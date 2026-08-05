@@ -1,0 +1,259 @@
+/* The verification letter.
+
+   Hand-written, no build step. Every rule here has a counterpart in
+   gwcvt_inline_letter_styles() in inc/render.php, which applies the same
+   styling as style attributes for the emailed copy — because the printed and
+   emailed letters have to be the same document. Add a class here and you add a
+   row there. */
+
+/* ─── The page ──────────────────────────────────────────────────────────────
+   Serif, deliberately. This document is read alongside court paperwork and
+   school forms, and a geometric sans reads as marketing. Its credibility comes
+   from looking like correspondence, not like an app. */
+:root {
+	color-scheme: light;
+}
+
+body.gwcvt-letter-page {
+	margin: 0;
+	padding: 0;
+	background: #f0f0f1;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 12pt;
+	line-height: 1.55;
+	color: #1a1a1a;
+}
+
+.gwcvt-letter {
+	max-width: 44em;
+	margin: 24px auto;
+	padding: 3.5em 3.5em 3em;
+	background: #fff;
+	box-shadow: 0 1px 4px rgb( 0 0 0 / .16 );
+}
+
+/* ─── The toolbar ───────────────────────────────────────────────────────────
+   On screen only. It exists because "Save as PDF" lives in the browser's own
+   print dialog, and a staff member who has never been told that will hunt for
+   a download button that does not exist. */
+.gwcvt-letter-toolbar {
+	max-width: 44em;
+	margin: 20px auto 0;
+	padding: 0 3.5em;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-size: 13px;
+}
+
+.gwcvt-print-button {
+	padding: 7px 16px;
+	border: 1px solid #2271b1;
+	border-radius: 3px;
+	background: #2271b1;
+	color: #fff;
+	font: inherit;
+	cursor: pointer;
+}
+
+.gwcvt-print-button:hover,
+.gwcvt-print-button:focus {
+	background: #135e96;
+	border-color: #135e96;
+}
+
+.gwcvt-letter-toolbar__hint {
+	margin-left: 12px;
+	color: #50575e;
+}
+
+/* ─── Letterhead ─────────────────────────────────────────────────────────── */
+.gwcvt-letterhead {
+	border-bottom: 1px solid #999;
+	padding-bottom: 10px;
+	margin-bottom: 22px;
+}
+
+.gwcvt-org {
+	font-size: 15pt;
+	font-weight: bold;
+	margin: 0 0 3px;
+}
+
+.gwcvt-org-address,
+.gwcvt-org-contact {
+	margin: 0;
+	font-size: 10pt;
+	color: #444;
+}
+
+.gwcvt-date {
+	margin: 0 0 18px;
+	font-size: 11pt;
+	color: #444;
+}
+
+.gwcvt-heading {
+	font-size: 15pt;
+	margin: 0 0 14px;
+}
+
+.gwcvt-subheading {
+	font-size: 12pt;
+	margin: 26px 0 8px;
+}
+
+.gwcvt-intro {
+	margin: 0 0 20px;
+}
+
+/* ─── Tables ─────────────────────────────────────────────────────────────── */
+.gwcvt-summary-table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 0 0 8px;
+}
+
+.gwcvt-summary-table th {
+	text-align: left;
+	padding: 4px 12px 4px 0;
+	font-weight: normal;
+	color: #444;
+	vertical-align: top;
+	width: 11em;
+}
+
+.gwcvt-summary-table td {
+	padding: 4px 0;
+	vertical-align: top;
+}
+
+.gwcvt-total {
+	font-size: 13pt;
+}
+
+.gwcvt-entries {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 10.5pt;
+}
+
+.gwcvt-entries th {
+	text-align: left;
+	padding: 5px 8px;
+	border-bottom: 1px solid #999;
+	font-size: 10pt;
+}
+
+.gwcvt-entries td {
+	padding: 5px 8px;
+	border-bottom: 1px solid #e0e0e0;
+	vertical-align: top;
+}
+
+/* Italic and grey, and the cell also says so in words — an unverified row must
+   never be distinguishable by styling alone, on a document that may well be
+   photocopied in black and white. */
+.gwcvt-row--unverified {
+	color: #555;
+	font-style: italic;
+}
+
+.gwcvt-unverified-note {
+	font-size: 10pt;
+	color: #555;
+	margin: 10px 0 0;
+}
+
+/* ─── Signature ──────────────────────────────────────────────────────────── */
+.gwcvt-signature {
+	margin: 40px 0 0;
+}
+
+/* A ruled line with room above it for a wet signature. Never an image of one:
+   a human signing this is the actual attestation. */
+.gwcvt-signature__rule {
+	border-bottom: 1px solid #333;
+	width: 22em;
+	margin: 0 0 6px;
+	height: 2.4em;
+}
+
+.gwcvt-signature__name {
+	margin: 0;
+	font-weight: bold;
+}
+
+.gwcvt-signature__title,
+.gwcvt-signature__org {
+	margin: 0;
+	font-size: 10.5pt;
+	color: #444;
+}
+
+/* ─── Disclaimer ─────────────────────────────────────────────────────────── */
+.gwcvt-disclaimer {
+	margin: 34px 0 0;
+	padding-top: 12px;
+	border-top: 1px solid #ccc;
+	font-size: 9.5pt;
+	color: #444;
+	line-height: 1.5;
+}
+
+.gwcvt-disclaimer p {
+	margin: 0;
+}
+
+.gwcvt-reference-note {
+	margin: 8px 0 0 !important;
+}
+
+.gwcvt-reference {
+	margin: 8px 0 0 !important;
+	font-family: Menlo, Consolas, monospace;
+	font-size: 10pt;
+	color: #1a1a1a;
+	letter-spacing: .04em;
+}
+
+/* ─── Print ─────────────────────────────────────────────────────────────────
+   The margin is on @page rather than the body, so the browser's own header and
+   footer sit outside it rather than on top of the letterhead. */
+@page {
+	margin: 0.75in;
+}
+
+@media print {
+	body.gwcvt-letter-page {
+		background: #fff;
+	}
+
+	.gwcvt-letter-toolbar {
+		display: none;
+	}
+
+	.gwcvt-letter {
+		max-width: none;
+		margin: 0;
+		padding: 0;
+		box-shadow: none;
+	}
+
+	/* Repeat the itemised table's header on every page it spills onto. Without
+	   this, page two of a long service record is a wall of unlabelled columns. */
+	.gwcvt-entries thead {
+		display: table-header-group;
+	}
+
+	.gwcvt-entries tr {
+		page-break-inside: avoid;
+	}
+
+	/* The two things that must never be split across a page break: the
+	   signature block, and the disclaimer. A disclaimer whose first half is on
+	   page one and whose second half is on page two is a disclaimer somebody
+	   can honestly say they did not read. */
+	.gwcvt-signature,
+	.gwcvt-disclaimer {
+		page-break-inside: avoid;
+	}
+}

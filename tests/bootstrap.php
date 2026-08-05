@@ -377,6 +377,34 @@ function current_time( $type, $gmt = 0 ) {
 	return gmdate( 'mysql' === $type ? 'Y-m-d H:i:s' : $type );
 }
 
+function wp_salt( $scheme = 'auth' ) {
+	// Fixed, so reference-code tests assert STABILITY rather than
+	// unpredictability. Weaker than WordPress by design; the property that
+	// matters here is that the same facts produce the same digest.
+	return 'gwcvt-test-salt-' . $scheme;
+}
+
+function wp_json_encode( $data, $options = 0, $depth = 512 ) {
+	return json_encode( $data, (int) $options, (int) $depth );
+}
+
+function wp_mail( $to, $subject, $message, $headers = array(), $attachments = array() ) {
+	$GLOBALS['gwcvt_test']['mail'][] = compact( 'to', 'subject', 'message', 'headers' );
+	return true;
+}
+
+function is_email( $email ) {
+	return (bool) filter_var( (string) $email, FILTER_VALIDATE_EMAIL );
+}
+
+function wp_timezone_string() {
+	return 'UTC';
+}
+
+function home_url( $path = '' ) {
+	return 'https://example.test' . $path;
+}
+
 function wp_date( $format, $timestamp = null, $timezone = null ) {
 	return gmdate( (string) $format, null === $timestamp ? time() : (int) $timestamp );
 }
@@ -509,8 +537,14 @@ require GWCVT_DIR . 'inc/i18n.php';
 require GWCVT_DIR . 'inc/settings.php';
 require GWCVT_DIR . 'inc/access.php';
 require GWCVT_DIR . 'inc/class-gwcvt-totals.php';
+require GWCVT_DIR . 'inc/class-gwcvt-letter-entry.php';
+require GWCVT_DIR . 'inc/class-gwcvt-letter.php';
 require GWCVT_DIR . 'inc/cpt.php';
 require GWCVT_DIR . 'inc/volunteer-cpt.php';
 require GWCVT_DIR . 'inc/entries.php';
 require GWCVT_DIR . 'inc/verify.php';
+require GWCVT_DIR . 'inc/letter-cpt.php';
+require GWCVT_DIR . 'inc/letter.php';
+require GWCVT_DIR . 'inc/render.php';
+require GWCVT_DIR . 'inc/emails.php';
 require GWCVT_DIR . 'inc/admin-screen.php';

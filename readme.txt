@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,13 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 
 == Changelog ==
 
+= 0.3.0 =
+* Verification letters: print-styled HTML on your letterhead, or emailed to the volunteer.
+* Every letter is itemised, naming who verified each shift and when, and carries a reference code.
+* "Check a reference" answers a phone call in ten seconds: matches, records have changed since, or never issued here.
+* Every letter issued is logged — printing included.
+* The disclaimer naming your organization as the authoritative record-keeper is editable, and cannot be emptied.
+
 = 0.2.0 =
 * Staff verification: verify a shift from its row, from the entry itself, or in bulk. Who verified it and when are recorded and will appear on the letter.
 * Filter the hours list by verification state, and an unverified count beside the menu item.
@@ -70,6 +77,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.3.0 =
+The verification letter, which is what this plugin is for. Worth trying end to end on a real volunteer record before relying on it.
 
 = 0.2.0 =
 Adds staff verification. Still a development release — the verification letter itself lands in 0.3.0.

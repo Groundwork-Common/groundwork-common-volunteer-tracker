@@ -29,6 +29,10 @@ WordPress 6.3, PHP 7.4. No build step, no Composer, no npm for anything that shi
 - **The colophon is collapsible, never dismissible,** and stores *when* it was collapsed rather than *that* it was — so thirty days falls out of a comparison instead of needing a scheduled event to clear a flag.
 - **No `load_plugin_textdomain()` call.** WordPress has loaded translations for directory-hosted plugins by itself since 4.6; calling it explicitly forces the `.mo` read on every request. `wp_set_script_translations()` is a different thing and is still needed.
 - **Translated lookup tables are functions with a static memo, never `const`.** A `const` is evaluated at include time, before the request's translation is loaded — invisible on an English site and total on every other one, and `_doing_it_wrong()` about it since 6.7.
+- **The letter is recomputed from entries every time, never from the cached rollup.** A letter is produced twice a year per volunteer and its correctness is the whole product; a cached figure that is subtly stale is the one failure this plugin cannot have, because the person holding the letter cannot tell.
+- **The reference verifier recomputes from current records, not from the stored figures.** Comparing a letter against its own log entry would answer "matches" every time — a verifier that always says yes is worse than none, because it actively vouches. It reports `changed` rather than `invalid`: hours get corrected and shifts get verified after a letter goes out, and none of that is anybody's fault.
+- **Printing is logged, not just emailing.** A printed letter has left the building just as much as an emailed one, and a log that only knew about email would answer "no letter was issued" about a letter somebody is holding.
+- **The emailed and printed letters come from one template.** Two templates drift, and the day they have drifted is the day a court receives a letter that differs from the organization's copy. The email's CSS is inlined by a hand-written ~20-rule map, which is only possible because the intro and disclaimer are sanitized to plain text rather than `wp_kses_post()`.
 
 ### Two departures from the sibling plugins
 
@@ -55,6 +59,11 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_attestation_methods` | filter | The ways an entry can be attested to, keyed by slug. |
 | `gwcvt_entry_verified` | action | After an entry is attested to. |
 | `gwcvt_entry_unverified` | action | After an attestation is withdrawn. |
+| `gwcvt_letter_post_type_args` | filter | `register_post_type()` arguments for the issued-letter log. |
+| `gwcvt_letter_model` | filter | The assembled letter, before it is rendered. |
+| `gwcvt_letter_reference` | filter | A letter's reference code. |
+| `gwcvt_email` | filter | A message (to, subject, body, headers) before it is sent. |
+| `gwcvt_letter_issued` | action | After a letter is produced and logged, for print as well as email. |
 
 ## Tests
 
