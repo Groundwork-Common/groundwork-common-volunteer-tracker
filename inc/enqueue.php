@@ -25,6 +25,18 @@ function gwcvt_register_front_assets(): void {
 		array(),
 		GWCVT_VERSION
 	);
+
+	/* The letter's own stylesheet, registered rather than enqueued. The print
+	 * view links it by URL because it renders a standalone document; the
+	 * reference checker enqueues this handle so it can show the same letter
+	 * inside wp-admin. One stylesheet either way — see the note at the top of
+	 * inc/render.php about the printed and emailed letters being one document. */
+	wp_register_style(
+		'gwcvt-letter',
+		GWCVT_URL . 'assets/css/letter.css',
+		array(),
+		GWCVT_VERSION
+	);
 }
 
 /**

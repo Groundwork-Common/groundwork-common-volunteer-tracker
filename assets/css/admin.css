@@ -391,3 +391,64 @@
 	position: static;
 	margin-left: auto;
 }
+
+/* ─── A volunteer's history ─────────────────────────────────────────────────
+   Read-only tables on the volunteer record: their shifts, and the letters
+   already issued about them. */
+.gwcvt-history {
+	margin-bottom: 12px;
+}
+
+.gwcvt-history__action {
+	width: 5em;
+	text-align: right;
+}
+
+.gwcvt-history__summary {
+	margin: 0 0 12px;
+	padding-top: 10px;
+	border-top: 1px solid #dcdcde;
+}
+
+/* ─── The reference comparison ──────────────────────────────────────────────
+   The rebuilt letter, shown inside the admin so somebody on the phone can put
+   it beside the copy they were sent. Left closed on a match and opened on a
+   mismatch: when the codes disagree, seeing the document IS the next step. */
+.gwcvt-comparison {
+	margin-top: 12px;
+}
+
+.gwcvt-comparison > summary {
+	cursor: pointer;
+	padding: 6px 0;
+	font-weight: 600;
+}
+
+/* The letter carries its own typography from letter.css. This is the desk it
+   sits on — a scroll box so a long service record does not push the rest of the
+   screen out of reach. */
+.gwcvt-comparison__paper {
+	max-height: 26em;
+	overflow-y: auto;
+	margin: 8px 0;
+	padding: 20px 24px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.gwcvt-comparison__paper .gwcvt-letter {
+	margin: 0;
+	padding: 0;
+	box-shadow: none;
+	max-width: none;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	/* The letter is ink on white wherever it is read, so the paper stays white
+	   even under a dark admin — a letter previewed in reverse video is not the
+	   document somebody is holding. */
+	.gwcvt-comparison__paper {
+		border-color: #3c434a;
+	}
+}

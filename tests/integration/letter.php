@@ -211,6 +211,105 @@ gwcvt_check(
 	(string) ( $gwcvt_changed['current']['minutes'] ?? 0 )
 );
 
+/* ── Changes the old digest could not see ────────────────────────────────────
+ * The first version of the reference hashed only the volunteer, the range, the
+ * total and the count. Each case below leaves all four identical, and each is a
+ * change to what the document says — so each used to come back "matches".
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Issue a letter, alter one entry, and report whether the code notices.
+ *
+ * @param int      $volunteer_id Volunteer post ID.
+ * @param callable $alter        Given an entry ID, changes something on it.
+ * @return string The status the checker reports afterwards.
+ */
+function gwcvt_tamper( int $volunteer_id, callable $alter ): string {
+	$letter = gwcvt_build_letter( $volunteer_id );
+	$record = gwcvt_log_letter( $letter, 'print' );
+	$GLOBALS['gwcvt_made'][] = $record;
+
+	$ids = gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish' ) ) );
+	$alter( (int) $ids[0] );
+
+	return gwcvt_verify_reference( $letter->reference )['status'];
+}
+
+$gwcvt_tamper_volunteer = wp_insert_post(
+	array( 'post_type' => GWCVT_VOLUNTEER_TYPE, 'post_status' => 'publish', 'post_title' => 'Zzytest Tamper Subject' )
+);
+$GLOBALS['gwcvt_made'][] = $gwcvt_tamper_volunteer;
+
+gwcvt_make_entry( $gwcvt_tamper_volunteer, '2026-04-06', 210, true );
+gwcvt_make_entry( $gwcvt_tamper_volunteer, '2026-04-13', 180, true );
+
+gwcvt_check(
+	'rewriting an activity is detected',
+	'changed' === gwcvt_tamper(
+		$gwcvt_tamper_volunteer,
+		static function ( int $id ): void {
+			update_post_meta( $id, GWCVT_ENTRY_ACTIVITY, 'Something entirely different' );
+		}
+	)
+);
+
+gwcvt_check(
+	'changing a supervisor is detected',
+	'changed' === gwcvt_tamper(
+		$gwcvt_tamper_volunteer,
+		static function ( int $id ): void {
+			update_post_meta( $id, GWCVT_ENTRY_SUPERVISOR, 'Someone Who Was Not There' );
+		}
+	)
+);
+
+gwcvt_check(
+	'moving a date within the range is detected',
+	'changed' === gwcvt_tamper(
+		$gwcvt_tamper_volunteer,
+		static function ( int $id ): void {
+			update_post_meta( $id, GWCVT_ENTRY_DATE, '2026-04-07' );
+		}
+	)
+);
+
+/* The one the old digest was most obviously blind to: the total and the count
+ * are untouched, only the split between two shifts moves. */
+gwcvt_check(
+	'swapping hours between two shifts is detected',
+	'changed' === gwcvt_tamper(
+		$gwcvt_tamper_volunteer,
+		static function ( int $id ) use ( $gwcvt_tamper_volunteer ): void {
+			$ids = gwcvt_entry_ids_for_volunteer( $gwcvt_tamper_volunteer, array( 'statuses' => array( 'publish' ) ) );
+			$a   = (int) get_post_meta( (int) $ids[0], GWCVT_ENTRY_MINUTES, true );
+			$b   = (int) get_post_meta( (int) $ids[1], GWCVT_ENTRY_MINUTES, true );
+			update_post_meta( (int) $ids[0], GWCVT_ENTRY_MINUTES, $b );
+			update_post_meta( (int) $ids[1], GWCVT_ENTRY_MINUTES, $a );
+		}
+	)
+);
+
+/* And an untouched letter still matches, so the above are detections rather
+ * than a verifier that has started refusing everything. */
+$gwcvt_clean = gwcvt_build_letter( $gwcvt_tamper_volunteer );
+$gwcvt_clean_record = gwcvt_log_letter( $gwcvt_clean, 'print' );
+$GLOBALS['gwcvt_made'][] = $gwcvt_clean_record;
+
+gwcvt_check(
+	'an untouched letter still matches',
+	'match' === gwcvt_verify_reference( $gwcvt_clean->reference )['status']
+);
+
+/* The checker hands back the rebuilt letter so the screen can show it in full. */
+$gwcvt_rebuilt = gwcvt_verify_reference( $gwcvt_clean->reference )['rebuilt'];
+
+gwcvt_check( 'the checker returns a rebuilt letter', $gwcvt_rebuilt instanceof GWCVT_Letter );
+gwcvt_check(
+	'and it renders as a full document',
+	$gwcvt_rebuilt instanceof GWCVT_Letter
+		&& false !== strpos( gwcvt_letter_body( $gwcvt_rebuilt, 'print' ), 'authoritative record-keeper' )
+);
+
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
 foreach ( $GLOBALS['gwcvt_made'] as $gwcvt_id ) {
