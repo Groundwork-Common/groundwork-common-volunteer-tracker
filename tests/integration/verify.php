@@ -179,21 +179,42 @@ gwcvt_check(
  * A real WP_Query with a NOT EXISTS join, and the transient that caches it.
  * ─────────────────────────────────────────────────────────────────────────── */
 
+/* Measured as a delta, not against a fixed number. gwcvt_unverified_count() is
+ * a site-wide figure and this script does not own the site — a demo fixture or
+ * a record somebody left behind would break an absolute assertion while the
+ * plugin was working perfectly. That happened: these read `1` and `0` until the
+ * seeded demo organisation existed. */
 gwcvt_forget_unverified_count();
-$gwcvt_count = gwcvt_unverified_count();
+$gwcvt_baseline = gwcvt_unverified_count();
 
-gwcvt_check( 'the unverified count is exact', 1 === $gwcvt_count, (string) $gwcvt_count );
+$gwcvt_extra = gwcvt_make_entry( $gwcvt_volunteer, '2026-05-23', 45 );
+gwcvt_forget_unverified_count();
+
+gwcvt_check(
+	'an unverified entry raises the count by one',
+	gwcvt_unverified_count() === $gwcvt_baseline + 1,
+	gwcvt_unverified_count() . ' vs baseline ' . $gwcvt_baseline
+);
 
 gwcvt_check( 'the count is cached', false !== get_transient( GWCVT_UNVERIFIED_COUNT_KEY ) );
 
-gwcvt_verify_entry( $gwcvt_unverified, $gwcvt_editor );
+gwcvt_verify_entry( $gwcvt_extra, $gwcvt_editor );
 
 gwcvt_check(
 	'verifying drops the cache',
 	false === get_transient( GWCVT_UNVERIFIED_COUNT_KEY )
 );
 
-gwcvt_check( 'the count is now zero', 0 === gwcvt_unverified_count(), (string) gwcvt_unverified_count() );
+/* Back to the baseline exactly, because only the entry added AFTER the baseline
+ * was taken has been verified. $gwcvt_unverified is deliberately left alone
+ * here: it was already unverified when the baseline was measured, so verifying
+ * it too would land one BELOW the baseline — which is what the first version of
+ * this assertion got wrong by calling the expected figure "the baseline". */
+gwcvt_check(
+	'verifying it again returns the count to the baseline',
+	gwcvt_unverified_count() === $gwcvt_baseline,
+	gwcvt_unverified_count() . ' vs baseline ' . $gwcvt_baseline
+);
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 

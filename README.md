@@ -18,6 +18,12 @@ What the letter does instead is report what the organization recorded, say plain
 
 WordPress 6.3, PHP 7.4. No build step, no Composer, no npm for anything that ships.
 
+The PHP 7.4 floor is tested, not assumed. PHPUnit 11 needs PHP 8.2, so the unit suite *cannot* run on 7.4 — which means without a deliberate job the compatibility claim in the plugin header would be verified by nobody. The Tests workflow runs the integration scripts against a real 7.4 site, and parses every shipping file with 7.4's own parser. To check it yourself:
+
+```bash
+npx @wordpress/env start --config=.wp-env.php74.json
+```
+
 ## Things that are deliberate
 
 - **Durations are integer minutes, never float hours.** Three and a half hours is `210`. Floats do not sum exactly, and a letter reading "42.30000000000001 hours" is not a rounding curiosity a court will overlook — it is the moment the reader stops believing the document. `HoursTest` sums a thousand entries both ways to keep the argument honest.
@@ -106,6 +112,17 @@ Then the integration scripts, each of which creates and removes its own fixtures
 ```bash
 npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
 ```
+
+## Continuous integration
+
+`.github/workflows/test.yml` runs four jobs on every push and pull request:
+
+| Job | What it answers |
+| --- | --- |
+| `lint` | Does every shipping file parse on PHP 7.4 — the version the header promises? |
+| `unit` | Is the logic right? PHPUnit 11 on 8.2, 8.3, 8.4. |
+| `integration` | Does it actually run? The six scripts under wp-env, on **7.4 and 8.3** — the two ends where the interesting failures are. |
+| `version` | Do the header, the constant, `Stable tag` and the changelog still agree? |
 
 ## Demo data
 

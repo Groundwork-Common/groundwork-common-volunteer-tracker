@@ -1,0 +1,175 @@
+name: Tests
+
+# ── What this is for ─────────────────────────────────────────────────────────
+# Two different questions, and they need different jobs.
+#
+#   "Is the logic right?"  — the PHPUnit suite, which runs against a stubbed
+#                            WordPress and is fast enough to run on every push.
+#
+#   "Does it actually run?" — the integration scripts, against a real database
+#                            and a real WP_REST_Server under wp-env.
+#
+# And one question that is easy to answer wrongly by never asking it: does this
+# plugin work on the PHP version its own header promises? The header says 7.4.
+# PHPUnit 11 requires 8.2, so the unit suite CANNOT run on 7.4 — which means
+# without the `php74` job below, the compatibility claim would be tested by
+# nobody, ever. That job is the reason this file exists in the shape it does.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A second push to the same branch cancels the first. These jobs take minutes
+# and nobody is waiting on the results of a commit that has been superseded.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Parses on PHP 7.4
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+
+      # Only what ships. tests/ is excluded by .distignore and never reaches a
+      # site, so it is free to use anything the test runner supports.
+      - name: Lint every shipping file
+        run: |
+          status=0
+          files=$(find . -name '*.php' -not -path './tests/*' -not -path './.git/*')
+          for file in $files; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "::error file=$file::Does not parse on PHP 7.4"
+              php -l "$file" || true
+              status=1
+            fi
+          done
+          echo "Checked $(echo "$files" | wc -l) files."
+          exit $status
+
+  unit:
+    name: Unit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.2', '8.3', '8.4' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      # Fetched rather than committed, the same way a developer runs it. There
+      # is no Composer in this plugin and the suite does not introduce one.
+      - name: Fetch PHPUnit
+        run: curl -sSLO https://phar.phpunit.de/phpunit-11.phar
+
+      - name: Run the suite
+        run: php phpunit-11.phar
+
+  integration:
+    name: Integration (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # 7.4 is the floor the plugin header promises; 8.3 is what a current
+        # host runs. Both, because the interesting failures are at the ends.
+        php: [ '7.4', '8.3' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # wp-env reads phpVersion from the config file, so the matrix writes one.
+      # Ports are left at the defaults: nothing else is running on the runner.
+      - name: Write a wp-env config for PHP ${{ matrix.php }}
+        run: |
+          cat > .wp-env.ci.json <<JSON
+          {
+            "core": null,
+            "phpVersion": "${{ matrix.php }}",
+            "plugins": [ "." ],
+            "testsEnvironment": false,
+            "config": {
+              "WP_DEBUG": true,
+              "WP_DEBUG_DISPLAY": true,
+              "SCRIPT_DEBUG": true
+            }
+          }
+          JSON
+
+      - name: Start WordPress
+        run: npx --yes @wordpress/env start --config=.wp-env.ci.json
+
+      - name: Confirm the PHP version really is ${{ matrix.php }}
+        run: |
+          actual=$(npx --yes @wordpress/env run cli --config=.wp-env.ci.json -- php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;' 2>/dev/null | tr -d '\r' | tail -1)
+          echo "Running on PHP $actual"
+          case "$actual" in
+            *"${{ matrix.php }}"*) ;;
+            *) echo "::error::Expected PHP ${{ matrix.php }}, got $actual"; exit 1 ;;
+          esac
+
+      # Each script echoes PASS/FAIL per check and exits non-zero on any
+      # failure. The exit code is what fails the job; the output is what tells
+      # somebody which check went.
+      - name: Run the integration scripts
+        run: |
+          status=0
+          base=wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration
+          for script in caps entries verify letter privacy self-log; do
+            echo "── $script ────────────────────────────────────────────"
+            if ! npx --yes @wordpress/env run cli --config=.wp-env.ci.json -- wp eval-file "$base/$script.php"; then
+              echo "::error::$script failed"
+              status=1
+            fi
+          done
+          exit $status
+
+      - name: Stop WordPress
+        if: always()
+        run: npx --yes @wordpress/env stop --config=.wp-env.ci.json || true
+
+  version:
+    name: Version numbers agree
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      # VersionTest covers this too, but it runs in the unit job alongside
+      # everything else. Failing it on its own says what is wrong without
+      # anybody reading a stack trace: a release where the header and the
+      # Stable tag disagree ships a version WordPress will not offer as an
+      # update, and fixing it means another release.
+      - name: Fetch PHPUnit
+        run: curl -sSLO https://phar.phpunit.de/phpunit-11.phar
+
+      - name: Check the four places a version lives
+        run: php phpunit-11.phar --filter VersionTest

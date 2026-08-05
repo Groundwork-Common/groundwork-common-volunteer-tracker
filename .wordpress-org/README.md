@@ -35,12 +35,29 @@ The captions currently expected, in order:
 
 ## Taking the screenshots
 
-**Use invented names.** Every screenshot of this plugin shows a person's name
+**Never shoot real data.** Every screenshot of this plugin shows a person's name
 next to a number of volunteer hours, and in the court-ordered case the
 surrounding interface implies why they are there. A screenshot of real data on a
 public plugin page is a disclosure that cannot be taken back — deleting the file
-does not delete it from the mirrors that scraped it.
+does not delete it from whatever scraped it first.
 
-Seed a demo site with obviously fictional volunteers before shooting, take the
-shots at 1280px wide, and check the browser chrome is out of frame and no real
-site name is visible in the admin bar.
+There is a fixture for exactly this. It builds Riverbend Food Bank, whose six
+volunteers are all invented and whose addresses are all on `example.test`:
+
+```bash
+npx @wordpress/env start
+npx @wordpress/env run cli -- wp eval-file \
+  wp-content/plugins/groundwork-common-volunteer-tracker/tests/seed.php
+```
+
+Then, at 1280px wide, with the browser chrome out of frame:
+
+| File | Where | What should be on screen |
+| --- | --- | --- |
+| `screenshot-1.png` | Volunteer Hours → All hours, filtered to **Not yet verified** | The queue: several shifts awaiting a staff member, including the two self-logged rows reading "— not yet matched". |
+| `screenshot-2.png` | Volunteer Hours → Log hours | The shift form with the volunteer picker open on "Mar", showing Marcus Delacroix. |
+| `screenshot-3.png` | The print view for Marcus Delacroix | The letter itself: letterhead, the itemized table, the signature block and the disclaimer. Scroll so the disclaimer is visible — it is the point. |
+| `screenshot-4.png` | Volunteer Hours → Letters, with a reference pasted in | The checker answering "This letter matches our current records." |
+
+Two things to check before saving: the admin bar shows no real site name, and
+the Riverbend letterhead — not your own organization's — is on the letter.
