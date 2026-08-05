@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.4.0
+ * Version:           0.5.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.4.0';
+const GWCVT_VERSION = '0.5.0';
 
 /* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -167,11 +167,23 @@ if ( ! function_exists( 'gwcvt_retention_due' ) ) {
 if ( ! function_exists( 'gwcvt_register_rest_routes' ) ) {
 	require GWCVT_DIR . 'inc/rest.php';
 }
+/* The public form. form.php renders it, self-log.php accepts it, block.php
+ * places it. self-log.php declares gwcvt_self_log_enabled(), which form.php
+ * calls, so it cannot move after it. */
+if ( ! function_exists( 'gwcvt_dispatch' ) ) {
+	require GWCVT_DIR . 'inc/self-log.php';
+}
+if ( ! function_exists( 'gwcvt_render_self_log_form' ) ) {
+	require GWCVT_DIR . 'inc/form.php';
+}
 if ( ! function_exists( 'gwcvt_render_entry_meta_box' ) ) {
 	require GWCVT_DIR . 'inc/meta-box.php';
 }
-if ( ! function_exists( 'gwcvt_enqueue_admin_assets' ) ) {
+if ( ! function_exists( 'gwcvt_register_front_assets' ) ) {
 	require GWCVT_DIR . 'inc/enqueue.php';
+}
+if ( ! function_exists( 'gwcvt_register_block' ) ) {
+	require GWCVT_DIR . 'inc/block.php';
 }
 
 /* The settings screen. Last, as in both sibling plugins, because it describes

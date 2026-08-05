@@ -31,6 +31,10 @@ WordPress 6.3, PHP 7.4. No build step, no Composer, no npm for anything that shi
 - **Translated lookup tables are functions with a static memo, never `const`.** A `const` is evaluated at include time, before the request's translation is loaded — invisible on an English site and total on every other one, and `_doing_it_wrong()` about it since 6.7.
 - **The letter is recomputed from entries every time, never from the cached rollup.** A letter is produced twice a year per volunteer and its correctness is the whole product; a cached figure that is subtly stale is the one failure this plugin cannot have, because the person holding the letter cannot tell.
 - **The reference verifier recomputes from current records, not from the stored figures.** Comparing a letter against its own log entry would answer "matches" every time — a verifier that always says yes is worse than none, because it actively vouches. It reports `changed` rather than `invalid`: hours get corrected and shifts get verified after a letter goes out, and none of that is anybody's fault.
+- **The public form is off until you switch it on**, and switching it on without pinning it to a page doesn't count. A plugin that started accepting personal information from strangers because it was installed would be doing something nobody asked for.
+- **The form never looks anybody up.** The handler doesn't ask whether the submitted email belongs to an existing volunteer, so there's no code path whose behaviour depends on that answer — and therefore no oracle to build one from. Name and email are stored as *claims* on a pending entry; a human attaches them later. An anonymous form can't create an identity record, only a row somebody must triage.
+- **Accepted, honeypotted and rate-limited are byte-identical.** `SelfLogTest` asserts it literally. If they diverge, the form starts answering questions about who's been submitting — and on a site running a court-ordered service programme, that question is whether a named person is working one off.
+- **The rate limiter hashes its keys and prunes on write.** It's a record of who submitted and when, written by anonymous traffic; in the clear it'd be a log of email addresses sitting in an option. It keys on `REMOTE_ADDR` only — `X-Forwarded-For` is spoofable by exactly the person being limited.
 - **Retention defaults to keeping everything, and nags until you decide.** A plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date they haven't reached. But defaulting to "keep forever" quietly hoards personal data. The resolution isn't a cleverer default — it's a non-dismissible notice on the plugin's own screens that goes away once the Privacy tab is saved, *including* saved as "keep indefinitely". A legitimate answer; never having considered it isn't.
 - **Anonymizing keeps the hours.** Grant reporting and a Form 990 need the service totals; they don't need the name. Deleting outright throws away the organization's own statistics to solve a problem removing the identity already solved. The claimed name/email on self-logged shifts are cleared too — they live on the *entry*, not the volunteer.
 - **The eraser names the letter references it affected.** Silently destroying the record behind a document a court is holding is exactly the failure this plugin can't have; whoever handles the request has to know a reference may now be un-checkable.
@@ -78,6 +82,8 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_retention_due` | filter | Whether a volunteer's record is due for purging. |
 | `gwcvt_before_purge` | action | Before a record is anonymized or deleted — last chance to export it. |
 | `gwcvt_purged` | action | After a record has been purged. |
+| `gwcvt_rate_limits` | filter | The public form's rate limits, keyed by scope. |
+| `gwcvt_self_log_received` | action | After the public form has recorded a submission. |
 
 ## Tests
 
@@ -94,6 +100,24 @@ Anything that genuinely needs WordPress runs under wp-env:
 ```bash
 npx @wordpress/env start
 ```
+
+Then the integration scripts, each of which creates and removes its own fixtures:
+
+```bash
+npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
+```
+
+## Demo data
+
+```bash
+npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/seed.php
+```
+
+Builds Riverbend Food Bank: six volunteers covering the states worth looking at — one working off a court order with 29.75 verified hours and a letter already on file, one with hours still waiting, one brand new with nothing verified, one with no email so their letter can only be printed, one dormant since 2023 and due under the retention policy, and one dormant but held back by an open case. Plus two self-logged submissions nobody has matched yet.
+
+Re-runnable: it removes what a previous run created, and only that — everything it makes is tagged, so a record you added by hand survives. It refuses to run unless `WP_ENVIRONMENT_TYPE` is `local` or `development`, because it writes settings and deletes records.
+
+Every name in it is invented and every address is on `example.test`. That is deliberate: this plugin's demo data is people's names beside a number of volunteer hours, and for two of them beside the fact that they are working off a court order. The same rule applies to screenshots — see `.wordpress-org/README.md`.
 
 ## Still to come
 

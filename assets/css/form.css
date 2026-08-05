@@ -1,0 +1,79 @@
+/* The public hour-logging form.
+
+   Deliberately restrained. This renders inside somebody else's theme, on a page
+   they styled, and a form that arrives with strong opinions about typography
+   looks like an advert for the plugin. Everything inherits: font, colour,
+   headings. What is styled here is layout and the two things a theme reliably
+   gets wrong for a form it did not expect — field spacing and the honeypot. */
+
+.gwcvt-form {
+	max-width: 34em;
+}
+
+.gwcvt-form__field {
+	display: flex;
+	flex-direction: column;
+	gap: .25em;
+	margin: 0 0 1.25em;
+}
+
+.gwcvt-form__field label {
+	font-weight: 600;
+}
+
+.gwcvt-form__field input {
+	/* Inherit the theme's own input styling where it has any, but never let a
+	   date field collapse to something unusable on a phone. */
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 2.5em;
+	padding: .4em .6em;
+}
+
+.gwcvt-form__help {
+	font-size: .875em;
+	opacity: .75;
+}
+
+.gwcvt-form__note {
+	font-size: .875em;
+	opacity: .75;
+	margin: 1.5em 0 0;
+}
+
+.gwcvt-form__actions {
+	margin: 1.5em 0 0;
+}
+
+/* ─── The honeypot ──────────────────────────────────────────────────────────
+   Positioned off screen rather than display:none or type="hidden", because the
+   scripts worth stopping skip both of those. It stays a real, focusable text
+   input as far as the DOM is concerned — but aria-hidden and tabindex="-1" in
+   the markup keep it away from anybody using a screen reader or the keyboard,
+   so nobody who should see the form ever meets it. */
+.gwcvt-form__hp {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+/* ─── Messages ─────────────────────────────────────────────────────────────
+   currentColor and a left rule rather than a colour of our own: green-on-white
+   from a plugin lands badly on a dark theme, and the message is carried by the
+   words in any case. */
+.gwcvt-form__message {
+	margin: 0 0 1.5em;
+	padding: .75em 1em;
+	border-left: 4px solid currentColor;
+	opacity: .95;
+}
+
+.gwcvt-form__message p {
+	margin: 0;
+}
+
+.gwcvt-form__message--problem {
+	font-weight: 600;
+}

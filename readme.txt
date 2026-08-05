@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,7 +40,7 @@ Volunteer records here are more sensitive than most plugin data — in the manda
 
 = Do volunteers need a WordPress login? =
 
-No. Staff enter hours from the admin. There is an optional front-end form volunteers can log their own hours through, and it is switched off until you switch it on.
+No. Staff enter hours from the admin. There is an optional front-end form volunteers can log their own hours through, and it is switched off until you switch it on. Anything sent through it arrives unverified and attached to nobody — a staff member matches it to a volunteer and checks it before it counts towards anything.
 
 = Can supervisors sign off without an account? =
 
@@ -58,6 +58,12 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 4. Checking a reference code somebody has phoned in about.
 
 == Changelog ==
+
+= 0.5.0 =
+* An optional public form volunteers can send their own hours through — off until you switch it on, and pinned to one page.
+* Everything sent arrives unverified, attached to nobody, and waits for a staff member to match and check it.
+* Honeypot, timing checks, and rate limiting by address and email. An optional shared code you can hand out at the front desk.
+* Available as the Volunteer Hours Form block or the [volunteer_hours_form] shortcode.
 
 = 0.4.0 =
 * Retention: choose how long volunteer records are kept, and whether old ones are anonymized or deleted. Defaults to keeping everything, and asks you to decide.
@@ -85,6 +91,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.5.0 =
+Adds an optional public hour-logging form. It stays off until you enable it under Settings → Logging.
 
 = 0.4.0 =
 Adds retention and privacy tooling. If you already have volunteer records, visit Volunteer Hours → Settings → Privacy and decide how long to keep them.
