@@ -87,6 +87,33 @@ gwcvt_check( 'a held record is not, however old', ! gwcvt_retention_due( $gwcvt_
 
 /* ── The sweep ───────────────────────────────────────────────────────────── */
 
+/* Counted before the sweep, because gwcvt_run_retention() walks every volunteer
+ * on the site and this script does not own the site. Asserting "1 purged, 1
+ * held" only holds on a pristine install — it broke the moment the seeded demo
+ * organisation existed, while the sweep was behaving exactly right. */
+$gwcvt_expect_purged = 0;
+$gwcvt_expect_held   = 0;
+
+foreach (
+	get_posts(
+		array(
+			'post_type'      => GWCVT_VOLUNTEER_TYPE,
+			'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+			'fields'         => 'ids',
+			'posts_per_page' => GWCVT_RETENTION_BATCH,
+			'no_found_rows'  => true,
+			'orderby'        => 'date',
+			'order'          => 'ASC',
+		)
+	) as $gwcvt_candidate
+) {
+	if ( gwcvt_retention_held( (int) $gwcvt_candidate ) ) {
+		++$gwcvt_expect_held;
+	} elseif ( gwcvt_retention_due( (int) $gwcvt_candidate ) ) {
+		++$gwcvt_expect_purged;
+	}
+}
+
 gwcvt_run_retention();
 
 $gwcvt_title = get_the_title( $gwcvt_old['volunteer'] );
@@ -115,8 +142,18 @@ gwcvt_check( 'the recent record was left alone', 'Zzytest Recent Record' === get
 gwcvt_check( 'the held record was left alone', 'Zzytest Held Record' === get_the_title( $gwcvt_held['volunteer'] ) );
 
 $gwcvt_log = gwcvt_retention_log();
-gwcvt_check( 'the sweep was logged', ! empty( $gwcvt_log ) && 1 === (int) $gwcvt_log[0]['purged'], (string) ( $gwcvt_log[0]['purged'] ?? -1 ) );
-gwcvt_check( 'the hold was counted', 1 === (int) ( $gwcvt_log[0]['held'] ?? 0 ), (string) ( $gwcvt_log[0]['held'] ?? -1 ) );
+gwcvt_check(
+	'the sweep logged what it purged',
+	! empty( $gwcvt_log ) && $gwcvt_expect_purged === (int) $gwcvt_log[0]['purged'],
+	( $gwcvt_log[0]['purged'] ?? -1 ) . ' of an expected ' . $gwcvt_expect_purged
+);
+gwcvt_check(
+	'and counted what it held back',
+	$gwcvt_expect_held === (int) ( $gwcvt_log[0]['held'] ?? -1 ),
+	( $gwcvt_log[0]['held'] ?? -1 ) . ' of an expected ' . $gwcvt_expect_held
+);
+gwcvt_check( 'this script’s own old record was among them', $gwcvt_expect_purged >= 1 );
+gwcvt_check( 'and its own held record among those', $gwcvt_expect_held >= 1 );
 
 /* ── Retention off purges nothing ────────────────────────────────────────── */
 

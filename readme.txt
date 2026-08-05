@@ -24,7 +24,10 @@ This plugin keeps the hours, lets staff attest to them, and prints the letter.
 * Records volunteer hours as individual shifts — who, when, how long, doing what, supervised by whom.
 * Lets a staff member with the right permission mark a shift verified. Who attested and when is recorded and appears on the letter.
 * Produces a verification letter for any volunteer over any date range, itemized, on your letterhead, ready to print or email.
-* Gives every letter a reference code you can read back to anyone who phones to check it.
+* Gives every letter a reference code you can read back to anyone who phones to check it — and a screen that tells you whether it still matches your records.
+* Logs every letter issued, printing included.
+* Optionally lets volunteers send in their own hours from a page on your site. Off until you switch it on; everything sent arrives unverified and waits for staff.
+* Lets you decide how long records are kept, and supports WordPress's own Export and Erase Personal Data tools.
 
 = What it deliberately does not do =
 

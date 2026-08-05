@@ -7,6 +7,11 @@ phpunit-*.phar
 # wp-env writes this when a developer overrides ports or mounts locally.
 .wp-env.override.json
 
+# Written by the Tests workflow, one per PHP version in the matrix. Committed
+# nowhere: the versions it is generated for live in .github/workflows/test.yml,
+# and a stale copy on disk would quietly test the wrong one.
+.wp-env.ci.json
+
 # Local-only development scaffolding — mail routing, fixtures, throwaway
 # mu-plugins. Mounted into wp-env by .wp-env.override.json. Nothing in here is
 # loaded on a real site, and nothing in here should ever be relied on by code

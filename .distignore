@@ -7,6 +7,8 @@
 .distignore
 .wp-env.json
 .wp-env.override.json
+.wp-env.php74.json
+.wp-env.ci.json
 .dev
 .phpunit.cache
 .phpunit.result.cache
