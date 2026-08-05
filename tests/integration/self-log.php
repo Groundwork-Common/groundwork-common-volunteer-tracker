@@ -27,10 +27,13 @@ $GLOBALS['gwcvt_made']     = array();
  *
  * gwcvt_self_log_received fires with the ID of each entry the handler stores,
  * which is exactly the hook needed and was already there. */
+$GLOBALS['gwcvt_last_entry'] = 0;
+
 add_action(
 	'gwcvt_self_log_received',
 	static function ( $entry_id ): void {
-		$GLOBALS['gwcvt_made'][] = (int) $entry_id;
+		$GLOBALS['gwcvt_made'][]     = (int) $entry_id;
+		$GLOBALS['gwcvt_last_entry'] = (int) $entry_id;
 	}
 );
 
@@ -144,11 +147,10 @@ $gwcvt_result = gwcvt_submit();
 gwcvt_check( 'a good submission is accepted', 'accepted' === $gwcvt_result, $gwcvt_result );
 gwcvt_check( 'and stores one entry', gwcvt_pending_count() === $gwcvt_before + 1 );
 
-$gwcvt_ids = get_posts(
-	array( 'post_type' => GWCVT_ENTRY_TYPE, 'post_status' => 'pending', 'fields' => 'ids', 'posts_per_page' => 1, 'no_found_rows' => true )
-);
-$gwcvt_entry = (int) $gwcvt_ids[0];
-$GLOBALS['gwcvt_made'][] = $gwcvt_entry;
+/* The ID the handler reported, not "whichever pending entry is newest" —
+ * that guess would pick up a seeded record the moment anything else on the
+ * site was pending, and this script then deletes what it captures. */
+$gwcvt_entry = (int) $GLOBALS['gwcvt_last_entry'];
 
 gwcvt_check( 'it is pending', 'pending' === get_post_status( $gwcvt_entry ), (string) get_post_status( $gwcvt_entry ) );
 gwcvt_check( 'it is marked as self-logged', 'self' === get_post_meta( $gwcvt_entry, GWCVT_ENTRY_SOURCE, true ) );
@@ -206,11 +208,7 @@ gwcvt_submit(
 	)
 );
 
-$gwcvt_ids = get_posts(
-	array( 'post_type' => GWCVT_ENTRY_TYPE, 'post_status' => 'pending', 'fields' => 'ids', 'posts_per_page' => 1, 'no_found_rows' => true, 'orderby' => 'ID', 'order' => 'DESC' )
-);
-$gwcvt_crafted = (int) $gwcvt_ids[0];
-$GLOBALS['gwcvt_made'][] = $gwcvt_crafted;
+$gwcvt_crafted = (int) $GLOBALS['gwcvt_last_entry'];
 
 gwcvt_check( 'a crafted volunteer id is ignored', 0 === (int) get_post_meta( $gwcvt_crafted, GWCVT_ENTRY_VOLUNTEER, true ) );
 gwcvt_check( 'a crafted verification is ignored', ! gwcvt_entry_is_verified( $gwcvt_crafted ) );
@@ -225,10 +223,7 @@ gwcvt_check( 'a missing code is refused', 'bad-code' === gwcvt_submit() );
 gwcvt_check( 'a wrong code is refused', 'bad-code' === gwcvt_submit( array( 'gwcvt_code' => 'nope' ) ) );
 gwcvt_check( 'the right code is accepted', 'accepted' === gwcvt_submit( array( 'gwcvt_code' => 'RIVERBEND' ) ) );
 
-$gwcvt_ids = get_posts(
-	array( 'post_type' => GWCVT_ENTRY_TYPE, 'post_status' => 'pending', 'fields' => 'ids', 'posts_per_page' => 1, 'no_found_rows' => true, 'orderby' => 'ID', 'order' => 'DESC' )
-);
-$GLOBALS['gwcvt_made'][] = (int) $gwcvt_ids[0];
+
 
 /* ── Rate limiting, end to end ───────────────────────────────────────────── */
 
