@@ -32,6 +32,8 @@ WordPress 6.3, PHP 7.4. No build step, no Composer, no npm for anything that shi
 - **The letter is recomputed from entries every time, never from the cached rollup.** A letter is produced twice a year per volunteer and its correctness is the whole product; a cached figure that is subtly stale is the one failure this plugin cannot have, because the person holding the letter cannot tell.
 - **The reference verifier recomputes from current records, not from the stored figures.** Comparing a letter against its own log entry would answer "matches" every time — a verifier that always says yes is worse than none, because it actively vouches. It reports `changed` rather than `invalid`: hours get corrected and shifts get verified after a letter goes out, and none of that is anybody's fault.
 - **Printing is logged, not just emailing.** A printed letter has left the building just as much as an emailed one, and a log that only knew about email would answer "no letter was issued" about a letter somebody is holding.
+- **There is no theme-overridable letter template, on purpose.** All the prose an organization is likely to change — intro, disclaimer, reference note, letterhead, signatory, email subject and covering note — is a setting on the Letter tab, with `{org} {name} {hours} {shifts} {period} {contact} {reference} {timestamp} {timezone}` placeholders. The document's furniture (headings, column headers, row labels) is filterable via `gwcvt_letter_strings`. What there is *not* is a template file a theme can own — because a theme that owns the markup is a theme that can delete the disclaimer, and the disclaimer not being deletable is the one structural promise this plugin makes about its own output.
+- **The email's covering note sits outside the letter.** A short "here is your letter" message is reasonable to want; putting it *inside* the document would mean the emailed and printed letters were no longer the same document.
 - **The emailed and printed letters come from one template.** Two templates drift, and the day they have drifted is the day a court receives a letter that differs from the organization's copy. The email's CSS is inlined by a hand-written ~20-rule map, which is only possible because the intro and disclaimer are sanitized to plain text rather than `wp_kses_post()`.
 
 ### Two departures from the sibling plugins
@@ -64,6 +66,9 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_letter_reference` | filter | A letter's reference code. |
 | `gwcvt_email` | filter | A message (to, subject, body, headers) before it is sent. |
 | `gwcvt_letter_issued` | action | After a letter is produced and logged, for print as well as email. |
+| `gwcvt_letter_strings` | filter | The letter's fixed wording — headings, column headers, row labels. |
+| `gwcvt_settings_fields` | filter | The settable settings, keyed by name. |
+| `gwcvt_settings_saved` | action | After the settings have been saved. |
 
 ## Tests
 

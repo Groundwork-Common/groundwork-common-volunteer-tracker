@@ -71,11 +71,81 @@ function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): 
 		</div>
 	<?php endif; ?>
 
+	<?php
+	/* The covering note sits OUTSIDE the letter, deliberately. A short "here is
+	 * your letter" message is a reasonable thing to want on an email, but
+	 * putting it inside the document would mean the emailed letter and the
+	 * printed one were no longer the same document — which is the one property
+	 * the whole credibility argument rests on. So it goes above, as a note
+	 * accompanying the letter rather than part of it. */
+	if ( 'email' === $medium ) {
+		$note = trim( (string) gwcvt_setting( 'email_intro' ) );
+
+		if ( '' !== $note ) {
+			printf(
+				'<div class="gwcvt-covering-note" style="font-family:Georgia,\'Times New Roman\',serif;font-size:12pt;line-height:1.55;color:#1a1a1a;max-width:44em;margin:0 auto 8px;padding:16px 16px 0;">%s</div>',
+				wp_kses(
+					nl2br( gwcvt_replace_tokens( $note, gwcvt_letter_tokens( $letter ) ) ),
+					gwcvt_letter_allowed_html()
+				)
+			);
+		}
+	}
+	?>
+
 	<?php echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in gwcvt_letter_body(). ?>
 </body>
 </html>
 	<?php
 	return (string) ob_get_clean();
+}
+
+/* ── The structural wording ──────────────────────────────────────────────────
+ * The prose an organisation is most likely to want to change — the opening
+ * paragraph, the disclaimer, the reference note — is a setting, editable on the
+ * Letter tab. The strings below are the document's furniture: headings, column
+ * headers, row labels. They are translatable, and they are filterable here for
+ * a site that needs different vocabulary ("Community Service Record" rather
+ * than "Volunteer Service Verification", say) without wanting to reimplement
+ * the template.
+ *
+ * There is deliberately NO theme-overridable template file. A theme that owns
+ * this markup is a theme that can delete the disclaimer, and the disclaimer not
+ * being deletable is the one structural promise this plugin makes about its own
+ * output. Filters can change what the furniture SAYS; nothing can remove the
+ * paragraph that says who is answerable for the hours.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The letter's fixed wording, all of it, in one filterable table.
+ *
+ * @param GWCVT_Letter $letter The letter being rendered.
+ * @return array<string, string>
+ */
+function gwcvt_letter_strings( GWCVT_Letter $letter ): array {
+	$strings = array(
+		'heading'         => __( 'Volunteer Service Verification', 'groundwork-common-volunteer-tracker' ),
+		'shifts_heading'  => __( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ),
+		'label_volunteer' => __( 'Volunteer', 'groundwork-common-volunteer-tracker' ),
+		'label_period'    => __( 'Period covered', 'groundwork-common-volunteer-tracker' ),
+		'label_hours'     => __( 'Verified hours', 'groundwork-common-volunteer-tracker' ),
+		'label_shifts'    => __( 'Shifts', 'groundwork-common-volunteer-tracker' ),
+		'col_date'        => __( 'Date', 'groundwork-common-volunteer-tracker' ),
+		'col_hours'       => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
+		'col_activity'    => __( 'Activity', 'groundwork-common-volunteer-tracker' ),
+		'col_supervisor'  => __( 'Supervised by', 'groundwork-common-volunteer-tracker' ),
+		'col_verification' => __( 'Verification', 'groundwork-common-volunteer-tracker' ),
+		'unverified_cell' => __( 'Not verified — not included in the total above', 'groundwork-common-volunteer-tracker' ),
+		'signature_blank' => __( 'Signature', 'groundwork-common-volunteer-tracker' ),
+	);
+
+	/**
+	 * The letter's fixed wording.
+	 *
+	 * @param array<string, string> $strings Keyed by role in the document.
+	 * @param GWCVT_Letter          $letter  The letter being rendered.
+	 */
+	return (array) apply_filters( 'gwcvt_letter_strings', $strings, $letter );
 }
 
 /**
@@ -93,6 +163,7 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 	$title     = trim( (string) gwcvt_setting( 'signatory_title' ) );
 	$address   = trim( (string) gwcvt_setting( 'org_address' ) );
 	$contact   = gwcvt_org_contact();
+	$strings   = gwcvt_letter_strings( $letter );
 
 	ob_start();
 	?>
@@ -110,33 +181,33 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 
 		<p class="gwcvt-date"><?php echo esc_html( wp_date( (string) get_option( 'date_format' ), $letter->issued_at ) ); ?></p>
 
-		<h1 class="gwcvt-heading"><?php esc_html_e( 'Volunteer Service Verification', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="gwcvt-heading"><?php echo esc_html( $strings['heading'] ); ?></h1>
 
 		<p class="gwcvt-intro"><?php echo wp_kses( gwcvt_letter_intro( $tokens ), gwcvt_letter_allowed_html() ); ?></p>
 
 		<table class="gwcvt-summary-table">
 			<tbody>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="row"><?php echo esc_html( $strings['label_volunteer'] ); ?></th>
 					<td><?php echo esc_html( $letter->volunteer_name ); ?></td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Period covered', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="row"><?php echo esc_html( $strings['label_period'] ); ?></th>
 					<td><?php echo esc_html( gwcvt_letter_period( $letter ) ); ?></td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Verified hours', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="row"><?php echo esc_html( $strings['label_hours'] ); ?></th>
 					<td class="gwcvt-total"><strong><?php echo esc_html( gwcvt_format_hours( $letter->verified_minutes ) ); ?></strong></td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'Shifts', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="row"><?php echo esc_html( $strings['label_shifts'] ); ?></th>
 					<td><?php echo esc_html( number_format_i18n( $letter->verified_count() ) ); ?></td>
 				</tr>
 			</tbody>
 		</table>
 
 		<?php if ( $itemize && ! $letter->is_empty() ) : ?>
-			<h2 class="gwcvt-subheading"><?php esc_html_e( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ); ?></h2>
+			<h2 class="gwcvt-subheading"><?php echo esc_html( $strings['shifts_heading'] ); ?></h2>
 
 			<?php
 			/* Itemised by default. A total with nothing behind it is a number the
@@ -146,11 +217,11 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 			<table class="gwcvt-entries">
 				<thead>
 					<tr>
-						<th scope="col"><?php esc_html_e( 'Date', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Hours', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Activity', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Supervised by', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Verification', 'groundwork-common-volunteer-tracker' ); ?></th>
+						<th scope="col"><?php echo esc_html( $strings['col_date'] ); ?></th>
+						<th scope="col"><?php echo esc_html( $strings['col_hours'] ); ?></th>
+						<th scope="col"><?php echo esc_html( $strings['col_activity'] ); ?></th>
+						<th scope="col"><?php echo esc_html( $strings['col_supervisor'] ); ?></th>
+						<th scope="col"><?php echo esc_html( $strings['col_verification'] ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -162,11 +233,7 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 							<td><?php echo esc_html( $entry->supervisor ); ?></td>
 							<td>
 								<?php
-								echo esc_html(
-									$entry->verified
-										? $entry->attestation
-										: __( 'Not verified — not included in the total above', 'groundwork-common-volunteer-tracker' )
-								);
+								echo esc_html( $entry->verified ? $entry->attestation : $strings['unverified_cell'] );
 								?>
 							</td>
 						</tr>
@@ -201,7 +268,7 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 		?>
 		<div class="gwcvt-signature">
 			<p class="gwcvt-signature__rule">&nbsp;</p>
-			<p class="gwcvt-signature__name"><?php echo esc_html( '' !== $signatory ? $signatory : __( 'Signature', 'groundwork-common-volunteer-tracker' ) ); ?></p>
+			<p class="gwcvt-signature__name"><?php echo esc_html( '' !== $signatory ? $signatory : $strings['signature_blank'] ); ?></p>
 			<?php if ( '' !== $title ) : ?>
 				<p class="gwcvt-signature__title"><?php echo esc_html( $title ); ?></p>
 			<?php endif; ?>

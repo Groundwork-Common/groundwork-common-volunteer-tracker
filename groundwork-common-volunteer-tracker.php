@@ -186,6 +186,9 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	// Verification where staff look for it: the hours list, and the entry itself.
 	require GWCVT_DIR . 'inc/admin-verify.php';
 
+	// The settings tabs' forms, and the one handler that saves them.
+	require GWCVT_DIR . 'inc/admin-settings.php';
+
 	// Producing, sending and checking letters.
 	require GWCVT_DIR . 'inc/admin-letters.php';
 }

@@ -65,6 +65,8 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * "Check a reference" answers a phone call in ten seconds: matches, records have changed since, or never issued here.
 * Every letter issued is logged — printing included.
 * The disclaimer naming your organization as the authoritative record-keeper is editable, and cannot be emptied.
+* A Letter settings tab: letterhead, signatory, all the wording with placeholders, and an optional covering note for the email.
+* A Logging settings tab: rounding increment, how hours display, whether future dates are allowed, and activity suggestions.
 
 = 0.2.0 =
 * Staff verification: verify a shift from its row, from the entry itself, or in bulk. Who verified it and when are recorded and will appear on the letter.
