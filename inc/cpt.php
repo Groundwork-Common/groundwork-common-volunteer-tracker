@@ -41,6 +41,7 @@ add_action( 'init', 'gwcvt_register_post_type' );
 add_filter( 'manage_' . GWCVT_ENTRY_TYPE . '_posts_columns', 'gwcvt_entry_columns' );
 add_action( 'manage_' . GWCVT_ENTRY_TYPE . '_posts_custom_column', 'gwcvt_entry_column', 10, 2 );
 add_filter( 'manage_edit-' . GWCVT_ENTRY_TYPE . '_sortable_columns', 'gwcvt_entry_sortable_columns' );
+add_filter( 'post_row_actions', 'gwcvt_entry_volunteer_row_action', 9, 2 );
 
 /**
  * Register the hour entry type.
@@ -217,12 +218,27 @@ function gwcvt_entry_column( $column, $post_id ): void {
 
 	switch ( $column ) {
 		case 'gwcvt_volunteer':
+			/* ── This links to the SHIFT, not to the volunteer ────────────────
+			 * Which looks wrong in a column headed "Volunteer", and is not.
+			 *
+			 * This is the list's primary column, so WordPress renders the row
+			 * actions — Edit, Trash, Verify — directly underneath it, and every
+			 * one of them acts on the shift. Linking the name to the volunteer
+			 * put a link to one record immediately above a row of actions
+			 * operating on a different one: click the name and you edit the
+			 * person, click Edit two pixels below and you edit the shift.
+			 *
+			 * So the primary link goes where the row's own actions go, and
+			 * reaching the volunteer is its own row action — see
+			 * gwcvt_entry_volunteer_row_action().
+			 * ─────────────────────────────────────────────────────────────── */
 			$volunteer_id = (int) get_post_meta( $post_id, GWCVT_ENTRY_VOLUNTEER, true );
+			$edit_entry   = (string) get_edit_post_link( $post_id );
 
 			if ( $volunteer_id > 0 ) {
 				printf(
-					'<a href="%1$s">%2$s</a>',
-					esc_url( (string) get_edit_post_link( $volunteer_id ) ),
+					'<strong><a class="row-title" href="%1$s">%2$s</a></strong>',
+					esc_url( $edit_entry ),
 					esc_html( get_the_title( $volunteer_id ) )
 				);
 				break;
@@ -230,7 +246,8 @@ function gwcvt_entry_column( $column, $post_id ): void {
 
 			$claimed = (string) get_post_meta( $post_id, '_gwcvt_claim_name', true );
 			printf(
-				'<span class="gwcvt-unmatched">%s</span>',
+				'<strong><a class="row-title" href="%1$s"><span class="gwcvt-unmatched">%2$s</span></a></strong>',
+				esc_url( $edit_entry ),
 				esc_html(
 					'' !== $claimed
 						/* translators: %s: the name somebody typed into the public form. */
@@ -273,4 +290,55 @@ function gwcvt_entry_sortable_columns( $columns ): array {
 	$columns['gwcvt_date'] = 'gwcvt_date';
 
 	return $columns;
+}
+
+/**
+ * A way back to the person, now that the name links to the shift.
+ *
+ * Inserted immediately after core's Edit rather than appended, and the
+ * distinction is not cosmetic: appending puts it below Trash, which reads as
+ * one more destructive-adjacent action rather than as the second of two "go
+ * and look at something" links. Filter priority alone cannot do this — priority
+ * orders the filters, not the entries within the array — so the array is
+ * rebuilt around the key.
+ *
+ * @param array   $actions Existing row actions.
+ * @param WP_Post $post    The row's post.
+ * @return array
+ */
+function gwcvt_entry_volunteer_row_action( $actions, $post ): array {
+	$actions = (array) $actions;
+
+	if ( GWCVT_ENTRY_TYPE !== $post->post_type ) {
+		return $actions;
+	}
+
+	$volunteer_id = (int) get_post_meta( (int) $post->ID, GWCVT_ENTRY_VOLUNTEER, true );
+
+	if ( $volunteer_id < 1 || ! current_user_can( 'edit_post', $volunteer_id ) ) {
+		return $actions;
+	}
+
+	$link = sprintf(
+		'<a href="%1$s">%2$s</a>',
+		esc_url( (string) get_edit_post_link( $volunteer_id ) ),
+		esc_html__( 'Volunteer record', 'groundwork-common-volunteer-tracker' )
+	);
+
+	if ( ! isset( $actions['edit'] ) ) {
+		$actions['gwcvt_volunteer_record'] = $link;
+		return $actions;
+	}
+
+	$rebuilt = array();
+
+	foreach ( $actions as $key => $markup ) {
+		$rebuilt[ $key ] = $markup;
+
+		if ( 'edit' === $key ) {
+			$rebuilt['gwcvt_volunteer_record'] = $link;
+		}
+	}
+
+	return $rebuilt;
 }
