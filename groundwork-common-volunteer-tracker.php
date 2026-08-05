@@ -110,10 +110,51 @@ if ( ! function_exists( 'gwcvt_cap' ) ) {
 	require GWCVT_DIR . 'inc/access.php';
 }
 
-/* The settings screen. Currently the colophon and nothing else — the tab shell,
- * the Fields editor and the Letters screen land on top of it in the milestones
- * that need them. It is here rather than inside a later guard because the
- * colophon is the one part of this screen that is finished. */
+/* The value objects, guarded on the class rather than a function. They depend
+ * on nothing and are constructed by the query layer below, so they come first.
+ *
+ * These are the family's one architectural departure and the rule is narrow:
+ * objects for values that are COMPUTED, arrays for anything PERSISTED. The
+ * field schema and the settings stay arrays, exactly as in the sibling plugins,
+ * because they are serialised into an option and wrapping them would mean
+ * hydrating and dehydrating on every read for no safety the defaults-merge does
+ * not already provide. Totals and the letter model are computed, flow through
+ * four call sites each, and are the two structures whose correctness is the
+ * product. See the box comment in inc/class-gwcvt-totals.php. */
+if ( ! class_exists( 'GWCVT_Totals' ) ) {
+	require GWCVT_DIR . 'inc/class-gwcvt-totals.php';
+}
+
+/* The post types, then the query layer that reads them. cpt.php declares the
+ * meta key constants entries.php totals with, so it cannot move after it. */
+if ( ! function_exists( 'gwcvt_register_post_type' ) ) {
+	require GWCVT_DIR . 'inc/cpt.php';
+}
+if ( ! function_exists( 'gwcvt_register_volunteer_type' ) ) {
+	require GWCVT_DIR . 'inc/volunteer-cpt.php';
+}
+if ( ! function_exists( 'gwcvt_entry_ids_for_volunteer' ) ) {
+	require GWCVT_DIR . 'inc/entries.php';
+}
+if ( ! function_exists( 'gwcvt_register_rest_routes' ) ) {
+	require GWCVT_DIR . 'inc/rest.php';
+}
+if ( ! function_exists( 'gwcvt_render_entry_meta_box' ) ) {
+	require GWCVT_DIR . 'inc/meta-box.php';
+}
+if ( ! function_exists( 'gwcvt_enqueue_admin_assets' ) ) {
+	require GWCVT_DIR . 'inc/enqueue.php';
+}
+
+/* The settings screen. Last, as in both sibling plugins, because it describes
+ * the others.
+ *
+ * enqueue.php above calls gwcvt_is_plugin_screen(), which this file declares —
+ * which looks like the wrong order and is not. Every one of these files only
+ * REGISTERS hooks at include time; the call happens on admin_enqueue_scripts,
+ * by which point the whole plugin is loaded. Moving this earlier to make the
+ * reading order match the call order would put the admin screen ahead of the
+ * post types it hangs its menu off, which is a dependency that IS load-time. */
 if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	require GWCVT_DIR . 'inc/admin-screen.php';
 }

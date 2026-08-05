@@ -16,7 +16,13 @@
  * @package VolunteerTracker
  */
 
-$gwcvt_failures = 0;
+/* $GLOBALS explicitly, everywhere, and not `global $x` alongside a bare
+ * top-level `$x = 0`. `wp eval-file` runs this file inside a function, so a
+ * top-level assignment is a LOCAL — while `global` in the helper below reaches
+ * the real global. The two are different variables, the counter increments one
+ * and the summary reads the other, and the script cheerfully prints ALL PASS
+ * underneath a list of failures. That happened. */
+$GLOBALS['gwcvt_failures'] = 0;
 
 /**
  * Assert, tersely.
@@ -25,10 +31,8 @@ $gwcvt_failures = 0;
  * @param bool   $ok    Whether it passed.
  */
 function gwcvt_check( string $label, bool $ok ): void {
-	global $gwcvt_failures;
-
 	if ( ! $ok ) {
-		++$gwcvt_failures;
+		++$GLOBALS['gwcvt_failures'];
 	}
 
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ), $label, "\n";
@@ -103,8 +107,8 @@ gwcvt_check( 'gwcvt_cap(verify)', 'gwcvt_verify_hours' === gwcvt_cap( 'verify' )
 gwcvt_check( 'gwcvt_cap(issue)', 'gwcvt_issue_letters' === gwcvt_cap( 'issue' ) );
 gwcvt_check( 'gwcvt_cap(manage)', 'manage_options' === gwcvt_cap( 'manage' ) );
 
-echo "\n", ( 0 === $gwcvt_failures ? "ALL PASS\n" : $gwcvt_failures . " FAILED\n" );
+echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? "ALL PASS\n" : $GLOBALS['gwcvt_failures'] . " CHECK(S) FAILED\n" );
 
-if ( $gwcvt_failures > 0 ) {
+if ( $GLOBALS['gwcvt_failures'] > 0 ) {
 	exit( 1 );
 }

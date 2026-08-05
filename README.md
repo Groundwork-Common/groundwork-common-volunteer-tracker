@@ -46,6 +46,12 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_capabilities` | filter | Remap the capabilities gating verification, letter issuance and settings. |
 | `gwcvt_default_cap_roles` | filter | Which roles are granted the plugin's capabilities when first seen. |
 | `gwcvt_hour_increment` | filter | The increment every logged duration is rounded to, in minutes. |
+| `gwcvt_post_type_args` | filter | `register_post_type()` arguments for hour entries. |
+| `gwcvt_volunteer_post_type_args` | filter | `register_post_type()` arguments for volunteers. |
+| `gwcvt_admin_tabs` | filter | The settings screen's tabs, keyed by slug. |
+| `gwcvt_entry_saved` | action | After an hour entry is saved from the admin. |
+| `gwcvt_settings_screen_loaded` | action | When the settings screen loads, before output. |
+| `gwcvt_render_tab_<slug>` | action | Render the body of one settings tab. |
 
 ## Tests
 

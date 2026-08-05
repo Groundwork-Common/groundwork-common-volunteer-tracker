@@ -60,7 +60,10 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 == Changelog ==
 
 = 0.1.0 =
-* Groundwork: plugin scaffolding, settings, capabilities, and the hour parser.
+* Hour entries and volunteer records, with a volunteer picker that searches as you type.
+* Per-volunteer totals on the volunteer list, split into verified and awaiting verification.
+* Durations accept 3.5, 3:30, 3h 30m or 210m, and round to the nearest quarter hour.
+* Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
 

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-05T15:01:28+00:00\n"
+"POT-Creation-Date: 2026-08-05T15:24:33+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -47,51 +47,184 @@ msgstr ""
 msgid "Permission denied"
 msgstr ""
 
-#. translators: %s: Groundwork Common, linked to the company site.
+#: inc/admin-screen.php:37
+msgid "Volunteer Tracker Settings"
+msgstr ""
+
+#: inc/admin-screen.php:38
+msgid "Settings"
+msgstr ""
+
 #: inc/admin-screen.php:71
+msgid "Letter"
+msgstr ""
+
+#: inc/admin-screen.php:72
+msgid "Logging"
+msgstr ""
+
+#: inc/admin-screen.php:73
+msgid "Privacy"
+msgstr ""
+
+#: inc/admin-screen.php:108
+msgid "Volunteer Tracker"
+msgstr ""
+
+#: inc/admin-screen.php:112
+msgid "Settings sections"
+msgstr ""
+
+#. translators: %s: the name of a settings tab.
+#: inc/admin-screen.php:146
+#, php-format
+msgid "The %s settings are not built yet. Hours logging works without them."
+msgstr ""
+
+#. translators: %s: Groundwork Common, linked to the company site.
+#: inc/admin-screen.php:221
 #, php-format
 msgid "Built by %s — technology leadership and support for nonprofits."
 msgstr ""
 
-#: inc/admin-screen.php:75
-#: inc/admin-screen.php:209
-#: inc/admin-screen.php:239
-#: inc/admin-screen.php:253
+#: inc/admin-screen.php:225
+#: inc/admin-screen.php:359
+#: inc/admin-screen.php:389
+#: inc/admin-screen.php:403
 msgid "Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:211
+#: inc/admin-screen.php:361
 msgid "Show"
 msgstr ""
 
-#: inc/admin-screen.php:219
+#: inc/admin-screen.php:369
 msgid "Hide for 30 days"
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:258
+#: inc/admin-screen.php:408
 #, php-format
 msgid "%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it."
 msgstr ""
 
-#: inc/admin-screen.php:266
+#: inc/admin-screen.php:416
 msgid "If you find this plugin useful, the most valuable thing you can do for us is mention us to a nonprofit who might benefit from our services. Referrals are how our business continues to grow its impact and reach."
 msgstr ""
 
-#: inc/admin-screen.php:272
+#: inc/admin-screen.php:422
 msgid "Learn about Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:281
+#: inc/admin-screen.php:431
 msgid "You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give."
 msgstr ""
 
-#: inc/admin-screen.php:286
+#: inc/admin-screen.php:436
 msgid "Support our work"
 msgstr ""
 
-#: inc/admin-screen.php:293
+#: inc/admin-screen.php:443
 msgid "Report a problem"
+msgstr ""
+
+#: inc/cpt.php:69
+msgctxt "post type general name"
+msgid "Volunteer Hours"
+msgstr ""
+
+#: inc/cpt.php:70
+msgctxt "post type singular name"
+msgid "Hour Entry"
+msgstr ""
+
+#: inc/cpt.php:71
+msgctxt "admin menu"
+msgid "Volunteer Hours"
+msgstr ""
+
+#: inc/cpt.php:72
+#: inc/cpt.php:73
+msgid "Log hours"
+msgstr ""
+
+#: inc/cpt.php:74
+msgid "Edit entry"
+msgstr ""
+
+#: inc/cpt.php:75
+msgid "New entry"
+msgstr ""
+
+#: inc/cpt.php:76
+msgid "View entry"
+msgstr ""
+
+#: inc/cpt.php:77
+msgid "Search entries"
+msgstr ""
+
+#: inc/cpt.php:78
+msgid "No hours logged yet."
+msgstr ""
+
+#: inc/cpt.php:79
+msgid "No entries in the trash."
+msgstr ""
+
+#: inc/cpt.php:80
+msgid "All hours"
+msgstr ""
+
+#. translators: %s: the name somebody typed into the public form.
+#: inc/cpt.php:162
+#, php-format
+msgid "%s (unmatched)"
+msgstr ""
+
+#: inc/cpt.php:163
+msgid "Unassigned"
+msgstr ""
+
+#. translators: 1: volunteer name, 2: date, 3: duration.
+#: inc/cpt.php:168
+#, php-format
+msgid "%1$s — %2$s — %3$s"
+msgstr ""
+
+#: inc/cpt.php:170
+msgid "no date"
+msgstr ""
+
+#: inc/cpt.php:199
+#: inc/meta-box.php:111
+msgid "Volunteer"
+msgstr ""
+
+#: inc/cpt.php:200
+msgid "Date"
+msgstr ""
+
+#: inc/cpt.php:201
+msgid "Hours"
+msgstr ""
+
+#: inc/cpt.php:202
+msgid "Activity"
+msgstr ""
+
+#: inc/cpt.php:203
+msgid "Supervisor"
+msgstr ""
+
+#. translators: %s: the name somebody typed into the public form.
+#: inc/cpt.php:237
+#, php-format
+msgid "%s — not yet matched"
+msgstr ""
+
+#: inc/cpt.php:238
+msgid "Not assigned"
 msgstr ""
 
 #: inc/i18n.php:50
@@ -122,6 +255,122 @@ msgstr ""
 msgid "The reference code identifies this letter against the records it was generated from. {org} can confirm whether a code still matches their current records. It is not a certification by any outside body."
 msgstr ""
 
+#: inc/meta-box.php:40
+msgid "Shift"
+msgstr ""
+
+#: inc/meta-box.php:49
+msgid "Contact details"
+msgstr ""
+
+#: inc/meta-box.php:95
+msgid "Logged from the public form and not yet matched to a volunteer."
+msgstr ""
+
+#. translators: 1: the name typed into the public form, 2: the email address typed into it.
+#: inc/meta-box.php:100
+#, php-format
+msgid "Submitted as %1$s (%2$s). These are claims made by whoever filled in the form — check them before choosing a volunteer."
+msgstr ""
+
+#: inc/meta-box.php:101
+msgid "no name given"
+msgstr ""
+
+#: inc/meta-box.php:102
+msgid "no email given"
+msgstr ""
+
+#: inc/meta-box.php:119
+msgid "No volunteer of that name"
+msgstr ""
+
+#: inc/meta-box.php:129
+msgid "Start typing a name…"
+msgstr ""
+
+#. translators: %s: a link to the new-volunteer screen.
+#: inc/meta-box.php:139
+#, php-format
+msgid "No record yet? %s first."
+msgstr ""
+
+#: inc/meta-box.php:141
+msgid "Add the volunteer"
+msgstr ""
+
+#: inc/meta-box.php:150
+msgid "Date of the shift"
+msgstr ""
+
+#: inc/meta-box.php:160
+msgid "Future dates are switched off in Settings → Logging."
+msgstr ""
+
+#: inc/meta-box.php:166
+msgid "Hours worked"
+msgstr ""
+
+#: inc/meta-box.php:178
+msgid "Accepts 3.5, 3:30, 3h 30m or 210m."
+msgstr ""
+
+#. translators: %d: a number of minutes.
+#: inc/meta-box.php:184
+#, php-format
+msgid "Rounded to the nearest %d minutes."
+msgstr ""
+
+#: inc/meta-box.php:194
+msgid "What they did"
+msgstr ""
+
+#: inc/meta-box.php:212
+msgid "Appears on the verification letter."
+msgstr ""
+
+#: inc/meta-box.php:217
+msgid "Supervised by"
+msgstr ""
+
+#: inc/meta-box.php:227
+msgid "The person who was there. Not necessarily whoever verifies the entry."
+msgstr ""
+
+#: inc/meta-box.php:372
+msgid "Email"
+msgstr ""
+
+#: inc/meta-box.php:375
+msgid "Where a verification letter is sent, and how the privacy tools find this record."
+msgstr ""
+
+#: inc/meta-box.php:380
+msgid "Phone"
+msgstr ""
+
+#. translators: 1: verified hours, 2: unverified hours, 3: number of shifts.
+#: inc/meta-box.php:390
+#, php-format
+msgid "%1$s verified, %2$s awaiting verification, across %3$s."
+msgstr ""
+
+#. translators: %d: number of shifts.
+#: inc/meta-box.php:396
+#, php-format
+msgid "%d shift"
+msgid_plural "%d shifts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/rest.php:52
+msgid "Part of a volunteer’s name."
+msgstr ""
+
+#: inc/rest.php:85
+msgid "Type at least two characters."
+msgstr ""
+
 #. translators: %s: a number of minutes.
 #: inc/settings.php:375
 #, php-format
@@ -138,4 +387,60 @@ msgstr ""
 #: inc/settings.php:384
 #, php-format
 msgid "%1$sh %2$sm"
+msgstr ""
+
+#: inc/volunteer-cpt.php:50
+msgctxt "post type general name"
+msgid "Volunteers"
+msgstr ""
+
+#: inc/volunteer-cpt.php:51
+msgctxt "post type singular name"
+msgid "Volunteer"
+msgstr ""
+
+#: inc/volunteer-cpt.php:52
+msgctxt "admin menu"
+msgid "Volunteers"
+msgstr ""
+
+#: inc/volunteer-cpt.php:53
+#: inc/volunteer-cpt.php:54
+msgid "Add volunteer"
+msgstr ""
+
+#: inc/volunteer-cpt.php:55
+msgid "Edit volunteer"
+msgstr ""
+
+#: inc/volunteer-cpt.php:56
+msgid "New volunteer"
+msgstr ""
+
+#: inc/volunteer-cpt.php:57
+msgid "Search volunteers"
+msgstr ""
+
+#: inc/volunteer-cpt.php:58
+msgid "No volunteers yet."
+msgstr ""
+
+#: inc/volunteer-cpt.php:59
+msgid "No volunteers in the trash."
+msgstr ""
+
+#: inc/volunteer-cpt.php:60
+msgid "Volunteers"
+msgstr ""
+
+#: inc/volunteer-cpt.php:102
+msgid "Verified hours"
+msgstr ""
+
+#: inc/volunteer-cpt.php:103
+msgid "Awaiting verification"
+msgstr ""
+
+#: inc/volunteer-cpt.php:104
+msgid "Last shift"
 msgstr ""

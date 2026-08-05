@@ -22,6 +22,156 @@ const GWCVT_LETTERS_PAGE  = 'gwcvt-letters';
 
 add_filter( 'admin_footer_text', 'gwcvt_admin_footer_text' );
 add_action( 'admin_init', 'gwcvt_handle_colophon_toggle' );
+add_action( 'admin_menu', 'gwcvt_register_menu' );
+
+/**
+ * Hang the settings screen off the Volunteer Hours menu.
+ *
+ * A submenu of the post type rather than a top-level menu of its own. The post
+ * type already owns a menu; a second top-level entry for the same plugin is the
+ * thing that makes an admin sidebar unreadable one plugin at a time.
+ */
+function gwcvt_register_menu(): void {
+	$hook = add_submenu_page(
+		GWCVT_MENU_SLUG,
+		__( 'Volunteer Tracker Settings', 'groundwork-common-volunteer-tracker' ),
+		__( 'Settings', 'groundwork-common-volunteer-tracker' ),
+		gwcvt_cap( 'manage' ),
+		GWCVT_SETTINGS_PAGE,
+		'gwcvt_render_settings_screen'
+	);
+
+	if ( $hook ) {
+		add_action( 'load-' . $hook, 'gwcvt_settings_screen_loaded' );
+	}
+}
+
+/**
+ * Runs when the settings screen is opened, before anything is rendered.
+ *
+ * Contextual help lands here in a later milestone; it is a hook rather than
+ * inline in the renderer because help tabs must be added before the page starts
+ * outputting, and doing it from the renderer is the mistake that makes them
+ * silently not appear.
+ */
+function gwcvt_settings_screen_loaded(): void {
+	/**
+	 * Fires when the Volunteer Tracker settings screen loads.
+	 */
+	do_action( 'gwcvt_settings_screen_loaded' );
+}
+
+/**
+ * The tabs, and what each is for.
+ *
+ * @return array<string, string>
+ */
+function gwcvt_admin_tabs(): array {
+	$tabs = array(
+		'letter'  => __( 'Letter', 'groundwork-common-volunteer-tracker' ),
+		'logging' => __( 'Logging', 'groundwork-common-volunteer-tracker' ),
+		'privacy' => __( 'Privacy', 'groundwork-common-volunteer-tracker' ),
+	);
+
+	/**
+	 * The settings screen's tabs, keyed by slug.
+	 *
+	 * @param array<string, string> $tabs Slug => label.
+	 */
+	return (array) apply_filters( 'gwcvt_admin_tabs', $tabs );
+}
+
+/**
+ * Which tab is being viewed.
+ *
+ * @return string
+ */
+function gwcvt_current_tab(): string {
+	$tabs = gwcvt_admin_tabs();
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from this value.
+	$wanted = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
+
+	return isset( $tabs[ $wanted ] ) ? $wanted : (string) array_key_first( $tabs );
+}
+
+/**
+ * The settings screen.
+ */
+function gwcvt_render_settings_screen(): void {
+	gwcvt_require_cap( 'manage' );
+
+	$tabs    = gwcvt_admin_tabs();
+	$current = gwcvt_current_tab();
+	?>
+	<div class="wrap gwcvt-wrap">
+		<h1><?php esc_html_e( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
+
+		<?php gwcvt_render_colophon(); ?>
+
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Settings sections', 'groundwork-common-volunteer-tracker' ); ?>">
+			<?php foreach ( $tabs as $slug => $label ) : ?>
+				<a
+					class="nav-tab <?php echo $slug === $current ? 'nav-tab-active' : ''; ?>"
+					href="<?php echo esc_url( gwcvt_settings_url( $slug ) ); ?>"
+					<?php echo $slug === $current ? 'aria-current="page"' : ''; ?>
+				>
+					<?php echo esc_html( $label ); ?>
+				</a>
+			<?php endforeach; ?>
+		</nav>
+
+		<?php
+		/* Each tab's form arrives with the milestone that needs it: the letter
+		 * template, the self-log form, and retention. Until then the screen is
+		 * honest about being unfinished rather than showing controls that do
+		 * nothing. */
+		?>
+		<div class="gwcvt-tab-body">
+			<?php
+			/**
+			 * Render the body of a settings tab.
+			 *
+			 * @param string $current The tab being viewed.
+			 */
+			do_action( 'gwcvt_render_tab_' . $current );
+
+			if ( ! has_action( 'gwcvt_render_tab_' . $current ) ) :
+				?>
+				<div class="notice notice-info inline">
+					<p>
+						<?php
+						printf(
+							/* translators: %s: the name of a settings tab. */
+							esc_html__( 'The %s settings are not built yet. Hours logging works without them.', 'groundwork-common-volunteer-tracker' ),
+							'<strong>' . esc_html( $tabs[ $current ] ) . '</strong>'
+						);
+						?>
+					</p>
+				</div>
+				<?php
+			endif;
+			?>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * A URL for one tab of the settings screen.
+ *
+ * @param string $tab Tab slug.
+ * @return string
+ */
+function gwcvt_settings_url( string $tab = '' ): string {
+	$args = array( 'page' => GWCVT_SETTINGS_PAGE );
+
+	if ( '' !== $tab ) {
+		$args['tab'] = $tab;
+	}
+
+	return add_query_arg( $args, admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ) );
+}
 
 /**
  * Is the screen being rendered one of this plugin's?
