@@ -467,34 +467,117 @@ function gwcvt_render_reference_checker(): void {
 					)
 				)
 			);
-			echo '</div>';
-			return;
+		} else {
+			printf(
+				'<div class="notice notice-warning inline"><p><strong>%1$s</strong></p><p>%2$s</p><p>%3$s</p></div>',
+				esc_html__( 'This letter was issued from this site, but our records have changed since.', 'groundwork-common-volunteer-tracker' ),
+				esc_html(
+					sprintf(
+						/* translators: 1: a volunteer's name, 2: a duration, 3: a date. */
+						__( 'The letter said: %1$s, %2$s verified. Issued %3$s.', 'groundwork-common-volunteer-tracker' ),
+						$name,
+						gwcvt_format_hours( $record['minutes'] ),
+						$record['issued_at']
+					)
+				),
+				esc_html( gwcvt_reference_difference_note( $result, $record ) )
+			);
 		}
 
-		printf(
-			'<div class="notice notice-warning inline"><p><strong>%1$s</strong></p><p>%2$s</p><p>%3$s</p></div>',
-			esc_html__( 'This letter was issued from this site, but our records have changed since.', 'groundwork-common-volunteer-tracker' ),
-			esc_html(
-				sprintf(
-					/* translators: 1: a volunteer's name, 2: a duration, 3: a date. */
-					__( 'The letter said: %1$s, %2$s verified. Issued %3$s.', 'groundwork-common-volunteer-tracker' ),
-					$name,
-					gwcvt_format_hours( $record['minutes'] ),
-					$record['issued_at']
-				)
-			),
-			esc_html(
-				isset( $result['current']['minutes'] )
-					? sprintf(
-						/* translators: %s: a duration. */
-						__( 'The records now say: %s verified. This is ordinary — hours get corrected and shifts get verified after a letter goes out. Compare the two and re-issue if you need to.', 'groundwork-common-volunteer-tracker' ),
-						gwcvt_format_hours( (int) $result['current']['minutes'] )
-					)
-					: __( 'That volunteer’s record no longer exists, so the current figure cannot be shown.', 'groundwork-common-volunteer-tracker' )
-			)
-		);
+		gwcvt_render_reference_comparison( $result );
 		?>
 	</div>
+	<?php
+}
+
+/**
+ * What actually differs, said in a way that does not read as a contradiction.
+ *
+ * The obvious wording — "the letter said 29.75 verified, the records now say
+ * 29.75 verified" — prints the same number twice under a heading announcing a
+ * change, and anybody reading it reasonably concludes the screen is broken.
+ *
+ * It is not: that is the most interesting case there is. The totals agreeing
+ * while the code disagrees means somebody altered the DETAIL — an activity, a
+ * date, a supervisor, or two shifts swapped so the sum came out the same. Those
+ * are precisely the edits a reader comparing totals would miss, and precisely
+ * why the digest covers every field the letter prints. So the screen has to
+ * name that case rather than show the number twice and leave it hanging.
+ *
+ * @param array $result From gwcvt_verify_reference().
+ * @param array $record The stored log entry.
+ * @return string
+ */
+function gwcvt_reference_difference_note( array $result, array $record ): string {
+	if ( ! isset( $result['current']['minutes'] ) ) {
+		return __( 'That volunteer’s record no longer exists, so there is nothing left to compare against.', 'groundwork-common-volunteer-tracker' );
+	}
+
+	$now = (int) $result['current']['minutes'];
+
+	if ( $now === (int) $record['minutes'] ) {
+		return __( 'The total is unchanged, so the difference is in the detail — a date, an activity, a supervisor, or hours moved between shifts. Compare the letter below against the copy you were sent to see which.', 'groundwork-common-volunteer-tracker' );
+	}
+
+	return sprintf(
+		/* translators: %s: a duration. */
+		__( 'The records now say: %s verified. This is ordinary — hours get corrected and shifts get verified after a letter goes out. Compare the letter below against the copy you were sent.', 'groundwork-common-volunteer-tracker' ),
+		gwcvt_format_hours( $now )
+	);
+}
+
+/**
+ * The letter as our records would produce it today, in full.
+ *
+ * ── Why the whole document and not a summary ─────────────────────────────────
+ * A summary answers "do the totals agree". The question somebody holding a
+ * printed letter is actually asking is "is this the same document" — and the
+ * ways a letter gets altered are mostly not the total. An activity description
+ * rewritten, a date nudged, a supervisor's name changed, two shifts swapped so
+ * the sum is unchanged: none of those move a figure anybody would think to
+ * compare, and all of them change what the document says.
+ *
+ * The reference digest now covers every one of those (see
+ * gwcvt_letter_fingerprint), so the plugin can say THAT something differs. It
+ * cannot say WHAT. Rendering the current letter in full is what lets a person
+ * put the two side by side and see it.
+ *
+ * Deliberately not an iframe of the print view: that route logs an issuance
+ * every time it is opened, and checking a reference is not issuing a letter.
+ * The audit log would fill up with letters nobody sent.
+ *
+ * @param array $result From gwcvt_verify_reference().
+ */
+function gwcvt_render_reference_comparison( array $result ): void {
+	$letter = $result['rebuilt'] ?? null;
+
+	if ( ! $letter instanceof GWCVT_Letter ) {
+		return;
+	}
+
+	wp_enqueue_style( 'gwcvt-letter' );
+	?>
+	<details class="gwcvt-comparison" <?php echo 'changed' === $result['status'] ? 'open' : ''; ?>>
+		<summary>
+			<?php
+			echo esc_html(
+				'changed' === $result['status']
+					? __( 'Show the letter as our records stand now — compare it against the copy you were sent', 'groundwork-common-volunteer-tracker' )
+					: __( 'Show the full letter', 'groundwork-common-volunteer-tracker' )
+			);
+			?>
+		</summary>
+
+		<div class="gwcvt-comparison__paper">
+			<?php
+			echo gwcvt_letter_body( $letter, 'print' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in inc/render.php.
+			?>
+		</div>
+
+		<p class="description">
+			<?php esc_html_e( 'This is generated from the records as they stand right now. It is not a stored copy of what was sent — this plugin does not keep one.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+	</details>
 	<?php
 }
 

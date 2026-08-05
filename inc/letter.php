@@ -93,7 +93,7 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
 		$verified,
 		$include_unverified ? $unverified : 0,
 		$include_unverified,
-		gwcvt_letter_reference( $volunteer_id, $from, $to, $verified, count( $rows ) ),
+		gwcvt_letter_reference( $volunteer_id, $from, $to, $verified, $rows ),
 		time()
 	);
 
@@ -128,23 +128,68 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
+ * Every fact the letter states about one shift.
+ *
+ * ── Why the digest covers the rows and not just the total ────────────────────
+ * The first version hashed the volunteer, the range, the total minutes and the
+ * number of shifts. That detects a letter whose TOTAL was altered, and nothing
+ * else. It does not detect:
+ *
+ *   two shifts swapped, 3 h and 4 h becoming 4 h and 3 h — same total, same
+ *   count, same code;
+ *   a date moved within the range;
+ *   an activity rewritten;
+ *   a supervisor's name changed;
+ *   a shift quietly unverified and another verified in its place.
+ *
+ * Every one of those is a change to what the document says, and every one used
+ * to come back "matches our current records". A verifier that only checks the
+ * total is a verifier that vouches for a letter somebody edited.
+ *
+ * So the fingerprint is every field the letter prints, per row, in the order it
+ * prints them. The cost is that correcting a typo in an activity description
+ * makes previously-issued letters report as changed — which is correct. The
+ * document did change, and the screen shows both versions so a human can see
+ * that it was a typo and not an alteration.
+ *
+ * @param GWCVT_Letter_Entry[] $rows The shifts, in the order the letter lists them.
+ * @return array
+ */
+function gwcvt_letter_fingerprint( array $rows ): array {
+	$fingerprint = array();
+
+	foreach ( $rows as $row ) {
+		$fingerprint[] = array(
+			$row->date,
+			$row->minutes,
+			$row->activity,
+			$row->supervisor,
+			$row->verified ? 1 : 0,
+		);
+	}
+
+	return $fingerprint;
+}
+
+/**
  * Mint a reference code.
  *
- * @param int    $volunteer_id     Volunteer post ID.
- * @param string $from             Y-m-d or ''.
- * @param string $to               Y-m-d or ''.
- * @param int    $verified_minutes Attested minutes.
- * @param int    $entry_count      Shifts listed.
+ * @param int                  $volunteer_id     Volunteer post ID.
+ * @param string               $from             Y-m-d or ''.
+ * @param string               $to               Y-m-d or ''.
+ * @param int                  $verified_minutes Attested minutes.
+ * @param GWCVT_Letter_Entry[] $rows             The shifts the letter lists.
  * @return string
  */
-function gwcvt_letter_reference( int $volunteer_id, string $from, string $to, int $verified_minutes, int $entry_count ): string {
+function gwcvt_letter_reference( int $volunteer_id, string $from, string $to, int $verified_minutes, array $rows ): string {
 	$canonical = wp_json_encode(
 		array(
 			'volunteer' => $volunteer_id,
 			'from'      => $from,
 			'to'        => $to,
 			'minutes'   => $verified_minutes,
-			'entries'   => $entry_count,
+			'entries'   => count( $rows ),
+			'rows'      => gwcvt_letter_fingerprint( $rows ),
 		)
 	);
 
@@ -198,6 +243,7 @@ function gwcvt_verify_reference( string $code ): array {
 			'status'  => 'unknown',
 			'letter'  => array(),
 			'current' => array(),
+			'rebuilt' => null,
 		);
 	}
 
@@ -230,6 +276,7 @@ function gwcvt_verify_reference( string $code ): array {
 			'status'  => 'changed',
 			'letter'  => $record,
 			'current' => array(),
+			'rebuilt' => null,
 		);
 	}
 
@@ -238,7 +285,7 @@ function gwcvt_verify_reference( string $code ): array {
 		$record['from'],
 		$record['to'],
 		$current->verified_minutes,
-		$current->entry_count()
+		$current->entries
 	);
 
 	/* Compared on the digest alone. The code embeds the day it was issued, so a
@@ -254,6 +301,11 @@ function gwcvt_verify_reference( string $code ): array {
 			'minutes' => $current->verified_minutes,
 			'entries' => $current->entry_count(),
 		),
+		/* The rebuilt letter itself, so the screen can render it in full rather
+		 * than summarising it. A summary answers "do the totals agree"; the
+		 * document answers "is this the same document", which is the question
+		 * somebody holding a printed copy is actually asking. */
+		'rebuilt' => $current,
 	);
 }
 

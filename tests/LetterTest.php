@@ -199,49 +199,125 @@ final class LetterTest extends TestCase {
 
 	/* ── The reference code ──────────────────────────────────────────────── */
 
-	public function test_a_reference_is_stable_for_the_same_facts(): void {
-		$a = gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', 390, 2 );
-		$b = gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', 390, 2 );
-
-		$this->assertSame( $a, $b, 'Re-issuing an unchanged letter must produce the same code.' );
-	}
-
-	public function test_the_digest_is_eight_hex_characters(): void {
-		$digest = gwcvt_reference_digest( gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', 390, 2 ) );
-
-		$this->assertMatchesRegularExpression( '/^[0-9A-F]{8}$/', $digest );
-	}
-
 	/**
-	 * @param string $label What differs.
-	 * @param array  $args  Arguments for the second code.
+	 * Two shifts, as the letter would list them.
+	 *
+	 * @param array $overrides Field overrides for the first row.
+	 * @return GWCVT_Letter_Entry[]
 	 */
-	#[DataProvider( 'reference_variations' )]
-	public function test_changing_any_fact_changes_the_reference( string $label, array $args ): void {
-		$base = gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', 390, 2 );
-		$other = gwcvt_letter_reference( ...$args );
+	private function rows( array $overrides = array() ): array {
+		$first = array_merge(
+			array(
+				'date'       => '2026-03-02',
+				'minutes'    => 210,
+				'activity'   => 'Sorting donations',
+				'supervisor' => 'Dana Reyes',
+				'verified'   => true,
+			),
+			$overrides
+		);
 
-		$this->assertNotSame(
-			gwcvt_reference_digest( $base ),
-			gwcvt_reference_digest( $other ),
-			$label . ' must change the code — otherwise an edited letter still verifies.'
+		return array(
+			new GWCVT_Letter_Entry( $first['date'], $first['minutes'], $first['activity'], $first['supervisor'], $first['verified'], '' ),
+			new GWCVT_Letter_Entry( '2026-03-09', 180, 'Front desk', 'Dana Reyes', true, '' ),
 		);
 	}
 
-	public static function reference_variations(): array {
-		return array(
-			'a different volunteer' => array( 'A different volunteer', array( 43, '2026-03-01', '2026-03-31', 390, 2 ) ),
-			'a different start'     => array( 'A different start date', array( 42, '2026-02-01', '2026-03-31', 390, 2 ) ),
-			'a different end'       => array( 'A different end date', array( 42, '2026-03-01', '2026-04-30', 390, 2 ) ),
-			'one more minute'       => array( 'One more minute', array( 42, '2026-03-01', '2026-03-31', 391, 2 ) ),
-			'one more shift'        => array( 'One more shift', array( 42, '2026-03-01', '2026-03-31', 390, 3 ) ),
+	/**
+	 * The code for a letter over those rows.
+	 *
+	 * @param array $overrides Field overrides for the first row.
+	 * @param int   $minutes   The verified total.
+	 * @return string
+	 */
+	private function code( array $overrides = array(), int $minutes = 390 ): string {
+		return gwcvt_reference_digest(
+			gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', $minutes, $this->rows( $overrides ) )
+		);
+	}
+
+	public function test_a_reference_is_stable_for_the_same_facts(): void {
+		$this->assertSame( $this->code(), $this->code(), 'Re-issuing an unchanged letter must produce the same code.' );
+	}
+
+	public function test_the_digest_is_eight_hex_characters(): void {
+		$this->assertMatchesRegularExpression( '/^[0-9A-F]{8}$/', $this->code() );
+	}
+
+	/* ── What the digest has to notice ───────────────────────────────────────
+	 * The first version hashed only the volunteer, the range, the total and the
+	 * count. Every case below produced an IDENTICAL code under it, and every one
+	 * is a change to what the document says — so the verifier answered "matches
+	 * our current records" about a letter that had been altered.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_swapping_two_shifts_changes_the_code(): void {
+		/* 3.5 h and 3 h becoming 3 h and 3.5 h. Same total, same number of
+		 * shifts, different document. */
+		$swapped = array(
+			new GWCVT_Letter_Entry( '2026-03-02', 180, 'Sorting donations', 'Dana Reyes', true, '' ),
+			new GWCVT_Letter_Entry( '2026-03-09', 210, 'Front desk', 'Dana Reyes', true, '' ),
+		);
+
+		$this->assertNotSame(
+			$this->code(),
+			gwcvt_reference_digest( gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', 390, $swapped ) )
+		);
+	}
+
+	public function test_rewriting_an_activity_changes_the_code(): void {
+		$this->assertNotSame( $this->code(), $this->code( array( 'activity' => 'Warehouse inventory' ) ) );
+	}
+
+	public function test_moving_a_date_within_the_range_changes_the_code(): void {
+		$this->assertNotSame( $this->code(), $this->code( array( 'date' => '2026-03-03' ) ) );
+	}
+
+	public function test_changing_a_supervisor_changes_the_code(): void {
+		$this->assertNotSame( $this->code(), $this->code( array( 'supervisor' => 'Somebody Else' ) ) );
+	}
+
+	public function test_unverifying_a_shift_changes_the_code(): void {
+		$this->assertNotSame( $this->code(), $this->code( array( 'verified' => false ) ) );
+	}
+
+	public function test_changing_the_total_changes_the_code(): void {
+		$this->assertNotSame( $this->code(), $this->code( array(), 391 ) );
+	}
+
+	public function test_changing_the_volunteer_or_the_range_changes_the_code(): void {
+		$rows = $this->rows();
+
+		$this->assertNotSame(
+			$this->code(),
+			gwcvt_reference_digest( gwcvt_letter_reference( 43, '2026-03-01', '2026-03-31', 390, $rows ) ),
+			'A different volunteer must change the code.'
+		);
+		$this->assertNotSame(
+			$this->code(),
+			gwcvt_reference_digest( gwcvt_letter_reference( 42, '2026-02-01', '2026-03-31', 390, $rows ) ),
+			'A different start date must change the code.'
+		);
+		$this->assertNotSame(
+			$this->code(),
+			gwcvt_reference_digest( gwcvt_letter_reference( 42, '2026-03-01', '2026-04-30', 390, $rows ) ),
+			'A different end date must change the code.'
+		);
+	}
+
+	public function test_dropping_a_shift_changes_the_code(): void {
+		$one = array( new GWCVT_Letter_Entry( '2026-03-02', 210, 'Sorting donations', 'Dana Reyes', true, '' ) );
+
+		$this->assertNotSame(
+			$this->code(),
+			gwcvt_reference_digest( gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', 390, $one ) )
 		);
 	}
 
 	public function test_the_prefix_setting_appears_in_the_code(): void {
 		$this->settings( array( 'reference_prefix' => 'fb' ) );
 
-		$this->assertStringStartsWith( 'FB-42-', gwcvt_letter_reference( 42, '', '', 390, 2 ) );
+		$this->assertStringStartsWith( 'FB-42-', gwcvt_letter_reference( 42, '', '', 390, $this->rows() ) );
 	}
 
 	public function test_a_prefix_with_punctuation_is_cleaned(): void {
@@ -249,7 +325,7 @@ final class LetterTest extends TestCase {
 
 		/* The code gets read aloud over the phone and typed back in. A slash in
 		 * it is a transcription error waiting to happen. */
-		$this->assertStringStartsWith( 'FOODBANK2026-42-', gwcvt_letter_reference( 42, '', '', 390, 2 ) );
+		$this->assertStringStartsWith( 'FOODBANK2026-42-', gwcvt_letter_reference( 42, '', '', 390, $this->rows() ) );
 	}
 
 	public function test_the_digest_survives_a_different_issue_date(): void {
@@ -257,19 +333,16 @@ final class LetterTest extends TestCase {
 		 * never recompute to a byte-identical code today. Verification compares
 		 * the digest alone — if it compared the whole code, every letter older
 		 * than a day would be reported as changed. */
-		$code = gwcvt_letter_reference( 42, '2026-03-01', '2026-03-31', 390, 2 );
+		$digest = $this->code();
 
-		$this->assertSame(
-			gwcvt_reference_digest( $code ),
-			gwcvt_reference_digest( 'REF-42-19990101-' . gwcvt_reference_digest( $code ) )
-		);
+		$this->assertSame( $digest, gwcvt_reference_digest( 'REF-42-19990101-' . $digest ) );
 	}
 
 	public function test_the_reference_is_filterable(): void {
 		$fixed = static fn(): string => 'FIXED-CODE';
 
 		add_filter( 'gwcvt_letter_reference', $fixed );
-		$this->assertSame( 'FIXED-CODE', gwcvt_letter_reference( 42, '', '', 390, 2 ) );
+		$this->assertSame( 'FIXED-CODE', gwcvt_letter_reference( 42, '', '', 390, $this->rows() ) );
 		remove_filter( 'gwcvt_letter_reference', $fixed );
 	}
 

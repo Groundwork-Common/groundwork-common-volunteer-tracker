@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Groundwork Common Volunteer Tracker 0.5.0\n"
+"Project-Id-Version: Groundwork Common Volunteer Tracker 0.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-05T17:04:07+00:00\n"
+"POT-Creation-Date: 2026-08-05T17:37:24+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -62,7 +62,7 @@ msgid "Produce a letter"
 msgstr ""
 
 #: inc/admin-letters.php:73
-#: inc/admin-letters.php:517
+#: inc/admin-letters.php:600
 #: inc/cpt.php:199
 #: inc/meta-box.php:111
 #: inc/render.php:129
@@ -119,7 +119,8 @@ msgid "Period"
 msgstr ""
 
 #: inc/admin-letters.php:169
-#: inc/admin-letters.php:516
+#: inc/admin-letters.php:599
+#: inc/admin-volunteer.php:207
 #: inc/privacy.php:523
 msgid "Reference"
 msgstr ""
@@ -192,6 +193,7 @@ msgid "Reference code"
 msgstr ""
 
 #: inc/admin-letters.php:428
+#: inc/admin-volunteer.php:240
 msgid "Check it"
 msgstr ""
 
@@ -215,6 +217,7 @@ msgstr ""
 
 #. translators: %d: number of shifts.
 #: inc/admin-letters.php:463
+#: inc/admin-volunteer.php:160
 #: inc/meta-box.php:426
 #, php-format
 msgid "%d shift"
@@ -222,56 +225,75 @@ msgid_plural "%d shifts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-letters.php:476
+#: inc/admin-letters.php:473
 msgid "This letter was issued from this site, but our records have changed since."
 msgstr ""
 
 #. translators: 1: a volunteer's name, 2: a duration, 3: a date.
-#: inc/admin-letters.php:480
+#: inc/admin-letters.php:477
 #, php-format
 msgid "The letter said: %1$s, %2$s verified. Issued %3$s."
 msgstr ""
 
-#. translators: %s: a duration.
-#: inc/admin-letters.php:490
-#, php-format
-msgid "The records now say: %s verified. This is ordinary — hours get corrected and shifts get verified after a letter goes out. Compare the two and re-issue if you need to."
-msgstr ""
-
-#: inc/admin-letters.php:493
-msgid "That volunteer’s record no longer exists, so the current figure cannot be shown."
-msgstr ""
-
-#: inc/admin-letters.php:508
-msgid "Recently issued"
-msgstr ""
-
-#: inc/admin-letters.php:511
-msgid "No letters have been issued yet."
-msgstr ""
-
-#: inc/admin-letters.php:518
-msgid "How"
+#: inc/admin-letters.php:513
+msgid "That volunteer’s record no longer exists, so there is nothing left to compare against."
 msgstr ""
 
 #: inc/admin-letters.php:519
+msgid "The total is unchanged, so the difference is in the detail — a date, an activity, a supervisor, or hours moved between shifts. Compare the letter below against the copy you were sent to see which."
+msgstr ""
+
+#. translators: %s: a duration.
+#: inc/admin-letters.php:524
+#, php-format
+msgid "The records now say: %s verified. This is ordinary — hours get corrected and shifts get verified after a letter goes out. Compare the letter below against the copy you were sent."
+msgstr ""
+
+#: inc/admin-letters.php:565
+msgid "Show the letter as our records stand now — compare it against the copy you were sent"
+msgstr ""
+
+#: inc/admin-letters.php:566
+msgid "Show the full letter"
+msgstr ""
+
+#: inc/admin-letters.php:578
+msgid "This is generated from the records as they stand right now. It is not a stored copy of what was sent — this plugin does not keep one."
+msgstr ""
+
+#: inc/admin-letters.php:591
+msgid "Recently issued"
+msgstr ""
+
+#: inc/admin-letters.php:594
+msgid "No letters have been issued yet."
+msgstr ""
+
+#: inc/admin-letters.php:601
+#: inc/admin-volunteer.php:209
+msgid "How"
+msgstr ""
+
+#: inc/admin-letters.php:602
 #: inc/admin-settings.php:649
 msgid "When"
 msgstr ""
 
-#: inc/admin-letters.php:529
+#: inc/admin-letters.php:612
 msgid "record removed"
 msgstr ""
 
-#: inc/admin-letters.php:537
+#: inc/admin-letters.php:620
 msgid "Emailed"
 msgstr ""
 
-#: inc/admin-letters.php:538
+#: inc/admin-letters.php:621
+#: inc/admin-volunteer.php:226
 msgid "Email failed"
 msgstr ""
 
-#: inc/admin-letters.php:541
+#: inc/admin-letters.php:624
+#: inc/admin-volunteer.php:229
 msgid "Printed"
 msgstr ""
 
@@ -701,6 +723,7 @@ msgid "Anonymised"
 msgstr ""
 
 #: inc/admin-verify.php:38
+#: inc/admin-volunteer.php:115
 #: inc/i18n.php:50
 msgid "Verified"
 msgstr ""
@@ -774,6 +797,87 @@ msgstr ""
 msgid "Verify these hours"
 msgstr ""
 
+#: inc/admin-volunteer.php:33
+msgid "Hours logged"
+msgstr ""
+
+#: inc/admin-volunteer.php:49
+msgid "Letters issued"
+msgstr ""
+
+#: inc/admin-volunteer.php:68
+msgid "Save this volunteer, then log their first shift."
+msgstr ""
+
+#: inc/admin-volunteer.php:84
+msgid "No hours logged for this volunteer yet."
+msgstr ""
+
+#: inc/admin-volunteer.php:112
+#: inc/cpt.php:200
+#: inc/privacy.php:491
+#: inc/render.php:133
+msgid "Date"
+msgstr ""
+
+#: inc/admin-volunteer.php:113
+#: inc/cpt.php:201
+#: inc/privacy.php:495
+#: inc/render.php:134
+msgid "Hours"
+msgstr ""
+
+#: inc/admin-volunteer.php:114
+#: inc/cpt.php:202
+#: inc/privacy.php:499
+#: inc/render.php:135
+msgid "Activity"
+msgstr ""
+
+#: inc/admin-volunteer.php:116
+#: inc/admin-volunteer.php:210
+msgid "Actions"
+msgstr ""
+
+#: inc/admin-volunteer.php:142
+msgid "Open"
+msgstr ""
+
+#. translators: 1: verified hours, 2: unverified hours, 3: number of shifts.
+#: inc/admin-volunteer.php:154
+#: inc/meta-box.php:420
+#, php-format
+msgid "%1$s verified, %2$s awaiting verification, across %3$s."
+msgstr ""
+
+#: inc/admin-volunteer.php:171
+msgid "Produce a letter for this volunteer"
+msgstr ""
+
+#: inc/admin-volunteer.php:195
+msgid "No verification letter has been issued for this volunteer."
+msgstr ""
+
+#: inc/admin-volunteer.php:206
+#: inc/privacy.php:527
+msgid "Issued"
+msgstr ""
+
+#: inc/admin-volunteer.php:208
+#: inc/privacy.php:535
+msgid "Hours stated"
+msgstr ""
+
+#. translators: %s: an email address.
+#: inc/admin-volunteer.php:225
+#, php-format
+msgid "Emailed to %s"
+msgstr ""
+
+#: inc/admin-volunteer.php:249
+msgid "What each letter stated when it went out. Checking one compares it against the records as they stand now."
+msgstr ""
+
 #: inc/cpt.php:69
 msgctxt "post type general name"
 msgid "Volunteer Hours"
@@ -840,24 +944,6 @@ msgstr ""
 
 #: inc/cpt.php:170
 msgid "no date"
-msgstr ""
-
-#: inc/cpt.php:200
-#: inc/privacy.php:491
-#: inc/render.php:133
-msgid "Date"
-msgstr ""
-
-#: inc/cpt.php:201
-#: inc/privacy.php:495
-#: inc/render.php:134
-msgid "Hours"
-msgstr ""
-
-#: inc/cpt.php:202
-#: inc/privacy.php:499
-#: inc/render.php:135
-msgid "Activity"
 msgstr ""
 
 #: inc/cpt.php:203
@@ -1068,12 +1154,6 @@ msgstr ""
 msgid "Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal."
 msgstr ""
 
-#. translators: 1: verified hours, 2: unverified hours, 3: number of shifts.
-#: inc/meta-box.php:420
-#, php-format
-msgid "%1$s verified, %2$s awaiting verification, across %3$s."
-msgstr ""
-
 #. translators: %d: an internal record number.
 #: inc/privacy.php:222
 #, php-format
@@ -1105,20 +1185,12 @@ msgstr ""
 msgid "Verification letters issued"
 msgstr ""
 
-#: inc/privacy.php:527
-msgid "Issued"
-msgstr ""
-
 #: inc/privacy.php:531
 msgid "Sent to"
 msgstr ""
 
 #: inc/privacy.php:532
 msgid "Printed, not emailed"
-msgstr ""
-
-#: inc/privacy.php:535
-msgid "Hours stated"
 msgstr ""
 
 #. translators: %s: the reason recorded for the hold.
