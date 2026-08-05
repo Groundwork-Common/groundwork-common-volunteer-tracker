@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,6 +59,12 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 
 == Changelog ==
 
+= 0.4.0 =
+* Retention: choose how long volunteer records are kept, and whether old ones are anonymized or deleted. Defaults to keeping everything, and asks you to decide.
+* Per-volunteer retention holds, for when a court requires a record kept longer than your policy.
+* Full support for WordPress's Export and Erase Personal Data tools, including naming any verification letters affected by an erasure.
+* uninstall.php: deleting the plugin removes nothing unless you explicitly arm it, and even then only its own settings.
+
 = 0.3.0 =
 * Verification letters: print-styled HTML on your letterhead, or emailed to the volunteer.
 * Every letter is itemised, naming who verified each shift and when, and carries a reference code.
@@ -79,6 +85,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.4.0 =
+Adds retention and privacy tooling. If you already have volunteer records, visit Volunteer Hours → Settings → Privacy and decide how long to keep them.
 
 = 0.3.0 =
 The verification letter, which is what this plugin is for. Worth trying end to end on a real volunteer record before relying on it.
