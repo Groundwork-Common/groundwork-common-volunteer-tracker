@@ -17,6 +17,23 @@
 $GLOBALS['gwcvt_failures'] = 0;
 $GLOBALS['gwcvt_made']     = array();
 
+/* Every entry this script's own submissions create, and nothing else.
+ *
+ * The first version swept up every pending entry on the site at cleanup,
+ * because gwcvt_submit() posts through the handler and does not hand an ID
+ * back. That deleted records this script never created — it quietly destroyed
+ * the seeded demo organisation's two self-logged submissions every time it ran,
+ * and on a site with real pending entries it would have destroyed those.
+ *
+ * gwcvt_self_log_received fires with the ID of each entry the handler stores,
+ * which is exactly the hook needed and was already there. */
+add_action(
+	'gwcvt_self_log_received',
+	static function ( $entry_id ): void {
+		$GLOBALS['gwcvt_made'][] = (int) $entry_id;
+	}
+);
+
 /**
  * Assert, tersely.
  *
@@ -235,10 +252,6 @@ gwcvt_check(
 	'accepted' === $gwcvt_result && gwcvt_self_log_message( $gwcvt_result ) === gwcvt_self_log_message( 'accepted' ),
 	$gwcvt_result
 );
-
-foreach ( get_posts( array( 'post_type' => GWCVT_ENTRY_TYPE, 'post_status' => 'pending', 'fields' => 'ids', 'posts_per_page' => -1, 'no_found_rows' => true ) ) as $gwcvt_id ) {
-	$GLOBALS['gwcvt_made'][] = (int) $gwcvt_id;
-}
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 

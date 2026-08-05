@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 
 == Changelog ==
 
+= 0.6.1 =
+* Fixed: on the hours list, a volunteer's name opened the volunteer while the Edit link directly beneath it opened the shift. The name now opens the shift, matching every action in that row, and a "Volunteer record" link goes to the person.
+
 = 0.6.0 =
 * A volunteer's record now shows every shift they have logged and every letter issued for them, with a link to check any of those references.
 * Checking a reference shows the whole letter as your records would produce it today, so you can compare it against the copy somebody was sent.
@@ -99,6 +102,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.6.1 =
+A small but confusing fix to the hours list. No data changes.
 
 = 0.6.0 =
 Reference codes now cover the whole letter rather than just the total, so codes issued before this release will report as changed. Re-issue any letter you need a live reference for.
