@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.6.1
+Stable tag: 0.7.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,13 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 
 == Changelog ==
 
+= 0.7.0 =
+* The "Not yet verified" badge is now the verify button — click it and the shift is attested, without hunting for a hover menu.
+* The hours list opens in shift-date order, newest first, instead of the order records happened to be created in.
+* Submissions from the public form now suggest who they belong to: one click to attach them to a matching volunteer, or to create a record from what was submitted.
+* A notice on the hours list says how many people are waiting to be matched, and a new "Awaiting matching" filter shows just those.
+* New "Log a day" screen for typing up a sign-in sheet: the date, activity and supervisor once, then everybody who worked it.
+
 = 0.6.1 =
 * Fixed: on the hours list, a volunteer's name opened the volunteer while the Edit link directly beneath it opened the shift. The name now opens the shift, matching every action in that row, and a "Volunteer record" link goes to the person.
 
@@ -102,6 +109,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.7.0 =
+Everyday improvements for whoever does the volunteer coordinating. No data changes.
 
 = 0.6.1 =
 A small but confusing fix to the hours list. No data changes.

@@ -92,6 +92,7 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_purged` | action | After a record has been purged. |
 | `gwcvt_rate_limits` | filter | The public form's rate limits, keyed by scope. |
 | `gwcvt_self_log_received` | action | After the public form has recorded a submission. |
+| `gwcvt_entry_attached` | action | After a self-logged entry is attached to a volunteer. |
 
 ## Tests
 

@@ -69,9 +69,10 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 		&& $screen
 		&& GWCVT_ENTRY_TYPE === $screen->post_type;
 
-	$on_letters = $screen && false !== strpos( (string) $screen->id, GWCVT_LETTERS_PAGE );
+	$on_letters   = $screen && false !== strpos( (string) $screen->id, GWCVT_LETTERS_PAGE );
+	$on_quick_add = $screen && false !== strpos( (string) $screen->id, GWCVT_QUICK_ADD_PAGE );
 
-	if ( ! $on_entry_editor && ! $on_letters ) {
+	if ( ! $on_entry_editor && ! $on_letters && ! $on_quick_add ) {
 		return;
 	}
 
@@ -85,6 +86,16 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 		GWCVT_VERSION,
 		true
 	);
+
+	if ( $on_quick_add ) {
+		wp_enqueue_script(
+			'gwcvt-quick-add',
+			GWCVT_URL . 'assets/js/admin-quick-add.js',
+			array( 'gwcvt-admin-picker' ),
+			GWCVT_VERSION,
+			true
+		);
+	}
 
 	wp_set_script_translations(
 		'gwcvt-admin-picker',

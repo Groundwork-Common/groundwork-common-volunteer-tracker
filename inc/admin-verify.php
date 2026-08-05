@@ -55,8 +55,40 @@ function gwcvt_render_verified_column( $column, $post_id ): void {
 	$context = gwcvt_attestation_context( $post_id );
 
 	if ( ! $context['verified'] ) {
+		/* ── The badge IS the verify control ──────────────────────────────
+		 * It was a plain span, and Verify lived only in the hover row
+		 * actions — which means the most obvious thing on the row did
+		 * nothing, and the thing that did something was invisible until you
+		 * knew to hover and unreachable on a touch screen.
+		 *
+		 * A coordinator working down a queue of thirty shifts clicks the
+		 * status, because the status is what they are reading. So it is a
+		 * link now, with an accessible name that says what clicking does
+		 * rather than what the state is — "Not yet verified" as a link name
+		 * would announce the opposite of the action. The visible text stays
+		 * the status, because that is what the column is for.
+		 *
+		 * Withdrawing stays a row action: undoing is rare, deliberate, and
+		 * should not sit under the cursor of somebody clicking quickly.
+		 * ─────────────────────────────────────────────────────────────── */
+		if ( ! gwcvt_user_can_verify( get_current_user_id(), $post_id ) ) {
+			printf(
+				'<span class="gwcvt-badge gwcvt-badge--waiting">%s</span>',
+				esc_html( gwcvt_verification_label( 'unverified' ) )
+			);
+			return;
+		}
+
 		printf(
-			'<span class="gwcvt-badge gwcvt-badge--waiting">%s</span>',
+			'<a class="gwcvt-badge gwcvt-badge--waiting gwcvt-badge--action" href="%1$s" aria-label="%2$s">%3$s</a>',
+			esc_url( gwcvt_verify_action_url( 'gwcvt_verify_entry', $post_id ) ),
+			esc_attr(
+				sprintf(
+					/* translators: %s: an hour entry's description, e.g. "Jane Doe — 2026-03-04 — 3.5". */
+					__( 'Verify these hours: %s', 'groundwork-common-volunteer-tracker' ),
+					get_the_title( $post_id )
+				)
+			),
 			esc_html( gwcvt_verification_label( 'unverified' ) )
 		);
 		return;
@@ -374,12 +406,31 @@ function gwcvt_verified_filter_dropdown( $post_type ): void {
 		<option value="verified" <?php selected( $current, 'verified' ); ?>>
 			<?php echo esc_html( gwcvt_verification_label( 'verified' ) ); ?>
 		</option>
+		<option value="unmatched" <?php selected( $current, 'unmatched' ); ?>>
+			<?php esc_html_e( 'Awaiting matching', 'groundwork-common-volunteer-tracker' ); ?>
+		</option>
 	</select>
 	<?php
 }
 
 /**
- * Apply that dropdown.
+ * Filter and order the hours list.
+ *
+ * ── Why the default order had to change ──────────────────────────────────────
+ * WordPress orders a post list by post_date, which for an hour entry is when
+ * somebody typed it in. A coordinator opening this screen is looking for last
+ * weekend's shifts, and what they got was creation order — which, once records
+ * arrive from more than one route, reads as no order at all. The seeded demo
+ * opened as 2023-06-24, 2026-07-18, 2026-08-01, 2026-07-25.
+ *
+ * So the default is the shift date, newest first. The Date column stays
+ * sortable, and an explicit sort still wins.
+ *
+ * The meta_query looks redundant and is not: ordering by a meta key uses an
+ * INNER JOIN, so an entry with no _gwcvt_date would silently vanish from the
+ * list. The EXISTS-or-NOT-EXISTS pair keeps those rows in, sorted last — a
+ * dateless entry is broken and needs a human, and hiding it is the worst
+ * possible response.
  *
  * @param WP_Query $query The query about to run.
  */
@@ -395,19 +446,50 @@ function gwcvt_apply_verified_filter( $query ): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation.
 	$state = isset( $_GET['gwcvt_state'] ) ? sanitize_key( wp_unslash( $_GET['gwcvt_state'] ) ) : '';
 
-	if ( ! in_array( $state, array( 'verified', 'unverified' ), true ) ) {
-		return;
+	$clauses = array( 'relation' => 'AND' );
+
+	if ( in_array( $state, array( 'verified', 'unverified' ), true ) ) {
+		$clauses[] = array(
+			'key'     => GWCVT_ENTRY_VERIFIED_AT,
+			'compare' => 'verified' === $state ? 'EXISTS' : 'NOT EXISTS',
+		);
 	}
 
-	$query->set(
-		'meta_query',
+	if ( 'unmatched' === $state ) {
+		/* Sent in through the public form and not yet attached to anybody.
+		 * Stored as the string '0', so a value comparison rather than
+		 * NOT EXISTS — the key is always written. */
+		$clauses[] = array(
+			'key'     => GWCVT_ENTRY_VOLUNTEER,
+			'value'   => '0',
+			'compare' => '=',
+		);
+	}
+
+	/* The NAME goes on the EXISTS clause, not on the OR group around it.
+	 * WP_Meta_Query collects named clauses so orderby can address them, and a
+	 * name on a group addresses nothing — the sort is silently dropped and the
+	 * list falls back to post date. Which is exactly what happened, and looked
+	 * like the ordering code not running at all. */
+	$clauses[] = array(
+		'relation'         => 'OR',
+		'gwcvt_shift_date' => array(
+			'key'     => GWCVT_ENTRY_DATE,
+			'compare' => 'EXISTS',
+		),
 		array(
-			array(
-				'key'     => GWCVT_ENTRY_VERIFIED_AT,
-				'compare' => 'verified' === $state ? 'EXISTS' : 'NOT EXISTS',
-			),
-		)
+			'key'     => GWCVT_ENTRY_DATE,
+			'compare' => 'NOT EXISTS',
+		),
 	);
+
+	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- an admin list screen, paginated by core.
+	$query->set( 'meta_query', $clauses );
+
+	// An explicit sort from the column headers wins.
+	if ( '' === (string) $query->get( 'orderby' ) ) {
+		$query->set( 'orderby', array( 'gwcvt_shift_date' => 'DESC', 'ID' => 'DESC' ) );
+	}
 }
 
 /* ── On the entry itself ─────────────────────────────────────────────────── */

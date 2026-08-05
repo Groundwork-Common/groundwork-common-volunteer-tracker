@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
 const GWCVT_MENU_SLUG     = 'edit.php?post_type=gwcvt_entry';
 const GWCVT_SETTINGS_PAGE = 'gwcvt-settings';
 const GWCVT_LETTERS_PAGE  = 'gwcvt-letters';
+const GWCVT_QUICK_ADD_PAGE = 'gwcvt-log-a-day';
 
 add_filter( 'admin_footer_text', 'gwcvt_admin_footer_text' );
 add_action( 'admin_init', 'gwcvt_handle_colophon_toggle' );

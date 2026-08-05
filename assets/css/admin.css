@@ -452,3 +452,71 @@
 		border-color: #3c434a;
 	}
 }
+
+/* ─── The verify badge as a control ─────────────────────────────────────────
+   The status is what a coordinator reads, so the status is what they click.
+   It has to look pressable without becoming a button — a row of thirty
+   buttons in a table column is louder than the data. */
+a.gwcvt-badge--action {
+	text-decoration: none;
+	cursor: pointer;
+	transition: background-color .1s ease, box-shadow .1s ease;
+}
+
+a.gwcvt-badge--action:hover,
+a.gwcvt-badge--action:focus {
+	background: #edfaef;
+	color: #00450c;
+	box-shadow: inset 0 0 0 1px #68de7c;
+}
+
+/* Never rely on the hover colour alone to say it is interactive: the focus
+   ring is what a keyboard user gets, and the pointer is what everybody else
+   gets before they commit to a click. */
+a.gwcvt-badge--action:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 1px;
+}
+
+/* ─── Triage ────────────────────────────────────────────────────────────────
+   The one or two buttons that turn a stranger's submission into a shift on
+   somebody's record. Inside the warning notice, so they read as the response
+   to it rather than as unrelated controls further down the form. */
+.gwcvt-triage-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin: 12px 0 4px;
+}
+
+.gwcvt-triage-actions .description {
+	flex: 1 1 16em;
+	margin: 0;
+}
+
+/* ─── Log a day ─────────────────────────────────────────────────────────────
+   The things a shift has in common at the top, the people below. The hours
+   column is narrow on purpose: it takes "3.5" or "3:30", and a wide box invites
+   somebody to write a sentence in it. */
+.gwcvt-quick-add__intro {
+	max-width: 46em;
+}
+
+.gwcvt-quick-add__people {
+	max-width: 48em;
+}
+
+.gwcvt-quick-add__hours {
+	width: 8em;
+}
+
+/* The picker's results list has to escape the table cell, or it is clipped by
+   the row below it. */
+.gwcvt-quick-add__people td {
+	overflow: visible;
+}
+
+.gwcvt-quick-add__people .gwcvt-picker {
+	max-width: none;
+}

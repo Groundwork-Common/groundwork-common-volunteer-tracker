@@ -162,10 +162,21 @@
 		} );
 	}
 
-	ready( function () {
+	function setUpAll() {
 		var pickers = document.querySelectorAll( '[data-gwcvt-picker]' );
 		for ( var i = 0; i < pickers.length; i++ ) {
+			/* Marked once wired. The log-a-day screen adds rows after load and
+			 * asks for another pass; without the mark, every existing picker
+			 * would gain a second set of handlers and fire two lookups per
+			 * keystroke. */
+			if ( pickers[ i ].getAttribute( 'data-gwcvt-ready' ) ) {
+				continue;
+			}
+			pickers[ i ].setAttribute( 'data-gwcvt-ready', '1' );
 			setUp( pickers[ i ] );
 		}
-	} );
+	}
+
+	ready( setUpAll );
+	document.addEventListener( 'gwcvt:pickers-added', setUpAll );
 }( window.wp || {} ) );
