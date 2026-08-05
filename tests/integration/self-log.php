@@ -105,7 +105,52 @@ function gwcvt_pending_count(): int {
 	);
 }
 
+
+/* ── Put the site's own settings back afterwards ─────────────────────────────
+ * This script rewrites gwcvt_settings to exercise the plugin under particular
+ * configurations. The first version then DELETED the option at cleanup, which
+ * does not restore anything — it wipes the site's entire plugin configuration:
+ * letterhead, signatory, disclaimer wording, retention policy, and whether the
+ * public form is switched on.
+ *
+ * On this machine that silently turned the demo organisation's form off. On a
+ * real site it would erase a retention policy somebody had deliberately chosen
+ * for records about court-ordered service, with nothing to say it had happened.
+ *
+ * So: snapshot first, restore last, including the "there was nothing here"
+ * case. A test that changes global configuration has to put it back.
+ * ─────────────────────────────────────────────────────────────────────────── */
+$GLOBALS['gwcvt_saved_options'] = array();
+
+/**
+ * Remember an option's current value so it can be restored.
+ *
+ * @param string $name Option name.
+ */
+function gwcvt_borrow_option( string $name ): void {
+	$GLOBALS['gwcvt_saved_options'][ $name ] = get_option( $name );
+}
+
+/**
+ * Put every borrowed option back exactly as it was.
+ */
+function gwcvt_return_options(): void {
+	foreach ( $GLOBALS['gwcvt_saved_options'] as $name => $value ) {
+		if ( false === $value ) {
+			delete_option( $name );
+			continue;
+		}
+
+		update_option( $name, $value );
+	}
+
+	gwcvt_settings_cache( null, true );
+}
+
 wp_set_current_user( 0 );
+
+gwcvt_borrow_option( 'gwcvt_settings' );
+gwcvt_borrow_option( GWCVT_RATE_LIMIT_OPTION );
 
 $gwcvt_page = wp_insert_post(
 	array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Zzytest Log your hours' )
@@ -256,8 +301,7 @@ foreach ( array_unique( $GLOBALS['gwcvt_made'] ) as $gwcvt_id ) {
 	wp_delete_post( (int) $gwcvt_id, true );
 }
 
-delete_option( 'gwcvt_settings' );
-delete_option( GWCVT_RATE_LIMIT_OPTION );
+gwcvt_return_options();
 
 echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? "ALL PASS\n" : $GLOBALS['gwcvt_failures'] . " CHECK(S) FAILED\n" );
 
