@@ -103,6 +103,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 					);
 					?>
 				</p>
+				<?php gwcvt_render_triage_actions( $entry_id ); ?>
 			</div>
 		<?php endif; ?>
 
