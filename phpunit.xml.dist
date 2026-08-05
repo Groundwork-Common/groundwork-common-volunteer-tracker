@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Run with a downloaded phar; there is no Composer dependency:
+
+    curl -sLO https://phar.phpunit.de/phpunit-11.phar
+    php phpunit-11.phar
+
+  tests/bootstrap.php stubs the WordPress surface the pure logic touches, so
+  this needs no database and no WordPress checkout. Anything that genuinely
+  needs WordPress — the REST route's registration, the letter's rendered output,
+  the privacy exporters — is verified under wp-env by tests/integration/.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         failOnWarning="true"
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true"
+         cacheDirectory=".phpunit.cache">
+	<testsuites>
+		<testsuite name="volunteer-tracker">
+			<directory>tests</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>
