@@ -567,5 +567,7 @@ require GWCVT_DIR . 'inc/letter.php';
 require GWCVT_DIR . 'inc/render.php';
 require GWCVT_DIR . 'inc/emails.php';
 require GWCVT_DIR . 'inc/privacy.php';
+require GWCVT_DIR . 'inc/self-log.php';
+require GWCVT_DIR . 'inc/form.php';
 require GWCVT_DIR . 'inc/admin-settings.php';
 require GWCVT_DIR . 'inc/admin-screen.php';

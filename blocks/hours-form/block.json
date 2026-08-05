@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "groundwork-common-volunteer-tracker/hours-form",
+	"title": "Volunteer Hours Form",
+	"category": "widgets",
+	"icon": "clipboard",
+	"description": "Lets volunteers send in the hours they worked. Staff check them before they count.",
+	"keywords": [ "volunteer", "hours", "timesheet" ],
+	"textdomain": "groundwork-common-volunteer-tracker",
+	"supports": {
+		"html": false,
+		"multiple": false,
+		"align": [ "wide" ]
+	},
+	"editorScript": "file:./edit.js",
+	"style": "gwcvt-form",
+	"render": "file:./render.php"
+}

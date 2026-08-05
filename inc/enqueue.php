@@ -7,7 +7,25 @@
 
 defined( 'ABSPATH' ) || exit;
 
+add_action( 'init', 'gwcvt_register_front_assets' );
 add_action( 'admin_enqueue_scripts', 'gwcvt_enqueue_admin_assets' );
+
+/**
+ * Register the front-end stylesheet.
+ *
+ * Registered on init, not enqueued. blocks/hours-form/block.json names the
+ * handle in its "style" key, so WordPress enqueues it only on pages that
+ * actually contain the block — which is the whole benefit of naming a handle
+ * there rather than a file. The shortcode path enqueues it explicitly.
+ */
+function gwcvt_register_front_assets(): void {
+	wp_register_style(
+		'gwcvt-form',
+		GWCVT_URL . 'assets/css/form.css',
+		array(),
+		GWCVT_VERSION
+	);
+}
 
 /**
  * The admin stylesheet and, on the entry screen, the volunteer picker.
