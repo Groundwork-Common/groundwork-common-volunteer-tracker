@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.7.0
+Stable tag: 0.11.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,11 @@ This plugin keeps the hours, lets staff attest to them, and prints the letter.
 
 = What it does =
 
+* Plans shifts ahead of time — when, where, what the work is, how many people you need and how many you have room for. Repeat one weekly, fortnightly, monthly or every weekday, and every occurrence is a real shift you can edit or cancel on its own.
+* Optionally lets people sign up for shifts from a page on your site, with no account. They get a confirmation, a calendar link and a way to cancel. The public list shows how many places are left, never who is coming.
+* Optionally reminds them before the shift, tells them if it moves or is called off, and sends you a daily summary of what is short of people and what still needs its hours logged.
+* Puts volunteers on a shift, keeps a waiting list once it is full, and prints the roster for the clipboard.
+* Turns that roster into hours once the shift is over — everybody who signed up, already ticked, with the scheduled hours filled in. Untick the no-shows, add the walk-ins, save once.
 * Records volunteer hours as individual shifts — who, when, how long, doing what, supervised by whom.
 * Lets a staff member with the right permission mark a shift verified. Who attested and when is recorded and appears on the letter.
 * Produces a verification letter for any volunteer over any date range, itemized, on your letterhead, ready to print or email.
@@ -45,6 +50,20 @@ Volunteer records here are more sensitive than most plugin data — in the manda
 
 No. Staff enter hours from the admin. There is an optional front-end form volunteers can log their own hours through, and it is switched off until you switch it on. Anything sent through it arrives unverified and attached to nobody — a staff member matches it to a volunteer and checks it before it counts towards anything.
 
+= Can volunteers sign up for shifts themselves? =
+
+Yes, if you switch it on under Settings → Shifts. They pick a shift, give a name and an email address, and get a confirmation with the details and a link to cancel. No account is created and no login is needed.
+
+You can still put people on shifts yourself, which is how a lot of signups at this size arrive — somebody rings up.
+
+= Does the public page show who has signed up? =
+
+No, and there is no setting that makes it. Visitors see what each shift is and how many places are left. On a site running a court-ordered service programme, a roster is a list of people working one off, and publishing it is not something the plugin will help you do by accident.
+
+= Is a scheduled shift the same as logged hours? =
+
+No, and deliberately not. A scheduled shift is a plan; hours are a record of what somebody actually did. Nobody accrues hours by signing up for a Saturday and not turning up, because turning a roster into hours is something a person does afterwards — and those hours then have to be verified like any others. It is the one place in this plugin where a shortcut would end up on a document a court reads.
+
 = Can supervisors sign off without an account? =
 
 Not yet. In this version a staff member with the right permission attests to hours, which is how the paper forms this replaces already work. Emailed supervisor confirmation is planned.
@@ -61,6 +80,45 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 4. Checking a reference code somebody has phoned in about.
 
 == Changelog ==
+
+= 0.11.0 =
+* Reminders. One message per person per shift, a configurable time before it starts — the single biggest thing you can do about people forgetting. Sent once, never twice, and never to somebody on the waiting list who does not have a place.
+* Cancelling a shift can email everybody signed up, with the reason. A tick box showing the count, so a mass email is never a surprise.
+* Moving a shift's date, time or place can email them too, with the new details and what it used to be. Nothing is sent for anything else — correcting the activity, the supervisor or the notes emails nobody.
+* An optional daily summary for you: shifts in the next week short of people, and shifts that have happened without their hours being logged. Nothing is sent on a day with nothing to say.
+* A reminder or confirmation carries a cancel link only if you have a public shifts page. Without one you get no link rather than one pointing at your home page.
+* The two scheduled jobs exist only while shifts are switched on, and are removed when you switch them off.
+
+= 0.10.0 =
+* People can now sign up for shifts from your own site — the Volunteer Shifts block, or the [volunteer_shifts] shortcode. Off until you switch it on, and pinned to one page.
+* The public list shows what each shift is, where, when, what to bring, and how many places are left. It never shows who else is coming, and there is no setting that makes it.
+* No account, ever. A signup records a name and an email address as a claim; a staff member matches it to a volunteer record exactly as with the hours form.
+* A confirmation email with the details, a link to add the shift to a calendar, and a link to cancel. No login needed for either.
+* Cancelling is a button on a page, never a link that acts on its own — mail clients and security scanners follow links, and one that cancelled a place would eventually be followed by a spam filter.
+* Full shifts take signups onto a waiting list rather than turning people away, and a place that frees up is filled straight away.
+* The same defences as the hours form: honeypot, timing checks, an optional shared code, and one shared rate limit across both forms. A successful signup, a bot, and a rate-limited attempt all get the same answer.
+* Signups are covered by WordPress's Export and Erase Personal Data tools — including a signup from somebody who never became a volunteer, which nothing else in the plugin would have found.
+* Retention now clears old signups from people who never became volunteers. The place on the shift is kept; the name and address are not.
+
+= 0.9.0 =
+* Log a shift's hours straight from its roster: everybody who signed up, already ticked, with the hours the shift was scheduled for. Untick whoever did not turn up, trim whoever left early, add the people who walked in, and save once.
+* A shift's date, activity and supervisor come across automatically, so nothing is retyped.
+* Somebody who signed up but is not on file yet is suggested from what they typed — picking who they are logs their hours and matches their signup in the same click.
+* Nothing at all is recorded for a no-show. There is no absence flag anywhere in the plugin.
+* Hours cannot be logged until a shift has actually finished. Recording them early would date them the day you typed them rather than the day they were worked, and that date is what a letter prints.
+* Reopening a shift you have already logged shows who has an entry and will not record them twice, so you can add somebody who was missed.
+* A notice on the hours list when shifts have happened and their hours have not been logged, and a "Hours not logged" flag on the schedule.
+* Hours logged from a shift are ordinary hours: unverified until a staff member attests to them, and identical on a letter to hours typed by hand.
+
+= 0.8.0 =
+* New Schedule screen: plan shifts ahead of time, with a date, a start and end time, a location, and how many people you need and can take.
+* Repeat a shift daily, every weekday, weekly, fortnightly or monthly on the same weekday. Every occurrence becomes a real shift you can edit or cancel by itself — closing the Saturday after Thanksgiving does not disturb the rest.
+* Overnight shifts, for organizations that run them.
+* Put volunteers on a shift by hand, using the same picker as everywhere else. Once a shift is full, later signups go on a waiting list rather than being turned away, and a place that frees up is filled straight away.
+* A printable roster with contact details and blank In/Out columns — the sheet that goes on the clipboard.
+* Cancel a shift with a reason. It stays on the schedule marked as cancelled rather than disappearing, so it is clear it was called off.
+* Shifts short of the number of people you said you needed are flagged on the schedule.
+* Off until you switch it on, under Settings → Shifts. Nothing about scheduling touches hours: a scheduled shift is a plan, and hours are still logged after the fact and still have to be verified.
 
 = 0.7.0 =
 * The "Not yet verified" badge is now the verify button — click it and the shift is attested, without hunting for a hover menu.
@@ -109,6 +167,18 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.11.0 =
+Adds shift reminders, cancellation and change notices, and an optional daily summary. All of it is off until you enable it under Settings → Shifts. Nothing changes for hours, letters or reference codes.
+
+= 0.10.0 =
+Adds public shift signup and the first email this plugin sends by itself. Both stay off until you enable them under Settings → Shifts. Nothing changes for hours, letters or reference codes.
+
+= 0.9.0 =
+Turns a shift's roster into hours in one pass. Nothing changes for hours you have already logged, and letters and reference codes are unaffected.
+
+= 0.8.0 =
+Adds shift scheduling and rosters. It stays off until you enable it under Settings → Shifts, and it changes nothing about hours you have already logged or letters you have already issued.
 
 = 0.7.0 =
 Everyday improvements for whoever does the volunteer coordinating. No data changes.

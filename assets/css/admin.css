@@ -520,3 +520,151 @@ a.gwcvt-badge--action:focus-visible {
 .gwcvt-quick-add__people .gwcvt-picker {
 	max-width: none;
 }
+
+/* ─── The schedule ──────────────────────────────────────────────────────────
+   A coordinator opens this screen to find out what is short of people and how
+   soon, so the fill figure is the loudest thing in the row and "short" is said
+   in words as well as in colour — the same rule as the verification badges
+   above. The row tint is reinforcement; the bold count and the screen-reader
+   text are the information. */
+.gwcvt-schedule__time {
+	color: #646970;
+	font-size: 12px;
+}
+
+.gwcvt-schedule__short {
+	color: #8a2424;
+}
+
+/* The first cell only. On every cell it draws a red bar down each column
+   boundary, which reads as five warnings rather than one. */
+.gwcvt-schedule__row--short td:first-child {
+	box-shadow: inset 3px 0 0 0 #d63638;
+}
+
+.gwcvt-schedule__row--cancelled .row-title,
+.gwcvt-schedule__row--cancelled .gwcvt-schedule__time {
+	text-decoration: line-through;
+}
+
+.gwcvt-schedule__row--cancelled td {
+	opacity: .7;
+}
+
+.gwcvt-badge--cancelled {
+	background: #fcf0f1;
+	color: #8a2424;
+	box-shadow: inset 0 0 0 1px #d63638;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	.gwcvt-schedule__short {
+		color: #f86368;
+	}
+
+	.gwcvt-badge--cancelled {
+		background: rgb( 214 54 56 / .12 );
+		color: #f86368;
+	}
+}
+
+/* ─── One shift ─────────────────────────────────────────────────────────────
+   The form and the roster are two halves of one job — what the shift is, and
+   who is coming — so they sit on one screen rather than two. */
+.gwcvt-shift-form__inline {
+	margin-left: 8px;
+}
+
+.gwcvt-roster {
+	max-width: 60em;
+}
+
+.gwcvt-roster__actions {
+	width: 8em;
+	text-align: right;
+}
+
+.gwcvt-roster__remove {
+	color: #b32d2e;
+	text-decoration: none;
+}
+
+.gwcvt-roster__remove:hover,
+.gwcvt-roster__remove:focus {
+	color: #8a2424;
+}
+
+/* The picker's results list has to escape its own stacking context here for the
+   same reason it does inside the Log a day table. */
+.gwcvt-roster-add {
+	margin-top: 12px;
+	overflow: visible;
+}
+
+.gwcvt-shift-delete {
+	color: #b32d2e;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	.gwcvt-roster__remove,
+	.gwcvt-shift-delete {
+		color: #f86368;
+	}
+}
+
+/* ─── The printed roster ────────────────────────────────────────────────────
+   Served as a standalone document from admin-post.php, sharing the letter's
+   stylesheet. The blank In/Out columns are the point: this is the sheet that
+   goes on a clipboard and comes back marked up. */
+.gwcvt-roster-print table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.gwcvt-roster-print td {
+	height: 2.4em;
+}
+
+/* ─── Shifts waiting to be typed up ─────────────────────────────────────────
+   A shift that happened and produced no hours is the one thing this feature
+   can quietly get wrong, so it is called out on the row and the badge is the
+   link that fixes it — the same move as the verify badge above. */
+.gwcvt-schedule__row--awaiting td:first-child {
+	box-shadow: inset 3px 0 0 0 #dba617;
+}
+
+/* The generic --action hover tints green, which means "done" everywhere else
+   in this stylesheet. On a badge that says hours are missing, going green on
+   hover says the opposite of the thing it is about to do. Keep it amber. */
+a.gwcvt-badge--waiting.gwcvt-badge--action:hover,
+a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
+	background: #f7ebc4;
+	color: #614200;
+	box-shadow: inset 0 0 0 1px #dba617;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	a.gwcvt-badge--waiting.gwcvt-badge--action:hover,
+	a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
+		background: rgb( 219 166 23 / .22 );
+		color: #dba617;
+	}
+}
+
+/* ─── Logging a shift's roster ──────────────────────────────────────────────
+   The tick column is narrow and first, because "who came" is the only question
+   on this screen the coordinator has to answer for every row. A row already
+   logged is dimmed rather than removed: it still has to be visible, or the
+   screen looks like it lost somebody. */
+.gwcvt-quick-add__came {
+	width: 4.5em;
+	text-align: center;
+}
+
+.gwcvt-quick-add__row--logged td {
+	opacity: .65;
+}
+
+.gwcvt-quick-add__row--logged .gwcvt-badge {
+	opacity: 1;
+}

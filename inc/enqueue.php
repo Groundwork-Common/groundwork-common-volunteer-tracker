@@ -26,6 +26,18 @@ function gwcvt_register_front_assets(): void {
 		GWCVT_VERSION
 	);
 
+	/* The shift list's stylesheet, on the same terms: blocks/shift-list's
+	 * block.json names this handle in its "style" key, so it loads only on pages
+	 * that actually contain the block. Separate from gwcvt-form because the two
+	 * surfaces are independent — a site can run the hours form without the
+	 * schedule, or the schedule without the hours form. */
+	wp_register_style(
+		'gwcvt-schedule',
+		GWCVT_URL . 'assets/css/schedule.css',
+		array(),
+		GWCVT_VERSION
+	);
+
 	/* The letter's own stylesheet, registered rather than enqueued. The print
 	 * view links it by URL because it renders a standalone document; the
 	 * reference checker enqueues this handle so it can show the same letter
@@ -71,8 +83,9 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 
 	$on_letters   = $screen && false !== strpos( (string) $screen->id, GWCVT_LETTERS_PAGE );
 	$on_quick_add = $screen && false !== strpos( (string) $screen->id, GWCVT_QUICK_ADD_PAGE );
+	$on_schedule  = $screen && false !== strpos( (string) $screen->id, GWCVT_SCHEDULE_PAGE );
 
-	if ( ! $on_entry_editor && ! $on_letters && ! $on_quick_add ) {
+	if ( ! $on_entry_editor && ! $on_letters && ! $on_quick_add && ! $on_schedule ) {
 		return;
 	}
 

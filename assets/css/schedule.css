@@ -1,0 +1,173 @@
+/* The public shift list and signup form.
+
+   Same restraint as form.css beside it: this renders inside somebody else's
+   theme, on a page they styled, and a list that arrives with strong opinions
+   about typography looks like an advert for the plugin. Everything inherits —
+   font, colour, headings. What is styled here is layout, the tap targets, and
+   the two things a theme reliably gets wrong for markup it did not expect. */
+
+.gwcvt-shifts {
+	max-width: 40em;
+}
+
+.gwcvt-shifts__list {
+	margin: 0 0 1.5em;
+	padding: 0;
+	border: 0;
+}
+
+.gwcvt-shifts__list legend {
+	padding: 0;
+	font-weight: 600;
+}
+
+/* ─── One shift ─────────────────────────────────────────────────────────────
+   The radio and its label are a single tap target, because the label carries
+   four lines of detail and a visitor on a phone should be able to hit any of
+   them. currentColor for the rule rather than a colour of our own: a grey that
+   reads as a quiet border on a light theme is invisible on a dark one. */
+.gwcvt-shift {
+	display: flex;
+	align-items: flex-start;
+	gap: .75em;
+	margin: 0 0 .75em;
+	padding: .9em 1em;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	opacity: .95;
+}
+
+.gwcvt-shift input[type="radio"] {
+	flex: 0 0 auto;
+	/* Nudged down onto the first line of the label rather than the top of the
+	   box, which is where a multi-line label leaves it. */
+	margin-top: .2em;
+	min-width: 1.1em;
+	min-height: 1.1em;
+}
+
+.gwcvt-shift label {
+	display: flex;
+	flex-direction: column;
+	gap: .15em;
+	cursor: pointer;
+	/* The whole remaining width, so the tap target is the row and not the words. */
+	flex: 1 1 auto;
+}
+
+.gwcvt-shift__when {
+	font-weight: 600;
+}
+
+.gwcvt-shift__what {
+	font-size: 1.05em;
+}
+
+.gwcvt-shift__where,
+.gwcvt-shift__notes {
+	font-size: .9em;
+	opacity: .8;
+}
+
+.gwcvt-shift__places {
+	font-size: .9em;
+	font-weight: 600;
+}
+
+/* Full is still selectable — capacity is advisory and the waiting list is real,
+   so this dims rather than disables. A disabled radio would turn somebody away
+   who is willing to be second in line. */
+.gwcvt-shift--full {
+	opacity: .7;
+}
+
+/* Somebody's own booking has no radio and no label wrapping its details, so the
+   spans are direct children here where in the list they are not. Without this
+   they inherit the row direction above and lay the date, the activity and the
+   location out side by side. */
+.gwcvt-shift--mine {
+	flex-direction: column;
+	gap: .15em;
+	border-width: 2px;
+}
+
+/* ─── The rest of the form ────────────────────────────────────────────────── */
+
+.gwcvt-shifts__field {
+	display: flex;
+	flex-direction: column;
+	gap: .25em;
+	margin: 0 0 1.25em;
+}
+
+.gwcvt-shifts__field label {
+	font-weight: 600;
+}
+
+.gwcvt-shifts__field input {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 2.5em;
+	padding: .4em .6em;
+}
+
+.gwcvt-shifts__help {
+	font-size: .875em;
+	opacity: .75;
+	margin: 0;
+}
+
+.gwcvt-shifts__empty {
+	opacity: .8;
+}
+
+/* ─── Messages ─────────────────────────────────────────────────────────────
+   currentColor and a left rule rather than a colour of our own, exactly as in
+   form.css: green-on-white from a plugin lands badly on a dark theme, and the
+   message is carried by the words in any case. */
+.gwcvt-shifts__message {
+	margin: 0 0 1.5em;
+	padding: .75em 1em;
+	border-left: 4px solid currentColor;
+	opacity: .95;
+}
+
+.gwcvt-shifts__heading {
+	margin-top: 0;
+}
+
+.gwcvt-shifts__cancel {
+	margin-top: 2em;
+	padding-top: 1em;
+	border-top: 1px solid currentColor;
+}
+
+.gwcvt-shifts__cancel p {
+	margin: 0 0 .5em;
+}
+
+/* Buttons inherit the theme's own where it styles bare <button>, and get enough
+   of their own that they are still recognisably buttons where it does not. */
+.gwcvt-shifts__button {
+	display: inline-block;
+	padding: .6em 1.2em;
+	cursor: pointer;
+}
+
+.gwcvt-shifts__button--quiet {
+	font-weight: normal;
+}
+
+/* ─── The honeypot ──────────────────────────────────────────────────────────
+   Positioned off screen rather than display:none or type="hidden", because the
+   scripts worth stopping skip both of those. It stays a real, focusable text
+   input as far as the DOM is concerned — but aria-hidden and tabindex="-1" in
+   the markup keep it away from anybody using a screen reader or the keyboard,
+   so nobody who should see the form ever meets it. */
+.gwcvt-shifts__hp {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}

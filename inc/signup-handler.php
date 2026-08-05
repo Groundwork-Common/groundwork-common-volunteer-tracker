@@ -1,0 +1,331 @@
+<?php
+/**
+ * The public signup: accepting a stranger's name against a shift.
+ *
+ * @package VolunteerTracker
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+add_action( 'template_redirect', 'gwcvt_signup_dispatch' );
+
+/* ── The same surface as the hours form, and the same answer ─────────────────
+ * inc/self-log.php sets out what this plugin does when the person on the other
+ * end is anonymous. Everything there applies here, so this file reuses its
+ * defences rather than restating them: gwcvt_rate_limited(), gwcvt_form_stamp(),
+ * gwcvt_form_age() and gwcvt_client_ip() are called from here unchanged.
+ *
+ * One shared limiter across both forms is deliberate. A script hammering the
+ * signup form and a script hammering the hours form are the same script, and two
+ * separate budgets would be twice the budget.
+ *
+ * What is different is worth naming, because it is the part somebody could get
+ * wrong later:
+ *
+ * 1. THE LIST IS PUBLIC AND THE ROSTER IS NOT. A visitor may see that Saturday
+ *    exists, what the work is, and that three places are left. They may never
+ *    see who is coming. On a site running a court-ordered service programme,
+ *    "who is volunteering Saturday" is a list of people working one off, and a
+ *    place count is not.
+ *
+ * 2. THERE IS ONE LOOKUP AND IT IS NOT AN ORACLE. gwcvt_find_signup() asks
+ *    whether this address is already on THIS shift, so that pressing Submit
+ *    twice does not book you twice. It never touches the volunteer table, and
+ *    the visible answer is identical either way — only the confirmation email,
+ *    which only that address receives, says which happened.
+ *
+ * 3. NOTHING MUTATES ON GET. The cancellation link in an email lands on a page
+ *    with a button. Mail clients and security scanners fetch links, and a GET
+ *    that withdrew a signup would eventually be withdrawn by a spam filter.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Handle a front-end signup or cancellation.
+ */
+function gwcvt_signup_dispatch(): void {
+	/* The first line, and deliberately not merely "do not render the form". A
+	 * handler that ran while only the form was hidden would accept posts to a
+	 * feature the site had switched off. */
+	if ( ! gwcvt_signups_open() ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- presence check only; the nonce is verified in each handler.
+	$is_signup = isset( $_POST['gwcvt_signup_submit'] );
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
+	$is_cancel = isset( $_POST['gwcvt_cancel_submit'] );
+
+	if ( ! $is_signup && ! $is_cancel ) {
+		return;
+	}
+
+	if ( ! is_page( (int) gwcvt_setting( 'schedule_page' ) ) ) {
+		return;
+	}
+
+	/* Nothing about this request may be cached, by us or by anybody in front of
+	 * us. The response reflects a submission that just happened and the page
+	 * carries a fresh nonce. */
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+
+	nocache_headers();
+
+	if ( $is_cancel ) {
+		gwcvt_handle_public_cancel();
+		return;
+	}
+
+	gwcvt_handle_public_signup();
+}
+
+/**
+ * Is signing up switched on, and pinned to a page?
+ *
+ * Both switches, because scheduling without public signup is a supported way to
+ * run this — a coordinator taking names on the phone — and the schedule existing
+ * must not be what puts a form on the internet.
+ *
+ * @return bool
+ */
+function gwcvt_signups_open(): bool {
+	return (bool) gwcvt_setting( 'shifts_enabled' )
+		&& (bool) gwcvt_setting( 'signup_enabled' )
+		&& (int) gwcvt_setting( 'schedule_page' ) > 0;
+}
+
+/**
+ * Read, check and record one signup.
+ */
+function gwcvt_handle_public_signup(): void {
+	$started = microtime( true );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
+	$nonce = isset( $_POST['gwcvt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_signup_nonce'] ) ) : '';
+
+	if ( ! wp_verify_nonce( $nonce, 'gwcvt_signup' ) ) {
+		gwcvt_signup_result( 'expired', $started );
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
+	$posted = wp_unslash( $_POST );
+
+	/* The honeypot. A visible text input in an off-screen wrapper — not
+	 * type="hidden" and not an inline display:none, both of which the scripts
+	 * worth stopping already know to skip. */
+	if ( '' !== trim( (string) ( $posted['gwcvt_website'] ?? '' ) ) ) {
+		gwcvt_signup_result( 'accepted', $started );
+		return;
+	}
+
+	$age = gwcvt_form_age( (string) ( $posted['gwcvt_t'] ?? '' ) );
+
+	if ( null === $age || $age > GWCVT_FORM_MAX_AGE ) {
+		gwcvt_signup_result( 'expired', $started );
+		return;
+	}
+
+	if ( $age < GWCVT_FORM_MIN_AGE ) {
+		gwcvt_signup_result( 'accepted', $started );
+		return;
+	}
+
+	$code = (string) gwcvt_setting( 'signup_code' );
+
+	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwcvt_code'] ?? '' ) ) ) ) {
+		/* A distinct message, because this one is not a security boundary — it is
+		 * a word somebody was given, and a person who mistypes it needs telling. */
+		gwcvt_signup_result( 'bad-code', $started );
+		return;
+	}
+
+	$shift_id = absint( $posted['gwcvt_shift'] ?? 0 );
+	$name     = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_name'] ?? '' ) ), 0, 100 );
+	$email    = sanitize_email( (string) ( $posted['gwcvt_email'] ?? '' ) );
+
+	/* An address is required here where the hours form leaves it optional, and
+	 * the reason is the confirmation: a signup nobody can be told about is a
+	 * commitment with no record and no way out of it. */
+	if ( '' === $name || '' === $email || ! is_email( $email ) ) {
+		gwcvt_signup_result( 'incomplete', $started );
+		return;
+	}
+
+	if ( ! gwcvt_shift_is_signup_visible( $shift_id ) ) {
+		/* Closed, cancelled, in the past, a draft, or not a shift at all. One
+		 * message for all of them: the visitor's list was simply out of date, and
+		 * enumerating why would answer questions about shifts they cannot see. */
+		gwcvt_signup_result( 'unavailable', $started );
+		return;
+	}
+
+	/* Counted before it is reported, so a refused attempt still counts against
+	 * the limit — otherwise the limiter is a speed bump somebody can sit on. */
+	if ( gwcvt_rate_limited( gwcvt_client_ip(), $email ) ) {
+		gwcvt_signup_result( 'accepted', $started );
+		return;
+	}
+
+	$signup_id = gwcvt_add_signup(
+		$shift_id,
+		array(
+			'claim_name'  => $name,
+			'claim_email' => $email,
+			'source'      => 'self',
+		)
+	);
+
+	if ( $signup_id > 0 ) {
+		gwcvt_queue_signup_confirmation( $signup_id );
+	}
+
+	gwcvt_signup_result( 'accepted', $started );
+}
+
+/**
+ * Withdraw a signup from the link in somebody's confirmation.
+ */
+function gwcvt_handle_public_cancel(): void {
+	$started = microtime( true );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
+	$nonce = isset( $_POST['gwcvt_cancel_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_cancel_nonce'] ) ) : '';
+
+	if ( ! wp_verify_nonce( $nonce, 'gwcvt_cancel_signup' ) ) {
+		gwcvt_signup_result( 'expired', $started );
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
+	$posted = wp_unslash( $_POST );
+
+	$signup_id = absint( $posted['gwcvt_signup'] ?? 0 );
+	$token     = sanitize_text_field( (string) ( $posted['gwcvt_k'] ?? '' ) );
+
+	/* A bad token and a signup that no longer exists give the same answer. The
+	 * token is the only thing that authorises this, so distinguishing them would
+	 * turn the URL into a way to ask whether a given signup ID is real. */
+	if ( ! gwcvt_signup_token_valid( $signup_id, $token ) ) {
+		gwcvt_signup_result( 'cancel-unknown', $started );
+		return;
+	}
+
+	gwcvt_withdraw_signup( $signup_id );
+
+	gwcvt_signup_result( 'cancelled', $started );
+}
+
+/**
+ * May a member of the public see and sign up for this shift?
+ *
+ * The single answer, used by the list and by the handler, so a shift that is
+ * invisible cannot be signed up for by anybody who guesses its ID.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwcvt_shift_is_signup_visible( int $shift_id ): bool {
+	if ( $shift_id < 1 || GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+		return false;
+	}
+
+	if ( ! gwcvt_shift_is_open( $shift_id ) ) {
+		return false;
+	}
+
+	$horizon = max( 1, (int) gwcvt_setting( 'signup_horizon_days' ) );
+	$starts  = gwcvt_shift_starts( $shift_id );
+
+	if ( null === $starts ) {
+		return false;
+	}
+
+	return $starts->getTimestamp() <= ( time() + ( $horizon * DAY_IN_SECONDS ) );
+}
+
+/**
+ * The shifts a visitor may see, soonest first.
+ *
+ * @return int[]
+ */
+function gwcvt_public_shift_ids(): array {
+	$horizon = max( 1, (int) gwcvt_setting( 'signup_horizon_days' ) );
+
+	$ids = gwcvt_shifts_between(
+		array(
+			'from'  => gwcvt_today(),
+			'to'    => gmdate( 'Y-m-d', time() + ( ( $horizon + 1 ) * DAY_IN_SECONDS ) ),
+			'limit' => 100,
+		)
+	);
+
+	$visible = array();
+
+	foreach ( $ids as $shift_id ) {
+		if ( gwcvt_shift_is_signup_visible( $shift_id ) ) {
+			$visible[] = $shift_id;
+		}
+	}
+
+	/**
+	 * The shifts shown on the public list.
+	 *
+	 * Filtered rather than fixed so a site can hide a shift from the public list
+	 * while keeping it on the schedule. Anything removed here is also refused by
+	 * the handler, because both read gwcvt_shift_is_signup_visible().
+	 *
+	 * @param int[] $visible Shift post IDs.
+	 */
+	return (array) apply_filters( 'gwcvt_schedule_visible_shifts', $visible );
+}
+
+/* ── Telling the visitor what happened ───────────────────────────────────── */
+
+/**
+ * Record the outcome for the page to render, with a floor on how fast we answer.
+ *
+ * The floor exists because "refused instantly" and "accepted after a database
+ * write" are distinguishable by a stopwatch. Belt and braces rather than the
+ * main defence, and it costs a few milliseconds on a form used a handful of
+ * times a day.
+ *
+ * @param string $result  What to tell them.
+ * @param float  $started microtime when the handler began.
+ */
+function gwcvt_signup_result( string $result, float $started ): void {
+	$elapsed = microtime( true ) - $started;
+	$floor   = 0.25;
+
+	if ( $elapsed < $floor ) {
+		usleep( (int) ( ( $floor - $elapsed ) * 1000000 ) );
+	}
+
+	$GLOBALS['gwcvt_signup_result'] = $result;
+}
+
+/**
+ * What the visitor is told.
+ *
+ * 'accepted' covers a real signup, a honeypot hit and a rate-limited attempt,
+ * and the string is identical for all three. SignupFormTest asserts that byte
+ * for byte — if these ever diverge, the form starts answering questions about
+ * who has been signing up.
+ *
+ * @param string $result Result key.
+ * @return string
+ */
+function gwcvt_signup_message( string $result ): string {
+	$messages = array(
+		'accepted'       => __( 'Thank you — you are signed up. We have sent the details to your email address, along with a link you can use if you need to cancel.', 'groundwork-common-volunteer-tracker' ),
+		'incomplete'     => __( 'Please choose a shift and give your name and email address.', 'groundwork-common-volunteer-tracker' ),
+		'unavailable'    => __( 'That shift is no longer taking signups. The list below is up to date — please pick another.', 'groundwork-common-volunteer-tracker' ),
+		'bad-code'       => __( 'That code was not recognised. Check the code you were given and try again.', 'groundwork-common-volunteer-tracker' ),
+		'expired'        => __( 'This page had been open too long to submit safely. Please try again.', 'groundwork-common-volunteer-tracker' ),
+		'cancelled'      => __( 'You have been taken off that shift. Thank you for letting us know.', 'groundwork-common-volunteer-tracker' ),
+		'cancel-unknown' => __( 'That link is no longer valid. It may have already been used, or the shift may have changed. Please get in touch if you need to cancel.', 'groundwork-common-volunteer-tracker' ),
+	);
+
+	return $messages[ $result ] ?? '';
+}

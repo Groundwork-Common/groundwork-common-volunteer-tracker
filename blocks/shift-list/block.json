@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "groundwork-common-volunteer-tracker/shift-list",
+	"title": "Volunteer Shifts",
+	"category": "widgets",
+	"icon": "calendar-alt",
+	"description": "Lists the shifts you need help with and lets people sign up. Shows how many places are left, never who is coming.",
+	"keywords": [ "volunteer", "shifts", "schedule", "signup" ],
+	"textdomain": "groundwork-common-volunteer-tracker",
+	"supports": {
+		"html": false,
+		"multiple": false,
+		"align": [ "wide" ]
+	},
+	"editorScript": "file:./edit.js",
+	"style": "gwcvt-schedule",
+	"render": "file:./render.php"
+}

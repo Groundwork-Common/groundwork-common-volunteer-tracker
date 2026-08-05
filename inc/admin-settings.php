@@ -9,6 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'gwcvt_render_tab_letter', 'gwcvt_render_settings_tab' );
 add_action( 'gwcvt_render_tab_logging', 'gwcvt_render_settings_tab' );
+add_action( 'gwcvt_render_tab_shifts', 'gwcvt_render_settings_tab' );
 add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_settings_tab' );
 add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_retention_log', 20 );
 add_action( 'admin_post_gwcvt_save_settings', 'gwcvt_handle_save_settings' );
@@ -260,6 +261,91 @@ function gwcvt_settings_fields(): array {
 			'label'   => __( 'Activity suggestions', 'groundwork-common-volunteer-tracker' ),
 			'help'    => __( 'One per line. Offered as suggestions when logging a shift; staff can still type anything. Leave empty for free text.', 'groundwork-common-volunteer-tracker' ),
 		),
+
+		/* ── Shifts ──────────────────────────────────────────────────────── */
+
+		'shifts_enabled'            => array(
+			'tab'     => 'shifts',
+			'section' => 'schedule',
+			'type'    => 'checkbox',
+			'label'   => __( 'Plan shifts ahead of time', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. With it on, a Schedule screen appears where you can plan shifts, repeat them, put volunteers on them and print a roster. A scheduled shift is a plan and records nothing about anybody\'s hours — hours are still logged after the fact and still have to be verified.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'shift_locations'           => array(
+			'tab'     => 'shifts',
+			'section' => 'schedule',
+			'type'    => 'textarea',
+			'rows'    => 5,
+			'label'   => __( 'Location suggestions', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'One per line. Offered as suggestions when planning a shift; you can still type anything. Leave empty for free text.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'signup_enabled'            => array(
+			'tab'     => 'shifts',
+			'section' => 'signup',
+			'type'    => 'checkbox',
+			'label'   => __( 'Let people sign up for shifts themselves', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name and an email address from anonymous visitors. The public list shows what each shift is and how many places are left — never who else is coming. Nobody who signs up is added to your volunteer records automatically; a staff member matches them, exactly as with the hours form.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'schedule_page'             => array(
+			'tab'     => 'shifts',
+			'section' => 'signup',
+			'type'    => 'page',
+			'label'   => __( 'The page the shifts are on', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Shifts block, or the [volunteer_shifts] shortcode, to a page and choose it here. Signups are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'signup_code'               => array(
+			'tab'     => 'shifts',
+			'section' => 'signup',
+			'type'    => 'text',
+			'label'   => __( 'Require a code', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Optional. A word you give people, which the form then asks for. Not a security control — it is the difference between a form the whole internet can post to and one only people who have been told about it will bother with.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'signup_horizon_days'       => array(
+			'tab'     => 'shifts',
+			'section' => 'signup',
+			'type'    => 'select',
+			'label'   => __( 'Show shifts up to', 'groundwork-common-volunteer-tracker' ),
+			'options' => 'gwcvt_signup_horizon_options',
+			'help'    => __( 'How far ahead the public list looks. A year of Saturdays is a wall of text nobody reads to the bottom of.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'signup_cutoff_hours'       => array(
+			'tab'     => 'shifts',
+			'section' => 'signup',
+			'type'    => 'select',
+			'label'   => __( 'Close signups', 'groundwork-common-volunteer-tracker' ),
+			'options' => 'gwcvt_signup_cutoff_options',
+			'help'    => __( 'Right up to the start is fine for a warehouse where an extra pair of hands is always welcome. Choose earlier if you have to print a list the night before.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'reminder_enabled'          => array(
+			'tab'     => 'shifts',
+			'section' => 'notices',
+			'type'    => 'checkbox',
+			'label'   => __( 'Remind people before their shift', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'One message per person per shift, sent once. Whoever is on the roster gets it; people on the waiting list do not, because they do not have a place yet.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'reminder_lead_hours'       => array(
+			'tab'     => 'shifts',
+			'section' => 'notices',
+			'type'    => 'select',
+			'label'   => __( 'Send the reminder', 'groundwork-common-volunteer-tracker' ),
+			'options' => 'gwcvt_reminder_lead_options',
+			'help'    => __( 'Two days is usually right: long enough that somebody who cannot make it still has time to say so, and you still have time to call somebody else.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'digest_enabled'            => array(
+			'tab'     => 'shifts',
+			'section' => 'notices',
+			'type'    => 'checkbox',
+			'label'   => __( 'Send yourself a daily summary', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'One message a day listing shifts in the next week that are short of people, and shifts that have happened without their hours being logged. Nothing is sent on a day when there is nothing to say.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'digest_recipient'          => array(
+			'tab'         => 'shifts',
+			'section'     => 'notices',
+			'type'        => 'email',
+			'label'       => __( 'Send the summary to', 'groundwork-common-volunteer-tracker' ),
+			'placeholder' => (string) get_option( 'admin_email' ),
+			'help'        => __( 'Leave empty to use the site’s admin address.', 'groundwork-common-volunteer-tracker' ),
+		),
 	);
 
 	/**
@@ -287,6 +373,11 @@ function gwcvt_settings_sections(): array {
 		'logging' => array(
 			'hours'   => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
 			'selflog' => __( 'The public form', 'groundwork-common-volunteer-tracker' ),
+		),
+		'shifts'  => array(
+			'schedule' => __( 'Planning ahead', 'groundwork-common-volunteer-tracker' ),
+			'signup'   => __( 'Signing up from your site', 'groundwork-common-volunteer-tracker' ),
+			'notices'  => __( 'Reminders and summaries', 'groundwork-common-volunteer-tracker' ),
 		),
 		'privacy' => array(
 			'retention' => __( 'Retention', 'groundwork-common-volunteer-tracker' ),
@@ -320,6 +411,50 @@ function gwcvt_retention_period_options(): array {
 		'36' => __( '3 years', 'groundwork-common-volunteer-tracker' ),
 		'60' => __( '5 years', 'groundwork-common-volunteer-tracker' ),
 		'84' => __( '7 years', 'groundwork-common-volunteer-tracker' ),
+	);
+}
+
+/**
+ * How far ahead the public shift list may look.
+ *
+ * @return array<string, string>
+ */
+function gwcvt_signup_horizon_options(): array {
+	return array(
+		'14'  => __( '2 weeks ahead', 'groundwork-common-volunteer-tracker' ),
+		'30'  => __( 'A month ahead', 'groundwork-common-volunteer-tracker' ),
+		'60'  => __( '2 months ahead', 'groundwork-common-volunteer-tracker' ),
+		'90'  => __( '3 months ahead', 'groundwork-common-volunteer-tracker' ),
+		'180' => __( '6 months ahead', 'groundwork-common-volunteer-tracker' ),
+	);
+}
+
+/**
+ * How long before a shift starts signups close.
+ *
+ * @return array<string, string>
+ */
+function gwcvt_signup_cutoff_options(): array {
+	return array(
+		'0'  => __( 'Right up to the start', 'groundwork-common-volunteer-tracker' ),
+		'2'  => __( '2 hours before', 'groundwork-common-volunteer-tracker' ),
+		'12' => __( '12 hours before', 'groundwork-common-volunteer-tracker' ),
+		'24' => __( 'The day before', 'groundwork-common-volunteer-tracker' ),
+		'48' => __( 'Two days before', 'groundwork-common-volunteer-tracker' ),
+	);
+}
+
+/**
+ * How long before a shift its reminder goes out.
+ *
+ * @return array<string, string>
+ */
+function gwcvt_reminder_lead_options(): array {
+	return array(
+		'12' => __( 'The evening before', 'groundwork-common-volunteer-tracker' ),
+		'24' => __( 'A day before', 'groundwork-common-volunteer-tracker' ),
+		'48' => __( 'Two days before', 'groundwork-common-volunteer-tracker' ),
+		'72' => __( 'Three days before', 'groundwork-common-volunteer-tracker' ),
 	);
 }
 

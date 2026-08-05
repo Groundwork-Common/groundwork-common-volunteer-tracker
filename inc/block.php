@@ -24,9 +24,27 @@ add_action( 'enqueue_block_editor_assets', 'gwcvt_localize_block_editor' );
 function gwcvt_register_block(): void {
 	if ( function_exists( 'register_block_type_from_metadata' ) ) {
 		register_block_type_from_metadata( GWCVT_DIR . 'blocks/hours-form' );
+		register_block_type_from_metadata( GWCVT_DIR . 'blocks/shift-list' );
 	}
 
 	add_shortcode( 'volunteer_hours_form', 'gwcvt_form_shortcode' );
+	add_shortcode( 'volunteer_shifts', 'gwcvt_shifts_shortcode' );
+}
+
+/**
+ * The shift list as a shortcode.
+ *
+ * @param array $atts Ignored; the list has no per-instance options.
+ * @return string
+ */
+function gwcvt_shifts_shortcode( $atts = array() ): string {
+	$list = gwcvt_render_shift_list();
+
+	if ( '' !== $list ) {
+		wp_enqueue_style( 'gwcvt-schedule' );
+	}
+
+	return $list;
 }
 
 /**
@@ -60,13 +78,26 @@ function gwcvt_form_shortcode( $atts = array() ): string {
 function gwcvt_localize_block_editor(): void {
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
+	$current = $screen && 'page' === $screen->post_type ? (int) get_the_ID() : 0;
+
 	wp_localize_script(
 		'groundwork-common-volunteer-tracker-hours-form-editor-script',
 		'GWCVT_EDITOR',
 		array(
 			'selfLogEnabled' => (bool) gwcvt_setting( 'self_log_enabled' ),
 			'pinnedPage'     => (int) gwcvt_setting( 'self_log_page' ),
-			'currentPage'    => $screen && 'page' === $screen->post_type ? (int) get_the_ID() : 0,
+			'currentPage'    => $current,
+		)
+	);
+
+	wp_localize_script(
+		'groundwork-common-volunteer-tracker-shift-list-editor-script',
+		'GWCVT_SHIFT_EDITOR',
+		array(
+			'shiftsEnabled' => (bool) gwcvt_setting( 'shifts_enabled' ),
+			'signupEnabled' => (bool) gwcvt_setting( 'signup_enabled' ),
+			'pinnedPage'    => (int) gwcvt_setting( 'schedule_page' ),
+			'currentPage'   => $current,
 		)
 	);
 }

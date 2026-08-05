@@ -33,6 +33,15 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  * harmless — just untidy in a way that outlives us.
  * ─────────────────────────────────────────────────────────────────────────── */
 
+/* One family of options is deliberately absent from the list below: the
+ * per-shift signup locks, 'gwcvt_signup_lock_<id>'. They are named after a post
+ * ID, so they cannot be enumerated without a query, and they do not need to be —
+ * each is released by the request that took it, stolen and reused if that
+ * request died, and deleted outright when its shift is. A stray one is a single
+ * non-autoloaded row that any later signup on that shift reclaims. Adding a
+ * $wpdb LIKE sweep to catch it would be the plugin's only raw query, run at the
+ * least testable moment in its life, to tidy something already self-tidying. */
+
 /** Every option this plugin writes. */
 const GWCVT_UNINSTALL_OPTIONS = array(
 	'gwcvt_settings',
@@ -46,10 +55,12 @@ const GWCVT_UNINSTALL_OPTIONS = array(
  * Clean up one site.
  */
 function gwcvt_uninstall_site(): void {
-	$event = wp_next_scheduled( 'gwcvt_daily_retention' );
+	foreach ( array( 'gwcvt_daily_retention', 'gwcvt_shift_reminders', 'gwcvt_coordinator_digest' ) as $gwcvt_event ) {
+		$gwcvt_next = wp_next_scheduled( $gwcvt_event );
 
-	if ( $event ) {
-		wp_unschedule_event( $event, 'gwcvt_daily_retention' );
+		if ( $gwcvt_next ) {
+			wp_unschedule_event( $gwcvt_next, $gwcvt_event );
+		}
 	}
 
 	delete_transient( 'gwcvt_unverified_count' );

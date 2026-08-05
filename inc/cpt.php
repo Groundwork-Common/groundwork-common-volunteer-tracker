@@ -19,6 +19,16 @@ const GWCVT_ENTRY_ACTIVITY   = '_gwcvt_activity';
 const GWCVT_ENTRY_SUPERVISOR = '_gwcvt_supervisor';
 const GWCVT_ENTRY_SOURCE     = '_gwcvt_source';
 
+/* The scheduled shift these hours were logged from, when they came from one.
+ * Absent on every entry typed by hand, which is most of them.
+ *
+ * Metadata, and deliberately nothing the letter reads. What a letter prints is
+ * the date, the duration, the activity, the supervisor and the attestation —
+ * the facts the organisation observed. That a plan existed beforehand is not one
+ * of them, and adding it to the printed document would invalidate every
+ * reference code ever issued for the sake of a line no reader needs. */
+const GWCVT_ENTRY_SHIFT = '_gwcvt_entry_shift';
+
 /* The attestation. Absent means unverified — there is no 'false' to store and
  * no third state, which is what stops "verified" and "not verified yet" from
  * drifting apart from "the record exists".
