@@ -1,0 +1,598 @@
+<?php
+/**
+ * Reading shifts: when they are, how long, how full, and whether they are open.
+ *
+ * @package VolunteerTracker
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+/* ── Wall time in, instants out ──────────────────────────────────────────────
+ * A shift stores '09:00', not a timestamp. The Saturday nine o'clock shift is at
+ * nine o'clock in March and at nine o'clock in November, and storing the instant
+ * would move one of them by an hour when the clocks change.
+ *
+ * So the record holds what a person would write on a noticeboard, and every
+ * question that needs a real moment in time — has it ended, is it within the
+ * reminder window, what goes in the calendar file — asks for one here, through
+ * gwcvt_timezone(). One conversion, one place.
+ *
+ * gwcvt_shift_instant_at() takes its zone as an argument rather than reaching
+ * for the site's, so that the conversion itself can be tested against a zone
+ * that actually observes daylight saving.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Read a typed time of day into H:i, or ''.
+ *
+ * @param string $raw What was posted.
+ * @return string
+ */
+function gwcvt_sanitize_time( string $raw ): string {
+	$value = trim( $raw );
+
+	if ( ! preg_match( '/^([01]\d|2[0-3]):([0-5]\d)$/', $value ) ) {
+		return '';
+	}
+
+	return $value;
+}
+
+/**
+ * A wall-clock date and time as a real moment.
+ *
+ * @param string       $date     Y-m-d.
+ * @param string       $time     H:i.
+ * @param DateTimeZone $timezone Where the organisation is.
+ * @return DateTimeImmutable|null
+ */
+function gwcvt_shift_instant_at( string $date, string $time, DateTimeZone $timezone ): ?DateTimeImmutable {
+	if ( '' === $time || null === gwcvt_recurrence_date( $date ) ) {
+		return null;
+	}
+
+	$instant = DateTimeImmutable::createFromFormat( '!Y-m-d H:i', $date . ' ' . $time, $timezone );
+
+	return false === $instant ? null : $instant;
+}
+
+/**
+ * When a shift starts.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return DateTimeImmutable|null
+ */
+function gwcvt_shift_starts( int $shift_id ): ?DateTimeImmutable {
+	return gwcvt_shift_instant_at(
+		(string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true ),
+		(string) get_post_meta( $shift_id, GWCVT_SHIFT_START, true ),
+		gwcvt_timezone()
+	);
+}
+
+/**
+ * When a shift ends.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return DateTimeImmutable|null
+ */
+function gwcvt_shift_ends( int $shift_id ): ?DateTimeImmutable {
+	$date = (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+
+	if ( get_post_meta( $shift_id, GWCVT_SHIFT_OVERNIGHT, true ) ) {
+		$next = gwcvt_recurrence_date( $date );
+
+		if ( null === $next ) {
+			return null;
+		}
+
+		$date = $next->modify( '+1 day' )->format( 'Y-m-d' );
+	}
+
+	return gwcvt_shift_instant_at(
+		$date,
+		(string) get_post_meta( $shift_id, GWCVT_SHIFT_END, true ),
+		gwcvt_timezone()
+	);
+}
+
+/**
+ * How long a shift is, in minutes.
+ *
+ * Minutes, like every other duration in this plugin, because this number becomes
+ * the prefilled hours on an entry the moment somebody reconciles the roster —
+ * and an entry's duration is an integer number of minutes. See the box comment
+ * in inc/settings.php.
+ *
+ * @param string $start     H:i.
+ * @param string $end       H:i.
+ * @param bool   $next_day  Whether the end time is on the following day.
+ * @return int Zero when the times cannot be read or do not describe a duration.
+ */
+function gwcvt_shift_duration( string $start, string $end, bool $next_day = false ): int {
+	$start = gwcvt_sanitize_time( $start );
+	$end   = gwcvt_sanitize_time( $end );
+
+	if ( '' === $start || '' === $end ) {
+		return 0;
+	}
+
+	$from = ( (int) substr( $start, 0, 2 ) * 60 ) + (int) substr( $start, 3, 2 );
+	$to   = ( (int) substr( $end, 0, 2 ) * 60 ) + (int) substr( $end, 3, 2 );
+
+	if ( $next_day ) {
+		$to += 1440;
+	}
+
+	$minutes = $to - $from;
+
+	/* A shift that ends before it starts is a typo, not a twenty-three hour
+	 * overnight — the overnight case is the explicit flag above. Nothing is
+	 * guessed; the screen refuses it and says why. */
+	if ( $minutes < 1 || $minutes > GWCVT_MAX_ENTRY_MINUTES ) {
+		return 0;
+	}
+
+	return $minutes;
+}
+
+/**
+ * How long a stored shift is, in minutes.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return int
+ */
+function gwcvt_shift_minutes( int $shift_id ): int {
+	return gwcvt_shift_duration(
+		(string) get_post_meta( $shift_id, GWCVT_SHIFT_START, true ),
+		(string) get_post_meta( $shift_id, GWCVT_SHIFT_END, true ),
+		(bool) get_post_meta( $shift_id, GWCVT_SHIFT_OVERNIGHT, true )
+	);
+}
+
+/* ── State, computed rather than stored ──────────────────────────────────────
+ * "Closed to signups" is not a status anybody writes. It is the answer to a
+ * comparison — is it cancelled, has it started, is it past its cutoff — and
+ * storing it would mean a scheduled task whose job is to make a row agree with
+ * the clock, plus every bug where that task did not run.
+ *
+ * The same argument as the colophon storing WHEN it was collapsed rather than
+ * THAT it was, so that thirty days falls out of a comparison.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Has this shift been cancelled?
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwcvt_shift_is_cancelled( int $shift_id ): bool {
+	return GWCVT_SHIFT_CANCELLED === get_post_status( $shift_id );
+}
+
+/**
+ * Has the roster been turned into hour entries?
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwcvt_shift_is_reconciled( int $shift_id ): bool {
+	return '' !== (string) get_post_meta( $shift_id, GWCVT_SHIFT_RECONCILED, true );
+}
+
+/**
+ * Has the shift finished?
+ *
+ * The gate on reconciling. An entry dated in the future is silently clamped to
+ * today by gwcvt_save_entry(), so writing hours for a shift that has not ended
+ * would record the wrong date on a document a court reads.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwcvt_shift_has_ended( int $shift_id ): bool {
+	$ends = gwcvt_shift_ends( $shift_id );
+
+	if ( null === $ends ) {
+		return false;
+	}
+
+	return $ends->getTimestamp() <= time();
+}
+
+/**
+ * Is this shift accepting signups?
+ *
+ * Being full is deliberately not part of this. A full shift still accepts
+ * people, onto the waiting list — see gwcvt_signup_settle().
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwcvt_shift_is_open( int $shift_id ): bool {
+	if ( 'publish' !== get_post_status( $shift_id ) ) {
+		return false;
+	}
+
+	$starts = gwcvt_shift_starts( $shift_id );
+
+	if ( null === $starts ) {
+		return false;
+	}
+
+	$cutoff = max( 0, (int) gwcvt_setting( 'signup_cutoff_hours' ) ) * HOUR_IN_SECONDS;
+
+	return ( $starts->getTimestamp() - $cutoff ) > time();
+}
+
+/**
+ * Did anything change that a volunteer would need to know about?
+ *
+ * The activity, the notes, the supervisor and the capacity are all deliberately
+ * absent from this list. They can change without affecting whether somebody can
+ * come, and mailing thirty people because a coordinator fixed a spelling is how
+ * an organisation teaches its volunteers to ignore its email.
+ *
+ * @param int   $shift_id Shift post ID.
+ * @param array $was      What it looked like before the save.
+ * @return bool
+ */
+function gwcvt_shift_moved( int $shift_id, array $was ): bool {
+	$now = array(
+		'date'     => (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true ),
+		'start'    => (string) get_post_meta( $shift_id, GWCVT_SHIFT_START, true ),
+		'end'      => (string) get_post_meta( $shift_id, GWCVT_SHIFT_END, true ),
+		'next_day' => (string) get_post_meta( $shift_id, GWCVT_SHIFT_OVERNIGHT, true ),
+		'location' => (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ),
+	);
+
+	foreach ( $now as $key => $value ) {
+		if ( (string) ( $was[ $key ] ?? '' ) !== $value ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/* ── The roster ──────────────────────────────────────────────────────────── */
+
+/**
+ * The signups on a shift.
+ *
+ * @param int      $shift_id Shift post ID.
+ * @param string[] $statuses Which statuses to include.
+ * @return int[] Signup post IDs, oldest first.
+ */
+function gwcvt_shift_signup_ids( int $shift_id, array $statuses = array( 'publish' ) ): array {
+	if ( $shift_id < 1 ) {
+		return array();
+	}
+
+	$ids = get_posts(
+		array(
+			'post_type'        => GWCVT_SIGNUP_TYPE,
+			'post_parent'      => $shift_id,
+			'post_status'      => $statuses,
+			'posts_per_page'   => 500,
+			'orderby'          => 'ID',
+			'order'            => 'ASC',
+			'fields'           => 'ids',
+			'no_found_rows'    => true,
+			'suppress_filters' => false,
+		)
+	);
+
+	$ids = array_map( 'intval', (array) $ids );
+
+	/* One cache priming call rather than a query per row. The roster screen reads
+	 * four meta keys off every signup, and a shift with thirty people on it would
+	 * otherwise be a hundred and twenty queries. */
+	if ( $ids ) {
+		update_postmeta_cache( $ids );
+	}
+
+	return $ids;
+}
+
+/**
+ * How many people are on the roster proper.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return int
+ */
+function gwcvt_shift_filled( int $shift_id ): int {
+	return count( gwcvt_shift_signup_ids( $shift_id ) );
+}
+
+/**
+ * How many places are left, or null when the shift has no maximum.
+ *
+ * Never negative: a shift that has somehow been overfilled reads as full rather
+ * than as minus one, because "minus one place left" on a public page is a bug
+ * report addressed to a volunteer.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return int|null
+ */
+function gwcvt_shift_spots_left( int $shift_id ): ?int {
+	$max = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
+
+	if ( $max < 1 ) {
+		return null;
+	}
+
+	return max( 0, $max - gwcvt_shift_filled( $shift_id ) );
+}
+
+/**
+ * Is the shift short of the number of people it needs?
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwcvt_shift_is_understaffed( int $shift_id ): bool {
+	$min = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true );
+
+	if ( $min < 1 ) {
+		return false;
+	}
+
+	return gwcvt_shift_filled( $shift_id ) < $min;
+}
+
+/* ── Finding shifts ──────────────────────────────────────────────────────── */
+
+/**
+ * Shifts in a date range, soonest first.
+ *
+ * Ordered by the shift's own date rather than by post date, through a named meta
+ * clause — the same construction inc/admin-verify.php uses on the hours list, and
+ * for the same reason: "when is it" and "when was it typed in" are different
+ * questions and only one of them is the one anybody is asking.
+ *
+ * @param array $args from, to (Y-m-d), statuses, limit.
+ * @return int[] Shift post IDs.
+ */
+function gwcvt_shifts_between( array $args = array() ): array {
+	$from     = (string) ( $args['from'] ?? gwcvt_today() );
+	$to       = (string) ( $args['to'] ?? '' );
+	$statuses = (array) ( $args['statuses'] ?? array( 'publish' ) );
+	$limit    = (int) ( $args['limit'] ?? 200 );
+
+	$range = array(
+		'key'     => GWCVT_SHIFT_DATE,
+		'value'   => $from,
+		'compare' => '>=',
+		'type'    => 'CHAR',
+	);
+
+	if ( '' !== $to ) {
+		$range = array(
+			'key'     => GWCVT_SHIFT_DATE,
+			'value'   => array( $from, $to ),
+			'compare' => 'BETWEEN',
+			'type'    => 'CHAR',
+		);
+	}
+
+	$ids = get_posts(
+		array(
+			'post_type'      => GWCVT_SHIFT_TYPE,
+			'post_status'    => $statuses,
+			'posts_per_page' => $limit,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_meta_query -- the only way to order by the shift's own date; the table is one row per shift.
+				'gwcvt_shift_date' => $range,
+			),
+			'orderby'        => array(
+				'gwcvt_shift_date' => 'ASC',
+				'ID'               => 'ASC',
+			),
+		)
+	);
+
+	$ids = array_map( 'intval', (array) $ids );
+
+	if ( $ids ) {
+		update_postmeta_cache( $ids );
+	}
+
+	return $ids;
+}
+
+/**
+ * Shifts that have finished and whose hours have never been logged.
+ *
+ * The query the reconciliation nag is built on. An unreconciled shift is not an
+ * error — somebody types Saturday up on Monday — but one that is still
+ * unreconciled a fortnight later is hours nobody will ever remember, and those
+ * hours are what a letter is made of.
+ *
+ * @param int $limit How many to return.
+ * @return int[]
+ */
+function gwcvt_unreconciled_shift_ids( int $limit = 50 ): array {
+	$candidates = gwcvt_shifts_between(
+		array(
+			'from'  => gmdate( 'Y-m-d', time() - ( 180 * DAY_IN_SECONDS ) ),
+			'to'    => gwcvt_today(),
+			'limit' => max( $limit * 4, 100 ),
+		)
+	);
+
+	$due = array();
+
+	foreach ( $candidates as $shift_id ) {
+		if ( count( $due ) >= $limit ) {
+			break;
+		}
+
+		if ( gwcvt_shift_is_reconciled( $shift_id ) || ! gwcvt_shift_has_ended( $shift_id ) ) {
+			continue;
+		}
+
+		/* A shift nobody signed up for and nobody walked into is not a chore
+		 * somebody forgot; it is a Saturday that did not happen. Left out of the
+		 * nag, and still reconcilable by hand from the schedule. */
+		if ( 0 === gwcvt_shift_filled( $shift_id ) ) {
+			continue;
+		}
+
+		$due[] = $shift_id;
+	}
+
+	return $due;
+}
+
+/**
+ * Shifts coming up that are short of the people they need.
+ *
+ * The other half of the daily summary. Only shifts that have not started —
+ * being short of people last Saturday is not something anybody can act on, and
+ * a summary full of things that cannot be acted on is a summary nobody reads.
+ *
+ * @param int $days How far ahead to look.
+ * @return int[]
+ */
+function gwcvt_understaffed_shift_ids( int $days = 7 ): array {
+	$candidates = gwcvt_shifts_between(
+		array(
+			'from'  => gwcvt_today(),
+			'to'    => gmdate( 'Y-m-d', time() + ( max( 1, $days ) * DAY_IN_SECONDS ) ),
+			'limit' => 100,
+		)
+	);
+
+	$short = array();
+
+	foreach ( $candidates as $shift_id ) {
+		$starts = gwcvt_shift_starts( $shift_id );
+
+		if ( null === $starts || $starts->getTimestamp() <= time() ) {
+			continue;
+		}
+
+		if ( gwcvt_shift_is_understaffed( $shift_id ) ) {
+			$short[] = $shift_id;
+		}
+	}
+
+	return $short;
+}
+
+/* ── Where the admin screens live ────────────────────────────────────────────
+ * URL builders rather than screens, and they sit here rather than beside the
+ * screens they point at because the daily summary builds both — and the summary
+ * runs on cron, where the admin bundle is not loaded at all. A digest that
+ * fatals at three in the morning on a site nobody is watching is a feature that
+ * silently stops existing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The schedule screen's own URL.
+ *
+ * @param array $args Extra query arguments.
+ * @return string
+ */
+function gwcvt_schedule_url( array $args = array() ): string {
+	return add_query_arg(
+		array_merge(
+			array(
+				'post_type' => GWCVT_ENTRY_TYPE,
+				'page'      => GWCVT_SCHEDULE_PAGE,
+			),
+			$args
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/**
+ * The screen that turns one shift's roster into hours.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string
+ */
+function gwcvt_shift_log_url( int $shift_id ): string {
+	return add_query_arg(
+		array(
+			'post_type'   => GWCVT_ENTRY_TYPE,
+			'page'        => GWCVT_QUICK_ADD_PAGE,
+			'gwcvt_shift' => $shift_id,
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/* ── Labels ──────────────────────────────────────────────────────────────── */
+
+/**
+ * A shift's date, as the site formats dates.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string
+ */
+function gwcvt_shift_date_label( int $shift_id ): string {
+	$starts = gwcvt_shift_starts( $shift_id );
+
+	if ( null === $starts ) {
+		return (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+	}
+
+	$format = (string) get_option( 'date_format' );
+
+	return (string) wp_date( '' !== $format ? $format : 'D j M Y', $starts->getTimestamp() );
+}
+
+/**
+ * A shift's time range, as the site formats times.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string
+ */
+function gwcvt_shift_time_label( int $shift_id ): string {
+	$starts = gwcvt_shift_starts( $shift_id );
+	$ends   = gwcvt_shift_ends( $shift_id );
+
+	if ( null === $starts || null === $ends ) {
+		return '';
+	}
+
+	$format = (string) get_option( 'time_format' );
+	$format = '' !== $format ? $format : 'H:i';
+
+	return sprintf(
+		/* translators: 1: a start time, 2: an end time. */
+		__( '%1$s–%2$s', 'groundwork-common-volunteer-tracker' ),
+		(string) wp_date( $format, $starts->getTimestamp() ),
+		(string) wp_date( $format, $ends->getTimestamp() )
+	);
+}
+
+/**
+ * How full a shift is, as a sentence for a coordinator.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string
+ */
+function gwcvt_shift_fill_label( int $shift_id ): string {
+	$filled = gwcvt_shift_filled( $shift_id );
+	$max    = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
+
+	if ( $max > 0 ) {
+		return sprintf(
+			/* translators: 1: how many people have signed up, 2: how many the shift takes. */
+			__( '%1$d of %2$d', 'groundwork-common-volunteer-tracker' ),
+			$filled,
+			$max
+		);
+	}
+
+	return sprintf(
+		/* translators: %d: how many people have signed up. */
+		_n( '%d signed up', '%d signed up', $filled, 'groundwork-common-volunteer-tracker' ),
+		$filled
+	);
+}

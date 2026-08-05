@@ -44,16 +44,56 @@ add_action( 'admin_notices', 'gwcvt_triage_result_notice' );
  * @return array{volunteer_id:int, matched_on:string}
  */
 function gwcvt_suggest_volunteer( int $entry_id ): array {
+	if ( (int) get_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, true ) > 0 ) {
+		return array(
+			'volunteer_id' => 0,
+			'matched_on'   => '',
+		);
+	}
+
+	return gwcvt_suggest_volunteer_for(
+		(string) get_post_meta( $entry_id, '_gwcvt_claim_email', true ),
+		(string) get_post_meta( $entry_id, '_gwcvt_claim_name', true )
+	);
+}
+
+/**
+ * The volunteer a signup is probably about.
+ *
+ * A signup keeps its claims under different meta keys from an entry's — see the
+ * note in inc/signup-cpt.php on why they are deliberately not shared — so this
+ * reads those and hands the same two strings to the same matcher. The rules
+ * below are the ones that matter, and there is exactly one copy of them.
+ *
+ * @param int $signup_id Signup post ID.
+ * @return array{volunteer_id:int, matched_on:string}
+ */
+function gwcvt_suggest_volunteer_for_signup( int $signup_id ): array {
+	if ( (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true ) > 0 ) {
+		return array(
+			'volunteer_id' => 0,
+			'matched_on'   => '',
+		);
+	}
+
+	return gwcvt_suggest_volunteer_for(
+		(string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_EMAIL, true ),
+		(string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_NAME, true )
+	);
+}
+
+/**
+ * The volunteer a claimed name and address probably belong to.
+ *
+ * @param string $email Claimed address.
+ * @param string $name  Claimed name.
+ * @return array{volunteer_id:int, matched_on:string}
+ */
+function gwcvt_suggest_volunteer_for( string $email, string $name ): array {
 	$none = array(
 		'volunteer_id' => 0,
 		'matched_on'   => '',
 	);
-
-	if ( (int) get_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, true ) > 0 ) {
-		return $none;
-	}
-
-	$email = (string) get_post_meta( $entry_id, '_gwcvt_claim_email', true );
 
 	if ( '' !== $email ) {
 		$by_email = gwcvt_volunteers_by_email( $email );
@@ -69,7 +109,7 @@ function gwcvt_suggest_volunteer( int $entry_id ): array {
 		}
 	}
 
-	$name = trim( (string) get_post_meta( $entry_id, '_gwcvt_claim_name', true ) );
+	$name = trim( $name );
 
 	if ( '' === $name ) {
 		return $none;

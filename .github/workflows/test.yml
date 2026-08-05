@@ -134,11 +134,32 @@ jobs:
       # Each script echoes PASS/FAIL per check and exits non-zero on any
       # failure. The exit code is what fails the job; the output is what tells
       # somebody which check went.
+      #
+      # Discovered from the filesystem rather than listed here. The list was
+      # written out by hand until it had six names on it and the repository had
+      # eleven scripts — so five milestones' worth of integration coverage
+      # existed, passed locally, and was run by nobody. A job that silently
+      # tests less than it appears to is worse than one that fails, because it
+      # reports success either way.
+      #
+      # The count is asserted for the same reason: a glob that matches nothing
+      # exits zero and looks exactly like a green run.
       - name: Run the integration scripts
         run: |
           status=0
           base=wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration
-          for script in caps entries verify letter privacy self-log; do
+
+          scripts=$(ls tests/integration/*.php | xargs -n1 basename | sed 's/\.php$//' | sort)
+          found=$(echo "$scripts" | wc -l | tr -d ' ')
+
+          echo "Found $found integration scripts."
+
+          if [ "$found" -lt 6 ]; then
+            echo "::error::Expected at least 6 integration scripts, found $found — the glob is wrong."
+            exit 1
+          fi
+
+          for script in $scripts; do
             echo "── $script ────────────────────────────────────────────"
             if ! npx --yes @wordpress/env run cli --config=.wp-env.ci.json -- wp eval-file "$base/$script.php"; then
               echo "::error::$script failed"

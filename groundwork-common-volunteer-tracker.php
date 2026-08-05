@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.7.1
+ * Version:           0.11.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.7.1';
+const GWCVT_VERSION = '0.11.0';
 
 /* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -142,6 +142,56 @@ if ( ! function_exists( 'gwcvt_register_volunteer_type' ) ) {
 if ( ! function_exists( 'gwcvt_entry_ids_for_volunteer' ) ) {
 	require GWCVT_DIR . 'inc/entries.php';
 }
+
+/* The schedule. recurrence.php is pure calendar arithmetic and depends on
+ * nothing, and shifts.php calls it to validate a date, so it goes first. The two
+ * post types declare the meta key constants the query layer reads, so they
+ * cannot move after it — the same ordering rule as cpt.php and entries.php
+ * above. signups.php reads a shift's capacity, so it comes last of the four.
+ *
+ * All four load whether or not scheduling is switched on. The setting governs
+ * whether the SCREENS appear, not whether the functions exist: a site that turns
+ * scheduling off still has shifts in the database, and the privacy exporter, the
+ * retention sweep and WP-CLI all have to be able to read them. */
+if ( ! function_exists( 'gwcvt_recurrence_dates' ) ) {
+	require GWCVT_DIR . 'inc/recurrence.php';
+}
+if ( ! function_exists( 'gwcvt_register_shift_type' ) ) {
+	require GWCVT_DIR . 'inc/shift-cpt.php';
+}
+if ( ! function_exists( 'gwcvt_register_signup_type' ) ) {
+	require GWCVT_DIR . 'inc/signup-cpt.php';
+}
+if ( ! function_exists( 'gwcvt_shift_duration' ) ) {
+	require GWCVT_DIR . 'inc/shifts.php';
+}
+if ( ! function_exists( 'gwcvt_add_signup' ) ) {
+	require GWCVT_DIR . 'inc/signups.php';
+}
+
+/* The public signup surface, in the same order as the hours form's below:
+ * handler first, because it declares gwcvt_signups_open() and
+ * gwcvt_public_shift_ids(), which the form and the calendar file both call.
+ * schedule-emails.php is last of the three — the handler queues a confirmation
+ * through it, but only at request time. */
+if ( ! function_exists( 'gwcvt_signup_dispatch' ) ) {
+	require GWCVT_DIR . 'inc/signup-handler.php';
+}
+if ( ! function_exists( 'gwcvt_render_shift_list' ) ) {
+	require GWCVT_DIR . 'inc/signup-form.php';
+}
+if ( ! function_exists( 'gwcvt_signup_ics' ) ) {
+	require GWCVT_DIR . 'inc/ics.php';
+}
+if ( ! function_exists( 'gwcvt_send_signup_confirmation' ) ) {
+	require GWCVT_DIR . 'inc/schedule-emails.php';
+}
+/* The two scheduled passes. After schedule-emails.php, which holds every message
+ * they send, and after admin-schedule.php would be too late — this registers
+ * cron hooks that fire on requests with no admin loaded at all. */
+if ( ! function_exists( 'gwcvt_run_reminders' ) ) {
+	require GWCVT_DIR . 'inc/schedule-cron.php';
+}
 if ( ! function_exists( 'gwcvt_verify_entry' ) ) {
 	require GWCVT_DIR . 'inc/verify.php';
 }
@@ -216,7 +266,14 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	// Typing up a sign-in sheet in one pass.
 	require GWCVT_DIR . 'inc/admin-quick-add.php';
 
-	/* Contextual help. Last, because it describes what all of the above do. */
+	/* Planning shifts, and who is coming to them. admin-schedule.php owns the
+	 * menu and routes between the screen's views; admin-shift.php renders one
+	 * shift and holds every handler that writes one. */
+	require GWCVT_DIR . 'inc/admin-schedule.php';
+	require GWCVT_DIR . 'inc/admin-shift.php';
+
+	/* Contextual help. Last, because it describes what all of the above do —
+	 * which now includes the schedule and its rosters. */
 	require GWCVT_DIR . 'inc/admin-help.php';
 }
 
@@ -268,7 +325,7 @@ register_deactivation_hook(
 		 * pointing at a function that no longer exists — harmless in WordPress,
 		 * which skips unknown hooks, and a permanent entry in every cron listing
 		 * a site owner ever looks at. */
-		foreach ( array( 'gwcvt_daily_retention' ) as $event ) {
+		foreach ( array( 'gwcvt_daily_retention', 'gwcvt_shift_reminders', 'gwcvt_coordinator_digest' ) as $event ) {
 			$next = wp_next_scheduled( $event );
 			if ( $next ) {
 				wp_unschedule_event( $next, $event );

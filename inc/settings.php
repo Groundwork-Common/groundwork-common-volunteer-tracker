@@ -117,6 +117,68 @@ function gwcvt_setting_defaults(): array {
 		 * and one only people who were handed a card at the front desk can. */
 		'self_log_code'             => '',
 
+		/* ── The schedule ────────────────────────────────────────────────── */
+
+		/* Off. Scheduling is a second product surface — a menu item, a set of
+		 * screens, and eventually mail leaving the site — and none of that should
+		 * appear because somebody updated a plugin they installed to log hours. An
+		 * organisation that takes signups on the phone and a clipboard is not
+		 * doing it wrong, and this stays out of their way until they say so. */
+		'shifts_enabled'            => false,
+
+		/* Empty means the location field is free text, exactly as 'activities'
+		 * above does for what the work is. Shipping a list would mean guessing
+		 * whether this install has one warehouse or eleven pantries. */
+		'shift_locations'           => '',
+
+		/* How long before a shift starts signups close, in hours. Zero means they
+		 * stay open until it begins — which is right for a food bank where
+		 * somebody turning up an hour early is a good day, and wrong for anything
+		 * that has to print a list the night before. */
+		'signup_cutoff_hours'       => 0,
+
+		/* ── Signing up from the front end ────────────────────────────────────
+		 * A second switch rather than a mode of the first, because "we plan
+		 * shifts internally" and "strangers can put their name on one" are
+		 * different decisions with different consequences, and an organisation
+		 * that wants the first should not have to accept the second to get it.
+		 *
+		 * Off, for the same reason self_log_enabled is off: with this on, the
+		 * site accepts a name and an email address from anonymous visitors. That
+		 * should never begin because somebody updated a plugin. */
+		'signup_enabled'            => false,
+
+		/* Pinned by ID, so renaming the page cannot quietly break the handler.
+		 * Enabled without a page pinned does not count as enabled — see
+		 * gwcvt_signups_open(). */
+		'schedule_page'             => 0,
+
+		/* A shared code, if the site wants one. Not a security control; it is the
+		 * difference between a form the whole internet can post to and one only
+		 * people who were handed a card will bother with. */
+		'signup_code'               => '',
+
+		/* How far ahead the public list looks. Long enough to plan around, short
+		 * enough that a year of Saturdays is not a wall of text. */
+		'signup_horizon_days'       => 60,
+
+		/* ── Reminders and the digest ─────────────────────────────────────────
+		 * Both off, and both are mail this site would send on a schedule with
+		 * nobody watching. The confirmation in 0.10.0 is not a setting because a
+		 * signup without one is broken; these two are useful rather than
+		 * structural, so they are a decision.
+		 *
+		 * A reminder is the single biggest lever anybody has on no-shows, and
+		 * two days is the interval that leaves time to find a replacement. */
+		'reminder_enabled'          => false,
+		'reminder_lead_hours'       => 48,
+
+		/* One message a day to one person, and only when there is something to
+		 * say. Empty means the site's admin address — the same "derive it rather
+		 * than fork it" rule as org_contact above. */
+		'digest_enabled'            => false,
+		'digest_recipient'          => '',
+
 		/* ── Privacy ─────────────────────────────────────────────────────── */
 
 		/* Zero means keep indefinitely, and it stays zero until somebody
