@@ -382,6 +382,36 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 			<input type="text" id="gwcvt-phone" name="gwcvt_phone" class="regular-text" maxlength="40" value="<?php echo esc_attr( $phone ); ?>" />
 		</div>
 
+		<?php
+		/* The retention hold. Courts do sometimes require an organisation to
+		 * keep a record longer than its own policy, and a sweep that could not
+		 * be overridden per person would make the retention setting unusable for
+		 * exactly the organisations this plugin is for. It also blocks a privacy
+		 * erasure request, which is why the reason is worth recording — the
+		 * administrator handling that request has to explain the refusal. */
+		?>
+		<div class="gwcvt-field gwcvt-hold">
+			<label>
+				<input type="checkbox" name="gwcvt_hold" value="1" <?php checked( (bool) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD, true ) ); ?> />
+				<strong><?php esc_html_e( 'Keep this record regardless of the retention policy', 'groundwork-common-volunteer-tracker' ); ?></strong>
+			</label>
+			<label for="gwcvt-hold-reason" class="screen-reader-text">
+				<?php esc_html_e( 'Why this record is held', 'groundwork-common-volunteer-tracker' ); ?>
+			</label>
+			<input
+				type="text"
+				id="gwcvt-hold-reason"
+				name="gwcvt_hold_reason"
+				class="regular-text"
+				maxlength="200"
+				placeholder="<?php esc_attr_e( 'Why — e.g. court order, open case', 'groundwork-common-volunteer-tracker' ); ?>"
+				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD_REASON, true ) ); ?>"
+			/>
+			<span class="description">
+				<?php esc_html_e( 'Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal.', 'groundwork-common-volunteer-tracker' ); ?>
+			</span>
+		</div>
+
 		<?php if ( ! $totals->is_empty() ) : ?>
 			<p class="gwcvt-summary">
 				<?php
@@ -429,6 +459,18 @@ function gwcvt_save_volunteer( $post_id, $post ): void {
 		GWCVT_VOLUNTEER_PHONE,
 		mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_phone'] ?? '' ) ), 0, 40 )
 	);
+
+	if ( isset( $posted['gwcvt_hold'] ) ) {
+		update_post_meta( $post_id, GWCVT_VOLUNTEER_HOLD, 1 );
+		update_post_meta(
+			$post_id,
+			GWCVT_VOLUNTEER_HOLD_REASON,
+			mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_hold_reason'] ?? '' ) ), 0, 200 )
+		);
+	} else {
+		delete_post_meta( $post_id, GWCVT_VOLUNTEER_HOLD );
+		delete_post_meta( $post_id, GWCVT_VOLUNTEER_HOLD_REASON );
+	}
 }
 
 /**

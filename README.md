@@ -31,6 +31,12 @@ WordPress 6.3, PHP 7.4. No build step, no Composer, no npm for anything that shi
 - **Translated lookup tables are functions with a static memo, never `const`.** A `const` is evaluated at include time, before the request's translation is loaded — invisible on an English site and total on every other one, and `_doing_it_wrong()` about it since 6.7.
 - **The letter is recomputed from entries every time, never from the cached rollup.** A letter is produced twice a year per volunteer and its correctness is the whole product; a cached figure that is subtly stale is the one failure this plugin cannot have, because the person holding the letter cannot tell.
 - **The reference verifier recomputes from current records, not from the stored figures.** Comparing a letter against its own log entry would answer "matches" every time — a verifier that always says yes is worse than none, because it actively vouches. It reports `changed` rather than `invalid`: hours get corrected and shifts get verified after a letter goes out, and none of that is anybody's fault.
+- **Retention defaults to keeping everything, and nags until you decide.** A plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date they haven't reached. But defaulting to "keep forever" quietly hoards personal data. The resolution isn't a cleverer default — it's a non-dismissible notice on the plugin's own screens that goes away once the Privacy tab is saved, *including* saved as "keep indefinitely". A legitimate answer; never having considered it isn't.
+- **Anonymizing keeps the hours.** Grant reporting and a Form 990 need the service totals; they don't need the name. Deleting outright throws away the organization's own statistics to solve a problem removing the identity already solved. The claimed name/email on self-logged shifts are cleared too — they live on the *entry*, not the volunteer.
+- **The eraser names the letter references it affected.** Silently destroying the record behind a document a court is holding is exactly the failure this plugin can't have; whoever handles the request has to know a reference may now be un-checkable.
+- **The issued-letter log survives a purge.** A letter having been issued is a fact about the organization's own conduct. It holds a reference, an ID and a date — no name.
+- **Retention reads the cached rollup; the letter refuses to.** Same data, different question: a cache a few hours stale can't change whether a record is over two years old, but it could change what a court reads.
+- **Uninstall deletes nothing unless armed,** and even armed removes only options — never posts, never post meta, never the capabilities.
 - **Printing is logged, not just emailing.** A printed letter has left the building just as much as an emailed one, and a log that only knew about email would answer "no letter was issued" about a letter somebody is holding.
 - **There is no theme-overridable letter template, on purpose.** All the prose an organization is likely to change — intro, disclaimer, reference note, letterhead, signatory, email subject and covering note — is a setting on the Letter tab, with `{org} {name} {hours} {shifts} {period} {contact} {reference} {timestamp} {timezone}` placeholders. The document's furniture (headings, column headers, row labels) is filterable via `gwcvt_letter_strings`. What there is *not* is a template file a theme can own — because a theme that owns the markup is a theme that can delete the disclaimer, and the disclaimer not being deletable is the one structural promise this plugin makes about its own output.
 - **The email's covering note sits outside the letter.** A short "here is your letter" message is reasonable to want; putting it *inside* the document would mean the emailed and printed letters were no longer the same document.
@@ -69,6 +75,9 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_letter_strings` | filter | The letter's fixed wording — headings, column headers, row labels. |
 | `gwcvt_settings_fields` | filter | The settable settings, keyed by name. |
 | `gwcvt_settings_saved` | action | After the settings have been saved. |
+| `gwcvt_retention_due` | filter | Whether a volunteer's record is due for purging. |
+| `gwcvt_before_purge` | action | Before a record is anonymized or deleted — last chance to export it. |
+| `gwcvt_purged` | action | After a record has been purged. |
 
 ## Tests
 

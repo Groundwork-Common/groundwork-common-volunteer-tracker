@@ -377,6 +377,25 @@ function current_time( $type, $gmt = 0 ) {
 	return gmdate( 'mysql' === $type ? 'Y-m-d H:i:s' : $type );
 }
 
+function get_post_field( $field, $post_id = null, $context = 'display' ) {
+	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	return $post[ $field ] ?? '';
+}
+
+function sanitize_email( $email ) {
+	return (string) filter_var( trim( (string) $email ), FILTER_SANITIZE_EMAIL );
+}
+
+function wp_list_pluck( $list, $field ) {
+	return array_map( static fn( $row ) => is_array( $row ) ? ( $row[ $field ] ?? null ) : null, (array) $list );
+}
+
+/* Deliberately absent: get_posts(). The retention sweep and the privacy
+ * exporters query the database, and a stub returning array() would make every
+ * assertion about them pass while proving nothing. They are covered against a
+ * real database by tests/integration/privacy.php. What is unit-tested here is
+ * the arithmetic. */
+
 function wp_salt( $scheme = 'auth' ) {
 	// Fixed, so reference-code tests assert STABILITY rather than
 	// unpredictability. Weaker than WordPress by design; the property that
@@ -547,4 +566,6 @@ require GWCVT_DIR . 'inc/letter-cpt.php';
 require GWCVT_DIR . 'inc/letter.php';
 require GWCVT_DIR . 'inc/render.php';
 require GWCVT_DIR . 'inc/emails.php';
+require GWCVT_DIR . 'inc/privacy.php';
+require GWCVT_DIR . 'inc/admin-settings.php';
 require GWCVT_DIR . 'inc/admin-screen.php';

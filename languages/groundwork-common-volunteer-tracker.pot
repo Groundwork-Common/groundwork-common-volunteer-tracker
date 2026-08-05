@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Groundwork Common Volunteer Tracker 0.3.0\n"
+"Project-Id-Version: Groundwork Common Volunteer Tracker 0.4.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-05T16:23:16+00:00\n"
+"POT-Creation-Date: 2026-08-05T16:39:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -104,6 +104,7 @@ msgid "There are no published hour entries for this volunteer in that period, so
 msgstr ""
 
 #: inc/admin-letters.php:157
+#: inc/privacy.php:466
 #: inc/render.php:131
 #: inc/volunteer-cpt.php:102
 msgid "Verified hours"
@@ -119,6 +120,7 @@ msgstr ""
 
 #: inc/admin-letters.php:169
 #: inc/admin-letters.php:516
+#: inc/privacy.php:523
 msgid "Reference"
 msgstr ""
 
@@ -213,7 +215,7 @@ msgstr ""
 
 #. translators: %d: number of shifts.
 #: inc/admin-letters.php:463
-#: inc/meta-box.php:396
+#: inc/meta-box.php:426
 #, php-format
 msgid "%d shift"
 msgid_plural "%d shifts"
@@ -253,6 +255,7 @@ msgid "How"
 msgstr ""
 
 #: inc/admin-letters.php:519
+#: inc/admin-settings.php:597
 msgid "When"
 msgstr ""
 
@@ -353,208 +356,300 @@ msgstr ""
 msgid "Report a problem"
 msgstr ""
 
-#: inc/admin-settings.php:44
+#: inc/admin-settings.php:46
 msgid "Organization name"
 msgstr ""
 
-#: inc/admin-settings.php:46
+#: inc/admin-settings.php:48
 msgid "Leave empty to use the site title."
 msgstr ""
 
-#: inc/admin-settings.php:53
+#: inc/admin-settings.php:55
 msgid "Address"
 msgstr ""
 
-#: inc/admin-settings.php:54
+#: inc/admin-settings.php:56
 msgid "Printed under the name. One line per line."
 msgstr ""
 
-#: inc/admin-settings.php:60
+#: inc/admin-settings.php:62
 msgid "Contact for questions"
 msgstr ""
 
-#: inc/admin-settings.php:62
+#: inc/admin-settings.php:64
 msgid "Where a court or school should direct questions about a letter. This is the number somebody phones to check a reference code, so make it one that is answered."
 msgstr ""
 
-#: inc/admin-settings.php:71
+#: inc/admin-settings.php:73
 msgid "Signed by"
 msgstr ""
 
-#: inc/admin-settings.php:72
+#: inc/admin-settings.php:74
 msgid "Printed under the signature line. Left empty, the line prints unlabelled — which looks unfinished, and is meant to."
 msgstr ""
 
-#: inc/admin-settings.php:78
+#: inc/admin-settings.php:80
 msgid "Their title"
 msgstr ""
 
-#: inc/admin-settings.php:88
+#: inc/admin-settings.php:90
 msgid "Opening paragraph"
 msgstr ""
 
-#: inc/admin-settings.php:90
+#: inc/admin-settings.php:92
 msgid "Leave empty to use the wording shown. Plain text only — bold and italic survive, other markup does not."
 msgstr ""
 
-#: inc/admin-settings.php:98
+#: inc/admin-settings.php:100
 msgid "Disclaimer"
 msgstr ""
 
-#: inc/admin-settings.php:100
+#: inc/admin-settings.php:102
 msgid "Your counsel may want particular wording, so this is yours to change. It cannot be emptied: saving it blank restores the default. A letter with no disclaimer is a letter that has quietly started implying this plugin certified something."
 msgstr ""
 
-#: inc/admin-settings.php:108
+#: inc/admin-settings.php:110
 msgid "What the reference code proves"
 msgstr ""
 
-#: inc/admin-settings.php:110
+#: inc/admin-settings.php:112
 msgid "Also cannot be emptied. Without it, a reader reasonably assumes a code means some outside body issued the document."
 msgstr ""
 
-#: inc/admin-settings.php:120
+#: inc/admin-settings.php:122
 msgid "List every shift"
 msgstr ""
 
-#: inc/admin-settings.php:121
+#: inc/admin-settings.php:123
 msgid "On by default. A total with nothing behind it is a number the reader has to take on faith, which is what this document exists to avoid."
 msgstr ""
 
-#: inc/admin-settings.php:127
+#: inc/admin-settings.php:129
 msgid "Also list hours nobody has verified"
 msgstr ""
 
-#: inc/admin-settings.php:128
+#: inc/admin-settings.php:130
 msgid "Off by default. When on, unverified shifts appear marked as such and are still excluded from the verified total — they are never quietly added in."
 msgstr ""
 
-#: inc/admin-settings.php:134
+#: inc/admin-settings.php:136
 msgid "Reference prefix"
 msgstr ""
 
-#: inc/admin-settings.php:135
+#: inc/admin-settings.php:137
 msgid "Prepended to every reference code. Letters and numbers only — the code gets read aloud over the phone and typed back in."
 msgstr ""
 
-#: inc/admin-settings.php:144
+#: inc/admin-settings.php:146
 msgid "Subject line"
 msgstr ""
 
-#: inc/admin-settings.php:145
+#: inc/admin-settings.php:147
 #: inc/emails.php:117
 msgid "Your volunteer service verification from {org}"
 msgstr ""
 
-#: inc/admin-settings.php:153
+#: inc/admin-settings.php:155
 msgid "Covering note"
 msgstr ""
 
-#: inc/admin-settings.php:154
+#: inc/admin-settings.php:156
 msgid "Appears above the letter in the email, outside it. The letter itself is identical whether printed or emailed, and this is how a short “here is your letter” message gets added without changing the document."
 msgstr ""
 
-#: inc/admin-settings.php:161
+#: inc/admin-settings.php:163
 msgid "From name"
 msgstr ""
 
-#: inc/admin-settings.php:162
+#: inc/admin-settings.php:164
 msgid "Leave both empty to use whatever WordPress would have used."
 msgstr ""
 
-#: inc/admin-settings.php:168
+#: inc/admin-settings.php:170
 msgid "From address"
 msgstr ""
 
-#: inc/admin-settings.php:177
+#: inc/admin-settings.php:179
 msgid "Round hours to"
 msgstr ""
 
-#: inc/admin-settings.php:179
+#: inc/admin-settings.php:181
 msgid "Do not round"
 msgstr ""
 
-#: inc/admin-settings.php:180
+#: inc/admin-settings.php:182
 msgid "5 minutes"
 msgstr ""
 
-#: inc/admin-settings.php:181
+#: inc/admin-settings.php:183
 msgid "10 minutes"
 msgstr ""
 
-#: inc/admin-settings.php:182
+#: inc/admin-settings.php:184
 msgid "15 minutes"
 msgstr ""
 
-#: inc/admin-settings.php:183
+#: inc/admin-settings.php:185
 msgid "30 minutes"
 msgstr ""
 
-#: inc/admin-settings.php:184
+#: inc/admin-settings.php:186
 msgid "A whole hour"
 msgstr ""
 
-#: inc/admin-settings.php:186
+#: inc/admin-settings.php:188
 msgid "Always to the nearest, never up — rounding up is the organization crediting hours nobody worked."
 msgstr ""
 
-#: inc/admin-settings.php:192
+#: inc/admin-settings.php:194
 msgid "Show hours as"
 msgstr ""
 
-#: inc/admin-settings.php:194
+#: inc/admin-settings.php:196
 msgid "Decimal is what a court order is usually written in."
 msgstr ""
 
-#: inc/admin-settings.php:200
+#: inc/admin-settings.php:202
 msgid "Allow shifts dated in the future"
 msgstr ""
 
-#: inc/admin-settings.php:201
+#: inc/admin-settings.php:203
 msgid "Off by default. A shift dated next Tuesday is a typo far more often than a plan, and on a document a court reads it discredits the whole record."
 msgstr ""
 
-#: inc/admin-settings.php:208
-msgid "Activity suggestions"
-msgstr ""
-
 #: inc/admin-settings.php:209
-msgid "One per line. Offered as suggestions when logging a shift; staff can still type anything. Leave empty for free text."
+msgid "Keep volunteer records for"
 msgstr ""
 
-#: inc/admin-settings.php:229
-msgid "Letterhead"
+#: inc/admin-settings.php:211
+msgid "\"Keep indefinitely\" is a legitimate answer, and it is the default — a plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date. What is not legitimate is never deciding, which is why this tab nags until you save it."
+msgstr ""
+
+#: inc/admin-settings.php:217
+msgid "When a record is old enough"
+msgstr ""
+
+#: inc/admin-settings.php:219
+msgid "Remove the name and contact details, keep the hours"
+msgstr ""
+
+#: inc/admin-settings.php:220
+msgid "Delete the record and its shifts entirely"
+msgstr ""
+
+#: inc/admin-settings.php:222
+msgid "Anonymising is usually right: your grant reporting and your Form 990 need the hours, and the hours identify nobody once the name is gone."
+msgstr ""
+
+#: inc/admin-settings.php:228
+msgid "Measured from"
 msgstr ""
 
 #: inc/admin-settings.php:230
+msgid "Their last recorded shift"
+msgstr ""
+
+#: inc/admin-settings.php:231
+msgid "The last time a shift of theirs was verified"
+msgstr ""
+
+#: inc/admin-settings.php:239
+msgid "Activity suggestions"
+msgstr ""
+
+#: inc/admin-settings.php:240
+msgid "One per line. Offered as suggestions when logging a shift; staff can still type anything. Leave empty for free text."
+msgstr ""
+
+#: inc/admin-settings.php:260
+msgid "Letterhead"
+msgstr ""
+
+#: inc/admin-settings.php:261
 #: inc/render.php:139
 msgid "Signature"
 msgstr ""
 
-#: inc/admin-settings.php:231
+#: inc/admin-settings.php:262
 msgid "Wording"
 msgstr ""
 
-#: inc/admin-settings.php:232
+#: inc/admin-settings.php:263
 msgid "What the letter includes"
 msgstr ""
 
-#: inc/admin-settings.php:233
+#: inc/admin-settings.php:264
 msgid "Emailing it"
 msgstr ""
 
-#: inc/admin-settings.php:236
+#: inc/admin-settings.php:267
 msgid "Recording hours"
 msgstr ""
 
+#: inc/admin-settings.php:270
+msgid "Retention"
+msgstr ""
+
+#: inc/admin-settings.php:281
+msgid "Keep indefinitely"
+msgstr ""
+
+#. translators: %d: a number of years.
+#: inc/admin-settings.php:286
+#, php-format
+msgid "%d year after that"
+msgid_plural "%d years after that"
+msgstr[0] ""
+msgstr[1] ""
+
 #. translators: %s: a list of placeholder tokens.
-#: inc/admin-settings.php:279
+#: inc/admin-settings.php:332
 #, php-format
 msgid "These accept placeholders: %s"
 msgstr ""
 
-#: inc/admin-settings.php:487
+#: inc/admin-settings.php:547
 msgid "Settings saved."
+msgstr ""
+
+#: inc/admin-settings.php:572
+msgid "How long should volunteer records be kept?"
+msgstr ""
+
+#: inc/admin-settings.php:573
+msgid "This plugin stores names, contact details and — for court-ordered service — information about somebody’s legal obligations. Nothing is being deleted while this is unanswered. Keeping records indefinitely is a perfectly good answer; not having decided is not."
+msgstr ""
+
+#: inc/admin-settings.php:575
+msgid "Decide now"
+msgstr ""
+
+#: inc/admin-settings.php:585
+msgid "Recent sweeps"
+msgstr ""
+
+#: inc/admin-settings.php:589
+msgid "Nothing has been purged yet. The sweep runs once a day and does nothing at all while records are kept indefinitely."
+msgstr ""
+
+#: inc/admin-settings.php:598
+msgid "What"
+msgstr ""
+
+#: inc/admin-settings.php:599
+msgid "Records"
+msgstr ""
+
+#: inc/admin-settings.php:600
+msgid "Held back"
+msgstr ""
+
+#: inc/admin-settings.php:611
+msgid "Deleted"
+msgstr ""
+
+#: inc/admin-settings.php:612
+msgid "Anonymised"
 msgstr ""
 
 #: inc/admin-verify.php:38
@@ -614,6 +709,7 @@ msgid "Any verification state"
 msgstr ""
 
 #: inc/admin-verify.php:425
+#: inc/privacy.php:507
 #: inc/render.php:137
 msgid "Verification"
 msgstr ""
@@ -699,16 +795,19 @@ msgid "no date"
 msgstr ""
 
 #: inc/cpt.php:200
+#: inc/privacy.php:491
 #: inc/render.php:133
 msgid "Date"
 msgstr ""
 
 #: inc/cpt.php:201
+#: inc/privacy.php:495
 #: inc/render.php:134
 msgid "Hours"
 msgstr ""
 
 #: inc/cpt.php:202
+#: inc/privacy.php:499
 #: inc/render.php:135
 msgid "Activity"
 msgstr ""
@@ -834,6 +933,7 @@ msgid "Appears on the verification letter."
 msgstr ""
 
 #: inc/meta-box.php:217
+#: inc/privacy.php:503
 #: inc/render.php:136
 msgid "Supervised by"
 msgstr ""
@@ -843,6 +943,7 @@ msgid "The person who was there. Not necessarily whoever verifies the entry."
 msgstr ""
 
 #: inc/meta-box.php:372
+#: inc/privacy.php:458
 msgid "Email"
 msgstr ""
 
@@ -851,13 +952,99 @@ msgid "Where a verification letter is sent, and how the privacy tools find this 
 msgstr ""
 
 #: inc/meta-box.php:380
+#: inc/privacy.php:462
 msgid "Phone"
 msgstr ""
 
+#: inc/meta-box.php:396
+msgid "Keep this record regardless of the retention policy"
+msgstr ""
+
+#: inc/meta-box.php:399
+msgid "Why this record is held"
+msgstr ""
+
+#: inc/meta-box.php:407
+msgid "Why — e.g. court order, open case"
+msgstr ""
+
+#: inc/meta-box.php:411
+msgid "Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal."
+msgstr ""
+
 #. translators: 1: verified hours, 2: unverified hours, 3: number of shifts.
-#: inc/meta-box.php:390
+#: inc/meta-box.php:420
 #, php-format
 msgid "%1$s verified, %2$s awaiting verification, across %3$s."
+msgstr ""
+
+#. translators: %d: an internal record number.
+#: inc/privacy.php:222
+#, php-format
+msgid "Former volunteer #%d"
+msgstr ""
+
+#: inc/privacy.php:425
+#: inc/privacy.php:591
+msgid "Volunteer hours"
+msgstr ""
+
+#: inc/privacy.php:450
+msgid "Volunteer record"
+msgstr ""
+
+#: inc/privacy.php:454
+msgid "Name"
+msgstr ""
+
+#: inc/privacy.php:470
+msgid "Hours awaiting verification"
+msgstr ""
+
+#: inc/privacy.php:487
+msgid "Volunteer shifts"
+msgstr ""
+
+#: inc/privacy.php:519
+msgid "Verification letters issued"
+msgstr ""
+
+#: inc/privacy.php:527
+msgid "Issued"
+msgstr ""
+
+#: inc/privacy.php:531
+msgid "Sent to"
+msgstr ""
+
+#: inc/privacy.php:532
+msgid "Printed, not emailed"
+msgstr ""
+
+#: inc/privacy.php:535
+msgid "Hours stated"
+msgstr ""
+
+#. translators: %s: the reason recorded for the hold.
+#: inc/privacy.php:626
+#, php-format
+msgid "This volunteer record is on a retention hold and was not erased. Reason recorded: %s"
+msgstr ""
+
+#: inc/privacy.php:629
+msgid "This volunteer record is on a retention hold and was not erased. Remove the hold on their record if the erasure should go ahead."
+msgstr ""
+
+#. translators: %s: a duration, already formatted — "42.5" or "42h 30m" depending on the site's setting, so the sentence must not add a unit of its own.
+#: inc/privacy.php:648
+#, php-format
+msgid "The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymised, they identify nobody, and the organization needs them for its own service reporting."
+msgstr ""
+
+#. translators: %s: a comma-separated list of reference codes.
+#: inc/privacy.php:659
+#, php-format
+msgid "Verification letters were previously issued for this person. Their references remain in the issued-letter log and can no longer be matched against a named record: %s"
 msgstr ""
 
 #: inc/render.php:66

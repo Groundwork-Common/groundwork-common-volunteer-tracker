@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'gwcvt_render_tab_letter', 'gwcvt_render_settings_tab' );
 add_action( 'gwcvt_render_tab_logging', 'gwcvt_render_settings_tab' );
+add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_settings_tab' );
+add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_retention_log', 20 );
 add_action( 'admin_post_gwcvt_save_settings', 'gwcvt_handle_save_settings' );
 
 /* ── One registry, three jobs ────────────────────────────────────────────────
@@ -200,6 +202,35 @@ function gwcvt_settings_fields(): array {
 			'label'   => __( 'Allow shifts dated in the future', 'groundwork-common-volunteer-tracker' ),
 			'help'    => __( 'Off by default. A shift dated next Tuesday is a typo far more often than a plan, and on a document a court reads it discredits the whole record.', 'groundwork-common-volunteer-tracker' ),
 		),
+		'retention_months'          => array(
+			'tab'     => 'privacy',
+			'section' => 'retention',
+			'type'    => 'select',
+			'label'   => __( 'Keep volunteer records for', 'groundwork-common-volunteer-tracker' ),
+			'options' => 'gwcvt_retention_period_options',
+			'help'    => __( '"Keep indefinitely" is a legitimate answer, and it is the default — a plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date. What is not legitimate is never deciding, which is why this tab nags until you save it.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'retention_action'          => array(
+			'tab'     => 'privacy',
+			'section' => 'retention',
+			'type'    => 'select',
+			'label'   => __( 'When a record is old enough', 'groundwork-common-volunteer-tracker' ),
+			'options' => array(
+				'anonymize' => __( 'Remove the name and contact details, keep the hours', 'groundwork-common-volunteer-tracker' ),
+				'delete'    => __( 'Delete the record and its shifts entirely', 'groundwork-common-volunteer-tracker' ),
+			),
+			'help'    => __( 'Anonymising is usually right: your grant reporting and your Form 990 need the hours, and the hours identify nobody once the name is gone.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'retention_anchor'          => array(
+			'tab'     => 'privacy',
+			'section' => 'retention',
+			'type'    => 'select',
+			'label'   => __( 'Measured from', 'groundwork-common-volunteer-tracker' ),
+			'options' => array(
+				'last_entry'  => __( 'Their last recorded shift', 'groundwork-common-volunteer-tracker' ),
+				'verified_at' => __( 'The last time a shift of theirs was verified', 'groundwork-common-volunteer-tracker' ),
+			),
+		),
 		'activities'                => array(
 			'tab'     => 'logging',
 			'section' => 'hours',
@@ -235,7 +266,29 @@ function gwcvt_settings_sections(): array {
 		'logging' => array(
 			'hours' => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
 		),
+		'privacy' => array(
+			'retention' => __( 'Retention', 'groundwork-common-volunteer-tracker' ),
+		),
 	);
+}
+
+/**
+ * How long records may be kept for.
+ *
+ * @return array<string, string>
+ */
+function gwcvt_retention_period_options(): array {
+	$options = array( '0' => __( 'Keep indefinitely', 'groundwork-common-volunteer-tracker' ) );
+
+	foreach ( array( 12, 18, 24, 36, 60, 84 ) as $months ) {
+		$options[ (string) $months ] = sprintf(
+			/* translators: %d: a number of years. */
+			_n( '%d year after that', '%d years after that', (int) round( $months / 12 ), 'groundwork-common-volunteer-tracker' ),
+			(int) round( $months / 12 )
+		);
+	}
+
+	return $options;
 }
 
 /**
@@ -418,6 +471,13 @@ function gwcvt_handle_save_settings(): void {
 		$stored[ $key ] = gwcvt_sanitize_setting( $posted[ $key ] ?? null, $field );
 	}
 
+	/* Saving this tab IS the decision, including saving it as "keep
+	 * indefinitely". The notice below goes away once somebody has considered the
+	 * question, not once they have answered it a particular way. */
+	if ( 'privacy' === $tab ) {
+		$stored['retention_decided'] = true;
+	}
+
 	update_option( GWCVT_SETTINGS_OPTION, $stored );
 	gwcvt_settings_cache( null, true );
 
@@ -486,4 +546,78 @@ function gwcvt_settings_saved_notice(): void {
 		'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
 		esc_html__( 'Settings saved.', 'groundwork-common-volunteer-tracker' )
 	);
+}
+
+add_action( 'admin_notices', 'gwcvt_retention_undecided_notice' );
+
+/**
+ * Nag until retention has been considered.
+ *
+ * Scoped strictly to this plugin's own screens, and not dismissible — a notice
+ * that can be dismissed is one that gets dismissed in the first week, which is
+ * the opposite of making a decision deliberate. It disappears the moment the
+ * Privacy tab is saved, whatever it is saved as.
+ */
+function gwcvt_retention_undecided_notice(): void {
+	if ( ! gwcvt_is_plugin_screen() || ! current_user_can( gwcvt_cap( 'manage' ) ) ) {
+		return;
+	}
+
+	if ( gwcvt_setting( 'retention_decided' ) ) {
+		return;
+	}
+
+	printf(
+		'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p><p><a class="button" href="%3$s">%4$s</a></p></div>',
+		esc_html__( 'How long should volunteer records be kept?', 'groundwork-common-volunteer-tracker' ),
+		esc_html__( 'This plugin stores names, contact details and — for court-ordered service — information about somebody’s legal obligations. Nothing is being deleted while this is unanswered. Keeping records indefinitely is a perfectly good answer; not having decided is not.', 'groundwork-common-volunteer-tracker' ),
+		esc_url( gwcvt_settings_url( 'privacy' ) ),
+		esc_html__( 'Decide now', 'groundwork-common-volunteer-tracker' )
+	);
+}
+
+/**
+ * What the last few sweeps did.
+ */
+function gwcvt_render_retention_log(): void {
+	$log = gwcvt_retention_log();
+	?>
+	<h2><?php esc_html_e( 'Recent sweeps', 'groundwork-common-volunteer-tracker' ); ?></h2>
+
+	<?php if ( ! $log ) : ?>
+		<p class="description">
+			<?php esc_html_e( 'Nothing has been purged yet. The sweep runs once a day and does nothing at all while records are kept indefinitely.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+		<?php return; ?>
+	<?php endif; ?>
+
+	<table class="widefat striped" style="max-width:44em">
+		<thead>
+			<tr>
+				<th scope="col"><?php esc_html_e( 'When', 'groundwork-common-volunteer-tracker' ); ?></th>
+				<th scope="col"><?php esc_html_e( 'What', 'groundwork-common-volunteer-tracker' ); ?></th>
+				<th scope="col"><?php esc_html_e( 'Records', 'groundwork-common-volunteer-tracker' ); ?></th>
+				<th scope="col"><?php esc_html_e( 'Held back', 'groundwork-common-volunteer-tracker' ); ?></th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php foreach ( $log as $run ) : ?>
+				<tr>
+					<td><?php echo esc_html( (string) ( $run['at'] ?? '' ) ); ?></td>
+					<td>
+						<?php
+						echo esc_html(
+							'delete' === ( $run['action'] ?? '' )
+								? __( 'Deleted', 'groundwork-common-volunteer-tracker' )
+								: __( 'Anonymised', 'groundwork-common-volunteer-tracker' )
+						);
+						?>
+					</td>
+					<td><?php echo esc_html( number_format_i18n( (int) ( $run['purged'] ?? 0 ) ) ); ?></td>
+					<td><?php echo esc_html( number_format_i18n( (int) ( $run['held'] ?? 0 ) ) ); ?></td>
+				</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	<?php
 }

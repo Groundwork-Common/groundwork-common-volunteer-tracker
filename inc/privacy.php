@@ -1,0 +1,672 @@
+<?php
+/**
+ * Retention, anonymisation, and WordPress's own privacy tools.
+ *
+ * @package VolunteerTracker
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+const GWCVT_RETENTION_EVENT = 'gwcvt_daily_retention';
+const GWCVT_RETENTION_LOG   = 'gwcvt_retention_log';
+
+/** How many volunteers one sweep will touch. */
+const GWCVT_RETENTION_BATCH = 50;
+
+/** How many sweeps the log remembers. */
+const GWCVT_RETENTION_LOG_SIZE = 30;
+
+const GWCVT_VOLUNTEER_HOLD_REASON = '_gwcvt_hold_reason';
+
+add_action( 'init', 'gwcvt_schedule_retention' );
+add_action( GWCVT_RETENTION_EVENT, 'gwcvt_run_retention' );
+
+/* Registered unconditionally, and not behind a setting. Privacy tooling that
+ * has to be switched on is privacy tooling that is off on every site that
+ * needed it. A site with no retention policy still has to be able to answer a
+ * request under GDPR, CCPA, or a volunteer simply asking what you hold. */
+add_filter( 'wp_privacy_personal_data_exporters', 'gwcvt_register_exporter' );
+add_filter( 'wp_privacy_personal_data_erasers', 'gwcvt_register_eraser' );
+
+/* ── Why the default keeps everything ────────────────────────────────────────
+ * retention_months defaults to 0, meaning never purge, and that is not
+ * indecision — it is the only safe default. A plugin that started deleting
+ * records after some period it chose would eventually destroy the six weeks of
+ * Saturdays somebody needs for a court date they have not reached yet, on a
+ * site whose administrator never knew the setting existed.
+ *
+ * But a default that keeps everything forever quietly hoards personal data, and
+ * the brief for this plugin named retention as a decision to be made
+ * deliberately rather than defaulted into.
+ *
+ * The resolution is not a cleverer default. It is 'retention_decided': the
+ * Privacy tab shows a notice that does not go away until somebody saves it —
+ * INCLUDING saving it as "keep indefinitely", which is a legitimate answer.
+ * What is not legitimate is never having considered the question.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Keep the daily sweep scheduled.
+ *
+ * On init and idempotent, for the same reason the capabilities are: a site that
+ * loses its cron entry to a migration or a restore gets it back on the next
+ * page load rather than needing a deactivate/reactivate cycle.
+ */
+function gwcvt_schedule_retention(): void {
+	if ( ! wp_next_scheduled( GWCVT_RETENTION_EVENT ) ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', GWCVT_RETENTION_EVENT );
+	}
+}
+
+/**
+ * The date on or before which a record is old enough to purge.
+ *
+ * Month arithmetic through DateTimeImmutable rather than a multiplication by
+ * thirty days. "Six months" means six calendar months to everybody who sets
+ * this, and 180 days drifts away from that by nearly a week a year — on a
+ * setting whose whole job is to be defensible if somebody asks.
+ *
+ * @param int    $months How many months to keep for.
+ * @param string $today  Y-m-d.
+ * @return string Y-m-d, or '' when retention is off.
+ */
+function gwcvt_retention_cutoff( int $months, string $today ): string {
+	if ( $months < 1 || '' === $today ) {
+		return '';
+	}
+
+	$date = DateTimeImmutable::createFromFormat( 'Y-m-d', $today, new DateTimeZone( 'UTC' ) );
+
+	if ( ! $date ) {
+		return '';
+	}
+
+	return $date->modify( '-' . $months . ' months' )->format( 'Y-m-d' );
+}
+
+/**
+ * The date a volunteer's retention clock runs from.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return string Y-m-d, or '' if it cannot be determined.
+ */
+function gwcvt_retention_anchor_date( int $volunteer_id ): string {
+	$anchor = (string) gwcvt_setting( 'retention_anchor' );
+
+	/* The cached rollup here, where the letter deliberately refuses it.
+	 *
+	 * The distinction is what the number is for. A letter's total is a claim
+	 * made to a court, so it is recomputed every time and a stale figure is
+	 * unacceptable. This is a date used to decide whether a record is more than
+	 * two years old — a cache that is a few hours behind cannot change that
+	 * answer, and the sweep walks fifty volunteers per run, so a fresh query
+	 * each would be fifty queries to learn something the rollup already knows.
+	 *
+	 * gwcvt_volunteer_totals() recomputes anyway when no cache exists, so the
+	 * worst case is correct rather than merely fast. */
+	$totals = gwcvt_volunteer_totals( $volunteer_id );
+
+	if ( 'verified_at' === $anchor ) {
+		$latest = '';
+
+		foreach ( gwcvt_entry_ids_for_volunteer( $volunteer_id ) as $entry_id ) {
+			$at = (string) get_post_meta( (int) $entry_id, GWCVT_ENTRY_VERIFIED_AT, true );
+
+			if ( '' !== $at && $at > $latest ) {
+				$latest = $at;
+			}
+		}
+
+		if ( '' !== $latest ) {
+			return substr( $latest, 0, 10 );
+		}
+	}
+
+	if ( '' !== $totals->last ) {
+		return $totals->last;
+	}
+
+	/* A volunteer who was created and never logged anything. Their own record
+	 * date is the only clock there is, and leaving them out entirely would mean
+	 * a half-filled contact record persisting forever precisely because it
+	 * contains nothing but the personal details. */
+	$created = (string) get_post_field( 'post_date', $volunteer_id );
+
+	return '' !== $created ? substr( $created, 0, 10 ) : '';
+}
+
+/**
+ * Is this volunteer's record due to be purged?
+ *
+ * @param int    $volunteer_id Volunteer post ID.
+ * @param string $today        Y-m-d. Defaults to today in the site's timezone.
+ * @return bool
+ */
+function gwcvt_retention_due( int $volunteer_id, string $today = '' ): bool {
+	$months = (int) gwcvt_setting( 'retention_months' );
+
+	if ( $months < 1 ) {
+		return false;
+	}
+
+	if ( gwcvt_retention_held( $volunteer_id ) ) {
+		return false;
+	}
+
+	$cutoff = gwcvt_retention_cutoff( $months, '' !== $today ? $today : gwcvt_today() );
+	$anchor = gwcvt_retention_anchor_date( $volunteer_id );
+
+	if ( '' === $cutoff || '' === $anchor ) {
+		return false;
+	}
+
+	$due = $anchor < $cutoff;
+
+	/**
+	 * Whether a volunteer's record is due for purging.
+	 *
+	 * @param bool   $due          Whether it is due.
+	 * @param int    $volunteer_id Volunteer post ID.
+	 * @param string $anchor       The date the clock ran from.
+	 */
+	return (bool) apply_filters( 'gwcvt_retention_due', $due, $volunteer_id, $anchor );
+}
+
+/**
+ * Is this record exempt from purging?
+ *
+ * Courts do sometimes require an organisation to keep a record for longer than
+ * its own policy, and a retention sweep that could not be overridden per person
+ * would make the setting unusable for exactly the orgs this plugin is for.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return bool
+ */
+function gwcvt_retention_held( int $volunteer_id ): bool {
+	return (bool) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD, true );
+}
+
+/* ── Purging ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Anonymise a volunteer, keeping their hours.
+ *
+ * The default action, and the right one for this domain. An organisation's
+ * grant reporting and its Form 990 need the hours; they do not need the name.
+ * Deleting outright throws away the organisation's own service statistics to
+ * solve a problem that removing the identity already solves.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return bool
+ */
+function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
+	if ( GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+		return false;
+	}
+
+	/**
+	 * Fires before a volunteer's record is anonymised or deleted.
+	 *
+	 * A site that exports to another system gets its last chance here.
+	 *
+	 * @param int    $volunteer_id Volunteer post ID.
+	 * @param string $action       'anonymize' or 'delete'.
+	 */
+	do_action( 'gwcvt_before_purge', $volunteer_id, 'anonymize' );
+
+	wp_update_post(
+		array(
+			'ID'         => $volunteer_id,
+			'post_title' => sprintf(
+				/* translators: %d: an internal record number. */
+				__( 'Former volunteer #%d', 'groundwork-common-volunteer-tracker' ),
+				$volunteer_id
+			),
+		)
+	);
+
+	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_EMAIL );
+	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_PHONE );
+
+	/* The claimed name and email on any self-logged entry are personal data too,
+	 * and they sit on the ENTRY rather than the volunteer — so anonymising only
+	 * the volunteer record would leave the name behind on every shift somebody
+	 * submitted through the public form. */
+	foreach ( gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
+		delete_post_meta( (int) $entry_id, '_gwcvt_claim_name' );
+		delete_post_meta( (int) $entry_id, '_gwcvt_claim_email' );
+		gwcvt_retitle_entry( (int) $entry_id );
+	}
+
+	/**
+	 * Fires after a volunteer's record has been purged.
+	 *
+	 * @param int    $volunteer_id Volunteer post ID.
+	 * @param string $action       'anonymize' or 'delete'.
+	 */
+	do_action( 'gwcvt_purged', $volunteer_id, 'anonymize' );
+
+	return true;
+}
+
+/**
+ * Delete a volunteer and their shifts outright.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return bool
+ */
+function gwcvt_delete_volunteer( int $volunteer_id ): bool {
+	if ( GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+		return false;
+	}
+
+	do_action( 'gwcvt_before_purge', $volunteer_id, 'delete' );
+
+	foreach ( gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
+		wp_delete_post( (int) $entry_id, true );
+	}
+
+	wp_delete_post( $volunteer_id, true );
+
+	/* The issued-letter log is deliberately NOT touched. A letter having been
+	 * issued is a fact about the organisation's own conduct, and the record of
+	 * it has to outlive the record it described — "we issued a letter, for
+	 * somebody no longer on file" is exactly what a court asking about it needs
+	 * to hear. The log holds a reference, an ID and a date; it holds no name. */
+
+	do_action( 'gwcvt_purged', $volunteer_id, 'delete' );
+
+	return true;
+}
+
+/**
+ * The daily sweep.
+ *
+ * Batched, oldest first. A site with five thousand volunteer records that
+ * switched retention on this morning would otherwise try to purge all of them
+ * in one cron request and time out halfway through, leaving nobody able to say
+ * which half.
+ */
+function gwcvt_run_retention(): void {
+	$months = (int) gwcvt_setting( 'retention_months' );
+
+	if ( $months < 1 ) {
+		return;
+	}
+
+	$action = 'delete' === gwcvt_setting( 'retention_action' ) ? 'delete' : 'anonymize';
+
+	$candidates = get_posts(
+		array(
+			'post_type'              => GWCVT_VOLUNTEER_TYPE,
+			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			'fields'                 => 'ids',
+			'posts_per_page'         => GWCVT_RETENTION_BATCH,
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'orderby'                => 'date',
+			'order'                  => 'ASC',
+		)
+	);
+
+	$purged = 0;
+	$held   = 0;
+
+	foreach ( (array) $candidates as $volunteer_id ) {
+		$volunteer_id = (int) $volunteer_id;
+
+		if ( gwcvt_retention_held( $volunteer_id ) ) {
+			++$held;
+			continue;
+		}
+
+		if ( ! gwcvt_retention_due( $volunteer_id ) ) {
+			continue;
+		}
+
+		$done = 'delete' === $action
+			? gwcvt_delete_volunteer( $volunteer_id )
+			: gwcvt_anonymize_volunteer( $volunteer_id );
+
+		if ( $done ) {
+			++$purged;
+		}
+	}
+
+	gwcvt_log_retention_run( $action, $purged, $held );
+}
+
+/**
+ * Record what a sweep did.
+ *
+ * A purge that runs invisibly is a purge nobody trusts, and the first question
+ * anybody asks after switching this on is "did it do anything".
+ *
+ * @param string $action What was done.
+ * @param int    $purged How many records.
+ * @param int    $held   How many were exempt.
+ */
+function gwcvt_log_retention_run( string $action, int $purged, int $held ): void {
+	$log = get_option( GWCVT_RETENTION_LOG );
+	$log = is_array( $log ) ? $log : array();
+
+	array_unshift(
+		$log,
+		array(
+			'at'     => (string) current_time( 'mysql', true ),
+			'action' => $action,
+			'purged' => $purged,
+			'held'   => $held,
+		)
+	);
+
+	update_option( GWCVT_RETENTION_LOG, array_slice( $log, 0, GWCVT_RETENTION_LOG_SIZE ), false );
+}
+
+/**
+ * The sweep history, newest first.
+ *
+ * @return array[]
+ */
+function gwcvt_retention_log(): array {
+	$log = get_option( GWCVT_RETENTION_LOG );
+
+	return is_array( $log ) ? $log : array();
+}
+
+/* ── WordPress's own privacy tools ───────────────────────────────────────────
+ * Tools → Export Personal Data and Tools → Erase Personal Data are where a site
+ * administrator goes when somebody asks what is held about them. A plugin
+ * storing this much personal data that answers neither is a plugin whose
+ * records are invisible to the process the site is relying on.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Volunteers matching an email address.
+ *
+ * @param string $email The address.
+ * @return int[]
+ */
+function gwcvt_volunteers_by_email( string $email ): array {
+	$email = sanitize_email( $email );
+
+	if ( '' === $email || ! is_email( $email ) ) {
+		return array();
+	}
+
+	$ids = get_posts(
+		array(
+			'post_type'              => GWCVT_VOLUNTEER_TYPE,
+			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			'fields'                 => 'ids',
+			'posts_per_page'         => -1,
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- indexed by meta_key; run once per privacy request, not per page load.
+			'meta_key'               => GWCVT_VOLUNTEER_EMAIL,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
+			'meta_value'             => $email,
+		)
+	);
+
+	return array_map( 'intval', (array) $ids );
+}
+
+/**
+ * Register the exporter.
+ *
+ * @param array $exporters Existing exporters.
+ * @return array
+ */
+function gwcvt_register_exporter( $exporters ): array {
+	$exporters = (array) $exporters;
+
+	$exporters['groundwork-common-volunteer-tracker'] = array(
+		'exporter_friendly_name' => __( 'Volunteer hours', 'groundwork-common-volunteer-tracker' ),
+		'callback'               => 'gwcvt_export_personal_data',
+	);
+
+	return $exporters;
+}
+
+/**
+ * Export everything held about one person.
+ *
+ * @param string $email The address.
+ * @param int    $page  1-based page number.
+ * @return array
+ */
+function gwcvt_export_personal_data( $email, $page = 1 ) {
+	$page  = max( 1, (int) $page );
+	$items = array();
+
+	$volunteers = gwcvt_volunteers_by_email( (string) $email );
+
+	foreach ( $volunteers as $volunteer_id ) {
+		$totals = gwcvt_compute_totals( $volunteer_id );
+
+		$items[] = array(
+			'group_id'    => 'gwcvt_volunteer',
+			'group_label' => __( 'Volunteer record', 'groundwork-common-volunteer-tracker' ),
+			'item_id'     => 'gwcvt-volunteer-' . $volunteer_id,
+			'data'        => array(
+				array(
+					'name'  => __( 'Name', 'groundwork-common-volunteer-tracker' ),
+					'value' => get_the_title( $volunteer_id ),
+				),
+				array(
+					'name'  => __( 'Email', 'groundwork-common-volunteer-tracker' ),
+					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_EMAIL, true ),
+				),
+				array(
+					'name'  => __( 'Phone', 'groundwork-common-volunteer-tracker' ),
+					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_PHONE, true ),
+				),
+				array(
+					'name'  => __( 'Verified hours', 'groundwork-common-volunteer-tracker' ),
+					'value' => gwcvt_format_hours( $totals->verified_minutes ),
+				),
+				array(
+					'name'  => __( 'Hours awaiting verification', 'groundwork-common-volunteer-tracker' ),
+					'value' => gwcvt_format_hours( $totals->pending_minutes ),
+				),
+			),
+		);
+
+		/* Paginated over this volunteer's shifts. An exporter that returned
+		 * everything at once is one that times out on the volunteer with four
+		 * years of Saturdays — which is exactly the person most likely to ask. */
+		$entry_ids = gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) );
+		$slice     = array_slice( $entry_ids, ( $page - 1 ) * GWCVT_RETENTION_BATCH, GWCVT_RETENTION_BATCH );
+
+		foreach ( $slice as $entry_id ) {
+			$entry_id = (int) $entry_id;
+
+			$items[] = array(
+				'group_id'    => 'gwcvt_entry',
+				'group_label' => __( 'Volunteer shifts', 'groundwork-common-volunteer-tracker' ),
+				'item_id'     => 'gwcvt-entry-' . $entry_id,
+				'data'        => array(
+					array(
+						'name'  => __( 'Date', 'groundwork-common-volunteer-tracker' ),
+						'value' => (string) get_post_meta( $entry_id, GWCVT_ENTRY_DATE, true ),
+					),
+					array(
+						'name'  => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
+						'value' => gwcvt_format_hours( (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true ) ),
+					),
+					array(
+						'name'  => __( 'Activity', 'groundwork-common-volunteer-tracker' ),
+						'value' => (string) get_post_meta( $entry_id, GWCVT_ENTRY_ACTIVITY, true ),
+					),
+					array(
+						'name'  => __( 'Supervised by', 'groundwork-common-volunteer-tracker' ),
+						'value' => (string) get_post_meta( $entry_id, GWCVT_ENTRY_SUPERVISOR, true ),
+					),
+					array(
+						'name'  => __( 'Verification', 'groundwork-common-volunteer-tracker' ),
+						'value' => gwcvt_attestation_line( $entry_id ),
+					),
+				),
+			);
+		}
+
+		// The letters issued about them, on the first page only.
+		if ( 1 === $page ) {
+			foreach ( gwcvt_letters_for_volunteer( $volunteer_id ) as $record ) {
+				$items[] = array(
+					'group_id'    => 'gwcvt_letter',
+					'group_label' => __( 'Verification letters issued', 'groundwork-common-volunteer-tracker' ),
+					'item_id'     => 'gwcvt-letter-' . $record['id'],
+					'data'        => array(
+						array(
+							'name'  => __( 'Reference', 'groundwork-common-volunteer-tracker' ),
+							'value' => $record['reference'],
+						),
+						array(
+							'name'  => __( 'Issued', 'groundwork-common-volunteer-tracker' ),
+							'value' => $record['issued_at'],
+						),
+						array(
+							'name'  => __( 'Sent to', 'groundwork-common-volunteer-tracker' ),
+							'value' => '' !== $record['recipient'] ? $record['recipient'] : __( 'Printed, not emailed', 'groundwork-common-volunteer-tracker' ),
+						),
+						array(
+							'name'  => __( 'Hours stated', 'groundwork-common-volunteer-tracker' ),
+							'value' => gwcvt_format_hours( $record['minutes'] ),
+						),
+					),
+				);
+			}
+		}
+	}
+
+	$most_entries = 0;
+
+	foreach ( $volunteers as $volunteer_id ) {
+		$most_entries = max( $most_entries, count( gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) ) );
+	}
+
+	return array(
+		'data' => $items,
+		'done' => ( $page * GWCVT_RETENTION_BATCH ) >= $most_entries,
+	);
+}
+
+/**
+ * Every letter issued about one volunteer.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return array[]
+ */
+function gwcvt_letters_for_volunteer( int $volunteer_id ): array {
+	$ids = get_posts(
+		array(
+			'post_type'              => GWCVT_LETTER_TYPE,
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => -1,
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- run once per privacy request.
+			'meta_key'               => GWCVT_LETTER_VOLUNTEER,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
+			'meta_value'             => (string) $volunteer_id,
+		)
+	);
+
+	return array_map( 'gwcvt_letter_record', array_map( 'intval', (array) $ids ) );
+}
+
+/**
+ * Register the eraser.
+ *
+ * @param array $erasers Existing erasers.
+ * @return array
+ */
+function gwcvt_register_eraser( $erasers ): array {
+	$erasers = (array) $erasers;
+
+	$erasers['groundwork-common-volunteer-tracker'] = array(
+		'eraser_friendly_name' => __( 'Volunteer hours', 'groundwork-common-volunteer-tracker' ),
+		'callback'             => 'gwcvt_erase_personal_data',
+	);
+
+	return $erasers;
+}
+
+/**
+ * Erase what can be erased, and say plainly what was kept and why.
+ *
+ * The messages matter as much as the erasing. WordPress shows them to the
+ * administrator handling the request, who then has to tell a real person what
+ * happened — and "some data was retained" with no explanation is worse than
+ * useless to them.
+ *
+ * @param string $email The address.
+ * @param int    $page  1-based page number.
+ * @return array
+ */
+function gwcvt_erase_personal_data( $email, $page = 1 ) {
+	$removed  = false;
+	$retained = false;
+	$messages = array();
+
+	$volunteers = gwcvt_volunteers_by_email( (string) $email );
+
+	foreach ( $volunteers as $volunteer_id ) {
+		if ( gwcvt_retention_held( $volunteer_id ) ) {
+			$retained = true;
+
+			$reason = (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD_REASON, true );
+
+			$messages[] = '' !== $reason
+				? sprintf(
+					/* translators: %s: the reason recorded for the hold. */
+					__( 'This volunteer record is on a retention hold and was not erased. Reason recorded: %s', 'groundwork-common-volunteer-tracker' ),
+					$reason
+				)
+				: __( 'This volunteer record is on a retention hold and was not erased. Remove the hold on their record if the erasure should go ahead.', 'groundwork-common-volunteer-tracker' );
+
+			continue;
+		}
+
+		/* Anonymised rather than deleted, and the message says so. The hours are
+		 * the organisation's own service record — needed for grant reporting and
+		 * a Form 990 — and they identify nobody once the name and contact
+		 * details are gone. Quietly destroying them would damage the
+		 * organisation to no benefit for the person asking. */
+		$letters = gwcvt_letters_for_volunteer( $volunteer_id );
+		$totals  = gwcvt_compute_totals( $volunteer_id );
+
+		if ( gwcvt_anonymize_volunteer( $volunteer_id ) ) {
+			$removed  = true;
+			$retained = true;
+
+			$messages[] = sprintf(
+				/* translators: %s: a duration, already formatted — "42.5" or "42h 30m" depending on the site's setting, so the sentence must not add a unit of its own. */
+				__( 'The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymised, they identify nobody, and the organization needs them for its own service reporting.', 'groundwork-common-volunteer-tracker' ),
+				gwcvt_format_hours( $totals->verified_minutes + $totals->pending_minutes )
+			);
+
+			/* Naming the affected letters, because silently destroying the record
+			 * behind a document a court is holding is precisely the failure this
+			 * plugin cannot have. The administrator needs to know a reference may
+			 * now be un-checkable. */
+			if ( $letters ) {
+				$messages[] = sprintf(
+					/* translators: %s: a comma-separated list of reference codes. */
+					__( 'Verification letters were previously issued for this person. Their references remain in the issued-letter log and can no longer be matched against a named record: %s', 'groundwork-common-volunteer-tracker' ),
+					implode( ', ', wp_list_pluck( $letters, 'reference' ) )
+				);
+			}
+		}
+	}
+
+	return array(
+		'items_removed'  => $removed,
+		'items_retained' => $retained,
+		'messages'       => $messages,
+		'done'           => true,
+	);
+}
