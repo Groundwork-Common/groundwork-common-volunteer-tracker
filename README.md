@@ -101,6 +101,24 @@ Anything that genuinely needs WordPress runs under wp-env:
 npx @wordpress/env start
 ```
 
+Then the integration scripts, each of which creates and removes its own fixtures:
+
+```bash
+npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
+```
+
+## Demo data
+
+```bash
+npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/seed.php
+```
+
+Builds Riverbend Food Bank: six volunteers covering the states worth looking at — one working off a court order with 29.75 verified hours and a letter already on file, one with hours still waiting, one brand new with nothing verified, one with no email so their letter can only be printed, one dormant since 2023 and due under the retention policy, and one dormant but held back by an open case. Plus two self-logged submissions nobody has matched yet.
+
+Re-runnable: it removes what a previous run created, and only that — everything it makes is tagged, so a record you added by hand survives. It refuses to run unless `WP_ENVIRONMENT_TYPE` is `local` or `development`, because it writes settings and deletes records.
+
+Every name in it is invented and every address is on `example.test`. That is deliberate: this plugin's demo data is people's names beside a number of volunteer hours, and for two of them beside the fact that they are working off a court order. The same rule applies to screenshots — see `.wordpress-org/README.md`.
+
 ## Still to come
 
 Milestones, in order: the data model and hour logging, staff verification, the letter and its reference verifier, the optional front-end self-log form, and retention with WordPress's privacy exporter and eraser. Emailed supervisor confirmation — a link a shift supervisor clicks, with no account — is the first thing after 1.0.
