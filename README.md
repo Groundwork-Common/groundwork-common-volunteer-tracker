@@ -52,6 +52,9 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_entry_saved` | action | After an hour entry is saved from the admin. |
 | `gwcvt_settings_screen_loaded` | action | When the settings screen loads, before output. |
 | `gwcvt_render_tab_<slug>` | action | Render the body of one settings tab. |
+| `gwcvt_attestation_methods` | filter | The ways an entry can be attested to, keyed by slug. |
+| `gwcvt_entry_verified` | action | After an entry is attested to. |
+| `gwcvt_entry_unverified` | action | After an attestation is withdrawn. |
 
 ## Tests
 

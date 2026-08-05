@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.1.0';
+const GWCVT_VERSION = '0.2.0';
 
 /* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -136,6 +136,9 @@ if ( ! function_exists( 'gwcvt_register_volunteer_type' ) ) {
 if ( ! function_exists( 'gwcvt_entry_ids_for_volunteer' ) ) {
 	require GWCVT_DIR . 'inc/entries.php';
 }
+if ( ! function_exists( 'gwcvt_verify_entry' ) ) {
+	require GWCVT_DIR . 'inc/verify.php';
+}
 if ( ! function_exists( 'gwcvt_register_rest_routes' ) ) {
 	require GWCVT_DIR . 'inc/rest.php';
 }
@@ -157,6 +160,9 @@ if ( ! function_exists( 'gwcvt_enqueue_admin_assets' ) ) {
  * post types it hangs its menu off, which is a dependency that IS load-time. */
 if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	require GWCVT_DIR . 'inc/admin-screen.php';
+
+	// Verification where staff look for it: the hours list, and the entry itself.
+	require GWCVT_DIR . 'inc/admin-verify.php';
 }
 
 /* ── Activation ──────────────────────────────────────────────────────────────

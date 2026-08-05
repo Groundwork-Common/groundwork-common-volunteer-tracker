@@ -41,6 +41,51 @@
 	margin: 0 0 20px;
 }
 
+/* ─── Verification badges ───────────────────────────────────────────────────
+   Colour is never the only signal — each badge carries its own words, because
+   "verified" and "not yet verified" is exactly the distinction somebody with a
+   colour vision deficiency must not have to infer from a green dot. The tint is
+   reinforcement, not information. */
+.gwcvt-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 9999px;
+	font-size: 12px;
+	line-height: 1.6;
+	white-space: nowrap;
+}
+
+.gwcvt-badge--verified {
+	background: #edfaef;
+	color: #00450c;
+	box-shadow: inset 0 0 0 1px #68de7c;
+}
+
+.gwcvt-badge--waiting {
+	background: #fcf9e8;
+	color: #614200;
+	box-shadow: inset 0 0 0 1px #dba617;
+}
+
+.gwcvt-badge__detail {
+	display: inline-block;
+	margin-top: 3px;
+	font-size: 12px;
+	color: #646970;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	.gwcvt-badge--verified {
+		background: rgb( 104 222 124 / .12 );
+		color: #68de7c;
+	}
+
+	.gwcvt-badge--waiting {
+		background: rgb( 219 166 23 / .12 );
+		color: #dba617;
+	}
+}
+
 /* ─── Volunteer picker ──────────────────────────────────────────────────────
    An autocomplete rather than a select, because a select is unusable past a few
    hundred volunteers. The list is positioned rather than inline so it overlays

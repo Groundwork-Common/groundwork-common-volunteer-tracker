@@ -47,7 +47,8 @@ define( 'GWCVT_VERSION', $gwcvt_m[1] ?? '0.0.0' );
 /* ── The in-memory store ─────────────────────────────────────────────────── */
 
 $GLOBALS['gwcvt_test'] = array(
-	'options'   => array(),
+	'options'    => array(),
+	'transients' => array(),
 	'post_meta' => array(),
 	'user_meta' => array(),
 	'posts'     => array(),
@@ -67,7 +68,8 @@ $GLOBALS['gwcvt_test_filters'] = array();
  */
 function gwcvt_test_reset(): void {
 	$GLOBALS['gwcvt_test'] = array(
-		'options'   => array(),
+		'options'    => array(),
+		'transients' => array(),
 		'post_meta' => array(),
 		'user_meta' => array(),
 		'posts'     => array(),
@@ -177,10 +179,11 @@ function get_role( $name ) {
 	return $GLOBALS['gwcvt_test']['roles'][ $name ] ?? null;
 }
 
-function gwcvt_test_add_user( int $id, array $caps = array(), string $role = '' ): void {
+function gwcvt_test_add_user( int $id, array $caps = array(), string $role = '', string $display_name = '' ): void {
 	$GLOBALS['gwcvt_test']['users'][ $id ] = array(
-		'caps' => $caps,
-		'role' => $role,
+		'caps'         => $caps,
+		'role'         => $role,
+		'display_name' => $display_name,
 	);
 }
 
@@ -374,6 +377,108 @@ function current_time( $type, $gmt = 0 ) {
 	return gmdate( 'mysql' === $type ? 'Y-m-d H:i:s' : $type );
 }
 
+function wp_date( $format, $timestamp = null, $timezone = null ) {
+	return gmdate( (string) $format, null === $timestamp ? time() : (int) $timestamp );
+}
+
+/* ── Posts and post meta ─────────────────────────────────────────────────────
+ * Enough of a store to exercise the verification state machine. Deliberately
+ * NOT enough to exercise the query layer: there is no get_posts() here, because
+ * a stub that returned array() would make every totals assertion pass while
+ * proving nothing, and one that reimplemented meta_query would be a second,
+ * subtly different WordPress to keep in step with the real one. The totals and
+ * the date ranges are covered against a real database by
+ * tests/integration/entries.php instead.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+function gwcvt_test_add_post( int $id, string $post_type, string $post_status = 'publish', string $post_title = '' ): void {
+	$GLOBALS['gwcvt_test']['posts'][ $id ] = array(
+		'ID'          => $id,
+		'post_type'   => $post_type,
+		'post_status' => $post_status,
+		'post_title'  => $post_title,
+	);
+}
+
+function get_post_type( $post_id = null ) {
+	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	return $post ? $post['post_type'] : false;
+}
+
+function get_post_status( $post_id = null ) {
+	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	return $post ? $post['post_status'] : false;
+}
+
+function get_the_title( $post_id = 0 ) {
+	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	return $post ? $post['post_title'] : '';
+}
+
+function wp_update_post( $postarr = array(), $wp_error = false ) {
+	$id = (int) ( $postarr['ID'] ?? 0 );
+
+	if ( ! isset( $GLOBALS['gwcvt_test']['posts'][ $id ] ) ) {
+		return 0;
+	}
+
+	foreach ( array( 'post_status', 'post_title' ) as $field ) {
+		if ( isset( $postarr[ $field ] ) ) {
+			$GLOBALS['gwcvt_test']['posts'][ $id ][ $field ] = $postarr[ $field ];
+		}
+	}
+
+	return $id;
+}
+
+function get_post_meta( $post_id, $key = '', $single = false ) {
+	$value = $GLOBALS['gwcvt_test']['post_meta'][ (int) $post_id ][ $key ] ?? '';
+	return $single ? $value : ( '' === $value ? array() : array( $value ) );
+}
+
+function update_post_meta( $post_id, $key, $value, $prev = '' ) {
+	$GLOBALS['gwcvt_test']['post_meta'][ (int) $post_id ][ $key ] = $value;
+	return true;
+}
+
+function delete_post_meta( $post_id, $key, $value = '' ) {
+	unset( $GLOBALS['gwcvt_test']['post_meta'][ (int) $post_id ][ $key ] );
+	return true;
+}
+
+function update_postmeta_cache( $post_ids ) {
+	return true;
+}
+
+function get_userdata( $user_id ) {
+	$user = $GLOBALS['gwcvt_test']['users'][ (int) $user_id ] ?? null;
+
+	if ( ! $user ) {
+		return false;
+	}
+
+	return (object) array(
+		'ID'           => (int) $user_id,
+		'display_name' => (string) ( $user['display_name'] ?? '' ),
+	);
+}
+
+/* ── Transients ──────────────────────────────────────────────────────────── */
+
+function get_transient( $key ) {
+	return $GLOBALS['gwcvt_test']['transients'][ $key ] ?? false;
+}
+
+function set_transient( $key, $value, $ttl = 0 ) {
+	$GLOBALS['gwcvt_test']['transients'][ $key ] = $value;
+	return true;
+}
+
+function delete_transient( $key ) {
+	unset( $GLOBALS['gwcvt_test']['transients'][ $key ] );
+	return true;
+}
+
 /* ── Everything else the loaded files touch ──────────────────────────────── */
 
 function wp_die( $message = '', $title = '', $args = array() ) {
@@ -403,4 +508,9 @@ function wp_unschedule_event( $timestamp, $hook, $args = array() ) {
 require GWCVT_DIR . 'inc/i18n.php';
 require GWCVT_DIR . 'inc/settings.php';
 require GWCVT_DIR . 'inc/access.php';
+require GWCVT_DIR . 'inc/class-gwcvt-totals.php';
+require GWCVT_DIR . 'inc/cpt.php';
+require GWCVT_DIR . 'inc/volunteer-cpt.php';
+require GWCVT_DIR . 'inc/entries.php';
+require GWCVT_DIR . 'inc/verify.php';
 require GWCVT_DIR . 'inc/admin-screen.php';
