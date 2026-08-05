@@ -362,11 +362,56 @@ final class LetterTest extends TestCase {
 	}
 
 	public function test_the_inliner_does_not_match_a_class_prefix(): void {
-		/* gwcvt-organisation must not pick up gwcvt-org's declarations. The word
-		 * boundary in the pattern is what stops that, and without a test it is
-		 * the kind of thing that only shows up as a mysteriously styled line. */
 		$html = gwcvt_inline_letter_styles( '<p class="gwcvt-organisation">Test</p>' );
 
 		$this->assertSame( '<p class="gwcvt-organisation">Test</p>', $html );
+	}
+
+	public function test_a_hyphenated_class_does_not_inherit_its_stem(): void {
+		/* The case the prefix test above missed for three releases. It used
+		 * "gwcvt-organisation", where the stem is followed by a letter — but the
+		 * real class names are hyphenated, and \b treats a hyphen as a word
+		 * boundary. So the rule for `gwcvt-org` matched inside
+		 * `gwcvt-org-address`, `gwcvt-org-contact` and `gwcvt-org-logo`. */
+		$html = gwcvt_inline_letter_styles( '<p class="gwcvt-org-address">Test</p>' );
+
+		$this->assertStringContainsString( 'font-size:10pt', $html, 'It should get its own declarations.' );
+		$this->assertStringNotContainsString( 'font-weight:bold', $html, 'It must not inherit gwcvt-org’s.' );
+	}
+
+	public function test_no_element_ever_gets_two_style_attributes(): void {
+		/* HTML keeps the FIRST style attribute and silently discards the rest,
+		 * so a second one means whichever rule wins is decided by the order the
+		 * rules happen to be listed in. That is how the logo arrived as bold
+		 * 15pt text. */
+		$html = gwcvt_inline_letter_styles(
+			'<header class="gwcvt-letterhead">'
+			. '<img class="gwcvt-org-logo" src="x.png" alt="" />'
+			. '<p class="gwcvt-org">Name</p>'
+			. '<p class="gwcvt-org-address">Street</p>'
+			. '<p class="gwcvt-org-contact">Phone</p>'
+			. '<table class="gwcvt-summary-table"><tr><th scope="row">A</th><td class="gwcvt-total">B</td></tr></table>'
+			. '</header>'
+		);
+
+		$this->assertSame( 0, preg_match_all( '/<[a-z]+[^>]*style="[^"]*"[^>]*style="/i', $html ) );
+	}
+
+	public function test_the_inliner_keeps_a_self_closing_tag_valid(): void {
+		$html = gwcvt_inline_letter_styles( '<img class="gwcvt-org-logo" src="x.png" alt="" />' );
+
+		/* The slash belongs after the attributes. Appending a style attribute
+		 * without accounting for it produces `<img … / style="…">`, which is
+		 * not markup any client will render as an image. */
+		$this->assertMatchesRegularExpression( '/style="[^"]*max-height[^"]*" \/>$/', $html );
+	}
+
+	public function test_a_classed_table_cell_carries_its_own_padding(): void {
+		/* The classless-cell pass deliberately leaves classed cells alone, so a
+		 * cell with a class has to bring the padding itself or arrive unpadded. */
+		$html = gwcvt_inline_letter_styles( '<td class="gwcvt-total">18</td>' );
+
+		$this->assertStringContainsString( 'padding:', $html );
+		$this->assertStringContainsString( 'font-size:13pt', $html );
 	}
 }

@@ -60,11 +60,23 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 		GWCVT_VERSION
 	);
 
+	$screen = get_current_screen();
+
+	// The logo chooser, on the settings screen only.
+	if ( $screen && false !== strpos( (string) $screen->id, GWCVT_SETTINGS_PAGE ) ) {
+		wp_enqueue_media();
+		wp_enqueue_script(
+			'gwcvt-admin-media',
+			GWCVT_URL . 'assets/js/admin-media.js',
+			array(),
+			GWCVT_VERSION,
+			true
+		);
+	}
+
 	/* The picker appears in two places: the entry editor, and the Letters
 	 * screen. One script serves both — it binds to every [data-gwcvt-picker] on
 	 * the page rather than to a known ID, so a third caller costs nothing. */
-	$screen = get_current_screen();
-
 	$on_entry_editor = in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true )
 		&& $screen
 		&& GWCVT_ENTRY_TYPE === $screen->post_type;

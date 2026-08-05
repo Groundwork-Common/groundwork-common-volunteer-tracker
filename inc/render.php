@@ -164,12 +164,27 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 	$address   = trim( (string) gwcvt_setting( 'org_address' ) );
 	$contact   = gwcvt_org_contact();
 	$strings   = gwcvt_letter_strings( $letter );
+	$logo      = gwcvt_letter_logo_url();
 
 	ob_start();
 	?>
 	<div class="gwcvt-letter">
 
 		<header class="gwcvt-letterhead">
+			<?php if ( '' !== $logo ) : ?>
+				<?php
+				/* alt="" on purpose. The organisation's name is printed as text
+				 * directly beneath, so alt text here would have a screen reader
+				 * announce it twice. The image is decoration; the name is the
+				 * information.
+				 *
+				 * And it stays decoration in the other direction too: email
+				 * clients block remote images by default, so a letter whose
+				 * letterhead is only a logo would arrive anonymous. The name is
+				 * always printed. */
+				?>
+				<img class="gwcvt-org-logo" src="<?php echo esc_url( $logo ); ?>" alt="" />
+			<?php endif; ?>
 			<p class="gwcvt-org"><?php echo esc_html( $org ); ?></p>
 			<?php if ( '' !== $address ) : ?>
 				<p class="gwcvt-org-address"><?php echo nl2br( esc_html( $address ) ); ?></p>
@@ -432,6 +447,29 @@ function gwcvt_letter_title( GWCVT_Letter $letter ): string {
 }
 
 /**
+ * The organisation's logo, if one is set and still exists.
+ *
+ * A sized version rather than the original: the letterhead caps the height in
+ * CSS either way, but a four-megabyte original inside an emailed letter is rude
+ * to whoever opens it on a phone.
+ *
+ * @return string An absolute URL, or ''.
+ */
+function gwcvt_letter_logo_url(): string {
+	$attachment = (int) gwcvt_setting( 'org_logo' );
+
+	if ( $attachment < 1 ) {
+		return '';
+	}
+
+	/* Absolute, because this markup is also emailed — a relative URL would
+	 * resolve against the reader's mail client and find nothing. */
+	$url = wp_get_attachment_image_url( $attachment, 'medium' );
+
+	return is_string( $url ) ? $url : '';
+}
+
+/**
  * How to reach the organisation about this letter.
  *
  * @return string
@@ -464,6 +502,7 @@ function gwcvt_inline_letter_styles( string $html ): string {
 	$rules = array(
 		'gwcvt-letter'            => 'font-family:Georgia,"Times New Roman",serif;font-size:12pt;line-height:1.55;color:#1a1a1a;max-width:44em;margin:0 auto;padding:16px;',
 		'gwcvt-letterhead'        => 'border-bottom:1px solid #999;padding-bottom:10px;margin-bottom:22px;',
+		'gwcvt-org-logo'          => 'display:block;max-height:56px;width:auto;margin:0 0 8px;',
 		'gwcvt-org'               => 'font-size:15pt;font-weight:bold;margin:0 0 3px;',
 		'gwcvt-org-address'       => 'margin:0;font-size:10pt;color:#444;',
 		'gwcvt-org-contact'       => 'margin:2px 0 0;font-size:10pt;color:#444;',
@@ -473,7 +512,10 @@ function gwcvt_inline_letter_styles( string $html ): string {
 		'gwcvt-intro'             => 'margin:0 0 20px;',
 		'gwcvt-summary-table'     => 'border-collapse:collapse;width:100%;margin:0 0 8px;',
 		'gwcvt-entries'           => 'border-collapse:collapse;width:100%;font-size:10.5pt;',
-		'gwcvt-total'             => 'font-size:13pt;',
+		/* Carries the cell padding as well as its own size, because the classless
+		 * cell pass below deliberately leaves classed cells alone — otherwise
+		 * this one would be styled twice and lose whichever came second. */
+		'gwcvt-total'             => 'padding:4px 0;vertical-align:top;font-size:13pt;',
 		'gwcvt-row--unverified'   => 'color:#555;font-style:italic;',
 		'gwcvt-unverified-note'   => 'font-size:10pt;color:#555;margin:10px 0 0;',
 		'gwcvt-signature'         => 'margin:40px 0 0;',
@@ -486,30 +528,69 @@ function gwcvt_inline_letter_styles( string $html ): string {
 		'gwcvt-reference'         => 'margin:8px 0 0;font-family:Menlo,Consolas,monospace;font-size:10pt;color:#1a1a1a;letter-spacing:.04em;',
 	);
 
-	foreach ( $rules as $class => $declarations ) {
-		/* Matches class="…" containing this class as a whole word, and appends
-		 * a style attribute. Deliberately not a DOM parse: loading DOMDocument
-		 * to add fourteen attributes would rewrite the entity encoding of every
-		 * name on the page, and a mangled apostrophe in a volunteer's surname is
-		 * exactly the sort of small wrongness this document cannot afford. */
-		$html = preg_replace(
-			'/(<[a-z]+[^>]*\bclass="[^"]*\b' . preg_quote( $class, '/' ) . '\b[^"]*")/i',
-			'$1 style="' . $declarations . '"',
-			$html
-		);
-	}
+	/* ── One pass, exact class names, one style attribute ────────────────────
+	 * The first version ran a regex per rule and appended a style attribute
+	 * each time it matched. Two things were wrong with that.
+	 *
+	 * \b treats a hyphen as a word boundary, so the rule for `gwcvt-org`
+	 * matched inside `gwcvt-org-logo`, `gwcvt-org-address` and
+	 * `gwcvt-org-contact`. And appending meant an element could end up with
+	 * TWO style attributes — where HTML takes the first and silently discards
+	 * the second, so which rule won depended on the order the rules happened to
+	 * be listed in. The address and contact lines rendered correctly by luck;
+	 * the logo did not, and arrived as bold 15pt text with no height cap.
+	 *
+	 * So: walk each element once, split its class attribute on whitespace,
+	 * match names exactly, and write a single style attribute. Nothing depends
+	 * on rule order any more.
+	 * ─────────────────────────────────────────────────────────────────────── */
+	return (string) preg_replace_callback(
+		'/<([a-z]+)([^>]*\bclass="([^"]*)"[^>]*?)>/i',
+		static function ( array $match ) use ( $rules ): string {
+			$declarations = '';
 
-	/* The table cells and headers, which have no classes of their own. */
-	$html = str_replace(
-		array( '<th scope="row">', '<th scope="col">', '<td>', '<td class="gwcvt-total"' ),
+			foreach ( preg_split( '/\s+/', trim( $match[3] ) ) as $class ) {
+				if ( '' !== $class && isset( $rules[ $class ] ) ) {
+					$declarations .= $rules[ $class ];
+				}
+			}
+
+			if ( '' === $declarations ) {
+				return $match[0];
+			}
+
+			$attributes = rtrim( $match[2] );
+			$closes     = '';
+
+			// <img … /> — the slash belongs after the attributes, not inside them.
+			if ( '/' === substr( $attributes, -1 ) ) {
+				$attributes = rtrim( substr( $attributes, 0, -1 ) );
+				$closes     = ' /';
+			}
+
+			return '<' . $match[1] . $attributes . ' style="' . $declarations . '"' . $closes . '>';
+		},
+		gwcvt_inline_letter_cells( $html )
+	);
+}
+
+/**
+ * The table cells and headers, which carry no classes of their own.
+ *
+ * @param string $html The letter body.
+ * @return string
+ */
+function gwcvt_inline_letter_cells( string $html ): string {
+	/* Only cells with NO class of their own. A classed cell is handled by the
+	 * class pass, and styling it here as well would give it two style
+	 * attributes — of which HTML silently keeps the first. */
+	return str_replace(
+		array( '<th scope="row">', '<th scope="col">', '<td>' ),
 		array(
 			'<th scope="row" style="text-align:left;padding:4px 12px 4px 0;font-weight:normal;color:#444;vertical-align:top;width:11em;">',
 			'<th scope="col" style="text-align:left;padding:5px 8px;border-bottom:1px solid #999;font-size:10pt;">',
 			'<td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;vertical-align:top;">',
-			'<td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;vertical-align:top;"',
 		),
 		$html
 	);
-
-	return $html;
 }

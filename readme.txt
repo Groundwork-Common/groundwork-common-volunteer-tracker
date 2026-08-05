@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.7.0
+Stable tag: 0.7.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,11 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 
 == Changelog ==
 
+= 0.7.1 =
+* Your logo can go on the letterhead. Kept small, with the organization name always printed as text underneath so the letter reads correctly when an email program refuses to load images.
+* Help tabs on every screen — what verifying actually means, what the reference code does and does not prove, and what happens to records over time.
+* Fixed: in emailed letters, the address, contact and logo lines could pick up the organization name's styling. The logo was the visible casualty, arriving as bold text with no size limit.
+
 = 0.7.0 =
 * The "Not yet verified" badge is now the verify button — click it and the shift is attested, without hunting for a hover menu.
 * The hours list opens in shift-date order, newest first, instead of the order records happened to be created in.
@@ -109,6 +114,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.7.1 =
+Adds a logo to the letterhead and help tabs throughout. Fixes styling in emailed letters.
 
 = 0.7.0 =
 Everyday improvements for whoever does the volunteer coordinating. No data changes.
