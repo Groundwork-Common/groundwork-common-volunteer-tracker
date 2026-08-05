@@ -521,6 +521,34 @@ a.gwcvt-badge--action:focus-visible {
 	max-width: none;
 }
 
+/* ─── The logo chooser ──────────────────────────────────────────────────────
+   A preview, a button, and a way back to nothing. The preview is boxed on
+   white because a logo is almost always ink on transparent, and a transparent
+   PNG on a dark admin looks like an empty frame. */
+.gwcvt-media__preview {
+	display: inline-block;
+	margin: 0 0 8px;
+	padding: 8px 12px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.gwcvt-media__preview img {
+	display: block;
+	max-height: 56px;
+	width: auto;
+}
+
+.gwcvt-media__remove {
+	margin-left: 8px;
+	color: #b32d2e;
+}
+
+.gwcvt-media__remove:hover,
+.gwcvt-media__remove:focus {
+	color: #8a2424;
+}
 /* ─── The schedule ──────────────────────────────────────────────────────────
    A coordinator opens this screen to find out what is short of people and how
    soon, so the fill figure is the loudest thing in the row and "short" is said

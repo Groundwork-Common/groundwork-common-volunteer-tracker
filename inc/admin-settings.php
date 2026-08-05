@@ -56,6 +56,13 @@ function gwcvt_settings_fields(): array {
 			'label'   => __( 'Address', 'groundwork-common-volunteer-tracker' ),
 			'help'    => __( 'Printed under the name. One line per line.', 'groundwork-common-volunteer-tracker' ),
 		),
+		'org_logo'                  => array(
+			'tab'     => 'letter',
+			'section' => 'letterhead',
+			'type'    => 'image',
+			'label'   => __( 'Logo', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Printed above the organization name. Kept small on purpose — this is correspondence, not a flyer. Email programs often refuse to load images, so the name is always printed as text underneath and the letter reads correctly without it.', 'groundwork-common-volunteer-tracker' ),
+		),
 		'org_contact'               => array(
 			'tab'         => 'letter',
 			'section'     => 'letterhead',
@@ -570,6 +577,25 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 					);
 					break;
 
+				case 'image':
+					$attachment = (int) $value;
+					$preview    = $attachment > 0 ? wp_get_attachment_image_url( $attachment, 'medium' ) : '';
+					?>
+					<div class="gwcvt-media" data-gwcvt-media>
+						<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="gwcvt[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $attachment ); ?>" />
+						<div class="gwcvt-media__preview" <?php echo '' === $preview ? 'hidden' : ''; ?>>
+							<img src="<?php echo esc_url( $preview ); ?>" alt="" />
+						</div>
+						<button type="button" class="button gwcvt-media__choose">
+							<?php echo esc_html( '' !== $preview ? __( 'Change logo', 'groundwork-common-volunteer-tracker' ) : __( 'Choose a logo', 'groundwork-common-volunteer-tracker' ) ); ?>
+						</button>
+						<button type="button" class="button-link gwcvt-media__remove" <?php echo '' === $preview ? 'hidden' : ''; ?>>
+							<?php esc_html_e( 'Remove', 'groundwork-common-volunteer-tracker' ); ?>
+						</button>
+					</div>
+					<?php
+					break;
+
 				case 'page':
 					wp_dropdown_pages(
 						array(
@@ -700,6 +726,19 @@ function gwcvt_sanitize_setting( $raw, array $field ) {
 
 			// A value that is not one of the options is refused, not stored.
 			return array_key_exists( $value, $options ) ? $value : '';
+
+		case 'image':
+			$attachment = absint( $raw );
+
+			/* Refused unless it really is an image in the media library. A
+			 * stored ID pointing at a PDF, or at an attachment somebody has
+			 * since deleted, would render as a broken image on a document
+			 * handed to a court. */
+			if ( $attachment < 1 || 'attachment' !== get_post_type( $attachment ) ) {
+				return 0;
+			}
+
+			return wp_attachment_is_image( $attachment ) ? $attachment : 0;
 
 		case 'page':
 			$page_id = absint( $raw );

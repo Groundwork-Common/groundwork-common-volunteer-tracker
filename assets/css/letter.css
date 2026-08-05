@@ -257,3 +257,13 @@ body.gwcvt-letter-page {
 		page-break-inside: avoid;
 	}
 }
+
+/* The logo, capped by height so the letter stays correspondence rather than
+   becoming a flyer. Width follows, so a wide wordmark and a square badge both
+   sit correctly without the organisation having to crop anything. */
+.gwcvt-org-logo {
+	display: block;
+	max-height: 56px;
+	width: auto;
+	margin: 0 0 8px;
+}

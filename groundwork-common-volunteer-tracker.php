@@ -271,6 +271,10 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	 * shift and holds every handler that writes one. */
 	require GWCVT_DIR . 'inc/admin-schedule.php';
 	require GWCVT_DIR . 'inc/admin-shift.php';
+
+	/* Contextual help. Last, because it describes what all of the above do —
+	 * which now includes the schedule and its rosters. */
+	require GWCVT_DIR . 'inc/admin-help.php';
 }
 
 /* ── Activation ──────────────────────────────────────────────────────────────

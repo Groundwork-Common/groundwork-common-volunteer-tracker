@@ -119,6 +119,10 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Cancel a shift with a reason. It stays on the schedule marked as cancelled rather than disappearing, so it is clear it was called off.
 * Shifts short of the number of people you said you needed are flagged on the schedule.
 * Off until you switch it on, under Settings → Shifts. Nothing about scheduling touches hours: a scheduled shift is a plan, and hours are still logged after the fact and still have to be verified.
+= 0.7.1 =
+* Your logo can go on the letterhead. Kept small, with the organization name always printed as text underneath so the letter reads correctly when an email program refuses to load images.
+* Help tabs on every screen — what verifying actually means, what the reference code does and does not prove, and what happens to records over time.
+* Fixed: in emailed letters, the address, contact and logo lines could pick up the organization name's styling. The logo was the visible casualty, arriving as bold text with no size limit.
 
 = 0.7.0 =
 * The "Not yet verified" badge is now the verify button — click it and the shift is attested, without hunting for a hover menu.
@@ -179,6 +183,8 @@ Turns a shift's roster into hours in one pass. Nothing changes for hours you hav
 
 = 0.8.0 =
 Adds shift scheduling and rosters. It stays off until you enable it under Settings → Shifts, and it changes nothing about hours you have already logged or letters you have already issued.
+= 0.7.1 =
+Adds a logo to the letterhead and help tabs throughout. Fixes styling in emailed letters.
 
 = 0.7.0 =
 Everyday improvements for whoever does the volunteer coordinating. No data changes.
