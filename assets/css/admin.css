@@ -41,6 +41,77 @@
 	margin: 0 0 20px;
 }
 
+/* ─── Letters screen ────────────────────────────────────────────────────────
+   Two columns on a wide screen: producing a letter on the left, and the two
+   things somebody does *about* letters already issued on the right. The
+   reference checker is in the sidebar rather than buried below the form because
+   it is used by whoever picks up the phone, who is not necessarily the person
+   who issues letters. */
+.gwcvt-letters-layout {
+	display: grid;
+	grid-template-columns: minmax( 0, 3fr ) minmax( 0, 2fr );
+	gap: 24px;
+	align-items: start;
+	margin-top: 16px;
+}
+
+@media ( max-width: 1100px ) {
+	.gwcvt-letters-layout {
+		grid-template-columns: minmax( 0, 1fr );
+	}
+}
+
+.gwcvt-letters-main,
+.gwcvt-box {
+	padding: 16px 20px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.gwcvt-box {
+	margin-bottom: 20px;
+}
+
+.gwcvt-box h2 {
+	margin-top: 0;
+	font-size: 14px;
+}
+
+.gwcvt-field-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+}
+
+.gwcvt-letter-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+}
+
+.gwcvt-preview {
+	max-width: 40em;
+	margin-bottom: 16px;
+}
+
+.gwcvt-preview th {
+	width: 12em;
+}
+
+.gwcvt-log code {
+	font-size: 11px;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	.gwcvt-letters-main,
+	.gwcvt-box {
+		background: #1d2327;
+		border-color: #3c434a;
+	}
+}
+
 /* ─── Verification badges ───────────────────────────────────────────────────
    Colour is never the only signal — each badge carries its own words, because
    "verified" and "not yet verified" is exactly the distinction somebody with a

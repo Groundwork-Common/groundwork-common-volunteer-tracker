@@ -30,14 +30,18 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 		GWCVT_VERSION
 	);
 
-	// The picker only exists on the entry editor.
-	if ( ! in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true ) ) {
-		return;
-	}
-
+	/* The picker appears in two places: the entry editor, and the Letters
+	 * screen. One script serves both — it binds to every [data-gwcvt-picker] on
+	 * the page rather than to a known ID, so a third caller costs nothing. */
 	$screen = get_current_screen();
 
-	if ( ! $screen || GWCVT_ENTRY_TYPE !== $screen->post_type ) {
+	$on_entry_editor = in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true )
+		&& $screen
+		&& GWCVT_ENTRY_TYPE === $screen->post_type;
+
+	$on_letters = $screen && false !== strpos( (string) $screen->id, GWCVT_LETTERS_PAGE );
+
+	if ( ! $on_entry_editor && ! $on_letters ) {
 		return;
 	}
 

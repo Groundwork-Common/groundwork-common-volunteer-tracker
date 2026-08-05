@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.2.0';
+const GWCVT_VERSION = '0.3.0';
 
 /* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -124,6 +124,12 @@ if ( ! function_exists( 'gwcvt_cap' ) ) {
 if ( ! class_exists( 'GWCVT_Totals' ) ) {
 	require GWCVT_DIR . 'inc/class-gwcvt-totals.php';
 }
+if ( ! class_exists( 'GWCVT_Letter_Entry' ) ) {
+	require GWCVT_DIR . 'inc/class-gwcvt-letter-entry.php';
+}
+if ( ! class_exists( 'GWCVT_Letter' ) ) {
+	require GWCVT_DIR . 'inc/class-gwcvt-letter.php';
+}
 
 /* The post types, then the query layer that reads them. cpt.php declares the
  * meta key constants entries.php totals with, so it cannot move after it. */
@@ -138,6 +144,22 @@ if ( ! function_exists( 'gwcvt_entry_ids_for_volunteer' ) ) {
 }
 if ( ! function_exists( 'gwcvt_verify_entry' ) ) {
 	require GWCVT_DIR . 'inc/verify.php';
+}
+if ( ! function_exists( 'gwcvt_register_letter_type' ) ) {
+	require GWCVT_DIR . 'inc/letter-cpt.php';
+}
+
+/* The letter. letter.php assembles the model and mints the reference,
+ * render.php turns one into a document, emails.php sends it. None of them
+ * knows about the admin screen that calls them. */
+if ( ! function_exists( 'gwcvt_build_letter' ) ) {
+	require GWCVT_DIR . 'inc/letter.php';
+}
+if ( ! function_exists( 'gwcvt_render_letter' ) ) {
+	require GWCVT_DIR . 'inc/render.php';
+}
+if ( ! function_exists( 'gwcvt_send_email' ) ) {
+	require GWCVT_DIR . 'inc/emails.php';
 }
 if ( ! function_exists( 'gwcvt_register_rest_routes' ) ) {
 	require GWCVT_DIR . 'inc/rest.php';
@@ -163,6 +185,12 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 
 	// Verification where staff look for it: the hours list, and the entry itself.
 	require GWCVT_DIR . 'inc/admin-verify.php';
+
+	// The settings tabs' forms, and the one handler that saves them.
+	require GWCVT_DIR . 'inc/admin-settings.php';
+
+	// Producing, sending and checking letters.
+	require GWCVT_DIR . 'inc/admin-letters.php';
 }
 
 /* ── Activation ──────────────────────────────────────────────────────────────

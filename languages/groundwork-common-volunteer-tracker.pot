@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Groundwork Common Volunteer Tracker 0.2.0\n"
+"Project-Id-Version: Groundwork Common Volunteer Tracker 0.3.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-05T15:34:45+00:00\n"
+"POT-Creation-Date: 2026-08-05T16:23:16+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -46,6 +46,230 @@ msgstr ""
 #: inc/access.php:196
 #: inc/admin-verify.php:204
 msgid "Permission denied"
+msgstr ""
+
+#: inc/admin-letters.php:20
+#: inc/admin-letters.php:59
+msgid "Verification Letters"
+msgstr ""
+
+#: inc/admin-letters.php:21
+msgid "Letters"
+msgstr ""
+
+#: inc/admin-letters.php:65
+msgid "Produce a letter"
+msgstr ""
+
+#: inc/admin-letters.php:73
+#: inc/admin-letters.php:517
+#: inc/cpt.php:199
+#: inc/meta-box.php:111
+#: inc/render.php:129
+msgid "Volunteer"
+msgstr ""
+
+#: inc/admin-letters.php:75
+#: inc/meta-box.php:119
+msgid "No volunteer of that name"
+msgstr ""
+
+#: inc/admin-letters.php:85
+#: inc/meta-box.php:129
+msgid "Start typing a name…"
+msgstr ""
+
+#: inc/admin-letters.php:95
+msgid "From"
+msgstr ""
+
+#: inc/admin-letters.php:99
+msgid "To"
+msgstr ""
+
+#: inc/admin-letters.php:105
+msgid "Leave both dates empty to cover their whole time volunteering."
+msgstr ""
+
+#: inc/admin-letters.php:108
+msgid "Preview"
+msgstr ""
+
+#: inc/admin-letters.php:136
+msgid "That volunteer no longer exists."
+msgstr ""
+
+#: inc/admin-letters.php:149
+msgid "There are no published hour entries for this volunteer in that period, so there is nothing to verify. A letter stating zero hours is not something to send."
+msgstr ""
+
+#: inc/admin-letters.php:157
+#: inc/render.php:131
+#: inc/volunteer-cpt.php:102
+msgid "Verified hours"
+msgstr ""
+
+#: inc/admin-letters.php:161
+msgid "Verified shifts"
+msgstr ""
+
+#: inc/admin-letters.php:165
+msgid "Period"
+msgstr ""
+
+#: inc/admin-letters.php:169
+#: inc/admin-letters.php:516
+msgid "Reference"
+msgstr ""
+
+#: inc/admin-letters.php:177
+msgid "None of these hours has been verified yet. Verify them before issuing a letter — otherwise it reports zero verified hours."
+msgstr ""
+
+#: inc/admin-letters.php:188
+msgid "Open the letter to print"
+msgstr ""
+
+#. translators: %s: an email address.
+#: inc/admin-letters.php:195
+#, php-format
+msgid "Email this letter to %s?"
+msgstr ""
+
+#. translators: %s: an email address.
+#: inc/admin-letters.php:200
+#, php-format
+msgid "Email it to %s"
+msgstr ""
+
+#. translators: %s: a link to the volunteer's record.
+#: inc/admin-letters.php:210
+#, php-format
+msgid "No email address on file, so it cannot be emailed. %s"
+msgstr ""
+
+#: inc/admin-letters.php:212
+msgid "Add one to their record"
+msgstr ""
+
+#: inc/admin-letters.php:221
+msgid "Both actions are recorded in the log, including printing — a printed letter has left the building just as much as an emailed one."
+msgstr ""
+
+#: inc/admin-letters.php:278
+msgid "That volunteer does not exist."
+msgstr ""
+
+#: inc/admin-letters.php:279
+#: inc/admin-verify.php:196
+msgid "Not found"
+msgstr ""
+
+#: inc/admin-letters.php:378
+msgid "The letter was emailed and recorded in the log."
+msgstr ""
+
+#: inc/admin-letters.php:379
+msgid "WordPress could not send the email. The attempt is recorded in the log. Check the site’s mail configuration, or print the letter instead."
+msgstr ""
+
+#: inc/admin-letters.php:380
+msgid "That volunteer has no email address on file."
+msgstr ""
+
+#: inc/admin-letters.php:414
+msgid "Check a reference"
+msgstr ""
+
+#: inc/admin-letters.php:417
+msgid "Somebody has phoned about a letter. Type the reference code printed on it."
+msgstr ""
+
+#: inc/admin-letters.php:425
+msgid "Reference code"
+msgstr ""
+
+#: inc/admin-letters.php:428
+msgid "Check it"
+msgstr ""
+
+#: inc/admin-letters.php:442
+msgid "No letter with that reference has been issued from this site."
+msgstr ""
+
+#: inc/admin-letters.php:449
+msgid "a volunteer whose record has since been removed"
+msgstr ""
+
+#: inc/admin-letters.php:454
+msgid "This letter matches our current records."
+msgstr ""
+
+#. translators: 1: a volunteer's name, 2: a duration, 3: a number of shifts, 4: a date.
+#: inc/admin-letters.php:458
+#, php-format
+msgid "%1$s — %2$s verified across %3$s. Issued %4$s."
+msgstr ""
+
+#. translators: %d: number of shifts.
+#: inc/admin-letters.php:463
+#: inc/meta-box.php:396
+#, php-format
+msgid "%d shift"
+msgid_plural "%d shifts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/admin-letters.php:476
+msgid "This letter was issued from this site, but our records have changed since."
+msgstr ""
+
+#. translators: 1: a volunteer's name, 2: a duration, 3: a date.
+#: inc/admin-letters.php:480
+#, php-format
+msgid "The letter said: %1$s, %2$s verified. Issued %3$s."
+msgstr ""
+
+#. translators: %s: a duration.
+#: inc/admin-letters.php:490
+#, php-format
+msgid "The records now say: %s verified. This is ordinary — hours get corrected and shifts get verified after a letter goes out. Compare the two and re-issue if you need to."
+msgstr ""
+
+#: inc/admin-letters.php:493
+msgid "That volunteer’s record no longer exists, so the current figure cannot be shown."
+msgstr ""
+
+#: inc/admin-letters.php:508
+msgid "Recently issued"
+msgstr ""
+
+#: inc/admin-letters.php:511
+msgid "No letters have been issued yet."
+msgstr ""
+
+#: inc/admin-letters.php:518
+msgid "How"
+msgstr ""
+
+#: inc/admin-letters.php:519
+msgid "When"
+msgstr ""
+
+#: inc/admin-letters.php:529
+msgid "record removed"
+msgstr ""
+
+#: inc/admin-letters.php:537
+msgid "Emailed"
+msgstr ""
+
+#: inc/admin-letters.php:538
+msgid "Email failed"
+msgstr ""
+
+#: inc/admin-letters.php:541
+msgid "Printed"
 msgstr ""
 
 #: inc/admin-screen.php:37
@@ -129,6 +353,210 @@ msgstr ""
 msgid "Report a problem"
 msgstr ""
 
+#: inc/admin-settings.php:44
+msgid "Organization name"
+msgstr ""
+
+#: inc/admin-settings.php:46
+msgid "Leave empty to use the site title."
+msgstr ""
+
+#: inc/admin-settings.php:53
+msgid "Address"
+msgstr ""
+
+#: inc/admin-settings.php:54
+msgid "Printed under the name. One line per line."
+msgstr ""
+
+#: inc/admin-settings.php:60
+msgid "Contact for questions"
+msgstr ""
+
+#: inc/admin-settings.php:62
+msgid "Where a court or school should direct questions about a letter. This is the number somebody phones to check a reference code, so make it one that is answered."
+msgstr ""
+
+#: inc/admin-settings.php:71
+msgid "Signed by"
+msgstr ""
+
+#: inc/admin-settings.php:72
+msgid "Printed under the signature line. Left empty, the line prints unlabelled — which looks unfinished, and is meant to."
+msgstr ""
+
+#: inc/admin-settings.php:78
+msgid "Their title"
+msgstr ""
+
+#: inc/admin-settings.php:88
+msgid "Opening paragraph"
+msgstr ""
+
+#: inc/admin-settings.php:90
+msgid "Leave empty to use the wording shown. Plain text only — bold and italic survive, other markup does not."
+msgstr ""
+
+#: inc/admin-settings.php:98
+msgid "Disclaimer"
+msgstr ""
+
+#: inc/admin-settings.php:100
+msgid "Your counsel may want particular wording, so this is yours to change. It cannot be emptied: saving it blank restores the default. A letter with no disclaimer is a letter that has quietly started implying this plugin certified something."
+msgstr ""
+
+#: inc/admin-settings.php:108
+msgid "What the reference code proves"
+msgstr ""
+
+#: inc/admin-settings.php:110
+msgid "Also cannot be emptied. Without it, a reader reasonably assumes a code means some outside body issued the document."
+msgstr ""
+
+#: inc/admin-settings.php:120
+msgid "List every shift"
+msgstr ""
+
+#: inc/admin-settings.php:121
+msgid "On by default. A total with nothing behind it is a number the reader has to take on faith, which is what this document exists to avoid."
+msgstr ""
+
+#: inc/admin-settings.php:127
+msgid "Also list hours nobody has verified"
+msgstr ""
+
+#: inc/admin-settings.php:128
+msgid "Off by default. When on, unverified shifts appear marked as such and are still excluded from the verified total — they are never quietly added in."
+msgstr ""
+
+#: inc/admin-settings.php:134
+msgid "Reference prefix"
+msgstr ""
+
+#: inc/admin-settings.php:135
+msgid "Prepended to every reference code. Letters and numbers only — the code gets read aloud over the phone and typed back in."
+msgstr ""
+
+#: inc/admin-settings.php:144
+msgid "Subject line"
+msgstr ""
+
+#: inc/admin-settings.php:145
+#: inc/emails.php:117
+msgid "Your volunteer service verification from {org}"
+msgstr ""
+
+#: inc/admin-settings.php:153
+msgid "Covering note"
+msgstr ""
+
+#: inc/admin-settings.php:154
+msgid "Appears above the letter in the email, outside it. The letter itself is identical whether printed or emailed, and this is how a short “here is your letter” message gets added without changing the document."
+msgstr ""
+
+#: inc/admin-settings.php:161
+msgid "From name"
+msgstr ""
+
+#: inc/admin-settings.php:162
+msgid "Leave both empty to use whatever WordPress would have used."
+msgstr ""
+
+#: inc/admin-settings.php:168
+msgid "From address"
+msgstr ""
+
+#: inc/admin-settings.php:177
+msgid "Round hours to"
+msgstr ""
+
+#: inc/admin-settings.php:179
+msgid "Do not round"
+msgstr ""
+
+#: inc/admin-settings.php:180
+msgid "5 minutes"
+msgstr ""
+
+#: inc/admin-settings.php:181
+msgid "10 minutes"
+msgstr ""
+
+#: inc/admin-settings.php:182
+msgid "15 minutes"
+msgstr ""
+
+#: inc/admin-settings.php:183
+msgid "30 minutes"
+msgstr ""
+
+#: inc/admin-settings.php:184
+msgid "A whole hour"
+msgstr ""
+
+#: inc/admin-settings.php:186
+msgid "Always to the nearest, never up — rounding up is the organization crediting hours nobody worked."
+msgstr ""
+
+#: inc/admin-settings.php:192
+msgid "Show hours as"
+msgstr ""
+
+#: inc/admin-settings.php:194
+msgid "Decimal is what a court order is usually written in."
+msgstr ""
+
+#: inc/admin-settings.php:200
+msgid "Allow shifts dated in the future"
+msgstr ""
+
+#: inc/admin-settings.php:201
+msgid "Off by default. A shift dated next Tuesday is a typo far more often than a plan, and on a document a court reads it discredits the whole record."
+msgstr ""
+
+#: inc/admin-settings.php:208
+msgid "Activity suggestions"
+msgstr ""
+
+#: inc/admin-settings.php:209
+msgid "One per line. Offered as suggestions when logging a shift; staff can still type anything. Leave empty for free text."
+msgstr ""
+
+#: inc/admin-settings.php:229
+msgid "Letterhead"
+msgstr ""
+
+#: inc/admin-settings.php:230
+#: inc/render.php:139
+msgid "Signature"
+msgstr ""
+
+#: inc/admin-settings.php:231
+msgid "Wording"
+msgstr ""
+
+#: inc/admin-settings.php:232
+msgid "What the letter includes"
+msgstr ""
+
+#: inc/admin-settings.php:233
+msgid "Emailing it"
+msgstr ""
+
+#: inc/admin-settings.php:236
+msgid "Recording hours"
+msgstr ""
+
+#. translators: %s: a list of placeholder tokens.
+#: inc/admin-settings.php:279
+#, php-format
+msgid "These accept placeholders: %s"
+msgstr ""
+
+#: inc/admin-settings.php:487
+msgid "Settings saved."
+msgstr ""
+
 #: inc/admin-verify.php:38
 #: inc/i18n.php:50
 msgid "Verified"
@@ -147,10 +575,6 @@ msgstr ""
 
 #: inc/admin-verify.php:195
 msgid "That hour entry does not exist."
-msgstr ""
-
-#: inc/admin-verify.php:196
-msgid "Not found"
 msgstr ""
 
 #: inc/admin-verify.php:203
@@ -190,6 +614,7 @@ msgid "Any verification state"
 msgstr ""
 
 #: inc/admin-verify.php:425
+#: inc/render.php:137
 msgid "Verification"
 msgstr ""
 
@@ -273,20 +698,18 @@ msgstr ""
 msgid "no date"
 msgstr ""
 
-#: inc/cpt.php:199
-#: inc/meta-box.php:111
-msgid "Volunteer"
-msgstr ""
-
 #: inc/cpt.php:200
+#: inc/render.php:133
 msgid "Date"
 msgstr ""
 
 #: inc/cpt.php:201
+#: inc/render.php:134
 msgid "Hours"
 msgstr ""
 
 #: inc/cpt.php:202
+#: inc/render.php:135
 msgid "Activity"
 msgstr ""
 
@@ -302,6 +725,12 @@ msgstr ""
 
 #: inc/cpt.php:238
 msgid "Not assigned"
+msgstr ""
+
+#. translators: %s: the address the message was originally addressed to.
+#: inc/emails.php:59
+#, php-format
+msgid "Trapped by GWCVT_MAIL_MODE. This was addressed to %s."
 msgstr ""
 
 #: inc/i18n.php:51
@@ -328,6 +757,16 @@ msgstr ""
 msgid "The reference code identifies this letter against the records it was generated from. {org} can confirm whether a code still matches their current records. It is not a certification by any outside body."
 msgstr ""
 
+#: inc/letter-cpt.php:57
+msgctxt "post type general name"
+msgid "Issued letters"
+msgstr ""
+
+#: inc/letter-cpt.php:58
+msgctxt "post type singular name"
+msgid "Issued letter"
+msgstr ""
+
 #: inc/meta-box.php:40
 msgid "Shift"
 msgstr ""
@@ -352,14 +791,6 @@ msgstr ""
 
 #: inc/meta-box.php:102
 msgid "no email given"
-msgstr ""
-
-#: inc/meta-box.php:119
-msgid "No volunteer of that name"
-msgstr ""
-
-#: inc/meta-box.php:129
-msgid "Start typing a name…"
 msgstr ""
 
 #. translators: %s: a link to the new-volunteer screen.
@@ -403,6 +834,7 @@ msgid "Appears on the verification letter."
 msgstr ""
 
 #: inc/meta-box.php:217
+#: inc/render.php:136
 msgid "Supervised by"
 msgstr ""
 
@@ -428,13 +860,71 @@ msgstr ""
 msgid "%1$s verified, %2$s awaiting verification, across %3$s."
 msgstr ""
 
-#. translators: %d: number of shifts.
-#: inc/meta-box.php:396
+#: inc/render.php:66
+msgid "Print this letter"
+msgstr ""
+
+#: inc/render.php:69
+msgid "Choose “Save as PDF” in the print dialog to email it yourself."
+msgstr ""
+
+#: inc/render.php:127
+msgid "Volunteer Service Verification"
+msgstr ""
+
+#: inc/render.php:128
+msgid "Shifts recorded"
+msgstr ""
+
+#: inc/render.php:130
+msgid "Period covered"
+msgstr ""
+
+#: inc/render.php:132
+msgid "Shifts"
+msgstr ""
+
+#: inc/render.php:138
+msgid "Not verified — not included in the total above"
+msgstr ""
+
+#. translators: %s: a duration, e.g. "1.5".
+#: inc/render.php:249
 #, php-format
-msgid "%d shift"
-msgid_plural "%d shifts"
-msgstr[0] ""
-msgstr[1] ""
+msgid "This letter also lists %s of recorded but unverified time. No member of staff has attested to those shifts, and they are excluded from the verified total above."
+msgstr ""
+
+#: inc/render.php:384
+msgid "This letter confirms that {name} performed {hours} hours of verified volunteer service with {org} during {period}. The shifts below are recorded in our volunteer hour log, and each was attested to by a member of our staff."
+msgstr ""
+
+#. translators: 1: a date, 2: a date.
+#: inc/render.php:400
+#, php-format
+msgid "%1$s to %2$s"
+msgstr ""
+
+#. translators: %s: a date.
+#: inc/render.php:408
+#, php-format
+msgid "from %s onwards"
+msgstr ""
+
+#. translators: %s: a date.
+#: inc/render.php:413
+#, php-format
+msgid "up to %s"
+msgstr ""
+
+#: inc/render.php:416
+msgid "their entire time volunteering with us"
+msgstr ""
+
+#. translators: 1: a volunteer's name, 2: the organisation's name.
+#: inc/render.php:428
+#, php-format
+msgid "Volunteer service verification — %1$s — %2$s"
+msgstr ""
 
 #: inc/rest.php:52
 msgid "Part of a volunteer’s name."
@@ -524,10 +1014,6 @@ msgstr ""
 
 #: inc/volunteer-cpt.php:60
 msgid "Volunteers"
-msgstr ""
-
-#: inc/volunteer-cpt.php:102
-msgid "Verified hours"
 msgstr ""
 
 #: inc/volunteer-cpt.php:103
