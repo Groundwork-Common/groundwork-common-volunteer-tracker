@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-05T16:49:34+00:00\n"
+"POT-Creation-Date: 2026-08-05T17:04:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -255,7 +255,7 @@ msgid "How"
 msgstr ""
 
 #: inc/admin-letters.php:519
-#: inc/admin-settings.php:639
+#: inc/admin-settings.php:649
 msgid "When"
 msgstr ""
 
@@ -618,69 +618,85 @@ msgstr ""
 msgid "Retention"
 msgstr ""
 
-#: inc/admin-settings.php:303
+#: inc/admin-settings.php:316
 msgid "Keep indefinitely"
 msgstr ""
 
-#. translators: %d: a number of years.
-#: inc/admin-settings.php:308
-#, php-format
-msgid "%d year after that"
-msgid_plural "%d years after that"
-msgstr[0] ""
-msgstr[1] ""
+#: inc/admin-settings.php:317
+msgid "1 year"
+msgstr ""
+
+#: inc/admin-settings.php:318
+msgid "18 months"
+msgstr ""
+
+#: inc/admin-settings.php:319
+msgid "2 years"
+msgstr ""
+
+#: inc/admin-settings.php:320
+msgid "3 years"
+msgstr ""
+
+#: inc/admin-settings.php:321
+msgid "5 years"
+msgstr ""
+
+#: inc/admin-settings.php:322
+msgid "7 years"
+msgstr ""
 
 #. translators: %s: a list of placeholder tokens.
-#: inc/admin-settings.php:354
+#: inc/admin-settings.php:364
 #, php-format
 msgid "These accept placeholders: %s"
 msgstr ""
 
-#: inc/admin-settings.php:434
+#: inc/admin-settings.php:444
 msgid "— not set —"
 msgstr ""
 
-#: inc/admin-settings.php:589
+#: inc/admin-settings.php:599
 msgid "Settings saved."
 msgstr ""
 
-#: inc/admin-settings.php:614
+#: inc/admin-settings.php:624
 msgid "How long should volunteer records be kept?"
 msgstr ""
 
-#: inc/admin-settings.php:615
+#: inc/admin-settings.php:625
 msgid "This plugin stores names, contact details and — for court-ordered service — information about somebody’s legal obligations. Nothing is being deleted while this is unanswered. Keeping records indefinitely is a perfectly good answer; not having decided is not."
 msgstr ""
 
-#: inc/admin-settings.php:617
+#: inc/admin-settings.php:627
 msgid "Decide now"
 msgstr ""
 
-#: inc/admin-settings.php:627
+#: inc/admin-settings.php:637
 msgid "Recent sweeps"
 msgstr ""
 
-#: inc/admin-settings.php:631
+#: inc/admin-settings.php:641
 msgid "Nothing has been purged yet. The sweep runs once a day and does nothing at all while records are kept indefinitely."
 msgstr ""
 
-#: inc/admin-settings.php:640
+#: inc/admin-settings.php:650
 msgid "What"
 msgstr ""
 
-#: inc/admin-settings.php:641
+#: inc/admin-settings.php:651
 msgid "Records"
 msgstr ""
 
-#: inc/admin-settings.php:642
+#: inc/admin-settings.php:652
 msgid "Held back"
 msgstr ""
 
-#: inc/admin-settings.php:653
+#: inc/admin-settings.php:663
 msgid "Deleted"
 msgstr ""
 
-#: inc/admin-settings.php:654
+#: inc/admin-settings.php:664
 msgid "Anonymised"
 msgstr ""
 

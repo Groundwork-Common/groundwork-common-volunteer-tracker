@@ -195,4 +195,36 @@ final class RetentionTest extends TestCase {
 		$this->assertArrayHasKey( '0', $options );
 		$this->assertSame( 'Keep indefinitely', $options['0'] );
 	}
+
+	public function test_no_two_periods_read_the_same(): void {
+		$labels = array_values( gwcvt_retention_period_options() );
+
+		/* This shipped broken: the labels were computed as round( $months / 12 ),
+		 * so 18 and 24 months both rendered as "2 years". Two options a person
+		 * cannot tell apart, storing different values, with the dropdown
+		 * selecting the first match when the screen was reopened — so somebody
+		 * who chose eighteen months saw two years the next time they looked. */
+		$this->assertSame(
+			count( $labels ),
+			count( array_unique( $labels ) ),
+			'Two retention periods render identically: ' . implode( ' | ', $labels )
+		);
+	}
+
+	public function test_every_period_is_a_whole_number_of_months(): void {
+		foreach ( array_keys( gwcvt_retention_period_options() ) as $months ) {
+			$this->assertMatchesRegularExpression( '/^\d+$/', (string) $months );
+		}
+	}
+
+	public function test_the_stored_value_is_months_not_years(): void {
+		$options = gwcvt_retention_period_options();
+
+		/* The keys feed gwcvt_retention_cutoff(), which subtracts calendar
+		 * months. A key meaning years would quietly divide every retention
+		 * period by twelve. */
+		$this->assertArrayHasKey( '12', $options );
+		$this->assertSame( '1 year', $options['12'] );
+		$this->assertSame( '18 months', $options['18'] );
+	}
 }

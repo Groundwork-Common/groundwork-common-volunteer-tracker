@@ -297,20 +297,30 @@ function gwcvt_settings_sections(): array {
 /**
  * How long records may be kept for.
  *
+ * Written out rather than computed from the month figures, which is how this
+ * first shipped and which was wrong twice over. round( 18 / 12 ) is 2, so
+ * eighteen months and twenty-four months both rendered as "2 years" — two
+ * options a person cannot tell apart, storing different values, with the
+ * dropdown selecting the first match when the screen was reopened. And the
+ * label read "2 years after that", where "that" referred to nothing at all.
+ *
+ * The keys are months because the arithmetic in inc/privacy.php is in calendar
+ * months; the labels are what somebody setting a retention policy would say.
+ * They read as the completion of the field's own label, "Keep volunteer records
+ * for" — the anchor they are measured from is the separate setting below.
+ *
  * @return array<string, string>
  */
 function gwcvt_retention_period_options(): array {
-	$options = array( '0' => __( 'Keep indefinitely', 'groundwork-common-volunteer-tracker' ) );
-
-	foreach ( array( 12, 18, 24, 36, 60, 84 ) as $months ) {
-		$options[ (string) $months ] = sprintf(
-			/* translators: %d: a number of years. */
-			_n( '%d year after that', '%d years after that', (int) round( $months / 12 ), 'groundwork-common-volunteer-tracker' ),
-			(int) round( $months / 12 )
-		);
-	}
-
-	return $options;
+	return array(
+		'0'  => __( 'Keep indefinitely', 'groundwork-common-volunteer-tracker' ),
+		'12' => __( '1 year', 'groundwork-common-volunteer-tracker' ),
+		'18' => __( '18 months', 'groundwork-common-volunteer-tracker' ),
+		'24' => __( '2 years', 'groundwork-common-volunteer-tracker' ),
+		'36' => __( '3 years', 'groundwork-common-volunteer-tracker' ),
+		'60' => __( '5 years', 'groundwork-common-volunteer-tracker' ),
+		'84' => __( '7 years', 'groundwork-common-volunteer-tracker' ),
+	);
 }
 
 /**
