@@ -376,6 +376,8 @@ function gwcvt_schedule_notice(): void {
 	);
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$restored = isset( $_GET['gwcvt_restored'] ) ? absint( wp_unslash( $_GET['gwcvt_restored'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$told = isset( $_GET['gwcvt_told'] ) ? absint( wp_unslash( $_GET['gwcvt_told'] ) ) : 0;
 
 	if ( 'created' === $result ) {
@@ -682,6 +684,8 @@ function gwcvt_event_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$deleted = isset( $_GET['gwcvt_deleted'] ) ? absint( wp_unslash( $_GET['gwcvt_deleted'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$restored = isset( $_GET['gwcvt_restored'] ) ? absint( wp_unslash( $_GET['gwcvt_restored'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$told = isset( $_GET['gwcvt_told'] ) ? absint( wp_unslash( $_GET['gwcvt_told'] ) ) : 0;
 
 	$messages = array(
@@ -728,6 +732,14 @@ function gwcvt_event_notice(): void {
 			/* translators: %d: how many empty times were deleted. */
 			_n( '%d empty time deleted.', '%d empty times deleted.', $deleted, 'groundwork-common-volunteer-tracker' ),
 			$deleted
+		);
+	}
+
+	if ( $restored > 0 ) {
+		$detail[] = sprintf(
+			/* translators: %d: how many cancelled times were put back on. */
+			_n( '%d time put back on.', '%d times put back on.', $restored, 'groundwork-common-volunteer-tracker' ),
+			$restored
 		);
 	}
 

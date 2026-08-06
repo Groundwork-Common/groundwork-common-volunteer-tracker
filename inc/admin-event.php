@@ -286,6 +286,60 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 			<input type="text" id="<?php echo esc_attr( $id ); ?>-loc" name="<?php echo esc_attr( $field ); ?>[location]" class="regular-text" maxlength="200" value="<?php echo esc_attr( $location ); ?>" <?php echo $locations ? 'list="gwcvt-event-locations"' : ''; ?> />
 		</div>
 
+		<?php if ( $slot_ids ) : ?>
+			<?php
+			$live      = 0;
+			$occupied  = 0;
+
+			foreach ( $slot_ids as $one ) {
+				if ( gwcvt_shift_is_cancelled( (int) $one ) ) {
+					continue;
+				}
+
+				++$live;
+
+				if ( gwcvt_shift_signup_ids( (int) $one, array( 'publish', GWCVT_SIGNUP_WAITLIST ) ) ) {
+					++$occupied;
+				}
+			}
+			?>
+			<?php if ( $live > 0 ) : ?>
+				<div style="margin-top:10px">
+					<label>
+						<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[remove]" value="1" />
+						<strong><?php esc_html_e( 'Remove this whole role', 'groundwork-common-volunteer-tracker' ); ?></strong>
+					</label>
+					<p class="description" style="margin:4px 0 0">
+						<?php
+						if ( $occupied > 0 ) {
+							printf(
+								esc_html(
+									/* translators: 1: how many times the role has, 2: how many have people on them. */
+									_n(
+										'Its %1$d time goes. %2$d of them has people on it and is cancelled rather than deleted — it stays on the schedule so everybody can see it was called off.',
+										'All %1$d of its times go. %2$d of them have people on them and are cancelled rather than deleted — they stay on the schedule so everybody can see they were called off.',
+										$live,
+										'groundwork-common-volunteer-tracker'
+									)
+								),
+								(int) $live,
+								(int) $occupied
+							);
+						} else {
+							printf(
+								esc_html(
+									/* translators: %d: how many times the role has. */
+									_n( 'Its %d time is deleted — nobody is on it.', 'All %d of its times are deleted — nobody is on any of them.', $live, 'groundwork-common-volunteer-tracker' )
+								),
+								(int) $live
+							);
+						}
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+		<?php endif; ?>
+
 		<div style="margin-top:10px">
 			<label for="<?php echo esc_attr( $id ); ?>-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label><br />
 			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000"><?php echo esc_textarea( $notes ); ?></textarea>
@@ -355,6 +409,24 @@ function gwcvt_render_event_slot_row( int $role_index, int $slot_index, int $shi
 	$filled    = $is_new ? 0 : gwcvt_shift_filled( $shift_id );
 	$waiting   = $is_new ? 0 : count( gwcvt_shift_signup_ids( $shift_id, array( GWCVT_SIGNUP_WAITLIST ) ) );
 	$cancelled = ! $is_new && gwcvt_shift_is_cancelled( $shift_id );
+
+	/* ── A cancelled time has to look cancelled ──────────────────────────────
+	 * This row used to come back from a cancellation looking exactly like every
+	 * other one: editable times, and a Remove box still offering to cancel a
+	 * thing that was already cancelled. The only difference was the word
+	 * "Cancelled" in the last column but one.
+	 *
+	 * So a coordinator ticked Remove, pressed Save, saw an unchanged row and
+	 * concluded it had not worked — when it had. That is worse than a feature
+	 * that fails, because the state is real and nothing on the screen agrees.
+	 *
+	 * Now it is struck through, greyed, carries its reason, and offers the one
+	 * action that makes sense on it: bringing it back. Its values ride along in
+	 * hidden fields so a save round-trips them untouched. */
+	if ( $cancelled ) {
+		gwcvt_render_cancelled_slot_row( $field, $id, $shift_id, $date, $start, $end, $min, $max, (bool) $overnight );
+		return;
+	}
 	?>
 	<tr>
 		<td>
@@ -388,8 +460,6 @@ function gwcvt_render_event_slot_row( int $role_index, int $slot_index, int $shi
 			<?php
 			if ( $is_new ) {
 				echo '<span class="description">' . esc_html__( 'New', 'groundwork-common-volunteer-tracker' ) . '</span>';
-			} elseif ( $cancelled ) {
-				echo '<span class="description">' . esc_html__( 'Cancelled', 'groundwork-common-volunteer-tracker' ) . '</span>';
 			} else {
 				echo esc_html( gwcvt_shift_fill_label( $shift_id ) );
 
@@ -427,6 +497,75 @@ function gwcvt_render_event_slot_row( int $role_index, int $slot_index, int $shi
 					?>
 				</label>
 			<?php endif; ?>
+		</td>
+	</tr>
+	<?php
+}
+
+/**
+ * A time that has been called off.
+ *
+ * Its values ride in hidden fields rather than inputs, so a save round-trips
+ * them unchanged and nothing about a cancelled time can be edited by accident.
+ *
+ * @param string $field     Field name prefix.
+ * @param string $id        Element id prefix.
+ * @param int    $shift_id  Shift post ID.
+ * @param string $date      Y-m-d.
+ * @param string $start     H:i.
+ * @param string $end       H:i.
+ * @param string $min       How many were needed.
+ * @param string $max       How many it took.
+ * @param bool   $overnight Whether it ran past midnight.
+ */
+function gwcvt_render_cancelled_slot_row( string $field, string $id, int $shift_id, string $date, string $start, string $end, string $min, string $max, bool $overnight ): void {
+	$reason  = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_REASON, true ) );
+	$roster  = count( gwcvt_shift_signup_ids( $shift_id, array( 'publish', GWCVT_SIGNUP_WAITLIST ) ) );
+	$carried = array(
+		'id'        => (string) $shift_id,
+		'date'      => $date,
+		'start'     => $start,
+		'end'       => $end,
+		'min'       => $min,
+		'max'       => $max,
+		'overnight' => $overnight ? '1' : '',
+	);
+	?>
+	<tr class="gwcvt-slot--cancelled" style="background:#fcf6e9;color:#8c8f94">
+		<td colspan="6">
+			<?php foreach ( $carried as $key => $value ) : ?>
+				<?php if ( '' !== $value ) : ?>
+					<input type="hidden" name="<?php echo esc_attr( $field . '[' . $key . ']' ); ?>" value="<?php echo esc_attr( $value ); ?>" />
+				<?php endif; ?>
+			<?php endforeach; ?>
+
+			<s><?php echo esc_html( gwcvt_shift_date_label( $shift_id ) . ' · ' . gwcvt_shift_time_label( $shift_id ) ); ?></s>
+			<strong style="color:#8a2424;margin-left:8px"><?php esc_html_e( 'Called off', 'groundwork-common-volunteer-tracker' ); ?></strong>
+
+			<?php if ( '' !== $reason ) : ?>
+				<span class="description" style="margin-left:8px"><?php echo esc_html( $reason ); ?></span>
+			<?php endif; ?>
+		</td>
+		<td data-gwcvt-fill>
+			<?php
+			if ( $roster > 0 ) {
+				printf(
+					esc_html(
+						/* translators: %d: how many people were on the time when it was called off. */
+						_n( '%d person was on it', '%d people were on it', $roster, 'groundwork-common-volunteer-tracker' )
+					),
+					(int) $roster
+				);
+			} else {
+				echo '<span class="description">—</span>';
+			}
+			?>
+		</td>
+		<td data-gwcvt-remove>
+			<label>
+				<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[restore]" value="1" />
+				<span class="description"><?php esc_html_e( 'Put it back on', 'groundwork-common-volunteer-tracker' ); ?></span>
+			</label>
 		</td>
 	</tr>
 	<?php
@@ -607,6 +746,7 @@ function gwcvt_handle_save_event(): void {
 			'gwcvt_made'      => $tally['made'],
 			'gwcvt_cancelled' => $tally['cancelled'],
 			'gwcvt_deleted'   => $tally['deleted'],
+			'gwcvt_restored'  => $tally['restored'],
 			'gwcvt_told'      => $tally['told'],
 		)
 	);
@@ -626,6 +766,7 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 		'updated'   => 0,
 		'cancelled' => 0,
 		'deleted'   => 0,
+		'restored'  => 0,
 		'told'      => 0,
 		'error'     => '',
 	);
@@ -650,6 +791,13 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 		$supervisor = '' !== $supervisor ? $supervisor : (string) $context['super'];
 		$location   = '' !== $location ? $location : (string) $context['location'];
 
+		/* Removing the whole role. Each of its times still goes through
+		 * gwcvt_remove_event_slot(), so the cancel-versus-delete rule is decided
+		 * per time rather than for the role as a whole — a role with one busy
+		 * Saturday and three empty ones leaves the Saturday on the schedule,
+		 * called off, and takes the other three away. */
+		$drop_role = ! empty( $role['remove'] );
+
 		$existing = array();
 
 		foreach ( $slots as $slot ) {
@@ -662,12 +810,12 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 		 * is refused rather than guessed at. Silently keeping the old name hides
 		 * a rename that did not happen; silently dropping the times loses a
 		 * roster. Neither is something to do on somebody's behalf. */
-		if ( '' === $name && $existing ) {
+		if ( '' === $name && $existing && ! $drop_role ) {
 			$tally['error'] = 'no-role';
 			return $tally;
 		}
 
-		if ( '' === $name ) {
+		if ( '' === $name && ! $drop_role ) {
 			continue;
 		}
 
@@ -694,8 +842,31 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 				continue;
 			}
 
-			if ( $shift_id > 0 && $remove ) {
+			if ( $shift_id > 0 && ( $remove || $drop_role ) ) {
 				$tally = gwcvt_remove_event_slot( $shift_id, $context, $tally );
+				continue;
+			}
+
+			/* Bringing a called-off time back. Only ever from the checkbox on a
+			 * cancelled row, and it leaves the reason in place — the record that
+			 * it was once called off is the organisation's own, and a volunteer
+			 * who was told may still be acting on what they were told. */
+			if ( $shift_id > 0 && ! empty( $slot['restore'] ) && gwcvt_shift_is_cancelled( $shift_id ) ) {
+				wp_update_post(
+					array(
+						'ID'          => $shift_id,
+						'post_status' => $slot_status,
+					)
+				);
+
+				++$tally['restored'];
+				continue;
+			}
+
+			/* A cancelled time nobody asked to change. Left exactly as it is —
+			 * its values arrive in hidden fields so that this is a no-op rather
+			 * than a silent re-publish. */
+			if ( $shift_id > 0 && gwcvt_shift_is_cancelled( $shift_id ) ) {
 				continue;
 			}
 
