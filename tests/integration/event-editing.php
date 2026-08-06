@@ -252,6 +252,31 @@ gwcvt_ed_check( 'the notice says one was cancelled', '1' === (string) ( $gwcvt_l
 /* THE BUG. Everything above passed before this file existed. */
 
 $gwcvt_screen = gwcvt_ed_screen( $gwcvt_event );
+
+/* ── And the control that removes the whole role ─────────────────────────────
+ * It renders only when the role still has a live time, which is right — a role
+ * whose times have all been called off has nothing that can be removed, because
+ * a cancelled time is kept on purpose.
+ *
+ * What was wrong was saying nothing in that case. An absent control and a
+ * control that has not loaded look identical, so somebody who had just
+ * cancelled a role's only time went hunting for a feature that was working
+ * exactly as intended. */
+
+gwcvt_ed_check(
+	'a role with a live time offers to remove the whole role',
+	false !== strpos( $gwcvt_screen, 'Remove this whole role' )
+);
+
+gwcvt_ed_check(
+	'the removal control sits with the role name, not four fields down',
+	strpos( $gwcvt_screen, 'gwcvt_roles[0][remove]' ) < strpos( $gwcvt_screen, 'gwcvt_roles[0][supervisor]' )
+);
+
+gwcvt_ed_check(
+	'it says what removing it will do',
+	false !== strpos( $gwcvt_screen, 'when you save' )
+);
 $gwcvt_row    = gwcvt_ed_row( $gwcvt_screen, $gwcvt_busy );
 
 gwcvt_ed_check( 'the cancelled row is still on the screen', '' !== $gwcvt_row );
@@ -351,6 +376,18 @@ gwcvt_ed_check( 'the person on it was told once', 1 === count( $GLOBALS['gwcvt_m
 
 $gwcvt_screen = gwcvt_ed_screen( $gwcvt_event );
 gwcvt_ed_check( 'the role is no longer offered for removal', 1 === substr_count( $gwcvt_screen, 'Remove this whole role' ), (string) substr_count( $gwcvt_screen, 'Remove this whole role' ) );
+
+/* ── A role whose times have all been called off ─────────────────────────── */
+
+$gwcvt_all_off = gwcvt_ed_screen( $gwcvt_event );
+$gwcvt_greeter = strpos( $gwcvt_all_off, 'value="Greeter"' );
+
+gwcvt_ed_check( 'the all-cancelled role is still on the screen', false !== $gwcvt_greeter );
+
+gwcvt_ed_check(
+	'it explains why it offers nothing to remove',
+	false !== strpos( $gwcvt_all_off, 'nothing left to remove' )
+);
 
 /* ── Things that must not mail anybody ───────────────────────────────────── */
 

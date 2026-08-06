@@ -262,18 +262,110 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 	$notes      = $first > 0 ? (string) get_post_meta( $first, GWCVT_SHIFT_NOTES, true ) : '';
 	?>
 	<div class="gwcvt-role-block" data-gwcvt-role="<?php echo esc_attr( (string) $index ); ?>" style="background:#fff;border:1px solid #c3c4c7;margin:0 0 14px;padding:12px 14px">
-		<div>
-			<label for="<?php echo esc_attr( $id ); ?>"><strong><?php esc_html_e( 'Role', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
-			<input
-				type="text"
-				id="<?php echo esc_attr( $id ); ?>"
-				name="<?php echo esc_attr( $field ); ?>[name]"
-				class="regular-text"
-				maxlength="200"
-				value="<?php echo esc_attr( $role ); ?>"
-				placeholder="<?php esc_attr_e( 'What they will be doing', 'groundwork-common-volunteer-tracker' ); ?>"
-				<?php echo $vocabulary ? 'list="gwcvt-event-roles"' : ''; ?>
-			/>
+		<?php
+		/* How much of this role is still live, worked out before the head is
+		 * drawn because the head is where the coordinator decides to remove it. */
+		$live     = 0;
+		$occupied = 0;
+
+		foreach ( $slot_ids as $one ) {
+			if ( gwcvt_shift_is_cancelled( (int) $one ) ) {
+				continue;
+			}
+
+			++$live;
+
+			if ( gwcvt_shift_signup_ids( (int) $one, array( 'publish', GWCVT_SIGNUP_WAITLIST ) ) ) {
+				++$occupied;
+			}
+		}
+		?>
+
+		<?php
+		/* ── The role's name, and the control that removes the lot ───────────
+		 * Level with the name and hard right, because that is where somebody
+		 * looks for it. It was first put in with the other role fields, four
+		 * rows down between "Where" and "What to know", where it was rendered
+		 * and invisible — which is the same as not being there. */
+		?>
+		<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap">
+			<div style="flex:1 1 280px">
+				<label for="<?php echo esc_attr( $id ); ?>"><strong><?php esc_html_e( 'Role', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
+				<input
+					type="text"
+					id="<?php echo esc_attr( $id ); ?>"
+					name="<?php echo esc_attr( $field ); ?>[name]"
+					class="regular-text"
+					maxlength="200"
+					value="<?php echo esc_attr( $role ); ?>"
+					placeholder="<?php esc_attr_e( 'What they will be doing', 'groundwork-common-volunteer-tracker' ); ?>"
+					<?php echo $vocabulary ? 'list="gwcvt-event-roles"' : ''; ?>
+				/>
+			</div>
+
+			<?php if ( $live > 0 ) : ?>
+				<div style="flex:0 1 330px;text-align:right">
+					<label style="display:inline-block;font-weight:600;color:#b32d2e">
+						<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[remove]" value="1" />
+						<?php esc_html_e( 'Remove this whole role', 'groundwork-common-volunteer-tracker' ); ?>
+					</label>
+					<p class="description" style="margin:4px 0 0">
+						<?php
+						/* Two counts, so two _n() calls. One sentence pluralised
+						 * on the total read "1 of them have people on them" the
+						 * moment the two numbers disagreed, which is most of the
+						 * time. */
+						printf(
+							esc_html(
+								/* translators: %d: how many times the role has. */
+								_n( 'Its %d time goes when you save.', 'All %d of its times go when you save.', $live, 'groundwork-common-volunteer-tracker' )
+							),
+							(int) $live
+						);
+
+						if ( $occupied > 0 ) {
+							echo ' ';
+							printf(
+								esc_html(
+									/* translators: %d: how many of them have people on them. */
+									_n(
+										'%d has people on it, so it is cancelled rather than deleted — it stays on the schedule so everybody can see it was called off.',
+										'%d of them have people on them, so those are cancelled rather than deleted — they stay on the schedule so everybody can see they were called off.',
+										$occupied,
+										'groundwork-common-volunteer-tracker'
+									)
+								),
+								(int) $occupied
+							);
+						} else {
+							echo ' ';
+							echo esc_html(
+								_n(
+									'Nobody is on it, so it is deleted outright.',
+									'Nobody is on any of them, so they are deleted outright.',
+									$live,
+									'groundwork-common-volunteer-tracker'
+								)
+							);
+						}
+						?>
+					</p>
+				</div>
+			<?php elseif ( $slot_ids ) : ?>
+				<?php
+				/* Every time in this role has been called off. There is nothing
+				 * to remove — a cancelled time is kept on purpose, because
+				 * people signed up for it and "this was called off" is an answer
+				 * the organisation owes them. Said out loud rather than left as
+				 * an empty corner, because an absent control and a control that
+				 * has not loaded look identical. */
+				?>
+				<div style="flex:0 1 330px;text-align:right">
+					<p class="description" style="margin:0">
+						<?php esc_html_e( 'Every time in this role has been called off. They stay on the schedule so everybody can see that, so there is nothing left to remove — put one back on below if you need it again.', 'groundwork-common-volunteer-tracker' ); ?>
+					</p>
+				</div>
+			<?php endif; ?>
 		</div>
 
 		<div style="margin-top:10px">
@@ -285,60 +377,6 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 			<label for="<?php echo esc_attr( $id ); ?>-loc"><?php esc_html_e( 'Where, if not the event\'s address', 'groundwork-common-volunteer-tracker' ); ?></label><br />
 			<input type="text" id="<?php echo esc_attr( $id ); ?>-loc" name="<?php echo esc_attr( $field ); ?>[location]" class="regular-text" maxlength="200" value="<?php echo esc_attr( $location ); ?>" <?php echo $locations ? 'list="gwcvt-event-locations"' : ''; ?> />
 		</div>
-
-		<?php if ( $slot_ids ) : ?>
-			<?php
-			$live      = 0;
-			$occupied  = 0;
-
-			foreach ( $slot_ids as $one ) {
-				if ( gwcvt_shift_is_cancelled( (int) $one ) ) {
-					continue;
-				}
-
-				++$live;
-
-				if ( gwcvt_shift_signup_ids( (int) $one, array( 'publish', GWCVT_SIGNUP_WAITLIST ) ) ) {
-					++$occupied;
-				}
-			}
-			?>
-			<?php if ( $live > 0 ) : ?>
-				<div style="margin-top:10px">
-					<label>
-						<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[remove]" value="1" />
-						<strong><?php esc_html_e( 'Remove this whole role', 'groundwork-common-volunteer-tracker' ); ?></strong>
-					</label>
-					<p class="description" style="margin:4px 0 0">
-						<?php
-						if ( $occupied > 0 ) {
-							printf(
-								esc_html(
-									/* translators: 1: how many times the role has, 2: how many have people on them. */
-									_n(
-										'Its %1$d time goes. %2$d of them has people on it and is cancelled rather than deleted — it stays on the schedule so everybody can see it was called off.',
-										'All %1$d of its times go. %2$d of them have people on them and are cancelled rather than deleted — they stay on the schedule so everybody can see they were called off.',
-										$live,
-										'groundwork-common-volunteer-tracker'
-									)
-								),
-								(int) $live,
-								(int) $occupied
-							);
-						} else {
-							printf(
-								esc_html(
-									/* translators: %d: how many times the role has. */
-									_n( 'Its %d time is deleted — nobody is on it.', 'All %d of its times are deleted — nobody is on any of them.', $live, 'groundwork-common-volunteer-tracker' )
-								),
-								(int) $live
-							);
-						}
-						?>
-					</p>
-				</div>
-			<?php endif; ?>
-		<?php endif; ?>
 
 		<div style="margin-top:10px">
 			<label for="<?php echo esc_attr( $id ); ?>-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label><br />
