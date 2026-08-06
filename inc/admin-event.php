@@ -12,11 +12,11 @@ add_action( 'admin_post_gwcvt_cancel_event', 'gwcvt_handle_cancel_event' );
 add_action( 'admin_post_gwcvt_delete_event', 'gwcvt_handle_delete_event' );
 add_action( 'admin_post_gwcvt_copy_event', 'gwcvt_handle_copy_event' );
 
-/** How many blank roles a fresh grid offers. */
-const GWCVT_EVENT_BLANK_ROLES = 3;
+/** How many blank roles the grid offers. One — see the note below. */
+const GWCVT_EVENT_BLANK_ROLES = 1;
 
 /** How many blank times each role offers. */
-const GWCVT_EVENT_BLANK_SLOTS = 3;
+const GWCVT_EVENT_BLANK_SLOTS = 1;
 
 /* ── The grid is role-major, and that is the whole design ────────────────────
  * A role is named once and its times hang underneath it. The name is then copied
@@ -24,13 +24,22 @@ const GWCVT_EVENT_BLANK_SLOTS = 3;
  * inside one event — which is what makes a role taxonomy unnecessary. The same
  * goes for the role's supervisor, location and notes.
  *
- * ── Why it works with no JavaScript ─────────────────────────────────────────
- * There is no build step, so the grid cannot depend on a script to add a row.
- * Instead it renders blank rows the way inc/admin-quick-add.php renders eight
- * blank ones: every role gets spare times, and the grid gets spare roles. A save
- * ignores anything still blank. Somebody building a twelve-role festival saves
- * twice, which is a smaller cost than a screen that does nothing when a script
- * fails to load.
+ * ── One spare, and a script that makes more ─────────────────────────────────
+ * There is no build step, so the grid must not DEPEND on a script to add a row.
+ * It offers exactly one blank role and one blank time per role, and a save
+ * ignores anything still blank — so with JavaScript off you can still build any
+ * grid, one save at a time.
+ *
+ * assets/js/admin-event-grid.js then adds the "add another" buttons, cloning a
+ * row the way assets/js/admin-quick-add.js already does on the log-a-day screen.
+ * Enhancement, never carriage.
+ *
+ * The first draft of this rendered three spare roles of three spare times each,
+ * borrowing the quick-add screen's convention of eight blank rows. That reads
+ * fine as eight rows of one table — it looks like a sign-in sheet waiting to be
+ * filled in. As three bordered cards of four labelled fields apiece it is a wall
+ * of nine empty inputs in front of the one thing you came to type. The
+ * convention did not survive the change in weight.
  *
  * Field names carry EXPLICIT indexes — gwcvt_roles[0][slots][2][date] — never a
  * positional []. An unticked checkbox posts nothing at all, so a positional
@@ -169,19 +178,30 @@ function gwcvt_render_event_editor( int $event_id ): void {
 				</datalist>
 			<?php endif; ?>
 
-			<?php
-			$index = 0;
+			<div id="gwcvt-event-grid">
+				<?php
+				$index = 0;
 
-			foreach ( $roles as $role => $slot_ids ) {
-				gwcvt_render_event_role_block( $index, (string) $role, $slot_ids, $vocabulary, $locations, $event_id );
-				++$index;
-			}
+				foreach ( $roles as $role => $slot_ids ) {
+					gwcvt_render_event_role_block( $index, (string) $role, $slot_ids, $vocabulary, $locations, $event_id );
+					++$index;
+				}
 
-			for ( $blank = 0; $blank < GWCVT_EVENT_BLANK_ROLES; $blank++ ) {
-				gwcvt_render_event_role_block( $index, '', array(), $vocabulary, $locations, $event_id );
-				++$index;
-			}
-			?>
+				for ( $blank = 0; $blank < GWCVT_EVENT_BLANK_ROLES; $blank++ ) {
+					gwcvt_render_event_role_block( $index, '', array(), $vocabulary, $locations, $event_id );
+					++$index;
+				}
+				?>
+
+				<p>
+					<button type="button" class="button" data-gwcvt-add-role>
+						<?php esc_html_e( '+ Add another role', 'groundwork-common-volunteer-tracker' ); ?>
+					</button>
+					<span class="description">
+						<?php esc_html_e( 'Or save, and a fresh blank one appears.', 'groundwork-common-volunteer-tracker' ); ?>
+					</span>
+				</p>
+			</div>
 
 			<?php if ( ! $is_new ) : ?>
 				<table class="form-table" role="presentation">
@@ -241,7 +261,7 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 	$location   = $first > 0 ? (string) get_post_meta( $first, GWCVT_SHIFT_LOCATION, true ) : '';
 	$notes      = $first > 0 ? (string) get_post_meta( $first, GWCVT_SHIFT_NOTES, true ) : '';
 	?>
-	<div class="gwcvt-role-block" style="background:#fff;border:1px solid #c3c4c7;margin:0 0 14px;padding:12px 14px">
+	<div class="gwcvt-role-block" data-gwcvt-role="<?php echo esc_attr( (string) $index ); ?>" style="background:#fff;border:1px solid #c3c4c7;margin:0 0 14px;padding:12px 14px">
 		<div>
 			<label for="<?php echo esc_attr( $id ); ?>"><strong><?php esc_html_e( 'Role', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
 			<input
@@ -303,6 +323,12 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 				?>
 			</tbody>
 		</table>
+
+		<p>
+			<button type="button" class="button button-small" data-gwcvt-add-time>
+				<?php esc_html_e( '+ Add another time', 'groundwork-common-volunteer-tracker' ); ?>
+			</button>
+		</p>
 	</div>
 	<?php
 }
@@ -358,7 +384,7 @@ function gwcvt_render_event_slot_row( int $role_index, int $slot_index, int $shi
 			<label class="screen-reader-text" for="<?php echo esc_attr( $id ); ?>-max"><?php esc_html_e( 'How many it takes', 'groundwork-common-volunteer-tracker' ); ?></label>
 			<input type="number" id="<?php echo esc_attr( $id ); ?>-max" name="<?php echo esc_attr( $field ); ?>[max]" min="0" max="500" style="width:5em" value="<?php echo esc_attr( $max ); ?>" />
 		</td>
-		<td>
+		<td data-gwcvt-fill>
 			<?php
 			if ( $is_new ) {
 				echo '<span class="description">' . esc_html__( 'New', 'groundwork-common-volunteer-tracker' ) . '</span>';
@@ -382,7 +408,7 @@ function gwcvt_render_event_slot_row( int $role_index, int $slot_index, int $shi
 			}
 			?>
 		</td>
-		<td>
+		<td data-gwcvt-remove>
 			<?php if ( ! $is_new ) : ?>
 				<label>
 					<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[remove]" value="1" />
