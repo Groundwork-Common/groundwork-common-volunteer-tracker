@@ -14,6 +14,41 @@ const GWCVT_VOLUNTEER_PHONE  = '_gwcvt_phone';
 const GWCVT_VOLUNTEER_TOTALS = '_gwcvt_totals';
 const GWCVT_VOLUNTEER_HOLD   = '_gwcvt_retention_hold';
 
+/* ── What somebody has to complete, and for whom ─────────────────────────────
+ * The one question both sides of a mandated placement ask constantly, and the
+ * only one this plugin could not answer: how many are left.
+ *
+ * It belongs on the volunteer rather than on each shift, for the reason set out
+ * below about a case number belonging to the assignment. Minutes, like every
+ * other duration here.
+ *
+ * ── And the reason it never reaches the letter ───────────────────────────────
+ * Everything else this plugin records is something the ORGANISATION observed:
+ * Jane worked three and a half hours, Marcus attested to it. This is not. It is
+ * a fact about somebody else's document — a court order, a school's
+ * requirement — which the organisation may have seen only as a photograph and
+ * may be reading wrong.
+ *
+ * Printing "120 ordered, 94 completed, 26 remaining" would be the organisation
+ * certifying the terms of an order back to the court that issued it. The court
+ * knows what it ordered. And if the terms were modified on appeal while the
+ * copy in the filing cabinet was not, the letter is now confidently wrong about
+ * the one line its reader would actually check.
+ *
+ * So: an internal planning figure. It appears on this screen, on the volunteer
+ * list, and nowhere in inc/letter.php or inc/render.php. LetterTest and
+ * tests/integration/required.php both assert that.
+ * ─────────────────────────────────────────────────────────────────────────── */
+const GWCVT_VOLUNTEER_REQUIRED    = '_gwcvt_required_minutes';
+const GWCVT_VOLUNTEER_REQUIRED_BY = '_gwcvt_required_by';
+
+/* Who requires it. Free text and deliberately not a court-shaped field: schools
+ * set service requirements, so do scouting groups, professional licences and
+ * some employers' volunteering schemes. A field labelled "court" would be wrong
+ * for most of the people it ends up describing, and would quietly assert
+ * something about the rest. */
+const GWCVT_VOLUNTEER_REQUIRED_FOR = '_gwcvt_required_for';
+
 add_action( 'init', 'gwcvt_register_volunteer_type' );
 add_filter( 'manage_' . GWCVT_VOLUNTEER_TYPE . '_posts_columns', 'gwcvt_volunteer_columns' );
 add_action( 'manage_' . GWCVT_VOLUNTEER_TYPE . '_posts_custom_column', 'gwcvt_volunteer_column', 10, 2 );
@@ -101,6 +136,7 @@ function gwcvt_volunteer_columns( $columns ): array {
 		array(
 			'gwcvt_verified' => __( 'Verified hours', 'groundwork-common-volunteer-tracker' ),
 			'gwcvt_pending'  => __( 'Awaiting verification', 'groundwork-common-volunteer-tracker' ),
+			'gwcvt_required' => __( 'Required', 'groundwork-common-volunteer-tracker' ),
 			'gwcvt_last'     => __( 'Last shift', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
@@ -140,6 +176,30 @@ function gwcvt_volunteer_column( $column, $post_id ): void {
 				break;
 			}
 			echo '<span aria-hidden="true">—</span>';
+			break;
+
+		case 'gwcvt_required':
+			/* Blank for the great majority of volunteers, who are not working
+			 * anything off. A column that said "none" on every row would be a
+			 * column of noise on the screen a coordinator scans most. */
+			if ( ! gwcvt_has_requirement( $post_id ) ) {
+				echo '<span aria-hidden="true">—</span>';
+				break;
+			}
+
+			$progress = gwcvt_requirement_progress( $post_id );
+
+			printf(
+				'<span class="gwcvt-badge gwcvt-badge--%1$s">%2$s</span>',
+				esc_attr( $progress['met'] ? 'verified' : ( $progress['overdue'] ? 'cancelled' : 'waiting' ) ),
+				esc_html( gwcvt_requirement_label( $post_id ) )
+			);
+
+			$due = gwcvt_requirement_deadline_label( $post_id );
+
+			if ( '' !== $due ) {
+				printf( '<span class="gwcvt-badge__detail">%s</span>', esc_html( $due ) );
+			}
 			break;
 
 		case 'gwcvt_last':

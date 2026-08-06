@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.11.1
+ * Version:           0.12.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.11.1';
+const GWCVT_VERSION = '0.12.0';
 
 /* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -141,6 +141,12 @@ if ( ! function_exists( 'gwcvt_register_volunteer_type' ) ) {
 }
 if ( ! function_exists( 'gwcvt_entry_ids_for_volunteer' ) ) {
 	require GWCVT_DIR . 'inc/entries.php';
+}
+
+/* What a mandated volunteer still has to complete. After entries.php, because
+ * progress is measured against the cached rollup that file maintains. */
+if ( ! function_exists( 'gwcvt_requirement_progress' ) ) {
+	require GWCVT_DIR . 'inc/required.php';
 }
 
 /* The schedule. recurrence.php is pure calendar arithmetic and depends on
