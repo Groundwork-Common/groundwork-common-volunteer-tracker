@@ -1,0 +1,1820 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Events UX prototype — Volunteer Tracker</title>
+
+<style>
+/* ══ Board tokens ═══════════════════════════════════════════════════════════ */
+:root {
+  --board:        #e9e5e6;
+  --board-2:      #ded8da;
+  --board-line:   #c9c1c4;
+  --board-ink:    #241d21;
+  --board-ink-2:  #5d5157;
+  --accent:       #8d4f6d;
+  --accent-soft:  #f0e3e9;
+  --good:         #3f7d5a;
+  --warn:         #a8721f;
+  --crit:         #a83a34;
+
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --wrap: 1180px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --board:      #191519;
+    --board-2:    #221c21;
+    --board-line: #3a3037;
+    --board-ink:  #ece6e9;
+    --board-ink-2:#a2939b;
+    --accent:     #c98aa8;
+    --accent-soft:#33222b;
+  }
+}
+:root[data-theme="dark"] {
+  --board:      #191519;
+  --board-2:    #221c21;
+  --board-line: #3a3037;
+  --board-ink:  #ece6e9;
+  --board-ink-2:#a2939b;
+  --accent:     #c98aa8;
+  --accent-soft:#33222b;
+}
+:root[data-theme="light"] {
+  --board:      #e9e5e6;
+  --board-2:    #ded8da;
+  --board-line: #c9c1c4;
+  --board-ink:  #241d21;
+  --board-ink-2:#5d5157;
+  --accent:     #8d4f6d;
+  --accent-soft:#f0e3e9;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--board);
+  color: var(--board-ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); }
+
+:where(a, button, input, summary):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ══ Masthead ═══════════════════════════════════════════════════════════════ */
+.mast {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 56px 24px 32px;
+  border-bottom: 1px solid var(--board-line);
+}
+.mast__eyebrow {
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--board-ink-2);
+  margin: 0 0 14px;
+}
+.mast__title {
+  font-family: var(--serif);
+  font-size: clamp(30px, 4.4vw, 46px);
+  line-height: 1.1;
+  font-weight: 400;
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+.mast__title em { color: var(--accent); font-style: italic; }
+.mast__lede {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--board-ink-2);
+  max-width: 62ch;
+  margin: 0;
+}
+
+/* ══ Board layout ═══════════════════════════════════════════════════════════ */
+.board {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 24px 96px;
+  display: grid;
+  grid-template-columns: 178px minmax(0, 1fr);
+  gap: 44px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .board { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .index { display: none; }
+}
+
+.index {
+  position: sticky;
+  top: 28px;
+  padding-top: 44px;
+  font-size: 13px;
+}
+.index__group {
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--board-ink-2);
+  margin: 24px 0 10px;
+}
+.index__group:first-child { margin-top: 0; }
+.index a {
+  display: block;
+  padding: 5px 0 5px 12px;
+  border-left: 2px solid var(--board-line);
+  color: var(--board-ink-2);
+  text-decoration: none;
+  line-height: 1.35;
+}
+.index a:hover { color: var(--board-ink); }
+.index a[aria-current="true"] {
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+.stream { min-width: 0; padding-top: 44px; display: flex; flex-direction: column; gap: 72px; }
+
+/* ══ A screen: heading, note, plate ═════════════════════════════════════════ */
+.screen { scroll-margin-top: 24px; }
+
+.screen__num {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--accent);
+}
+.screen__title {
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 400;
+  margin: 6px 0 10px;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.screen__q {
+  font-family: var(--serif);
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--board-ink-2);
+  max-width: 64ch;
+  margin: 0 0 26px;
+}
+.screen__q strong { color: var(--board-ink); font-weight: 600; }
+
+/* margin notes */
+.note {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 13px 16px;
+  margin: 20px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 70ch;
+}
+.note__label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+.note p { margin: 0; }
+.note p + p { margin-top: 9px; }
+.note code {
+  font-family: var(--mono);
+  font-size: .88em;
+  background: color-mix(in srgb, var(--board-ink) 8%, transparent);
+  padding: 1px 4px;
+}
+
+/* the plate: a product screen sitting on the board */
+.plate {
+  background: #f0f0f1;
+  border: 1px solid var(--board-line);
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 12px 28px -18px rgba(0,0,0,.5);
+  overflow-x: auto;
+}
+.plate__chrome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1d2327;
+  color: #a7aaad;
+  font-size: 11.5px;
+  padding: 7px 12px;
+  font-family: var(--mono);
+  letter-spacing: .02em;
+}
+.plate__chrome span { color: #f0f0f1; }
+.plate--fe .plate__chrome { background: #2f2a2d; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WORDPRESS ADMIN PLATE — built to wp-admin's real values
+   ══════════════════════════════════════════════════════════════════════════ */
+.wp {
+  background: #f0f0f1;
+  color: #1d2327;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  line-height: 1.4em;
+  padding: 20px 22px 30px;
+  min-width: 720px;
+}
+.wp a { color: #2271b1; text-decoration: none; }
+.wp a:hover { color: #135e96; text-decoration: underline; }
+.wp h1 {
+  font-size: 23px;
+  font-weight: 400;
+  margin: 0 0 4px;
+  padding: 9px 0 4px;
+  line-height: 1.3;
+  display: inline-block;
+}
+.wp h2 { font-size: 14px; margin: 26px 0 10px; }
+.wp p { margin: 1em 0; }
+.wp .description { color: #646970; font-size: 13px; font-style: italic; }
+
+.wp__pagetitleaction {
+  margin-left: 8px;
+  font-size: 13px;
+  vertical-align: 4px;
+}
+.wp__hr { border: 0; border-top: 1px solid #c3c4c7; margin: 16px 0; }
+
+/* buttons */
+.btn {
+  display: inline-block;
+  font-size: 13px;
+  line-height: 2.15384615;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #2271b1;
+  border-radius: 3px;
+  background: #f6f7f7;
+  color: #2271b1;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  vertical-align: top;
+}
+.btn:hover { background: #f0f0f1; border-color: #0a4b78; color: #0a4b78; }
+.btn--primary { background: #2271b1; border-color: #2271b1; color: #fff; }
+.btn--primary:hover { background: #135e96; border-color: #135e96; color: #fff; }
+.btn--link {
+  border: 0; background: none; color: #b32d2e; padding: 0; min-height: 0;
+  text-decoration: underline; cursor: pointer; font-size: 13px; font-family: inherit;
+}
+.btn--link:hover { color: #8a2424; background: none; }
+.btn--small { min-height: 26px; line-height: 2; font-size: 12px; }
+
+/* subsubsub */
+.wp__views {
+  list-style: none;
+  margin: 8px 0 12px;
+  padding: 0;
+  font-size: 13px;
+  color: #646970;
+}
+.wp__views li { display: inline; }
+.wp__views li::after { content: " |"; color: #c3c4c7; }
+.wp__views li:last-child::after { content: ""; }
+.wp__views .current { color: #1d2327; font-weight: 600; }
+.wp__views .count { color: #646970; }
+
+/* list table */
+.wp table.list {
+  border-spacing: 0;
+  width: 100%;
+  clear: both;
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+.wp table.list th, .wp table.list td {
+  padding: 11px 10px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.5;
+}
+.wp table.list thead th {
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 400;
+  color: #2c3338;
+  white-space: nowrap;
+}
+.wp table.list tbody tr + tr td { border-top: 1px solid #f0f0f1; }
+.wp table.list tbody tr:hover { background: #f6f7f7; }
+.wp .rowtitle { font-weight: 600; font-size: 14px; }
+.wp .rowsub { color: #646970; font-size: 12.5px; margin-top: 2px; }
+.wp .num { font-variant-numeric: tabular-nums; }
+
+/* the fill figure: loudest thing in the row */
+.fill { display: flex; align-items: baseline; gap: 8px; }
+.fill__n {
+  font-size: 19px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+  line-height: 1.1;
+}
+.fill__of { color: #646970; font-size: 12.5px; }
+.meter {
+  width: 96px; height: 5px; background: #e0e0e1; margin-top: 6px; overflow: hidden;
+}
+.meter i { display: block; height: 100%; background: #3f7d5a; }
+.meter--short i { background: #a8721f; }
+
+/* state chips */
+.chip {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 18px;
+  padding: 0 7px;
+  border-radius: 2px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.chip--short { background: #fcf3e3; color: #7a520f; box-shadow: inset 0 0 0 1px #e6cfa4; }
+.chip--ok    { background: #e8f2ec; color: #2f6045; box-shadow: inset 0 0 0 1px #b7d5c4; }
+.chip--off   { background: #f6e7e7; color: #8a2424; box-shadow: inset 0 0 0 1px #e0bcbc; }
+.chip--wait  { background: #eceef3; color: #4b5563; box-shadow: inset 0 0 0 1px #c9cfda; }
+.chip--new   { background: #e7f0f7; color: #135e96; box-shadow: inset 0 0 0 1px #b3cfe4; }
+
+.row--off .rowtitle, .row--off td { color: #8c8f94; }
+.row--off .rowtitle { text-decoration: line-through; }
+
+/* form table */
+.wp table.form { border-spacing: 0; width: 100%; max-width: 780px; }
+.wp table.form th {
+  width: 190px;
+  padding: 18px 10px 18px 0;
+  text-align: left;
+  vertical-align: top;
+  font-weight: 600;
+  color: #1d2327;
+  line-height: 1.3;
+}
+.wp table.form td { padding: 14px 10px; vertical-align: top; }
+.wp input[type=text], .wp input[type=email], .wp input[type=time], .wp input[type=date], .wp textarea {
+  border: 1px solid #8c8f94;
+  border-radius: 4px;
+  background: #fff;
+  color: #2c3338;
+  padding: 0 8px;
+  line-height: 2;
+  min-height: 30px;
+  font-size: 14px;
+  font-family: inherit;
+  box-shadow: 0 0 0 transparent;
+}
+.wp textarea { padding: 6px 8px; line-height: 1.5; min-height: 74px; }
+.wp input:focus, .wp textarea:focus {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+  outline: 2px solid transparent;
+}
+.wp .regular-text { width: 25em; max-width: 100%; }
+.wp .large-text { width: 100%; }
+.wp .tiny { width: 4.5em; text-align: center; }
+.wp .time { width: 7.5em; }
+
+/* derived, non-editable value */
+.derived {
+  display: inline-block;
+  background: #f6f7f7;
+  border: 1px dashed #c3c4c7;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 13.5px;
+  color: #2c3338;
+}
+
+/* notices */
+.wp .notice {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-left: 4px solid #72aee6;
+  padding: 10px 12px;
+  margin: 14px 0;
+}
+.wp .notice--warn { border-left-color: #dba617; }
+.wp .notice p { margin: .4em 0; }
+
+/* ── the role-major grid builder ─────────────────────────────────────────── */
+.roles { display: flex; flex-direction: column; gap: 14px; margin: 12px 0 0; }
+
+.role {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+.role__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #f0f0f1;
+  flex-wrap: wrap;
+}
+.role__field { flex: 1 1 260px; min-width: 220px; }
+.role__label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #646970;
+  margin-bottom: 4px;
+}
+.role__warn {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #646970;
+  line-height: 1.45;
+}
+.role__warn b { color: #1d2327; font-weight: 600; }
+
+/* role-level "What to know" — copied to every time in the role */
+.role__know { flex-basis: 100%; }
+.role__know textarea { width: 100%; min-height: 56px; }
+.role__know .description { margin: 5px 0 0; font-size: 12px; }
+
+.slots { border-spacing: 0; width: 100%; }
+.slots th {
+  font-size: 11px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #646970;
+  font-weight: 400;
+  text-align: left;
+  padding: 9px 10px 7px;
+  border-bottom: 1px solid #f0f0f1;
+  white-space: nowrap;
+}
+.slots td { padding: 9px 10px; border-bottom: 1px solid #f0f0f1; vertical-align: middle; }
+.slots tr:last-child td { border-bottom: 0; }
+.slots .who { font-size: 12.5px; color: #646970; white-space: nowrap; }
+.slots .who b { color: #1d2327; font-variant-numeric: tabular-nums; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+.dot--ok { background: #3f7d5a; }
+.dot--short { background: #a8721f; }
+.dot--empty { background: #c3c4c7; }
+
+.slot--going td { background: #fcf6e9; }
+.slot--going .whenwhat { text-decoration: line-through; color: #8c8f94; }
+
+.role__foot { padding: 10px 14px; background: #f6f7f7; border-top: 1px solid #f0f0f1; }
+
+.confirm {
+  background: #fcf3e3;
+  border-top: 1px solid #e6cfa4;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.confirm strong { display: block; margin-bottom: 4px; }
+.confirm label { display: block; margin: 8px 0; }
+.confirm .btns { display: flex; gap: 8px; margin-top: 10px; }
+
+.addrole { margin-top: 4px; }
+
+/* roster */
+.roster__group { margin: 0 0 20px; }
+.roster__role {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #1d2327;
+}
+.roster__slot {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  margin-bottom: 10px;
+}
+.roster__slothead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  background: #f6f7f7;
+  border-bottom: 1px solid #c3c4c7;
+  flex-wrap: wrap;
+}
+.roster__when { font-weight: 600; font-variant-numeric: tabular-nums; }
+.roster ul { list-style: none; margin: 0; padding: 0; }
+.roster li {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 12px; border-bottom: 1px solid #f0f0f1;
+}
+.roster li:last-child { border-bottom: 0; }
+.roster .name { font-weight: 600; }
+.roster .when { color: #646970; font-size: 12.5px; margin-left: auto; white-space: nowrap; }
+.roster .flag {
+  flex-basis: 100%;
+  font-size: 12.5px;
+  color: #7a520f;
+  background: #fcf3e3;
+  padding: 6px 9px;
+  border-left: 3px solid #dba617;
+  margin-top: 2px;
+}
+.roster .empty { padding: 12px; color: #646970; font-style: italic; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FRONT-END PLATE — a plugin's own minimal CSS inside somebody's theme
+   ══════════════════════════════════════════════════════════════════════════ */
+.fe {
+  background: #fff;
+  color: #22201f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.6;
+  padding: 40px 34px 46px;
+  min-width: 320px;
+}
+.fe__inner { max-width: 640px; margin: 0 auto; }
+.fe h1 {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 700;
+  margin: 0 0 6px;
+  letter-spacing: -.015em;
+}
+.fe h2 { font-size: 20px; margin: 30px 0 8px; font-weight: 700; }
+.fe__meta {
+  color: #5a5553;
+  font-size: 15.5px;
+  margin: 0 0 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #ddd9d7;
+}
+.fe p { margin: 0 0 16px; }
+.fe__ask { font-weight: 600; margin: 26px 0 4px; }
+.fe__askhelp { color: #5a5553; font-size: 14.5px; margin: 0 0 16px; }
+
+.fe fieldset { border: 0; margin: 0 0 22px; padding: 0; }
+.fe legend {
+  font-size: 12px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #22201f;
+  padding: 0 0 7px;
+  border-bottom: 1px solid #22201f;
+  width: 100%;
+  margin-bottom: 2px;
+}
+.slotpick {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 2px;
+  border-bottom: 1px solid #eae7e5;
+  cursor: pointer;
+}
+.slotpick:hover { background: #faf8f7; }
+.slotpick input { margin: 4px 0 0; width: 17px; height: 17px; flex: none; cursor: pointer; }
+.slotpick__body { flex: 1; min-width: 0; }
+.slotpick__when { font-weight: 600; font-variant-numeric: tabular-nums; }
+.slotpick__left { display: block; font-size: 14.5px; color: #3f6b52; margin-top: 1px; }
+.slotpick__left--full { color: #6b6360; }
+.slotpick__note { display: block; font-size: 14px; color: #5a5553; margin-top: 3px; }
+
+.fe__field { margin: 0 0 18px; }
+.fe__field label { display: block; font-weight: 600; margin-bottom: 5px; }
+.fe__field input {
+  width: 100%;
+  font: inherit;
+  padding: 9px 11px;
+  border: 1px solid #a8a29e;
+  border-radius: 2px;
+  background: #fff;
+  color: inherit;
+}
+.fe__field input:focus { border-color: #22201f; outline: 2px solid #22201f; outline-offset: 1px; }
+.fe__help { font-size: 14px; color: #5a5553; margin: 5px 0 0; }
+.fe__submit {
+  font: inherit;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 2px;
+  background: #22201f;
+  color: #fff;
+  cursor: pointer;
+}
+.fe__submit:hover { background: #3d3936; }
+.fe__quiet {
+  display: inline-block;
+  font: inherit;
+  font-size: 15px;
+  padding: 9px 16px;
+  border: 1px solid #a8a29e;
+  border-radius: 2px;
+  background: #fff;
+  color: #22201f;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fe__msg {
+  border-left: 3px solid #22201f;
+  background: #f6f4f2;
+  padding: 15px 18px;
+  margin: 0 0 26px;
+}
+.fe__msg p { margin: 0; }
+.fe__msg p + p { margin-top: 11px; }
+.fe__msg--clash { border-left-color: #a8721f; background: #fbf5e9; }
+.fe__msg--clash strong { display: block; margin-bottom: 6px; }
+.fe__msg--clash label {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin-top: 12px; font-weight: 600; cursor: pointer;
+}
+.fe__msg--clash input { margin: 3px 0 0; width: 17px; height: 17px; flex: none; }
+.slotpick--clash { background: #fbf5e9; box-shadow: inset 3px 0 0 #a8721f; padding-left: 12px; }
+.fe__mine {
+  border: 1px solid #ddd9d7;
+  padding: 18px 20px;
+  margin: 0 0 22px;
+}
+.fe__mine .slotpick__when { display: block; font-size: 18px; }
+
+/* email plate */
+.mail { background: #eceae8; padding: 26px 20px; }
+.mail__paper {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #ddd9d7;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  color: #22201f;
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+.mail__hdr { padding: 14px 22px; border-bottom: 1px solid #ddd9d7; font-size: 13px; color: #5a5553; }
+.mail__hdr b { color: #22201f; }
+.mail__body { padding: 22px 22px 26px; }
+.mail__body p { margin: 0 0 15px; }
+.mail__slot { border-top: 1px solid #eae7e5; padding: 14px 0; }
+.mail__slot:last-of-type { border-bottom: 1px solid #eae7e5; margin-bottom: 18px; }
+.mail__role { font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: #5a5553; }
+.mail__when { font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0 7px; }
+.mail__links { font-size: 14.5px; }
+.mail__links a { color: #2f5d8c; }
+.mail__foot { font-size: 13.5px; color: #5a5553; border-top: 1px solid #ddd9d7; padding: 16px 22px; }
+
+/* ══ closing ════════════════════════════════════════════════════════════════ */
+.close {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 24px 90px;
+}
+.close__inner {
+  border-top: 1px solid var(--board-line);
+  padding-top: 34px;
+  display: grid;
+  grid-template-columns: 178px minmax(0, 1fr);
+  gap: 44px;
+}
+@media (max-width: 900px) { .close__inner { grid-template-columns: 1fr; gap: 0; } }
+.close h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 25px;
+  margin: 0 0 16px;
+}
+.open {
+  border-top: 1px solid var(--board-line);
+  padding: 15px 0;
+  max-width: 70ch;
+}
+.open__q { font-weight: 600; margin: 0 0 5px; font-size: 15.5px; }
+.open__a { margin: 0; color: var(--board-ink-2); font-size: 15px; line-height: 1.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<header class="mast">
+  <p class="mast__eyebrow">Groundwork Common Volunteer Tracker · UX prototype</p>
+  <h1 class="mast__title">Events: one occasion, several roles, <em>several times</em></h1>
+  <p class="mast__lede">Seven screens a coordinator and a volunteer actually meet, drawn against the plan. The admin plates use WordPress admin's own greys and blues rather than a prettier invention — a prototype that flatters its own chrome lies about what the thing will feel like. The grid builder and the public form work; press them.</p>
+</header>
+
+<div class="board">
+  <nav class="index" aria-label="Screens">
+    <p class="index__group">Coordinator</p>
+    <a href="#s1">Events list</a>
+    <a href="#s2">Building the grid</a>
+    <a href="#s3">Removing a slot</a>
+    <a href="#s4">The roster</a>
+    <p class="index__group">Volunteer</p>
+    <a href="#s5">The event page</a>
+    <a href="#s6">What they're told</a>
+    <a href="#s7">The confirmation</a>
+    <a href="#s8">The reminder</a>
+    <a href="#s9">Dropping one slot</a>
+  </nav>
+
+  <main class="stream">
+
+    <!-- ═══ 1 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s1">
+      <p class="screen__num">01 / COORDINATOR</p>
+      <h2 class="screen__title">Schedule ▸ Events</h2>
+      <p class="screen__q">A fourth view beside the three the schedule screen already has. The coordinator opens it to answer one question — <strong>which of these is short of people, and how soon</strong> — so the fill figure is the loudest thing in the row and the event's name is not.</p>
+
+      <div class="plate">
+        <div class="plate__chrome">wp-admin/edit.php?post_type=gwcvt_entry&amp;page=gwcvt-schedule&amp;view=<span>events</span></div>
+        <div class="wp">
+          <h1>Schedule</h1><a class="btn wp__pagetitleaction" href="#s2">Add an event</a>
+
+          <ul class="wp__views">
+            <li><a href="#s1">Coming up <span class="count">(11)</span></a></li>
+            <li><span class="current">Events <span class="count">(4)</span></span></li>
+            <li><a href="#s1">Past <span class="count">(63)</span></a></li>
+            <li><a href="#s1">Cancelled <span class="count">(2)</span></a></li>
+          </ul>
+
+          <table class="list">
+            <thead>
+              <tr>
+                <th style="width:32%">Event</th>
+                <th style="width:17%">When</th>
+                <th style="width:15%">Where</th>
+                <th style="width:9%">Roles</th>
+                <th style="width:16%">Places filled</th>
+                <th style="width:11%"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="rowtitle"><a href="#s2">Fall Festival</a></div>
+                  <div class="rowsub">Greeter · Kitchen · Set-up and clear-down</div>
+                </td>
+                <td class="num">Sat 12 Oct<div class="rowsub">in 9 days</div></td>
+                <td>Riverside Park</td>
+                <td class="num">3</td>
+                <td>
+                  <div class="fill"><span class="fill__n">8</span><span class="fill__of">of 22</span></div>
+                  <div class="meter meter--short"><i style="width:36%"></i></div>
+                  <div style="margin-top:7px"><span class="chip chip--short">3 roles short</span></div>
+                </td>
+                <td><a href="#s4">Roster</a> · <a href="#s2">Edit</a></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="rowtitle"><a href="#s2">Thanksgiving Meal Service</a></div>
+                  <div class="rowsub">Serving · Kitchen · Washing up · Welcome desk · Drivers</div>
+                </td>
+                <td class="num">Thu 27 Nov<div class="rowsub">in 55 days</div></td>
+                <td>Community Hall</td>
+                <td class="num">5</td>
+                <td>
+                  <div class="fill"><span class="fill__n">31</span><span class="fill__of">of 34</span></div>
+                  <div class="meter"><i style="width:91%"></i></div>
+                  <div style="margin-top:7px"><span class="chip chip--ok">Fully staffed</span></div>
+                </td>
+                <td><a href="#s4">Roster</a> · <a href="#s2">Edit</a></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="rowtitle"><a href="#s2">Winter Coat Drive</a></div>
+                  <div class="rowsub">Sorting · Loading</div>
+                </td>
+                <td class="num">Sat 6 – Sun 7 Dec<div class="rowsub">in 64 days</div></td>
+                <td>Fifth Street warehouse</td>
+                <td class="num">2</td>
+                <td>
+                  <div class="fill"><span class="fill__n">4</span><span class="fill__of">of 20</span></div>
+                  <div class="meter meter--short"><i style="width:20%"></i></div>
+                  <div style="margin-top:7px"><span class="chip chip--short">Both roles short</span></div>
+                </td>
+                <td><a href="#s4">Roster</a> · <a href="#s2">Edit</a></td>
+              </tr>
+              <tr class="row--off">
+                <td>
+                  <div class="rowtitle">Riverside Park Clean-Up</div>
+                  <div class="rowsub">Called off — flooding on the lower path</div>
+                </td>
+                <td class="num">Sat 20 Sep</td>
+                <td>Riverside Park</td>
+                <td class="num">2</td>
+                <td><span class="chip chip--off">Cancelled</span><div class="rowsub" style="margin-top:5px">11 people told</div></td>
+                <td><a href="#s4">Roster</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Why the cancelled row is still here</span>
+        <p>An event with people on it is cancelled, never deleted — the same rule shifts already follow. Deleting says it never existed, which is only true of a typo. "11 people told" is the receipt for the mail that went out.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 2 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s2">
+      <p class="screen__num">02 / COORDINATOR</p>
+      <h2 class="screen__title">Building the grid</h2>
+      <p class="screen__q">The screen the whole feature stands on. It is <strong>role-major</strong>: you name a role once and hang times underneath it, so the role string is typed once and copied to every shift that role creates. That is what makes a taxonomy unnecessary — "Greeter" and "greeter" cannot both exist inside one event. <strong>Add a role, add a time and remove all work here.</strong></p>
+
+      <div class="plate">
+        <div class="plate__chrome">wp-admin/edit.php?post_type=gwcvt_entry&amp;page=gwcvt-schedule&amp;event=<span>1482</span></div>
+        <div class="wp">
+          <h1>Edit event</h1>
+
+          <table class="form">
+            <tr>
+              <th><label for="ev-name">Name</label></th>
+              <td>
+                <input type="text" id="ev-name" class="regular-text" value="Fall Festival">
+                <p class="description">What volunteers will recognise it by.</p>
+              </td>
+            </tr>
+            <tr>
+              <th><label for="ev-desc">What it is</label></th>
+              <td>
+                <textarea id="ev-desc" class="large-text" rows="3">Our biggest day of the year. Music, food stalls, and a great many chairs to move. Bring water — we will feed you.</textarea>
+              </td>
+            </tr>
+            <tr>
+              <th>When</th>
+              <td>
+                <span class="derived">Saturday 12 October 2026 · one day</span>
+                <p class="description">Taken from the times below. There is nothing to fill in here.</p>
+              </td>
+            </tr>
+            <tr>
+              <th><label for="ev-where">Where</label></th>
+              <td>
+                <input type="text" id="ev-where" class="regular-text" value="Riverside Park, north gate">
+                <p class="description">Roles can override this. Most will not.</p>
+              </td>
+            </tr>
+            <tr>
+              <th><label for="ev-sup">Supervisor</label></th>
+              <td>
+                <input type="text" id="ev-sup" class="regular-text" value="Marcus Webb">
+                <p class="description">Inherited by any role that does not name its own.</p>
+              </td>
+            </tr>
+          </table>
+
+          <hr class="wp__hr">
+
+          <h2>Who you need</h2>
+          <p class="description" style="margin-top:-4px">A role's name is printed on volunteers' verification letters. Name it as work.</p>
+
+          <div class="roles" id="roles">
+
+            <!-- Greeter -->
+            <div class="role" data-role>
+              <div class="role__head">
+                <div class="role__field">
+                  <label class="role__label" for="r1">Role</label>
+                  <input type="text" id="r1" class="regular-text" value="Greeter" list="activities">
+                </div>
+                <div class="role__field">
+                  <label class="role__label" for="r1s">Supervisor for this role</label>
+                  <input type="text" id="r1s" class="regular-text" placeholder="Marcus Webb">
+                </div>
+                <button type="button" class="btn btn--small" data-removerole>Remove role</button>
+                <div class="role__know">
+                  <label class="role__label" for="r1n">What to know</label>
+                  <textarea id="r1n" rows="2" maxlength="1000" placeholder="Closed shoes, park round the back, ask for Dana at the desk."></textarea>
+                  <p class="description">Shown to whoever signs up, and repeated in their confirmation, their reminder and their calendar entry. Applies to every time below.</p>
+                </div>
+              </div>
+              <table class="slots">
+                <thead>
+                  <tr><th style="width:8.5em">Date</th><th style="width:14em">From — to</th><th style="width:6em">Need</th><th style="width:6em">Most</th><th>Signed up</th><th style="width:8em"></th></tr>
+                </thead>
+                <tbody>
+                  <tr data-slot data-filled="3">
+                    <td class="whenwhat"><input type="date" value="2026-10-12"></td>
+                    <td class="whenwhat"><input type="time" class="time" value="09:00"> <input type="time" class="time" value="12:00"></td>
+                    <td><input type="text" class="tiny" value="2"></td>
+                    <td><input type="text" class="tiny" value="3"></td>
+                    <td class="who"><span class="dot dot--ok"></span><b>3 of 3</b> · 1 waiting</td>
+                    <td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>
+                  </tr>
+                  <tr data-slot data-filled="1">
+                    <td class="whenwhat"><input type="date" value="2026-10-12"></td>
+                    <td class="whenwhat"><input type="time" class="time" value="12:00"> <input type="time" class="time" value="15:00"></td>
+                    <td><input type="text" class="tiny" value="2"></td>
+                    <td><input type="text" class="tiny" value="3"></td>
+                    <td class="who"><span class="dot dot--short"></span><b>1 of 3</b></td>
+                    <td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="role__foot"><button type="button" class="btn btn--small" data-addtime>+ Add a time</button></div>
+            </div>
+
+            <!-- Kitchen -->
+            <div class="role" data-role>
+              <div class="role__head">
+                <div class="role__field">
+                  <label class="role__label" for="r2">Role</label>
+                  <input type="text" id="r2" class="regular-text" value="Kitchen" list="activities">
+                </div>
+                <div class="role__field">
+                  <label class="role__label" for="r2s">Supervisor for this role</label>
+                  <input type="text" id="r2s" class="regular-text" value="Elena Duarte">
+                </div>
+                <button type="button" class="btn btn--small" data-removerole>Remove role</button>
+                <div class="role__know">
+                  <label class="role__label" for="r2n">What to know</label>
+                  <textarea id="r2n" rows="2" maxlength="1000">Hot work and closed shoes, please.</textarea>
+                  <p class="description">Shown to whoever signs up, and repeated in their confirmation, their reminder and their calendar entry. Applies to every time below.</p>
+                </div>
+              </div>
+              <table class="slots">
+                <thead>
+                  <tr><th style="width:8.5em">Date</th><th style="width:14em">From — to</th><th style="width:6em">Need</th><th style="width:6em">Most</th><th>Signed up</th><th style="width:8em"></th></tr>
+                </thead>
+                <tbody>
+                  <tr data-slot data-filled="2">
+                    <td class="whenwhat"><input type="date" value="2026-10-12"></td>
+                    <td class="whenwhat"><input type="time" class="time" value="08:00"> <input type="time" class="time" value="14:00"></td>
+                    <td><input type="text" class="tiny" value="4"></td>
+                    <td><input type="text" class="tiny" value="6"></td>
+                    <td class="who"><span class="dot dot--short"></span><b>2 of 6</b></td>
+                    <td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="role__foot"><button type="button" class="btn btn--small" data-addtime>+ Add a time</button></div>
+            </div>
+
+            <!-- Set-up -->
+            <div class="role" data-role>
+              <div class="role__head">
+                <div class="role__field">
+                  <label class="role__label" for="r3">Role</label>
+                  <input type="text" id="r3" class="regular-text" value="Set-up and clear-down" list="activities">
+                </div>
+                <div class="role__field">
+                  <label class="role__label" for="r3s">Supervisor for this role</label>
+                  <input type="text" id="r3s" class="regular-text" placeholder="Marcus Webb">
+                </div>
+                <button type="button" class="btn btn--small" data-removerole>Remove role</button>
+                <div class="role__know">
+                  <label class="role__label" for="r3n">What to know</label>
+                  <textarea id="r3n" rows="2" maxlength="1000">Some lifting. Tell us if that is a problem and we will find you something else.</textarea>
+                  <p class="description">Shown to whoever signs up, and repeated in their confirmation, their reminder and their calendar entry. Applies to every time below.</p>
+                </div>
+              </div>
+              <table class="slots">
+                <thead>
+                  <tr><th style="width:8.5em">Date</th><th style="width:14em">From — to</th><th style="width:6em">Need</th><th style="width:6em">Most</th><th>Signed up</th><th style="width:8em"></th></tr>
+                </thead>
+                <tbody>
+                  <tr data-slot data-filled="2">
+                    <td class="whenwhat"><input type="date" value="2026-10-12"></td>
+                    <td class="whenwhat"><input type="time" class="time" value="07:30"> <input type="time" class="time" value="09:00"></td>
+                    <td><input type="text" class="tiny" value="3"></td>
+                    <td><input type="text" class="tiny" value="4"></td>
+                    <td class="who"><span class="dot dot--short"></span><b>2 of 4</b></td>
+                    <td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>
+                  </tr>
+                  <tr data-slot data-filled="0">
+                    <td class="whenwhat"><input type="date" value="2026-10-12"></td>
+                    <td class="whenwhat"><input type="time" class="time" value="15:00"> <input type="time" class="time" value="17:00"></td>
+                    <td><input type="text" class="tiny" value="3"></td>
+                    <td><input type="text" class="tiny" value="6"></td>
+                    <td class="who"><span class="dot dot--empty"></span>Nobody yet</td>
+                    <td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="role__foot"><button type="button" class="btn btn--small" data-addtime>+ Add a time</button></div>
+            </div>
+
+          </div>
+
+          <p class="addrole"><button type="button" class="btn" id="addrole">+ Add a role</button></p>
+
+          <datalist id="activities">
+            <option value="Greeter"></option><option value="Kitchen"></option>
+            <option value="Food sorting"></option><option value="Serving"></option>
+            <option value="Washing up"></option><option value="Set-up and clear-down"></option>
+            <option value="Welcome desk"></option><option value="Grounds and gardening"></option>
+          </datalist>
+
+          <hr class="wp__hr">
+
+          <p>
+            <button type="button" class="btn btn--primary">Save event</button>
+            <button type="button" class="btn">Save as a draft</button>
+            <span class="description" style="margin-left:10px">A draft is invisible to the public and takes no signups.</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Three decisions visible on this screen</span>
+        <p><b>When is derived, never typed.</b> The grid has already said when everything is. A second date field is a second source of truth, and it disagrees the first time somebody moves one slot.</p>
+        <p><b>The role name carries a warning.</b> The activity flows shift → reconcile screen → hour entry → the letter, and it sits inside the reference digest. A role called "Trash Duty" is a line a judge reads.</p>
+        <p><b>Add-a-role and add-a-time are plain buttons.</b> They can be server round-trips that re-render with a blank row, exactly as the quick-add screen already renders eight blank ones. There is no build step, so JavaScript enhances and never carries.</p>
+      </div>
+
+      <div class="note">
+        <span class="note__label">"What to know" sits on the role, not on the time</span>
+        <p>It is the existing <code>_gwcvt_shift_notes</code> — already on every shift, already labelled "What to know", and already reaching four places: the public list, the calendar file's description, the confirmation and the reminder. Nothing new is stored; the grid types it once per role and copies it to every shift that role creates, exactly as it does the role's name.</p>
+        <p>Because near enough every note anybody writes on a grid — <em>hot work and closed shoes, some lifting, ring the bell at the north gate</em> — is a fact about the work rather than about a particular hour. The consequence is that it shows on <b>every</b> time in that role, which is why both set-up times carry the lifting warning overleaf.</p>
+        <p>For a genuine one-off, the grid links each row to the single-shift editor that already exists — an event slot <em>is</em> a shift. That avoids a second notes box in the grid, and with it the question of whether a slot's note replaces the role's or is added to it.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 3 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s3">
+      <p class="screen__num">03 / COORDINATOR</p>
+      <h2 class="screen__title">Removing a slot that has people on it</h2>
+      <p class="screen__q">The rule that a shift with a roster is <strong>cancelled and never deleted</strong> does not lapse because the removal came from a grid instead of a button. An empty slot just goes. An occupied one asks — and it says which of the two is about to happen before it happens. <strong>Press Remove on either row.</strong></p>
+
+      <div class="plate">
+        <div class="plate__chrome">wp-admin/…&amp;event=<span>1482</span> — detail</div>
+        <div class="wp">
+          <div class="role" data-role>
+            <div class="role__head">
+              <div class="role__field">
+                <label class="role__label" for="r9">Role</label>
+                <input type="text" id="r9" class="regular-text" value="Greeter">
+              </div>
+            </div>
+            <table class="slots">
+              <thead>
+                <tr><th style="width:8.5em">Date</th><th style="width:14em">From — to</th><th style="width:6em">Need</th><th style="width:6em">Most</th><th>Signed up</th><th style="width:8em"></th></tr>
+              </thead>
+              <tbody>
+                <tr data-slot data-filled="3">
+                  <td class="whenwhat"><input type="date" value="2026-10-12"></td>
+                  <td class="whenwhat"><input type="time" class="time" value="09:00"> <input type="time" class="time" value="12:00"></td>
+                  <td><input type="text" class="tiny" value="2"></td>
+                  <td><input type="text" class="tiny" value="3"></td>
+                  <td class="who"><span class="dot dot--ok"></span><b>3 of 3</b> · 1 waiting</td>
+                  <td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>
+                </tr>
+                <tr data-slot data-filled="0">
+                  <td class="whenwhat"><input type="date" value="2026-10-12"></td>
+                  <td class="whenwhat"><input type="time" class="time" value="15:00"> <input type="time" class="time" value="17:00"></td>
+                  <td><input type="text" class="tiny" value="3"></td>
+                  <td><input type="text" class="tiny" value="6"></td>
+                  <td class="who"><span class="dot dot--empty"></span>Nobody yet</td>
+                  <td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="role__foot"><button type="button" class="btn btn--small" data-addtime>+ Add a time</button></div>
+          </div>
+
+          <div class="notice notice--warn" style="max-width:780px">
+            <p><strong>What Save will do:</strong> cancel 1 time that 4 people are on, and delete 1 empty time. Cancelled times stay on the schedule, struck through, so everybody can see it was called off.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Mailing the roster is a tick box, never a side effect</span>
+        <p>The plugin already refuses to mail thirty people because somebody fixed a spelling. Cancelling a slot shows the count and asks; re-typing a role name or widening a maximum tells nobody.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 4 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s4">
+      <p class="screen__num">04 / COORDINATOR</p>
+      <h2 class="screen__title">The roster</h2>
+      <p class="screen__q">The one screen in the feature that shows names — staff-side, behind a capability. Grouped role, then time, because that is the shape of the day. It carries the two things a grid makes newly possible: somebody who has <strong>double-booked themselves</strong>, and somebody the public form could not match to a volunteer record.</p>
+
+      <div class="plate">
+        <div class="plate__chrome">wp-admin/…&amp;event=<span>1482</span>&amp;view=roster</div>
+        <div class="wp roster">
+          <h1>Fall Festival — roster</h1>
+          <p class="description" style="margin-top:0">Saturday 12 October 2026 · Riverside Park, north gate · 8 of 22 places filled</p>
+
+          <div class="notice" style="max-width:820px;border-left-color:#dba617">
+            <p><strong>Dana Whitfield is on two roles that overlap</strong> — Greeter 09:00–12:00 and Kitchen 08:00–14:00. Nothing has been blocked; you may want to ring them.</p>
+          </div>
+
+          <div class="roster__group">
+            <p class="roster__role">Greeter</p>
+
+            <div class="roster__slot">
+              <div class="roster__slothead">
+                <span class="roster__when">09:00 – 12:00</span>
+                <span><span class="chip chip--ok">Full</span> <span class="description" style="font-style:normal">3 of 3 · 1 waiting</span></span>
+              </div>
+              <ul>
+                <li>
+                  <span class="name">Dana Whitfield</span>
+                  <span class="chip chip--wait">Overlaps</span>
+                  <span class="when">signed up 14 days ago</span>
+                  <span class="flag">Also on Kitchen 08:00–14:00. These overlap by three hours.</span>
+                </li>
+                <li><span class="name">Tomas Iverson</span><span class="when">signed up 12 days ago</span></li>
+                <li>
+                  <span class="name">R. Nkemelu</span>
+                  <span class="chip chip--new">Not matched</span>
+                  <a href="#s4">Match to a volunteer</a>
+                  <span class="when">signed up 2 days ago</span>
+                </li>
+                <li style="background:#f6f7f7">
+                  <span class="name" style="color:#646970">Priya Raman</span>
+                  <span class="chip chip--wait">Waiting list</span>
+                  <span class="when">signed up 1 day ago</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="roster__slot">
+              <div class="roster__slothead">
+                <span class="roster__when">12:00 – 15:00</span>
+                <span><span class="chip chip--short">Short by 1</span> <span class="description" style="font-style:normal">1 of 3</span></span>
+              </div>
+              <ul><li><span class="name">Aisha Bello</span><span class="when">signed up 6 days ago</span></li></ul>
+            </div>
+          </div>
+
+          <div class="roster__group">
+            <p class="roster__role">Kitchen</p>
+            <div class="roster__slot">
+              <div class="roster__slothead">
+                <span class="roster__when">08:00 – 14:00</span>
+                <span><span class="chip chip--short">Short by 2</span> <span class="description" style="font-style:normal">2 of 6</span></span>
+              </div>
+              <ul>
+                <li><span class="name">Dana Whitfield</span><span class="chip chip--wait">Overlaps</span><span class="when">signed up 14 days ago</span></li>
+                <li><span class="name">Samuel Ortiz</span><span class="when">signed up 9 days ago</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="roster__group">
+            <p class="roster__role">Set-up and clear-down</p>
+            <div class="roster__slot">
+              <div class="roster__slothead">
+                <span class="roster__when">07:30 – 09:00</span>
+                <span><span class="chip chip--short">Short by 1</span> <span class="description" style="font-style:normal">2 of 4</span></span>
+              </div>
+              <ul>
+                <li><span class="name">Tomas Iverson</span><span class="when">signed up 12 days ago</span></li>
+                <li><span class="name">Grace Lindqvist</span><span class="when">signed up 3 days ago</span></li>
+              </ul>
+            </div>
+            <div class="roster__slot">
+              <div class="roster__slothead">
+                <span class="roster__when">15:00 – 17:00</span>
+                <span><span class="chip chip--short">Nobody yet</span> <span class="description" style="font-style:normal">0 of 6 · needs 3</span></span>
+              </div>
+              <p class="empty">Nobody has signed up for this one.</p>
+            </div>
+          </div>
+
+          <hr class="wp__hr">
+
+          <h2 style="margin-top:0">Put somebody on</h2>
+          <table class="form" style="max-width:none">
+            <tr>
+              <th><label for="ra-who">Volunteer</label></th>
+              <td>
+                <input type="text" id="ra-who" class="regular-text" placeholder="Start typing a name…" autocomplete="off">
+                <p class="description">Somebody who is not on file yet needs a volunteer record first.</p>
+              </td>
+            </tr>
+            <tr>
+              <th><label for="ra-slot">Which one</label></th>
+              <td>
+                <select id="ra-slot" style="font-size:14px;padding:3px;min-height:30px;border:1px solid #8c8f94;border-radius:4px">
+                  <option>Greeter · 09:00–12:00 — full, 1 waiting</option>
+                  <option>Greeter · 12:00–15:00 — needs 1 more</option>
+                  <option selected>Kitchen · 08:00–14:00 — needs 2 more</option>
+                  <option>Set-up and clear-down · 07:30–09:00 — needs 1 more</option>
+                  <option>Set-up and clear-down · 15:00–17:00 — needs 3</option>
+                </select>
+                <p class="description">Over the maximum goes on the waiting list, the same as a signup from the website. Raise the maximum if you mean it.</p>
+              </td>
+            </tr>
+          </table>
+          <p><button type="button" class="btn">Add them</button></p>
+
+          <hr class="wp__hr">
+          <p>
+            <button type="button" class="btn">Print the roster</button>
+            <span class="description" style="margin-left:8px">One sheet for the clipboard, split by role and time. Bring it back marked up and type it into Log a day.</span>
+          </p>
+          <p>
+            <button type="button" class="btn" disabled style="opacity:.55;cursor:default">Log these hours</button>
+            <span class="description" style="margin-left:8px">Available once the event has ended. Each time is written up on its own.</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Adding by hand already exists — it needs one field</span>
+        <p><code>gwcvt_handle_roster_add()</code> takes a volunteer ID and calls <code>gwcvt_add_signup()</code> with <code>source =&gt; 'staff'</code>. It refuses an ID of 0 on purpose: a staff member typing a name and an address would be manufacturing an untriaged claim, which is the public form's job. The coordinator's job is to say <em>who this is</em>.</p>
+        <p>Events add the slot picker, and put the volunteer first — somebody doing this is on the phone to a person they already know, hunting for a time that suits. The fill count sits in each option so they can steer the call.</p>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Two things this screen deliberately does not do</span>
+        <p><b>It does not refuse the double-booking.</b> Capacity here is advisory and so is this: somebody working off a court order should not be bounced by a rule, and a coordinator who can see it can have a conversation. Tomas Iverson finishing set-up at 09:00 and greeting from 09:00 is <em>not</em> flagged — touching is not overlapping.</p>
+        <p><b>It does not log hours for the event.</b> Each time is reconciled on its own, through the screen that already exists. An event never produces hours; only a shift does, and only after it has ended.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 5 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s5">
+      <p class="screen__num">05 / VOLUNTEER</p>
+      <h2 class="screen__title">The event page</h2>
+      <p class="screen__q">Radios become checkboxes and that is the whole structural change — still one form, still one nonce, still nothing that needs JavaScript. The full slot stays tickable, because full means the waiting list rather than no. <strong>Tick Kitchen and either Greeter time to see the clash warning</strong>; tick set-up at 07:30 and Greeter at 09:00 and nothing happens, because touching is not overlapping.</p>
+
+      <div class="plate plate--fe">
+        <div class="plate__chrome">example.org/volunteer/fall-festival</div>
+        <div class="fe">
+          <div class="fe__inner" id="fe-form">
+            <h1>Fall Festival</h1>
+            <p class="fe__meta">Saturday 12 October 2026 · Riverside Park, north gate</p>
+
+            <p>Our biggest day of the year. Music, food stalls, and a great many chairs to move. Bring water — we will feed you.</p>
+
+            <p class="fe__ask">Choose the times you can help.</p>
+            <p class="fe__askhelp">You can pick more than one.</p>
+
+            <form id="signup">
+              <fieldset>
+                <legend>Greeter</legend>
+                <label class="slotpick">
+                  <input type="checkbox" name="slot[9001]" data-role="Greeter" data-from="09:00" data-to="12:00">
+                  <span class="slotpick__body">
+                    <span class="slotpick__when">09:00 – 12:00</span>
+                    <span class="slotpick__left slotpick__left--full">Full — you can join the waiting list</span>
+                  </span>
+                </label>
+                <label class="slotpick">
+                  <input type="checkbox" name="slot[9002]" data-role="Greeter" data-from="12:00" data-to="15:00">
+                  <span class="slotpick__body">
+                    <span class="slotpick__when">12:00 – 15:00</span>
+                    <span class="slotpick__left">2 places left</span>
+                  </span>
+                </label>
+              </fieldset>
+
+              <fieldset>
+                <legend>Kitchen</legend>
+                <label class="slotpick">
+                  <input type="checkbox" name="slot[9003]" data-role="Kitchen" data-from="08:00" data-to="14:00">
+                  <span class="slotpick__body">
+                    <span class="slotpick__when">08:00 – 14:00</span>
+                    <span class="slotpick__left">4 places left</span>
+                    <span class="slotpick__note">Hot work and closed shoes, please.</span>
+                  </span>
+                </label>
+              </fieldset>
+
+              <fieldset>
+                <legend>Set-up and clear-down</legend>
+                <label class="slotpick">
+                  <input type="checkbox" name="slot[9004]" data-role="Set-up and clear-down" data-from="07:30" data-to="09:00">
+                  <span class="slotpick__body">
+                    <span class="slotpick__when">07:30 – 09:00</span>
+                    <span class="slotpick__left">2 places left</span>
+                    <span class="slotpick__note">Some lifting. Tell us if that is a problem and we will find you something else.</span>
+                  </span>
+                </label>
+                <label class="slotpick">
+                  <input type="checkbox" name="slot[9005]" data-role="Set-up and clear-down" data-from="15:00" data-to="17:00">
+                  <span class="slotpick__body">
+                    <span class="slotpick__when">15:00 – 17:00</span>
+                    <span class="slotpick__left">6 places left</span>
+                    <span class="slotpick__note">Some lifting. Tell us if that is a problem and we will find you something else.</span>
+                  </span>
+                </label>
+              </fieldset>
+
+              <div class="fe__field">
+                <label for="fe-name">Your name</label>
+                <input type="text" id="fe-name" autocomplete="name">
+              </div>
+
+              <div class="fe__field">
+                <label for="fe-email">Your email address</label>
+                <input type="email" id="fe-email" autocomplete="email">
+                <p class="fe__help">So we can send you the details and a link to cancel if you need to. It does not create an account.</p>
+              </div>
+
+              <p><button type="submit" class="fe__submit">Sign me up</button></p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">The clash warning stops at the edge of the submission</span>
+        <p>Both slots are in the POST, so the check reads only what the sender just ticked and looks nothing up. That is what makes it safe — and it is also exactly why the <em>other</em> half cannot exist.</p>
+        <p>Asking whether the address just typed already holds an overlapping slot means querying earlier signups by email and then changing the page by the answer. That is the neighbour attack again: type somebody's address, tick Kitchen 08:00–14:00, and "that clashes with something you are already down for" reports that they hold something across those hours. <code>gwcvt_find_signup()</code> is licensed for its email lookup by one clause — <em>"its answer changes nothing the visitor can see"</em> — and a cross-submission warning spends that clause.</p>
+        <p>So a clash with an earlier submission is a coordinator-side flag on the roster, which is where screen 04 shows it.</p>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Warned, not blocked — and why this is not the capacity argument</span>
+        <p>Being over the maximum is the organisation's constraint colliding with somebody who wants to come. An overlap is a physical impossibility and nearly always a misclick, and it fails towards the organisation: the slot reads as filled, the coordinator stops recruiting, nobody turns up. <b>A phantom-filled slot is worse than an empty one.</b></p>
+        <p>It is still a warning rather than a refusal, because ducking out of the kitchen at noon to greet is a real thing people do. The form comes back with every tick intact, names the two, and asks once.</p>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Counts, never names — and no setting changes it</span>
+        <p>This is the hardest divergence from the products this resembles, which publish their rosters by design. On a site running a court-ordered service programme, who is coming on Saturday is a list of people working one off. A place count says nothing about anybody; a first name says everything about one.</p>
+        <p>It is also why "2 places left" on a cached page is harmless. The page is a hint; <code>gwcvt_settle_signups()</code> is the authority, and it puts the overflow on a waiting list rather than turning anybody away.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 6 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s6">
+      <p class="screen__num">06 / VOLUNTEER</p>
+      <h2 class="screen__title">What they are told</h2>
+      <p class="screen__q">The most dangerous screen in the feature, and it is the one with the least on it. A multi-slot form begs for <em>"you are signed up for 3 shifts"</em> — and a count of what the database <em>did</em> answers a question the sender was never entitled to ask.</p>
+
+      <div class="plate plate--fe">
+        <div class="plate__chrome">example.org/volunteer/fall-festival — after POST</div>
+        <div class="fe">
+          <div class="fe__inner">
+            <div class="fe__msg" role="status">
+              <p>Thank you — you are signed up. We have sent the details to your email address, along with a link you can use if you need to cancel.</p>
+            </div>
+            <h1>Fall Festival</h1>
+            <p class="fe__meta">Saturday 12 October 2026 · Riverside Park, north gate</p>
+            <p style="color:#5a5553">…the list follows, refreshed.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">The attack this is guarding against</span>
+        <p><code>gwcvt_add_signup()</code> is idempotent: signing up twice for the same slot refreshes the first rather than making a second. And the form never checks whether the address belongs to anybody.</p>
+        <p>So a stranger types <b>your neighbour's</b> email and ticks three boxes. Three new signups, or two new and one refresh, or three refreshes — if the response tells those apart, they have learned which of those slots your neighbour was already on, without ever being told a name. On a site running court-ordered service, that is a fact about a person they did not publish.</p>
+        <p>The leak is therefore a count of <b>what the write did</b>. A count of what was <em>ticked</em> reports only what the sender already knew, and a honeypot hit or a rate-limited attempt can produce that one too — so it does not break the byte-identical rule.</p>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Why no number at all, even so</span>
+        <p>Not because a request-derived count is unsafe, but because the invariant is only cheap to hold in its blunt form. <em>"This response contains no digits"</em> is one assertion, the shape <code>SelfLogTest</code> already uses. <em>"This response may contain a digit, but only one derived from the request and never from what the write returned"</em> holds until the first person who thinks it would be friendlier to mention you were already down for the kitchen — and that arrives looking like a copy edit.</p>
+        <p>So: three slots, one slot, a honeypot hit and a rate-limited attempt all return the string already in the plugin, unchanged. Any slot no longer open returns the existing <code>unavailable</code>, with no count and no list of which. The detail goes in the email, which only that address receives.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 7 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s7">
+      <p class="screen__num">07 / VOLUNTEER</p>
+      <h2 class="screen__title">The confirmation</h2>
+      <p class="screen__q">One email per submission, not one per slot — four emails for four ticks is how an organisation teaches its volunteers to filter it. Each slot carries <strong>its own cancel link and its own calendar link</strong>, and that is what lets a token stay scoped to one slot while still answering "I can only drop the Sunday".</p>
+
+      <div class="plate plate--fe">
+        <div class="plate__chrome">Confirmation, sent on shutdown</div>
+        <div class="mail">
+          <div class="mail__paper">
+            <div class="mail__hdr">
+              <div><b>Fall Festival — you are signed up</b></div>
+              <div>Groundwork Common &lt;volunteers@example.org&gt;</div>
+            </div>
+            <div class="mail__body">
+              <p>Hello Dana,</p>
+              <p>Thank you for signing up for the Fall Festival on <b>Saturday 12 October</b> at Riverside Park, north gate. Here is what you put your name down for.</p>
+
+              <div class="mail__slot">
+                <div class="mail__role">Kitchen</div>
+                <div class="mail__when">08:00 – 14:00</div>
+                <div class="mail__links"><a href="#s7">Add to your calendar</a> · <a href="#s9">Cancel this one</a></div>
+              </div>
+
+              <div class="mail__slot">
+                <div class="mail__role">Greeter</div>
+                <div class="mail__when">12:00 – 15:00</div>
+                <div class="mail__links"><a href="#s7">Add to your calendar</a> · <a href="#s9">Cancel this one</a></div>
+              </div>
+
+              <div class="mail__slot">
+                <div class="mail__role">Set-up and clear-down</div>
+                <div class="mail__when">15:00 – 17:00</div>
+                <div class="mail__links"><a href="#s7">Add to your calendar</a> · <a href="#s9">Cancel this one</a></div>
+              </div>
+
+              <p>Marcus Webb will be looking after the day. If anything changes we will write to you at this address.</p>
+              <p style="color:#5a5553;font-size:14.5px">Kitchen runs hot — closed shoes, please.</p>
+            </div>
+            <div class="mail__foot">
+              You are receiving this because you signed up at example.org. It does not create an account, and we will not add you to anything else.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">Why the queue groups, and why reminders do not</span>
+        <p>Confirmations already defer to <code>shutdown</code>; grouping them by claimed address and event is a change to the queue and nothing else. <b>Reminders stay one per slot.</b> Grouping them would break the one-to-one between a send and the <code>_gwcvt_signup_reminded_at</code> flag, and that flag is the whole reason a missed cron run sends late rather than never or twice.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 8 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s8">
+      <p class="screen__num">08 / VOLUNTEER</p>
+      <h2 class="screen__title">The reminder, 48 hours out</h2>
+      <p class="screen__q">Today's reminder says "you are down to volunteer on Saturday". Exact for one shift; for somebody holding three places it is ambiguous in the worst way, because <strong>the decline link drops one signup and the message never says which</strong>. So an event reminder lists what they hold, in the order the day happens, each declining on its own.</p>
+
+      <div class="plate plate--fe">
+        <div class="plate__chrome">Reminder — hourly pass, 48 hours before the first slot</div>
+        <div class="mail">
+          <div class="mail__paper">
+            <div class="mail__hdr">
+              <div><b>Groundwork Common: a reminder about Saturday 12 October</b></div>
+              <div>Groundwork Common &lt;volunteers@example.org&gt;</div>
+            </div>
+            <div class="mail__body">
+              <p>Hello Dana,</p>
+              <p>A reminder that you are down to volunteer with Groundwork Common this <b>Saturday 12 October</b> — the Fall Festival, at Riverside Park, north gate. Here is your day.</p>
+
+              <div class="mail__slot">
+                <div class="mail__role">Kitchen</div>
+                <div class="mail__when">08:00 – 14:00</div>
+                <p style="margin:0 0 7px;font-size:14.5px;color:#5a5553">Hot work and closed shoes, please.</p>
+                <div class="mail__links"><a href="#s9">Add to your calendar</a> · <a href="#s9">I cannot make this one</a></div>
+              </div>
+
+              <div class="mail__slot">
+                <div class="mail__role">Greeter</div>
+                <div class="mail__when">12:00 – 15:00</div>
+                <div class="mail__links"><a href="#s9">Add to your calendar</a> · <a href="#s9">I cannot make this one</a></div>
+              </div>
+
+              <div class="mail__slot">
+                <div class="mail__role">Set-up and clear-down</div>
+                <div class="mail__when">15:00 – 17:00</div>
+                <p style="margin:0 0 7px;font-size:14.5px;color:#5a5553">Some lifting. Tell us if that is a problem and we will find you something else.</p>
+                <div class="mail__links"><a href="#s9">Add to your calendar</a> · <a href="#s9">I cannot make this one</a></div>
+              </div>
+
+              <p>If you cannot make one of them, please use its link to let us know — it takes you off that one only, and there is still time for us to ask somebody else.</p>
+              <p>Marcus Webb will be looking after the day.</p>
+            </div>
+            <div class="mail__foot">
+              You are receiving this because you signed up at example.org. It does not create an account, and we will not add you to anything else.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">There is no "confirm you are still coming", and there will not be</span>
+        <p>Every product this resembles has that button. The asymmetry that rules it out: <b>an unclicked cancel link means nothing; an unclicked confirm link looks like an answer.</b> And then the answer has to be interpreted — a place dropped because somebody did not read an email, or a sorted list of people who do not reply, kept about a population working off court orders.</p>
+        <p>Prefetching makes it structurally worse rather than merely awkward. Cancelling is a POST behind a page because mail scanners follow links; a confirm link that survives that contact confirms <em>everybody</em>, and nothing tells the real ones apart. A feature whose commonest outcome is a wrong signal is worse than not having it, because the coordinator starts discounting the true signups too.</p>
+      </div>
+
+      <div class="note">
+        <span class="note__label">What keeps the hourly pass idempotent once it groups</span>
+        <p>Not one flag per email — that framing is what made this look impossible earlier. The invariant is: <b>a slot's flag is set if and only if that slot was named in a message that was sent.</b> Mark every slot you are about to mention, before sending, then send once.</p>
+        <p>Which settles multi-day events: mention only slots inside the window, mark exactly those. The Sunday slots keep their own flags and get their own message. Naming a slot without marking it sends it twice; marking one without naming it means it is <em>never</em> reminded about — and that failure is silent, so it is the one that needs the test.</p>
+      </div>
+    </section>
+
+    <!-- ═══ 9 ═══════════════════════════════════════════════════════════════ -->
+    <section class="screen" id="s9">
+      <p class="screen__num">09 / VOLUNTEER</p>
+      <h2 class="screen__title">Dropping one slot</h2>
+      <p class="screen__q">The link from the email lands on a page with a <strong>button</strong>, never a bare GET. Mail clients prefetch links and security appliances follow them to see where they go — a GET that withdrew a place would eventually be withdrawn by a spam filter, and the volunteer would find out by not being expected.</p>
+
+      <div class="plate plate--fe">
+        <div class="plate__chrome">example.org/volunteer/fall-festival?gwcvt_signup=<span>44120</span>&amp;gwcvt_k=…</div>
+        <div class="fe">
+          <div class="fe__inner">
+            <h1>Your place</h1>
+            <div class="fe__mine">
+              <span class="mail__role" style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#5a5553">Kitchen · Fall Festival</span>
+              <span class="slotpick__when">Saturday 12 October, 08:00 – 14:00</span>
+              <span class="slotpick__note">Riverside Park, north gate · Elena Duarte is looking after the kitchen</span>
+            </div>
+
+            <p><a class="fe__quiet" href="#s9">Add it to your calendar</a></p>
+
+            <h2>Cannot make it any more?</h2>
+            <p>This will take you off the kitchen only. Anything else you signed up for stays as it is — each has its own link in your confirmation email.</p>
+            <p><button type="button" class="fe__quiet" id="cancelbtn">Cancel my place</button></p>
+            <div id="cancelled" hidden>
+              <div class="fe__msg" role="status">
+                <p>You have been taken off that shift. Thank you for letting us know.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note__label">One token means one slot, on purpose</span>
+        <p>It is tempting to have this panel list everything this address signed up for. That would be a lookup keyed on an email address — the shape the self-log form refuses to have, and a forwarded confirmation would then disclose the lot. The email already carries a link per slot, so the need is answered without the blast radius. The sentence above is doing that work: it tells somebody the other places are untouched, so they do not go hunting.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="close">
+  <div class="close__inner">
+    <div></div>
+    <div>
+      <h2>Open questions these screens raise</h2>
+
+      <div class="open">
+        <p class="open__q">Should the flat "Coming up" view interleave event slots, or only summarise the event?</p>
+        <p class="open__a">Drawn here as a summary row. Interleaving five festival slots among next Saturday's ordinary shifts buries them; omitting them entirely is a list that lies by omission. A single row that expands is the middle, and it is untested.</p>
+      </div>
+
+      <div class="open">
+        <p class="open__q">Does the volunteer need to see which roles they already hold when they come back to the page?</p>
+        <p class="open__a">Currently no — the grid is identical for everybody, which is what keeps it free of any lookup keyed on identity. The cost is that somebody who signs up twice sees no acknowledgement on the page. <code>gwcvt_add_signup()</code> is already idempotent so nothing breaks; it is only unsatisfying.</p>
+      </div>
+
+      <div class="open">
+        <p class="open__q">Is "Need" and "Most" the right pair of words?</p>
+        <p class="open__a">They are <code>_gwcvt_shift_min</code> and <code>_gwcvt_shift_max</code>, and the schedule screen currently never asks a coordinator to hold both in mind at once. Across a grid of eight rows it might want to be one number with an "or as many as turn up" option.</p>
+      </div>
+
+      <div class="open">
+        <p class="open__q">Should a role be able to span days?</p>
+        <p class="open__a">The date sits on each row, so the Winter Coat Drive's two days already work. Whether the editor should group by day before role — or offer a "copy this role to Sunday" — is a real question for any event longer than one day.</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var HEAD =
+    '<tr><th style="width:8.5em">Date</th><th style="width:14em">From — to</th>' +
+    '<th style="width:6em">Need</th><th style="width:6em">Most</th>' +
+    '<th>Signed up</th><th style="width:8em"></th></tr>';
+
+  function slotRow() {
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-slot', '');
+    tr.setAttribute('data-filled', '0');
+    tr.innerHTML =
+      '<td class="whenwhat"><input type="date" value="2026-10-12"></td>' +
+      '<td class="whenwhat"><input type="time" class="time" value="09:00"> <input type="time" class="time" value="12:00"></td>' +
+      '<td><input type="text" class="tiny" value="2"></td>' +
+      '<td><input type="text" class="tiny" value="4"></td>' +
+      '<td class="who"><span class="dot dot--empty"></span>Nobody yet</td>' +
+      '<td><a href="#s2" title="Opens this one time in the single-shift editor, where it can have its own note">Edit</a> · <button type="button" class="btn--link" data-removeslot>Remove</button></td>';
+    return tr;
+  }
+
+  /* Add a time ---------------------------------------------------------- */
+  document.addEventListener('click', function (e) {
+    var add = e.target.closest('[data-addtime]');
+    if (!add) return;
+    var body = add.closest('[data-role]').querySelector('.slots tbody');
+    var row = slotRow();
+    body.appendChild(row);
+    row.querySelector('input').focus();
+  });
+
+  /* Remove a time — cancels when occupied, deletes when empty ------------ */
+  document.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-removeslot]');
+    if (!rm) return;
+
+    var row = rm.closest('[data-slot]');
+    var filled = parseInt(row.getAttribute('data-filled'), 10) || 0;
+
+    if (filled === 0) { row.remove(); return; }
+    if (row.classList.contains('slot--going')) return;
+
+    row.classList.add('slot--going');
+    rm.textContent = 'Keep it';
+    rm.removeAttribute('data-removeslot');
+    rm.setAttribute('data-keepslot', '');
+
+    var td = row.querySelector('.who');
+    td.innerHTML = '<span class="chip chip--off">Will be cancelled</span>';
+
+    var note = document.createElement('tr');
+    note.className = 'slot--note';
+    note.innerHTML =
+      '<td colspan="6" style="padding:0">' +
+        '<div class="confirm">' +
+          '<strong>' + filled + ' ' + (filled === 1 ? 'person is' : 'people are') + ' on this time.</strong>' +
+          'Saving will cancel it rather than delete it — it stays on the schedule, struck through, so everybody can see it was called off.' +
+          '<label><input type="checkbox" checked> Tell ' + (filled === 1 ? 'them' : 'them') + ' it was called off</label>' +
+          '<label style="margin-top:-4px">Why (they will be told): ' +
+            '<input type="text" style="width:22em;margin-left:6px" value="We have enough greeters for the morning"></label>' +
+        '</div>' +
+      '</td>';
+    row.parentNode.insertBefore(note, row.nextSibling);
+  });
+
+  /* Undo a pending cancellation ----------------------------------------- */
+  document.addEventListener('click', function (e) {
+    var keep = e.target.closest('[data-keepslot]');
+    if (!keep) return;
+
+    var row = keep.closest('[data-slot]');
+    var filled = parseInt(row.getAttribute('data-filled'), 10) || 0;
+    var next = row.nextElementSibling;
+
+    if (next && next.classList.contains('slot--note')) next.remove();
+    row.classList.remove('slot--going');
+
+    keep.textContent = 'Remove';
+    keep.removeAttribute('data-keepslot');
+    keep.setAttribute('data-removeslot', '');
+
+    row.querySelector('.who').innerHTML =
+      '<span class="dot dot--ok"></span><b>' + filled + ' of 3</b> · 1 waiting';
+  });
+
+  /* Remove a role -------------------------------------------------------- */
+  document.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-removerole]');
+    if (!rm) return;
+    var role = rm.closest('[data-role]');
+    var occupied = 0;
+    Array.prototype.forEach.call(role.querySelectorAll('[data-slot]'), function (r) {
+      occupied += parseInt(r.getAttribute('data-filled'), 10) || 0;
+    });
+    if (occupied > 0) {
+      Array.prototype.forEach.call(role.querySelectorAll('[data-removeslot]'), function (b) { b.click(); });
+      return;
+    }
+    role.remove();
+  });
+
+  /* Add a role ----------------------------------------------------------- */
+  var n = 0;
+  var addRole = document.getElementById('addrole');
+  if (addRole) {
+    addRole.addEventListener('click', function () {
+      n += 1;
+      var id = 'rn' + n;
+      var el = document.createElement('div');
+      el.className = 'role';
+      el.setAttribute('data-role', '');
+      el.innerHTML =
+        '<div class="role__head">' +
+          '<div class="role__field">' +
+            '<label class="role__label" for="' + id + '">Role</label>' +
+            '<input type="text" id="' + id + '" class="regular-text" placeholder="What they will be doing" list="activities">' +
+            '<p class="role__warn">Printed on volunteers’ verification letters. <b>Name it as work.</b></p>' +
+          '</div>' +
+          '<div class="role__field">' +
+            '<label class="role__label" for="' + id + 's">Supervisor for this role</label>' +
+            '<input type="text" id="' + id + 's" class="regular-text" placeholder="Marcus Webb">' +
+          '</div>' +
+          '<button type="button" class="btn btn--small" data-removerole>Remove role</button>' +
+          '<div class="role__know">' +
+            '<label class="role__label" for="' + id + 'n">What to know</label>' +
+            '<textarea id="' + id + 'n" rows="2" maxlength="1000" ' +
+              'placeholder="Closed shoes, park round the back, ask for Dana at the desk."></textarea>' +
+            '<p class="description">Shown to whoever signs up, and repeated in their confirmation, ' +
+              'their reminder and their calendar entry. Applies to every time below.</p>' +
+          '</div>' +
+        '</div>' +
+        '<table class="slots"><thead>' + HEAD + '</thead><tbody></tbody></table>' +
+        '<div class="role__foot"><button type="button" class="btn btn--small" data-addtime>+ Add a time</button></div>';
+
+      document.getElementById('roles').appendChild(el);
+      el.querySelector('.slots tbody').appendChild(slotRow());
+      el.querySelector('input').focus();
+    });
+  }
+
+  /* The public form ------------------------------------------------------
+   * Two things are modelled here and both are load-bearing:
+   *   - the overlap check reads ONLY the submission, never the database, so it
+   *     cannot report what this address already holds;
+   *   - the success message carries no count, ever.
+   * ---------------------------------------------------------------------- */
+  function mins(hhmm) {
+    var p = hhmm.split(':');
+    return (parseInt(p[0], 10) * 60) + parseInt(p[1], 10);
+  }
+
+  function clashIn(picked) {
+    for (var i = 0; i < picked.length; i++) {
+      for (var j = i + 1; j < picked.length; j++) {
+        var a = picked[i], b = picked[j];
+        /* Strictly overlapping. Touching — 07:30–09:00 then 09:00–12:00 — is not
+         * a clash, and must never be reported as one. */
+        if (mins(a.dataset.from) < mins(b.dataset.to) &&
+            mins(b.dataset.from) < mins(a.dataset.to)) {
+          return [a, b];
+        }
+      }
+    }
+    return null;
+  }
+
+  function label(input) {
+    return input.dataset.role + ' ' + input.dataset.from + '–' + input.dataset.to;
+  }
+
+  var form = document.getElementById('signup');
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var inner = document.getElementById('fe-form');
+      var old = inner.querySelector('.fe__msg');
+      if (old) old.remove();
+      Array.prototype.forEach.call(form.querySelectorAll('.slotpick--clash'), function (el) {
+        el.classList.remove('slotpick--clash');
+      });
+
+      var picked = Array.prototype.filter.call(
+        form.querySelectorAll('input[type=checkbox][data-from]'),
+        function (c) { return c.checked; }
+      );
+
+      var msg = document.createElement('div');
+      msg.setAttribute('role', 'status');
+
+      var pair = clashIn(picked);
+      var owned = inner.querySelector('#clash-ok');
+
+      if (pair && !(owned && owned.checked)) {
+        msg.className = 'fe__msg fe__msg--clash';
+        msg.innerHTML =
+          '<strong>Those two are at the same time.</strong>' +
+          '<p>You have picked <b>' + label(pair[0]) + '</b> and <b>' + label(pair[1]) +
+            '</b>, and they overlap. Most people who do this meant to pick one of them.</p>' +
+          '<label><input type="checkbox" id="clash-ok"> ' +
+            'I know — I am doing both, and I will move between them.</label>';
+        pair[0].closest('.slotpick').classList.add('slotpick--clash');
+        pair[1].closest('.slotpick').classList.add('slotpick--clash');
+        inner.insertBefore(msg, inner.firstChild);
+        msg.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        return;
+      }
+
+      msg.className = 'fe__msg';
+      msg.innerHTML = '<p>Thank you — you are signed up. We have sent the details to your ' +
+        'email address, along with a link you can use if you need to cancel.</p>';
+      inner.insertBefore(msg, inner.firstChild);
+      msg.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }
+
+  /* The cancel button ---------------------------------------------------- */
+  var cancel = document.getElementById('cancelbtn');
+  if (cancel) {
+    cancel.addEventListener('click', function () {
+      cancel.parentNode.hidden = true;
+      document.getElementById('cancelled').hidden = false;
+    });
+  }
+
+  /* Index highlighting --------------------------------------------------- */
+  var links = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.index a'), function (a) {
+    links[a.getAttribute('href').slice(1)] = a;
+  });
+  if (window.IntersectionObserver) {
+    var seen = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { seen[en.target.id] = en.isIntersecting; });
+      var current = null;
+      Object.keys(links).forEach(function (id) { if (seen[id] && !current) current = id; });
+      Object.keys(links).forEach(function (id) {
+        if (id === current) { links[id].setAttribute('aria-current', 'true'); }
+        else { links[id].removeAttribute('aria-current'); }
+      });
+    }, { rootMargin: '-10% 0px -70% 0px' });
+    Array.prototype.forEach.call(document.querySelectorAll('.screen'), function (s) { io.observe(s); });
+  }
+}());
+</script>
+</body>
+</html>
