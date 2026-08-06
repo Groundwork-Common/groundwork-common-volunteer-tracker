@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.12.0
+Stable tag: 0.12.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 4. Checking a reference code somebody has phoned in about.
 
 == Changelog ==
+
+= 0.12.1 =
+* The Volunteer Hours menu is in the order you work in — the hours, then the schedule, then volunteers, then letters. Settings is last, where it belongs; it had drifted into the middle as screens were added over several releases.
 
 = 0.12.0 =
 * Record how many hours somebody has to complete, by when, and who requires it — for people working off court-ordered or school-required service. Their record and the volunteer list show how far along they are and how long they have left.
@@ -183,6 +186,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.12.1 =
+Reorders the admin menu. Nothing else changes.
 
 = 0.12.0 =
 Adds hours-required tracking for mandated volunteers. Nothing changes for anybody without a requirement recorded, and letters and reference codes are unaffected.

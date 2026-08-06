@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Groundwork Common Volunteer Tracker 0.12.0\n"
+"Project-Id-Version: Groundwork Common Volunteer Tracker 0.12.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-06T02:52:05+00:00\n"
+"POT-Creation-Date: 2026-08-06T04:02:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -55,17 +55,17 @@ msgid "Permission denied"
 msgstr ""
 
 #: inc/admin-help.php:57
-#: inc/admin-screen.php:111
+#: inc/admin-screen.php:234
 msgid "Volunteer Tracker"
 msgstr ""
 
 #: inc/admin-help.php:58
-#: inc/admin-screen.php:40
+#: inc/admin-screen.php:163
 msgid "Settings"
 msgstr ""
 
 #: inc/admin-help.php:59
-#: inc/admin-screen.php:446
+#: inc/admin-screen.php:569
 msgid "Report a problem"
 msgstr ""
 
@@ -107,7 +107,7 @@ msgid "The public form is switched off until you switch it on and choose a page 
 msgstr ""
 
 #: inc/admin-help.php:104
-#: inc/admin-screen.php:75
+#: inc/admin-screen.php:198
 #: inc/render.php:132
 msgid "Shifts"
 msgstr ""
@@ -1004,72 +1004,72 @@ msgstr[1] ""
 msgid "Log them now"
 msgstr ""
 
-#: inc/admin-screen.php:39
+#: inc/admin-screen.php:162
 msgid "Volunteer Tracker Settings"
 msgstr ""
 
-#: inc/admin-screen.php:73
+#: inc/admin-screen.php:196
 msgid "Letter"
 msgstr ""
 
-#: inc/admin-screen.php:74
+#: inc/admin-screen.php:197
 msgid "Logging"
 msgstr ""
 
-#: inc/admin-screen.php:76
+#: inc/admin-screen.php:199
 msgid "Privacy"
 msgstr ""
 
-#: inc/admin-screen.php:115
+#: inc/admin-screen.php:238
 msgid "Settings sections"
 msgstr ""
 
 #. translators: %s: the name of a settings tab.
-#: inc/admin-screen.php:149
+#: inc/admin-screen.php:272
 #, php-format
 msgid "The %s settings are not built yet. Hours logging works without them."
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:224
+#: inc/admin-screen.php:347
 #, php-format
 msgid "Built by %s — technology leadership and support for nonprofits."
 msgstr ""
 
-#: inc/admin-screen.php:228
-#: inc/admin-screen.php:362
-#: inc/admin-screen.php:392
-#: inc/admin-screen.php:406
+#: inc/admin-screen.php:351
+#: inc/admin-screen.php:485
+#: inc/admin-screen.php:515
+#: inc/admin-screen.php:529
 msgid "Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:364
+#: inc/admin-screen.php:487
 msgid "Show"
 msgstr ""
 
-#: inc/admin-screen.php:372
+#: inc/admin-screen.php:495
 msgid "Hide for 30 days"
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:411
+#: inc/admin-screen.php:534
 #, php-format
 msgid "%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it."
 msgstr ""
 
-#: inc/admin-screen.php:419
+#: inc/admin-screen.php:542
 msgid "If you find this plugin useful, the most valuable thing you can do for us is mention us to a nonprofit who might benefit from our services. Referrals are how our business continues to grow its impact and reach."
 msgstr ""
 
-#: inc/admin-screen.php:425
+#: inc/admin-screen.php:548
 msgid "Learn about Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:434
+#: inc/admin-screen.php:557
 msgid "You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give."
 msgstr ""
 
-#: inc/admin-screen.php:439
+#: inc/admin-screen.php:562
 msgid "Support our work"
 msgstr ""
 

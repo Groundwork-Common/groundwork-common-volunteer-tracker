@@ -26,6 +26,129 @@ add_filter( 'admin_footer_text', 'gwcvt_admin_footer_text' );
 add_action( 'admin_init', 'gwcvt_handle_colophon_toggle' );
 add_action( 'admin_menu', 'gwcvt_register_menu' );
 
+/* Priority 99: after every screen has registered itself, including any a site
+ * has added of its own. Ordering cannot be done at registration time because
+ * the two screens WordPress adds for the post type — All hours and Log hours —
+ * are not added by this plugin at all. */
+add_action( 'admin_menu', 'gwcvt_order_menu', 99 );
+
+/* ── Why the menu is reordered rather than registered in order ───────────────
+ * Left alone, this menu came out as: All hours, Log hours, Volunteers,
+ * Settings, Letters, Log a day, Schedule.
+ *
+ * Settings fourth, in the middle of the working screens, because admin-screen
+ * .php registers at the default priority and the screens that came later
+ * registered at 11, 12 and 13. Nobody chose that order; it is the order the
+ * files happen to load in, and it grew one entry at a time over five releases.
+ *
+ * The order below is the coordinator's week instead. The hours cluster first,
+ * because the queue is what they open every day and it is what the top-level
+ * menu item points at. Then the schedule, which is the same job seen forwards.
+ * Then the people, then what gets produced for them, then — last, always —
+ * the settings.
+ *
+ * add_submenu_page() takes a position argument, which looks like the answer and
+ * is not: positions are per-registration integers with no coordination between
+ * plugins, WordPress ignores them entirely for post type submenus, and two
+ * items claiming the same slot resolve by float-key collision in a way nobody
+ * can predict. Rewriting the array once, at the end, is the only method that
+ * says what it means.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The order the Volunteer Hours submenu appears in.
+ *
+ * By slug, and anything not named here keeps its place at the end — a site that
+ * has added its own screen to this menu should not lose it because this list
+ * had not heard of it.
+ *
+ * @return string[]
+ */
+function gwcvt_menu_order(): array {
+	$order = array(
+		/* The verify queue. First because it is the daily screen, and because
+		 * it is what the top-level menu item itself opens — a first submenu
+		 * that is not the parent's own target reads as a mis-click waiting to
+		 * happen. */
+		'edit.php?post_type=' . GWCVT_ENTRY_TYPE,
+
+		// Writing up what happened: the common way, then the single-entry way.
+		GWCVT_QUICK_ADD_PAGE,
+		'post-new.php?post_type=' . GWCVT_ENTRY_TYPE,
+
+		// The same job seen forwards.
+		GWCVT_SCHEDULE_PAGE,
+
+		// Who the hours belong to.
+		'edit.php?post_type=' . GWCVT_VOLUNTEER_TYPE,
+
+		// What gets produced for them.
+		GWCVT_LETTERS_PAGE,
+	);
+
+	/**
+	 * The order of the Volunteer Hours submenu, by slug.
+	 *
+	 * Settings is deliberately absent from this list: anything not named here
+	 * is appended, and Settings is appended after that, so it lands at the
+	 * bottom however many screens a site adds.
+	 *
+	 * Naming it here anyway will place it wherever you put it. That is the
+	 * point of a filter — a site that has explicitly asked for Settings third
+	 * has said something, and overriding it would be this plugin arguing with
+	 * somebody about their own admin.
+	 *
+	 * @param string[] $order Submenu slugs, in the order they should appear.
+	 */
+	return (array) apply_filters( 'gwcvt_menu_order', $order );
+}
+
+/**
+ * Put the submenu in that order.
+ */
+function gwcvt_order_menu(): void {
+	$parent = GWCVT_MENU_SLUG;
+
+	if ( empty( $GLOBALS['submenu'][ $parent ] ) || ! is_array( $GLOBALS['submenu'][ $parent ] ) ) {
+		return;
+	}
+
+	$items = $GLOBALS['submenu'][ $parent ];
+	$by_slug = array();
+
+	foreach ( $items as $item ) {
+		$by_slug[ (string) ( $item[2] ?? '' ) ] = $item;
+	}
+
+	$ordered = array();
+
+	foreach ( gwcvt_menu_order() as $slug ) {
+		if ( isset( $by_slug[ $slug ] ) ) {
+			$ordered[] = $by_slug[ $slug ];
+			unset( $by_slug[ $slug ] );
+		}
+	}
+
+	/* Whatever is left, in the order it was registered — a screen this plugin
+	 * has never heard of keeps its place rather than vanishing. Settings is
+	 * pulled out of that remainder so it stays at the bottom however many
+	 * screens a site adds. */
+	$settings = $by_slug[ GWCVT_SETTINGS_PAGE ] ?? null;
+	unset( $by_slug[ GWCVT_SETTINGS_PAGE ] );
+
+	foreach ( $by_slug as $item ) {
+		$ordered[] = $item;
+	}
+
+	if ( null !== $settings ) {
+		$ordered[] = $settings;
+	}
+
+	/* Re-keyed from zero. WordPress reads the keys as positions when it renders,
+	 * and leaving the originals would put everything back where it started. */
+	$GLOBALS['submenu'][ $parent ] = array_values( $ordered );
+}
+
 /**
  * Hang the settings screen off the Volunteer Hours menu.
  *
