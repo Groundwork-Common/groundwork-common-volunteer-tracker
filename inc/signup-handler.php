@@ -582,7 +582,7 @@ function gwcvt_signup_message( string $result ): string {
 		 * knows about the address they typed. Nothing else may be added here
 		 * without that being true of it as well. */
 		'too-many'       => __( 'That is more times than we can take in one go. Please pick a few, send them, and come back for the rest.', 'groundwork-common-volunteer-tracker' ),
-		'clash'          => __( 'Two of the times you picked are at the same time as each other. Most people who do this meant to pick one of them — change it below, or tick the box to say you meant both.', 'groundwork-common-volunteer-tracker' ),
+		'clash'          => __( 'Two of the times you picked overlap. Change one, or tick the box below to say you meant both.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	return $messages[ $result ] ?? '';

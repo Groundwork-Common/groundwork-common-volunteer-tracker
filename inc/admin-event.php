@@ -125,7 +125,7 @@ function gwcvt_render_event_editor( int $event_id ): void {
 								<strong><?php echo '' !== $when ? esc_html( $when ) : esc_html__( 'Nothing scheduled yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
 							</p>
 							<p class="description">
-								<?php esc_html_e( 'Taken from the times below. There is nothing to fill in here — a second date field is a second answer, and it disagrees with the first the moment somebody moves one time.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php esc_html_e( 'Taken from the times below.', 'groundwork-common-volunteer-tracker' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -157,7 +157,7 @@ function gwcvt_render_event_editor( int $event_id ): void {
 								<input type="checkbox" name="gwcvt_published" value="1" <?php checked( $published || $is_new ); ?> />
 								<?php esc_html_e( 'Published', 'groundwork-common-volunteer-tracker' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'A draft takes no signups, and its times cannot be reached by guessing their address.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'A draft takes no signups.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 				</tbody>
@@ -167,7 +167,7 @@ function gwcvt_render_event_editor( int $event_id ): void {
 
 			<h2><?php esc_html_e( 'Who you need', 'groundwork-common-volunteer-tracker' ); ?></h2>
 			<p class="description">
-				<?php esc_html_e( 'A role is named once and its times hang underneath it. The name is printed on volunteers\' verification letters — name it as work.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Role names are printed on volunteers\' verification letters.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 
 			<?php if ( $vocabulary ) : ?>
@@ -214,7 +214,7 @@ function gwcvt_render_event_editor( int $event_id ): void {
 									<?php esc_html_e( 'Email anybody affected if this save moves a time', 'groundwork-common-volunteer-tracker' ); ?>
 								</label>
 								<p class="description">
-									<?php esc_html_e( 'Only a move counts — the date, the times, or the address. Renaming a role, correcting a supervisor or widening a maximum tells nobody. Calling a time off is its own action and asks separately.', 'groundwork-common-volunteer-tracker' ); ?>
+									<?php esc_html_e( 'Only a move counts: the date, the times, or the address. Renaming a role or changing a number tells nobody.', 'groundwork-common-volunteer-tracker' ); ?>
 								</p>
 							</td>
 						</tr>
@@ -314,7 +314,7 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 						);
 
 						echo ' ';
-						esc_html_e( 'You will be shown exactly what goes before anything happens.', 'groundwork-common-volunteer-tracker' );
+						esc_html_e( 'You will be shown what goes before anything happens.', 'groundwork-common-volunteer-tracker' );
 						?>
 					</p>
 				</div>
@@ -329,7 +329,7 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 				?>
 				<div style="flex:0 1 330px;text-align:right">
 					<p class="description" style="margin:0">
-						<?php esc_html_e( 'Every time in this role has been called off. They stay on the schedule so everybody can see that, so there is nothing left to remove — put one back on below if you need it again.', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Every time in this role has been called off. Put one back on below if you need it again.', 'groundwork-common-volunteer-tracker' ); ?>
 					</p>
 				</div>
 			<?php endif; ?>
@@ -347,9 +347,9 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 
 		<div style="margin-top:10px">
 			<label for="<?php echo esc_attr( $id ); ?>-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label><br />
-			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000"><?php echo esc_textarea( $notes ); ?></textarea>
+			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Closed shoes, park round the back, ask for Dana at the desk.', 'groundwork-common-volunteer-tracker' ); ?>"><?php echo esc_textarea( $notes ); ?></textarea>
 			<p class="description">
-				<?php esc_html_e( 'Closed shoes, park round the back, ask for Dana at the desk. Shown to whoever signs up, and repeated in their confirmation, their reminder and their calendar entry. Applies to every time below.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Shown to whoever signs up, and in their confirmation, reminder and calendar entry. Applies to every time in this role.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</div>
 
@@ -605,7 +605,7 @@ function gwcvt_render_event_danger_zone( int $event_id ): void {
 		<input type="date" id="gwcvt-copy-date" name="gwcvt_copy_date" required />
 		<?php submit_button( __( 'Copy this event', 'groundwork-common-volunteer-tracker' ), 'secondary', 'submit', false ); ?>
 		<p class="description">
-			<?php esc_html_e( 'The same roles, times and numbers against a new date, saved as a draft with nobody on it. Events are copied rather than repeated — a repeat rule needs an exception list the first time somebody moves one time.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'The same roles, times and numbers against a new date, saved as a draft with nobody on it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</form>
 

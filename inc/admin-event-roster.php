@@ -72,7 +72,7 @@ function gwcvt_render_event_roster( int $event_id ): void {
 					<?php
 					printf(
 						/* translators: 1: a person's name, 2: one slot, 3: another slot. */
-						esc_html__( '%1$s is on two times that overlap — %2$s and %3$s. Nothing has been blocked; you may want to ring them.', 'groundwork-common-volunteer-tracker' ),
+						esc_html__( '%1$s is down for two times that overlap: %2$s and %3$s. Nothing has been blocked.', 'groundwork-common-volunteer-tracker' ),
 						'<strong>' . esc_html( $clash['who'] ) . '</strong>',
 						esc_html( gwcvt_slot_label( $clash['a'] ) ),
 						esc_html( gwcvt_slot_label( $clash['b'] ) )
@@ -131,7 +131,7 @@ function gwcvt_render_event_roster( int $event_id ): void {
 									<ul id="gwcvt-event-roster-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
 								</div>
 								<p class="description">
-									<?php esc_html_e( 'Somebody who is not on file yet needs a volunteer record first. Typing a name and an address here would make a claim for somebody else to match, which is the public form\'s job.', 'groundwork-common-volunteer-tracker' ); ?>
+									<?php esc_html_e( 'Somebody who is not on file yet needs a volunteer record first.', 'groundwork-common-volunteer-tracker' ); ?>
 								</p>
 							</td>
 						</tr>
@@ -160,7 +160,7 @@ function gwcvt_render_event_roster( int $event_id ): void {
 									<?php endforeach; ?>
 								</select>
 								<p class="description">
-									<?php esc_html_e( 'Over the maximum goes on the waiting list, the same as a signup from the website. Capacity has one authority and it is not whoever is on the phone — raise the maximum if you mean it.', 'groundwork-common-volunteer-tracker' ); ?>
+									<?php esc_html_e( 'Over the maximum goes on the waiting list. Raise the maximum first if you mean to add them to the roster.', 'groundwork-common-volunteer-tracker' ); ?>
 								</p>
 							</td>
 						</tr>

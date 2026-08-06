@@ -229,7 +229,7 @@ $gwcvt_ask_role = gwcvt_sc_render( 'the drop-role confirmation', function () use
 
 gwcvt_sc_check( 'calling off asks for a reason', false !== strpos( $gwcvt_ask_slot, 'gwcvt_reason' ) );
 gwcvt_sc_check( 'and offers a way out', false !== strpos( $gwcvt_ask_slot, 'Leave it alone' ) );
-gwcvt_sc_check( 'and says the time is kept, not deleted', false !== strpos( $gwcvt_ask_slot, 'not deleted' ) );
+gwcvt_sc_check( 'and says the time is kept rather than deleted', false !== strpos( $gwcvt_ask_slot, 'rather than being deleted' ) );
 gwcvt_sc_check( 'dropping a role lists what is kept and what goes', false !== strpos( $gwcvt_ask_role, 'Called off, and kept' ) );
 
 /* ── What the screens have to contain, and what they must not ────────────── */
