@@ -50,13 +50,17 @@ final class MenuTest extends TestCase {
 		);
 	}
 
-	public function test_it_puts_the_screens_in_the_order_somebody_works_in(): void {
+	/**
+	 * What is coming, then who is coming, then what they did, then writing it
+	 * up, then what gets produced for them. It reads forwards.
+	 */
+	public function test_it_puts_the_screens_in_the_order_things_happen(): void {
 		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
 
 		gwcvt_order_menu();
 
 		$this->assertSame(
-			array( 'All hours', 'Log a day', 'Log hours', 'Schedule', 'Volunteers', 'Letters', 'Settings' ),
+			array( 'Schedule', 'Volunteers', 'All hours', 'Log a day', 'Log hours', 'Letters', 'Settings' ),
 			$this->labels()
 		);
 	}
@@ -77,15 +81,28 @@ final class MenuTest extends TestCase {
 	}
 
 	/**
-	 * The parent's own target stays first. A menu whose first submenu is not
-	 * what the top-level item opens is a mis-click waiting to happen.
+	 * The parent's own screen is still in the menu, just not first.
+	 *
+	 * Worth asserting because it is the one thing this ordering gives up: the
+	 * top-level "Volunteer Hours" link opens All hours, which is now third. The
+	 * link still has a destination, and a menu ordered by when things happen is
+	 * easier to hold in your head than one ordered by which screen we guessed
+	 * got opened most — but losing the screen entirely would be a different
+	 * matter, so it is checked.
 	 */
-	public function test_the_parents_own_screen_stays_first(): void {
+	public function test_the_parents_own_screen_is_still_present(): void {
 		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
 
 		gwcvt_order_menu();
 
-		$this->assertSame( GWCVT_MENU_SLUG, $GLOBALS['submenu'][ GWCVT_MENU_SLUG ][0][2] );
+		$slugs = array_map(
+			static function ( array $item ): string {
+				return (string) $item[2];
+			},
+			$GLOBALS['submenu'][ GWCVT_MENU_SLUG ]
+		);
+
+		$this->assertContains( GWCVT_MENU_SLUG, $slugs );
 	}
 
 	/* ── Somebody else's screen ──────────────────────────────────────────────
@@ -190,6 +207,7 @@ final class MenuTest extends TestCase {
 		gwcvt_order_menu();
 
 		$this->assertSame( array( 'All hours', 'Log a day' ), $this->labels() );
+		$this->assertCount( 2, $this->labels(), 'a screen that was never added must not appear' );
 	}
 
 	/**
