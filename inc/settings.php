@@ -359,10 +359,14 @@ function gwcvt_hour_increment(): int {
 /**
  * Parse a typed duration into minutes.
  *
- * @param string $raw What the user typed.
+ * @param string $raw   What the user typed.
+ * @param bool   $round Whether to apply the site's increment. Pass false to ask
+ *                      what was actually typed — the entry editor does, so it
+ *                      can say when rounding changed the figure rather than
+ *                      changing it in silence on the number a court reads.
  * @return int|null Minutes, or null if it could not be read as a duration.
  */
-function gwcvt_parse_hours( string $raw ): ?int {
+function gwcvt_parse_hours( string $raw, bool $round = true ): ?int {
 	$value = strtolower( trim( $raw ) );
 	$value = str_replace( ',', '', $value );
 
@@ -395,7 +399,7 @@ function gwcvt_parse_hours( string $raw ): ?int {
 		return null;
 	}
 
-	return gwcvt_round_minutes( $minutes );
+	return $round ? gwcvt_round_minutes( $minutes ) : $minutes;
 }
 
 /**

@@ -216,6 +216,75 @@ gwcvt_check(
 	gwcvt_unverified_count() . ' vs baseline ' . $gwcvt_baseline
 );
 
+/* ── Withdrawing in bulk stops to ask ────────────────────────────────────────
+ * Verifying in bulk is additive and undoable, so it acts at once. Withdrawing
+ * removes an attestation naming a person and a date, and verifying again does
+ * not restore it — it records a new one. It used to be two clicks with no
+ * confirmation, no undo, and a green notice afterwards.
+ *
+ * The assertion that matters is the second one: that asking has not quietly
+ * become doing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+wp_set_current_user( $gwcvt_editor );
+
+$gwcvt_bulk = array();
+
+foreach ( range( 1, 2 ) as $gwcvt_n ) {
+	$gwcvt_id = gwcvt_make_entry( $gwcvt_volunteer, '2026-03-0' . $gwcvt_n, 120 );
+	gwcvt_verify_entry( $gwcvt_id, $gwcvt_editor );
+	$gwcvt_bulk[] = $gwcvt_id;
+}
+
+/* One that was never verified, which has nothing to withdraw. */
+$gwcvt_never = gwcvt_make_entry( $gwcvt_volunteer, '2026-03-09', 60 );
+
+$gwcvt_redirect = gwcvt_handle_bulk_actions(
+	admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ),
+	'gwcvt_unverify',
+	array_merge( $gwcvt_bulk, array( $gwcvt_never ) )
+);
+
+gwcvt_check(
+	'bulk withdrawal asks first',
+	false !== strpos( $gwcvt_redirect, 'gwcvt_confirm=unverify' )
+);
+
+gwcvt_check(
+	'AND HAS WITHDRAWN NOTHING YET',
+	gwcvt_entry_is_verified( $gwcvt_bulk[0] ) && gwcvt_entry_is_verified( $gwcvt_bulk[1] )
+);
+
+parse_str( (string) wp_parse_url( $gwcvt_redirect, PHP_URL_QUERY ), $gwcvt_args );
+
+gwcvt_check(
+	'an entry with nothing to withdraw is left out',
+	false === strpos( (string) ( $gwcvt_args['gwcvt_ids'] ?? '' ), (string) $gwcvt_never ),
+	(string) ( $gwcvt_args['gwcvt_ids'] ?? '' )
+);
+
+gwcvt_check(
+	'and is counted as skipped',
+	1 === (int) ( $gwcvt_args['gwcvt_skipped'] ?? 0 ),
+	(string) ( $gwcvt_args['gwcvt_skipped'] ?? 0 )
+);
+
+/* Verifying, by contrast, still acts immediately. */
+foreach ( $gwcvt_bulk as $gwcvt_id ) {
+	gwcvt_unverify_entry( $gwcvt_id );
+}
+
+$gwcvt_redirect = gwcvt_handle_bulk_actions(
+	admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ),
+	'gwcvt_verify',
+	$gwcvt_bulk
+);
+
+gwcvt_check(
+	'bulk verification still acts at once',
+	false !== strpos( $gwcvt_redirect, 'gwcvt_result=verified' ) && gwcvt_entry_is_verified( $gwcvt_bulk[0] )
+);
+
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
 foreach ( $GLOBALS['gwcvt_made'] as $gwcvt_id ) {

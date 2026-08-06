@@ -1,0 +1,165 @@
+<style>
+	* { margin: 0; padding: 0; box-sizing: border-box; }
+	body { background: #fff; }
+
+	/* The plugin's own palette, taken from assets/css/letter.css and the
+	   Groundwork Common wordmark — ink, paper, a grey rule, and the company's
+	   gold used once. Nothing here is decoration for its own sake, because the
+	   thing being advertised is a document that refuses decoration. */
+	:root {
+		--ink: #1a1a1a;
+		--paper: #fff;
+		--rule: #999;
+		--muted: #555;
+		--gold: #ffc857;
+	}
+
+	.frame { position: relative; overflow: hidden; }
+
+	/* ── Icon ───────────────────────────────────────────────────────────────
+	   A page with a ruled line at the foot of it. At 128px the itemised table
+	   is unreadable, so what is drawn is the shape somebody recognises: a
+	   sheet of paper, a few lines of type, and the rule a person signs on —
+	   the one element this plugin will not replace with a picture. */
+	.icon {
+		width: 256px; height: 256px;
+		background: var(--ink);
+		display: flex; align-items: center; justify-content: center;
+	}
+	.icon .page {
+		width: 150px; height: 186px;
+		background: var(--paper);
+		border-radius: 3px;
+		padding: 24px 20px;
+		display: flex; flex-direction: column;
+		box-shadow: 0 6px 18px rgba(0,0,0,.35);
+	}
+	.icon .line { height: 8px; background: #d8d8d8; border-radius: 2px; margin-bottom: 11px; }
+	.icon .line.short { width: 58%; }
+	.icon .line.head { background: var(--ink); height: 11px; width: 74%; margin-bottom: 18px; }
+	.icon .sign { margin-top: auto; }
+	.icon .sign .rule { height: 4px; background: var(--gold); border-radius: 2px; width: 100%; }
+
+	/* ── Banner ─────────────────────────────────────────────────────────────
+	   Typographic, in the letter's own Georgia. A banner with a photograph of
+	   volunteers would be advertising somebody else's day; this advertises the
+	   document, which is what the plugin makes. */
+	.banner {
+		background: var(--paper);
+		display: flex; align-items: center;
+		border-bottom: 0;
+	}
+	.banner .bar { background: var(--gold); height: 100%; flex: 0 0 auto; }
+	.banner .body { padding: 0 0 0 var(--pad); }
+	.banner h1 {
+		font-family: Georgia, "Times New Roman", serif;
+		color: var(--ink);
+		font-weight: 700;
+		letter-spacing: -.01em;
+		line-height: 1.08;
+	}
+	.banner .rule { background: var(--rule); }
+	.banner p {
+		font-family: Georgia, "Times New Roman", serif;
+		color: var(--muted);
+		line-height: 1.45;
+	}
+	.banner .org {
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+		color: var(--rule);
+		text-transform: uppercase;
+	}
+
+	/* The same page as the icon, large and quiet, running off the right edge.
+	   The banner was otherwise a third empty, which reads as unfinished rather
+	   than as restraint. Pale enough to be texture: it must not compete with the
+	   sentence, which is the thing somebody is actually reading. */
+	.banner .sheet {
+		position: absolute;
+		background: var(--paper);
+		border: 1px solid #e8e8e8;
+		border-radius: 4px;
+		display: flex; flex-direction: column;
+		box-shadow: 0 2px 22px rgba(0,0,0,.05);
+	}
+	.banner .sheet i { display: block; background: #ededed; border-radius: 2px; }
+	.banner .sheet i.head { background: #d5d5d5; }
+	.banner .sheet .foot { margin-top: auto; background: var(--gold); opacity: .5; border-radius: 2px; }
+
+	/* Sized so the whole sheet, including the gold rule at its foot, sits inside
+	   the frame. The rule cropped by the bottom edge was the one element on the
+	   page worth showing — a signature line half off the canvas is the opposite
+	   of the point. Only the right edge runs out, and that is deliberate. */
+	#banner-large .sheet {
+		width: 320px; height: 370px;
+		right: -54px; top: 64px;
+		transform: rotate(4deg);
+		padding: 36px 32px;
+	}
+	#banner-large .sheet i { height: 12px; margin-bottom: 16px; }
+	#banner-large .sheet i.head { height: 16px; width: 66%; margin-bottom: 26px; }
+	#banner-large .sheet i.short { width: 52%; }
+	#banner-large .sheet .foot { height: 6px; }
+
+	#banner-small .sheet {
+		width: 162px; height: 186px;
+		right: -28px; top: 31px;
+		transform: rotate(4deg);
+		padding: 18px 16px;
+	}
+	#banner-small .sheet i { height: 6px; margin-bottom: 8px; }
+	#banner-small .sheet i.head { height: 8px; width: 66%; margin-bottom: 13px; }
+	#banner-small .sheet i.short { width: 52%; }
+	#banner-small .sheet .foot { height: 3px; }
+
+	/* 1544 × 500 */
+	#banner-large { width: 1544px; height: 500px; --pad: 84px; }
+	#banner-large .bar { width: 18px; }
+	#banner-large .body { max-width: 1080px; }
+	#banner-large h1 { font-size: 66px; }
+	#banner-large .rule { height: 1px; width: 128px; margin: 26px 0; }
+	#banner-large p { font-size: 25px; max-width: 900px; }
+	#banner-large .org { font-size: 14px; letter-spacing: .16em; margin-top: 34px; }
+
+	/* 772 × 250 */
+	#banner-small { width: 772px; height: 250px; --pad: 42px; }
+	#banner-small .bar { width: 9px; }
+	#banner-small .body { max-width: 560px; }
+	#banner-small h1 { font-size: 34px; }
+	#banner-small .rule { height: 1px; width: 68px; margin: 13px 0; }
+	#banner-small p { font-size: 14px; max-width: 500px; }
+	#banner-small .org { font-size: 9px; letter-spacing: .16em; margin-top: 16px; }
+</style>
+
+<div class="frame icon" id="icon">
+	<div class="page">
+		<div class="line head"></div>
+		<div class="line"></div>
+		<div class="line"></div>
+		<div class="line short"></div>
+		<div class="sign"><div class="rule"></div></div>
+	</div>
+</div>
+
+<div class="frame banner" id="banner-large">
+	<div class="bar"></div>
+	<div class="body">
+		<h1>Volunteer Tracker</h1>
+		<div class="rule"></div>
+		<p>Log volunteer hours, have staff attest to them, and produce a verification
+		letter a court or a school will accept &mdash; from the person who earned it.</p>
+		<div class="org">Groundwork Common</div>
+	</div>
+		<div class="sheet"><i class="head"></i><i></i><i></i><i class="short"></i><div class="foot"></div></div>
+</div>
+
+<div class="frame banner" id="banner-small">
+	<div class="bar"></div>
+	<div class="body">
+		<h1>Volunteer Tracker</h1>
+		<div class="rule"></div>
+		<p>Hours, attested by your staff, and the letter a court will accept.</p>
+		<div class="org">Groundwork Common</div>
+	</div>
+		<div class="sheet"><i class="head"></i><i></i><i></i><i class="short"></i><div class="foot"></div></div>
+</div>

@@ -19,7 +19,7 @@ function gwcvt_register_letters_menu(): void {
 		GWCVT_MENU_SLUG,
 		__( 'Verification Letters', 'groundwork-common-volunteer-tracker' ),
 		__( 'Letters', 'groundwork-common-volunteer-tracker' ),
-		gwcvt_cap( 'issue' ),
+		GWCVT_CAP_OPEN_LETTERS,
 		GWCVT_LETTERS_PAGE,
 		'gwcvt_render_letters_screen'
 	);
@@ -42,7 +42,17 @@ function gwcvt_letters_url( array $args = array() ): string {
  * The screen.
  */
 function gwcvt_render_letters_screen(): void {
-	gwcvt_require_cap( 'issue' );
+	if ( ! current_user_can( GWCVT_CAP_OPEN_LETTERS ) ) {
+		wp_die(
+			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
+	}
+
+	/* Producing one is the higher-trust half and stays where it was. Somebody who
+	 * can only verify gets the reference checker and the log. */
+	$can_issue = current_user_can( gwcvt_cap( 'issue' ) );
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from these.
 	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
@@ -62,6 +72,12 @@ function gwcvt_render_letters_screen(): void {
 
 		<div class="gwcvt-letters-layout">
 			<div class="gwcvt-letters-main">
+			<?php if ( ! $can_issue ) : ?>
+				<h2 class="title"><?php esc_html_e( 'Checking a letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
+				<p class="description" style="max-width:40em">
+					<?php esc_html_e( 'You can check whether a reference somebody has phoned in about still matches this organization\'s records. Producing a letter is a separate permission — ask an administrator if you need it.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
+			<?php else : ?>
 				<h2 class="title"><?php esc_html_e( 'Produce a letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 				<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="gwcvt-letter-form">
@@ -109,6 +125,7 @@ function gwcvt_render_letters_screen(): void {
 				</form>
 
 				<?php gwcvt_render_letter_preview( $letter, $volunteer_id, $from, $to ); ?>
+			<?php endif; ?>
 			</div>
 
 			<div class="gwcvt-letters-aside">
@@ -177,6 +194,8 @@ function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, 
 			<p><?php esc_html_e( 'None of these hours has been verified yet. Verify them before issuing a letter — otherwise it reports zero verified hours.', 'groundwork-common-volunteer-tracker' ); ?></p>
 		</div>
 	<?php endif; ?>
+
+	<?php gwcvt_render_letterhead_warning(); ?>
 
 	<p class="gwcvt-letter-actions">
 		<a
@@ -287,6 +306,78 @@ function gwcvt_letter_request(): array {
 		'from'         => $from,
 		'to'           => $to,
 	);
+}
+
+/* ── Whose letterhead is this? ───────────────────────────────────────────────
+ * Three settings fall back to something reasonable when empty, and the letter
+ * prints perfectly well without any of them: the organisation's name becomes the
+ * WordPress site title, the contact becomes the site's admin email, and the
+ * signature line prints the literal word "Signature".
+ *
+ * Each fallback is right on its own. Together they mean a coordinator who never
+ * opened the Letter tab can hand a court a document headed with a website's
+ * title, giving a webmaster's address as the number to ring, over a line reading
+ * "Signature" where a person's name belongs — with nothing anywhere saying so.
+ *
+ * A warning and not a block. The plugin does not get to decide that somebody's
+ * letterhead is wrong; it does have to say what it is about to print.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The letterhead values still coming from somewhere other than the settings.
+ *
+ * @return string[] Sentences, each naming one fallback.
+ */
+function gwcvt_letterhead_gaps(): array {
+	$gaps = array();
+
+	if ( '' === trim( (string) gwcvt_setting( 'org_name' ) ) ) {
+		$gaps[] = sprintf(
+			/* translators: %s: the site's title. */
+			__( 'The letter will be headed “%s”, which is this website\'s title rather than an organization name anybody chose.', 'groundwork-common-volunteer-tracker' ),
+			gwcvt_org_name()
+		);
+	}
+
+	if ( '' === trim( (string) gwcvt_setting( 'org_contact' ) ) ) {
+		$gaps[] = sprintf(
+			/* translators: %s: an email address. */
+			__( 'Questions about it will be directed to %s, this site\'s administrator address. That is the contact somebody uses to check a reference code, so it should be one that is answered.', 'groundwork-common-volunteer-tracker' ),
+			gwcvt_org_contact()
+		);
+	}
+
+	if ( '' === trim( (string) gwcvt_setting( 'signatory_name' ) ) ) {
+		$gaps[] = __( 'Nobody is named under the signature line, so it prints the word “Signature”. That is deliberate — it looks unfinished because it is — but it will look that way to whoever receives it.', 'groundwork-common-volunteer-tracker' );
+	}
+
+	return $gaps;
+}
+
+/**
+ * Say what this letter would carry that nobody chose.
+ */
+function gwcvt_render_letterhead_warning(): void {
+	$gaps = gwcvt_letterhead_gaps();
+
+	if ( ! $gaps ) {
+		return;
+	}
+	?>
+	<div class="notice notice-warning inline">
+		<p><strong><?php esc_html_e( 'This letter has not been given your letterhead yet.', 'groundwork-common-volunteer-tracker' ); ?></strong></p>
+
+		<?php foreach ( $gaps as $gap ) : ?>
+			<p><?php echo esc_html( $gap ); ?></p>
+		<?php endforeach; ?>
+
+		<p>
+			<a href="<?php echo esc_url( gwcvt_settings_url( 'letter' ) ); ?>">
+				<?php esc_html_e( 'Set it up on the Letter tab', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+		</p>
+	</div>
+	<?php
 }
 
 /* ── Printing ────────────────────────────────────────────────────────────────

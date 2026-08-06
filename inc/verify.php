@@ -177,6 +177,55 @@ function gwcvt_local_date( string $gmt_datetime ): string {
 	return $timestamp > 0 ? (string) wp_date( (string) get_option( 'date_format' ), $timestamp ) : '';
 }
 
+/* ── A calendar date, as the site writes dates ───────────────────────────────
+ * Beside gwcvt_local_date() rather than folded into it, because the two answer
+ * different questions. That one converts an instant — a GMT timestamp recorded
+ * when somebody attested — into a date in the site's timezone. This one formats
+ * a date that never was an instant: a shift happened on a day, and no timezone
+ * conversion applies to it. Passing a plain Y-m-d through the other would shift
+ * it across a day boundary on any site west of UTC.
+ *
+ * It exists because the letter printed both. Its letterhead date went through
+ * wp_date(); every row of the itemised table, and the "Period covered" line,
+ * printed the raw stored value. So one document read "August 6, 2026" at the top
+ * and "2026-03-04" in every row below it — on the page whose whole job is being
+ * read by somebody who checks documents for a living.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A stored calendar date, as the site formats dates.
+ *
+ * @param string $date Y-m-d.
+ * @return string The formatted date, or the input unchanged if it is not one.
+ */
+function gwcvt_display_date( string $date ): string {
+	$date = trim( $date );
+
+	if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $date, $m ) ) {
+		/* Returned as-is rather than blanked. A letter is built from records that
+		 * may predate any validation this plugin has ever had, and a row that
+		 * printed nothing where a date belongs is worse than one printing an
+		 * unformatted date somebody can still read. */
+		return $date;
+	}
+
+	$format = trim( (string) get_option( 'date_format' ) );
+
+	/* An empty format would make gmdate() return an empty string, and a letter
+	 * with a blank where a date belongs is worse than one showing 2026-03-04.
+	 * The option is always set on a real site — which is the reason to handle it
+	 * here rather than assume it. */
+	if ( '' === $format ) {
+		return $date;
+	}
+
+	$timestamp = gmmktime( 12, 0, 0, (int) $m[2], (int) $m[3], (int) $m[1] );
+
+	/* Midday UTC and gmdate() rather than wp_date(): the point is to format the
+	 * date that was stored, not to move it into a timezone it never had. */
+	return (string) gmdate( $format, (int) $timestamp );
+}
+
 /**
  * The line of text the letter prints under a shift.
  *

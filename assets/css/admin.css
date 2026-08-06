@@ -841,6 +841,10 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-docket__row--critical .gwcvt-docket__stripe { background: #d63638; }
 .gwcvt-docket__row--waiting .gwcvt-docket__stripe { background: #dba617; }
 
+/* Only the first-run steps use this. A real queue is never "done" — it is
+   absent, which is what the empty worklist already says. */
+.gwcvt-docket__row--done .gwcvt-docket__stripe { background: #00a32a; }
+
 .gwcvt-docket__count {
 	padding: 16px 0;
 	font-size: 28px;
@@ -852,6 +856,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 .gwcvt-docket__row--critical .gwcvt-docket__count { color: #8a2424; }
 .gwcvt-docket__row--waiting .gwcvt-docket__count { color: #614200; }
+.gwcvt-docket__row--done .gwcvt-docket__count { color: #00733c; }
 
 .gwcvt-docket__body {
 	padding: 14px 0;
@@ -1177,6 +1182,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 	.gwcvt-docket__row--critical .gwcvt-docket__count { color: #f86368; }
 	.gwcvt-docket__row--waiting .gwcvt-docket__count { color: #dba617; }
+	.gwcvt-docket__row--done .gwcvt-docket__count { color: #68de87; }
 	.gwcvt-shiftline--short .gwcvt-shiftline__count { color: #f86368; }
 	.gwcvt-meter { background: #2c3338; }
 }

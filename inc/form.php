@@ -23,6 +23,25 @@ function gwcvt_render_self_log_form(): string {
 		return '';
 	}
 
+	/* ── Not on the pinned page ──────────────────────────────────────────────
+	 * gwcvt_dispatch() refuses to handle a submission that did not come from the
+	 * pinned page, and this used to render a complete, working-looking form
+	 * anywhere the shortcode was put. So a volunteer filled it in, pressed Send
+	 * my hours, and got the page back with their answers still in the fields and
+	 * NO message of any kind — not a success, not an error. The reasonable thing
+	 * to do next is submit it again.
+	 *
+	 * Rendering nothing would be worse: an editor who placed the shortcode sees
+	 * a blank space and no reason for it. So the form is replaced by a plain
+	 * statement, with no fields to fill in and nothing to submit.
+	 * ─────────────────────────────────────────────────────────────────────── */
+	if ( ! gwcvt_is_self_log_page() ) {
+		return sprintf(
+			'<div class="gwcvt-form"><div class="gwcvt-form__message gwcvt-form__message--problem"><p>%s</p></div></div>',
+			esc_html__( 'This form is set up on another page, so it cannot take hours here. Please use the hours form on the page your organization gave you.', 'groundwork-common-volunteer-tracker' )
+		);
+	}
+
 	$result  = (string) ( $GLOBALS['gwcvt_self_log_result'] ?? '' );
 	$message = '' !== $result ? gwcvt_self_log_message( $result ) : '';
 	$code    = (string) gwcvt_setting( 'self_log_code' );
@@ -70,6 +89,18 @@ function gwcvt_render_self_log_form(): string {
 				<input type="text" id="gwcvt-website" name="gwcvt_website" tabindex="-1" autocomplete="off" value="" />
 			</div>
 
+			<?php
+			/* A fieldset and a legend, as the signup form has. Without them the
+			 * form has no accessible name at all: somebody moving through the
+			 * page by landmark or heading arrives at seven unrelated inputs with
+			 * nothing saying what they are collectively for.
+			 *
+			 * The legend sits inside the fieldset and outside the honeypot, so
+			 * the decoy stays out of the group as well as out of the tab order. */
+			?>
+			<fieldset class="gwcvt-form__group">
+				<legend><?php esc_html_e( 'Send in the hours you worked', 'groundwork-common-volunteer-tracker' ); ?></legend>
+
 			<p class="gwcvt-form__field">
 				<label for="gwcvt-self-name"><?php esc_html_e( 'Your name', 'groundwork-common-volunteer-tracker' ); ?></label>
 				<input type="text" id="gwcvt-self-name" name="gwcvt_name" maxlength="100" required value="<?php echo esc_attr( $keep['name'] ?? '' ); ?>" />
@@ -77,8 +108,14 @@ function gwcvt_render_self_log_form(): string {
 
 			<p class="gwcvt-form__field">
 				<label for="gwcvt-self-email"><?php esc_html_e( 'Your email', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="email" id="gwcvt-self-email" name="gwcvt_email" maxlength="200" value="<?php echo esc_attr( $keep['email'] ?? '' ); ?>" />
-				<span class="gwcvt-form__help"><?php esc_html_e( 'Helps staff match these hours to your record. Optional.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<?php
+				/* aria-describedby on both helped fields. Without it the hint is
+				 * a sentence a screen reader never reaches — and the one below,
+				 * about how to write a duration, is exactly what prevents the
+				 * most common rejection. */
+				?>
+				<input type="email" id="gwcvt-self-email" name="gwcvt_email" maxlength="200" aria-describedby="gwcvt-self-email-help" value="<?php echo esc_attr( $keep['email'] ?? '' ); ?>" />
+				<span class="gwcvt-form__help" id="gwcvt-self-email-help"><?php esc_html_e( 'Helps staff match these hours to your record. Optional.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 
 			<p class="gwcvt-form__field">
@@ -95,8 +132,8 @@ function gwcvt_render_self_log_form(): string {
 
 			<p class="gwcvt-form__field">
 				<label for="gwcvt-self-hours"><?php esc_html_e( 'How long you worked', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-self-hours" name="gwcvt_hours" inputmode="decimal" required value="<?php echo esc_attr( $keep['hours'] ?? '' ); ?>" />
-				<span class="gwcvt-form__help"><?php esc_html_e( 'For example 3.5, 3:30, or 3h 30m.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<input type="text" id="gwcvt-self-hours" name="gwcvt_hours" inputmode="decimal" required aria-describedby="gwcvt-self-hours-help" value="<?php echo esc_attr( $keep['hours'] ?? '' ); ?>" />
+				<span class="gwcvt-form__help" id="gwcvt-self-hours-help"><?php esc_html_e( 'For example 3.5, 3:30, or 3h 30m. A plain number means hours, so for two hundred and ten minutes write 210m.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 
 			<p class="gwcvt-form__field">
@@ -123,6 +160,8 @@ function gwcvt_render_self_log_form(): string {
 					<input type="text" id="gwcvt-self-code" name="gwcvt_code" autocomplete="off" required value="" />
 				</p>
 			<?php endif; ?>
+
+			</fieldset>
 
 			<p class="gwcvt-form__actions">
 				<button type="submit" name="gwcvt_log_hours" value="1"><?php esc_html_e( 'Send my hours', 'groundwork-common-volunteer-tracker' ); ?></button>

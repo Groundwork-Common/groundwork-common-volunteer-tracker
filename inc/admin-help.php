@@ -119,6 +119,20 @@ function gwcvt_add_settings_help(): void {
 			__( 'Anonymizing is usually the right action rather than deleting. Your grant reporting and your Form 990 need the hours; they do not need the name, and the hours identify nobody once it is gone.', 'groundwork-common-volunteer-tracker' ),
 			__( 'A volunteer’s record can be held back from the sweep individually, with a reason — for when a court requires you to keep something longer than your own policy. A hold also blocks an erasure request from WordPress’s privacy tools, and the reason you record is shown to whoever handles it.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Requests under Tools → Export Personal Data and Erase Personal Data include volunteer records, shifts, issued letters, and any shifts somebody signed up for — including a signup from a person who never became a volunteer, which nothing else in the plugin would find. They work whether or not you have set a retention period.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Deleting the plugin removes none of it. Every volunteer, shift, signup, hour entry and issued letter stays exactly where it is, and so do the two permissions this plugin adds to your roles. Deactivating does the same. That means deleting the plugin is not a way to remove somebody\'s data — use the retention policy or the Erase Personal Data tool first.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The one thing you can ask it to clean up on deletion is its own configuration, with the tick box under <strong>Removing this plugin</strong>. Even armed, it deletes no records of any kind.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-copies',
+		__( 'Staging and copies of this site', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'A copy of this site restored from a backup — a staging server, a developer\'s machine, a clone made to try an upgrade — has the real volunteers and the real email addresses in it. Left running, it will send reminders, confirmations and verification letters to those people, about court-ordered service, from a site nobody is watching.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Two constants stop it, and they go in <code>wp-config.php</code> on the copy rather than on the live site, because the copy is what you control when you make one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Set <code>GWCVT_MAIL_MODE</code> to <code>off</code> and this plugin sends nothing at all. Set it to <code>trap</code>, and also set <code>GWCVT_MAIL_ALLOW</code> to your own address, and every message is redirected there instead, with the site\'s name in the subject and a line saying who it was really addressed to.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Neither constant needs to exist on the live site. Unset means normal delivery, so a site that has never heard of them behaves exactly as you would expect. Trap mode with no address to trap to sends nothing rather than falling through to the real recipient.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
@@ -223,6 +237,35 @@ function gwcvt_add_schedule_help( $screen ): void {
 		)
 	);
 
+	/* Events share this screen, so they are tabs here rather than a registration
+	 * of their own — gwcvt_event_edit_url() and gwcvt_event_roster_url() are both
+	 * the schedule page with an argument. */
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-events',
+		__( 'Events', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'An event is one occasion with several roles, each offered at several times — a festival, a meal service, a collection drive. Underneath it there is nothing new: every time on an event is an ordinary shift, so waiting lists, reminders, rosters and hours all behave exactly as they do for a shift you scheduled on its own.', 'groundwork-common-volunteer-tracker' ),
+			__( 'You build the day as a grid. Name a role once and hang its times underneath it; the role’s supervisor, address and what-to-know are typed once and carried down to every time in it. Anything a single time names for itself wins over the role, and anything the role names wins over the event — most specific wins, and nothing is ever appended to anything else.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The date is not something you fill in. It is read from the times in the grid, because a second date field is a second answer and it disagrees with the first the moment somebody moves one time.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Calling off a time and dropping a role are buttons rather than something you do by clearing a field, and each asks first. Removing a time cancels it when people are on it and deletes it only when nobody is — the row tells you which before you save.', 'groundwork-common-volunteer-tracker' ),
+			__( '<strong>Copy</strong> puts the whole day on a new date, roles and times and all, saved as a draft so you can check the dates before anybody sees it.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-event-page',
+		__( 'Where volunteers see an event', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'An event has no web address of its own, and publishing one does not give it one. It is seen only on a page you put it on: add the <strong>Volunteer Event</strong> block to a page and pick the event, or paste the <code>[volunteer_event]</code> shortcode with the event’s id into one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The event editor tells you which page currently shows it, and says so plainly when no page does. That is the fastest way to check, because the answer is found by looking for the block rather than stored anywhere.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Three things have to be true before anybody can sign up: signing up from your site is switched on, a shifts page is pinned under Settings → Shifts, and the event is published. The pinned shifts page is needed even though the event sits on a page of its own — every public signup goes through it.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An event’s times never appear on the general shifts page. That page lists shifts you scheduled on their own; an event is shown whole, on its own page, or not at all.', 'groundwork-common-volunteer-tracker' ),
+			__( 'What a visitor sees is each role, each time, and how many places are left. Never who else is coming — the same rule as the shift list, and for the same reason.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
 	gwcvt_add_help_tab(
 		$screen,
 		'gwcvt-help-roster',
@@ -245,6 +288,7 @@ function gwcvt_add_schedule_help( $screen ): void {
 			__( 'Hours cannot be logged before a shift has ended. Recorded early they would be dated the day you typed them rather than the day they were worked, and that date is what a letter prints.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Nothing at all is recorded for somebody who did not come. There is no absence marked anywhere — the shift simply produces no hours for them.', 'groundwork-common-volunteer-tracker' ),
 			__( 'You can come back to a shift you have already logged to add somebody who was missed. Anybody who already has an entry is shown as logged and cannot be recorded twice.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An event works the same way, one time at a time. Open its roster and each time that has finished carries its own <strong>Log the hours</strong> link, with the people who signed up for that time already ticked. The event’s row on the schedule says how many times are still waiting.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 

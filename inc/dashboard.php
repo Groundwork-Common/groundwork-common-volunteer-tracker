@@ -26,6 +26,48 @@ const GWCVT_YEAR_TOTALS_KEY = 'gwcvt_year_totals';
  * names, and that screen is where somebody has gone deliberately.
  * ─────────────────────────────────────────────────────────────────────────── */
 
+/* ── Nothing waiting, or nothing yet? ────────────────────────────────────────
+ * The worklist leaves out every queue that is empty, which is right: a screen
+ * reporting "0 waiting" five times over is one people stop reading. But it means
+ * a site with no volunteers, no hours and no shifts produced the same screen as
+ * a site where everything is done — and said, to somebody who installed the
+ * plugin ninety seconds ago, that everything logged has been verified and no
+ * shift this week is short of people.
+ *
+ * Both sentences are true of an empty database and neither is any use. So the
+ * all-clear needs one thing the counts cannot tell it: whether there has ever
+ * been anything here.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Does this site have any volunteer records at all yet?
+ *
+ * Deliberately not counting auto-drafts. Opening "Add volunteer" and wandering
+ * off creates one, and a site that looked started because somebody opened a
+ * screen would lose the guidance at exactly the moment it was needed.
+ *
+ * @return bool
+ */
+function gwcvt_has_any_records(): bool {
+	$looking = array(
+		GWCVT_VOLUNTEER_TYPE => array( 'publish' ),
+		GWCVT_ENTRY_TYPE     => array( 'publish' ),
+		GWCVT_SHIFT_TYPE     => array( 'publish', 'draft' ),
+	);
+
+	foreach ( $looking as $type => $statuses ) {
+		$counts = (array) wp_count_posts( $type );
+
+		foreach ( $statuses as $status ) {
+			if ( (int) ( $counts[ $status ] ?? 0 ) > 0 ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 /**
  * Everything the dashboard needs to know, in one pass.
  *
@@ -185,8 +227,16 @@ function gwcvt_dashboard_item_url( string $key ): string {
 			return gwcvt_schedule_url();
 
 		case 'overdue':
+			/* Filtered to the people this line counted. The bare list was every
+			 * volunteer the site has ever had, in no order, under a link reading
+			 * "See who". The filter's slug is spelled out rather than referenced
+			 * through GWCVT_VOLUNTEER_FILTER because that constant lives in the
+			 * admin bundle and this file is loaded for cron and WP-CLI too. */
 			return add_query_arg(
-				array( 'post_type' => GWCVT_VOLUNTEER_TYPE ),
+				array(
+					'post_type'         => GWCVT_VOLUNTEER_TYPE,
+					'gwcvt_requirement' => 'overdue',
+				),
 				admin_url( 'edit.php' )
 			);
 

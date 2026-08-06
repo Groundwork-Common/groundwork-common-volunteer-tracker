@@ -157,8 +157,12 @@ function gwcvt_render_event_editor( int $event_id ): void {
 								<input type="checkbox" name="gwcvt_published" value="1" <?php checked( $published || $is_new ); ?> />
 								<?php esc_html_e( 'Published', 'groundwork-common-volunteer-tracker' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'A draft takes no signups.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'A draft takes no signups. Publishing does not give the event an address — it is seen on the page you put it on.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Where volunteers see this', 'groundwork-common-volunteer-tracker' ); ?></th>
+						<td><?php gwcvt_render_event_visibility( $event_id, $is_new, $published ); ?></td>
 					</tr>
 				</tbody>
 			</table>
@@ -232,6 +236,96 @@ function gwcvt_render_event_editor( int $event_id ): void {
 		?>
 	</div>
 	<?php
+}
+
+/* ── Where an event actually appears ─────────────────────────────────────────
+ * An event has no address of its own. gwcvt_event has public => false, so the
+ * only way anybody sees one is that a staff member put the Volunteer Event block
+ * or the [volunteer_event] shortcode on an ordinary page.
+ *
+ * Nothing used to say so, and the Published checkbox beside this row implied the
+ * opposite — so the reasonable reading of "Published" was "it is now live
+ * somewhere", and the coordinator went looking for a link that does not exist.
+ *
+ * Three separate things have to be true before a volunteer can reach it, and
+ * they fail independently, so each is reported on its own rather than collapsed
+ * into one "not visible" sentence somebody would have to go and diagnose.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Say where this event can be seen, or what is stopping it.
+ *
+ * @param int  $event_id  Event post ID, 0 for an unsaved one.
+ * @param bool $is_new    Whether this event has never been saved.
+ * @param bool $published Whether it is published.
+ */
+function gwcvt_render_event_visibility( int $event_id, bool $is_new, bool $published ): void {
+	if ( $is_new || $event_id < 1 ) {
+		?>
+		<p class="description">
+			<?php esc_html_e( 'Create the event first. Then put it on a page, and this will name it.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+		<?php
+		return;
+	}
+
+	$blockers = array();
+
+	if ( ! gwcvt_setting( 'shifts_enabled' ) ) {
+		$blockers[] = __( 'Planning shifts is switched off, so nothing public is running.', 'groundwork-common-volunteer-tracker' );
+	} elseif ( ! gwcvt_setting( 'signup_enabled' ) ) {
+		$blockers[] = __( 'Signing up from your site is switched off, so nobody can sign up.', 'groundwork-common-volunteer-tracker' );
+	} elseif ( (int) gwcvt_setting( 'schedule_page' ) < 1 ) {
+		/* Non-obvious and worth stating plainly: gwcvt_signups_open() gates every
+		 * public signup on the shifts page being pinned, including an event's,
+		 * even though the event lives on a different page entirely. */
+		$blockers[] = __( 'No shifts page is pinned. Every public signup goes through it, including this event\'s.', 'groundwork-common-volunteer-tracker' );
+	}
+
+	$page_id = gwcvt_event_page_id( $event_id );
+
+	if ( $page_id > 0 ) {
+		printf(
+			'<p style="margin:0 0 4px"><strong>%1$s</strong> <a href="%2$s" target="_blank" rel="noopener">%3$s</a></p>',
+			esc_html__( 'On this page:', 'groundwork-common-volunteer-tracker' ),
+			esc_url( (string) get_permalink( $page_id ) ),
+			esc_html( (string) get_the_title( $page_id ) )
+		);
+	} else {
+		?>
+		<p style="margin:0 0 4px">
+			<strong><?php esc_html_e( 'No page shows this event yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
+		</p>
+		<p class="description" style="margin:0 0 4px">
+			<?php esc_html_e( 'Add the Volunteer Event block to a page and pick this event, or paste this into one:', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+		<p style="margin:0 0 4px">
+			<code>[volunteer_event id="<?php echo esc_html( (string) $event_id ); ?>"]</code>
+		</p>
+		<?php
+	}
+
+	if ( ! $published ) {
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'It is a draft, so the page shows nothing until you publish it.', 'groundwork-common-volunteer-tracker' )
+		);
+	}
+
+	foreach ( $blockers as $blocker ) {
+		printf( '<p class="description">%s</p>', esc_html( $blocker ) );
+	}
+
+	/* Only when a SETTING is in the way. A draft is fixed by the checkbox above,
+	 * and pointing that person at the settings screen would send them to look for
+	 * a switch that is not there. */
+	if ( $blockers ) {
+		printf(
+			'<p class="description"><a href="%1$s">%2$s</a></p>',
+			esc_url( gwcvt_settings_url( 'shifts' ) ),
+			esc_html__( 'Open the Shifts settings', 'groundwork-common-volunteer-tracker' )
+		);
+	}
 }
 
 /**

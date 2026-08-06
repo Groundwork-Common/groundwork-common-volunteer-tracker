@@ -587,6 +587,7 @@ require GWCVT_DIR . 'inc/events.php';
 require GWCVT_DIR . 'inc/signups.php';
 require GWCVT_DIR . 'inc/signup-handler.php';
 require GWCVT_DIR . 'inc/signup-form.php';
+require GWCVT_DIR . 'inc/event-form.php';
 require GWCVT_DIR . 'inc/ics.php';
 require GWCVT_DIR . 'inc/schedule-emails.php';
 require GWCVT_DIR . 'inc/schedule-cron.php';
@@ -603,3 +604,8 @@ require GWCVT_DIR . 'inc/self-log.php';
 require GWCVT_DIR . 'inc/form.php';
 require GWCVT_DIR . 'inc/admin-settings.php';
 require GWCVT_DIR . 'inc/admin-screen.php';
+
+/* admin-volunteer.php's list-table filter is pure arithmetic over query vars —
+ * the same split as the dashboard's worklist — so it is unit-testable. The rest
+ * of that file renders meta boxes and is covered by tests/integration. */
+require GWCVT_DIR . 'inc/admin-volunteer.php';

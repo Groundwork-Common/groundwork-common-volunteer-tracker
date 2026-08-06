@@ -62,7 +62,7 @@ function gwcvt_render_event_roster( int $event_id ): void {
 				<a class="button" href="<?php echo esc_url( gwcvt_event_print_url( $event_id ) ); ?>" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
-				<span class="description"><?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up and type it into Log a day.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<span class="description"><?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use "Log the hours" beside each time — everybody who signed up is already listed and ticked.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php endif; ?>
 		</p>
 
@@ -186,6 +186,14 @@ function gwcvt_render_event_slot_roster( int $shift_id ): void {
 	$cancelled = gwcvt_shift_is_cancelled( $shift_id );
 	$min       = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true );
 	$short     = max( 0, $min - count( $roster ) );
+
+	/* A time that has finished can be turned into hours, exactly as a standalone
+	 * shift can. It could not be reached from anywhere before: an event slot was
+	 * counted by the unlogged-hours nag, and the only screens offering the
+	 * pre-filled reconciliation listed standalone shifts. The instruction on the
+	 * print sheet — type it into Log a day — meant retyping the roster by hand. */
+	$ended      = ! $cancelled && gwcvt_shift_has_ended( $shift_id );
+	$reconciled = $ended && gwcvt_shift_is_reconciled( $shift_id );
 	?>
 	<h3 style="margin-bottom:4px">
 		<?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?>
@@ -206,6 +214,20 @@ function gwcvt_render_event_slot_roster( int $shift_id ): void {
 			}
 			?>
 		</span>
+
+		<?php if ( $ended ) : ?>
+			<a
+				class="gwcvt-badge <?php echo $reconciled ? 'gwcvt-badge--verified' : 'gwcvt-badge--waiting gwcvt-badge--action'; ?>"
+				style="font-weight:400"
+				href="<?php echo esc_url( gwcvt_shift_log_url( $shift_id ) ); ?>"
+			>
+				<?php
+				echo $reconciled
+					? esc_html__( 'Log more hours', 'groundwork-common-volunteer-tracker' )
+					: esc_html__( 'Log the hours', 'groundwork-common-volunteer-tracker' );
+				?>
+			</a>
+		<?php endif; ?>
 	</h3>
 
 	<table class="widefat striped" style="margin-bottom:14px">

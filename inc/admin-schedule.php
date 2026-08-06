@@ -559,6 +559,7 @@ function gwcvt_schedule_rows( array $shifts, array $events ): array {
 function gwcvt_render_event_summary_row( int $event_id ): void {
 	$cancelled = gwcvt_event_is_cancelled( $event_id );
 	$short     = $cancelled ? array() : gwcvt_event_short_slot_ids( $event_id );
+	$unlogged  = $cancelled ? array() : gwcvt_event_unlogged_slot_ids( $event_id );
 	$slots     = gwcvt_event_slot_ids( $event_id, array( 'publish', 'draft' ) );
 	$roles     = count( gwcvt_event_roles( $event_id, array( 'publish', 'draft' ) ) );
 
@@ -579,6 +580,26 @@ function gwcvt_render_event_summary_row( int $event_id ): void {
 		</td>
 		<td>
 			<a href="<?php echo esc_url( gwcvt_event_edit_url( $event_id ) ); ?>"><strong><?php echo esc_html( gwcvt_event_name( $event_id ) ); ?></strong></a>
+
+			<?php if ( $unlogged ) : ?>
+				<?php
+				/* Links to the roster rather than to a log screen, because an
+				 * event has several times and there is no one of them to send
+				 * somebody to. The roster lists them with a log link each. */
+				?>
+				<a class="gwcvt-badge gwcvt-badge--waiting gwcvt-badge--action" href="<?php echo esc_url( gwcvt_event_roster_url( $event_id ) ); ?>">
+					<?php
+					printf(
+						esc_html(
+							/* translators: %d: how many times still need their hours logged. */
+							_n( '%d time needs its hours', '%d times need their hours', count( $unlogged ), 'groundwork-common-volunteer-tracker' )
+						),
+						(int) count( $unlogged )
+					);
+					?>
+				</a>
+			<?php endif; ?>
+
 			<div class="row-actions">
 				<span><a href="<?php echo esc_url( gwcvt_event_roster_url( $event_id ) ); ?>"><?php esc_html_e( 'Roster', 'groundwork-common-volunteer-tracker' ); ?></a> | </span>
 				<span><a href="<?php echo esc_url( gwcvt_event_edit_url( $event_id ) ); ?>"><?php esc_html_e( 'Edit', 'groundwork-common-volunteer-tracker' ); ?></a></span>

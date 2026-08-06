@@ -310,9 +310,42 @@ gwcvt_ev_check( 'a slot on another event is not booked through this one', 0 === 
 do_action( 'shutdown' );
 $GLOBALS['gwcvt_mail'] = array();
 
+/* ── Make this event the only thing a reminder pass can find ─────────────────
+ * gwcvt_run_reminders() sweeps the whole site and returns a site-wide count, so
+ * this assertion — three slots on one day produce ONE message — is only true of
+ * a database holding nothing else due a reminder.
+ *
+ * That was an accident of running against an empty install. Seed the demo
+ * fixture first, as CLAUDE.md tells you to, and its upcoming Saturdays are due
+ * a reminder too: the count came back 4 and four assertions failed, on the first
+ * run only, because a reminder is sent once and the flag then hides the problem
+ * from every run after it. A test that passes the second time is worse than one
+ * that fails.
+ *
+ * So every signup that is not on this event is marked as already reminded. It
+ * says what the assertion always meant.
+ * ─────────────────────────────────────────────────────────────────────────── */
+$gwcvt_mine = array();
+
 foreach ( gwcvt_event_slot_ids( $gwcvt_event ) as $gwcvt_slot ) {
 	foreach ( gwcvt_shift_signup_ids( (int) $gwcvt_slot ) as $gwcvt_signup ) {
+		$gwcvt_mine[] = (int) $gwcvt_signup;
 		delete_post_meta( (int) $gwcvt_signup, GWCVT_SIGNUP_REMINDED );
+	}
+}
+
+$gwcvt_everyone = get_posts(
+	array(
+		'post_type'      => GWCVT_SIGNUP_TYPE,
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+	)
+);
+
+foreach ( (array) $gwcvt_everyone as $gwcvt_signup ) {
+	if ( ! in_array( (int) $gwcvt_signup, $gwcvt_mine, true ) ) {
+		update_post_meta( (int) $gwcvt_signup, GWCVT_SIGNUP_REMINDED, gmdate( 'Y-m-d H:i:s' ) );
 	}
 }
 

@@ -7,6 +7,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+/* Both fire for any page write, and both only bump a number — see the box
+ * comment above gwcvt_event_page_generation(). */
+add_action( 'save_post', 'gwcvt_maybe_flush_event_page_cache', 10, 2 );
+add_action( 'deleted_post', 'gwcvt_maybe_flush_event_page_cache', 10, 2 );
+
 /* ── Counts, never names. Still. ─────────────────────────────────────────────
  * Everything in the box comment at the top of inc/signup-form.php applies here
  * unchanged, and this is where it is most tempting to break. The products this
@@ -311,6 +316,104 @@ function gwcvt_signup_return_url( int $signup_id ): string {
 	return $page > 0 ? (string) get_permalink( $page ) : '';
 }
 
+/* ── Finding the page an event is on ─────────────────────────────────────────
+ * An event has no URL of its own — the post type is public => false, and the
+ * grid is placed on an ordinary page by the block or the shortcode. So the only
+ * way to answer "where do volunteers see this" is to go looking for the
+ * placement, which is what this does.
+ *
+ * Two markers, because there are two ways to place one and they look nothing
+ * alike in post_content:
+ *
+ *   [volunteer_event id="12"]
+ *   <!-- wp:groundwork-common-volunteer-tracker/event-grid {"eventId":12} /-->
+ *
+ * Both are searched for, and both are then matched on the ID with a real
+ * pattern rather than a substring test. A bare strpos() for "12" is true of a
+ * page holding event 1, event 2, event 120, or the year 2012 in the prose above
+ * the block — which meant a cancellation link could point at the wrong
+ * occasion's page.
+ *
+ * The result is cached, and the key carries a generation number that any page
+ * edit bumps. Without that, the sequence somebody actually performs — build the
+ * event, discover no page shows it, make the page — left the answer wrong for
+ * up to an hour, which is exactly the hour they are testing it in.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The current generation of the event-page lookup cache.
+ *
+ * @return int
+ */
+function gwcvt_event_page_generation(): int {
+	return max( 1, (int) get_option( 'gwcvt_event_page_gen', 1 ) );
+}
+
+/**
+ * Invalidate every cached event-page answer.
+ *
+ * Bumping one number rather than deleting N transients, because the placement
+ * that just changed may be the one being REMOVED — in which case the event it
+ * used to name is not derivable from the content we are now looking at.
+ */
+function gwcvt_flush_event_page_cache(): void {
+	update_option( 'gwcvt_event_page_gen', gwcvt_event_page_generation() + 1, false );
+}
+
+/**
+ * Bump the generation when a page that could hold a grid is written.
+ *
+ * @param int     $post_id Post ID.
+ * @param WP_Post $post    The post.
+ */
+function gwcvt_maybe_flush_event_page_cache( $post_id, $post = null ): void {
+	if ( ! $post instanceof WP_Post || 'page' !== $post->post_type ) {
+		return;
+	}
+
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+		return;
+	}
+
+	gwcvt_flush_event_page_cache();
+}
+
+/**
+ * Does this content place the grid for a particular event?
+ *
+ * Kept separate so it can be asserted without a database.
+ *
+ * @param string $content  Post content.
+ * @param int    $event_id Event post ID.
+ * @return bool
+ */
+function gwcvt_content_places_event( string $content, int $event_id ): bool {
+	if ( $event_id < 1 || '' === $content ) {
+		return false;
+	}
+
+	/* The shortcode, with the id quoted, single-quoted or bare. \b on the closing
+	 * side so id="1" does not answer for event 12. */
+	if ( preg_match_all( '/\[volunteer_event\b[^\]]*/', $content, $tags ) ) {
+		foreach ( $tags[0] as $tag ) {
+			if ( preg_match( '/\bid\s*=\s*["\']?(\d+)/', $tag, $m ) && (int) $m[1] === $event_id ) {
+				return true;
+			}
+		}
+	}
+
+	// The block's serialised attribute.
+	if ( preg_match_all( '/"eventId"\s*:\s*(\d+)/', $content, $ids ) ) {
+		foreach ( $ids[1] as $id ) {
+			if ( (int) $id === $event_id ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 /**
  * The page an event's grid is placed on, or 0.
  *
@@ -318,7 +421,11 @@ function gwcvt_signup_return_url( int $signup_id ): string {
  * @return int
  */
 function gwcvt_event_page_id( int $event_id ): int {
-	$key    = 'gwcvt_event_page_' . $event_id;
+	if ( $event_id < 1 ) {
+		return 0;
+	}
+
+	$key    = 'gwcvt_event_page_' . gwcvt_event_page_generation() . '_' . $event_id;
 	$cached = get_transient( $key );
 
 	if ( false !== $cached ) {
@@ -327,27 +434,32 @@ function gwcvt_event_page_id( int $event_id ): int {
 
 	$found = 0;
 
-	$pages = get_posts(
-		array(
-			'post_type'              => 'page',
-			'post_status'            => 'publish',
-			'posts_per_page'         => 100,
-			'fields'                 => 'ids',
-			'no_found_rows'          => true,
-			'update_post_term_cache' => false,
-			's'                      => 'volunteer_event',
-		)
-	);
+	/* Two searches rather than one. The shortcode contains the literal
+	 * "volunteer_event"; the block contains "volunteer-tracker/event-grid" and
+	 * no such string, so a single search on the first marker silently never
+	 * returned a block-placed page — which is the placement the editor
+	 * recommends. */
+	$page_ids = array();
 
-	foreach ( (array) $pages as $page_id ) {
-		$content = (string) get_post_field( 'post_content', $page_id );
+	foreach ( array( '[volunteer_event', 'volunteer-tracker/event-grid' ) as $marker ) {
+		$page_ids = array_merge(
+			$page_ids,
+			(array) get_posts(
+				array(
+					'post_type'              => 'page',
+					'post_status'            => 'publish',
+					'posts_per_page'         => 100,
+					'fields'                 => 'ids',
+					'no_found_rows'          => true,
+					'update_post_term_cache' => false,
+					's'                      => $marker,
+				)
+			)
+		);
+	}
 
-		if ( false !== strpos( $content, '[volunteer_event' ) && false !== strpos( $content, (string) $event_id ) ) {
-			$found = (int) $page_id;
-			break;
-		}
-
-		if ( false !== strpos( $content, 'event-grid' ) && false !== strpos( $content, '"eventId":' . $event_id ) ) {
+	foreach ( array_unique( array_map( 'intval', $page_ids ) ) as $page_id ) {
+		if ( gwcvt_content_places_event( (string) get_post_field( 'post_content', $page_id ), $event_id ) ) {
 			$found = (int) $page_id;
 			break;
 		}

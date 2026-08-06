@@ -92,6 +92,31 @@ function gwcvt_self_log_enabled(): bool {
 }
 
 /**
+ * Is this request the page the form is pinned to?
+ *
+ * The same question gwcvt_dispatch() asks before it will accept a submission,
+ * named once so the renderer cannot drift from the handler. They disagreed:
+ * the handler required the pinned page and the renderer did not, so a second
+ * copy of the form posted into nothing and said nothing about it.
+ *
+ * @return bool
+ */
+function gwcvt_is_self_log_page(): bool {
+	if ( ! gwcvt_self_log_enabled() ) {
+		return false;
+	}
+
+	/* Outside a main query — a widget, a REST render, WP-CLI — is_page() is not a
+	 * meaningful question. Answering true keeps the form as it was in contexts
+	 * that were never the problem. */
+	if ( ! did_action( 'template_redirect' ) ) {
+		return true;
+	}
+
+	return is_page( (int) gwcvt_setting( 'self_log_page' ) );
+}
+
+/**
  * Read, check and record one submission.
  */
 function gwcvt_handle_self_log(): void {
