@@ -88,6 +88,29 @@ function gwcvt_render_schedule_screen(): void {
 			return;
 		}
 
+		/* The two decisions that stop to ask. Each is a whole screen with one
+		 * choice on it, because both need a reason typed and both decide whether
+		 * people get an email — neither of which fits on a row. */
+		if ( 'call-off' === $view ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; the POST it leads to carries the nonce.
+			$slot = isset( $_GET['slot'] ) ? absint( wp_unslash( $_GET['slot'] ) ) : 0;
+
+			if ( gwcvt_event_for_shift( $slot ) === $event_id ) {
+				gwcvt_render_call_off_slot( $slot );
+				return;
+			}
+		}
+
+		if ( 'drop-role' === $view ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+			$role = isset( $_GET['role'] ) ? sanitize_text_field( rawurldecode( wp_unslash( $_GET['role'] ) ) ) : '';
+
+			if ( '' !== $role ) {
+				gwcvt_render_drop_role( $event_id, $role );
+				return;
+			}
+		}
+
 		gwcvt_render_event_editor( $event_id );
 		return;
 	}
@@ -376,9 +399,9 @@ function gwcvt_schedule_notice(): void {
 	);
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$restored = isset( $_GET['gwcvt_restored'] ) ? absint( wp_unslash( $_GET['gwcvt_restored'] ) ) : 0;
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$told = isset( $_GET['gwcvt_told'] ) ? absint( wp_unslash( $_GET['gwcvt_told'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$slot = isset( $_GET['gwcvt_slot'] ) ? absint( wp_unslash( $_GET['gwcvt_slot'] ) ) : 0;
 
 	if ( 'created' === $result ) {
 		$message = sprintf(
@@ -684,12 +707,34 @@ function gwcvt_event_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$deleted = isset( $_GET['gwcvt_deleted'] ) ? absint( wp_unslash( $_GET['gwcvt_deleted'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$restored = isset( $_GET['gwcvt_restored'] ) ? absint( wp_unslash( $_GET['gwcvt_restored'] ) ) : 0;
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$told = isset( $_GET['gwcvt_told'] ) ? absint( wp_unslash( $_GET['gwcvt_told'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$slot = isset( $_GET['gwcvt_slot'] ) ? absint( wp_unslash( $_GET['gwcvt_slot'] ) ) : 0;
 
 	$messages = array(
 		'saved'      => __( 'Saved.', 'groundwork-common-volunteer-tracker' ),
+
+		/* An action says what it did, in the past tense, naming the thing it did
+		 * it to. That sentence is the whole reason these moved off the form: a
+		 * deferred checkbox could only describe a future, and the screen it came
+		 * back to looked identical whether or not it had happened. */
+		'called-off-slot' => $slot > 0
+			? sprintf(
+				/* translators: %s: a role and a time. */
+				__( '%s was called off. It stays on the schedule, struck through, so everybody can see it.', 'groundwork-common-volunteer-tracker' ),
+				gwcvt_slot_label( $slot )
+			)
+			: __( 'That time was called off.', 'groundwork-common-volunteer-tracker' ),
+		'restored-slot' => $slot > 0
+			? sprintf(
+				/* translators: %s: a role and a time. */
+				__( '%s is back on.', 'groundwork-common-volunteer-tracker' ),
+				gwcvt_slot_label( $slot )
+			)
+			: __( 'That time is back on.', 'groundwork-common-volunteer-tracker' ),
+		'deleted-slot'  => __( 'That time was deleted. Nobody was on it.', 'groundwork-common-volunteer-tracker' ),
+		'dropped-role'  => __( 'The role is gone.', 'groundwork-common-volunteer-tracker' ),
+		'unknown-role'  => __( 'That role has no times left on it.', 'groundwork-common-volunteer-tracker' ),
 		'copied'     => __( 'Copied. This is the new one, saved as a draft — check the dates before you publish it.', 'groundwork-common-volunteer-tracker' ),
 		'called-off' => __( 'The event was called off, and every time on it with it.', 'groundwork-common-volunteer-tracker' ),
 		'deleted'    => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
@@ -708,7 +753,7 @@ function gwcvt_event_notice(): void {
 		return;
 	}
 
-	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'failed' );
+	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'unknown-role', 'failed' );
 	$detail = array();
 
 	if ( $made > 0 ) {
@@ -732,14 +777,6 @@ function gwcvt_event_notice(): void {
 			/* translators: %d: how many empty times were deleted. */
 			_n( '%d empty time deleted.', '%d empty times deleted.', $deleted, 'groundwork-common-volunteer-tracker' ),
 			$deleted
-		);
-	}
-
-	if ( $restored > 0 ) {
-		$detail[] = sprintf(
-			/* translators: %d: how many cancelled times were put back on. */
-			_n( '%d time put back on.', '%d times put back on.', $restored, 'groundwork-common-volunteer-tracker' ),
-			$restored
 		);
 	}
 

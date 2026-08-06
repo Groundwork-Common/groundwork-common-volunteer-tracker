@@ -218,6 +218,20 @@ $gwcvt_grid = gwcvt_sc_render( 'the public grid', function () use ( $gwcvt_event
 	echo gwcvt_render_event_grid( $gwcvt_event );
 } );
 
+/* The two screens that stop to ask. */
+$gwcvt_ask_slot = gwcvt_sc_render( 'the call-off confirmation', function () use ( $gwcvt_slots ) {
+	gwcvt_render_call_off_slot( (int) $gwcvt_slots[0] );
+} );
+
+$gwcvt_ask_role = gwcvt_sc_render( 'the drop-role confirmation', function () use ( $gwcvt_event ) {
+	gwcvt_render_drop_role( $gwcvt_event, 'Greeter' );
+} );
+
+gwcvt_sc_check( 'calling off asks for a reason', false !== strpos( $gwcvt_ask_slot, 'gwcvt_reason' ) );
+gwcvt_sc_check( 'and offers a way out', false !== strpos( $gwcvt_ask_slot, 'Leave it alone' ) );
+gwcvt_sc_check( 'and says the time is kept, not deleted', false !== strpos( $gwcvt_ask_slot, 'not deleted' ) );
+gwcvt_sc_check( 'dropping a role lists what is kept and what goes', false !== strpos( $gwcvt_ask_role, 'Called off, and kept' ) );
+
 /* ── What the screens have to contain, and what they must not ────────────── */
 
 gwcvt_sc_check(
@@ -226,14 +240,22 @@ gwcvt_sc_check(
 	(string) substr_count( $gwcvt_editor, 'value="Greeter"' )
 );
 
+/* Lifecycle is an action per row, not a field on the form. An occupied time
+ * offers to be called off — a screen that asks first, because it needs a reason
+ * and decides whether people get an email. An empty one offers a plain delete. */
 gwcvt_sc_check(
-	'the editor says what removing an occupied time will do',
-	false !== strpos( $gwcvt_editor, 'Cancels it' )
+	'an occupied time offers to be called off',
+	false !== strpos( $gwcvt_editor, 'Call it off' )
 );
 
 gwcvt_sc_check(
-	'the editor says what removing an empty time will do',
-	false !== strpos( $gwcvt_editor, 'Deletes it' )
+	'an empty time offers a plain delete',
+	false !== strpos( $gwcvt_editor, 'gwcvt_delete_slot' )
+);
+
+gwcvt_sc_check(
+	'the form itself carries no lifecycle fields',
+	false === strpos( $gwcvt_editor, '[remove]' ) && false === strpos( $gwcvt_editor, '[restore]' )
 );
 
 gwcvt_sc_check(
