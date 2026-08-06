@@ -965,19 +965,15 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	border-top: 0;
 }
 
-/* Quiet on purpose. It is the way out of a panel somebody has finished reading,
-   not a thing competing with the worklist above it for a decision. */
+/* Below the panel rather than inside it: within the border it sat under the last
+   line of next week and read as belonging to next week, when it is the way out
+   of the whole fortnight. Quiet either way — it is not competing with the
+   worklist above for a decision. */
 .gwcvt-dash__more {
-	margin: 0;
-	padding: 10px 16px;
-	border-top: 1px solid #f0f0f1;
+	margin: 8px 0 0;
+	padding: 0 2px;
 	text-align: right;
 	font-size: 12px;
-}
-
-/* The line above it is the shift's own bottom border; two would read as a rule. */
-.gwcvt-shiftline + .gwcvt-dash__more {
-	border-top: 0;
 }
 
 .gwcvt-dash__more a {
@@ -1157,7 +1153,6 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	.gwcvt-docket__row,
 	.gwcvt-shiftline,
 	.gwcvt-shiftweek,
-	.gwcvt-dash__more,
 	.gwcvt-map__group,
 	.gwcvt-year__rows {
 		border-color: #2c3338;

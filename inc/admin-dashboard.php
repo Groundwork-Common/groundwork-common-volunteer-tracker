@@ -177,11 +177,16 @@ function gwcvt_render_dashboard_upcoming(): void {
 					<?php gwcvt_render_dashboard_shiftline( (int) $shift_id ); ?>
 				<?php endforeach; ?>
 			<?php endforeach; ?>
-
-			<p class="gwcvt-dash__more">
-				<a href="<?php echo esc_url( gwcvt_schedule_url() ); ?>"><?php esc_html_e( 'Open the schedule', 'groundwork-common-volunteer-tracker' ); ?></a>
-			</p>
 		</div>
+
+		<?php
+		/* Outside the panel, not in it. Inside, it sat under the last line of
+		 * next week and read as belonging to next week. It is the way out of
+		 * the whole fortnight. */
+		?>
+		<p class="gwcvt-dash__more">
+			<a href="<?php echo esc_url( gwcvt_schedule_url() ); ?>"><?php esc_html_e( 'Open the schedule', 'groundwork-common-volunteer-tracker' ); ?></a>
+		</p>
 	</section>
 	<?php
 }
