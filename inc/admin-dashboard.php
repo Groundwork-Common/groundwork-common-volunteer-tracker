@@ -125,90 +125,133 @@ function gwcvt_render_dashboard_worklist( array $items ): void {
 }
 
 /**
- * The next few shifts.
+ * The next fortnight, split at the end of this week.
  */
 function gwcvt_render_dashboard_upcoming(): void {
 	if ( ! gwcvt_shifts_enabled() ) {
 		return;
 	}
 
-	$shifts = array_slice(
-		gwcvt_shifts_between(
-			array(
-				'from'  => gwcvt_today(),
-				'to'    => gmdate( 'Y-m-d', time() + ( 60 * DAY_IN_SECONDS ) ),
-				'limit' => 20,
-			)
-		),
-		0,
-		5
+	$today  = gwcvt_today();
+	$bounds = gwcvt_fortnight_bounds( $today, (int) get_option( 'start_of_week' ) );
+
+	$shifts = gwcvt_shifts_between(
+		array(
+			'from'  => $today,
+			'to'    => $bounds['fortnight'],
+			'limit' => 60,
+		)
 	);
 
 	if ( ! $shifts ) {
 		return;
 	}
+
+	$weeks = array(
+		'this' => array(),
+		'next' => array(),
+	);
+
+	foreach ( $shifts as $shift_id ) {
+		$date = (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+
+		$weeks[ $date <= $bounds['this_week'] ? 'this' : 'next' ][] = (int) $shift_id;
+	}
+
+	$titles = array(
+		'this' => __( 'This week', 'groundwork-common-volunteer-tracker' ),
+		'next' => __( 'Next week', 'groundwork-common-volunteer-tracker' ),
+	);
 	?>
 	<section>
 		<div class="gwcvt-dash__head">
 			<h2><?php esc_html_e( 'Coming up', 'groundwork-common-volunteer-tracker' ); ?></h2>
-			<span class="gwcvt-dash__aside"><?php esc_html_e( 'Next five', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
 		<div class="gwcvt-dash__panel">
-			<?php foreach ( $shifts as $shift_id ) : ?>
-				<?php
-				$max    = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
-				$filled = gwcvt_shift_filled( $shift_id );
-				$short  = gwcvt_shift_is_understaffed( $shift_id );
-				$full   = $max > 0 && $filled >= $max;
+			<?php foreach ( array_filter( $weeks ) as $when => $ids ) : ?>
+				<?php /* array_filter drops an empty half rather than heading it and leaving it blank: a heading over nothing reads as a fault in the screen. */ ?>
+				<h3 class="gwcvt-shiftweek"><?php echo esc_html( $titles[ $when ] ); ?></h3>
 
-				/* A hair of width even at zero, so an empty shift still reads as
-				 * a meter rather than as a missing element. */
-				$width = $max > 0 ? max( 2, (int) round( ( $filled / $max ) * 100 ) ) : 2;
-
-				$class = $short ? ' gwcvt-shiftline--short' : ( $full ? ' gwcvt-shiftline--full' : '' );
-				?>
-				<div class="gwcvt-shiftline<?php echo esc_attr( $class ); ?>">
-					<span class="gwcvt-shiftline__when">
-						<span class="gwcvt-shiftline__date"><?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?></span>
-						<span class="gwcvt-shiftline__time"><?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?></span>
-					</span>
-					<span class="gwcvt-shiftline__what">
-						<a href="<?php echo esc_url( gwcvt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>">
-							<?php echo esc_html( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) ); ?>
-						</a>
-						<?php $where = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) ); ?>
-						<?php if ( '' !== $where ) : ?>
-							<span class="gwcvt-shiftline__where"><?php echo esc_html( $where ); ?></span>
-						<?php endif; ?>
-					</span>
-					<span class="gwcvt-shiftline__fill">
-						<span class="gwcvt-meter"><span class="gwcvt-meter__bar" style="width: <?php echo esc_attr( (string) $width ); ?>%"></span></span>
-						<span class="gwcvt-shiftline__count">
-							<?php
-							echo esc_html( gwcvt_shift_fill_label( $shift_id ) );
-
-							$min = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true );
-
-							/* The number is not enough on its own: "3 of 8" does
-							 * not say whether three is a problem. Colour does not
-							 * say it either, for anybody who cannot see it. */
-							if ( $short && $min > 0 ) {
-								printf(
-									/* translators: %d: how many people the shift needs. */
-									' · ' . esc_html__( 'needs %d', 'groundwork-common-volunteer-tracker' ),
-									(int) $min
-								);
-							} elseif ( $full ) {
-								echo ' · ' . esc_html__( 'full', 'groundwork-common-volunteer-tracker' );
-							}
-							?>
-						</span>
-					</span>
-				</div>
+				<?php foreach ( $ids as $shift_id ) : ?>
+					<?php gwcvt_render_dashboard_shiftline( (int) $shift_id ); ?>
+				<?php endforeach; ?>
 			<?php endforeach; ?>
+
+			<p class="gwcvt-dash__more">
+				<a href="<?php echo esc_url( gwcvt_schedule_url() ); ?>"><?php esc_html_e( 'Open the schedule', 'groundwork-common-volunteer-tracker' ); ?></a>
+			</p>
 		</div>
 	</section>
+	<?php
+}
+
+/**
+ * One shift, as a line.
+ *
+ * @param int $shift_id Shift post ID.
+ */
+function gwcvt_render_dashboard_shiftline( int $shift_id ): void {
+	$max    = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
+	$filled = gwcvt_shift_filled( $shift_id );
+	$short  = gwcvt_shift_is_understaffed( $shift_id );
+	$full   = $max > 0 && $filled >= $max;
+
+	/* A hair of width even at zero, so an empty shift still reads as a meter
+	 * rather than as a missing element. */
+	$width = $max > 0 ? max( 2, (int) round( ( $filled / $max ) * 100 ) ) : 2;
+
+	$class  = $short ? ' gwcvt-shiftline--short' : ( $full ? ' gwcvt-shiftline--full' : '' );
+	$starts = gwcvt_shift_starts( $shift_id );
+	$where  = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) );
+	?>
+	<div class="gwcvt-shiftline<?php echo esc_attr( $class ); ?>">
+		<span class="gwcvt-shiftline__when">
+			<span class="gwcvt-shiftline__date">
+				<?php if ( null !== $starts ) : ?>
+					<?php
+					/* The weekday, ahead of the date the site formats. In a list
+					 * this short "Saturday" is what people navigate by — nobody
+					 * plans a rota by the fourteenth. */
+					?>
+					<span class="gwcvt-shiftline__day"><?php echo esc_html( (string) wp_date( 'D', $starts->getTimestamp() ) ); ?></span>
+				<?php endif; ?>
+				<?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?>
+			</span>
+			<span class="gwcvt-shiftline__time"><?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?></span>
+		</span>
+		<span class="gwcvt-shiftline__what">
+			<a href="<?php echo esc_url( gwcvt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>">
+				<?php echo esc_html( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) ); ?>
+			</a>
+			<?php if ( '' !== $where ) : ?>
+				<span class="gwcvt-shiftline__where"><?php echo esc_html( $where ); ?></span>
+			<?php endif; ?>
+		</span>
+		<span class="gwcvt-shiftline__fill">
+			<span class="gwcvt-meter"><span class="gwcvt-meter__bar" style="width: <?php echo esc_attr( (string) $width ); ?>%"></span></span>
+			<span class="gwcvt-shiftline__count">
+				<?php
+				echo esc_html( gwcvt_shift_fill_label( $shift_id ) );
+
+				$min = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true );
+
+				/* The number is not enough on its own: "3 of 8" does not say
+				 * whether three is a problem. Colour does not say it either, for
+				 * anybody who cannot see it. */
+				if ( $short && $min > 0 ) {
+					printf(
+						/* translators: %d: how many people the shift needs. */
+						' · ' . esc_html__( 'needs %d', 'groundwork-common-volunteer-tracker' ),
+						(int) $min
+					);
+				} elseif ( $full ) {
+					echo ' · ' . esc_html__( 'full', 'groundwork-common-volunteer-tracker' );
+				}
+				?>
+			</span>
+		</span>
+	</div>
 	<?php
 }
 

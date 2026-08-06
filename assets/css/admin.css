@@ -747,6 +747,19 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	color: #646970;
 }
 
+/* WordPress floats the Help tab over the top right of .wrap, so the date has to
+   stop short of it or the two collide into one line. The padding sits on the
+   date rather than the masthead so the rule underneath still runs full width. */
+.gwcvt-dash__date {
+	padding-right: 120px;
+}
+
+@media ( max-width: 960px ) {
+	.gwcvt-dash__date {
+		padding-right: 0;
+	}
+}
+
 .gwcvt-dash__columns {
 	display: grid;
 	grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
@@ -921,6 +934,62 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	font-weight: 600;
 }
 
+/* The weekday is what a fortnight is read by, so it is the part set solid and
+   the date beside it is the reference. */
+.gwcvt-shiftline__day {
+	margin-right: 5px;
+	color: #1d2327;
+}
+
+.gwcvt-shiftline--short .gwcvt-shiftline__day {
+	color: #8a2424;
+}
+
+/* ─── This week, then next ──────────────────────────────────────────────────
+   Two halves rather than fourteen undifferentiated rows, because they answer
+   different questions: this week is still fixable, next week is only worth
+   knowing about. */
+.gwcvt-shiftweek {
+	margin: 0;
+	padding: 8px 16px;
+	background: #f6f7f7;
+	border-bottom: 1px solid #f0f0f1;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.gwcvt-shiftweek + .gwcvt-shiftline {
+	border-top: 0;
+}
+
+/* Quiet on purpose. It is the way out of a panel somebody has finished reading,
+   not a thing competing with the worklist above it for a decision. */
+.gwcvt-dash__more {
+	margin: 0;
+	padding: 10px 16px;
+	border-top: 1px solid #f0f0f1;
+	text-align: right;
+	font-size: 12px;
+}
+
+/* The line above it is the shift's own bottom border; two would read as a rule. */
+.gwcvt-shiftline + .gwcvt-dash__more {
+	border-top: 0;
+}
+
+.gwcvt-dash__more a {
+	text-decoration: none;
+	color: #646970;
+}
+
+.gwcvt-dash__more a:hover,
+.gwcvt-dash__more a:focus {
+	color: #2271b1;
+}
+
 .gwcvt-shiftline__time,
 .gwcvt-shiftline__where {
 	display: block;
@@ -1087,9 +1156,23 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 	.gwcvt-docket__row,
 	.gwcvt-shiftline,
+	.gwcvt-shiftweek,
+	.gwcvt-dash__more,
 	.gwcvt-map__group,
 	.gwcvt-year__rows {
 		border-color: #2c3338;
+	}
+
+	.gwcvt-shiftweek {
+		background: #22282d;
+	}
+
+	.gwcvt-shiftline__day {
+		color: #f0f0f1;
+	}
+
+	.gwcvt-shiftline--short .gwcvt-shiftline__day {
+		color: #f86368;
 	}
 
 	.gwcvt-docket__row:hover,

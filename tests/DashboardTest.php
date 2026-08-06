@@ -209,6 +209,87 @@ final class DashboardTest extends TestCase {
 		$this->assertStringContainsString( 'volunteer list', $items[0]['why'] );
 	}
 
+	/**
+	 * Every line names a job rather than reporting a state.
+	 *
+	 * The screen exists to be acted on. "A shift has happened and its hours are
+	 * not logged" makes the reader translate a description into a task before
+	 * they can decide anything; "Write up a shift that has already happened"
+	 * does not. The state belongs on the second line, which answers "and if I
+	 * leave it?".
+	 */
+	public function test_every_line_opens_with_something_to_do(): void {
+		foreach ( gwcvt_dashboard_items( $this->everything() ) as $item ) {
+			$this->assertMatchesRegularExpression(
+				'/^(Write up|Find|Check on|Verify|Match)\b/',
+				$item['what'],
+				$item['key'] . ' describes a state instead of naming the job'
+			);
+		}
+	}
+
+	/* ── Where this week stops ───────────────────────────────────────────────
+	 * Coming up runs a fortnight split in two. The split is calendar
+	 * arithmetic, and the day it breaks on belongs to the site — WordPress
+	 * already asks, and a great many places answer Saturday or Sunday.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * @param string $today   Y-m-d.
+	 * @param int    $start   start_of_week, as WordPress stores it.
+	 * @param string $ends    Expected last day of this week.
+	 * @param string $further Expected last day of next week.
+	 */
+	#[DataProvider( 'fortnights' )]
+	public function test_the_week_ends_where_the_site_says_it_does( string $today, int $start, string $ends, string $further ): void {
+		$bounds = gwcvt_fortnight_bounds( $today, $start );
+
+		$this->assertSame( $ends, $bounds['this_week'] );
+		$this->assertSame( $further, $bounds['fortnight'] );
+	}
+
+	public static function fortnights(): array {
+		/* 2026-08-06 is a Thursday. */
+		return array(
+			'Thursday, weeks starting Monday' => array( '2026-08-06', 1, '2026-08-09', '2026-08-16' ),
+			'Thursday, weeks starting Sunday' => array( '2026-08-06', 0, '2026-08-08', '2026-08-15' ),
+
+			/* On the first day of the week, this week is a full seven days. */
+			'Monday, weeks starting Monday'   => array( '2026-08-03', 1, '2026-08-09', '2026-08-16' ),
+
+			/* On the last, it ends tonight — and the fortnight is really eight
+			 * days, which is the honest answer: "next week" has not moved. */
+			'Sunday, weeks starting Monday'   => array( '2026-08-09', 1, '2026-08-09', '2026-08-16' ),
+
+			/* Across a month, and across a year. */
+			'end of the month'                => array( '2026-08-30', 1, '2026-08-30', '2026-09-06' ),
+			'end of the year'                 => array( '2026-12-31', 1, '2027-01-03', '2027-01-10' ),
+
+			/* A leap day is a day like any other to date arithmetic that never
+			 * touches a timezone, and this is the assertion that says so. */
+			'a leap year'                     => array( '2028-02-28', 1, '2028-03-05', '2028-03-12' ),
+		);
+	}
+
+	/**
+	 * A start_of_week outside 0–6 is wrapped rather than producing a bound that
+	 * is days adrift. Nothing in WordPress writes one, and an option is an
+	 * option.
+	 */
+	public function test_a_nonsense_week_start_still_produces_a_week(): void {
+		$sane = gwcvt_fortnight_bounds( '2026-08-06', 1 );
+
+		$this->assertSame( $sane, gwcvt_fortnight_bounds( '2026-08-06', 8 ) );
+		$this->assertSame( $sane, gwcvt_fortnight_bounds( '2026-08-06', -6 ) );
+	}
+
+	public function test_an_unreadable_date_falls_back_to_today(): void {
+		$bounds = gwcvt_fortnight_bounds( 'the day after tomorrow', 1 );
+
+		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $bounds['this_week'] );
+		$this->assertGreaterThan( $bounds['this_week'], $bounds['fortnight'] );
+	}
+
 	/* ── Filterable ──────────────────────────────────────────────────────── */
 
 	public function test_a_site_can_add_a_line_of_its_own(): void {

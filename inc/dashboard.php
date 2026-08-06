@@ -77,55 +77,60 @@ function gwcvt_dashboard_items( array $counts ): array {
 	 * language that would want the number mid-sentence, and there is nowhere to
 	 * put it — the number is a column, and the column is the design.
 	 */
+	/* Every line names the job, verb first. The screen exists to be acted on, and
+	 * a sentence that describes a state — "a shift has happened and its hours
+	 * are not logged" — makes the reader do the translation into a task before
+	 * they can decide anything. The state belongs in the second line, which is
+	 * there to answer "and if I leave it?". */
 	$defined = array(
 		'unreconciled' => array(
 			'severity' => 'critical',
 			'what'     => _n_noop(
-				'A shift has happened and its hours are not logged',
-				'Shifts have happened and their hours are not logged',
+				'Write up a shift that has already happened',
+				'Write up shifts that have already happened',
 				'groundwork-common-volunteer-tracker'
 			),
-			'why'      => __( 'Until they are typed up those hours are on nobody’s record and cannot reach a letter.', 'groundwork-common-volunteer-tracker' ),
-			'action'   => __( 'Log them', 'groundwork-common-volunteer-tracker' ),
+			'why'      => __( 'Until somebody types them up, those hours are on nobody’s record and cannot reach a letter.', 'groundwork-common-volunteer-tracker' ),
+			'action'   => __( 'Log the hours', 'groundwork-common-volunteer-tracker' ),
 		),
 		'understaffed' => array(
 			'severity' => 'critical',
 			'what'     => _n_noop(
-				'A shift this week is short of people',
-				'Shifts this week are short of people',
+				'Find people for a shift this week',
+				'Find people for shifts this week',
 				'groundwork-common-volunteer-tracker'
 			),
-			'why'      => __( 'There is still time to ring round.', 'groundwork-common-volunteer-tracker' ),
-			'action'   => __( 'See the schedule', 'groundwork-common-volunteer-tracker' ),
+			'why'      => __( 'There is still time to ring round. On Sunday there is nothing to be done about Saturday.', 'groundwork-common-volunteer-tracker' ),
+			'action'   => __( 'Open the schedule', 'groundwork-common-volunteer-tracker' ),
 		),
 		'overdue'      => array(
 			'severity' => 'waiting',
 			'what'     => _n_noop(
-				'Somebody is past the deadline for hours they have to complete',
-				'People are past the deadline for hours they have to complete',
+				'Check on somebody past their deadline',
+				'Check on people past their deadline',
 				'groundwork-common-volunteer-tracker'
 			),
-			'why'      => __( 'Hours of theirs may be logged and simply not verified yet — checking those may be all that is needed. The names are on the volunteer list.', 'groundwork-common-volunteer-tracker' ),
+			'why'      => __( 'Hours of theirs may be logged and simply not verified yet — that may be all it is. The names are on the volunteer list.', 'groundwork-common-volunteer-tracker' ),
 			'action'   => __( 'See who', 'groundwork-common-volunteer-tracker' ),
 		),
 		'unverified'   => array(
 			'severity' => 'waiting',
 			'what'     => _n_noop(
-				'A shift is waiting for somebody to verify it',
-				'Shifts are waiting for somebody to verify them',
+				'Verify a shift somebody has logged',
+				'Verify shifts somebody has logged',
 				'groundwork-common-volunteer-tracker'
 			),
-			'why'      => __( 'Only verified hours appear on a letter, so these do not count for anybody yet.', 'groundwork-common-volunteer-tracker' ),
-			'action'   => __( 'Verify', 'groundwork-common-volunteer-tracker' ),
+			'why'      => __( 'Only verified hours appear on a letter, so these count for nobody yet.', 'groundwork-common-volunteer-tracker' ),
+			'action'   => __( 'Verify them', 'groundwork-common-volunteer-tracker' ),
 		),
 		'unmatched'    => array(
 			'severity' => 'waiting',
 			'what'     => _n_noop(
-				'Somebody sent in hours and has not been matched',
-				'People sent in hours and have not been matched',
+				'Match somebody who sent in hours',
+				'Match people who sent in hours',
 				'groundwork-common-volunteer-tracker'
 			),
-			'why'      => __( 'What somebody typed into the public form is a claim until a person says who they are.', 'groundwork-common-volunteer-tracker' ),
+			'why'      => __( 'What somebody typed into the public form is a claim until a person says whose it is.', 'groundwork-common-volunteer-tracker' ),
 			'action'   => __( 'Match them', 'groundwork-common-volunteer-tracker' ),
 		),
 	);
@@ -205,6 +210,52 @@ function gwcvt_dashboard_item_url( string $key ): string {
 	}
 
 	return admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE );
+}
+
+/* ── Where this week stops ───────────────────────────────────────────────────
+ * "Coming up" runs a fortnight and is split in two, because those two halves
+ * are answers to different questions. This week is what a coordinator can still
+ * do something about — ring round, move somebody, cancel while people can still
+ * be told. Next week is what they should be thinking about, and nothing more.
+ * Fourteen undifferentiated rows would answer neither.
+ *
+ * Where the week breaks is the site's business, not this plugin's: WordPress
+ * already asks on Settings → General and a great many places outside Europe and
+ * North America answer Saturday or Sunday.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The last day of this week and the last day of the one after.
+ *
+ * Pure calendar arithmetic on date strings, with no timezone in it — midnight
+ * on a bare Y-m-d has the same weekday everywhere, which is the whole reason
+ * shifts store a date and a wall-clock time rather than an instant.
+ *
+ * @param string $today         Y-m-d.
+ * @param int    $start_of_week 0 for Sunday through 6 for Saturday, as WordPress stores it.
+ * @return array{this_week:string, fortnight:string}
+ */
+function gwcvt_fortnight_bounds( string $today, int $start_of_week ): array {
+	$midnight = (int) strtotime( $today . ' 00:00:00 UTC' );
+
+	if ( ! $midnight ) {
+		$today    = gmdate( 'Y-m-d' );
+		$midnight = (int) strtotime( $today . ' 00:00:00 UTC' );
+	}
+
+	$start_of_week = ( ( $start_of_week % 7 ) + 7 ) % 7;
+
+	/* How far into the week today already is, so the remainder is what is left
+	 * of it. On the first day of the week that is nothing and this week runs a
+	 * full seven days; on the last it is six and this week ends tonight. */
+	$elapsed = ( (int) gmdate( 'w', $midnight ) - $start_of_week + 7 ) % 7;
+
+	$this_week = $midnight + ( ( 6 - $elapsed ) * DAY_IN_SECONDS );
+
+	return array(
+		'this_week' => gmdate( 'Y-m-d', $this_week ),
+		'fortnight' => gmdate( 'Y-m-d', $this_week + ( 7 * DAY_IN_SECONDS ) ),
+	);
 }
 
 /* ── Requirements that have run out of time ─────────────────────────────────
