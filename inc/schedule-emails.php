@@ -90,6 +90,13 @@ function gwcvt_send_queued_confirmations(): void {
 				gwcvt_send_signup_confirmation( $signup_id );
 				break;
 
+			case 'event-confirmation':
+				gwcvt_send_event_confirmation(
+					(int) ( $context['event'] ?? 0 ),
+					array_map( 'intval', (array) ( $context['signups'] ?? array() ) )
+				);
+				break;
+
 			case 'reminder':
 				gwcvt_send_shift_reminder( $signup_id );
 				break;
@@ -545,5 +552,257 @@ function gwcvt_signup_manage_url( int $signup_id ): string {
 			'gwcvt_k'      => gwcvt_signup_token( $signup_id ),
 		),
 		(string) get_permalink( $page )
+	);
+}
+
+/* ── One event, one message ──────────────────────────────────────────────────
+ * Four slots must not be four emails. Somebody who ticks a morning and an
+ * afternoon and a set-up is doing one thing, and a mailbox with four near
+ * identical messages in it is how an organisation teaches its volunteers to
+ * filter its address.
+ *
+ * Each slot carries ITS OWN cancel link and its own calendar link, and that is
+ * what makes per-signup tokens sufficient. "I can only drop the Sunday" is
+ * answered by having four links rather than by inventing a token that spans
+ * slots — which would mean one forwarded email disclosing the lot.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Note that one message covering several slots is owed.
+ *
+ * @param int   $event_id   Event post ID.
+ * @param int[] $signup_ids The signups this submission made.
+ */
+function gwcvt_queue_event_confirmation( int $event_id, array $signup_ids ): void {
+	if ( ! $signup_ids ) {
+		return;
+	}
+
+	gwcvt_queue_signup_mail(
+		'event-confirmation',
+		(int) $signup_ids[0],
+		array(
+			'event'   => $event_id,
+			'signups' => array_map( 'intval', $signup_ids ),
+		)
+	);
+}
+
+/**
+ * Tell somebody what they signed up for, all of it, in one message.
+ *
+ * @param int   $event_id   Event post ID.
+ * @param int[] $signup_ids Signups from one submission.
+ * @return bool
+ */
+function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool {
+	$signup_ids = array_values( array_filter( array_map( 'intval', $signup_ids ) ) );
+
+	if ( ! $signup_ids || GWCVT_EVENT_TYPE !== get_post_type( $event_id ) ) {
+		return false;
+	}
+
+	$email = gwcvt_signup_email( $signup_ids[0] );
+
+	if ( '' === $email || ! is_email( $email ) ) {
+		return false;
+	}
+
+	/* Ordered by when they happen rather than by which box was ticked first. The
+	 * message is a plan for a day, and a day runs in one direction. */
+	usort(
+		$signup_ids,
+		static function ( int $a, int $b ) {
+			return gwcvt_compare_slots(
+				(int) get_post_field( 'post_parent', $a ),
+				(int) get_post_field( 'post_parent', $b )
+			);
+		}
+	);
+
+	$where = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) );
+
+	$lines = array(
+		sprintf(
+			'<p>%s</p>',
+			esc_html(
+				sprintf(
+					/* translators: 1: the event's name, 2: a date, 3: the organisation's name. */
+					__( 'Thank you for signing up for %1$s on %2$s with %3$s. Here is what you put your name down for.', 'groundwork-common-volunteer-tracker' ),
+					gwcvt_event_name( $event_id ),
+					gwcvt_event_date_label( $event_id ),
+					gwcvt_org_name()
+				)
+			)
+		),
+	);
+
+	if ( '' !== $where ) {
+		$lines[] = sprintf( '<p>%s</p>', esc_html( $where ) );
+	}
+
+	foreach ( $signup_ids as $signup_id ) {
+		$lines[] = gwcvt_event_slot_block( (int) $signup_id );
+	}
+
+	$lines[] = sprintf(
+		'<p>%s</p>',
+		esc_html__( 'Each one has its own link. Cancelling one takes you off that one only and leaves the rest as they are.', 'groundwork-common-volunteer-tracker' )
+	);
+
+	$supervisor = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_SUPERVISOR, true ) );
+
+	if ( '' !== $supervisor ) {
+		$lines[] = sprintf(
+			'<p>%s</p>',
+			esc_html(
+				sprintf(
+					/* translators: %s: a staff member's name. */
+					__( '%s will be looking after the day.', 'groundwork-common-volunteer-tracker' ),
+					$supervisor
+				)
+			)
+		);
+	}
+
+	$lines[] = gwcvt_email_footer();
+
+	return gwcvt_send_email(
+		$email,
+		sprintf(
+			/* translators: 1: the organisation's name, 2: the event's name. */
+			__( '%1$s: you are signed up for %2$s', 'groundwork-common-volunteer-tracker' ),
+			gwcvt_org_name(),
+			gwcvt_event_name( $event_id )
+		),
+		implode( "\n", $lines )
+	);
+}
+
+/**
+ * One slot inside a grouped message: what it is, and its two links.
+ *
+ * @param int $signup_id Signup post ID.
+ * @return string
+ */
+function gwcvt_event_slot_block( int $signup_id ): string {
+	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
+
+	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+		return '';
+	}
+
+	$role    = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) );
+	$notes   = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_NOTES, true ) );
+	$waiting = GWCVT_SIGNUP_WAITLIST === get_post_status( $signup_id );
+	$manage  = gwcvt_signup_manage_url( $signup_id );
+
+	$block = array( '<hr />' );
+
+	if ( '' !== $role ) {
+		$block[] = sprintf( '<p><strong>%s</strong><br />', esc_html( $role ) );
+	} else {
+		$block[] = '<p>';
+	}
+
+	$block[] = sprintf(
+		'%s, %s</p>',
+		esc_html( gwcvt_shift_date_label( $shift_id ) ),
+		esc_html( gwcvt_shift_time_label( $shift_id ) )
+	);
+
+	if ( $waiting ) {
+		$block[] = sprintf(
+			'<p>%s</p>',
+			esc_html__( 'This one is full, so you are on the waiting list for it. We will be in touch if a place comes free.', 'groundwork-common-volunteer-tracker' )
+		);
+	}
+
+	if ( '' !== $notes ) {
+		$block[] = sprintf( '<p>%s</p>', nl2br( esc_html( $notes ) ) );
+	}
+
+	/* No link at all rather than one pointing at the front page. A site can run
+	 * events without pinning a public page, and "click here to cancel" landing
+	 * on nothing is worse than no link: they click it, find nothing, and assume
+	 * they have cancelled. */
+	if ( '' !== $manage ) {
+		$block[] = sprintf(
+			'<p><a href="%1$s">%2$s</a></p>',
+			esc_url( $manage ),
+			esc_html__( 'Add this one to your calendar, or cancel it', 'groundwork-common-volunteer-tracker' )
+		);
+	}
+
+	return implode( "\n", $block );
+}
+
+/**
+ * Remind somebody of everything they hold on one event, in one message.
+ *
+ * Today's single-shift reminder says "you are down to volunteer on Saturday".
+ * Exact for one shift. For somebody holding three places at a festival it is
+ * ambiguous in the worst possible way — the decline link drops ONE signup, and
+ * the message never says which. So each slot is named and each carries its own
+ * link, and the copy says plainly that using one leaves the others alone.
+ *
+ * @param int   $event_id   Event post ID.
+ * @param int[] $signup_ids The signups being reminded about, in time order.
+ * @return bool
+ */
+function gwcvt_send_event_reminder( int $event_id, array $signup_ids ): bool {
+	$signup_ids = array_values( array_filter( array_map( 'intval', $signup_ids ) ) );
+
+	if ( ! $signup_ids || GWCVT_EVENT_TYPE !== get_post_type( $event_id ) ) {
+		return false;
+	}
+
+	$email = gwcvt_signup_email( $signup_ids[0] );
+
+	if ( '' === $email || ! is_email( $email ) ) {
+		return false;
+	}
+
+	$where = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) );
+
+	$lines = array(
+		sprintf(
+			'<p>%s</p>',
+			esc_html(
+				sprintf(
+					/* translators: 1: the organisation's name, 2: a date, 3: the event's name. */
+					__( 'A reminder that you are down to volunteer with %1$s on %2$s — %3$s. Here is your day.', 'groundwork-common-volunteer-tracker' ),
+					gwcvt_org_name(),
+					gwcvt_event_date_label( $event_id ),
+					gwcvt_event_name( $event_id )
+				)
+			)
+		),
+	);
+
+	if ( '' !== $where ) {
+		$lines[] = sprintf( '<p>%s</p>', esc_html( $where ) );
+	}
+
+	foreach ( $signup_ids as $signup_id ) {
+		$lines[] = gwcvt_event_slot_block( (int) $signup_id );
+	}
+
+	$lines[] = sprintf(
+		'<p>%s</p>',
+		esc_html__( 'If you cannot make one of them, please use its own link to let us know — it takes you off that one only, and there is still time for us to ask somebody else.', 'groundwork-common-volunteer-tracker' )
+	);
+
+	$lines[] = gwcvt_email_footer();
+
+	return gwcvt_send_email(
+		$email,
+		sprintf(
+			/* translators: 1: the organisation's name, 2: the event's name. */
+			__( '%1$s: a reminder about %2$s', 'groundwork-common-volunteer-tracker' ),
+			gwcvt_org_name(),
+			gwcvt_event_name( $event_id )
+		),
+		implode( "\n", $lines )
 	);
 }

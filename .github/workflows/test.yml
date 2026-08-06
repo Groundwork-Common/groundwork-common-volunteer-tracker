@@ -58,6 +58,18 @@ jobs:
           echo "Checked $(echo "$files" | wc -l) files."
           exit $status
 
+  # The one hand-written script with logic worth checking. It renumbers cloned
+  # rows in the event grid, and the first version of its patterns matched
+  # nothing while still looking correct on screen — the field names came out
+  # right, so a cloned row saved perfectly and only the labels were wrong.
+  js:
+    name: The grid's row cloning
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - run: node tests/js/renumber.test.mjs
+
   unit:
     name: Unit (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest

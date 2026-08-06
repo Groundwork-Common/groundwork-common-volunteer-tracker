@@ -122,6 +122,19 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 		);
 	}
 
+	/* The event grid's "add another" buttons. Enhancement only — the screen
+	 * renders one spare role and one spare time without it, and a save ignores
+	 * anything blank, so the grid is buildable with this script absent. */
+	if ( $on_schedule ) {
+		wp_enqueue_script(
+			'gwcvt-event-grid',
+			GWCVT_URL . 'assets/js/admin-event-grid.js',
+			array(),
+			GWCVT_VERSION,
+			true
+		);
+	}
+
 	wp_set_script_translations(
 		'gwcvt-admin-picker',
 		'groundwork-common-volunteer-tracker',

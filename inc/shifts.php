@@ -351,7 +351,26 @@ function gwcvt_shift_is_understaffed( int $shift_id ): bool {
  * for the same reason: "when is it" and "when was it typed in" are different
  * questions and only one of them is the one anybody is asking.
  *
- * @param array $args from, to (Y-m-d), statuses, limit.
+ * ── 'parent' defaults to EVERYTHING, and it must stay that way ───────────────
+ * An event's slots are ordinary shifts whose post_parent is the event, so this
+ * function returns them alongside standalone shifts unless a caller says
+ * otherwise. That default is load-bearing.
+ *
+ * gwcvt_understaffed_shift_ids() and gwcvt_unreconciled_shift_ids() both run
+ * through here. Filter parented shifts out by default and the reconciliation nag
+ * silently stops covering events — and the failure mode is hours nobody typed
+ * up, on the number a letter is built from. Nothing on any screen would say so.
+ *
+ * Exactly two callers opt IN to `parent => 0`, and both want a flat list of
+ * standalone shifts because they show events separately:
+ *
+ *   - gwcvt_public_shift_ids(), or every festival slot appears loose on the
+ *     generic signup page with no idea what it belongs to;
+ *   - the schedule screen's flat view, which groups events into one row.
+ *
+ * Never opt out by default.
+ *
+ * @param array $args from, to (Y-m-d), statuses, limit, parent.
  * @return int[] Shift post IDs.
  */
 function gwcvt_shifts_between( array $args = array() ): array {
@@ -359,6 +378,11 @@ function gwcvt_shifts_between( array $args = array() ): array {
 	$to       = (string) ( $args['to'] ?? '' );
 	$statuses = (array) ( $args['statuses'] ?? array( 'publish' ) );
 	$limit    = (int) ( $args['limit'] ?? 200 );
+
+	/* Null rather than 0, because 0 is a real answer meaning "standalone only".
+	 * Absent has to be distinguishable from "no parent", or the default becomes
+	 * the opt-in and the trap above springs. */
+	$parent = array_key_exists( 'parent', $args ) ? (int) $args['parent'] : null;
 
 	$range = array(
 		'key'     => GWCVT_SHIFT_DATE,
@@ -376,22 +400,26 @@ function gwcvt_shifts_between( array $args = array() ): array {
 		);
 	}
 
-	$ids = get_posts(
-		array(
-			'post_type'      => GWCVT_SHIFT_TYPE,
-			'post_status'    => $statuses,
-			'posts_per_page' => $limit,
-			'fields'         => 'ids',
-			'no_found_rows'  => true,
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_meta_query -- the only way to order by the shift's own date; the table is one row per shift.
-				'gwcvt_shift_date' => $range,
-			),
-			'orderby'        => array(
-				'gwcvt_shift_date' => 'ASC',
-				'ID'               => 'ASC',
-			),
-		)
+	$query = array(
+		'post_type'      => GWCVT_SHIFT_TYPE,
+		'post_status'    => $statuses,
+		'posts_per_page' => $limit,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_meta_query -- the only way to order by the shift's own date; the table is one row per shift.
+			'gwcvt_shift_date' => $range,
+		),
+		'orderby'        => array(
+			'gwcvt_shift_date' => 'ASC',
+			'ID'               => 'ASC',
+		),
 	);
+
+	if ( null !== $parent ) {
+		$query['post_parent'] = $parent;
+	}
+
+	$ids = get_posts( $query );
 
 	$ids = array_map( 'intval', (array) $ids );
 

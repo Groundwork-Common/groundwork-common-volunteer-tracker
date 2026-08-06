@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://groundworkcommon.com
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.13.0
+ * Version:           0.14.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.13.0';
+const GWCVT_VERSION = '0.14.0';
 
 /* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -165,11 +165,22 @@ if ( ! function_exists( 'gwcvt_recurrence_dates' ) ) {
 if ( ! function_exists( 'gwcvt_register_shift_type' ) ) {
 	require GWCVT_DIR . 'inc/shift-cpt.php';
 }
+/* The event type, beside the shift type it contains. Its meta key constants are
+ * read by events.php below, so it cannot move after it — the same ordering rule
+ * as shift-cpt.php and shifts.php. */
+if ( ! function_exists( 'gwcvt_register_event_type' ) ) {
+	require GWCVT_DIR . 'inc/event-cpt.php';
+}
 if ( ! function_exists( 'gwcvt_register_signup_type' ) ) {
 	require GWCVT_DIR . 'inc/signup-cpt.php';
 }
 if ( ! function_exists( 'gwcvt_shift_duration' ) ) {
 	require GWCVT_DIR . 'inc/shifts.php';
+}
+/* Reading events. After shifts.php, because every question about an event is a
+ * question about its slots and this file answers them by calling that one. */
+if ( ! function_exists( 'gwcvt_event_slot_ids' ) ) {
+	require GWCVT_DIR . 'inc/events.php';
 }
 if ( ! function_exists( 'gwcvt_add_signup' ) ) {
 	require GWCVT_DIR . 'inc/signups.php';
@@ -185,6 +196,12 @@ if ( ! function_exists( 'gwcvt_signup_dispatch' ) ) {
 }
 if ( ! function_exists( 'gwcvt_render_shift_list' ) ) {
 	require GWCVT_DIR . 'inc/signup-form.php';
+}
+/* The event grid, beside the shift list it shares its rules with. After
+ * signup-form.php, because it reuses gwcvt_render_signup_manage() to answer a
+ * cancellation link that happens to land on an event's page. */
+if ( ! function_exists( 'gwcvt_render_event_grid' ) ) {
+	require GWCVT_DIR . 'inc/event-form.php';
 }
 if ( ! function_exists( 'gwcvt_signup_ics' ) ) {
 	require GWCVT_DIR . 'inc/ics.php';
@@ -281,9 +298,17 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 
 	/* Planning shifts, and who is coming to them. admin-schedule.php owns the
 	 * menu and routes between the screen's views; admin-shift.php renders one
-	 * shift and holds every handler that writes one. */
+	 * shift and holds every handler that writes one.
+	 *
+	 * The two event files follow the same split — admin-event.php is the editor
+	 * and the handlers that write an event's grid, admin-event-roster.php is who
+	 * is coming and the sheet that goes on the clipboard. They load after
+	 * admin-shift.php because the roster's promote action falls back to
+	 * gwcvt_shift_redirect() for a standalone shift. */
 	require GWCVT_DIR . 'inc/admin-schedule.php';
 	require GWCVT_DIR . 'inc/admin-shift.php';
+	require GWCVT_DIR . 'inc/admin-event.php';
+	require GWCVT_DIR . 'inc/admin-event-roster.php';
 
 	// The screen somebody lands on.
 	require GWCVT_DIR . 'inc/admin-dashboard.php';

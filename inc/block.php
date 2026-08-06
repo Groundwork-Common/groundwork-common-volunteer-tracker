@@ -25,10 +25,36 @@ function gwcvt_register_block(): void {
 	if ( function_exists( 'register_block_type_from_metadata' ) ) {
 		register_block_type_from_metadata( GWCVT_DIR . 'blocks/hours-form' );
 		register_block_type_from_metadata( GWCVT_DIR . 'blocks/shift-list' );
+		register_block_type_from_metadata( GWCVT_DIR . 'blocks/event-grid' );
 	}
 
 	add_shortcode( 'volunteer_hours_form', 'gwcvt_form_shortcode' );
 	add_shortcode( 'volunteer_shifts', 'gwcvt_shifts_shortcode' );
+	add_shortcode( 'volunteer_event', 'gwcvt_event_shortcode' );
+}
+
+/**
+ * One event's grid as a shortcode.
+ *
+ * Takes the event's ID, because unlike the shift list there is more than one of
+ * these and the block has to be told which. A shortcode with no id renders
+ * nothing rather than guessing at the next event — a page that silently
+ * advertised a different occasion after the first one passed would be worse than
+ * a page that showed nothing.
+ *
+ * @param array $atts id.
+ * @return string
+ */
+function gwcvt_event_shortcode( $atts = array() ): string {
+	$atts = shortcode_atts( array( 'id' => 0 ), (array) $atts, 'volunteer_event' );
+
+	$grid = gwcvt_render_event_grid( (int) $atts['id'] );
+
+	if ( '' !== $grid ) {
+		wp_enqueue_style( 'gwcvt-schedule' );
+	}
+
+	return $grid;
 }
 
 /**
@@ -98,6 +124,34 @@ function gwcvt_localize_block_editor(): void {
 			'signupEnabled' => (bool) gwcvt_setting( 'signup_enabled' ),
 			'pinnedPage'    => (int) gwcvt_setting( 'schedule_page' ),
 			'currentPage'   => $current,
+		)
+	);
+
+	/* The events to choose from, by name and date. A list rather than a REST
+	 * route for the same reason as the booleans above — and pointedly not the
+	 * event type made queryable, which would publish a location and the shape of
+	 * an organisation's calendar to anybody who asked. */
+	$events = array();
+
+	foreach ( gwcvt_events_between( array( 'from' => gwcvt_today(), 'limit' => 50 ) ) as $event_id ) {
+		$events[] = array(
+			'value' => (string) $event_id,
+			'label' => sprintf(
+				/* translators: 1: an event's name, 2: when it is. */
+				_x( '%1$s — %2$s', 'an event, in the block editor picker', 'groundwork-common-volunteer-tracker' ),
+				gwcvt_event_name( (int) $event_id ),
+				gwcvt_event_date_label( (int) $event_id )
+			),
+		);
+	}
+
+	wp_localize_script(
+		'groundwork-common-volunteer-tracker-event-grid-editor-script',
+		'GWCVT_EVENT_EDITOR',
+		array(
+			'shiftsEnabled' => (bool) gwcvt_setting( 'shifts_enabled' ),
+			'signupEnabled' => (bool) gwcvt_setting( 'signup_enabled' ),
+			'events'        => $events,
 		)
 	);
 }
