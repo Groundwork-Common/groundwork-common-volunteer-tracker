@@ -132,23 +132,26 @@ final class DashboardTest extends TestCase {
 	}
 
 	/**
-	 * Both plural forms state the count, the singular included.
+	 * The sentence never states the count.
 	 *
-	 * It reads a shade stiffer in English than "A shift has happened", and it is
-	 * not optional: Russian, Polish and Arabic use what gettext calls the
-	 * singular for 21, 31 and 101 as well, so a singular that leaves the number
-	 * out says "shift has happened" to somebody looking at twenty-one of them.
-	 * WP-CLI warns about exactly this, and it was right.
+	 * The count is rendered beside it as its own element, so a sentence holding
+	 * it too reads "2  2 shifts this week are short of people". Both nooped
+	 * forms are therefore free of placeholders — and both, not just the
+	 * singular, because a placeholder in only one of them is a genuine i18n bug:
+	 * Russian, Polish and Arabic use what gettext calls the singular for 21, 31
+	 * and 101 as well.
 	 *
 	 * @param string $key   Which queue.
 	 * @param int    $count How many.
 	 */
 	#[DataProvider( 'singulars' )]
-	public function test_every_line_states_its_own_count( string $key, int $count ): void {
+	public function test_the_sentence_leaves_the_number_to_the_column( string $key, int $count ): void {
 		$items = gwcvt_dashboard_items( array( $key => $count ) );
 
 		$this->assertCount( 1, $items );
-		$this->assertStringContainsString( (string) $count, $items[0]['what'] );
+		$this->assertSame( $count, $items[0]['count'] );
+		$this->assertDoesNotMatchRegularExpression( '/\d/', $items[0]['what'], 'the sentence restates a count the column already shows' );
+		$this->assertStringNotContainsString( '%', $items[0]['what'], 'a placeholder survived into the rendered sentence' );
 	}
 
 	public static function singulars(): array {

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-06T12:12:30+00:00\n"
+"POT-Creation-Date: 2026-08-06T12:26:42+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -2080,7 +2080,7 @@ msgstr ""
 
 #: inc/admin-verify.php:144
 #: inc/admin-verify.php:280
-#: inc/dashboard.php:116
+#: inc/dashboard.php:119
 msgid "Verify"
 msgstr ""
 
@@ -2284,79 +2284,69 @@ msgstr ""
 msgid "Volunteer record"
 msgstr ""
 
-#. translators: %s: how many.
-#: inc/dashboard.php:77
-#, php-format
-msgid "%s shift has happened and its hours are not logged"
-msgid_plural "%s shifts have happened and their hours are not logged"
+#: inc/dashboard.php:83
+msgid "A shift has happened and its hours are not logged"
+msgid_plural "Shifts have happened and their hours are not logged"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:82
+#: inc/dashboard.php:88
 msgid "Until they are typed up those hours are on nobody’s record and cannot reach a letter."
 msgstr ""
 
-#: inc/dashboard.php:83
+#: inc/dashboard.php:89
 msgid "Log them"
 msgstr ""
 
-#. translators: %s: how many.
-#: inc/dashboard.php:88
-#, php-format
-msgid "%s shift this week is short of people"
-msgid_plural "%s shifts this week are short of people"
+#: inc/dashboard.php:93
+msgid "A shift this week is short of people"
+msgid_plural "Shifts this week are short of people"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:93
+#: inc/dashboard.php:98
 msgid "There is still time to ring round."
 msgstr ""
 
-#: inc/dashboard.php:94
+#: inc/dashboard.php:99
 msgid "See the schedule"
 msgstr ""
 
-#. translators: %s: how many.
-#: inc/dashboard.php:99
-#, php-format
-msgid "%s person is past the deadline for hours they have to complete"
-msgid_plural "%s people are past the deadline for hours they have to complete"
+#: inc/dashboard.php:103
+msgid "Somebody is past the deadline for hours they have to complete"
+msgid_plural "People are past the deadline for hours they have to complete"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:104
+#: inc/dashboard.php:108
 msgid "Hours of theirs may be logged and simply not verified yet — checking those may be all that is needed. The names are on the volunteer list."
 msgstr ""
 
-#: inc/dashboard.php:105
+#: inc/dashboard.php:109
 msgid "See who"
 msgstr ""
 
-#. translators: %s: how many.
-#: inc/dashboard.php:110
-#, php-format
-msgid "%s shift is waiting for somebody to verify it"
-msgid_plural "%s shifts are waiting for somebody to verify them"
+#: inc/dashboard.php:113
+msgid "A shift is waiting for somebody to verify it"
+msgid_plural "Shifts are waiting for somebody to verify them"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:115
+#: inc/dashboard.php:118
 msgid "Only verified hours appear on a letter, so these do not count for anybody yet."
 msgstr ""
 
-#. translators: %s: how many.
-#: inc/dashboard.php:121
-#, php-format
-msgid "%s person sent in hours and has not been matched"
-msgid_plural "%s people sent in hours and have not been matched"
+#: inc/dashboard.php:123
+msgid "Somebody sent in hours and has not been matched"
+msgid_plural "People sent in hours and have not been matched"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:126
+#: inc/dashboard.php:128
 msgid "What somebody typed into the public form is a claim until a person says who they are."
 msgstr ""
 
-#: inc/dashboard.php:127
+#: inc/dashboard.php:129
 msgid "Match them"
 msgstr ""
 

@@ -64,19 +64,25 @@ function gwcvt_dashboard_counts(): array {
  * @return array<int, array{key:string, count:int, severity:string, what:string, why:string, action:string}>
  */
 function gwcvt_dashboard_items( array $counts ): array {
-	/* Both forms carry the placeholder, including the singular. It reads a shade
-	 * stiffer in English — "1 shift has happened" rather than "A shift has
-	 * happened" — and it is not optional: Russian, Polish and Arabic use what
-	 * gettext calls the singular for 21, 31 and 101 too, so a singular without
-	 * the count is a sentence that says "shift has happened" to a coordinator
-	 * looking at twenty-one of them. */
+	/* Neither form carries the number. The count is rendered beside the sentence
+	 * as its own element, large, because that is the thing being scanned — so a
+	 * sentence that restated it read "2  2 shifts this week are short of people".
+	 *
+	 * Which is also why there is no placeholder rather than one in both forms:
+	 * a placeholder in only the plural is a real bug, since Russian, Polish and
+	 * Arabic use what gettext calls the singular for 21, 31 and 101 as well, and
+	 * WP-CLI warns about exactly that. Dropping it from both sides fixes the
+	 * mismatch instead of papering over it, and translate_nooped_plural() still
+	 * picks the form from $count either way. The one thing it costs is a
+	 * language that would want the number mid-sentence, and there is nowhere to
+	 * put it — the number is a column, and the column is the design.
+	 */
 	$defined = array(
 		'unreconciled' => array(
 			'severity' => 'critical',
-			'what'     => /* translators: %s: how many. */
-				_n_noop(
-				'%s shift has happened and its hours are not logged',
-				'%s shifts have happened and their hours are not logged',
+			'what'     => _n_noop(
+				'A shift has happened and its hours are not logged',
+				'Shifts have happened and their hours are not logged',
 				'groundwork-common-volunteer-tracker'
 			),
 			'why'      => __( 'Until they are typed up those hours are on nobody’s record and cannot reach a letter.', 'groundwork-common-volunteer-tracker' ),
@@ -84,10 +90,9 @@ function gwcvt_dashboard_items( array $counts ): array {
 		),
 		'understaffed' => array(
 			'severity' => 'critical',
-			'what'     => /* translators: %s: how many. */
-				_n_noop(
-				'%s shift this week is short of people',
-				'%s shifts this week are short of people',
+			'what'     => _n_noop(
+				'A shift this week is short of people',
+				'Shifts this week are short of people',
 				'groundwork-common-volunteer-tracker'
 			),
 			'why'      => __( 'There is still time to ring round.', 'groundwork-common-volunteer-tracker' ),
@@ -95,10 +100,9 @@ function gwcvt_dashboard_items( array $counts ): array {
 		),
 		'overdue'      => array(
 			'severity' => 'waiting',
-			'what'     => /* translators: %s: how many. */
-				_n_noop(
-				'%s person is past the deadline for hours they have to complete',
-				'%s people are past the deadline for hours they have to complete',
+			'what'     => _n_noop(
+				'Somebody is past the deadline for hours they have to complete',
+				'People are past the deadline for hours they have to complete',
 				'groundwork-common-volunteer-tracker'
 			),
 			'why'      => __( 'Hours of theirs may be logged and simply not verified yet — checking those may be all that is needed. The names are on the volunteer list.', 'groundwork-common-volunteer-tracker' ),
@@ -106,10 +110,9 @@ function gwcvt_dashboard_items( array $counts ): array {
 		),
 		'unverified'   => array(
 			'severity' => 'waiting',
-			'what'     => /* translators: %s: how many. */
-				_n_noop(
-				'%s shift is waiting for somebody to verify it',
-				'%s shifts are waiting for somebody to verify them',
+			'what'     => _n_noop(
+				'A shift is waiting for somebody to verify it',
+				'Shifts are waiting for somebody to verify them',
 				'groundwork-common-volunteer-tracker'
 			),
 			'why'      => __( 'Only verified hours appear on a letter, so these do not count for anybody yet.', 'groundwork-common-volunteer-tracker' ),
@@ -117,10 +120,9 @@ function gwcvt_dashboard_items( array $counts ): array {
 		),
 		'unmatched'    => array(
 			'severity' => 'waiting',
-			'what'     => /* translators: %s: how many. */
-				_n_noop(
-				'%s person sent in hours and has not been matched',
-				'%s people sent in hours and have not been matched',
+			'what'     => _n_noop(
+				'Somebody sent in hours and has not been matched',
+				'People sent in hours and have not been matched',
 				'groundwork-common-volunteer-tracker'
 			),
 			'why'      => __( 'What somebody typed into the public form is a claim until a person says who they are.', 'groundwork-common-volunteer-tracker' ),
@@ -141,7 +143,7 @@ function gwcvt_dashboard_items( array $counts ): array {
 			'key'      => $key,
 			'count'    => $count,
 			'severity' => (string) $item['severity'],
-			'what'     => sprintf( translate_nooped_plural( $item['what'], $count, 'groundwork-common-volunteer-tracker' ), number_format_i18n( $count ) ),
+			'what'     => translate_nooped_plural( $item['what'], $count, 'groundwork-common-volunteer-tracker' ),
 			'why'      => (string) $item['why'],
 			'action'   => (string) $item['action'],
 		);
