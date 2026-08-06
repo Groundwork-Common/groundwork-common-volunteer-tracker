@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.12.2
+Stable tag: 0.13.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,7 @@ This plugin keeps the hours, lets staff attest to them, and prints the letter.
 
 = What it does =
 
+* A dashboard showing what needs doing, what is coming up, what the year adds up to, and where to go next.
 * Plans shifts ahead of time — when, where, what the work is, how many people you need and how many you have room for. Repeat one weekly, fortnightly, monthly or every weekday, and every occurrence is a real shift you can edit or cancel on its own.
 * Optionally lets people sign up for shifts from a page on your site, with no account. They get a confirmation, a calendar link and a way to cancel. The public list shows how many places are left, never who is coming.
 * Optionally reminds them before the shift, tells them if it moves or is called off, and sends you a daily summary of what is short of people and what still needs its hours logged.
@@ -81,6 +82,14 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 4. Checking a reference code somebody has phoned in about.
 
 == Changelog ==
+
+= 0.13.0 =
+* A dashboard: the screen you land on. What is waiting for you, the next few shifts, what the year adds up to, and a map of everywhere else.
+* The worklist is ordered by what is lost if it waits, not by which number is biggest — unlogged hours first, then shifts still short of people, then the things that keep.
+* A queue with nothing in it does not appear. On a quiet day the whole list is one line saying so.
+* Nobody is named on it. Every line is a count and a link; the names are on the screen you go to.
+* This year's verified hours, for your Form 990 and your grant reports. From 1 January unless a developer sets otherwise.
+* The map only offers what you can actually reach — somebody who cannot issue letters is not shown a Letters section that would refuse them.
 
 = 0.12.2 =
 * The Volunteer Hours menu now reads forwards: Schedule, Volunteers, All hours, Log a day, Log hours, Letters, Settings.
@@ -189,6 +198,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.13.0 =
+Adds a dashboard as the first screen under Volunteer Hours. Nothing else changes.
 
 = 0.12.2 =
 Adjusts the admin menu order. Nothing else changes.

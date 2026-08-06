@@ -214,10 +214,23 @@ gwcvt_set_settings(
 );
 
 $gwcvt_sent = gwcvt_run_reminders();
-$gwcvt_mail = gwcvt_drain_mail();
 
-gwcvt_check( 'exactly the shift inside the window is reminded', 1 === $gwcvt_sent, (string) $gwcvt_sent );
-gwcvt_check( 'and one message went out', 1 === count( $gwcvt_mail ), (string) count( $gwcvt_mail ) );
+/* Only this script's own mail. The reminder pass is site-wide by design, so on
+ * a site with seed data — or with any real shift two days out — the total is
+ * whatever else happened to be due, and asserting on it makes the test pass or
+ * fail depending on what day it is run. It did: this read 1 for weeks and then
+ * read 4 the morning a seeded Saturday drifted inside the 48-hour lead. */
+$gwcvt_mail = array_values(
+	array_filter(
+		gwcvt_drain_mail(),
+		static function ( array $gwcvt_message ): bool {
+			return 0 === strpos( (string) ( $gwcvt_message['to'] ?? '' ), 'zzytest-' );
+		}
+	)
+);
+
+gwcvt_check( 'exactly the shift inside the window is reminded', 1 === count( $gwcvt_mail ), (string) count( $gwcvt_mail ) );
+gwcvt_check( 'and the pass counted it', $gwcvt_sent >= 1, (string) $gwcvt_sent );
 gwcvt_check( 'to the right person', 'zzytest-a@example.test' === ( $gwcvt_mail[0]['to'] ?? '' ), (string) ( $gwcvt_mail[0]['to'] ?? '' ) );
 gwcvt_check( 'saying where to go', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'Zzytest main warehouse' ) );
 gwcvt_check( 'and carrying a way to cancel', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'gwcvt_signup=' . $gwcvt_a ) );
