@@ -696,3 +696,23 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-quick-add__row--logged .gwcvt-badge {
 	opacity: 1;
 }
+
+/* ─── What somebody has to complete ─────────────────────────────────────────
+   Only ever drawn for a volunteer who has a requirement recorded, which is a
+   small minority of them. Overdue is said in words as well as in colour — the
+   same rule as the verification badges — because "you are late" is not a thing
+   to communicate with a tint alone. */
+.gwcvt-progress--overdue {
+	border-left: 4px solid #d63638;
+	padding-left: 12px;
+}
+
+.gwcvt-required input {
+	max-width: 8em;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	.gwcvt-progress--overdue {
+		border-left-color: #f86368;
+	}
+}

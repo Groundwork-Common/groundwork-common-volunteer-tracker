@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Groundwork Common Volunteer Tracker 0.11.1\n"
+"Project-Id-Version: Groundwork Common Volunteer Tracker 0.12.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-06T02:21:10+00:00\n"
+"POT-Creation-Date: 2026-08-06T02:52:05+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -405,9 +405,9 @@ msgid "There are no published hour entries for this volunteer in that period, so
 msgstr ""
 
 #: inc/admin-letters.php:157
-#: inc/privacy.php:556
+#: inc/privacy.php:567
 #: inc/render.php:131
-#: inc/volunteer-cpt.php:102
+#: inc/volunteer-cpt.php:137
 msgid "Verified hours"
 msgstr ""
 
@@ -422,7 +422,7 @@ msgstr ""
 #: inc/admin-letters.php:169
 #: inc/admin-letters.php:599
 #: inc/admin-volunteer.php:207
-#: inc/privacy.php:613
+#: inc/privacy.php:636
 msgid "Reference"
 msgstr ""
 
@@ -521,7 +521,7 @@ msgstr ""
 #. translators: %d: number of shifts.
 #: inc/admin-letters.php:463
 #: inc/admin-volunteer.php:160
-#: inc/meta-box.php:427
+#: inc/meta-box.php:523
 #, php-format
 msgid "%d shift"
 msgid_plural "%d shifts"
@@ -630,7 +630,7 @@ msgstr ""
 #: inc/admin-shift.php:119
 #: inc/admin-volunteer.php:112
 #: inc/cpt.php:211
-#: inc/privacy.php:581
+#: inc/privacy.php:604
 #: inc/render.php:133
 msgid "Date"
 msgstr ""
@@ -649,7 +649,7 @@ msgstr ""
 #: inc/admin-quick-add.php:326
 #: inc/admin-shift.php:206
 #: inc/meta-box.php:218
-#: inc/privacy.php:593
+#: inc/privacy.php:616
 #: inc/render.php:136
 msgid "Supervised by"
 msgstr ""
@@ -666,7 +666,7 @@ msgstr ""
 #: inc/admin-quick-add.php:342
 #: inc/admin-volunteer.php:113
 #: inc/cpt.php:212
-#: inc/privacy.php:585
+#: inc/privacy.php:608
 #: inc/render.php:134
 msgid "Hours"
 msgstr ""
@@ -1703,7 +1703,7 @@ msgstr ""
 
 #: inc/admin-shift.php:311
 #: inc/admin-shift.php:932
-#: inc/privacy.php:544
+#: inc/privacy.php:555
 msgid "Name"
 msgstr ""
 
@@ -1713,12 +1713,12 @@ msgid "Contact"
 msgstr ""
 
 #: inc/admin-shift.php:313
-#: inc/privacy.php:672
+#: inc/privacy.php:695
 msgid "Signed up"
 msgstr ""
 
 #: inc/admin-shift.php:314
-#: inc/privacy.php:676
+#: inc/privacy.php:699
 msgid "Standing"
 msgstr ""
 
@@ -1733,12 +1733,12 @@ msgid "Nobody yet."
 msgstr ""
 
 #: inc/admin-shift.php:324
-#: inc/privacy.php:713
+#: inc/privacy.php:736
 msgid "On the roster"
 msgstr ""
 
 #: inc/admin-shift.php:328
-#: inc/privacy.php:710
+#: inc/privacy.php:733
 msgid "Waiting list"
 msgstr ""
 
@@ -1965,7 +1965,7 @@ msgid "Awaiting matching"
 msgstr ""
 
 #: inc/admin-verify.php:507
-#: inc/privacy.php:597
+#: inc/privacy.php:620
 #: inc/render.php:137
 msgid "Verification"
 msgstr ""
@@ -1996,7 +1996,7 @@ msgstr ""
 
 #: inc/admin-volunteer.php:114
 #: inc/cpt.php:213
-#: inc/privacy.php:589
+#: inc/privacy.php:612
 #: inc/render.php:135
 msgid "Activity"
 msgstr ""
@@ -2007,7 +2007,7 @@ msgstr ""
 
 #. translators: 1: verified hours, 2: unverified hours, 3: number of shifts.
 #: inc/admin-volunteer.php:154
-#: inc/meta-box.php:421
+#: inc/meta-box.php:517
 #, php-format
 msgid "%1$s verified, %2$s awaiting verification, across %3$s."
 msgstr ""
@@ -2021,12 +2021,12 @@ msgid "No verification letter has been issued for this volunteer."
 msgstr ""
 
 #: inc/admin-volunteer.php:206
-#: inc/privacy.php:617
+#: inc/privacy.php:640
 msgid "Issued"
 msgstr ""
 
 #: inc/admin-volunteer.php:208
-#: inc/privacy.php:625
+#: inc/privacy.php:648
 msgid "Hours stated"
 msgstr ""
 
@@ -2124,7 +2124,7 @@ msgid "Not assigned"
 msgstr ""
 
 #: inc/cpt.php:335
-#: inc/privacy.php:540
+#: inc/privacy.php:551
 msgid "Volunteer record"
 msgstr ""
 
@@ -2236,7 +2236,7 @@ msgid "Issued letter"
 msgstr ""
 
 #: inc/meta-box.php:40
-#: inc/privacy.php:660
+#: inc/privacy.php:683
 msgid "Shift"
 msgstr ""
 
@@ -2303,7 +2303,7 @@ msgid "The person who was there. Not necessarily whoever verifies the entry."
 msgstr ""
 
 #: inc/meta-box.php:373
-#: inc/privacy.php:548
+#: inc/privacy.php:559
 msgid "Email"
 msgstr ""
 
@@ -2312,7 +2312,7 @@ msgid "Where a verification letter is sent, and how the privacy tools find this 
 msgstr ""
 
 #: inc/meta-box.php:381
-#: inc/privacy.php:552
+#: inc/privacy.php:563
 msgid "Phone"
 msgstr ""
 
@@ -2332,77 +2332,126 @@ msgstr ""
 msgid "Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal."
 msgstr ""
 
+#: inc/meta-box.php:428
+msgid "Hours they have to complete"
+msgstr ""
+
+#: inc/meta-box.php:437
+msgid "e.g. 40"
+msgstr ""
+
+#: inc/meta-box.php:440
+msgid "For somebody working off court-ordered or school-required service. Leave empty for everybody else. This is for your own planning and never appears on a letter — how many hours were ordered is a fact about somebody else’s document, not about anything you observed."
+msgstr ""
+
+#: inc/meta-box.php:446
+msgid "By when"
+msgstr ""
+
+#: inc/meta-box.php:454
+msgid "Optional. Shown as a countdown on their record and on the volunteer list."
+msgstr ""
+
+#: inc/meta-box.php:459
+#: inc/privacy.php:583
+msgid "Who requires it"
+msgstr ""
+
+#: inc/meta-box.php:468
+msgid "e.g. a court, a school, a scouting group"
+msgstr ""
+
+#. translators: %s: a number of hours, already formatted.
+#: inc/meta-box.php:482
+#, php-format
+msgid "%s to go"
+msgstr ""
+
+#. translators: %s: a number of hours, already formatted.
+#: inc/meta-box.php:497
+#, php-format
+msgid "%s more is logged but not verified yet, so it does not count towards this."
+msgstr ""
+
 #. translators: %d: an internal record number.
 #: inc/privacy.php:222
 #, php-format
 msgid "Former volunteer #%d"
 msgstr ""
 
-#: inc/privacy.php:515
-#: inc/privacy.php:751
+#: inc/privacy.php:526
+#: inc/privacy.php:774
 msgid "Volunteer hours"
 msgstr ""
 
-#: inc/privacy.php:560
+#: inc/privacy.php:571
 msgid "Hours awaiting verification"
 msgstr ""
 
-#: inc/privacy.php:577
+#: inc/privacy.php:575
+msgid "Hours they are required to complete"
+msgstr ""
+
+#: inc/privacy.php:579
+msgid "Required by"
+msgstr ""
+
+#: inc/privacy.php:600
 msgid "Volunteer shifts"
 msgstr ""
 
-#: inc/privacy.php:609
+#: inc/privacy.php:632
 msgid "Verification letters issued"
 msgstr ""
 
-#: inc/privacy.php:621
+#: inc/privacy.php:644
 msgid "Sent to"
 msgstr ""
 
-#: inc/privacy.php:622
+#: inc/privacy.php:645
 msgid "Printed, not emailed"
 msgstr ""
 
-#: inc/privacy.php:656
+#: inc/privacy.php:679
 msgid "Shifts signed up for"
 msgstr ""
 
-#: inc/privacy.php:664
+#: inc/privacy.php:687
 msgid "Name given"
 msgstr ""
 
-#: inc/privacy.php:668
+#: inc/privacy.php:691
 msgid "Email given"
 msgstr ""
 
-#: inc/privacy.php:706
+#: inc/privacy.php:729
 msgid "Withdrawn"
 msgstr ""
 
 #. translators: %s: the reason recorded for the hold.
-#: inc/privacy.php:786
+#: inc/privacy.php:809
 #, php-format
 msgid "This volunteer record is on a retention hold and was not erased. Reason recorded: %s"
 msgstr ""
 
-#: inc/privacy.php:789
+#: inc/privacy.php:812
 msgid "This volunteer record is on a retention hold and was not erased. Remove the hold on their record if the erasure should go ahead."
 msgstr ""
 
 #. translators: %s: a duration, already formatted — "42.5" or "42h 30m" depending on the site's setting, so the sentence must not add a unit of its own.
-#: inc/privacy.php:808
+#: inc/privacy.php:831
 #, php-format
 msgid "The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymised, they identify nobody, and the organization needs them for its own service reporting."
 msgstr ""
 
 #. translators: %s: a comma-separated list of reference codes.
-#: inc/privacy.php:819
+#: inc/privacy.php:842
 #, php-format
 msgid "Verification letters were previously issued for this person. Their references remain in the issued-letter log and can no longer be matched against a named record: %s"
 msgstr ""
 
 #. translators: %d: how many shift signups were affected.
-#: inc/privacy.php:859
+#: inc/privacy.php:882
 #, php-format
 msgid "The name and email address given when signing up for %d shift were removed. The place on the shift itself was kept — it is the organization's record of who staffed it, and it now identifies nobody."
 msgid_plural "The name and email address given when signing up for %d shifts were removed. The places on the shifts themselves were kept — they are the organization's record of who staffed them, and they now identify nobody."
@@ -2410,7 +2459,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many shift signups were left alone.
-#: inc/privacy.php:872
+#: inc/privacy.php:895
 #, php-format
 msgid "%d shift signup belongs to a volunteer record on a retention hold and was not erased."
 msgid_plural "%d shift signups belong to a volunteer record on a retention hold and were not erased."
@@ -2502,6 +2551,38 @@ msgstr ""
 #, php-format
 msgid "Volunteer service verification — %1$s — %2$s"
 msgstr ""
+
+#. translators: %s: a number of hours, already formatted.
+#: inc/required.php:125
+#, php-format
+msgid "Completed — %s verified"
+msgstr ""
+
+#. translators: 1: hours verified so far, 2: hours required. Both already formatted, so the sentence must not add a unit of its own.
+#: inc/required.php:132
+#, php-format
+msgid "%1$s of %2$s"
+msgstr ""
+
+#. translators: %d: how many days ago the deadline was.
+#: inc/required.php:158
+#, php-format
+msgid "Due %d day ago"
+msgid_plural "Due %d days ago"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/required.php:164
+msgid "Due today"
+msgstr ""
+
+#. translators: %d: how many days are left.
+#: inc/required.php:169
+#, php-format
+msgid "%d day left"
+msgid_plural "%d days left"
+msgstr[0] ""
+msgstr[1] ""
 
 #: inc/rest.php:52
 msgid "Part of a volunteer’s name."
@@ -2896,55 +2977,59 @@ msgstr ""
 msgid "Verified %1$s by %2$s"
 msgstr ""
 
-#: inc/volunteer-cpt.php:50
+#: inc/volunteer-cpt.php:85
 msgctxt "post type general name"
 msgid "Volunteers"
 msgstr ""
 
-#: inc/volunteer-cpt.php:51
+#: inc/volunteer-cpt.php:86
 msgctxt "post type singular name"
 msgid "Volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:52
+#: inc/volunteer-cpt.php:87
 msgctxt "admin menu"
 msgid "Volunteers"
 msgstr ""
 
-#: inc/volunteer-cpt.php:53
-#: inc/volunteer-cpt.php:54
+#: inc/volunteer-cpt.php:88
+#: inc/volunteer-cpt.php:89
 msgid "Add volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:55
+#: inc/volunteer-cpt.php:90
 msgid "Edit volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:56
+#: inc/volunteer-cpt.php:91
 msgid "New volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:57
+#: inc/volunteer-cpt.php:92
 msgid "Search volunteers"
 msgstr ""
 
-#: inc/volunteer-cpt.php:58
+#: inc/volunteer-cpt.php:93
 msgid "No volunteers yet."
 msgstr ""
 
-#: inc/volunteer-cpt.php:59
+#: inc/volunteer-cpt.php:94
 msgid "No volunteers in the trash."
 msgstr ""
 
-#: inc/volunteer-cpt.php:60
+#: inc/volunteer-cpt.php:95
 msgid "Volunteers"
 msgstr ""
 
-#: inc/volunteer-cpt.php:103
+#: inc/volunteer-cpt.php:138
 msgid "Awaiting verification"
 msgstr ""
 
-#: inc/volunteer-cpt.php:104
+#: inc/volunteer-cpt.php:139
+msgid "Required"
+msgstr ""
+
+#: inc/volunteer-cpt.php:140
 msgid "Last shift"
 msgstr ""
 

@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.11.1
+Stable tag: 0.12.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,6 +32,7 @@ This plugin keeps the hours, lets staff attest to them, and prints the letter.
 * Gives every letter a reference code you can read back to anyone who phones to check it — and a screen that tells you whether it still matches your records.
 * Logs every letter issued, printing included.
 * Optionally lets volunteers send in their own hours from a page on your site. Off until you switch it on; everything sent arrives unverified and waits for staff.
+* Tracks how many hours somebody working off court-ordered or school-required service still has to complete, and by when. For your planning only — it never appears on a letter.
 * Lets you decide how long records are kept, and supports WordPress's own Export and Erase Personal Data tools.
 
 = What it deliberately does not do =
@@ -80,6 +81,12 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 4. Checking a reference code somebody has phoned in about.
 
 == Changelog ==
+
+= 0.12.0 =
+* Record how many hours somebody has to complete, by when, and who requires it — for people working off court-ordered or school-required service. Their record and the volunteer list show how far along they are and how long they have left.
+* Only verified hours count towards it. Hours still waiting to be verified are shown next to it rather than added in, so "four short with six unverified" is visible as the ten-second problem it is.
+* None of it ever appears on a letter, and there is no setting that puts it there. How many hours a court ordered is a fact about the court's document, not about anything your organization observed — and stating its terms back to the court is not something this plugin will help you do.
+* Anonymizing a record removes the requirement along with the name. The hours stay; "120 hours required by a named court" does not stop identifying an event just because the name above it is gone.
 
 = 0.11.1 =
 * Help tabs on the Schedule screen, on a single shift, and on Log a day when it is opened from one — what a shift is and is not, why hours cannot be logged before it has ended, and why the public page never shows who is coming.
@@ -176,6 +183,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.12.0 =
+Adds hours-required tracking for mandated volunteers. Nothing changes for anybody without a requirement recorded, and letters and reference codes are unaffected.
 
 = 0.11.1 =
 Help text for the scheduling screens. No functional changes.

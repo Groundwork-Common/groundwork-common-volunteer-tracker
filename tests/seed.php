@@ -219,6 +219,12 @@ gwcvt_settings_cache( null, true );
 // Working off a court order, most of the way through. The letter case.
 $gwcvt_marcus = gwcvt_seed_volunteer( 'Marcus Delacroix', 'marcus@example.test', '(555) 0177' );
 
+/* Forty hours ordered, nearly done, three weeks to go. The state the whole
+ * hours-required feature exists for, and the one worth having on screen. */
+update_post_meta( $gwcvt_marcus, GWCVT_VOLUNTEER_REQUIRED, 40 * 60 );
+update_post_meta( $gwcvt_marcus, GWCVT_VOLUNTEER_REQUIRED_BY, gmdate( 'Y-m-d', strtotime( gwcvt_today() . ' +21 days' ) ) );
+update_post_meta( $gwcvt_marcus, GWCVT_VOLUNTEER_REQUIRED_FOR, 'Franklin County Municipal Court' );
+
 foreach (
 	array(
 		array( '2026-05-02', '3:30', 'Sorting the produce delivery' ),
@@ -244,6 +250,12 @@ gwcvt_seed_entry( $gwcvt_priya, '2026-08-01', '3:15', 'Packing weekend boxes', f
 
 // Brand new. Nothing verified yet — the triage case.
 $gwcvt_tomas = gwcvt_seed_volunteer( 'Tomás Beaulieu', 'tomas@example.test' );
+
+/* Past their deadline and still short — the other state worth looking at, and
+ * the one a coordinator most needs to spot from the list. */
+update_post_meta( $gwcvt_tomas, GWCVT_VOLUNTEER_REQUIRED, 30 * 60 );
+update_post_meta( $gwcvt_tomas, GWCVT_VOLUNTEER_REQUIRED_BY, gmdate( 'Y-m-d', strtotime( gwcvt_today() . ' -9 days' ) ) );
+update_post_meta( $gwcvt_tomas, GWCVT_VOLUNTEER_REQUIRED_FOR, 'Riverbend High School' );
 
 gwcvt_seed_entry( $gwcvt_tomas, '2026-07-25', '4', 'Sorting the produce delivery', false );
 gwcvt_seed_entry( $gwcvt_tomas, '2026-08-01', '3:30', 'Warehouse inventory', false );
@@ -474,9 +486,9 @@ if ( $gwcvt_letter instanceof GWCVT_Letter ) {
 echo "\nRiverbend Food Bank is seeded.\n\n";
 
 printf( "  %-22s %s\n", 'Volunteers', '6' );
-printf( "  %-22s %s\n", 'Marcus Delacroix', gwcvt_format_hours( gwcvt_compute_totals( $gwcvt_marcus )->verified_minutes ) . ' h verified — ready for a letter' );
+printf( "  %-22s %s\n", 'Marcus Delacroix', gwcvt_format_hours( gwcvt_compute_totals( $gwcvt_marcus )->verified_minutes ) . ' h verified — ready for a letter, ' . gwcvt_requirement_label( $gwcvt_marcus ) . ' court-ordered' );
 printf( "  %-22s %s\n", 'Priya Ramanathan', 'a mix of verified and waiting' );
-printf( "  %-22s %s\n", 'Tomás Beaulieu', 'nothing verified yet' );
+printf( "  %-22s %s\n", 'Tomás Beaulieu', 'nothing verified yet — ' . gwcvt_requirement_label( $gwcvt_tomas ) . ', ' . strtolower( gwcvt_requirement_deadline_label( $gwcvt_tomas ) ) );
 printf( "  %-22s %s\n", 'Fatima Sørensen', 'verified, but no email — print only' );
 printf( "  %-22s %s\n", 'Inès Okonkwo', 'dormant since 2023 — due under the 2-year policy' );
 printf( "  %-22s %s\n", 'Wendell Achebe', 'dormant, but on a retention hold' );

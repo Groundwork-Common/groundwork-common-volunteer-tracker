@@ -228,6 +228,17 @@ function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
 	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_EMAIL );
 	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_PHONE );
 
+	/* The requirement goes too, and it is the most important thing in this list.
+	 * The hours survive anonymisation because they are the organisation's own
+	 * service record and identify nobody once the name is gone — but "120 hours
+	 * required by 15 November for Franklin County Municipal Court" says that a
+	 * person was under a court order, names the court, and dates it. That is a
+	 * disclosure about a real event, and it does not stop being one because the
+	 * name above it has been removed. */
+	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED );
+	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_BY );
+	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_FOR );
+
 	/* The claimed name and email on any self-logged entry are personal data too,
 	 * and they sit on the ENTRY rather than the volunteer — so anonymising only
 	 * the volunteer record would leave the name behind on every shift somebody
@@ -559,6 +570,18 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 				array(
 					'name'  => __( 'Hours awaiting verification', 'groundwork-common-volunteer-tracker' ),
 					'value' => gwcvt_format_hours( $totals->pending_minutes ),
+				),
+				array(
+					'name'  => __( 'Hours they are required to complete', 'groundwork-common-volunteer-tracker' ),
+					'value' => gwcvt_has_requirement( $volunteer_id ) ? gwcvt_format_hours( gwcvt_required_minutes( $volunteer_id ) ) : '',
+				),
+				array(
+					'name'  => __( 'Required by', 'groundwork-common-volunteer-tracker' ),
+					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_BY, true ),
+				),
+				array(
+					'name'  => __( 'Who requires it', 'groundwork-common-volunteer-tracker' ),
+					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_FOR, true ),
 				),
 			),
 		);

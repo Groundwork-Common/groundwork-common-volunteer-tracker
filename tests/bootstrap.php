@@ -571,6 +571,7 @@ require GWCVT_DIR . 'inc/ics.php';
 require GWCVT_DIR . 'inc/schedule-emails.php';
 require GWCVT_DIR . 'inc/schedule-cron.php';
 require GWCVT_DIR . 'inc/entries.php';
+require GWCVT_DIR . 'inc/required.php';
 require GWCVT_DIR . 'inc/verify.php';
 require GWCVT_DIR . 'inc/letter-cpt.php';
 require GWCVT_DIR . 'inc/letter.php';
