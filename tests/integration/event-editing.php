@@ -169,10 +169,63 @@ function gwcvt_ed_slot( int $id, string $date, string $start, string $end, array
 add_filter( 'pre_wp_mail', 'gwcvt_ed_catch_mail', 10, 2 );
 add_filter( 'wp_redirect', 'gwcvt_ed_catch_redirect', 1 );
 
+
+/* ── The site's own settings are borrowed, never replaced ────────────────────
+ * This script needs scheduling switched on. It used to get there by writing a
+ * three-key settings array over whatever the site had, and putting the original
+ * back at the end — which is fine until the script fails in the middle, and
+ * then the site is left with three keys and a coordinator wondering why
+ * scheduling turned itself off.
+ *
+ * Two changes. The overrides are MERGED over what is already stored, so even a
+ * restore that never happens leaves every other setting intact. And the restore
+ * is registered on shutdown, so it runs whether this script finishes, fails an
+ * assertion, or fatals.
+ *
+ * The plugin's own notes name this: an integration script that wiped the site's
+ * entire configuration on every run, invisible while the site was empty.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 $GLOBALS['gwcvt_settings_before'] = get_option( GWCVT_SETTINGS_OPTION );
 
-update_option( GWCVT_SETTINGS_OPTION, array( 'shifts_enabled' => true, 'signup_enabled' => true, 'schedule_page' => 1 ) );
-gwcvt_settings_cache( null, true );
+/**
+ * Put the site's settings back exactly as they were found.
+ */
+function gwcvt_restore_settings(): void {
+	if ( ! array_key_exists( 'gwcvt_settings_before', $GLOBALS ) ) {
+		return;
+	}
+
+	if ( false === $GLOBALS['gwcvt_settings_before'] ) {
+		delete_option( GWCVT_SETTINGS_OPTION );
+	} else {
+		update_option( GWCVT_SETTINGS_OPTION, $GLOBALS['gwcvt_settings_before'] );
+	}
+
+	unset( $GLOBALS['gwcvt_settings_before'] );
+
+	if ( function_exists( 'gwcvt_settings_cache' ) ) {
+		gwcvt_settings_cache( null, true );
+	}
+}
+
+register_shutdown_function( 'gwcvt_restore_settings' );
+
+/**
+ * Switch on what this script needs, keeping everything else.
+ *
+ * @param array $overrides Settings to lay over the site's own.
+ */
+function gwcvt_borrow_settings( array $overrides ): void {
+	update_option(
+		GWCVT_SETTINGS_OPTION,
+		array_merge( (array) get_option( GWCVT_SETTINGS_OPTION, array() ), $overrides )
+	);
+
+	gwcvt_settings_cache( null, true );
+}
+
+gwcvt_borrow_settings( array( 'shifts_enabled' => true, 'signup_enabled' => true, 'schedule_page' => 1 ) );
 
 $gwcvt_admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
 wp_set_current_user( $gwcvt_admins ? (int) $gwcvt_admins[0]->ID : 1 );
@@ -468,12 +521,6 @@ foreach ( gwcvt_event_slot_ids( $gwcvt_event, array( 'publish', 'draft', GWCVT_S
 wp_delete_post( (int) $gwcvt_vol, true );
 wp_delete_post( (int) $gwcvt_event, true );
 
-if ( false === $GLOBALS['gwcvt_settings_before'] ) {
-	delete_option( GWCVT_SETTINGS_OPTION );
-} else {
-	update_option( GWCVT_SETTINGS_OPTION, $GLOBALS['gwcvt_settings_before'] );
-}
-
-gwcvt_settings_cache( null, true );
+/* Settings are put back by the shutdown handler registered above. */
 
 echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? 'ALL PASS' : $GLOBALS['gwcvt_failures'] . ' FAILED' ), "\n";
