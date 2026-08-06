@@ -339,31 +339,6 @@ function gwcvt_event_clashes( int $event_id ): array {
 	return $clashes;
 }
 
-/**
- * What makes two signups the same person, for the purpose of spotting a clash.
- *
- * A matched volunteer answers by record. An unmatched one answers by the address
- * they typed, which is the only handle there is — and it is deliberately not
- * used to look anything up, only to group rows already on this screen.
- *
- * Returns '' when there is neither, so a signup with no handle is never grouped
- * with another one that also has none.
- *
- * @param int $signup_id Signup post ID.
- * @return string
- */
-function gwcvt_signup_person_key( int $signup_id ): string {
-	$volunteer_id = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true );
-
-	if ( $volunteer_id > 0 ) {
-		return 'v' . $volunteer_id;
-	}
-
-	$email = (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_EMAIL, true );
-
-	return '' !== $email ? 'e' . strtolower( $email ) : '';
-}
-
 /* ── Handlers ────────────────────────────────────────────────────────────── */
 
 /**

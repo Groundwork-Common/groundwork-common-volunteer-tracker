@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.13.0
+Stable tag: 0.14.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,17 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 4. Checking a reference code somebody has phoned in about.
 
 == Changelog ==
+
+= 0.14.0 =
+* Events: one occasion with several roles, each offered at several times, each with its own numbers. A festival, a meal service, a collection drive.
+* Build the day as a grid — name a role once and hang its times underneath it. The role's supervisor, address and "what to know" are typed once and carried down to every time in it.
+* Volunteers pick more than one time in a single go, and get one email listing all of them, each with its own calendar link and its own cancel link.
+* The reminder lists the whole day rather than sending one message per time, and says plainly that dropping one leaves the others alone.
+* Ticking two times that overlap asks whether you meant it, rather than quietly booking you twice.
+* Removing a time from the grid cancels it when people are on it and deletes it only when nobody is — and the row tells you which before you save.
+* Print one sheet for the clipboard, split by role and time, with the waiting list on it.
+* Give somebody on the waiting list a place by hand, for when you know the person who has not answered is not coming.
+* Copy an event onto a new date, roles and times and all, as a draft.
 
 = 0.13.0 =
 * A dashboard: the screen you land on. What is waiting for you, the next few shifts, what the year adds up to, and a map of everywhere else.
@@ -198,6 +209,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.14.0 =
+Adds events — one occasion with several roles at several times. Existing shifts, signups and letters are untouched.
 
 = 0.13.0 =
 Adds a dashboard as the first screen under Volunteer Hours. Nothing else changes.

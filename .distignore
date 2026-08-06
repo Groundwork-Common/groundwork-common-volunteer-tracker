@@ -10,6 +10,7 @@
 .wp-env.php74.json
 .wp-env.ci.json
 .dev
+.design
 .phpunit.cache
 .phpunit.result.cache
 phpunit.xml.dist

@@ -54,12 +54,19 @@ function gwcvt_signup_dispatch(): void {
 	$is_signup = isset( $_POST['gwcvt_signup_submit'] );
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
 	$is_cancel = isset( $_POST['gwcvt_cancel_submit'] );
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
+	$is_event = isset( $_POST['gwcvt_event_submit'] );
 
-	if ( ! $is_signup && ! $is_cancel ) {
+	if ( ! $is_signup && ! $is_cancel && ! $is_event ) {
 		return;
 	}
 
-	if ( ! is_page( (int) gwcvt_setting( 'schedule_page' ) ) ) {
+	/* Still a gate, and it now has two keys. An event grid lives on whatever page
+	 * the site put the block on, so the pinned schedule page is no longer the
+	 * only place a submission can legitimately arrive from. What has NOT changed
+	 * is that a handler must never run where no form was rendered — that would be
+	 * accepting posts to a feature the site has not put anywhere. */
+	if ( ! gwcvt_signup_page_allows_posts() ) {
 		return;
 	}
 
@@ -77,7 +84,39 @@ function gwcvt_signup_dispatch(): void {
 		return;
 	}
 
+	if ( $is_event ) {
+		gwcvt_handle_public_event_signup();
+		return;
+	}
+
 	gwcvt_handle_public_signup();
+}
+
+/**
+ * May this request carry a signup at all?
+ *
+ * The pinned schedule page, or any page whose content places an event grid. A
+ * post to anywhere else is refused before a nonce is even looked at.
+ *
+ * @return bool
+ */
+function gwcvt_signup_page_allows_posts(): bool {
+	if ( is_page( (int) gwcvt_setting( 'schedule_page' ) ) ) {
+		return true;
+	}
+
+	if ( ! is_singular() ) {
+		return false;
+	}
+
+	$post = get_post();
+
+	if ( ! $post instanceof WP_Post ) {
+		return false;
+	}
+
+	return has_shortcode( (string) $post->post_content, 'volunteer_event' )
+		|| has_block( 'groundwork-common-volunteer-tracker/event-grid', $post );
 }
 
 /**
@@ -182,6 +221,188 @@ function gwcvt_handle_public_signup(): void {
 	}
 
 	gwcvt_signup_result( 'accepted', $started );
+}
+
+/* ── One submission, several slots ───────────────────────────────────────────
+ * The dangerous one, and the danger is entirely in what it says back.
+ *
+ * gwcvt_add_signup() is idempotent — a second signup for the same slot by the
+ * same address refreshes the first rather than making another — and this form
+ * never checks whose address it was given. So a stranger can type somebody
+ * else's address and tick three boxes. Three new signups, two new and one
+ * refresh, or three refreshes: IF THE RESPONSE TELLS THOSE APART, they have
+ * learned which of those slots that person was already on, without ever being
+ * told a name. On a site running court-ordered service that is a disclosure
+ * about a named person, obtained by somebody who supplied nothing but a guess.
+ *
+ * So the leak is a count of WHAT THE WRITE DID. A count of what was ticked would
+ * in fact be safe — it reports only what the sender already posted, and a
+ * honeypot hit could produce it too. The rule bans all of them anyway, because
+ * "the response carries no number" is one assertion a test can hold, and "only
+ * numbers derived from the request" is a rule the next friendly copy edit will
+ * break. Write it down or somebody competent decides the rule is superstition.
+ *
+ * ── Why the clash check runs before the honeypot ─────────────────────────────
+ * Both slots are in the POST, so the check reads only what the sender ticked and
+ * the times already printed on the page. Running it FIRST means every path gives
+ * the same answer to the same POST — otherwise a bot filling the honeypot would
+ * get 'accepted' where a clean clashing submission got a warning, and the
+ * difference between those two answers is a honeypot detector.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Read, check and record one submission covering several slots.
+ */
+function gwcvt_handle_public_event_signup(): void {
+	$started = microtime( true );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
+	$nonce = isset( $_POST['gwcvt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_signup_nonce'] ) ) : '';
+
+	if ( ! wp_verify_nonce( $nonce, 'gwcvt_signup' ) ) {
+		gwcvt_signup_result( 'expired', $started );
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
+	$posted = wp_unslash( $_POST );
+
+	$event_id = absint( $posted['gwcvt_event'] ?? 0 );
+	$wanted   = array_map( 'absint', array_keys( (array) ( $posted['gwcvt_slots'] ?? array() ) ) );
+	$wanted   = array_values( array_filter( array_unique( $wanted ) ) );
+
+	/* Kept so the form can be handed back with every tick still in place. A
+	 * visitor who has to answer a question should not have to re-do the grid. */
+	$GLOBALS['gwcvt_signup_picked'] = $wanted;
+	$GLOBALS['gwcvt_signup_name']   = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_name'] ?? '' ) ), 0, 100 );
+	$GLOBALS['gwcvt_signup_email']  = sanitize_email( (string) ( $posted['gwcvt_email'] ?? '' ) );
+
+	if ( GWCVT_EVENT_TYPE !== get_post_type( $event_id ) || 'publish' !== get_post_status( $event_id ) ) {
+		gwcvt_signup_result( 'unavailable', $started );
+		return;
+	}
+
+	/* A cap on one submission. Safe to report because it depends only on what the
+	 * visitor posted, not on anything the site knows about them. */
+	if ( count( $wanted ) > gwcvt_event_signup_limit() ) {
+		gwcvt_signup_result( 'too-many', $started );
+		return;
+	}
+
+	/* Only slots belonging to THIS event, so a crafted post cannot reach across
+	 * to another event's grid or to a standalone shift. */
+	$mine = array();
+
+	foreach ( $wanted as $shift_id ) {
+		if ( gwcvt_event_for_shift( $shift_id ) === $event_id ) {
+			$mine[] = $shift_id;
+		}
+	}
+
+	if ( ! $mine || '' === $GLOBALS['gwcvt_signup_name'] || '' === $GLOBALS['gwcvt_signup_email'] || ! is_email( $GLOBALS['gwcvt_signup_email'] ) ) {
+		gwcvt_signup_result( 'incomplete', $started );
+		return;
+	}
+
+	if ( empty( $posted['gwcvt_clash_ok'] ) ) {
+		$pair = gwcvt_first_overlapping_pair( $mine );
+
+		if ( $pair ) {
+			$GLOBALS['gwcvt_signup_clash'] = $pair;
+			gwcvt_signup_result( 'clash', $started );
+			return;
+		}
+	}
+
+	/* The honeypot. Everything above this line is derived from the request;
+	 * everything below it can depend on the database. */
+	if ( '' !== trim( (string) ( $posted['gwcvt_website'] ?? '' ) ) ) {
+		gwcvt_signup_result( 'accepted', $started );
+		return;
+	}
+
+	$age = gwcvt_form_age( (string) ( $posted['gwcvt_t'] ?? '' ) );
+
+	if ( null === $age || $age > GWCVT_FORM_MAX_AGE ) {
+		gwcvt_signup_result( 'expired', $started );
+		return;
+	}
+
+	if ( $age < GWCVT_FORM_MIN_AGE ) {
+		gwcvt_signup_result( 'accepted', $started );
+		return;
+	}
+
+	$code = (string) gwcvt_setting( 'signup_code' );
+
+	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwcvt_code'] ?? '' ) ) ) ) {
+		gwcvt_signup_result( 'bad-code', $started );
+		return;
+	}
+
+	$open = array();
+
+	foreach ( $mine as $shift_id ) {
+		if ( gwcvt_shift_is_signup_visible( $shift_id ) ) {
+			$open[] = $shift_id;
+		}
+	}
+
+	/* Any slot that closed between the page rendering and the button being
+	 * pressed sends them back to the refreshed grid — with no count, and without
+	 * saying which. Their list was out of date; enumerating why would answer
+	 * questions about slots they cannot see. */
+	if ( count( $open ) !== count( $mine ) ) {
+		gwcvt_signup_result( 'unavailable', $started );
+		return;
+	}
+
+	/* Counted once. It is one person pressing one button, whatever they ticked —
+	 * and counted before it is reported, so a refused attempt still counts. */
+	if ( gwcvt_rate_limited( gwcvt_client_ip(), $GLOBALS['gwcvt_signup_email'] ) ) {
+		gwcvt_signup_result( 'accepted', $started );
+		return;
+	}
+
+	$made = array();
+
+	foreach ( $open as $shift_id ) {
+		$signup_id = gwcvt_add_signup(
+			$shift_id,
+			array(
+				'claim_name'  => $GLOBALS['gwcvt_signup_name'],
+				'claim_email' => $GLOBALS['gwcvt_signup_email'],
+				'source'      => 'self',
+			)
+		);
+
+		if ( $signup_id > 0 ) {
+			$made[] = $signup_id;
+		}
+	}
+
+	if ( $made ) {
+		gwcvt_queue_event_confirmation( $event_id, $made );
+	}
+
+	/* Every slot accepted, one slot accepted, a honeypot hit and a rate-limited
+	 * attempt all end here, on the same string. */
+	$GLOBALS['gwcvt_signup_picked'] = array();
+	gwcvt_signup_result( 'accepted', $started );
+}
+
+/**
+ * How many slots one submission may take.
+ *
+ * @return int
+ */
+function gwcvt_event_signup_limit(): int {
+	/**
+	 * The most slots one person may take in a single submission.
+	 *
+	 * @param int $limit Generous for any real event.
+	 */
+	return max( 1, (int) apply_filters( 'gwcvt_event_signup_limit', 20 ) );
 }
 
 /**
@@ -354,6 +575,14 @@ function gwcvt_signup_message( string $result ): string {
 		'expired'        => __( 'This page had been open too long to submit safely. Please try again.', 'groundwork-common-volunteer-tracker' ),
 		'cancelled'      => __( 'You have been taken off that shift. Thank you for letting us know.', 'groundwork-common-volunteer-tracker' ),
 		'cancel-unknown' => __( 'That link is no longer valid. It may have already been used, or the shift may have changed. Please get in touch if you need to cancel.', 'groundwork-common-volunteer-tracker' ),
+
+		/* Both of these are safe to say because both depend only on what the
+		 * visitor just posted — how many boxes they ticked, and whether two of
+		 * those boxes are at the same time. Neither reports anything the site
+		 * knows about the address they typed. Nothing else may be added here
+		 * without that being true of it as well. */
+		'too-many'       => __( 'That is more times than we can take in one go. Please pick a few, send them, and come back for the rest.', 'groundwork-common-volunteer-tracker' ),
+		'clash'          => __( 'Two of the times you picked are at the same time as each other. Most people who do this meant to pick one of them — change it below, or tick the box to say you meant both.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	return $messages[ $result ] ?? '';

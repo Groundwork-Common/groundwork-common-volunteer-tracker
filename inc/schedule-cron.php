@@ -79,6 +79,7 @@ function gwcvt_run_reminders(): int {
 	$lead = max( 1, (int) gwcvt_setting( 'reminder_lead_hours' ) ) * HOUR_IN_SECONDS;
 	$now  = time();
 	$sent = 0;
+	$due  = array();
 
 	/* A window in dates to get the candidate shifts out of the database, then an
 	 * exact comparison on instants to decide. The date range is deliberately
@@ -94,10 +95,6 @@ function gwcvt_run_reminders(): int {
 	);
 
 	foreach ( $shifts as $shift_id ) {
-		if ( $sent >= GWCVT_REMINDER_BATCH ) {
-			break;
-		}
-
 		$starts = gwcvt_shift_starts( $shift_id );
 
 		if ( null === $starts ) {
@@ -116,28 +113,115 @@ function gwcvt_run_reminders(): int {
 		/* The roster only. Somebody on the waiting list has no place, and telling
 		 * them to turn up on Saturday would be telling them something untrue. */
 		foreach ( gwcvt_shift_signup_ids( $shift_id ) as $signup_id ) {
-			if ( $sent >= GWCVT_REMINDER_BATCH ) {
-				break;
-			}
-
 			if ( '' !== (string) get_post_meta( $signup_id, GWCVT_SIGNUP_REMINDED, true ) ) {
 				continue;
 			}
 
-			/* Stamped before the send, not after. wp_mail() returning false does
-			 * not mean nothing was delivered — a message can be accepted by the
-			 * MTA and still report an error here — and the failure worth avoiding
-			 * is an hourly pass that reminds the same person every hour forever
-			 * because delivery keeps reporting failure. */
-			update_post_meta( $signup_id, GWCVT_SIGNUP_REMINDED, current_time( 'mysql', true ) );
-
-			gwcvt_send_shift_reminder( (int) $signup_id );
-
-			++$sent;
+			$due[] = (int) $signup_id;
 		}
 	}
 
+	foreach ( gwcvt_group_due_reminders( $due ) as $group ) {
+		if ( $sent >= GWCVT_REMINDER_BATCH ) {
+			break;
+		}
+
+		/* Stamped before the send, not after, and stamped on EVERY slot this
+		 * message is about to name. wp_mail() returning false does not mean
+		 * nothing was delivered — a message can be accepted by the MTA and still
+		 * report an error here — and the failure worth avoiding is an hourly pass
+		 * that reminds the same person every hour forever. */
+		foreach ( $group['signups'] as $signup_id ) {
+			update_post_meta( $signup_id, GWCVT_SIGNUP_REMINDED, current_time( 'mysql', true ) );
+		}
+
+		if ( $group['event'] > 0 && count( $group['signups'] ) > 1 ) {
+			gwcvt_send_event_reminder( $group['event'], $group['signups'] );
+		} else {
+			gwcvt_send_shift_reminder( (int) $group['signups'][0] );
+		}
+
+		++$sent;
+	}
+
 	return $sent;
+}
+
+/* ── What keeps the pass idempotent once it groups ───────────────────────────
+ * Not one flag per email — that framing is what made grouping look impossible.
+ * The invariant that matters is:
+ *
+ *   A SLOT'S FLAG IS SET IF AND ONLY IF THAT SLOT WAS NAMED IN A MESSAGE THAT
+ *   WAS SENT.
+ *
+ * Mark every slot you are about to mention, before sending, then send once.
+ *
+ * Which settles multi-day events: only slots already inside the reminder window
+ * are gathered above, so only those are named and only those are marked. A
+ * festival's Sunday slots keep their own flags and get their own message when
+ * they come due.
+ *
+ * Name a slot without marking it and it is reminded about twice. Mark one
+ * without naming it and it is NEVER reminded about — and that failure is silent,
+ * which is why tests/integration/events.php asserts it directly.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Gather due signups into the messages that will carry them.
+ *
+ * One group per person per event; standalone shifts stay one group each.
+ *
+ * @param int[] $signup_ids Signups owed a reminder.
+ * @return array<int, array{event: int, signups: int[]}>
+ */
+function gwcvt_group_due_reminders( array $signup_ids ): array {
+	$groups = array();
+
+	foreach ( $signup_ids as $signup_id ) {
+		$signup_id = (int) $signup_id;
+		$shift_id  = (int) get_post_field( 'post_parent', $signup_id );
+		$event_id  = gwcvt_event_for_shift( $shift_id );
+
+		/* A standalone shift is its own group, keyed by the signup, so nothing
+		 * about the existing single-shift path changes. */
+		if ( $event_id < 1 ) {
+			$groups[ 's' . $signup_id ] = array(
+				'event'   => 0,
+				'signups' => array( $signup_id ),
+			);
+			continue;
+		}
+
+		$person = gwcvt_signup_person_key( $signup_id );
+
+		/* No handle to group by — no volunteer record and no address on file. It
+		 * gets its own message rather than being lumped in with every other
+		 * anonymous row, which would mail one person about somebody else's slots. */
+		$key = '' !== $person ? 'e' . $event_id . '|' . $person : 'x' . $signup_id;
+
+		if ( ! isset( $groups[ $key ] ) ) {
+			$groups[ $key ] = array(
+				'event'   => $event_id,
+				'signups' => array(),
+			);
+		}
+
+		$groups[ $key ]['signups'][] = $signup_id;
+	}
+
+	foreach ( $groups as $key => $group ) {
+		usort(
+			$groups[ $key ]['signups'],
+			static function ( int $a, int $b ) {
+				return gwcvt_compare_slots(
+					(int) get_post_field( 'post_parent', $a ),
+					(int) get_post_field( 'post_parent', $b )
+				);
+			}
+		);
+	}
+
+	return array_values( $groups );
 }
 
 /* ── The coordinator's daily summary ─────────────────────────────────────────

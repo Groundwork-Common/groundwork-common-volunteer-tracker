@@ -23,7 +23,7 @@ This has been asked for and refused:
 
 ## The shape of the code
 
-Procedural PHP, prefix `gwcvt_`, 31 files in `inc/`, required from the bootstrap
+Procedural PHP, prefix `gwcvt_`, one file per concern in `inc/`, required from the bootstrap
 with `function_exists()` guards in a documented order. Several are genuine
 load-time dependencies — **do not reorder without reading the block comments.**
 

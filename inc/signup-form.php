@@ -278,10 +278,41 @@ function gwcvt_render_signup_manage(): string {
 				<input type="hidden" name="gwcvt_k" value="<?php echo esc_attr( $token ); ?>" />
 
 				<p><?php esc_html_e( 'Cannot make it any more?', 'groundwork-common-volunteer-tracker' ); ?></p>
+
+				<?php if ( gwcvt_event_for_shift( $shift_id ) > 0 ) : ?>
+					<?php
+					/* Said before the button, not after it. A token authorises one
+					 * slot and no more — widening it to everything this address
+					 * holds would mean a lookup keyed on an email address, and a
+					 * forwarded confirmation would then disclose the lot. The cost
+					 * of that narrowness is that somebody holding three places
+					 * cannot tell what this button will do, so it is spelled out. */
+					?>
+					<p class="gwcvt-shifts__help">
+						<?php esc_html_e( 'This takes you off this one only. Anything else you signed up for stays as it is — each has its own link in your confirmation email.', 'groundwork-common-volunteer-tracker' ); ?>
+					</p>
+				<?php endif; ?>
+
 				<button type="submit" name="gwcvt_cancel_submit" value="1" class="gwcvt-shifts__button gwcvt-shifts__button--quiet">
 					<?php esc_html_e( 'Cancel my place', 'groundwork-common-volunteer-tracker' ); ?>
 				</button>
 			</form>
+		<?php endif; ?>
+
+		<?php
+		/* A way back, because cancelling was otherwise a dead end: somebody who
+		 * picked the wrong time had nowhere to go. Both destinations are already
+		 * public, so this discloses nothing — it just saves them hunting for the
+		 * page they came from. */
+		$back = gwcvt_signup_return_url( $signup_id );
+
+		if ( '' !== $back ) :
+			?>
+			<p class="gwcvt-shifts__back">
+				<a href="<?php echo esc_url( $back ); ?>">
+					<?php esc_html_e( 'See the other times', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+			</p>
 		<?php endif; ?>
 	</div>
 	<?php

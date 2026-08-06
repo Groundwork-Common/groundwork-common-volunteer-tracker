@@ -12,8 +12,21 @@ const GWCVT_EVENT_TYPE = 'gwcvt_event';
 /* Called off, as a status rather than a meta flag, for the same reason a shift's
  * is: post_status is where this plugin keeps lifecycle. A cancelled event is
  * kept rather than trashed — people signed up for it, and "this was called off"
- * is an answer the organisation owes them. */
-const GWCVT_EVENT_CANCELLED = 'gwcvt_event_cancelled';
+ * is an answer the organisation owes them.
+ *
+ * ── The name is short because wp_posts.post_status is varchar(20) ────────────
+ * This was 'gwcvt_event_cancelled' first, which is twenty-one characters. The
+ * column takes twenty. WordPress does not error, does not truncate and does not
+ * warn: wp_insert_post() sanitises a status it cannot store and the row keeps
+ * the one it already had.
+ *
+ * So "Call it off" reported success, the event stayed published, and it went on
+ * taking signups. Nothing on any screen said otherwise. tests/integration/
+ * events.php asserts a cancelled event reads back as cancelled for exactly this
+ * reason — the unit suite never touches a database and could not have caught it.
+ *
+ * Anything added here has to fit in twenty characters. Count them. */
+const GWCVT_EVENT_CANCELLED = 'gwcvt_ev_cancelled';
 
 /* Event meta. Constants for the same reason the shift's are: the schedule
  * screen, the editor, the public grid and the emails all read these, and a typo

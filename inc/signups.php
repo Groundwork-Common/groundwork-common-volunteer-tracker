@@ -335,6 +335,42 @@ function gwcvt_attach_signup( int $signup_id, int $volunteer_id ): bool {
 	return true;
 }
 
+/**
+ * What makes two signups the same person, for the purpose of spotting a clash.
+ *
+ * A matched volunteer answers by record. An unmatched one answers by the address
+ * they typed, which is the only handle there is.
+ *
+ * ── This is not a lookup, and the difference is the whole point ──────────────
+ * It never queries anything. It turns ONE signup that the caller already holds
+ * into a string, so that a set of signups the caller already holds can be
+ * grouped. No code path asks "does this address belong to anybody", which is
+ * the question inc/self-log.php refuses to let the public form ask.
+ *
+ * It lives here rather than beside the roster screen that first needed it
+ * because the reminder pass groups by it too, and that pass runs on cron with
+ * no admin bundle loaded at all. A function the digest needs which only exists
+ * on admin requests is a fatal at three in the morning on a site nobody is
+ * watching.
+ *
+ * Returns '' when there is neither, so a signup with no handle is never grouped
+ * with another one that also has none.
+ *
+ * @param int $signup_id Signup post ID.
+ * @return string
+ */
+function gwcvt_signup_person_key( int $signup_id ): string {
+	$volunteer_id = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true );
+
+	if ( $volunteer_id > 0 ) {
+		return 'v' . $volunteer_id;
+	}
+
+	$email = (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_EMAIL, true );
+
+	return '' !== $email ? 'e' . strtolower( $email ) : '';
+}
+
 /* ── Finding somebody's signups ──────────────────────────────────────────────
  * Both of these exist for the privacy tools and the retention sweep, and the
  * first one is the reason they are needed at all: a signup made through the
