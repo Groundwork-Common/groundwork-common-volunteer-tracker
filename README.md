@@ -68,6 +68,7 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **The disclaimer is editable but cannot be emptied.** An organization's counsel may need particular wording; "no disclaimer" is not a wording choice, it is the plugin quietly starting to imply it certified something. An empty stored value reads as "use the default".
 - **Capabilities are granted on `init`, not on activation.** An activation hook runs once, and a site that loses them to a security plugin rebuilding roles or a restore from an old backup would need a deactivate/reactivate cycle to get them back.
 - **A capability set to `false` is left alone; one removed entirely is restored.** That is the isset() check in `gwcvt_grant_capabilities()`, and it is the only way to tell a deliberate revocation from a loss. See the note on the function.
+- **The admin menu is reordered once at the end, not registered in order.** Left alone it came out as All hours, Log hours, Volunteers, Settings, Letters, Log a day, Schedule — Settings fourth, in the middle of the working screens, because one file registers at the default priority and the screens added in later releases registered at 11, 12 and 13. Nobody chose that; it is the order the files load in. `add_submenu_page()`'s position argument looks like the fix and is not: positions are uncoordinated integers between plugins, WordPress ignores them for post type submenus, and two items claiming a slot resolve by float-key collision. Rewriting the array once, at priority 99, is the only method that says what it means.
 - **The colophon is collapsible, never dismissible,** and stores *when* it was collapsed rather than *that* it was — so thirty days falls out of a comparison instead of needing a scheduled event to clear a flag.
 - **No `load_plugin_textdomain()` call.** WordPress has loaded translations for directory-hosted plugins by itself since 4.6; calling it explicitly forces the `.mo` read on every request. `wp_set_script_translations()` is a different thing and is still needed.
 - **Translated lookup tables are functions with a static memo, never `const`.** A `const` is evaluated at include time, before the request's translation is loaded — invisible on an English site and total on every other one, and `_doing_it_wrong()` about it since 6.7.
@@ -109,6 +110,7 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwcvt_post_type_args` | filter | `register_post_type()` arguments for hour entries. |
 | `gwcvt_volunteer_post_type_args` | filter | `register_post_type()` arguments for volunteers. |
 | `gwcvt_admin_tabs` | filter | The settings screen's tabs, keyed by slug. |
+| `gwcvt_menu_order` | filter | The order of the Volunteer Hours submenu, by slug. |
 | `gwcvt_entry_saved` | action | After an hour entry is saved from the admin. |
 | `gwcvt_settings_screen_loaded` | action | When the settings screen loads, before output. |
 | `gwcvt_render_tab_<slug>` | action | Render the body of one settings tab. |
