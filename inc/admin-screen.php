@@ -65,22 +65,29 @@ add_action( 'admin_menu', 'gwcvt_order_menu', 99 );
  * @return string[]
  */
 function gwcvt_menu_order(): array {
+	/* ── The order is a volunteer's life, not a screen's importance ───────────
+	 * What is coming, then who is coming, then what they did, then writing it
+	 * up, then what gets produced for them. It reads forwards.
+	 *
+	 * It puts the schedule above the hours list, which means the first item is
+	 * not what the top-level "Volunteer Hours" link opens — that still goes to
+	 * All hours. Worth knowing rather than worth avoiding: the top-level link
+	 * has a destination either way, and a menu ordered by when things happen is
+	 * easier to hold in your head than one ordered by which screen we thought
+	 * got opened most. */
 	$order = array(
-		/* The verify queue. First because it is the daily screen, and because
-		 * it is what the top-level menu item itself opens — a first submenu
-		 * that is not the parent's own target reads as a mis-click waiting to
-		 * happen. */
-		'edit.php?post_type=' . GWCVT_ENTRY_TYPE,
-
-		// Writing up what happened: the common way, then the single-entry way.
-		GWCVT_QUICK_ADD_PAGE,
-		'post-new.php?post_type=' . GWCVT_ENTRY_TYPE,
-
-		// The same job seen forwards.
+		// What is coming.
 		GWCVT_SCHEDULE_PAGE,
 
-		// Who the hours belong to.
+		// Who is coming, and what each of them still has to do.
 		'edit.php?post_type=' . GWCVT_VOLUNTEER_TYPE,
+
+		// What they did, and the queue of what nobody has attested to yet.
+		'edit.php?post_type=' . GWCVT_ENTRY_TYPE,
+
+		// Writing it up: the common way, then the single-entry way.
+		GWCVT_QUICK_ADD_PAGE,
+		'post-new.php?post_type=' . GWCVT_ENTRY_TYPE,
 
 		// What gets produced for them.
 		GWCVT_LETTERS_PAGE,
