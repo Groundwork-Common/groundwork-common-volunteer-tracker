@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.11.0
+Stable tag: 0.11.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,11 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 4. Checking a reference code somebody has phoned in about.
 
 == Changelog ==
+
+= 0.11.1 =
+* Help tabs on the Schedule screen, on a single shift, and on Log a day when it is opened from one — what a shift is and is not, why hours cannot be logged before it has ended, and why the public page never shows who is coming.
+* A Shifts tab in the settings help, covering the two switches and what the plugin will and will not send by itself.
+* Fixed: the privacy help listed what an export contains and had not been updated for shift signups.
 
 = 0.11.0 =
 * Reminders. One message per person per shift, a configurable time before it starts — the single biggest thing you can do about people forgetting. Sent once, never twice, and never to somebody on the waiting list who does not have a place.
@@ -171,6 +176,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.11.1 =
+Help text for the scheduling screens. No functional changes.
 
 = 0.11.0 =
 Adds shift reminders, cancellation and change notices, and an optional daily summary. All of it is off until you enable it under Settings → Shifts. Nothing changes for hours, letters or reference codes.

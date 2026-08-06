@@ -100,13 +100,25 @@ function gwcvt_add_settings_help(): void {
 
 	gwcvt_add_help_tab(
 		$screen,
+		'gwcvt-help-shifts',
+		__( 'Shifts', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Off until you switch it on. With it on, a Schedule screen appears where you can plan shifts ahead of time, put volunteers on them and print a roster. Nothing about it touches hours: a scheduled shift is a plan, and hours are still logged afterwards and still have to be verified.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Letting people sign up from your site is a second switch, because taking names on the phone and accepting them from strangers are different decisions. With it on, this site accepts a name and an email address from anonymous visitors, and the page it is on must be chosen here.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Reminders and the daily summary are the only mail this plugin sends without somebody pressing a button, and both are off until you turn them on. A confirmation when somebody signs up is not optional — a booking nobody can be told about is one they have no record of and no way out of.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The daily summary lists shifts in the next week that are short of people, and shifts that have happened without their hours being logged. Nothing is sent on a day when there is nothing to report.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_tab(
+		$screen,
 		'gwcvt-help-privacy',
 		__( 'Keeping and removing records', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Nothing is ever deleted while records are kept indefinitely, which is the default. That default is deliberate: a plugin that deleted on a schedule it chose would eventually destroy the weeks of Saturdays somebody needs for a court date they have not reached yet.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Anonymizing is usually the right action rather than deleting. Your grant reporting and your Form 990 need the hours; they do not need the name, and the hours identify nobody once it is gone.', 'groundwork-common-volunteer-tracker' ),
 			__( 'A volunteer’s record can be held back from the sweep individually, with a reason — for when a court requires you to keep something longer than your own policy. A hold also blocks an erasure request from WordPress’s privacy tools, and the reason you record is shown to whoever handles it.', 'groundwork-common-volunteer-tracker' ),
-			__( 'Requests under Tools → Export Personal Data and Erase Personal Data include volunteer records, shifts and issued letters. They work whether or not you have set a retention period.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Requests under Tools → Export Personal Data and Erase Personal Data include volunteer records, shifts, issued letters, and any shifts somebody signed up for — including a signup from a person who never became a volunteer, which nothing else in the plugin would find. They work whether or not you have set a retention period.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
@@ -142,9 +154,64 @@ function gwcvt_add_screen_help( $screen ): void {
 		return;
 	}
 
+	if ( false !== strpos( (string) $screen->id, GWCVT_SCHEDULE_PAGE ) ) {
+		gwcvt_add_schedule_help( $screen );
+		return;
+	}
+
 	if ( false !== strpos( (string) $screen->id, GWCVT_QUICK_ADD_PAGE ) ) {
 		gwcvt_add_quick_add_help( $screen );
 	}
+}
+
+/**
+ * The schedule, and the single-shift view that shares its page.
+ *
+ * No check on whether shifts are switched on: the screen is only registered
+ * when they are, so reaching this means they are.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwcvt_add_schedule_help( $screen ): void {
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-planning',
+		__( 'Planning shifts', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'A shift here is a plan, not a record. Nobody accrues hours by being on a shift — hours are logged afterwards, by somebody who was there, and still have to be verified like any others.', 'groundwork-common-volunteer-tracker' ),
+			__( 'A repeat creates real shifts, one per date, each of which you can edit or cancel on its own. Closing the Saturday after Thanksgiving does not disturb the rest of the season.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Times are the times you would write on a noticeboard. A nine o’clock shift is at nine o’clock all year, including the weekend the clocks change. For a shift that runs past midnight, tick <strong>ends the next day</strong> — an end time before the start is otherwise treated as a typo and refused.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The minimum is what flags a shift on this screen as short of people. The maximum is not a limit on who may sign up: once it is reached, later signups go on a waiting list rather than being turned away, and you decide what to do with them.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Cancelling and deleting are different things. A cancelled shift stays on the schedule marked as cancelled, so it is clear it was called off rather than never planned; deleting is only offered while nobody is signed up.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-roster',
+		__( 'Who is coming', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'You can put anybody on a shift yourself, which is how most offers of help at this size arrive — somebody rings up. They need a volunteer record first.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Taking somebody off records that they withdrew rather than removing them, so a glance at the shift shows that two people dropped instead of leaving you wondering. Whoever is next on the waiting list takes the free place straight away.', 'groundwork-common-volunteer-tracker' ),
+			__( '<strong>Print the roster</strong> gives you the sheet for the clipboard, with contact details and blank columns for in and out times, plus spare rows for people who turn up without having signed up.', 'groundwork-common-volunteer-tracker' ),
+			__( 'If you let people sign up from your own site, what they see is what each shift is and how many places are left — never who else is coming. There is no setting that changes that, because a roster can say more about the people on it than they agreed to make public.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Somebody who signs up from your site is not added to your volunteer records. Their name and email are stored as claims until a member of staff matches them, exactly as with hours sent through the public form.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-logging-a-shift',
+		__( 'Turning a shift into hours', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Once a shift has finished, <strong>Log the hours</strong> opens it with everybody who signed up already ticked and the hours it was scheduled for filled in. Untick whoever did not turn up, change the hours for anybody who left early, add the people who walked in, and save once.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Hours cannot be logged before a shift has ended. Recorded early they would be dated the day you typed them rather than the day they were worked, and that date is what a letter prints.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Nothing at all is recorded for somebody who did not come. There is no absence marked anywhere — the shift simply produces no hours for them.', 'groundwork-common-volunteer-tracker' ),
+			__( 'You can come back to a shift you have already logged to add somebody who was missed. Anybody who already has an entry is shown as logged and cannot be recorded twice.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_sidebar( $screen );
 }
 
 /**
@@ -247,6 +314,23 @@ function gwcvt_add_quick_add_help( $screen ): void {
 			__( 'Everything logged here arrives unverified, the same as any other entry. Use the link in the confirmation to go and verify the lot.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
+
+	/* The same screen behaves differently when it is opened from a shift, and
+	 * somebody who has never opened it that way has no reason to know it can be.
+	 * Only offered where it is true: on a site with shifts switched off, this
+	 * screen only ever has the blank-day form on it. */
+	if ( gwcvt_shifts_enabled() ) {
+		gwcvt_add_help_tab(
+			$screen,
+			'gwcvt-help-from-a-shift',
+			__( 'Logging from a shift', 'groundwork-common-volunteer-tracker' ),
+			array(
+				__( 'Opened from a shift on the schedule, this screen fills itself in: the date, the activity and the supervisor come from the shift, and everybody who signed up is already listed and ticked with the hours it was scheduled for.', 'groundwork-common-volunteer-tracker' ),
+				__( 'That leaves you the parts that actually differ — untick whoever did not turn up, trim anybody who left early, and use the blank rows at the bottom for people who came without signing up.', 'groundwork-common-volunteer-tracker' ),
+				__( 'Somebody who signed up through your site and has not been matched to a volunteer record yet is shown with a suggestion. Choosing who they are logs their hours and matches their signup at the same time.', 'groundwork-common-volunteer-tracker' ),
+			)
+		);
+	}
 
 	gwcvt_add_help_sidebar( $screen );
 }
