@@ -716,3 +716,467 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 		border-left-color: #f86368;
 	}
 }
+
+/* ─── The dashboard ─────────────────────────────────────────────────────────
+   Two things on one screen: what is true right now, and every way out. The
+   worklist is the widest column because the worklist is the urgent part; the
+   map is an index down the side because an index is reference.
+
+   No colours of its own — everything below reuses the badge and schedule
+   palette already established above, so the dashboard reads as the same
+   product rather than a visitor. */
+.gwcvt-dash__masthead {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 4px 20px;
+	margin: 0 0 20px;
+	padding-bottom: 14px;
+	border-bottom: 2px solid #1d2327;
+}
+
+.gwcvt-dash__masthead h1 {
+	display: inline;
+	padding: 0;
+	margin-right: 10px;
+}
+
+.gwcvt-dash__org,
+.gwcvt-dash__date {
+	color: #646970;
+}
+
+/* WordPress floats the Help tab over the top right of .wrap, so the date has to
+   stop short of it or the two collide into one line. The padding sits on the
+   date rather than the masthead so the rule underneath still runs full width. */
+.gwcvt-dash__date {
+	padding-right: 120px;
+}
+
+@media ( max-width: 960px ) {
+	.gwcvt-dash__date {
+		padding-right: 0;
+	}
+}
+
+.gwcvt-dash__columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
+	gap: 24px;
+	align-items: start;
+}
+
+@media ( max-width: 960px ) {
+	.gwcvt-dash__columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.gwcvt-dash__column {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	min-width: 0;
+}
+
+.gwcvt-dash__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.gwcvt-dash__head h2 {
+	margin: 0;
+	padding: 0;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.gwcvt-dash__aside {
+	font-size: 12px;
+	color: #646970;
+}
+
+.gwcvt-dash__panel {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+/* ─── The worklist ──────────────────────────────────────────────────────────
+   Each line is one thing to do, and the count is set large because the count
+   is what decides whether it is done now. State is carried by the margin
+   stripe AND the words — the same rule the verification badges follow. */
+.gwcvt-docket__row {
+	display: grid;
+	grid-template-columns: 5px 4rem minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0 14px;
+	text-decoration: none;
+	color: inherit;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.gwcvt-docket__row:last-child {
+	border-bottom: 0;
+}
+
+.gwcvt-docket__row:hover,
+.gwcvt-docket__row:focus {
+	background: #f6f7f7;
+	color: inherit;
+}
+
+.gwcvt-docket__stripe {
+	align-self: stretch;
+}
+
+.gwcvt-docket__row--critical .gwcvt-docket__stripe { background: #d63638; }
+.gwcvt-docket__row--waiting .gwcvt-docket__stripe { background: #dba617; }
+
+.gwcvt-docket__count {
+	padding: 16px 0;
+	font-size: 28px;
+	font-weight: 300;
+	line-height: 1;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.gwcvt-docket__row--critical .gwcvt-docket__count { color: #8a2424; }
+.gwcvt-docket__row--waiting .gwcvt-docket__count { color: #614200; }
+
+.gwcvt-docket__body {
+	padding: 14px 0;
+	min-width: 0;
+}
+
+.gwcvt-docket__what {
+	display: block;
+	font-size: 15px;
+	line-height: 1.35;
+}
+
+.gwcvt-docket__why {
+	display: block;
+	margin-top: 2px;
+	font-size: 12px;
+	color: #646970;
+}
+
+.gwcvt-docket__go {
+	padding: 14px 16px 14px 0;
+	font-size: 12px;
+	font-weight: 600;
+	color: #2271b1;
+	white-space: nowrap;
+}
+
+.gwcvt-docket__go::after {
+	content: " \2192";
+}
+
+.gwcvt-docket__row:hover .gwcvt-docket__go {
+	color: #135e96;
+}
+
+.gwcvt-docket__clear {
+	margin: 0;
+	padding: 16px 18px;
+	color: #646970;
+}
+
+@media ( max-width: 600px ) {
+	.gwcvt-docket__row {
+		grid-template-columns: 5px 3rem minmax(0, 1fr);
+	}
+
+	.gwcvt-docket__count {
+		font-size: 22px;
+	}
+
+	.gwcvt-docket__go {
+		grid-column: 2 / -1;
+		padding: 0 0 14px;
+	}
+}
+
+/* ─── One upcoming shift ────────────────────────────────────────────────────
+   The meter is reinforcement; "3 of 8 · needs 6" is the information. A bar on
+   its own does not say whether three is a problem, and colour does not say it
+   to everybody. */
+.gwcvt-shiftline {
+	display: grid;
+	grid-template-columns: 9rem minmax(0, 1fr) 9rem;
+	gap: 3px 16px;
+	align-items: center;
+	padding: 12px 16px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.gwcvt-shiftline:last-child {
+	border-bottom: 0;
+}
+
+.gwcvt-shiftline__when {
+	font-size: 12px;
+}
+
+.gwcvt-shiftline__date {
+	display: block;
+	font-weight: 600;
+}
+
+/* The weekday is what a fortnight is read by, so it is the part set solid and
+   the date beside it is the reference. */
+.gwcvt-shiftline__day {
+	margin-right: 5px;
+	color: #1d2327;
+}
+
+.gwcvt-shiftline--short .gwcvt-shiftline__day {
+	color: #8a2424;
+}
+
+/* ─── This week, then next ──────────────────────────────────────────────────
+   Two halves rather than fourteen undifferentiated rows, because they answer
+   different questions: this week is still fixable, next week is only worth
+   knowing about. */
+.gwcvt-shiftweek {
+	margin: 0;
+	padding: 8px 16px;
+	background: #f6f7f7;
+	border-bottom: 1px solid #f0f0f1;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.gwcvt-shiftweek + .gwcvt-shiftline {
+	border-top: 0;
+}
+
+/* Below the panel rather than inside it: within the border it sat under the last
+   line of next week and read as belonging to next week, when it is the way out
+   of the whole fortnight. Quiet either way — it is not competing with the
+   worklist above for a decision. */
+.gwcvt-dash__more {
+	margin: 8px 0 0;
+	padding: 0 2px;
+	text-align: right;
+	font-size: 12px;
+}
+
+.gwcvt-dash__more a {
+	text-decoration: none;
+	color: #646970;
+}
+
+.gwcvt-dash__more a:hover,
+.gwcvt-dash__more a:focus {
+	color: #2271b1;
+}
+
+.gwcvt-shiftline__time,
+.gwcvt-shiftline__where {
+	display: block;
+	color: #646970;
+	font-size: 12px;
+}
+
+.gwcvt-shiftline__what {
+	min-width: 0;
+}
+
+.gwcvt-shiftline__what a {
+	text-decoration: none;
+}
+
+.gwcvt-shiftline__fill {
+	text-align: right;
+}
+
+.gwcvt-meter {
+	display: block;
+	height: 4px;
+	margin-bottom: 4px;
+	background: #f0f0f1;
+	border-radius: 9999px;
+	overflow: hidden;
+}
+
+.gwcvt-meter__bar {
+	display: block;
+	height: 100%;
+	background: #2271b1;
+}
+
+.gwcvt-shiftline--short .gwcvt-meter__bar { background: #d63638; }
+.gwcvt-shiftline--full .gwcvt-meter__bar { background: #68de7c; }
+
+.gwcvt-shiftline__count {
+	font-size: 12px;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.gwcvt-shiftline--short .gwcvt-shiftline__count {
+	color: #8a2424;
+	font-weight: 600;
+}
+
+@media ( max-width: 600px ) {
+	.gwcvt-shiftline {
+		grid-template-columns: minmax(0, 1fr) 7.5rem;
+	}
+
+	.gwcvt-shiftline__when {
+		grid-column: 1 / -1;
+	}
+}
+
+/* ─── The year ──────────────────────────────────────────────────────────────
+   Set in the letter's serif rather than the interface sans, because it is the
+   one number on this screen that leaves the building — into a Form 990 or a
+   grant report. The distinction between letter.css and this file already
+   exists; this is it showing through. */
+.gwcvt-year {
+	padding: 16px 18px;
+}
+
+.gwcvt-year__figure {
+	margin: 0;
+	font-family: Georgia, "Times New Roman", serif;
+	font-size: 40px;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.gwcvt-year__unit {
+	font-family: inherit;
+	font-size: 13px;
+	color: #646970;
+}
+
+.gwcvt-year__rows {
+	margin: 14px 0 0;
+	padding-top: 12px;
+	border-top: 1px solid #f0f0f1;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 12px;
+}
+
+.gwcvt-year__rows > div {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.gwcvt-year__rows dt {
+	margin: 0;
+	color: #646970;
+}
+
+.gwcvt-year__rows dd {
+	margin: 0;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.gwcvt-year__note {
+	margin: 12px 0 0;
+	font-size: 12px;
+	color: #646970;
+}
+
+/* ─── The map ───────────────────────────────────────────────────────────────
+   Every way out, grouped by what it is about. An index rather than a row of
+   tiles: somebody who opens this weekly rather than daily needs the shape of
+   the whole thing, and tiles would only show whichever few we guessed at. */
+.gwcvt-map__group {
+	padding: 13px 18px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.gwcvt-map__group:last-child {
+	border-bottom: 0;
+}
+
+.gwcvt-map__group h3 {
+	margin: 0 0 7px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.gwcvt-map__links {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.gwcvt-map__links a {
+	text-decoration: none;
+}
+
+.gwcvt-map__links a:hover,
+.gwcvt-map__links a:focus {
+	text-decoration: underline;
+}
+
+@media ( prefers-color-scheme: dark ) {
+	.gwcvt-dash__masthead {
+		border-bottom-color: #e9edf0;
+	}
+
+	.gwcvt-dash__panel {
+		background: #1d2327;
+		border-color: #3c434a;
+	}
+
+	.gwcvt-docket__row,
+	.gwcvt-shiftline,
+	.gwcvt-shiftweek,
+	.gwcvt-map__group,
+	.gwcvt-year__rows {
+		border-color: #2c3338;
+	}
+
+	.gwcvt-shiftweek {
+		background: #22282d;
+	}
+
+	.gwcvt-shiftline__day {
+		color: #f0f0f1;
+	}
+
+	.gwcvt-shiftline--short .gwcvt-shiftline__day {
+		color: #f86368;
+	}
+
+	.gwcvt-docket__row:hover,
+	.gwcvt-docket__row:focus {
+		background: #22282d;
+	}
+
+	.gwcvt-docket__row--critical .gwcvt-docket__count { color: #f86368; }
+	.gwcvt-docket__row--waiting .gwcvt-docket__count { color: #dba617; }
+	.gwcvt-shiftline--short .gwcvt-shiftline__count { color: #f86368; }
+	.gwcvt-meter { background: #2c3338; }
+}

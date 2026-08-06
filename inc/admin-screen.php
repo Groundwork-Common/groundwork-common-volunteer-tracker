@@ -21,6 +21,7 @@ const GWCVT_SETTINGS_PAGE = 'gwcvt-settings';
 const GWCVT_LETTERS_PAGE  = 'gwcvt-letters';
 const GWCVT_QUICK_ADD_PAGE = 'gwcvt-log-a-day';
 const GWCVT_SCHEDULE_PAGE  = 'gwcvt-schedule';
+const GWCVT_DASHBOARD_PAGE = 'gwcvt-dashboard';
 
 add_filter( 'admin_footer_text', 'gwcvt_admin_footer_text' );
 add_action( 'admin_init', 'gwcvt_handle_colophon_toggle' );
@@ -76,6 +77,10 @@ function gwcvt_menu_order(): array {
 	 * easier to hold in your head than one ordered by which screen we thought
 	 * got opened most. */
 	$order = array(
+		/* Where you land. Not part of the sequence below so much as the place
+		 * you start it from. */
+		GWCVT_DASHBOARD_PAGE,
+
 		// What is coming.
 		GWCVT_SCHEDULE_PAGE,
 

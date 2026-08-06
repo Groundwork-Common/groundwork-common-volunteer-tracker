@@ -306,6 +306,24 @@ function _n( $single, $plural, $number, $domain = 'default' ) {
 	return 1 === (int) $number ? $single : $plural;
 }
 
+/* The nooped-plural pair. Real, because the dashboard's worklist builds its
+ * sentences through them and a stub that returned the singular always would
+ * let a broken plural through every assertion. */
+function _n_noop( $singular, $plural, $domain = null ) {
+	return array(
+		0          => $singular,
+		1          => $plural,
+		'singular' => $singular,
+		'plural'   => $plural,
+		'context'  => null,
+		'domain'   => $domain,
+	);
+}
+
+function translate_nooped_plural( $nooped_plural, $count, $domain = 'default' ) {
+	return 1 === (int) $count ? $nooped_plural['singular'] : $nooped_plural['plural'];
+}
+
 function esc_html( $text ) {
 	return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
 }
@@ -572,6 +590,7 @@ require GWCVT_DIR . 'inc/schedule-emails.php';
 require GWCVT_DIR . 'inc/schedule-cron.php';
 require GWCVT_DIR . 'inc/entries.php';
 require GWCVT_DIR . 'inc/required.php';
+require GWCVT_DIR . 'inc/dashboard.php';
 require GWCVT_DIR . 'inc/verify.php';
 require GWCVT_DIR . 'inc/letter-cpt.php';
 require GWCVT_DIR . 'inc/letter.php';

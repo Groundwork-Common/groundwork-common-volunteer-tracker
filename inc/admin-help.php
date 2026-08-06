@@ -154,6 +154,11 @@ function gwcvt_add_screen_help( $screen ): void {
 		return;
 	}
 
+	if ( false !== strpos( (string) $screen->id, GWCVT_DASHBOARD_PAGE ) ) {
+		gwcvt_add_dashboard_help( $screen );
+		return;
+	}
+
 	if ( false !== strpos( (string) $screen->id, GWCVT_SCHEDULE_PAGE ) ) {
 		gwcvt_add_schedule_help( $screen );
 		return;
@@ -162,6 +167,38 @@ function gwcvt_add_screen_help( $screen ): void {
 	if ( false !== strpos( (string) $screen->id, GWCVT_QUICK_ADD_PAGE ) ) {
 		gwcvt_add_quick_add_help( $screen );
 	}
+}
+
+/**
+ * The screen somebody lands on.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwcvt_add_dashboard_help( $screen ): void {
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-dashboard',
+		__( 'What this screen shows', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Two things: what is waiting for you, and every way out of here. Nothing on it is a number for its own sake — each line in <strong>Needs you</strong> is something to do, and the count is what tells you whether to do it now.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The order is not by size. It runs by what is lost if it waits: hours from a shift that happened and was never typed up come first, because every week takes them further from anybody remembering them. Shifts still short of people come next, because on Sunday there is nothing to be done about Saturday. Verifying and matching sit at the bottom — both keep.', 'groundwork-common-volunteer-tracker' ),
+			__( 'A queue with nothing in it does not appear at all. A screen that says “none waiting” five times over is one people stop reading, and then the line that matters gets skimmed with it.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Nobody is named here. Every line is a count and a link, and the names are on the screen the link goes to — which is somewhere you have gone deliberately.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_tab(
+		$screen,
+		'gwcvt-help-year',
+		__( 'The year’s figure', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Verified hours only, for the same reason a letter states only those: nobody has attested to the rest. Hours still waiting are counted beside it rather than folded in.', 'groundwork-common-volunteer-tracker' ),
+			__( 'It is the number your Form 990 and your grant reports want, and it is the only thing on this screen that leaves the building. Everything else is a prompt to do something.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The year runs from 1 January. If yours does not, a developer can set the start date with the <code>gwcvt_reporting_year_start</code> filter — it is not a setting, because a wrong answer here quietly misstates a figure that goes to a funder.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwcvt_add_help_sidebar( $screen );
 }
 
 /**

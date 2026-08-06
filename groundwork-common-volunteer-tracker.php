@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://groundworkcommon.com
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.12.2
+ * Version:           0.13.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.12.2';
+const GWCVT_VERSION = '0.13.0';
 
 /* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -198,6 +198,13 @@ if ( ! function_exists( 'gwcvt_send_signup_confirmation' ) ) {
 if ( ! function_exists( 'gwcvt_run_reminders' ) ) {
 	require GWCVT_DIR . 'inc/schedule-cron.php';
 }
+
+/* What the dashboard reads. After the schedule and the requirements, because it
+ * counts both; not in the admin bundle, because the year figures are cleared
+ * from entry hooks that fire under WP-CLI and cron as well. */
+if ( ! function_exists( 'gwcvt_dashboard_items' ) ) {
+	require GWCVT_DIR . 'inc/dashboard.php';
+}
 if ( ! function_exists( 'gwcvt_verify_entry' ) ) {
 	require GWCVT_DIR . 'inc/verify.php';
 }
@@ -277,6 +284,9 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	 * shift and holds every handler that writes one. */
 	require GWCVT_DIR . 'inc/admin-schedule.php';
 	require GWCVT_DIR . 'inc/admin-shift.php';
+
+	// The screen somebody lands on.
+	require GWCVT_DIR . 'inc/admin-dashboard.php';
 
 	/* Contextual help. Last, because it describes what all of the above do —
 	 * which now includes the schedule and its rosters. */
