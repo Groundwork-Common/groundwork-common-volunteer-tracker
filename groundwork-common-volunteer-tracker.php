@@ -165,11 +165,22 @@ if ( ! function_exists( 'gwcvt_recurrence_dates' ) ) {
 if ( ! function_exists( 'gwcvt_register_shift_type' ) ) {
 	require GWCVT_DIR . 'inc/shift-cpt.php';
 }
+/* The event type, beside the shift type it contains. Its meta key constants are
+ * read by events.php below, so it cannot move after it — the same ordering rule
+ * as shift-cpt.php and shifts.php. */
+if ( ! function_exists( 'gwcvt_register_event_type' ) ) {
+	require GWCVT_DIR . 'inc/event-cpt.php';
+}
 if ( ! function_exists( 'gwcvt_register_signup_type' ) ) {
 	require GWCVT_DIR . 'inc/signup-cpt.php';
 }
 if ( ! function_exists( 'gwcvt_shift_duration' ) ) {
 	require GWCVT_DIR . 'inc/shifts.php';
+}
+/* Reading events. After shifts.php, because every question about an event is a
+ * question about its slots and this file answers them by calling that one. */
+if ( ! function_exists( 'gwcvt_event_slot_ids' ) ) {
+	require GWCVT_DIR . 'inc/events.php';
 }
 if ( ! function_exists( 'gwcvt_add_signup' ) ) {
 	require GWCVT_DIR . 'inc/signups.php';
@@ -281,9 +292,17 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 
 	/* Planning shifts, and who is coming to them. admin-schedule.php owns the
 	 * menu and routes between the screen's views; admin-shift.php renders one
-	 * shift and holds every handler that writes one. */
+	 * shift and holds every handler that writes one.
+	 *
+	 * The two event files follow the same split — admin-event.php is the editor
+	 * and the handlers that write an event's grid, admin-event-roster.php is who
+	 * is coming and the sheet that goes on the clipboard. They load after
+	 * admin-shift.php because the roster's promote action falls back to
+	 * gwcvt_shift_redirect() for a standalone shift. */
 	require GWCVT_DIR . 'inc/admin-schedule.php';
 	require GWCVT_DIR . 'inc/admin-shift.php';
+	require GWCVT_DIR . 'inc/admin-event.php';
+	require GWCVT_DIR . 'inc/admin-event-roster.php';
 
 	// The screen somebody lands on.
 	require GWCVT_DIR . 'inc/admin-dashboard.php';

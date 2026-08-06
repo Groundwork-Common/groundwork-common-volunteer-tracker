@@ -220,8 +220,22 @@ function gwcvt_handle_public_cancel(): void {
 /**
  * May a member of the public see and sign up for this shift?
  *
- * The single answer, used by the list and by the handler, so a shift that is
- * invisible cannot be signed up for by anybody who guesses its ID.
+ * The single answer, used by the list, by the event grid and by the handler, so
+ * a shift that is invisible cannot be signed up for by anybody who guesses its
+ * ID.
+ *
+ * ── Event slots answer to their event as well as to themselves ───────────────
+ * A slot on a DRAFT or a cancelled event is refused here, which is the whole
+ * reason this check knows about events at all: a coordinator building next
+ * month's festival in draft has real shift rows in the database, and without
+ * this a guessed ID would book a place on an event nobody has published.
+ *
+ * ── Why the horizon does not apply to a slot ─────────────────────────────────
+ * signup_horizon_days keeps the flat list from showing a year of Saturdays to
+ * somebody who only wanted to know about this one. A visitor on an event's page
+ * has already chosen that event, so the horizon has nothing to protect them
+ * from — and applying it would mean a festival announced ninety days out shows a
+ * grid where every row says it is unavailable, which reads as broken.
  *
  * @param int $shift_id Shift post ID.
  * @return bool
@@ -235,12 +249,19 @@ function gwcvt_shift_is_signup_visible( int $shift_id ): bool {
 		return false;
 	}
 
-	$horizon = max( 1, (int) gwcvt_setting( 'signup_horizon_days' ) );
-	$starts  = gwcvt_shift_starts( $shift_id );
+	$starts = gwcvt_shift_starts( $shift_id );
 
 	if ( null === $starts ) {
 		return false;
 	}
+
+	$event_id = gwcvt_event_for_shift( $shift_id );
+
+	if ( $event_id > 0 ) {
+		return 'publish' === get_post_status( $event_id );
+	}
+
+	$horizon = max( 1, (int) gwcvt_setting( 'signup_horizon_days' ) );
 
 	return $starts->getTimestamp() <= ( time() + ( $horizon * DAY_IN_SECONDS ) );
 }
@@ -253,11 +274,19 @@ function gwcvt_shift_is_signup_visible( int $shift_id ): bool {
 function gwcvt_public_shift_ids(): array {
 	$horizon = max( 1, (int) gwcvt_setting( 'signup_horizon_days' ) );
 
+	/* Standalone shifts only. An event's slots belong on their event's own page,
+	 * where the grid says which role each one is and what the day is; loose on
+	 * this list they are half a dozen unexplained times at the same address.
+	 *
+	 * This is a filter on the LIST, not on what may be signed up for — an event
+	 * slot is perfectly signup-able, just from the event's page. The handler
+	 * still asks gwcvt_shift_is_signup_visible(), which knows the difference. */
 	$ids = gwcvt_shifts_between(
 		array(
-			'from'  => gwcvt_today(),
-			'to'    => gmdate( 'Y-m-d', time() + ( ( $horizon + 1 ) * DAY_IN_SECONDS ) ),
-			'limit' => 100,
+			'from'   => gwcvt_today(),
+			'to'     => gmdate( 'Y-m-d', time() + ( ( $horizon + 1 ) * DAY_IN_SECONDS ) ),
+			'limit'  => 100,
+			'parent' => 0,
 		)
 	);
 
