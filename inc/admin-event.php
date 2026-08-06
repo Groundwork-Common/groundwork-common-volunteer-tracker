@@ -207,20 +207,15 @@ function gwcvt_render_event_editor( int $event_id ): void {
 				<table class="form-table" role="presentation">
 					<tbody>
 						<tr>
-							<th scope="row"><label for="gwcvt-event-reason"><?php esc_html_e( 'Why, if you are removing a time', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-							<td>
-								<input type="text" id="gwcvt-event-reason" name="gwcvt_reason" class="regular-text" maxlength="300" />
-								<p class="description"><?php esc_html_e( 'Shown to anybody who was on it, if you tell them below.', 'groundwork-common-volunteer-tracker' ); ?></p>
-							</td>
-						</tr>
-						<tr>
 							<th scope="row"><?php esc_html_e( 'Telling people', 'groundwork-common-volunteer-tracker' ); ?></th>
 							<td>
 								<label>
 									<input type="checkbox" name="gwcvt_notify" value="1" checked />
-									<?php esc_html_e( 'Email anybody who was on a time this save cancels', 'groundwork-common-volunteer-tracker' ); ?>
+									<?php esc_html_e( 'Email anybody affected if this save moves a time', 'groundwork-common-volunteer-tracker' ); ?>
 								</label>
-								<p class="description"><?php esc_html_e( 'Only cancellations send anything. Renaming a role or widening a maximum tells nobody.', 'groundwork-common-volunteer-tracker' ); ?></p>
+								<p class="description">
+									<?php esc_html_e( 'Only a move counts — the date, the times, or the address. Renaming a role, correcting a supervisor or widening a maximum tells nobody. Calling a time off is its own action and asks separately.', 'groundwork-common-volunteer-tracker' ); ?>
+								</p>
 							</td>
 						</tr>
 					</tbody>
@@ -305,49 +300,21 @@ function gwcvt_render_event_role_block( int $index, string $role, array $slot_id
 
 			<?php if ( $live > 0 ) : ?>
 				<div style="flex:0 1 330px;text-align:right">
-					<label style="display:inline-block;font-weight:600;color:#b32d2e">
-						<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[remove]" value="1" />
+					<a class="button button-small" style="color:#b32d2e;border-color:#b32d2e" href="<?php echo esc_url( gwcvt_drop_role_url( $event_id, $role ) ); ?>">
 						<?php esc_html_e( 'Remove this whole role', 'groundwork-common-volunteer-tracker' ); ?>
-					</label>
+					</a>
 					<p class="description" style="margin:4px 0 0">
 						<?php
-						/* Two counts, so two _n() calls. One sentence pluralised
-						 * on the total read "1 of them have people on them" the
-						 * moment the two numbers disagreed, which is most of the
-						 * time. */
 						printf(
 							esc_html(
 								/* translators: %d: how many times the role has. */
-								_n( 'Its %d time goes when you save.', 'All %d of its times go when you save.', $live, 'groundwork-common-volunteer-tracker' )
+								_n( 'It has %d time on it.', 'It has %d times on it.', $live, 'groundwork-common-volunteer-tracker' )
 							),
 							(int) $live
 						);
 
-						if ( $occupied > 0 ) {
-							echo ' ';
-							printf(
-								esc_html(
-									/* translators: %d: how many of them have people on them. */
-									_n(
-										'%d has people on it, so it is cancelled rather than deleted — it stays on the schedule so everybody can see it was called off.',
-										'%d of them have people on them, so those are cancelled rather than deleted — they stay on the schedule so everybody can see they were called off.',
-										$occupied,
-										'groundwork-common-volunteer-tracker'
-									)
-								),
-								(int) $occupied
-							);
-						} else {
-							echo ' ';
-							echo esc_html(
-								_n(
-									'Nobody is on it, so it is deleted outright.',
-									'Nobody is on any of them, so they are deleted outright.',
-									$live,
-									'groundwork-common-volunteer-tracker'
-								)
-							);
-						}
+						echo ' ';
+						esc_html_e( 'You will be shown exactly what goes before anything happens.', 'groundwork-common-volunteer-tracker' );
 						?>
 					</p>
 				</div>
@@ -517,24 +484,33 @@ function gwcvt_render_event_slot_row( int $role_index, int $slot_index, int $shi
 			?>
 		</td>
 		<td data-gwcvt-remove>
-			<?php if ( ! $is_new ) : ?>
-				<label>
-					<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[remove]" value="1" />
-					<?php
-					/* The consequence is spelled out on the row, computed here rather
-					 * than by a script, because the cancel-versus-delete rule is
-					 * invisible in a grid unless the grid says which is about to
-					 * happen. A time with people on it is CANCELLED — it stays on the
-					 * schedule so everybody can see it was called off. Deleting says
-					 * it never existed, which is only true of a typo. */
-					if ( $filled > 0 || $waiting > 0 ) {
-						echo '<span class="description">' . esc_html__( 'Cancels it — people are on it', 'groundwork-common-volunteer-tracker' ) . '</span>';
-					} else {
-						echo '<span class="description">' . esc_html__( 'Deletes it — nobody is on it', 'groundwork-common-volunteer-tracker' ) . '</span>';
-					}
-					?>
-				</label>
-			<?php endif; ?>
+			<?php
+			/* ── Actions, not fields ─────────────────────────────────────────
+			 * These used to be a checkbox that took effect on Save, and that is
+			 * the whole reason cancelling a time appeared not to work: the form
+			 * re-rendered and a cancelled row looked exactly like a live one.
+			 * An action reports what it did; a deferred field has to predict it.
+			 *
+			 * Calling a time off stops to ask, because it needs a reason typed
+			 * and decides whether people get an email. Deleting an empty one is
+			 * a nonced link that happens at once, exactly as taking somebody off
+			 * a roster does. */
+			if ( $is_new ) {
+				echo '<span class="description">&mdash;</span>';
+			} elseif ( $filled > 0 || $waiting > 0 ) {
+				printf(
+					'<a href="%1$s" style="color:#b32d2e">%2$s</a>',
+					esc_url( gwcvt_call_off_slot_url( $shift_id ) ),
+					esc_html__( 'Call it off', 'groundwork-common-volunteer-tracker' )
+				);
+			} else {
+				printf(
+					'<a href="%1$s" style="color:#b32d2e">%2$s</a>',
+					esc_url( gwcvt_slot_action_url( 'gwcvt_delete_slot', $shift_id ) ),
+					esc_html__( 'Delete', 'groundwork-common-volunteer-tracker' )
+				);
+			}
+			?>
 		</td>
 	</tr>
 	<?php
@@ -600,10 +576,9 @@ function gwcvt_render_cancelled_slot_row( string $field, string $id, int $shift_
 			?>
 		</td>
 		<td data-gwcvt-remove>
-			<label>
-				<input type="checkbox" name="<?php echo esc_attr( $field ); ?>[restore]" value="1" />
-				<span class="description"><?php esc_html_e( 'Put it back on', 'groundwork-common-volunteer-tracker' ); ?></span>
-			</label>
+			<a href="<?php echo esc_url( gwcvt_slot_action_url( 'gwcvt_restore_slot', $shift_id ) ); ?>">
+				<?php esc_html_e( 'Put it back on', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
 		</td>
 	</tr>
 	<?php
@@ -709,7 +684,6 @@ function gwcvt_handle_save_event(): void {
 
 	$published = ! empty( $posted['gwcvt_published'] );
 	$notify    = ! empty( $posted['gwcvt_notify'] );
-	$reason    = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_reason'] ?? '' ) ), 0, 300 );
 
 	if ( $event_id > 0 && GWCVT_EVENT_TYPE !== get_post_type( $event_id ) ) {
 		gwcvt_event_redirect( 0, 'unknown' );
@@ -757,7 +731,6 @@ function gwcvt_handle_save_event(): void {
 		array(
 			'status'   => $published ? 'publish' : 'draft',
 			'notify'   => $notify,
-			'reason'   => $reason,
 			'location' => (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ),
 			'super'    => (string) get_post_meta( $event_id, GWCVT_EVENT_SUPERVISOR, true ),
 		)
@@ -784,7 +757,6 @@ function gwcvt_handle_save_event(): void {
 			'gwcvt_made'      => $tally['made'],
 			'gwcvt_cancelled' => $tally['cancelled'],
 			'gwcvt_deleted'   => $tally['deleted'],
-			'gwcvt_restored'  => $tally['restored'],
 			'gwcvt_told'      => $tally['told'],
 		)
 	);
@@ -795,7 +767,7 @@ function gwcvt_handle_save_event(): void {
  *
  * @param int   $event_id Event post ID.
  * @param array $roles    The posted gwcvt_roles structure.
- * @param array $context  status, notify, reason, location, super.
+ * @param array $context  status, notify, location, super.
  * @return array made, updated, cancelled, deleted, told, error.
  */
 function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): array {
@@ -804,7 +776,6 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 		'updated'   => 0,
 		'cancelled' => 0,
 		'deleted'   => 0,
-		'restored'  => 0,
 		'told'      => 0,
 		'error'     => '',
 	);
@@ -829,12 +800,6 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 		$supervisor = '' !== $supervisor ? $supervisor : (string) $context['super'];
 		$location   = '' !== $location ? $location : (string) $context['location'];
 
-		/* Removing the whole role. Each of its times still goes through
-		 * gwcvt_remove_event_slot(), so the cancel-versus-delete rule is decided
-		 * per time rather than for the role as a whole — a role with one busy
-		 * Saturday and three empty ones leaves the Saturday on the schedule,
-		 * called off, and takes the other three away. */
-		$drop_role = ! empty( $role['remove'] );
 
 		$existing = array();
 
@@ -848,12 +813,12 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 		 * is refused rather than guessed at. Silently keeping the old name hides
 		 * a rename that did not happen; silently dropping the times loses a
 		 * roster. Neither is something to do on somebody's behalf. */
-		if ( '' === $name && $existing && ! $drop_role ) {
+		if ( '' === $name && $existing ) {
 			$tally['error'] = 'no-role';
 			return $tally;
 		}
 
-		if ( '' === $name && ! $drop_role ) {
+		if ( '' === $name ) {
 			continue;
 		}
 
@@ -867,7 +832,6 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 			$start     = gwcvt_sanitize_time( sanitize_text_field( (string) ( $slot['start'] ?? '' ) ) );
 			$end       = gwcvt_sanitize_time( sanitize_text_field( (string) ( $slot['end'] ?? '' ) ) );
 			$overnight = ! empty( $slot['overnight'] );
-			$remove    = ! empty( $slot['remove'] );
 
 			if ( $shift_id > 0 && GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 				continue;
@@ -880,30 +844,10 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 				continue;
 			}
 
-			if ( $shift_id > 0 && ( $remove || $drop_role ) ) {
-				$tally = gwcvt_remove_event_slot( $shift_id, $context, $tally );
-				continue;
-			}
-
-			/* Bringing a called-off time back. Only ever from the checkbox on a
-			 * cancelled row, and it leaves the reason in place — the record that
-			 * it was once called off is the organisation's own, and a volunteer
-			 * who was told may still be acting on what they were told. */
-			if ( $shift_id > 0 && ! empty( $slot['restore'] ) && gwcvt_shift_is_cancelled( $shift_id ) ) {
-				wp_update_post(
-					array(
-						'ID'          => $shift_id,
-						'post_status' => $slot_status,
-					)
-				);
-
-				++$tally['restored'];
-				continue;
-			}
-
-			/* A cancelled time nobody asked to change. Left exactly as it is —
-			 * its values arrive in hidden fields so that this is a no-op rather
-			 * than a silent re-publish. */
+			/* A cancelled time is never touched by a save. Calling one off and
+			 * putting it back are actions of their own — see
+			 * inc/admin-event-actions.php — and its values arrive here in hidden
+			 * fields so that this is a no-op rather than a silent re-publish. */
 			if ( $shift_id > 0 && gwcvt_shift_is_cancelled( $shift_id ) ) {
 				continue;
 			}
@@ -998,51 +942,6 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 			}
 		}
 	}
-
-	return $tally;
-}
-
-/**
- * Take one time off the grid: cancelled when anybody is on it, deleted when not.
- *
- * @param int   $shift_id Shift post ID.
- * @param array $context  notify, reason.
- * @param array $tally    Running counts.
- * @return array The tally.
- */
-function gwcvt_remove_event_slot( int $shift_id, array $context, array $tally ): array {
-	$roster = gwcvt_shift_signup_ids( $shift_id, array( 'publish', GWCVT_SIGNUP_WAITLIST ) );
-
-	if ( ! $roster ) {
-		wp_delete_post( $shift_id, true );
-		++$tally['deleted'];
-
-		return $tally;
-	}
-
-	if ( gwcvt_shift_is_cancelled( $shift_id ) ) {
-		return $tally;
-	}
-
-	wp_update_post(
-		array(
-			'ID'          => $shift_id,
-			'post_status' => GWCVT_SHIFT_CANCELLED,
-		)
-	);
-
-	update_post_meta( $shift_id, GWCVT_SHIFT_REASON, (string) $context['reason'] );
-	++$tally['cancelled'];
-
-	if ( $context['notify'] ) {
-		foreach ( $roster as $signup_id ) {
-			gwcvt_queue_signup_mail( 'cancelled', (int) $signup_id, array( 'reason' => (string) $context['reason'] ) );
-			++$tally['told'];
-		}
-	}
-
-	/** This action is documented in inc/admin-shift.php */
-	do_action( 'gwcvt_shift_cancelled', $shift_id, (string) $context['reason'], $roster );
 
 	return $tally;
 }

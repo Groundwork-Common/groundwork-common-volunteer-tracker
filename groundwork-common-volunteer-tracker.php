@@ -308,6 +308,7 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	require GWCVT_DIR . 'inc/admin-schedule.php';
 	require GWCVT_DIR . 'inc/admin-shift.php';
 	require GWCVT_DIR . 'inc/admin-event.php';
+	require GWCVT_DIR . 'inc/admin-event-actions.php';
 	require GWCVT_DIR . 'inc/admin-event-roster.php';
 
 	// The screen somebody lands on.
