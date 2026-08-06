@@ -123,8 +123,8 @@ function gwcvt_render_call_off_slot( int $shift_id ): void {
 						esc_html(
 							/* translators: %d: how many people are on it. */
 							_n(
-								'%d person is on it. The time stays on the schedule, struck through, so everybody can see it was called off — it is not deleted.',
-								'%d people are on it. The time stays on the schedule, struck through, so everybody can see it was called off — it is not deleted.',
+								'%d person is on it. The time stays on the schedule marked as called off, rather than being deleted.',
+								'%d people are on it. The time stays on the schedule marked as called off, rather than being deleted.',
 								count( $roster ),
 								'groundwork-common-volunteer-tracker'
 							)
@@ -219,7 +219,7 @@ function gwcvt_render_drop_role( int $event_id, string $role ): void {
 			<?php
 			printf(
 				/* translators: 1: a role's name, 2: an event's name. */
-				esc_html__( 'You are about to drop %1$s from %2$s. Here is exactly what happens.', 'groundwork-common-volunteer-tracker' ),
+				esc_html__( 'You are about to drop %1$s from %2$s.', 'groundwork-common-volunteer-tracker' ),
 				'<strong>' . esc_html( $role ) . '</strong>',
 				'<strong>' . esc_html( gwcvt_event_name( $event_id ) ) . '</strong>'
 			);
@@ -228,7 +228,7 @@ function gwcvt_render_drop_role( int $event_id, string $role ): void {
 
 		<?php if ( $busy ) : ?>
 			<h2><?php esc_html_e( 'Called off, and kept', 'groundwork-common-volunteer-tracker' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'People are on these, so they stay on the schedule struck through rather than being deleted — "this was called off" is an answer they are owed.', 'groundwork-common-volunteer-tracker' ); ?></p>
+			<p class="description"><?php esc_html_e( 'People are on these, so they stay on the schedule marked as called off rather than being deleted.', 'groundwork-common-volunteer-tracker' ); ?></p>
 			<ul class="ul-disc">
 				<?php foreach ( $busy as $shift_id ) : ?>
 					<li>

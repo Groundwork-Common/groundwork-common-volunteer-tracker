@@ -500,7 +500,7 @@ gwcvt_ed_check( 'the all-cancelled role is still on the screen', false !== $gwcv
 
 gwcvt_ed_check(
 	'it explains why it offers nothing to remove',
-	false !== strpos( $gwcvt_all_off, 'nothing left to remove' )
+	false !== strpos( $gwcvt_all_off, 'Every time in this role has been called off' )
 );
 
 /* ── Things that must not mail anybody ───────────────────────────────────── */
