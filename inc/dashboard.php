@@ -308,6 +308,84 @@ function gwcvt_fortnight_bounds( string $today, int $start_of_week ): array {
 	);
 }
 
+/* ── Reading every matching row, without asking for them all at once ─────────
+ * The two counts below used to pass a large posts_per_page and take whatever
+ * came back: 200 for the overdue count, 5000 for the year's entries. Both are
+ * numbers this screen prints, and a cap that is reached does not announce
+ * itself — it just reports a smaller organisation than the one running the
+ * site. The year figure is the worse of the two, because the box comment below
+ * describes exactly what it is for: "what goes into a Form 990 or a grant
+ * report".
+ *
+ * Neither can be answered by a COUNT in SQL. Whether a volunteer is overdue
+ * needs gwcvt_requirement_progress() per person, and the totals need each
+ * entry's minutes and verification state, so both have to walk the rows.
+ *
+ * So walk them a page at a time. Every individual query stays bounded — which
+ * is what the caps were protecting — and the post meta for one page is primed
+ * and then dropped, so peak memory is a page rather than a year. The loop ends
+ * when a page comes back short, and the offset advances by a full page every
+ * iteration, so it terminates on any finite table.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Call $handle once for every post ID matching $args.
+ *
+ * @param array    $args   Query arguments, minus paging and fields.
+ * @param callable $handle Receives one post ID per matching row.
+ * @param int      $page   Rows per query.
+ */
+function gwcvt_walk_matching_ids( array $args, callable $handle, int $page = 500 ): void {
+	$offset = 0;
+
+	do {
+		$batch = get_posts(
+			array_merge(
+				$args,
+				array(
+					'fields'         => 'ids',
+					'posts_per_page' => $page,
+					'offset'         => $offset,
+					'no_found_rows'  => true,
+					/* Ordered by ID, and not negotiable by the caller.
+					 *
+					 * Offset paging is only correct over a *total* order. get_posts()
+					 * defaults to ordering by post_date, which is not one: entries
+					 * created in the same second — a seed run, an import, a busy
+					 * afternoon — tie, and MySQL is free to break the tie differently
+					 * on each query. The pages then overlap and skip, and the walk
+					 * returns some rows twice and others never.
+					 *
+					 * This was not hypothetical. The first version of this function
+					 * omitted it and walked 22 seeded entries as 22 rows containing
+					 * duplicates, which is exactly the failure that would have
+					 * misstated the totals it was written to fix. ID is unique, so it
+					 * is a total order and the paging is stable. */
+					'orderby'        => 'ID',
+					'order'          => 'ASC',
+				)
+			)
+		);
+
+		$batch = array_map( 'intval', (array) $batch );
+		$found = count( $batch );
+
+		if ( $found > 0 ) {
+			/* Primed per page rather than for the whole result. The callers read
+			 * several meta keys per row, and without this each row is its own
+			 * query; with it, one query serves the page and is discarded before
+			 * the next. */
+			update_postmeta_cache( $batch );
+
+			foreach ( $batch as $id ) {
+				$handle( $id );
+			}
+		}
+
+		$offset += $page;
+	} while ( $found === $page );
+}
+
 /* ── Requirements that have run out of time ─────────────────────────────────
  * Counted here, never listed here. See the box comment at the top.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -318,14 +396,12 @@ function gwcvt_fortnight_bounds( string $today, int $start_of_week ): array {
  * @return int[]
  */
 function gwcvt_overdue_requirement_ids(): array {
-	$candidates = get_posts(
+	$overdue = array();
+
+	gwcvt_walk_matching_ids(
 		array(
 			'post_type'              => GWCVT_VOLUNTEER_TYPE,
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
-			'fields'                 => 'ids',
-			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the volunteer roster, counted in one pass. 200 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
-			'posts_per_page'         => 200,
-			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- two indexed keys, once per dashboard load.
 			'meta_query'             => array(
@@ -336,22 +412,17 @@ function gwcvt_overdue_requirement_ids(): array {
 					'type'    => 'CHAR',
 				),
 			),
-		)
+		),
+		static function ( int $volunteer_id ) use ( &$overdue ): void {
+			if ( ! gwcvt_has_requirement( $volunteer_id ) ) {
+				return;
+			}
+
+			if ( gwcvt_requirement_progress( $volunteer_id )['overdue'] ) {
+				$overdue[] = $volunteer_id;
+			}
+		}
 	);
-
-	$overdue = array();
-
-	foreach ( (array) $candidates as $volunteer_id ) {
-		$volunteer_id = (int) $volunteer_id;
-
-		if ( ! gwcvt_has_requirement( $volunteer_id ) ) {
-			continue;
-		}
-
-		if ( gwcvt_requirement_progress( $volunteer_id )['overdue'] ) {
-			$overdue[] = $volunteer_id;
-		}
-	}
 
 	return $overdue;
 }
@@ -407,14 +478,19 @@ function gwcvt_org_totals( string $from, string $to ): array {
 		return $cached;
 	}
 
-	$ids = get_posts(
+	$totals = array(
+		'verified'   => 0,
+		'pending'    => 0,
+		'entries'    => 0,
+		'volunteers' => 0,
+	);
+
+	$people = array();
+
+	gwcvt_walk_matching_ids(
 		array(
 			'post_type'              => GWCVT_ENTRY_TYPE,
 			'post_status'            => array( 'publish', 'pending' ),
-			'fields'                 => 'ids',
-			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- entries inside the reporting window, counted in one pass. 5000 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
-			'posts_per_page'         => 5000,
-			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed range, cached for an hour.
 			'meta_query'             => array(
@@ -425,45 +501,29 @@ function gwcvt_org_totals( string $from, string $to ): array {
 					'type'    => 'CHAR',
 				),
 			),
-		)
+		),
+		static function ( int $entry_id ) use ( &$totals, &$people ): void {
+			$minutes = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
+
+			if ( $minutes < 1 ) {
+				return;
+			}
+
+			if ( '' !== (string) get_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_AT, true ) ) {
+				$totals['verified'] += $minutes;
+			} else {
+				$totals['pending'] += $minutes;
+			}
+
+			++$totals['entries'];
+
+			$volunteer = (int) get_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, true );
+
+			if ( $volunteer > 0 ) {
+				$people[ $volunteer ] = true;
+			}
+		}
 	);
-
-	$ids = array_map( 'intval', (array) $ids );
-
-	if ( $ids ) {
-		update_postmeta_cache( $ids );
-	}
-
-	$totals = array(
-		'verified'   => 0,
-		'pending'    => 0,
-		'entries'    => 0,
-		'volunteers' => 0,
-	);
-
-	$people = array();
-
-	foreach ( $ids as $entry_id ) {
-		$minutes = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
-
-		if ( $minutes < 1 ) {
-			continue;
-		}
-
-		if ( '' !== (string) get_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_AT, true ) ) {
-			$totals['verified'] += $minutes;
-		} else {
-			$totals['pending'] += $minutes;
-		}
-
-		++$totals['entries'];
-
-		$volunteer = (int) get_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, true );
-
-		if ( $volunteer > 0 ) {
-			$people[ $volunteer ] = true;
-		}
-	}
 
 	$totals['volunteers'] = count( $people );
 
