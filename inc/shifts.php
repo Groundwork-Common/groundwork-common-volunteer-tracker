@@ -407,7 +407,7 @@ function gwcvt_shifts_between( array $args = array() ): array {
 		'posts_per_page' => $limit,
 		'fields'         => 'ids',
 		'no_found_rows'  => true,
-		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_meta_query -- the only way to order by the shift's own date; the table is one row per shift.
+		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the only way to order by the shift's own date; the table is one row per shift.
 			'gwcvt_shift_date' => $range,
 		),
 		'orderby'        => array(

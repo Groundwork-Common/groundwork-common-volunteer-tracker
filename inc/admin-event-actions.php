@@ -302,7 +302,6 @@ function gwcvt_handle_call_off_slot(): void {
 		gwcvt_event_redirect( 0, 'unknown' );
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_reason'] ?? '' ) ), 0, 300 );
@@ -328,7 +327,7 @@ function gwcvt_handle_call_off_slot(): void {
 function gwcvt_handle_restore_slot(): void {
 	gwcvt_require_shift_cap( 'publish_posts' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified immediately below against this value.
+	// Verified immediately below against this value.
 	$shift_id = isset( $_GET['gwcvt_slot'] ) ? absint( wp_unslash( $_GET['gwcvt_slot'] ) ) : 0;
 
 	check_admin_referer( 'gwcvt_restore_slot_' . $shift_id );
@@ -362,7 +361,7 @@ function gwcvt_handle_restore_slot(): void {
 function gwcvt_handle_delete_slot(): void {
 	gwcvt_require_shift_cap( 'delete_posts' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified immediately below against this value.
+	// Verified immediately below against this value.
 	$shift_id = isset( $_GET['gwcvt_slot'] ) ? absint( wp_unslash( $_GET['gwcvt_slot'] ) ) : 0;
 
 	check_admin_referer( 'gwcvt_delete_slot_' . $shift_id );
@@ -400,7 +399,6 @@ function gwcvt_handle_drop_role(): void {
 		gwcvt_event_redirect( 0, 'unknown' );
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$role   = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_role'] ?? '' ) ), 0, 200 );

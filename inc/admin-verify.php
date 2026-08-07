@@ -179,7 +179,6 @@ function gwcvt_verify_action_url( string $action, int $entry_id ): string {
  * @return string
  */
 function gwcvt_current_admin_url(): string {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; used to rebuild the current list view and validated with wp_safe_redirect on the way back.
 	$query = isset( $_SERVER['QUERY_STRING'] ) ? sanitize_text_field( wp_unslash( $_SERVER['QUERY_STRING'] ) ) : '';
 
 	return admin_url( 'edit.php' . ( '' !== $query ? '?' . $query : '?post_type=' . GWCVT_ENTRY_TYPE ) );
@@ -221,7 +220,6 @@ function gwcvt_handle_unverify_entry(): void {
  * @return int
  */
 function gwcvt_verify_request_entry( string $action ): int {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the nonce for this exact entry is verified below; this read only identifies which entry that is.
 	$entry_id = isset( $_GET['entry'] ) ? absint( wp_unslash( $_GET['entry'] ) ) : 0;
 
 	if ( $entry_id < 1 || GWCVT_ENTRY_TYPE !== get_post_type( $entry_id ) ) {
@@ -727,7 +725,7 @@ function gwcvt_apply_verified_filter( $query ): void {
 		),
 	);
 
-	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- an admin list screen, paginated by core.
+	// An admin list screen, paginated by core.
 	$query->set( 'meta_query', $clauses );
 
 	// An explicit sort from the column headers wins.

@@ -54,8 +54,27 @@
 	<arg name="parallel" value="8"/>
 	<arg value="ps"/>
 
-	<rule ref="WordPress-Extra"/>
-	<rule ref="WordPress-Docs"/>
+	<!--
+		`WordPress`, not `WordPress-Extra` plus `WordPress-Docs`.
+
+		The first version of this file used the latter pair, copied from the post
+		portal. It looked equivalent and is not: two sniffs live in `WordPress`
+		and in neither of the others —
+
+		  WordPress.DB.SlowDBQuery
+		  WordPress.Security.ValidatedSanitizedInput
+
+		— and the second of those is a security check. This repository carried
+		twenty-one `phpcs:ignore` annotations naming SlowDBQuery, every one of
+		them written against a sniff the ruleset was not running, so all twenty-one
+		were inert: documentation wearing the costume of suppression. That is the
+		exact failure the standards job was added to catch, and it was hiding in
+		the ruleset rather than in the code.
+
+		The sibling location finder has used `WordPress` throughout, which is how
+		the discrepancy surfaced.
+	-->
+	<rule ref="WordPress"/>
 
 	<!--
 		Everything the sniffs need to know about this plugin, declared once so

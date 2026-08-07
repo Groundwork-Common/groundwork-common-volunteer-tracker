@@ -281,19 +281,15 @@ function gwcvt_letter_action_url( string $action, int $volunteer_id, string $fro
  * @return array{letter:GWCVT_Letter, volunteer_id:int, from:string, to:string}
  */
 function gwcvt_letter_request(): array {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the nonce for this exact volunteer is checked below; this read identifies which.
-	$action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$action       = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
 	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
 
 	gwcvt_require_cap( 'issue' );
 
 	check_admin_referer( $action . '_' . $volunteer_id );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified directly above.
 	$from = isset( $_GET['from'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified directly above.
-	$to = isset( $_GET['to'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
+	$to   = isset( $_GET['to'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
 	$letter = gwcvt_build_letter(
 		$volunteer_id,

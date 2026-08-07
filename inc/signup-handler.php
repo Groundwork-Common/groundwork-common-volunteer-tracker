@@ -141,7 +141,6 @@ function gwcvt_signups_open(): bool {
 function gwcvt_handle_public_signup(): void {
 	$started = microtime( true );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
 	$nonce = isset( $_POST['gwcvt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_signup_nonce'] ) ) : '';
 
 	if ( ! wp_verify_nonce( $nonce, 'gwcvt_signup' ) ) {
@@ -149,7 +148,6 @@ function gwcvt_handle_public_signup(): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	/* The honeypot. A visible text input in an off-screen wrapper — not
@@ -257,7 +255,6 @@ function gwcvt_handle_public_signup(): void {
 function gwcvt_handle_public_event_signup(): void {
 	$started = microtime( true );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
 	$nonce = isset( $_POST['gwcvt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_signup_nonce'] ) ) : '';
 
 	if ( ! wp_verify_nonce( $nonce, 'gwcvt_signup' ) ) {
@@ -265,7 +262,6 @@ function gwcvt_handle_public_event_signup(): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$event_id = absint( $posted['gwcvt_event'] ?? 0 );
@@ -412,7 +408,6 @@ function gwcvt_event_signup_limit(): int {
 function gwcvt_handle_public_cancel(): void {
 	$started = microtime( true );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
 	$nonce = isset( $_POST['gwcvt_cancel_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_cancel_nonce'] ) ) : '';
 
 	if ( ! wp_verify_nonce( $nonce, 'gwcvt_cancel_signup' ) ) {
@@ -420,7 +415,6 @@ function gwcvt_handle_public_cancel(): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$signup_id = absint( $posted['gwcvt_signup'] ?? 0 );

@@ -373,7 +373,6 @@ function gwcvt_handle_event_roster_add(): void {
 
 	check_admin_referer( 'gwcvt_event_roster_add_' . $event_id );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$volunteer_id = absint( $posted['gwcvt_volunteer'] ?? 0 );
@@ -504,7 +503,7 @@ function gwcvt_event_print_url( int $event_id ): string {
 function gwcvt_handle_event_roster_print(): void {
 	gwcvt_require_shift_cap();
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified immediately below against this value.
+	// Verified immediately below against this value.
 	$event_id = isset( $_GET['gwcvt_event'] ) ? absint( wp_unslash( $_GET['gwcvt_event'] ) ) : 0;
 
 	check_admin_referer( 'gwcvt_event_roster_print_' . $event_id );

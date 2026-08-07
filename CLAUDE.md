@@ -109,8 +109,25 @@ composer lint:fix      # only what phpcbf can fix — read the warning below fir
 composer compat        # PHPCompatibilityWP against the 7.4 floor
 ```
 
-Never add a `phpcs:ignore` without a `--` reason after it; every existing one
-explains itself, and there are around 126 of them.
+Never add a `phpcs:ignore` without a `--` reason after it. There are 108, and
+**every one of them has been checked to actually suppress something** — a sweep
+neutralises each in turn and re-lints, and a stale one is deleted rather than
+left. Two rules follow:
+
+- **A stale ignore is armed, not harmless.** It suppresses nothing today, so it
+  reads as safe. Move a nonce check or drop it in a refactor and the warning that
+  would have caught you is silenced by a comment somebody wrote years earlier for
+  a different reason. Forty were removed for this; twenty-three of those sat on
+  nonce lines.
+- **Check the sniff code is real.** Three annotations named
+  `WordPress.DB.SlowDBQuery.slow_meta_query`, which does not exist — the code is
+  `slow_db_query_meta_query`. A misspelled code silently matches nothing, and
+  nothing tells you.
+
+The ruleset is `WordPress`, not `WordPress-Extra` plus `WordPress-Docs`. They
+look equivalent and are not: `WordPress.DB.SlowDBQuery` and the security sniff
+`WordPress.Security.ValidatedSanitizedInput` live only in the former. Do not
+"tidy" it into the pair — that silently stops a security check from running.
 
 **Composer here is a linter and nothing else.** No runtime dependency, no
 autoloader, and `composer.json`, `composer.lock`, `phpcs.xml.dist` and `vendor/`

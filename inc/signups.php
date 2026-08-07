@@ -155,7 +155,7 @@ function gwcvt_find_signup( int $shift_id, int $volunteer_id, string $email = ''
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
 			'no_found_rows'  => true,
-			'meta_query'     => array( $match ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_meta_query -- scoped to one shift's children.
+			'meta_query'     => array( $match ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- scoped to one shift's children.
 		)
 	);
 

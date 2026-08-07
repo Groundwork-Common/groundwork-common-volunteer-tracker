@@ -254,7 +254,6 @@ function gwcvt_triage_url( string $action, int $entry_id, int $volunteer = 0 ): 
  * @return int
  */
 function gwcvt_triage_request_entry( string $action ): int {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the nonce for this exact entry is verified below.
 	$entry_id = isset( $_GET['entry'] ) ? absint( wp_unslash( $_GET['entry'] ) ) : 0;
 
 	if ( $entry_id < 1 || GWCVT_ENTRY_TYPE !== get_post_type( $entry_id ) ) {

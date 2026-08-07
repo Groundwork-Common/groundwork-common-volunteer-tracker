@@ -102,7 +102,13 @@ function gwcvt_render_schedule_screen(): void {
 		}
 
 		if ( 'drop-role' === $view ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+			/* sanitize_text_field() is the outermost call, which is the order that
+			 * matters: the value is unslashed, then URL-decoded, and only then
+			 * sanitized, so nothing a decode could reintroduce escapes it. The
+			 * sniff cannot follow rawurldecode() through the chain and reports the
+			 * input as raw. Decoding after sanitizing would be the real bug, and
+			 * is what this ordering avoids. */
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read-only view switch, no state change; sanitized outermost, see above.
 			$role = isset( $_GET['role'] ) ? sanitize_text_field( rawurldecode( wp_unslash( $_GET['role'] ) ) ) : '';
 
 			if ( '' !== $role ) {

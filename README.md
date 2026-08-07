@@ -220,7 +220,7 @@ npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-
 
 ## Coding standards
 
-WordPress-Extra plus WordPress-Docs — what a WordPress.org reviewer runs, available here before they see it:
+The `WordPress` standard — what a WordPress.org reviewer runs, available here before they see it:
 
 ```bash
 composer install
@@ -228,7 +228,11 @@ composer lint          # phpcs against phpcs.xml.dist
 composer compat        # PHPCompatibilityWP against the 7.4 floor
 ```
 
-The point is the ~126 `phpcs:ignore` annotations across `inc/`. Each carries a written justification, and until this ran nothing verified that any of them still silenced something real — an annotation outlives the code it was written for silently, because the only signal that it has stopped being true is a sniff that no longer fires.
+The point is the `phpcs:ignore` annotations across `inc/` — 108 of them, each carrying a written justification. Until this ran, nothing verified that any of them still silenced something real: an annotation outlives the code it was written for silently, because the only signal that it has stopped being true is a sniff that no longer fires.
+
+That is not hypothetical here. The first sweep found **40 of 148 were suppressing nothing**, and the standard was the wrong one — `WordPress-Extra` plus `WordPress-Docs` looks equivalent to `WordPress` and is not. Two sniffs live only in the latter, `WordPress.DB.SlowDBQuery` and the security check `WordPress.Security.ValidatedSanitizedInput`, so twenty-one annotations naming SlowDBQuery had never been able to suppress anything, and three of those named `slow_meta_query`, a sniff code that does not exist at all.
+
+**A stale ignore on a security line is worse than none.** It suppresses nothing today, so it reads as harmless — but it is armed. Move the nonce check, or delete it in a refactor, and the warning that would have caught you is silenced by a comment somebody wrote years earlier for a different reason. All forty were removed, and `tests/` aside the count is now exactly the number of sniffs that genuinely object.
 
 `composer compat` answers a question `php -l` cannot. Parsing on 7.4 is not the same as *running* on 7.4: a PHP 8 function parses perfectly and then fails at runtime, on exactly the shared hosting this plugin is installed on.
 
