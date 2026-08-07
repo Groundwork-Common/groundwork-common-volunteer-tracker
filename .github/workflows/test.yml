@@ -70,6 +70,43 @@ jobs:
       - uses: actions/checkout@v5
       - run: node tests/js/renumber.test.mjs
 
+  # This repository carries around 126 phpcs:ignore annotations, each with a
+  # written justification, and until this job existed nothing verified that any
+  # of them still silenced something real. An annotation outlives the code it was
+  # written for silently — the only signal that it has stopped being true is a
+  # sniff that no longer fires, and nothing was running the sniffs.
+  #
+  # Composer here is a linter and nothing else. It installs no runtime
+  # dependency, the plugin loads no autoloader, and composer.json, composer.lock
+  # and vendor/ are all in .distignore, so none of it reaches the zip. PHPUnit is
+  # deliberately NOT a Composer dependency: the suite is fetched as a phar by the
+  # unit job below, which is the workflow this repo already had and which works.
+  standards:
+    name: Coding standards
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+
+      - name: Install the linter
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run PHPCS
+        run: composer run lint
+
+      # php -l proves the source parses on 7.4. It cannot prove the source only
+      # calls what 7.4 has — a PHP 8 function parses perfectly on 7.4 and fails
+      # at runtime, on the shared hosting this plugin is actually installed on.
+      - name: Check the source really runs on 7.4
+        run: composer run compat
+
   unit:
     name: Unit (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
