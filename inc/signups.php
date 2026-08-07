@@ -215,7 +215,7 @@ function gwcvt_settle_signups( int $shift_id ): void {
 /**
  * Try to take the settling lock for a shift.
  *
- * add_option() is the atomic primitive here: it returns false when the key
+ * Uses add_option() as the atomic primitive: it returns false when the key
  * already exists, which is a test-and-set in one statement rather than a read
  * followed by a write that another request can slip between.
  *
@@ -400,6 +400,7 @@ function gwcvt_signups_by_claim_email( string $email ): array {
 			'post_type'              => GWCVT_SIGNUP_TYPE,
 			'post_status'            => array( 'publish', GWCVT_SIGNUP_WAITLIST, GWCVT_SIGNUP_WITHDRAWN ),
 			'fields'                 => 'ids',
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- every signup on one shift, to settle the waiting list. 500 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
 			'posts_per_page'         => 500,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
@@ -429,6 +430,7 @@ function gwcvt_signup_ids_for_volunteer( int $volunteer_id ): array {
 			'post_type'              => GWCVT_SIGNUP_TYPE,
 			'post_status'            => array( 'publish', GWCVT_SIGNUP_WAITLIST, GWCVT_SIGNUP_WITHDRAWN ),
 			'fields'                 => 'ids',
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- every signup on one shift, to settle the waiting list. 500 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
 			'posts_per_page'         => 500,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,

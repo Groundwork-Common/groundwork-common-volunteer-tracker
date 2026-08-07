@@ -74,6 +74,7 @@ function gwcvt_dispatch(): void {
 	 * us. The response reflects a submission that just happened and the page
 	 * carries a fresh nonce. */
 	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- DONOTCACHEPAGE is a shared convention read by caching plugins and hosts; prefixing it would mean nothing reads it.
 		define( 'DONOTCACHEPAGE', true );
 	}
 

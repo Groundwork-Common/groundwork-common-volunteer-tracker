@@ -606,6 +606,13 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 					break;
 
 				case 'page':
+					/* These are arguments to wp_dropdown_pages(), which esc_attr()s
+					 * name and id itself before printing them. The sniff flags every
+					 * argument to a function that echoes and cannot see core's own
+					 * escaping, so it reports three findings that are not defects.
+					 * Disabled across the call rather than per line, because the
+					 * findings land on the array members rather than on the call. */
+					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 					wp_dropdown_pages(
 						array(
 							'name'              => 'gwcvt[' . $key . ']',
@@ -615,6 +622,7 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 							'option_none_value' => '0',
 						)
 					);
+					// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 					break;
 
 				case 'select':

@@ -278,7 +278,6 @@ function gwcvt_letter_action_url( string $action, int $volunteer_id, string $fro
 /**
  * The shared front half of both issue handlers.
  *
- * @param string $action admin_post action and nonce prefix.
  * @return array{letter:GWCVT_Letter, volunteer_id:int, from:string, to:string}
  */
 function gwcvt_letter_request(): array {

@@ -158,6 +158,7 @@ function gwcvt_order_menu(): void {
 
 	/* Re-keyed from zero. WordPress reads the keys as positions when it renders,
 	 * and leaving the originals would put everything back where it started. */
+	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $submenu is the documented way to order a menu; core exposes no API for it, and this writes one plugin's own branch of it rather than replacing the global.
 	$GLOBALS['submenu'][ $parent ] = array_values( $ordered );
 }
 

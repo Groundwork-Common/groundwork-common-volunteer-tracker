@@ -274,6 +274,7 @@ function gwcvt_shift_signup_ids( int $shift_id, array $statuses = array( 'publis
 			'post_type'        => GWCVT_SIGNUP_TYPE,
 			'post_parent'      => $shift_id,
 			'post_status'      => $statuses,
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the roster of one shift. 500 is far above any shift a person could staff, and is a bound rather than a page; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
 			'posts_per_page'   => 500,
 			'orderby'          => 'ID',
 			'order'            => 'ASC',

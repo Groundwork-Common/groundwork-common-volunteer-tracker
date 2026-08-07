@@ -136,6 +136,7 @@ function gwcvt_recurrence_dates( string $start, string $pattern, string $until )
 	 * needs and is still a number rather than a hope. */
 	$ceiling = GWCVT_RECURRENCE_MAX * 2;
 
+	// phpcs:ignore Squiz.PHP.DisallowSizeFunctionsInLoops.Found -- $dates grows inside the loop; its count is the cap being enforced, so hoisting it would make the guard never fire.
 	while ( count( $dates ) < GWCVT_RECURRENCE_MAX && $step < $ceiling ) {
 		$date = gwcvt_recurrence_step( $from, $pattern, $step );
 		++$step;

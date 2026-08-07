@@ -21,25 +21,51 @@ defined( 'ABSPATH' ) || exit;
 class GWCVT_Letter_Entry {
  // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
 
-	/** @var string Date of the shift, Y-m-d. */
+	/**
+	 * Date of the shift, Y-m-d.
+	 *
+	 * @var string
+	 */
 	public string $date = '';
 
-	/** @var int Duration in minutes. Never a float — see inc/settings.php. */
+	/**
+	 * Duration in minutes. Never a float — see inc/settings.php.
+	 *
+	 * @var int
+	 */
 	public int $minutes = 0;
 
-	/** @var string What was done. */
+	/**
+	 * What was done.
+	 *
+	 * @var string
+	 */
 	public string $activity = '';
 
-	/** @var string Who supervised it. */
+	/**
+	 * Who supervised it.
+	 *
+	 * @var string
+	 */
 	public string $supervisor = '';
 
-	/** @var bool Whether a staff member has attested to it. */
+	/**
+	 * Whether a staff member has attested to it.
+	 *
+	 * @var bool
+	 */
 	public bool $verified = false;
 
-	/** @var string The attestation, spelled out. Empty when unverified. */
+	/**
+	 * The attestation, spelled out. Empty when unverified.
+	 *
+	 * @var string
+	 */
 	public string $attestation = '';
 
 	/**
+	 * Build one line of a letter.
+	 *
 	 * @param string $date        Y-m-d.
 	 * @param int    $minutes     Duration in minutes.
 	 * @param string $activity    What was done.

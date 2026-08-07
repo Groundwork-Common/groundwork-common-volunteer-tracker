@@ -217,6 +217,7 @@ function gwcvt_ics_fold( string $line ): string {
 	$remaining = $line;
 	$limit     = 75;
 
+	// phpcs:ignore Squiz.PHP.DisallowSizeFunctionsInLoops.Found -- $remaining is shortened inside the loop, so its length is the termination condition and cannot be hoisted.
 	while ( strlen( $remaining ) > $limit ) {
 		$take = $limit;
 

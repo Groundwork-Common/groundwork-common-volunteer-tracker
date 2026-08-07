@@ -842,6 +842,7 @@ function gwcvt_add_pending_bubble(): void {
 			continue;
 		}
 
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- appending the pending-count bubble to this plugin's own menu item, which is how core itself renders the comments count. There is no API for it.
 		$menu[ $index ][0] .= sprintf(
 			' <span class="awaiting-mod"><span class="pending-count">%s</span></span>',
 			esc_html( number_format_i18n( $count ) )

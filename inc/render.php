@@ -55,6 +55,7 @@ function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): 
 	<meta name="robots" content="noindex, nofollow" />
 	<title><?php echo esc_html( gwcvt_letter_title( $letter ) ); ?></title>
 	<?php if ( 'print' === $medium ) : ?>
+		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- this is a standalone document with its own <head>, not a WordPress page, so there is no enqueue queue to join. The plugin owning this markup outright is the point: see the note about theme-overridable templates. ?>
 		<link rel="stylesheet" href="<?php echo esc_url( GWCVT_URL . 'assets/css/letter.css?ver=' . GWCVT_VERSION ); ?>" />
 	<?php endif; ?>
 </head>
@@ -339,7 +340,7 @@ function gwcvt_letter_tokens( GWCVT_Letter $letter ): array {
 /**
  * The site's timezone, named the way a person would name it.
  *
- * wp_timezone_string() returns whatever is in the setting, which for a site
+ * WordPress's wp_timezone_string() returns whatever is in the setting, which for a site
  * configured by UTC offset is a string like "+00:00". On a letter that reads as
  * a bug — "Generated 5 August 2026 3:53 pm (+00:00)" — and the timestamp is one
  * of the things making this document credible, so it cannot look broken.
@@ -552,20 +553,20 @@ function gwcvt_inline_letter_styles( string $html ): string {
 	 * ─────────────────────────────────────────────────────────────────────── */
 	return (string) preg_replace_callback(
 		'/<([a-z]+)([^>]*\bclass="([^"]*)"[^>]*?)>/i',
-		static function ( array $match ) use ( $rules ): string {
+		static function ( array $matched ) use ( $rules ): string {
 			$declarations = '';
 
-			foreach ( preg_split( '/\s+/', trim( $match[3] ) ) as $class ) {
+			foreach ( preg_split( '/\s+/', trim( $matched[3] ) ) as $class ) {
 				if ( '' !== $class && isset( $rules[ $class ] ) ) {
 					$declarations .= $rules[ $class ];
 				}
 			}
 
 			if ( '' === $declarations ) {
-				return $match[0];
+				return $matched[0];
 			}
 
-			$attributes = rtrim( $match[2] );
+			$attributes = rtrim( $matched[2] );
 			$closes     = '';
 
 			// <img … /> — the slash belongs after the attributes, not inside them.
@@ -574,7 +575,7 @@ function gwcvt_inline_letter_styles( string $html ): string {
 				$closes     = ' /';
 			}
 
-			return '<' . $match[1] . $attributes . ' style="' . $declarations . '"' . $closes . '>';
+			return '<' . $matched[1] . $attributes . ' style="' . $declarations . '"' . $closes . '>';
 		},
 		gwcvt_inline_letter_cells( $html )
 	);

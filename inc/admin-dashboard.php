@@ -59,7 +59,7 @@ function gwcvt_render_dashboard(): void {
 				<span class="gwcvt-dash__org"><?php echo esc_html( gwcvt_org_name() ); ?></span>
 			</div>
 			<span class="gwcvt-dash__date">
-				<?php echo esc_html( wp_date( (string) get_option( 'date_format' ) ?: 'j F Y' ) ); ?>
+				<?php echo esc_html( wp_date( (string) get_option( 'date_format' ) ?: 'j F Y' ) ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- an empty date_format must fall back too, which ?? does not do; spelling it out would call get_option() twice. ?>
 			</span>
 		</header>
 

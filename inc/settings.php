@@ -385,7 +385,7 @@ function gwcvt_parse_hours( string $raw, bool $round = true ): ?int {
 		$minutes = ( (float) ( $m[1] ?? 0 ) * 60 ) + (float) ( $m[2] ?? 0 );
 
 	} elseif ( preg_match( '/^\d*\.?\d+$/', $value ) ) {
-		// A bare number is hours. 3, 3.5, .5
+		// A bare number is hours — 3, 3.5 and .5 all count.
 		$minutes = (float) $value * 60;
 	}
 

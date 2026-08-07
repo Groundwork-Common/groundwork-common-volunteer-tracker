@@ -542,6 +542,7 @@ function gwcvt_render_event_roster_document( int $event_id ): void {
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="noindex, nofollow, noarchive" />
 	<title><?php echo esc_html( gwcvt_event_name( $event_id ) ); ?></title>
+	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- this is a standalone document with its own <head>, not a WordPress page, so there is no enqueue queue to join. The plugin owning this markup outright is the point: see the note about theme-overridable templates. ?>
 	<link rel="stylesheet" href="<?php echo esc_url( GWCVT_URL . 'assets/css/letter.css' ); ?>" />
 </head>
 <body class="gwcvt-roster-print">

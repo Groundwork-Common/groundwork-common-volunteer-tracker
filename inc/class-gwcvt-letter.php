@@ -28,37 +28,79 @@ defined( 'ABSPATH' ) || exit;
 class GWCVT_Letter {
  // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
 
-	/** @var int The volunteer this is about. */
+	/**
+	 * The volunteer this is about.
+	 *
+	 * @var int
+	 */
 	public int $volunteer_id = 0;
 
-	/** @var string Their name, as the letter prints it. */
+	/**
+	 * Their name, as the letter prints it.
+	 *
+	 * @var string
+	 */
 	public string $volunteer_name = '';
 
-	/** @var string Start of the period covered, Y-m-d. Empty means "from the beginning". */
+	/**
+	 * Start of the period covered, Y-m-d. Empty means "from the beginning".
+	 *
+	 * @var string
+	 */
 	public string $from = '';
 
-	/** @var string End of the period covered, Y-m-d. Empty means "to today". */
+	/**
+	 * End of the period covered, Y-m-d. Empty means "to today".
+	 *
+	 * @var string
+	 */
 	public string $to = '';
 
-	/** @var GWCVT_Letter_Entry[] The shifts, oldest first. */
+	/**
+	 * The shifts, oldest first.
+	 *
+	 * @var GWCVT_Letter_Entry[]
+	 */
 	public array $entries = array();
 
-	/** @var int Minutes a staff member has attested to. This is the figure the letter claims. */
+	/**
+	 * Minutes a staff member has attested to. This is the figure the letter claims.
+	 *
+	 * @var int
+	 */
 	public int $verified_minutes = 0;
 
-	/** @var int Minutes shown but not attested to. Never added to the figure above. */
+	/**
+	 * Minutes shown but not attested to. Never added to the figure above.
+	 *
+	 * @var int
+	 */
 	public int $unverified_minutes = 0;
 
-	/** @var bool Whether unattested shifts appear at all. */
+	/**
+	 * Whether unattested shifts appear at all.
+	 *
+	 * @var bool
+	 */
 	public bool $includes_unverified = false;
 
-	/** @var string The reference code. */
+	/**
+	 * The reference code.
+	 *
+	 * @var string
+	 */
 	public string $reference = '';
 
-	/** @var int When this letter was produced, as a Unix timestamp. */
+	/**
+	 * When this letter was produced, as a Unix timestamp.
+	 *
+	 * @var int
+	 */
 	public int $issued_at = 0;
 
 	/**
+	 * Build the letter model.
+	 *
 	 * @param int    $volunteer_id        Volunteer post ID.
 	 * @param string $volunteer_name      Display name.
 	 * @param string $from                Y-m-d or ''.
@@ -69,6 +111,12 @@ class GWCVT_Letter {
 	 * @param bool   $includes_unverified Whether unattested shifts are listed.
 	 * @param string $reference           Reference code.
 	 * @param int    $issued_at           Unix timestamp.
+	 *
+	 * @throws InvalidArgumentException If $entries holds anything that is not a
+	 *                                  GWCVT_Letter_Entry. The letter is the one
+	 *                                  output here that has to be exact, so a
+	 *                                  wrong-typed row fails loudly at
+	 *                                  construction rather than rendering blank.
 	 */
 	public function __construct(
 		int $volunteer_id,
