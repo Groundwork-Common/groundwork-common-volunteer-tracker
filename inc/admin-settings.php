@@ -606,19 +606,25 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 					break;
 
 				case 'page':
-					/* These are arguments to wp_dropdown_pages(), which esc_attr()s
-					 * name and id itself before printing them. The sniff flags every
-					 * argument to a function that echoes and cannot see core's own
-					 * escaping, so it reports three findings that are not defects.
-					 * Disabled across the call rather than per line, because the
-					 * findings land on the array members rather than on the call. */
+					/* `name` and `id` are escaped by core: wp_dropdown_pages() builds
+					 * its <select> with esc_attr() around both. The sniff flags every
+					 * argument to a function that echoes and cannot see that, so those
+					 * two findings are not defects.
+					 *
+					 * `show_option_none` is NOT escaped by core — it is concatenated
+					 * into the <option> raw, unlike option_none_value beside it. An
+					 * earlier version of this annotation claimed core escaped all
+					 * three, which was checked and found to be untrue, so it is
+					 * escaped here instead of being covered by the same excuse. The
+					 * string is our own and harmless today; the point is that the
+					 * reason written down has to be the reason that is true. */
 					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 					wp_dropdown_pages(
 						array(
 							'name'              => 'gwcvt[' . $key . ']',
 							'id'                => $id,
 							'selected'          => (int) $value,
-							'show_option_none'  => __( '— not set —', 'groundwork-common-volunteer-tracker' ),
+							'show_option_none'  => esc_html__( '— not set —', 'groundwork-common-volunteer-tracker' ),
 							'option_none_value' => '0',
 						)
 					);
