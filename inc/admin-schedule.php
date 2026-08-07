@@ -733,7 +733,7 @@ function gwcvt_event_notice(): void {
 	$slot = isset( $_GET['gwcvt_slot'] ) ? absint( wp_unslash( $_GET['gwcvt_slot'] ) ) : 0;
 
 	$messages = array(
-		'saved'      => __( 'Saved.', 'groundwork-common-volunteer-tracker' ),
+		'saved'           => __( 'Saved.', 'groundwork-common-volunteer-tracker' ),
 
 		/* An action says what it did, in the past tense, naming the thing it did
 		 * it to. That sentence is the whole reason these moved off the form: a
@@ -746,28 +746,28 @@ function gwcvt_event_notice(): void {
 				gwcvt_slot_label( $slot )
 			)
 			: __( 'That time was called off.', 'groundwork-common-volunteer-tracker' ),
-		'restored-slot' => $slot > 0
+		'restored-slot'   => $slot > 0
 			? sprintf(
 				/* translators: %s: a role and a time. */
 				__( '%s is back on.', 'groundwork-common-volunteer-tracker' ),
 				gwcvt_slot_label( $slot )
 			)
 			: __( 'That time is back on.', 'groundwork-common-volunteer-tracker' ),
-		'deleted-slot'  => __( 'That time was deleted. Nobody was on it.', 'groundwork-common-volunteer-tracker' ),
-		'dropped-role'  => __( 'The role is gone.', 'groundwork-common-volunteer-tracker' ),
-		'unknown-role'  => __( 'That role has no times left on it.', 'groundwork-common-volunteer-tracker' ),
-		'copied'     => __( 'Copied. This is the new one, saved as a draft — check the dates before you publish it.', 'groundwork-common-volunteer-tracker' ),
-		'called-off' => __( 'The event was called off, and every time on it with it.', 'groundwork-common-volunteer-tracker' ),
-		'deleted'    => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
-		'promoted'   => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
-		'rostered'   => __( 'They are on the list.', 'groundwork-common-volunteer-tracker' ),
-		'no-title'   => __( 'An event needs a name — it is what volunteers will recognise it by.', 'groundwork-common-volunteer-tracker' ),
-		'no-role'    => __( 'A role with times under it needs a name. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'bad-time'   => __( 'One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight.', 'groundwork-common-volunteer-tracker' ),
-		'has-roster' => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
-		'bad-date'   => __( 'That date could not be read.', 'groundwork-common-volunteer-tracker' ),
-		'unknown'    => __( 'That event no longer exists.', 'groundwork-common-volunteer-tracker' ),
-		'failed'     => __( 'That could not be saved. Please try again.', 'groundwork-common-volunteer-tracker' ),
+		'deleted-slot'    => __( 'That time was deleted. Nobody was on it.', 'groundwork-common-volunteer-tracker' ),
+		'dropped-role'    => __( 'The role is gone.', 'groundwork-common-volunteer-tracker' ),
+		'unknown-role'    => __( 'That role has no times left on it.', 'groundwork-common-volunteer-tracker' ),
+		'copied'          => __( 'Copied. This is the new one, saved as a draft — check the dates before you publish it.', 'groundwork-common-volunteer-tracker' ),
+		'called-off'      => __( 'The event was called off, and every time on it with it.', 'groundwork-common-volunteer-tracker' ),
+		'deleted'         => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
+		'promoted'        => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
+		'rostered'        => __( 'They are on the list.', 'groundwork-common-volunteer-tracker' ),
+		'no-title'        => __( 'An event needs a name — it is what volunteers will recognise it by.', 'groundwork-common-volunteer-tracker' ),
+		'no-role'         => __( 'A role with times under it needs a name. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'bad-time'        => __( 'One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight.', 'groundwork-common-volunteer-tracker' ),
+		'has-roster'      => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
+		'bad-date'        => __( 'That date could not be read.', 'groundwork-common-volunteer-tracker' ),
+		'unknown'         => __( 'That event no longer exists.', 'groundwork-common-volunteer-tracker' ),
+		'failed'          => __( 'That could not be saved. Please try again.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	if ( ! isset( $messages[ $result ] ) ) {

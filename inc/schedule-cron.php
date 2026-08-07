@@ -39,7 +39,10 @@ add_action( GWCVT_DIGEST_EVENT, 'gwcvt_run_digest' );
 function gwcvt_schedule_shift_events(): void {
 	$wanted = (bool) gwcvt_setting( 'shifts_enabled' );
 
-	foreach ( array( GWCVT_REMINDER_EVENT => 'hourly', GWCVT_DIGEST_EVENT => 'daily' ) as $event => $recurrence ) {
+	foreach ( array(
+		GWCVT_REMINDER_EVENT => 'hourly',
+		GWCVT_DIGEST_EVENT   => 'daily',
+	) as $event => $recurrence ) {
 		$next = wp_next_scheduled( $event );
 
 		if ( $wanted && ! $next ) {

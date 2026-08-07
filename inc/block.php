@@ -154,7 +154,12 @@ function gwcvt_localize_block_editor(): void {
 	 * an organisation's calendar to anybody who asked. */
 	$events = array();
 
-	foreach ( gwcvt_events_between( array( 'from' => gwcvt_today(), 'limit' => 50 ) ) as $event_id ) {
+	foreach ( gwcvt_events_between(
+		array(
+			'from'  => gwcvt_today(),
+			'limit' => 50,
+		)
+	) as $event_id ) {
 		$events[] = array(
 			'value' => (string) $event_id,
 			'label' => sprintf(

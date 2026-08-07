@@ -28,7 +28,8 @@ defined( 'ABSPATH' ) || exit;
  * explicit constructor — no promotion, no readonly, no enums. That is enough.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-class GWCVT_Totals { // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names is StudlyCaps with underscores.
+class GWCVT_Totals {
+ // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names is StudlyCaps with underscores.
 
 	/** @var int Minutes a staff member has attested to. */
 	public int $verified_minutes = 0;

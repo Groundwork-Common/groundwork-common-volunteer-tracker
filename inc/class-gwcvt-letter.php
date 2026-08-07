@@ -25,7 +25,8 @@ defined( 'ABSPATH' ) || exit;
  * single path from records to document, and LetterTest asserts that no other
  * caller invokes the constructor.
  */
-class GWCVT_Letter { // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
+class GWCVT_Letter {
+ // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
 
 	/** @var int The volunteer this is about. */
 	public int $volunteer_id = 0;

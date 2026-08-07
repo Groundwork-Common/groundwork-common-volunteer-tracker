@@ -367,8 +367,8 @@ function gwcvt_events_between( array $args = array() ): array {
 
 	if ( '' !== $to ) {
 		$range = array(
-			'relation'   => 'AND',
-			'ends_after' => array(
+			'relation'         => 'AND',
+			'ends_after'       => array(
 				'key'     => GWCVT_EVENT_END_DATE,
 				'value'   => $from,
 				'compare' => '>=',

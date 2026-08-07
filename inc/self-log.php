@@ -206,7 +206,7 @@ function gwcvt_handle_self_log(): void {
 function gwcvt_insert_self_logged_entry( string $name, string $email, string $date, int $hours, array $posted ): int {
 	$entry_id = wp_insert_post(
 		array(
-			'post_type' => GWCVT_ENTRY_TYPE,
+			'post_type'   => GWCVT_ENTRY_TYPE,
 			/* Pending, meaning no human has accepted this record yet. It is not
 			 * a draft — a draft reads as unfinished work by staff — and it is
 			 * certainly not published, which would put an unreviewed claim into
@@ -447,7 +447,7 @@ function gwcvt_rate_limited( string $ip, string $email ): bool {
 		);
 
 		++$row['count'];
-		$bucket[ $key ] = $row;
+		$bucket[ $key ]  = $row;
 		$store[ $scope ] = $bucket;
 
 		if ( $row['count'] > $max ) {

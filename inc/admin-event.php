@@ -894,7 +894,6 @@ function gwcvt_save_event_grid( int $event_id, array $roles, array $context ): a
 		$supervisor = '' !== $supervisor ? $supervisor : (string) $context['super'];
 		$location   = '' !== $location ? $location : (string) $context['location'];
 
-
 		$existing = array();
 
 		foreach ( $slots as $slot ) {

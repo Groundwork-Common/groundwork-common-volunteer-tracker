@@ -55,9 +55,9 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
 	$unverified = 0;
 
 	foreach ( $entry_ids as $entry_id ) {
-		$entry_id     = (int) $entry_id;
-		$is_verified  = gwcvt_entry_is_verified( $entry_id );
-		$minutes      = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
+		$entry_id    = (int) $entry_id;
+		$is_verified = gwcvt_entry_is_verified( $entry_id );
+		$minutes     = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
 
 		if ( $is_verified ) {
 			$verified += $minutes;

@@ -732,7 +732,13 @@ function gwcvt_apply_verified_filter( $query ): void {
 
 	// An explicit sort from the column headers wins.
 	if ( '' === (string) $query->get( 'orderby' ) ) {
-		$query->set( 'orderby', array( 'gwcvt_shift_date' => 'DESC', 'ID' => 'DESC' ) );
+		$query->set(
+			'orderby',
+			array(
+				'gwcvt_shift_date' => 'DESC',
+				'ID'               => 'DESC',
+			)
+		);
 	}
 }
 

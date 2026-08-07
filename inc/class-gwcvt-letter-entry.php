@@ -18,7 +18,8 @@ defined( 'ABSPATH' ) || exit;
  * See the box comment in inc/class-gwcvt-totals.php for the rule about which
  * things in this plugin are objects and which stay arrays.
  */
-class GWCVT_Letter_Entry { // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
+class GWCVT_Letter_Entry {
+ // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
 
 	/** @var string Date of the shift, Y-m-d. */
 	public string $date = '';

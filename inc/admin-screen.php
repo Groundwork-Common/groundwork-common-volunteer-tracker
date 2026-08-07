@@ -16,9 +16,9 @@ defined( 'ABSPATH' ) || exit;
  * here because the footer filter, the tab shell and the help tabs all have to
  * agree about what "our screen" means, and three copies of a string is three
  * chances for two of them to agree while the third drifts. */
-const GWCVT_MENU_SLUG     = 'edit.php?post_type=gwcvt_entry';
-const GWCVT_SETTINGS_PAGE = 'gwcvt-settings';
-const GWCVT_LETTERS_PAGE  = 'gwcvt-letters';
+const GWCVT_MENU_SLUG      = 'edit.php?post_type=gwcvt_entry';
+const GWCVT_SETTINGS_PAGE  = 'gwcvt-settings';
+const GWCVT_LETTERS_PAGE   = 'gwcvt-letters';
 const GWCVT_QUICK_ADD_PAGE = 'gwcvt-log-a-day';
 const GWCVT_SCHEDULE_PAGE  = 'gwcvt-schedule';
 const GWCVT_DASHBOARD_PAGE = 'gwcvt-dashboard';
@@ -125,7 +125,7 @@ function gwcvt_order_menu(): void {
 		return;
 	}
 
-	$items = $GLOBALS['submenu'][ $parent ];
+	$items   = $GLOBALS['submenu'][ $parent ];
 	$by_slug = array();
 
 	foreach ( $items as $item ) {
