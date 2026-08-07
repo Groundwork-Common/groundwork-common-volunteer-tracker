@@ -76,14 +76,39 @@ final class VersionTest extends TestCase {
 		}
 	}
 
-	public function test_the_text_domain_matches_the_folder_name(): void {
+	/**
+	 * The slug, the text domain, the main file's name and the .pot's name are
+	 * deliberately one string.
+	 *
+	 * This used to assert on basename( GWCVT_DIR ) — the folder the checkout
+	 * happens to sit in — which is the one thing in the list that is not the
+	 * plugin's own business. WordPress.org installs into a folder named after
+	 * the slug whatever the developer's directory was called, so the assertion
+	 * proved nothing about the shipped plugin while failing in any checkout not
+	 * named after the repo: a git worktree, a fork, a CI job that clones into
+	 * `work/`. The main file's name is the invariant that actually matters, and
+	 * it is one the repository controls.
+	 *
+	 * The sibling post portal reached the same conclusion first; this is its
+	 * test, adapted. Keeping the two the same shape is deliberate — three
+	 * plugins that answer "what is the slug" three different ways is how one of
+	 * them ends up answering it wrongly.
+	 */
+	public function test_the_slug_is_one_string_everywhere(): void {
+		$slug = 'groundwork-common-volunteer-tracker';
+
 		preg_match( '/^ \* Text Domain:\s*(\S+)/m', $this->plugin_file(), $domain );
 
-		$this->assertSame( 'groundwork-common-volunteer-tracker', $domain[1] );
-		$this->assertSame(
-			'groundwork-common-volunteer-tracker',
-			basename( rtrim( GWCVT_DIR, '/' ) ),
-			'The folder name, the slug and the text domain are deliberately the same string.'
+		$this->assertSame( $slug, $domain[1], 'The Text Domain header must be the slug.' );
+
+		$this->assertFileExists(
+			GWCVT_DIR . $slug . '.php',
+			'The main plugin file must be named after the slug.'
+		);
+
+		$this->assertFileExists(
+			GWCVT_DIR . 'languages/' . $slug . '.pot',
+			'The translation template must be named after the text domain, or WordPress will not find it.'
 		);
 	}
 

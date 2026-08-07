@@ -106,6 +106,40 @@ not happen here. Never add one without a `--` reason.
 Ports are pinned in `.wp-env.override.json`, which is gitignored — a fresh clone
 gets wp-env defaults.
 
+## The beta site
+
+<https://wp.beta.poo6op.com> is a shared demo install carrying **all three**
+Groundwork Common plugins, seeded as one organisation. `bin/deploy-staging.sh`
+rsyncs the working tree there — current branch and uncommitted edits included, by
+design — using `.distignore` as the manifest, then activates. `--dry-run` first if
+in doubt. README.md has the full account; four things matter before touching it:
+
+- **The target is not in the repo, and must not be put there.** The script reads
+  `SSH_HOST`, `DEST_ROOT` and `SITE_URL` from
+  `~/.config/groundwork-common/beta.env` (override with `GWC_BETA_ENV`) and stops
+  with instructions if that file is missing. An SSH user and host are not a
+  credential, but together they name a valid account on a public host — the half
+  of a break-in that is usually the work. Do not "simplify" this back to a
+  literal: these repos being private is a setting that reverses in one click, and
+  `.distignore` covers the release zip, not the repository.
+
+- **Production shares the SSH login.** `groundworkcommon.com`, a live nonprofit
+  site, is in the same home directory on the same user. A wrong destination path
+  does not fail, it succeeds against production. The script guards this by
+  refusing to run unless it finds a beta-only mu-plugin at the target — do not
+  remove that check to make a one-off deploy easier.
+- **`WP_ENVIRONMENT_TYPE` is `development`, not `staging`,** because the seed
+  scripts refuse anything else. So every other `wp_get_environment_type()` guard
+  relaxes there too, and no real record may ever live on that host.
+- **Nothing sends mail.** `wp_mail()` is intercepted at `pre_wp_mail` and stored;
+  read it under Tools → Trapped mail. Not `phpmailer_init` — see the trap below.
+
+WP-CLI on that host costs ~30s per invocation. Batch into one `wp eval-file`
+rather than chaining `wp` calls, or a routine step blows a two-minute timeout.
+
+`tests/` is in `.distignore`, so the seed is **not** deployed with the plugin.
+Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.php`.
+
 ## Traps that have already cost time
 
 - **Rollup invalidation must not hang off `save_post`.** It fires *during*
@@ -156,6 +190,13 @@ gets wp-env defaults.
   dropped — all correct, all invisible, on the numbers a letter prints.
 - Screenshot captions are matched to files **by number alone**. Reordering the
   captions without renaming the files silently mislabels every one.
+- **Trapping mail belongs on `pre_wp_mail`, never `phpmailer_init`.** The latter
+  is the usual place to redirect mail and it cannot stop a send — only change
+  where it goes. If PHPMailer then throws, because the host has no MTA or rejects
+  the From address, `wp_mail()` returns false. This plugin reads that return to
+  decide a reminder was not delivered, so it retries the same reminder on every
+  cron pass. `pre_wp_mail` short-circuits the function and returns true, which is
+  the answer production would have given.
 
 ## Hard rules
 
