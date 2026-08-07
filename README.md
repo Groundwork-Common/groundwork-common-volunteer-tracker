@@ -228,6 +228,43 @@ Re-runnable: it removes what a previous run created, and only that — everythin
 
 Every name in it is invented and every address is on `example.test`. That is deliberate: this plugin's demo data is people's names beside a number of volunteer hours, and for two of them beside the fact that they are working off a court order. The same rule applies to screenshots — see `.wordpress-org/README.md`.
 
+## The beta site
+
+<https://wp.beta.poo6op.com> is a shared demo and beta install carrying **all three** Groundwork Common plugins — this one, the location finder and the post portal — seeded as one organisation rather than three unrelated demos. It is where a change is looked at in a browser on real hosting before it is merged.
+
+```bash
+bin/deploy-staging.sh              # deploy the working tree, then activate
+bin/deploy-staging.sh --dry-run    # show what would change, send nothing
+```
+
+It deploys **whatever is checked out right now**, branch and uncommitted edits included. That is the point — waiting for `main` would defeat the purpose. Nothing in the script reads git state.
+
+Once per machine, tell it where the site is. The target is **not** in the repository and is not going into it: an SSH user and host are not a credential, but together they name a valid account on a specific public host — the half of a break-in that is normally the work. These repos are private, and "private today" is a weaker promise than "never committed", because the setting reverses in one click and history outlives it. Note too that `.distignore` keeps this script out of the release *zip* and does nothing about the *repository* — two different exposures, and only one of them was covered. So the target lives in one file outside every repo, shared by all three plugins because it is one beta site:
+
+```bash
+mkdir -p ~/.config/groundwork-common && cat > ~/.config/groundwork-common/beta.env <<'CONF'
+SSH_HOST=user@host.dreamhost.com
+DEST_ROOT=wp.beta.example.com
+SITE_URL=https://wp.beta.example.com
+CONF
+```
+
+Without it the script stops and prints exactly that, rather than falling back to a default. Set `GWC_BETA_ENV` to keep the file elsewhere.
+
+What gets sent is `.distignore`, the same file `wp dist-archive` reads, so what lands on the beta site is what a user would install and there is no second exclusion list to fall out of step with the first. `tests/` is therefore *not* deployed; to reseed, copy `tests/seed.php` up and run it by absolute path:
+
+```bash
+wp eval-file ~/beta-seeds/gwcvt-seed.php
+```
+
+Three things about that host are worth knowing before working on it:
+
+- **Production shares the login.** `groundworkcommon.com` — a live nonprofit site — is in the same home directory on the same SSH user. A wrong destination path does not fail, it succeeds against production. The script refuses to run unless it finds a beta-only mu-plugin at the target, so a typo stops the run instead of redecorating a live site.
+- **`WP_ENVIRONMENT_TYPE` is `development`, not `staging`.** The seed scripts refuse to run outside `local` and `development`, and seeding is the whole point of the box. Everything else keying off `wp_get_environment_type()` relaxes there too, which is exactly why no real record may ever live on it.
+- **No mail leaves it.** An mu-plugin intercepts `wp_mail()` at `pre_wp_mail` and stores the message instead of sending it; read what would have gone out under **Tools → Trapped mail**. This plugin sends on cron — shift reminders, waiting-list promotions — against invented data, and an invented address is only safe until somebody seeds a real one out of habit. The hook is `pre_wp_mail` rather than `phpmailer_init` deliberately: the latter can only redirect a send, not stop it, and a PHPMailer failure would make `wp_mail()` return false, which this plugin reads as "not sent" and retries on every cron pass.
+
+WP-CLI on that shared host takes roughly thirty seconds per invocation, because it bootstraps WordPress each time. Batch work into one `wp eval-file` rather than chaining several `wp` calls.
+
 ## Still to come
 
 Milestones, in order: the data model and hour logging, staff verification, the letter and its reference verifier, the optional front-end self-log form, retention with WordPress's privacy exporter and eraser, and the schedule with its rosters.
