@@ -430,7 +430,6 @@ function gwcvt_colophon_is_collapsed(): bool {
  * a script, all to avoid a reload nobody will notice.
  */
 function gwcvt_handle_colophon_toggle(): void {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- presence check only; the nonce is verified below before anything is written.
 	if ( ! isset( $_GET['gwcvt_colophon'] ) ) {
 		return;
 	}
@@ -441,7 +440,6 @@ function gwcvt_handle_colophon_toggle(): void {
 
 	check_admin_referer( 'gwcvt_colophon' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified directly above.
 	$wanted = sanitize_key( wp_unslash( $_GET['gwcvt_colophon'] ) );
 
 	if ( 'collapse' === $wanted ) {

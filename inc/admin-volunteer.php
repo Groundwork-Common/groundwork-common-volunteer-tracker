@@ -99,6 +99,7 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
 		 * saying these are the overdue ones. */
 		$vars['post__in'] = $overdue ? array_values( array_map( 'intval', $overdue ) ) : array( 0 );
 	} elseif ( 'has' === $state ) {
+		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering an admin list table by a meta value is what meta_query is for; the key is indexed and this runs on one screen a coordinator opens deliberately.
 		$vars['meta_query'] = array(
 			array(
 				'key'     => GWCVT_VOLUNTEER_REQUIRED,
@@ -108,6 +109,7 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
 			),
 		);
 	} elseif ( 'none' === $state ) {
+		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- as above, and NOT EXISTS has no non-meta equivalent: "volunteers with no requirement" cannot be expressed as a post field.
 		$vars['meta_query'] = array(
 			'relation' => 'OR',
 			array(
@@ -138,10 +140,11 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
 	 * cannot be combined: a filter and this sort at once would need one clause
 	 * array holding both, and the filter states that use meta_query are exactly
 	 * the ones this sort makes redundant. */
-	$vars['orderby']    = array(
+	$vars['orderby'] = array(
 		'gwcvt_deadline' => $order,
 		'title'          => 'ASC',
 	);
+	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the EXISTS-or-NOT-EXISTS pair described directly above. Dropping it to satisfy the sniff would silently hide every volunteer without a deadline, which is the bug the comment exists to prevent.
 	$vars['meta_query'] = array(
 		'relation'       => 'OR',
 		'gwcvt_deadline' => array(
@@ -184,7 +187,7 @@ function gwcvt_apply_volunteer_filter( $query ): void {
 	);
 
 	foreach ( $vars as $key => $value ) {
-		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- indexed keys, on a screen somebody explicitly asked to filter or sort.
+		// Indexed keys, on a screen somebody explicitly asked to filter or sort.
 		$query->set( $key, $value );
 	}
 }

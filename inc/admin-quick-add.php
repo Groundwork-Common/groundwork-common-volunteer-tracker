@@ -536,7 +536,6 @@ function gwcvt_handle_quick_add(): void {
 
 	check_admin_referer( 'gwcvt_quick_add' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$shift_id = absint( $posted['gwcvt_shift'] ?? 0 );

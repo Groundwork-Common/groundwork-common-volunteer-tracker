@@ -767,7 +767,6 @@ function gwcvt_handle_save_event(): void {
 
 	check_admin_referer( 'gwcvt_save_event_' . $event_id );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$title = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_title'] ?? '' ) ), 0, 200 );
@@ -1084,7 +1083,6 @@ function gwcvt_handle_cancel_event(): void {
 		gwcvt_event_redirect( 0, 'unknown' );
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_reason'] ?? '' ) ), 0, 300 );
@@ -1185,7 +1183,6 @@ function gwcvt_handle_copy_event(): void {
 		gwcvt_event_redirect( 0, 'unknown' );
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$wanted = gwcvt_sanitize_date( sanitize_text_field( (string) ( $posted['gwcvt_copy_date'] ?? '' ) ) );

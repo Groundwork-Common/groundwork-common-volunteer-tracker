@@ -679,10 +679,17 @@ function gwcvt_handle_save_settings(): void {
 
 	check_admin_referer( 'gwcvt_save_settings' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
+	/* Not sanitized here, and that is the design rather than an oversight. This
+	 * is a bag of settings whose types differ per field, so there is no single
+	 * sanitizer that is right for all of them. Nothing is trusted on the way in:
+	 * the loop below reads only the keys gwcvt_settings_fields() declares — a
+	 * key nobody declared is never looked at — and every value it does read goes
+	 * through gwcvt_sanitize_setting() against that field's own definition
+	 * before it reaches $stored. Sanitizing twice, once generically here, would
+	 * flatten the textarea fields the letter depends on. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce checked directly above; sanitized per field at the foreach below.
 	$posted = isset( $_POST['gwcvt'] ) ? (array) wp_unslash( $_POST['gwcvt'] ) : array();
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
-	$tab = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : '';
+	$tab    = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : '';
 
 	$stored = get_option( GWCVT_SETTINGS_OPTION );
 	$stored = is_array( $stored ) ? $stored : array();
@@ -1015,7 +1022,6 @@ function gwcvt_handle_save_permissions(): void {
 	gwcvt_require_cap( 'manage' );
 	check_admin_referer( 'gwcvt_save_permissions' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$wanted = array(
@@ -1138,7 +1144,6 @@ function gwcvt_handle_save_uninstall(): void {
 	gwcvt_require_cap( 'manage' );
 	check_admin_referer( 'gwcvt_save_uninstall' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$armed = ! empty( $_POST['gwcvt_allow_destructive_uninstall'] );
 
 	/* Non-autoloaded: read once, by uninstall.php, on a request where nothing

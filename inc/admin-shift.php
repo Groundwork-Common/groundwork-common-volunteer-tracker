@@ -533,7 +533,6 @@ function gwcvt_handle_save_shift(): void {
 
 	check_admin_referer( 'gwcvt_save_shift_' . $shift_id );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	$date = gwcvt_sanitize_date( sanitize_text_field( (string) ( $posted['gwcvt_date'] ?? '' ) ) );
@@ -705,14 +704,12 @@ function gwcvt_handle_cancel_shift(): void {
 		gwcvt_shift_redirect( 0, 'not-found' );
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$reason = mb_substr( sanitize_text_field( (string) wp_unslash( $_POST['gwcvt_reason'] ?? '' ) ), 0, 200 );
 
 	/* Read before the status changes, because a cancelled shift's roster is
 	 * still its roster and these are the people who need telling. */
 	$roster = gwcvt_shift_signup_ids( $shift_id, array( 'publish', GWCVT_SIGNUP_WAITLIST ) );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
 	$notify = ! empty( $_POST['gwcvt_notify'] );
 
 	wp_update_post(
@@ -755,7 +752,7 @@ function gwcvt_handle_cancel_shift(): void {
 function gwcvt_handle_delete_shift(): void {
 	gwcvt_require_shift_cap( 'publish_posts' );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified immediately below against this value.
+	// Verified immediately below against this value.
 	$shift_id = isset( $_GET['gwcvt_shift'] ) ? absint( wp_unslash( $_GET['gwcvt_shift'] ) ) : 0;
 
 	check_admin_referer( 'gwcvt_delete_shift_' . $shift_id );
@@ -792,7 +789,6 @@ function gwcvt_handle_roster_add(): void {
 
 	check_admin_referer( 'gwcvt_roster_add_' . $shift_id );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$volunteer_id = absint( wp_unslash( $_POST['gwcvt_volunteer'] ?? 0 ) );
 
 	if ( $volunteer_id < 1 ) {
@@ -816,7 +812,7 @@ function gwcvt_handle_roster_add(): void {
 function gwcvt_handle_roster_remove(): void {
 	gwcvt_require_shift_cap();
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified immediately below against this value.
+	// Verified immediately below against this value.
 	$signup_id = isset( $_GET['gwcvt_signup'] ) ? absint( wp_unslash( $_GET['gwcvt_signup'] ) ) : 0;
 
 	check_admin_referer( 'gwcvt_roster_remove_' . $signup_id );
@@ -854,7 +850,7 @@ function gwcvt_roster_print_url( int $shift_id ): string {
 function gwcvt_handle_roster_print(): void {
 	gwcvt_require_shift_cap();
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified immediately below against this value.
+	// Verified immediately below against this value.
 	$shift_id = isset( $_GET['gwcvt_shift'] ) ? absint( wp_unslash( $_GET['gwcvt_shift'] ) ) : 0;
 
 	check_admin_referer( 'gwcvt_roster_print_' . $shift_id );

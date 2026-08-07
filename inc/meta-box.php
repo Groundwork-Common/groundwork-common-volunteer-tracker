@@ -769,7 +769,6 @@ function gwcvt_should_save( int $post_id, string $nonce_field, string $nonce_act
 		return false;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
 	$nonce = isset( $_POST[ $nonce_field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $nonce_field ] ) ) : '';
 
 	/* Absent rather than invalid means this save did not come from our form —

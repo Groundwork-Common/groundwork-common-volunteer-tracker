@@ -123,7 +123,6 @@ function gwcvt_is_self_log_page(): bool {
 function gwcvt_handle_self_log(): void {
 	$started = microtime( true );
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- this IS the nonce check.
 	$nonce = isset( $_POST['gwcvt_self_log_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_self_log_nonce'] ) ) : '';
 
 	if ( ! wp_verify_nonce( $nonce, 'gwcvt_self_log' ) ) {
@@ -131,7 +130,6 @@ function gwcvt_handle_self_log(): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
 	$posted = wp_unslash( $_POST );
 
 	/* The honeypot. A visible text input in an off-screen wrapper — not
