@@ -26,6 +26,27 @@ function gwcvt_register_block(): void {
 		register_block_type_from_metadata( GWCVT_DIR . 'blocks/hours-form' );
 		register_block_type_from_metadata( GWCVT_DIR . 'blocks/shift-list' );
 		register_block_type_from_metadata( GWCVT_DIR . 'blocks/event-grid' );
+
+		/* ── The editor scripts' translations ────────────────────────────────
+		 * Registered here, immediately after the handles exist, rather than in
+		 * inc/enqueue.php beside the picker's. That call was the only one, so
+		 * every string in the three edit.js files was extracted into the POT and
+		 * could never render translated — the warnings telling an editor that
+		 * the form is switched off, or pinned to another page, stayed in English
+		 * on a Spanish site.
+		 *
+		 * The handle is derived by register_block_type_from_metadata() from the
+		 * block name plus '-editor-script', which is why these strings look like
+		 * they were guessed. They are the same names inc/block.php's
+		 * wp_localize_script() calls already rely on.
+		 * ─────────────────────────────────────────────────────────────────── */
+		foreach ( array( 'hours-form', 'shift-list', 'event-grid' ) as $block ) {
+			wp_set_script_translations(
+				'groundwork-common-volunteer-tracker-' . $block . '-editor-script',
+				'groundwork-common-volunteer-tracker',
+				GWCVT_DIR . 'languages'
+			);
+		}
 	}
 
 	add_shortcode( 'volunteer_hours_form', 'gwcvt_form_shortcode' );

@@ -28,10 +28,45 @@ the files silently mislabels every screenshot, and nothing anywhere warns you.
 
 The captions currently expected, in order:
 
-1. The hours list, filtered to shifts nobody has verified yet.
-2. Entering a shift, with the volunteer picker and the verify button.
-3. A verification letter, ready to print.
-4. Checking a reference code somebody has phoned in about.
+1. The dashboard: what needs doing, ordered by what is lost if it waits.
+2. The hours list, filtered to shifts nobody has verified yet.
+3. Entering a shift, with the volunteer picker and the verify button.
+4. A verification letter, ready to print.
+5. Checking a reference code somebody has phoned in about.
+6. The schedule, with an event and the ordinary shifts around it.
+7. Building an event: one occasion, its roles, and the times under each.
+8. The roster for an event, split by role and time, ready for the clipboard.
+
+The eight screenshots exist as of 0.15.0, shot against `tests/seed.php` at
+1280px on a 2× display, so each file is 2560×1800. They are capped at that
+height on purpose: the event editor's full page is over seven thousand pixels
+tall, which scaled into a plugin page is a grey smear.
+
+## The icon and the banners
+
+`assets-source.html` in this folder draws all four. Open it in a browser and
+screenshot the three elements — `#icon`, `#banner-large`, `#banner-small` — at
+their natural size; the 128px icon is the same drawing with the override at the
+foot of that file applied. No build step and nothing to install, which is why it
+is a single static file rather than a script.
+
+**The design, so it can be remade rather than guessed at.** Everything is taken
+from the letter's own stylesheet — Georgia, ink `#1a1a1a`, a `#999` rule — plus
+the Groundwork Common gold `#ffc857` from the wordmark, used once.
+
+The icon is a sheet of paper with a ruled line at its foot. At 128px an itemised
+table is unreadable, so what is drawn is the shape somebody recognises: a page, a
+few lines of type, and the line a person signs on. That line is the one element
+this plugin refuses to replace with a picture of a signature, which makes it the
+right thing to build a mark from.
+
+The banners are typographic for the same reason. A banner showing photographed
+volunteers would be advertising somebody else's afternoon; what this plugin makes
+is a document, so the document is what is on it — quiet enough behind the
+sentence to stay texture.
+
+None of this is precious. It is a first pass by somebody who is not a designer,
+and replacing it costs nothing but the four files.
 
 ## Taking the screenshots
 
@@ -54,10 +89,14 @@ Then, at 1280px wide, with the browser chrome out of frame:
 
 | File | Where | What should be on screen |
 | --- | --- | --- |
-| `screenshot-1.png` | Volunteer Hours → All hours, filtered to **Not yet verified** | The queue: several shifts awaiting a staff member, including the two self-logged rows reading "— not yet matched". |
-| `screenshot-2.png` | Volunteer Hours → Log hours | The shift form with the volunteer picker open on "Mar", showing Marcus Delacroix. |
-| `screenshot-3.png` | The print view for Marcus Delacroix | The letter itself: letterhead, the itemized table, the signature block and the disclaimer. Scroll so the disclaimer is visible — it is the point. |
-| `screenshot-4.png` | Volunteer Hours → Letters, with a reference pasted in | The checker answering "This letter matches our current records." |
+| `screenshot-1.png` | Volunteer Hours → Dashboard | The worklist with several lines on it, so the ordering is visible. Not an empty one, and not the first-run "Nothing here yet" panel. |
+| `screenshot-2.png` | Volunteer Hours → All hours, filtered to **Not yet verified** | The queue: several shifts awaiting a staff member, including the two self-logged rows reading "— not yet matched". |
+| `screenshot-3.png` | Volunteer Hours → Log hours | The shift form with the volunteer picker open on "Mar", showing Marcus Delacroix. |
+| `screenshot-4.png` | The print view for Marcus Delacroix | The letter itself: letterhead, the itemized table, the signature block and the disclaimer. Scroll so the disclaimer is visible — it is the point. |
+| `screenshot-5.png` | Volunteer Hours → Letters, with a reference pasted in | The checker answering "This letter matches our current records." |
+| `screenshot-6.png` | Volunteer Hours → Schedule | The list with an event's summary row among ordinary shifts, so the difference reads. |
+| `screenshot-7.png` | An event, in the editor | The role-major grid: a role named once with its times under it, and the "Where volunteers see this" row filled in. |
+| `screenshot-8.png` | An event → Roster | Grouped role then time, with a "Log the hours" link on a time that has passed. |
 
 Two things to check before saving: the admin bar shows no real site name, and
 the Riverbend letterhead — not your own organization's — is on the letter.

@@ -10,6 +10,7 @@ defined( 'ABSPATH' ) || exit;
 add_action( 'add_meta_boxes', 'gwcvt_add_meta_boxes' );
 add_action( 'save_post_' . GWCVT_ENTRY_TYPE, 'gwcvt_save_entry', 10, 2 );
 add_action( 'save_post_' . GWCVT_VOLUNTEER_TYPE, 'gwcvt_save_volunteer', 10, 2 );
+add_action( 'admin_notices', 'gwcvt_entry_saved_notice' );
 
 /* ── Why every field wrapper here is a div ───────────────────────────────────
  * The obvious markup for a labelled field is a <p>, and it is what wp-admin's
@@ -150,10 +151,17 @@ function gwcvt_render_entry_meta_box( $post ): void {
 			<label for="gwcvt-date">
 				<strong><?php esc_html_e( 'Date of the shift', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
+			<?php
+			/* required on both this and the hours field below. The save still
+			 * copes with neither being given — a browser that skips validation,
+			 * a Quick Edit, a programmatic write — and now says so afterwards.
+			 * This is the cheaper half: catching it before the round trip. */
+			?>
 			<input
 				type="date"
 				id="gwcvt-date"
 				name="gwcvt_date"
+				required
 				value="<?php echo esc_attr( $date ); ?>"
 				<?php echo '' !== $max_date ? 'max="' . esc_attr( $max_date ) . '"' : ''; ?>
 			/>
@@ -172,6 +180,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 				name="gwcvt_hours"
 				class="small-text"
 				inputmode="decimal"
+				required
 				value="<?php echo esc_attr( $minutes > 0 ? gwcvt_format_hours( $minutes ) : '' ); ?>"
 			/>
 			<span class="description">
@@ -265,6 +274,13 @@ function gwcvt_save_entry( $post_id, $post ): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by gwcvt_should_save() directly above.
 	$posted = wp_unslash( $_POST );
 
+	/* Everything this save quietly corrected, reported afterwards by
+	 * gwcvt_entry_saved_notice(). Three things used to be fixed up in silence
+	 * here, and the only trace was a derived title reading "… — 0". The screen
+	 * that logs a day's shifts has always said what it skipped and why; the
+	 * screen most hours are typed into said nothing. */
+	$problems = array();
+
 	$volunteer_id = isset( $posted['gwcvt_volunteer'] ) ? absint( $posted['gwcvt_volunteer'] ) : 0;
 
 	/* A volunteer ID that does not name a volunteer is dropped rather than
@@ -273,15 +289,33 @@ function gwcvt_save_entry( $post_id, $post ): void {
 	 * those hours with no indication anywhere that it had. */
 	if ( $volunteer_id > 0 && GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 		$volunteer_id = 0;
+		$problems[]   = 'volunteer';
 	}
 
 	$date = isset( $posted['gwcvt_date'] ) ? gwcvt_sanitize_date( (string) $posted['gwcvt_date'] ) : '';
 
 	if ( '' !== $date && ! gwcvt_setting( 'allow_future_dates' ) && $date > gwcvt_today() ) {
-		$date = gwcvt_today();
+		$date       = gwcvt_today();
+		$problems[] = 'future-date';
 	}
 
 	$minutes = isset( $posted['gwcvt_hours'] ) ? gwcvt_parse_hours( (string) $posted['gwcvt_hours'] ) : null;
+
+	if ( null === $minutes ) {
+		$problems[] = 'hours';
+	} else {
+		/* Rounding is to the nearest and never up, and it is the right default —
+		 * but it changes the figure a letter prints, and it did so without ever
+		 * saying it had. Somebody typing 3:07 and reading back 3.0 should be told
+		 * which of the two is on the record. */
+		$typed = isset( $posted['gwcvt_hours'] ) ? gwcvt_parse_hours( (string) $posted['gwcvt_hours'], false ) : null;
+
+		if ( null !== $typed && $typed !== $minutes ) {
+			$problems[] = 'rounded';
+		}
+	}
+
+	gwcvt_stash_entry_problems( $post_id, $problems );
 
 	update_post_meta( $post_id, GWCVT_ENTRY_VOLUNTEER, (string) $volunteer_id );
 	update_post_meta( $post_id, GWCVT_ENTRY_DATE, $date );
@@ -322,6 +356,109 @@ function gwcvt_save_entry( $post_id, $post ): void {
 	 * @param int $post_id Entry post ID.
 	 */
 	do_action( 'gwcvt_entry_saved', $post_id );
+}
+
+/* ── Saying what was corrected ───────────────────────────────────────────────
+ * A transient rather than a query argument, for the same reason the schedule
+ * screen uses one for its truncation note: the entry editor's redirect is
+ * WordPress's, not ours, and adding to it means filtering redirect_post_location
+ * to smuggle state through a URL a user can then bookmark and re-trigger.
+ *
+ * Keyed by entry AND by user, because two coordinators editing the same shift
+ * are two different stories, and short-lived because a message about a save is
+ * worthless by the time anybody could see it stale.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Remember what a save had to fix, for the redirect that follows it.
+ *
+ * @param int      $entry_id Entry post ID.
+ * @param string[] $problems Problem keys.
+ */
+function gwcvt_stash_entry_problems( int $entry_id, array $problems ): void {
+	$key = 'gwcvt_entry_saved_' . $entry_id . '_' . get_current_user_id();
+
+	if ( ! $problems ) {
+		delete_transient( $key );
+		return;
+	}
+
+	set_transient( $key, array_values( array_unique( $problems ) ), 2 * MINUTE_IN_SECONDS );
+}
+
+/**
+ * What to say about one thing a save corrected.
+ *
+ * A function and not a const array: a const is evaluated at include time, which
+ * freezes these in English for the request.
+ *
+ * @return array<string, string>
+ */
+function gwcvt_entry_problem_messages(): array {
+	return array(
+		'hours'       => __( 'This shift was saved with no hours on it, because what was typed could not be read as a duration. Hours can be written as 3.5, 3:30, 3h 30m or 210m — a bare number means hours, so anything longer than a single day is refused rather than recorded.', 'groundwork-common-volunteer-tracker' ),
+		'future-date' => __( 'The date was in the future, so it was changed to today. Hours dated ahead would be dated the day they were typed rather than the day they were worked, and that date is what a letter prints. Future dates can be allowed under Settings → Logging.', 'groundwork-common-volunteer-tracker' ),
+		'volunteer'   => __( 'The volunteer could not be attached, so these hours are on nobody\'s record and will not appear on any letter. Choose somebody with the picker and save again.', 'groundwork-common-volunteer-tracker' ),
+	);
+}
+
+/**
+ * Report what the last save corrected.
+ */
+function gwcvt_entry_saved_notice(): void {
+	$screen = get_current_screen();
+
+	if ( ! $screen instanceof WP_Screen || GWCVT_ENTRY_TYPE !== $screen->id ) {
+		return;
+	}
+
+	$entry_id = (int) get_the_ID();
+
+	if ( $entry_id < 1 ) {
+		return;
+	}
+
+	$key      = 'gwcvt_entry_saved_' . $entry_id . '_' . get_current_user_id();
+	$problems = get_transient( $key );
+
+	if ( ! is_array( $problems ) || ! $problems ) {
+		return;
+	}
+
+	delete_transient( $key );
+
+	$messages = gwcvt_entry_problem_messages();
+
+	/* A warning and not an error: the entry did save, and calling it an error
+	 * invites somebody to assume it did not and type it a second time. */
+	echo '<div class="notice notice-warning is-dismissible">';
+
+	foreach ( $problems as $problem ) {
+		$problem = (string) $problem;
+
+		/* Built here rather than in the table above, because it has to read back
+		 * the figure that was actually stored. */
+		if ( 'rounded' === $problem ) {
+			printf(
+				'<p>%s</p>',
+				esc_html(
+					sprintf(
+						/* translators: 1: a duration as the site formats them, 2: a number of minutes. */
+						__( 'Recorded as %1$s. Hours are rounded to the nearest %2$d minutes — to the nearest, never up, so the organization never credits time nobody worked. The increment is on the Logging tab.', 'groundwork-common-volunteer-tracker' ),
+						gwcvt_format_hours( (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true ) ),
+						(int) gwcvt_setting( 'hour_increment' )
+					)
+				)
+			);
+			continue;
+		}
+
+		if ( isset( $messages[ $problem ] ) ) {
+			printf( '<p>%s</p>', esc_html( $messages[ $problem ] ) );
+		}
+	}
+
+	echo '</div>';
 }
 
 /**
@@ -381,6 +518,7 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 				<strong><?php esc_html_e( 'Phone', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
 			<input type="text" id="gwcvt-phone" name="gwcvt_phone" class="regular-text" maxlength="40" value="<?php echo esc_attr( $phone ); ?>" />
+			<span class="description"><?php esc_html_e( 'For your own use — ringing round when a shift is short. It is never printed on a letter and never shown publicly.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
 		<?php
@@ -396,8 +534,15 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 				<input type="checkbox" name="gwcvt_hold" value="1" <?php checked( (bool) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD, true ) ); ?> />
 				<strong><?php esc_html_e( 'Keep this record regardless of the retention policy', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
-			<label for="gwcvt-hold-reason" class="screen-reader-text">
-				<?php esc_html_e( 'Why this record is held', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php
+			/* A visible label, not a screen-reader-only one. The placeholder used
+			 * to be the only cue for a sighted user, and a placeholder disappears
+			 * the moment somebody types — leaving a filled-in box with nothing
+			 * saying what it holds, on the field an administrator has to read
+			 * back when refusing an erasure request. */
+			?>
+			<label for="gwcvt-hold-reason">
+				<?php esc_html_e( 'Why it is held', 'groundwork-common-volunteer-tracker' ); ?>
 			</label>
 			<input
 				type="text"
@@ -467,6 +612,9 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_FOR, true ) ); ?>"
 				placeholder="<?php esc_attr_e( 'e.g. a court, a school, a scouting group', 'groundwork-common-volunteer-tracker' ); ?>"
 			/>
+			<span class="description">
+				<?php esc_html_e( 'For your own records, so you know which programme this person is here under. Like the rest of this section it never reaches a letter — what a court asked for is a fact about the court\'s document, not about anything you observed.', 'groundwork-common-volunteer-tracker' ); ?>
+			</span>
 		</div>
 
 		<?php if ( gwcvt_has_requirement( $volunteer_id ) ) : ?>

@@ -188,6 +188,8 @@ final class LetterTest extends TestCase {
 	}
 
 	public function test_the_period_reads_sensibly_in_all_four_shapes(): void {
+		/* No date_format stored, so the dates print as they are held. The
+		 * formatted case is asserted below. */
 		$this->assertSame( '2026-03-01 to 2026-03-31', gwcvt_letter_period( $this->letter() ) );
 		$this->assertSame( 'from 2026-03-01 onwards', gwcvt_letter_period( $this->letter( array( 'to' => '' ) ) ) );
 		$this->assertSame( 'up to 2026-03-31', gwcvt_letter_period( $this->letter( array( 'from' => '' ) ) ) );
@@ -195,6 +197,42 @@ final class LetterTest extends TestCase {
 			'their entire time volunteering with us',
 			gwcvt_letter_period( $this->letter( array( 'from' => '', 'to' => '' ) ) )
 		);
+	}
+
+	/* ── Dates on the letter ─────────────────────────────────────────────────
+	 * The letterhead date has always gone through the site's date format. The
+	 * itemised rows and the period line printed the raw stored value, so one
+	 * document read "August 6, 2026" at the top and "2026-03-04" in every row
+	 * below — to a reader whose job is checking documents.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_a_stored_date_prints_the_way_the_site_writes_dates(): void {
+		update_option( 'date_format', 'F j, Y' );
+
+		$this->assertSame( 'March 4, 2026', gwcvt_display_date( '2026-03-04' ) );
+		$this->assertSame( 'March 1, 2026 to March 31, 2026', gwcvt_letter_period( $this->letter() ) );
+	}
+
+	/* Midday UTC, so a site west of Greenwich does not print the day before. A
+	 * shift happened on a day; it was never an instant to convert. */
+	public function test_a_date_does_not_slip_across_a_day_boundary(): void {
+		update_option( 'date_format', 'Y-m-d' );
+
+		$this->assertSame( '2026-01-01', gwcvt_display_date( '2026-01-01' ) );
+		$this->assertSame( '2026-12-31', gwcvt_display_date( '2026-12-31' ) );
+	}
+
+	public function test_an_unformattable_date_is_printed_rather_than_dropped(): void {
+		update_option( 'date_format', 'F j, Y' );
+
+		/* A blank where a date belongs reads as a broken document. Anything this
+		 * cannot parse is passed through for a human to see. */
+		$this->assertSame( '', gwcvt_display_date( '' ) );
+		$this->assertSame( 'sometime', gwcvt_display_date( 'sometime' ) );
+	}
+
+	public function test_no_stored_format_falls_back_to_the_stored_date(): void {
+		$this->assertSame( '2026-03-04', gwcvt_display_date( '2026-03-04' ) );
 	}
 
 	/* ── The reference code ──────────────────────────────────────────────── */

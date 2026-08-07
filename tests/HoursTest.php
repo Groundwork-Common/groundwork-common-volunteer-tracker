@@ -10,6 +10,39 @@ use PHPUnit\Framework\TestCase;
 
 final class HoursTest extends TestCase {
 
+	/* ── Asking what was typed, before rounding ──────────────────────────────
+	 * The entry editor needs both figures to say "you typed 3:07, we recorded
+	 * 3.0". Rounding is right and stays the default; doing it in silence on the
+	 * number a court reads is what was wrong.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_the_parser_can_be_asked_not_to_round(): void {
+		gwcvt_test_reset();
+		update_option( GWCVT_SETTINGS_OPTION, array( 'hour_increment' => 15 ) );
+		gwcvt_settings_cache( null, true );
+
+		$this->assertSame( 187, gwcvt_parse_hours( '3:07', false ) );
+		$this->assertSame( 180, gwcvt_parse_hours( '3:07' ) );
+	}
+
+	public function test_not_rounding_still_refuses_what_rounding_refuses(): void {
+		gwcvt_test_reset();
+
+		// A bare number is hours, so 210 is longer than a day either way.
+		$this->assertNull( gwcvt_parse_hours( '210', false ) );
+		$this->assertNull( gwcvt_parse_hours( 'nonsense', false ) );
+		$this->assertSame( 210, gwcvt_parse_hours( '210m', false ) );
+	}
+
+	public function test_an_exact_value_is_unchanged_by_rounding(): void {
+		gwcvt_test_reset();
+		update_option( GWCVT_SETTINGS_OPTION, array( 'hour_increment' => 15 ) );
+		gwcvt_settings_cache( null, true );
+
+		// Nothing to report when the two agree — this is the common case.
+		$this->assertSame( gwcvt_parse_hours( '3:30', false ), gwcvt_parse_hours( '3:30' ) );
+	}
+
 	protected function setUp(): void {
 		gwcvt_test_reset();
 	}

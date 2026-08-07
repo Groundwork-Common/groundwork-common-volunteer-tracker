@@ -12,6 +12,12 @@ add_action( 'gwcvt_render_tab_logging', 'gwcvt_render_settings_tab' );
 add_action( 'gwcvt_render_tab_shifts', 'gwcvt_render_settings_tab' );
 add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_settings_tab' );
 add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_retention_log', 20 );
+add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_uninstall_section', 30 );
+add_action( 'admin_post_gwcvt_save_uninstall', 'gwcvt_handle_save_uninstall' );
+
+add_action( 'gwcvt_render_tab_permissions', 'gwcvt_render_permissions_tab' );
+add_action( 'admin_post_gwcvt_save_permissions', 'gwcvt_handle_save_permissions' );
+add_filter( 'gwcvt_admin_tabs', 'gwcvt_add_permissions_tab' );
 add_action( 'admin_post_gwcvt_save_settings', 'gwcvt_handle_save_settings' );
 
 /* ── One registry, three jobs ────────────────────────────────────────────────
@@ -86,6 +92,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'signature',
 			'type'    => 'text',
 			'label'   => __( 'Their title', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Printed under the name — "Volunteer Coordinator", "Executive Director". It tells a reader what standing the person signing has to say what the letter says.', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		/* ── Letter: wording ─────────────────────────────────────────────── */
@@ -176,6 +183,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'email',
 			'type'    => 'email',
 			'label'   => __( 'From address', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Use an address at your own domain. A letter sent from an address somewhere else is the thing a spam filter is most likely to hold back, and the volunteer never learns it was sent.', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		/* ── Logging ─────────────────────────────────────────────────────── */
@@ -259,6 +267,7 @@ function gwcvt_settings_fields(): array {
 				'last_entry'  => __( 'Their last recorded shift', 'groundwork-common-volunteer-tracker' ),
 				'verified_at' => __( 'The last time a shift of theirs was verified', 'groundwork-common-volunteer-tracker' ),
 			),
+			'help'    => __( 'The clock runs on the whole person, not on each shift — a record is removed when the person has been inactive this long, and their old shifts go with them. Measuring from the last shift is what most policies mean. Measuring from the last verification is later, sometimes much later, because a shift written up in March and attested in June counts from June.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'activities'                => array(
 			'tab'     => 'logging',
@@ -800,6 +809,330 @@ function gwcvt_retention_undecided_notice(): void {
 		esc_url( gwcvt_settings_url( 'privacy' ) ),
 		esc_html__( 'Decide now', 'groundwork-common-volunteer-tracker' )
 	);
+}
+
+/* ── Who is allowed to do what ───────────────────────────────────────────────
+ * This plugin adds exactly two capabilities, and inc/access.php is explicit
+ * about why they are two rather than one: the person who logs Saturday's hours
+ * and the person who signs a letter to a probation officer are frequently
+ * different people, and the letter is the higher-trust action.
+ *
+ * That reasoning was right and unusable. Both were granted to administrator and
+ * editor and to nothing else, and no screen anywhere showed who held them or let
+ * anybody change it — so realising the separation the code argues for meant
+ * installing a capability-manager plugin or writing a filter in PHP. Meanwhile a
+ * coordinator on any other role found the Verify button simply absent, with
+ * nothing on screen explaining why.
+ *
+ * A role matrix rather than a per-user one, because WordPress's own model is
+ * roles and because a per-user grant becomes invisible the moment somebody
+ * changes that user's role.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Add the Permissions tab.
+ *
+ * @param array $tabs Slug => label.
+ * @return array
+ */
+function gwcvt_add_permissions_tab( $tabs ): array {
+	$tabs = (array) $tabs;
+
+	/* Before Privacy, after the three that describe what the plugin does. Who may
+	 * use it belongs beside how long its records are kept. */
+	$privacy = $tabs['privacy'] ?? null;
+	unset( $tabs['privacy'] );
+
+	$tabs['permissions'] = __( 'Permissions', 'groundwork-common-volunteer-tracker' );
+
+	if ( null !== $privacy ) {
+		$tabs['privacy'] = $privacy;
+	}
+
+	return $tabs;
+}
+
+/**
+ * The roles these capabilities can sensibly be granted to.
+ *
+ * Anything that cannot edit posts is left out: a matrix offering to let
+ * Subscriber verify hours invites somebody to tick it and then wonder why the
+ * screen is not there.
+ *
+ * @return array<string, string> Role slug => display name.
+ */
+function gwcvt_permission_roles(): array {
+	$roles = array();
+
+	foreach ( (array) wp_roles()->roles as $slug => $role ) {
+		$caps = (array) ( $role['capabilities'] ?? array() );
+
+		if ( empty( $caps['edit_posts'] ) ) {
+			continue;
+		}
+
+		$roles[ (string) $slug ] = translate_user_role( (string) ( $role['name'] ?? $slug ) );
+	}
+
+	return $roles;
+}
+
+/**
+ * One checkbox in the matrix.
+ *
+ * @param string $name  Field name.
+ * @param string $slug  Role slug.
+ * @param string $label Role display name.
+ * @param string $title Screen-reader sentence.
+ * @param bool   $held  Whether the role holds the capability.
+ * @param bool   $fixed Whether it cannot be changed.
+ */
+function gwcvt_render_permission_box( string $name, string $slug, string $label, string $title, bool $held, bool $fixed ): void {
+	?>
+	<label>
+		<input
+			type="checkbox"
+			name="<?php echo esc_attr( $name ); ?>[]"
+			value="<?php echo esc_attr( $slug ); ?>"
+			<?php checked( $held ); ?>
+			<?php disabled( $fixed ); ?>
+		/>
+		<span class="screen-reader-text">
+			<?php
+			printf(
+				esc_html( $title ),
+				esc_html( $label )
+			);
+			?>
+		</span>
+	</label>
+	<?php
+	/* A disabled checkbox posts nothing, so the fixed row needs a hidden field
+	 * or saving the form would revoke what it is showing as ticked. */
+	if ( $fixed ) :
+		?>
+		<input type="hidden" name="<?php echo esc_attr( $name ); ?>[]" value="<?php echo esc_attr( $slug ); ?>" />
+		<?php
+	endif;
+}
+
+/**
+ * The Permissions tab.
+ */
+function gwcvt_render_permissions_tab(): void {
+	$roles  = gwcvt_permission_roles();
+	$verify = gwcvt_cap( 'verify' );
+	$issue  = gwcvt_cap( 'issue' );
+	?>
+	<h2><?php esc_html_e( 'Who can do what', 'groundwork-common-volunteer-tracker' ); ?></h2>
+
+	<p class="description" style="max-width:44em">
+		<?php esc_html_e( 'Anybody who can edit posts on this site can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization\'s name on a letter to a court. They are frequently different people.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+
+	<p class="description" style="max-width:44em">
+		<?php esc_html_e( 'A role with neither still sees the hours list and can type up a shift. It simply has no Verify button and no Letters screen, rather than being shown buttons that would refuse it.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<input type="hidden" name="action" value="gwcvt_save_permissions" />
+		<?php wp_nonce_field( 'gwcvt_save_permissions' ); ?>
+
+		<table class="widefat striped" style="max-width:44em">
+			<thead>
+				<tr>
+					<th scope="col"><?php esc_html_e( 'Role', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Verify hours', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Issue letters', 'groundwork-common-volunteer-tracker' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $roles as $slug => $label ) : ?>
+					<?php
+					$role  = get_role( $slug );
+					$fixed = 'administrator' === $slug;
+					?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $label ); ?></th>
+						<td>
+							<?php
+							gwcvt_render_permission_box(
+								'gwcvt_verify',
+								(string) $slug,
+								(string) $label,
+								/* translators: %s: a role name. */
+								__( 'Let %s verify hours', 'groundwork-common-volunteer-tracker' ),
+								(bool) ( $role && $role->has_cap( $verify ) ),
+								$fixed
+							);
+							?>
+						</td>
+						<td>
+							<?php
+							gwcvt_render_permission_box(
+								'gwcvt_issue',
+								(string) $slug,
+								(string) $label,
+								/* translators: %s: a role name. */
+								__( 'Let %s issue letters', 'groundwork-common-volunteer-tracker' ),
+								(bool) ( $role && $role->has_cap( $issue ) ),
+								$fixed
+							);
+							?>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<p class="description" style="max-width:44em">
+			<?php esc_html_e( 'Administrator is fixed. A site where nobody can issue a letter has no way to give one back, and an administrator can change this screen anyway.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+
+		<?php submit_button(); ?>
+	</form>
+	<?php
+}
+
+/**
+ * Save the permissions matrix.
+ */
+function gwcvt_handle_save_permissions(): void {
+	gwcvt_require_cap( 'manage' );
+	check_admin_referer( 'gwcvt_save_permissions' );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
+	$posted = wp_unslash( $_POST );
+
+	$wanted = array(
+		gwcvt_cap( 'verify' ) => array_map( 'sanitize_key', (array) ( $posted['gwcvt_verify'] ?? array() ) ),
+		gwcvt_cap( 'issue' )  => array_map( 'sanitize_key', (array) ( $posted['gwcvt_issue'] ?? array() ) ),
+	);
+
+	foreach ( gwcvt_permission_roles() as $slug => $label ) {
+		$role = get_role( $slug );
+
+		if ( ! $role ) {
+			continue;
+		}
+
+		foreach ( $wanted as $cap => $granted ) {
+			$should = in_array( (string) $slug, $granted, true );
+
+			/* add_cap() writes the whole role back to the options table, so only
+			 * touch a role whose answer has actually changed. */
+			if ( $should === $role->has_cap( $cap ) ) {
+				continue;
+			}
+
+			if ( $should ) {
+				$role->add_cap( $cap );
+				continue;
+			}
+
+			/* An explicit false rather than remove_cap(). gwcvt_grant_capabilities()
+			 * runs on every init and restores a capability whose key is missing
+			 * altogether — it cannot tell "somebody removed this" from "this role
+			 * never heard of it". A stored false is what says a person decided no,
+			 * and it is the one form that survives the next page load. */
+			$role->add_cap( $cap, false );
+		}
+	}
+
+	wp_safe_redirect( add_query_arg( 'gwcvt_saved', '1', gwcvt_settings_url( 'permissions' ) ) );
+	exit;
+}
+
+/* ── What deleting the plugin does ───────────────────────────────────────────
+ * uninstall.php removes nothing but a handful of options unless the site has
+ * explicitly armed it, and even then it never touches a post, a meta row or a
+ * capability. That policy is right — a plugin that dropped a volunteer's
+ * court-ordered service history because somebody clicked Delete on the Plugins
+ * screen would be indefensible.
+ *
+ * What was wrong is that it was invisible. The flag appeared only in
+ * uninstall.php, with no screen, no notice and one line in a changelog five
+ * releases back. So both outcomes were reachable by surprise: an organisation
+ * that deleted the plugin and believed the records went with it, and one obliged
+ * to remove those records with no way to do it short of WP-CLI.
+ *
+ * Stated here, on the tab that is already about keeping and removing records,
+ * and armed only by a deliberate act on this screen.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Whether an uninstall is currently allowed to delete this plugin's options.
+ *
+ * @return bool
+ */
+function gwcvt_destructive_uninstall_armed(): bool {
+	return (bool) get_option( 'gwcvt_allow_destructive_uninstall', false );
+}
+
+/**
+ * The "Removing this plugin" section.
+ */
+function gwcvt_render_uninstall_section(): void {
+	$armed = gwcvt_destructive_uninstall_armed();
+	?>
+	<h2><?php esc_html_e( 'Removing this plugin', 'groundwork-common-volunteer-tracker' ); ?></h2>
+
+	<p class="description" style="max-width:44em">
+		<?php esc_html_e( 'Deleting this plugin from the Plugins screen leaves every volunteer record, every logged shift, every scheduled shift and signup, and the log of letters issued, exactly where they are. Deactivating it does the same. Nothing here removes a person\'s hours by accident, and reinstalling picks up where you left off.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+
+	<p class="description" style="max-width:44em">
+		<?php esc_html_e( 'That is the right default and it is worth knowing about, because it also means deleting the plugin is not a way to remove somebody\'s data. To do that, use the retention policy above, or WordPress\'s own Erase Personal Data tool, before you delete anything.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width:44em">
+		<input type="hidden" name="action" value="gwcvt_save_uninstall" />
+		<?php wp_nonce_field( 'gwcvt_save_uninstall' ); ?>
+
+		<table class="form-table" role="presentation">
+			<tbody>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'On deletion', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<td>
+						<label>
+							<input type="checkbox" name="gwcvt_allow_destructive_uninstall" value="1" <?php checked( $armed ); ?> />
+							<?php esc_html_e( 'Also remove this plugin\'s settings when it is deleted', 'groundwork-common-volunteer-tracker' ); ?>
+						</label>
+						<p class="description">
+							<?php esc_html_e( 'Off by default. With it on, deleting the plugin also removes its settings, its retention log and the record of what it had been asked to do. It still does not delete a single volunteer, shift, signup, hour entry or issued letter — nothing this plugin can do from this screen will.', 'groundwork-common-volunteer-tracker' ); ?>
+						</p>
+						<?php if ( $armed ) : ?>
+							<p class="description">
+								<strong><?php esc_html_e( 'Currently armed.', 'groundwork-common-volunteer-tracker' ); ?></strong>
+								<?php esc_html_e( 'Deleting the plugin will discard its configuration, so a reinstall starts from the defaults and the retention question is asked again.', 'groundwork-common-volunteer-tracker' ); ?>
+							</p>
+						<?php endif; ?>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<?php submit_button( __( 'Save', 'groundwork-common-volunteer-tracker' ) ); ?>
+	</form>
+	<?php
+}
+
+/**
+ * Save the uninstall preference.
+ */
+function gwcvt_handle_save_uninstall(): void {
+	gwcvt_require_cap( 'manage' );
+	check_admin_referer( 'gwcvt_save_uninstall' );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified directly above.
+	$armed = ! empty( $_POST['gwcvt_allow_destructive_uninstall'] );
+
+	/* Non-autoloaded: read once, by uninstall.php, on a request where nothing
+	 * else of ours is loaded. */
+	update_option( 'gwcvt_allow_destructive_uninstall', $armed, false );
+
+	wp_safe_redirect( add_query_arg( 'gwcvt_saved', '1', gwcvt_settings_url( 'privacy' ) ) );
+	exit;
 }
 
 /**

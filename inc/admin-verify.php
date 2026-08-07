@@ -17,9 +17,11 @@ add_action( 'pre_get_posts', 'gwcvt_apply_verified_filter' );
 add_filter( 'bulk_actions-edit-' . GWCVT_ENTRY_TYPE, 'gwcvt_register_bulk_actions' );
 add_filter( 'handle_bulk_actions-edit-' . GWCVT_ENTRY_TYPE, 'gwcvt_handle_bulk_actions', 10, 3 );
 add_action( 'admin_notices', 'gwcvt_bulk_action_notice' );
+add_action( 'admin_notices', 'gwcvt_bulk_unverify_confirm' );
 
 add_action( 'admin_post_gwcvt_verify_entry', 'gwcvt_handle_verify_entry' );
 add_action( 'admin_post_gwcvt_unverify_entry', 'gwcvt_handle_unverify_entry' );
+add_action( 'admin_post_gwcvt_bulk_unverify', 'gwcvt_handle_bulk_unverify' );
 
 add_action( 'add_meta_boxes', 'gwcvt_add_verify_meta_box' );
 add_action( 'admin_menu', 'gwcvt_add_pending_bubble', 20 );
@@ -306,6 +308,51 @@ function gwcvt_handle_bulk_actions( $redirect_to, $action, $post_ids ): string {
 	}
 
 	$user_id = get_current_user_id();
+
+	/* ── Withdrawal stops to ask ─────────────────────────────────────────────
+	 * Verifying in bulk is additive and undoable. Withdrawing is neither: it
+	 * removes an attestation naming a person and a date, and re-verifying does
+	 * not put that back — it records a NEW name and a new date. Two clicks could
+	 * rewrite the provenance of a page of hours, on the one fact a letter rests
+	 * on, with no undo.
+	 *
+	 * So it goes to a confirmation first, in the same spirit as the interstitial
+	 * that calling off an event's time gets. Not a JS confirm(): this needs to
+	 * say what will happen and what cannot be got back, which a browser dialog
+	 * cannot do and a screen reader announces poorly.
+	 * ─────────────────────────────────────────────────────────────────────── */
+	if ( 'gwcvt_unverify' === $action ) {
+		$eligible = array();
+
+		foreach ( (array) $post_ids as $post_id ) {
+			$post_id = (int) $post_id;
+
+			if ( gwcvt_user_can_verify( $user_id, $post_id ) && gwcvt_entry_is_verified( $post_id ) ) {
+				$eligible[] = $post_id;
+			}
+		}
+
+		if ( ! $eligible ) {
+			return add_query_arg(
+				array(
+					'gwcvt_result'  => 'unverified',
+					'gwcvt_done'    => 0,
+					'gwcvt_skipped' => count( (array) $post_ids ),
+				),
+				$redirect_to
+			);
+		}
+
+		return add_query_arg(
+			array(
+				'gwcvt_confirm' => 'unverify',
+				'gwcvt_ids'     => implode( ',', $eligible ),
+				'gwcvt_skipped' => max( 0, count( (array) $post_ids ) - count( $eligible ) ),
+			),
+			$redirect_to
+		);
+	}
+
 	$done    = 0;
 	$skipped = 0;
 
@@ -336,6 +383,198 @@ function gwcvt_handle_bulk_actions( $redirect_to, $action, $post_ids ): string {
 		),
 		$redirect_to
 	);
+}
+
+/**
+ * The entry IDs a confirmation is being asked about.
+ *
+ * @return int[]
+ */
+function gwcvt_confirm_ids(): array {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; nothing is written until the confirmation form below is submitted with its own nonce.
+	$raw = isset( $_GET['gwcvt_ids'] ) ? sanitize_text_field( wp_unslash( $_GET['gwcvt_ids'] ) ) : '';
+
+	$ids = array_filter( array_map( 'absint', explode( ',', $raw ) ) );
+
+	return array_values( array_unique( $ids ) );
+}
+
+/**
+ * Ask before withdrawing a selection's attestations.
+ */
+function gwcvt_bulk_unverify_confirm(): void {
+	$screen = get_current_screen();
+
+	if ( ! $screen instanceof WP_Screen || 'edit-' . GWCVT_ENTRY_TYPE !== $screen->id ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$confirm = isset( $_GET['gwcvt_confirm'] ) ? sanitize_key( wp_unslash( $_GET['gwcvt_confirm'] ) ) : '';
+
+	if ( 'unverify' !== $confirm ) {
+		return;
+	}
+
+	$ids = gwcvt_confirm_ids();
+
+	if ( ! $ids ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$skipped = isset( $_GET['gwcvt_skipped'] ) ? absint( wp_unslash( $_GET['gwcvt_skipped'] ) ) : 0;
+	?>
+	<div class="notice notice-warning">
+		<p>
+			<strong>
+				<?php
+				printf(
+					esc_html(
+						/* translators: %d: how many shifts. */
+						_n(
+							'Withdraw verification from %d shift?',
+							'Withdraw verification from %d shifts?',
+							count( $ids ),
+							'groundwork-common-volunteer-tracker'
+						)
+					),
+					(int) count( $ids )
+				);
+				?>
+			</strong>
+		</p>
+		<p>
+			<?php esc_html_e( 'Each of these carries a staff member\'s name and the date they attested to it. Withdrawing removes that. Verifying them again afterwards does not restore it — it records whoever does it, on the day they do it.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+		<p>
+			<?php esc_html_e( 'The hours themselves are untouched. They stop counting towards anything, and they stop appearing as verified on a letter, until somebody attests to them again.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+
+		<?php if ( $skipped > 0 ) : ?>
+			<p>
+				<?php
+				printf(
+					esc_html(
+						/* translators: %d: how many of the selected shifts are not affected. */
+						_n(
+							'%d of the shifts you selected is not included — either it was never verified, or it is not yours to verify.',
+							'%d of the shifts you selected are not included — either they were never verified, or they are not yours to verify.',
+							$skipped,
+							'groundwork-common-volunteer-tracker'
+						)
+					),
+					(int) $skipped
+				);
+				?>
+			</p>
+		<?php endif; ?>
+
+		<ul style="margin-left:1.5em;list-style:disc">
+			<?php foreach ( array_slice( $ids, 0, 10 ) as $id ) : ?>
+				<li><?php echo esc_html( get_the_title( (int) $id ) ); ?></li>
+			<?php endforeach; ?>
+			<?php if ( count( $ids ) > 10 ) : ?>
+				<li>
+					<em>
+						<?php
+						printf(
+							esc_html(
+								/* translators: %d: how many more shifts are in the selection. */
+								_n( 'and %d more', 'and %d more', count( $ids ) - 10, 'groundwork-common-volunteer-tracker' )
+							),
+							(int) ( count( $ids ) - 10 )
+						);
+						?>
+					</em>
+				</li>
+			<?php endif; ?>
+		</ul>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:8px">
+			<input type="hidden" name="action" value="gwcvt_bulk_unverify" />
+			<input type="hidden" name="gwcvt_ids" value="<?php echo esc_attr( implode( ',', $ids ) ); ?>" />
+			<input type="hidden" name="returnto" value="<?php echo esc_attr( gwcvt_current_list_url() ); ?>" />
+			<?php wp_nonce_field( 'gwcvt_bulk_unverify' ); ?>
+
+			<button type="submit" class="button button-primary">
+				<?php esc_html_e( 'Withdraw verification', 'groundwork-common-volunteer-tracker' ); ?>
+			</button>
+			<a class="button" href="<?php echo esc_url( gwcvt_current_list_url() ); ?>">
+				<?php esc_html_e( 'Leave it alone', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+		</form>
+	</div>
+	<?php
+}
+
+/**
+ * This list screen, without the confirmation arguments on it.
+ *
+ * @return string
+ */
+function gwcvt_current_list_url(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- building a link back to the screen the user is already on.
+	$query = wp_unslash( $_GET );
+
+	unset( $query['gwcvt_confirm'], $query['gwcvt_ids'], $query['gwcvt_skipped'], $query['_wpnonce'] );
+
+	$clean = array();
+
+	foreach ( (array) $query as $key => $value ) {
+		if ( is_scalar( $value ) ) {
+			$clean[ sanitize_key( (string) $key ) ] = sanitize_text_field( (string) $value );
+		}
+	}
+
+	$clean['post_type'] = GWCVT_ENTRY_TYPE;
+
+	return add_query_arg( $clean, admin_url( 'edit.php' ) );
+}
+
+/**
+ * Withdraw a confirmed selection.
+ *
+ * Every entry is authorised again here rather than trusted from the confirmation
+ * link — the ids travelled through a URL, and a handler that acts on what a URL
+ * told it is a handler that acts on whatever anybody puts in one.
+ */
+function gwcvt_handle_bulk_unverify(): void {
+	gwcvt_require_cap( 'verify' );
+	check_admin_referer( 'gwcvt_bulk_unverify' );
+
+	$raw = isset( $_POST['gwcvt_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_ids'] ) ) : '';
+	$ids = array_filter( array_map( 'absint', explode( ',', $raw ) ) );
+
+	$user_id = get_current_user_id();
+	$done    = 0;
+	$skipped = 0;
+
+	foreach ( array_unique( $ids ) as $entry_id ) {
+		$entry_id = (int) $entry_id;
+
+		if ( ! gwcvt_user_can_verify( $user_id, $entry_id ) || ! gwcvt_unverify_entry( $entry_id ) ) {
+			++$skipped;
+			continue;
+		}
+
+		++$done;
+	}
+
+	$returnto = isset( $_POST['returnto'] ) ? esc_url_raw( wp_unslash( $_POST['returnto'] ) ) : '';
+	$base     = '' !== $returnto ? $returnto : add_query_arg( 'post_type', GWCVT_ENTRY_TYPE, admin_url( 'edit.php' ) );
+
+	wp_safe_redirect(
+		add_query_arg(
+			array(
+				'gwcvt_result'  => 'unverified',
+				'gwcvt_done'    => $done,
+				'gwcvt_skipped' => $skipped,
+			),
+			$base
+		)
+	);
+	exit;
 }
 
 /**
@@ -374,8 +613,13 @@ function gwcvt_bulk_action_notice(): void {
 		);
 	}
 
+	/* Green only when something actually happened. A selection where every row
+	 * was skipped used to come back as a success notice reading "0 entries
+	 * verified. 12 were skipped" — which announces, in the colour reserved for
+	 * things going right, that nothing went right. */
 	printf(
-		'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+		'<div class="notice %1$s is-dismissible"><p>%2$s</p></div>',
+		$done > 0 ? 'notice-success' : 'notice-warning',
 		esc_html( $message )
 	);
 }

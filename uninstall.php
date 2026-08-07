@@ -40,14 +40,19 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  * request died, and deleted outright when its shift is. A stray one is a single
  * non-autoloaded row that any later signup on that shift reclaims. Adding a
  * $wpdb LIKE sweep to catch it would be the plugin's only raw query, run at the
- * least testable moment in its life, to tidy something already self-tidying. */
+ * least testable moment in its life, to tidy something already self-tidying.
+ *
+ * 'gwcvt_schema' used to be listed and is not any more. Nothing has ever written
+ * it: the stored field schema described in the original plan was never built, so
+ * the entry deleted an option no site has. It read as evidence that the feature
+ * exists. If it is ever built, this is where its option goes back. */
 
 /** Every option this plugin writes. */
 const GWCVT_UNINSTALL_OPTIONS = array(
 	'gwcvt_settings',
-	'gwcvt_schema',
 	'gwcvt_retention_log',
 	'gwcvt_needs_rewrite_flush',
+	'gwcvt_event_page_gen',
 	'gwcvt_allow_destructive_uninstall',
 );
 

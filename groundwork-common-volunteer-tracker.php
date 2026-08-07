@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://groundworkcommon.com
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.14.0
+ * Version:           0.15.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -53,13 +53,18 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.14.0';
+const GWCVT_VERSION = '0.15.0';
 
-/* Deliberately not derived from GWCVT_VERSION, and SchemaTest asserts they can
+/* Deliberately not derived from GWCVT_VERSION, and VersionTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
  * definition changes, which is rarely, and coupling it to the release number
  * would mean either a pointless migration on every patch or a version number
- * that lies about what it describes. */
+ * that lies about what it describes.
+ *
+ * Nothing reads it yet. The stored field schema from the original plan was never
+ * built, so this is a number with no migration runner behind it — see "Still to
+ * come" in README.md, where whether that feature is still wanted is an open
+ * question rather than a backlog item. */
 const GWCVT_SCHEMA_VERSION = 1;
 
 /*

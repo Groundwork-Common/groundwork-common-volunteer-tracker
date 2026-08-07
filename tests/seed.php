@@ -55,7 +55,7 @@ wp_set_current_user( 1 );
 
 $gwcvt_previous = get_posts(
 	array(
-		'post_type'      => array( GWCVT_ENTRY_TYPE, GWCVT_VOLUNTEER_TYPE, GWCVT_LETTER_TYPE, GWCVT_SHIFT_TYPE, GWCVT_SIGNUP_TYPE, 'page' ),
+		'post_type'      => array( GWCVT_ENTRY_TYPE, GWCVT_VOLUNTEER_TYPE, GWCVT_LETTER_TYPE, GWCVT_SHIFT_TYPE, GWCVT_EVENT_TYPE, GWCVT_SIGNUP_TYPE, 'page' ),
 		'post_status'    => 'any',
 		'posts_per_page' => -1,
 		'fields'         => 'ids',
@@ -147,7 +147,33 @@ function gwcvt_seed_entry( int $volunteer_id, string $date, string $hours, strin
 	return $id;
 }
 
-/* ── The organisation ────────────────────────────────────────────────────── */
+/* ── The organisation ────────────────────────────────────────────────────────
+ * The site's own title goes with it. The admin bar carries that title into every
+ * screenshot, and the shooting guide's rule is that no real site name may appear
+ * in one — on a developer's machine the title is usually the folder, which is a
+ * branch name or a client's name and belongs on a public plugin page even less
+ * than a real volunteer does.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+update_option( 'blogname', 'Riverbend Food Bank' );
+update_option( 'blogdescription', 'Food, and a hand up, in the Riverbend' );
+
+/* The account doing the seeding is the one that attests to every hour below, and
+ * its display name is printed on the letter beside each shift — "Verified 6
+ * August 2026 by ___". On a fresh wp-env that reads "by admin", which makes the
+ * one line carrying the letter's credibility look like test data. Named to match
+ * the signatory, because on a food bank this size they are the same person.
+ *
+ * Guarded by the environment check at the top of this file: this writes to a user
+ * account, which is further than the rest of the script goes. */
+wp_update_user(
+	array(
+		'ID'           => 1,
+		'display_name' => 'Dana Reyes',
+		'first_name'   => 'Dana',
+		'last_name'    => 'Reyes',
+	)
+);
 
 $gwcvt_page = (int) wp_insert_post(
 	array(
@@ -469,6 +495,180 @@ gwcvt_seed_signup(
 	)
 );
 
+/* ── An event ────────────────────────────────────────────────────────────────
+ * One occasion, three roles, five times. A meal service is the clearest example
+ * of the shape events exist for: the same afternoon needs a kitchen, a serving
+ * line and somebody on the door, each wanted at a different hour and in
+ * different numbers.
+ *
+ * Two of the times are in the past with people on them and their hours not
+ * logged, because that is the state the schedule nags about and the one the
+ * roster's "Log the hours" link answers. Every slot is an ordinary shift with a
+ * post_parent — that is the whole design, so nothing here is special-cased.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * One event.
+ *
+ * @param string $name     What it is called.
+ * @param array  $meta     Description, location, supervisor.
+ * @return int
+ */
+function gwcvt_seed_event( string $name, array $meta = array() ): int {
+	$id = (int) wp_insert_post(
+		array(
+			'post_type'   => GWCVT_EVENT_TYPE,
+			'post_status' => (string) ( $meta['status'] ?? 'publish' ),
+			'post_title'  => $name,
+		)
+	);
+
+	update_post_meta( $id, GWCVT_SEED_MARK, 1 );
+	update_post_meta( $id, GWCVT_EVENT_DESCRIPTION, (string) ( $meta['description'] ?? '' ) );
+	update_post_meta( $id, GWCVT_EVENT_LOCATION, (string) ( $meta['location'] ?? 'Riverbend Community Center' ) );
+	update_post_meta( $id, GWCVT_EVENT_SUPERVISOR, (string) ( $meta['supervisor'] ?? 'Dana Reyes' ) );
+
+	return $id;
+}
+
+/**
+ * One time within an event, in a role.
+ *
+ * @param int    $event_id The event.
+ * @param string $role     What the work is. Printed on a letter, so named as work.
+ * @param string $date     Y-m-d.
+ * @param string $start    H:i.
+ * @param string $end      H:i.
+ * @param array  $extra    min, max, location, supervisor.
+ * @return int
+ */
+function gwcvt_seed_slot( int $event_id, string $role, string $date, string $start, string $end, array $extra = array() ): int {
+	/* Empty rather than the shift helper's warehouse defaults, so a slot inherits
+	 * the event's address and supervisor unless this call overrides them. The
+	 * cascade is most of what the role-major grid is for, and a fixture whose
+	 * every slot names its own location shows it doing nothing. */
+	$extra += array(
+		'location'   => '',
+		'supervisor' => '',
+	);
+
+	$id = gwcvt_seed_shift( $date, $start, $end, $role, $extra );
+
+	wp_update_post(
+		array(
+			'ID'          => $id,
+			'post_parent' => $event_id,
+		)
+	);
+
+	return $id;
+}
+
+$gwcvt_event = gwcvt_seed_event(
+	'Thanksgiving meal service',
+	array(
+		'description' => 'We serve about three hundred people across the afternoon. Come for one shift or stay for the day — the kitchen starts long before the doors open.',
+		'location'    => 'Riverbend Community Center',
+	)
+);
+
+/* Two days ago, so the afternoon has happened and its hours are waiting. */
+$gwcvt_event_past = gmdate( 'Y-m-d', strtotime( gwcvt_today() . ' -2 days' ) );
+
+/* Kitchen: the long one, and the one nobody wants at seven in the morning. */
+$gwcvt_kitchen_am = gwcvt_seed_slot(
+	$gwcvt_event,
+	'Kitchen preparation',
+	$gwcvt_event_past,
+	'07:00',
+	'11:00',
+	array( 'min' => 4, 'max' => 6, 'location' => 'Community Center kitchen' )
+);
+
+$gwcvt_kitchen_pm = gwcvt_seed_slot(
+	$gwcvt_event,
+	'Kitchen preparation',
+	$gwcvt_event_past,
+	'11:00',
+	'15:00',
+	array( 'min' => 3, 'max' => 5, 'location' => 'Community Center kitchen' )
+);
+
+/* Serving: two sittings, the second still short of people. */
+$gwcvt_serving_1 = gwcvt_seed_slot(
+	$gwcvt_event,
+	'Serving the meal',
+	$gwcvt_event_past,
+	'12:00',
+	'14:30',
+	array( 'min' => 6, 'max' => 8 )
+);
+
+$gwcvt_serving_2 = gwcvt_seed_slot(
+	$gwcvt_event,
+	'Serving the meal',
+	$gwcvt_event_past,
+	'14:30',
+	'17:00',
+	array( 'min' => 6, 'max' => 8 )
+);
+
+/* Welcome desk: one person, all afternoon. */
+$gwcvt_welcome = gwcvt_seed_slot(
+	$gwcvt_event,
+	'Welcome desk',
+	$gwcvt_event_past,
+	'11:30',
+	'17:00',
+	array( 'min' => 1, 'max' => 2, 'supervisor' => 'Priya Ramanathan' )
+);
+
+/* An event's own dates are derived from its slots and are what the schedule
+ * queries on, so nothing above is findable until this runs. The admin's grid
+ * handler calls it after every save; a fixture that writes slots directly has to
+ * call it itself, or it builds an event that exists and cannot be found. */
+gwcvt_event_refresh_dates( $gwcvt_event );
+
+/* Who came. Marcus is on two times that overlap, which is what the roster's
+ * clash warning is for — it is not blocked, it is pointed out. */
+gwcvt_seed_signup( $gwcvt_kitchen_am, array( 'volunteer_id' => $gwcvt_marcus ) );
+gwcvt_seed_signup( $gwcvt_kitchen_am, array( 'volunteer_id' => $gwcvt_tomas ) );
+gwcvt_seed_signup( $gwcvt_kitchen_pm, array( 'volunteer_id' => $gwcvt_tomas ) );
+gwcvt_seed_signup( $gwcvt_serving_1, array( 'volunteer_id' => $gwcvt_marcus ) );
+gwcvt_seed_signup( $gwcvt_serving_1, array( 'volunteer_id' => $gwcvt_priya ) );
+gwcvt_seed_signup( $gwcvt_serving_1, array( 'volunteer_id' => $gwcvt_fatima ) );
+gwcvt_seed_signup( $gwcvt_welcome, array( 'volunteer_id' => $gwcvt_priya ) );
+
+/* Somebody who is not on file, on the event too — triage reaches here as well. */
+gwcvt_seed_signup(
+	$gwcvt_serving_2,
+	array(
+		'claim_name'  => 'Rosalind Achterberg',
+		'claim_email' => 'rosalind@example.test',
+		'source'      => 'self',
+	)
+);
+
+/* The page the grid is on. Without one the event is unreachable, which is
+ * exactly what the editor's "Where volunteers see this" row now says — so the
+ * fixture has to build the good case for a screenshot to show it. */
+$gwcvt_event_page = (int) wp_insert_post(
+	array(
+		'post_type'    => 'page',
+		'post_status'  => 'publish',
+		'post_title'   => 'Thanksgiving meal service',
+		'post_name'    => 'thanksgiving-meal-service',
+		'post_content' => '<!-- wp:groundwork-common-volunteer-tracker/event-grid {"eventId":' . $gwcvt_event . '} /-->',
+	)
+);
+
+update_post_meta( $gwcvt_event_page, GWCVT_SEED_MARK, 1 );
+
+/* The lookup caches per generation, and this script has just written a page. */
+if ( function_exists( 'gwcvt_flush_event_page_cache' ) ) {
+	gwcvt_flush_event_page_cache();
+}
+
 /* ── One letter already issued ───────────────────────────────────────────────
  * So the log has a row and the reference checker has something to check.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -486,6 +686,16 @@ if ( $gwcvt_letter instanceof GWCVT_Letter ) {
 echo "\nRiverbend Food Bank is seeded.\n\n";
 
 printf( "  %-22s %s\n", 'Volunteers', '6' );
+printf(
+	"  %-22s %s\n",
+	'Thanksgiving',
+	sprintf(
+		'an event — %d roles, %d times, %d waiting to be logged',
+		count( gwcvt_event_roles( $gwcvt_event ) ),
+		count( gwcvt_event_slot_ids( $gwcvt_event ) ),
+		count( gwcvt_event_unlogged_slot_ids( $gwcvt_event ) )
+	)
+);
 printf( "  %-22s %s\n", 'Marcus Delacroix', gwcvt_format_hours( gwcvt_compute_totals( $gwcvt_marcus )->verified_minutes ) . ' h verified — ready for a letter, ' . gwcvt_requirement_label( $gwcvt_marcus ) . ' court-ordered' );
 printf( "  %-22s %s\n", 'Priya Ramanathan', 'a mix of verified and waiting' );
 printf( "  %-22s %s\n", 'Tomás Beaulieu', 'nothing verified yet — ' . gwcvt_requirement_label( $gwcvt_tomas ) . ', ' . strtolower( gwcvt_requirement_deadline_label( $gwcvt_tomas ) ) );

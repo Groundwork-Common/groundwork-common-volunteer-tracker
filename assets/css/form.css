@@ -10,6 +10,23 @@
 	max-width: 34em;
 }
 
+/* The fieldset is there to give the form an accessible name, not to draw a box
+   around it. A browser's default border and padding would be the one loud thing
+   on a form whose whole point is arriving quietly inside somebody else's
+   theme — so both are removed, and the legend is left as ordinary text. */
+.gwcvt-form__group {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+
+.gwcvt-form__group > legend {
+	padding: 0;
+	margin: 0 0 1em;
+	font-weight: 600;
+}
+
 .gwcvt-form__field {
 	display: flex;
 	flex-direction: column;

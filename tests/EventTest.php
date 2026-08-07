@@ -238,4 +238,54 @@ final class EventTest extends TestCase {
 	public function test_an_unknown_result_says_nothing(): void {
 		$this->assertSame( '', gwcvt_signup_message( 'made-up' ) );
 	}
+
+	/* ── Which page shows which event ────────────────────────────────────────
+	 * An event has no URL of its own, so the only way to answer "where do
+	 * volunteers see this" is to recognise the placement in a page's content.
+	 * Getting it wrong sends a cancellation link to the wrong occasion, which is
+	 * why the matching is asserted rather than eyeballed.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_the_shortcode_names_its_event(): void {
+		$this->assertTrue( gwcvt_content_places_event( '[volunteer_event id="12"]', 12 ) );
+		$this->assertTrue( gwcvt_content_places_event( "[volunteer_event id='12']", 12 ) );
+		$this->assertTrue( gwcvt_content_places_event( '[volunteer_event id=12]', 12 ) );
+	}
+
+	public function test_the_block_names_its_event(): void {
+		$block = '<!-- wp:groundwork-common-volunteer-tracker/event-grid {"eventId":12} /-->';
+
+		$this->assertTrue( gwcvt_content_places_event( $block, 12 ) );
+	}
+
+	/* The bug this replaces: a bare strpos() for "12" was true of a page holding
+	 * event 1, event 2, event 120, and of the year 2012 in the prose above the
+	 * block. */
+	public function test_an_id_is_not_matched_by_a_substring_of_another(): void {
+		$page = '[volunteer_event id="12"]';
+
+		$this->assertFalse( gwcvt_content_places_event( $page, 1 ) );
+		$this->assertFalse( gwcvt_content_places_event( $page, 2 ) );
+		$this->assertFalse( gwcvt_content_places_event( $page, 120 ) );
+	}
+
+	public function test_prose_around_the_placement_is_not_an_id(): void {
+		$page = '<p>Every autumn since 2012.</p><!-- wp:groundwork-common-volunteer-tracker/event-grid {"eventId":7} /-->';
+
+		$this->assertFalse( gwcvt_content_places_event( $page, 2012 ) );
+		$this->assertTrue( gwcvt_content_places_event( $page, 7 ) );
+	}
+
+	public function test_a_page_with_several_placements_answers_for_each(): void {
+		$page = '[volunteer_event id="3"] and [volunteer_event id="9"]';
+
+		$this->assertTrue( gwcvt_content_places_event( $page, 3 ) );
+		$this->assertTrue( gwcvt_content_places_event( $page, 9 ) );
+		$this->assertFalse( gwcvt_content_places_event( $page, 4 ) );
+	}
+
+	public function test_nothing_places_event_zero(): void {
+		$this->assertFalse( gwcvt_content_places_event( '[volunteer_event id="0"]', 0 ) );
+		$this->assertFalse( gwcvt_content_places_event( '', 12 ) );
+	}
 }

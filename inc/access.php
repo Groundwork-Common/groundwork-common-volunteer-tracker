@@ -44,6 +44,46 @@ const GWCVT_CAP_ISSUE  = 'gwcvt_issue_letters';
 const GWCVT_DEFAULT_CAP_ROLES = array( 'administrator', 'editor' );
 
 add_action( 'init', 'gwcvt_grant_capabilities', 5 );
+add_filter( 'map_meta_cap', 'gwcvt_map_open_letters', 10, 3 );
+
+/* ── Reaching the Letters screen ─────────────────────────────────────────────
+ * The screen does two things, and they are not the same size. Producing a letter
+ * puts the organisation's name on a document a court reads, and stays behind
+ * gwcvt_issue_letters. Checking a reference somebody has phoned in about is a
+ * ten-second lookup that answers "does this still match our records" and
+ * discloses nothing the caller is not holding already.
+ *
+ * Both used to sit behind the higher one, which meant the front-desk answer to a
+ * probation officer's phone call required the right to sign letters — so either
+ * nobody could answer the phone, or everybody could sign.
+ *
+ * A meta capability rather than a second menu item: add_submenu_page() takes one
+ * capability, and the screen has to appear for somebody who holds EITHER. This
+ * is the mechanism WordPress provides for exactly that, and it keeps one screen
+ * with two halves rather than two screens that would drift.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+const GWCVT_CAP_OPEN_LETTERS = 'gwcvt_open_letters';
+
+/**
+ * Map the Letters screen's meta capability.
+ *
+ * @param string[] $caps    Primitive capabilities required.
+ * @param string   $cap     The capability being checked.
+ * @param int      $user_id Who is being checked.
+ * @return string[]
+ */
+function gwcvt_map_open_letters( $caps, $cap, $user_id ): array {
+	if ( GWCVT_CAP_OPEN_LETTERS !== $cap ) {
+		return (array) $caps;
+	}
+
+	/* Both are primitive capabilities, so neither re-enters this filter. */
+	$allowed = user_can( (int) $user_id, gwcvt_cap( 'issue' ) )
+		|| user_can( (int) $user_id, gwcvt_cap( 'verify' ) );
+
+	return array( $allowed ? 'exist' : 'do_not_allow' );
+}
 
 /**
  * The capability that gates each kind of action.

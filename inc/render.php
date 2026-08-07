@@ -242,7 +242,7 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 				<tbody>
 					<?php foreach ( $letter->entries as $entry ) : ?>
 						<tr class="<?php echo $entry->verified ? 'gwcvt-row' : 'gwcvt-row gwcvt-row--unverified'; ?>">
-							<td><?php echo esc_html( $entry->date ); ?></td>
+							<td><?php echo esc_html( gwcvt_display_date( $entry->date ) ); ?></td>
 							<td><?php echo esc_html( gwcvt_format_hours( $entry->minutes ) ); ?></td>
 							<td><?php echo esc_html( $entry->activity ); ?></td>
 							<td><?php echo esc_html( $entry->supervisor ); ?></td>
@@ -409,23 +409,29 @@ function gwcvt_letter_intro( array $tokens ): string {
  * @return string
  */
 function gwcvt_letter_period( GWCVT_Letter $letter ): string {
+	/* Formatted, like every other date on the document. The stored Y-m-d is what
+	 * the reference code is computed over and what the checker compares — this is
+	 * only how it is written on the page. */
+	$from = gwcvt_display_date( $letter->from );
+	$to   = gwcvt_display_date( $letter->to );
+
 	if ( '' !== $letter->from && '' !== $letter->to ) {
 		return sprintf(
 			/* translators: 1: a date, 2: a date. */
 			__( '%1$s to %2$s', 'groundwork-common-volunteer-tracker' ),
-			$letter->from,
-			$letter->to
+			$from,
+			$to
 		);
 	}
 
 	if ( '' !== $letter->from ) {
 		/* translators: %s: a date. */
-		return sprintf( __( 'from %s onwards', 'groundwork-common-volunteer-tracker' ), $letter->from );
+		return sprintf( __( 'from %s onwards', 'groundwork-common-volunteer-tracker' ), $from );
 	}
 
 	if ( '' !== $letter->to ) {
 		/* translators: %s: a date. */
-		return sprintf( __( 'up to %s', 'groundwork-common-volunteer-tracker' ), $letter->to );
+		return sprintf( __( 'up to %s', 'groundwork-common-volunteer-tracker' ), $to );
 	}
 
 	return __( 'their entire time volunteering with us', 'groundwork-common-volunteer-tracker' );

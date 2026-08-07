@@ -96,7 +96,14 @@ function gwcvt_render_dashboard_worklist( array $items ): void {
 		</div>
 
 		<div class="gwcvt-dash__panel gwcvt-docket">
-			<?php if ( ! $items ) : ?>
+			<?php if ( ! $items && ! gwcvt_has_any_records() ) : ?>
+				<?php
+				/* Nothing waiting because nothing has started. Telling this person
+				 * that everything logged has been verified is true of an empty
+				 * database and no use to anybody. */
+				gwcvt_render_dashboard_start_here();
+				?>
+			<?php elseif ( ! $items ) : ?>
 				<?php
 				/* One line, and no invented figures to fill the space. A screen
 				 * that reports "0 waiting" five times over is one people stop
@@ -121,6 +128,81 @@ function gwcvt_render_dashboard_worklist( array $items ): void {
 			<?php endforeach; ?>
 		</div>
 	</section>
+	<?php
+}
+
+/* ── The first five minutes ──────────────────────────────────────────────────
+ * Shown only while the site genuinely has nothing in it, and gone for good the
+ * moment it does. Not a wizard and not dismissible: there is nothing to dismiss
+ * once a single volunteer exists, and a wizard would be a fifth screen to
+ * maintain for a sequence that is four links.
+ *
+ * Two of the four report whether they are done, because those are the two whose
+ * being undone is invisible later — an unset letterhead prints a website's title
+ * on a court's letter, and an undecided retention policy is the one thing this
+ * plugin will nag about forever.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * What to do first, on a site with nothing in it yet.
+ */
+function gwcvt_render_dashboard_start_here(): void {
+	$steps = array();
+
+	if ( current_user_can( gwcvt_cap( 'manage' ) ) ) {
+		$steps[] = array(
+			'url'  => gwcvt_settings_url( 'letter' ),
+			'what' => __( 'Tell the letter who you are', 'groundwork-common-volunteer-tracker' ),
+			'why'  => __( 'Your organization\'s name, the address, and who signs. Left empty, a letter goes out headed with this website\'s title.', 'groundwork-common-volunteer-tracker' ),
+			'done' => ! gwcvt_letterhead_gaps(),
+		);
+	}
+
+	$steps[] = array(
+		'url'  => admin_url( 'post-new.php?post_type=' . GWCVT_VOLUNTEER_TYPE ),
+		'what' => __( 'Add your first volunteer', 'groundwork-common-volunteer-tracker' ),
+		'why'  => __( 'A record of a person, not a WordPress account. Nobody signs in.', 'groundwork-common-volunteer-tracker' ),
+		'done' => false,
+	);
+
+	$steps[] = array(
+		'url'  => admin_url( 'post-new.php?post_type=' . GWCVT_ENTRY_TYPE ),
+		'what' => __( 'Log a shift they worked', 'groundwork-common-volunteer-tracker' ),
+		'why'  => __( 'One occasion of work. A member of staff then verifies it, and verified hours are what a letter reports.', 'groundwork-common-volunteer-tracker' ),
+		'done' => false,
+	);
+
+	if ( current_user_can( gwcvt_cap( 'manage' ) ) ) {
+		$steps[] = array(
+			'url'  => gwcvt_settings_url( 'privacy' ),
+			'what' => __( 'Decide how long records are kept', 'groundwork-common-volunteer-tracker' ),
+			'why'  => __( 'Keeping them indefinitely is a perfectly good answer. Not having decided is not, which is why this one asks until you do.', 'groundwork-common-volunteer-tracker' ),
+			'done' => (bool) gwcvt_setting( 'retention_decided' ),
+		);
+	}
+	?>
+	<p class="gwcvt-docket__clear">
+		<strong><?php esc_html_e( 'Nothing here yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
+		<?php esc_html_e( 'This screen fills up on its own once hours are being logged. Until then, here is the order most organizations start in.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+
+	<?php foreach ( $steps as $step ) : ?>
+		<a class="gwcvt-docket__row gwcvt-docket__row--<?php echo $step['done'] ? 'done' : 'waiting'; ?>" href="<?php echo esc_url( (string) $step['url'] ); ?>">
+			<span class="gwcvt-docket__stripe" aria-hidden="true"></span>
+			<span class="gwcvt-docket__count" aria-hidden="true"><?php echo $step['done'] ? '&#10003;' : '&middot;'; ?></span>
+			<span class="gwcvt-docket__body">
+				<span class="gwcvt-docket__what"><?php echo esc_html( (string) $step['what'] ); ?></span>
+				<span class="gwcvt-docket__why"><?php echo esc_html( (string) $step['why'] ); ?></span>
+			</span>
+			<span class="gwcvt-docket__go">
+				<?php
+				echo $step['done']
+					? esc_html__( 'Done', 'groundwork-common-volunteer-tracker' )
+					: esc_html__( 'Start', 'groundwork-common-volunteer-tracker' );
+				?>
+			</span>
+		</a>
+	<?php endforeach; ?>
 	<?php
 }
 

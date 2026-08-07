@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.14.0
+Stable tag: 0.15.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,7 +27,8 @@ This plugin keeps the hours, lets staff attest to them, and prints the letter.
 * Optionally reminds them before the shift, tells them if it moves or is called off, and sends you a daily summary of what is short of people and what still needs its hours logged.
 * Puts volunteers on a shift, keeps a waiting list once it is full, and prints the roster for the clipboard.
 * Turns that roster into hours once the shift is over — everybody who signed up, already ticked, with the scheduled hours filled in. Untick the no-shows, add the walk-ins, save once.
-* Records volunteer hours as individual shifts — who, when, how long, doing what, supervised by whom.
+* Records volunteer hours as individual shifts — who, when, how long, doing what, supervised by whom. Type 3.5, 3:30, 3h 30m or 210m; whichever you use, the figure stored is rounded to an increment you choose — always to the nearest, never up, and the screen tells you when it has.
+* Runs a day as an event when one occasion has several roles at several times — a festival, a meal service, a collection drive. Volunteers pick more than one time in a single go and get one email listing all of them.
 * Lets a staff member with the right permission mark a shift verified. Who attested and when is recorded and appears on the letter.
 * Produces a verification letter for any volunteer over any date range, itemized, on your letterhead, ready to print or email.
 * Gives every letter a reference code you can read back to anyone who phones to check it — and a screen that tells you whether it still matches your records.
@@ -35,6 +36,7 @@ This plugin keeps the hours, lets staff attest to them, and prints the letter.
 * Optionally lets volunteers send in their own hours from a page on your site. Off until you switch it on; everything sent arrives unverified and waits for staff.
 * Tracks how many hours somebody working off court-ordered or school-required service still has to complete, and by when. For your planning only — it never appears on a letter.
 * Lets you decide how long records are kept, and supports WordPress's own Export and Erase Personal Data tools.
+* Lets you choose which roles can verify hours and which can issue letters — they are frequently different people, and they are separate permissions.
 
 = What it deliberately does not do =
 
@@ -74,14 +76,67 @@ Not yet. In this version a staff member with the right permission attests to hou
 
 It produces a letter styled for print — use your browser's Print to PDF. Bundling a PDF library would add megabytes of third-party code to a plugin that otherwise has no dependencies at all.
 
+= How do volunteers reach an event? =
+
+You put it on a page. An event has no web address of its own, and publishing it does not give it one — add the **Volunteer Event** block to a page and pick the event, or paste the `[volunteer_event]` shortcode with the event's id into one. The event editor tells you which page currently shows it, and says so when none does.
+
+An event's times never appear on the general shifts page. That page lists shifts you scheduled on their own; an event is shown whole, on its own page.
+
+= What happens if I delete the plugin? =
+
+Nothing is removed. Every volunteer record, logged shift, scheduled shift, signup and issued letter stays exactly where it is, and so do the permissions added to your roles. Deactivating does the same.
+
+That is deliberate — losing somebody's court-ordered service history because a plugin was toggled off is not a risk worth taking — but it does mean deleting the plugin is not a way to remove somebody's data. Use the retention policy, or WordPress's Erase Personal Data tool, before you delete anything. If you want the plugin's own settings cleaned up on deletion, there is a tick box for that on the Privacy tab; even then it deletes no records.
+
+= I have a staging copy of my site. Will it email my volunteers? =
+
+Yes, unless you stop it — and this is the most important thing to know about running this plugin. A copy restored from a backup has the real names and the real email addresses in it, and left running it will send reminders, confirmations and verification letters to those people about court-ordered service.
+
+Put one of these in `wp-config.php` **on the copy**:
+
+`define( 'GWCVT_MAIL_MODE', 'off' );`
+
+That sends nothing at all. Or, to see what would have gone out:
+
+`define( 'GWCVT_MAIL_MODE', 'trap' );`
+`define( 'GWCVT_MAIL_ALLOW', 'you@example.com' );`
+
+Every message then goes to that address instead, with the site's name in the subject line and a note saying who it was really addressed to. Neither constant is needed on your live site — unset means normal delivery.
+
 == Screenshots ==
 
-1. The hours list, filtered to shifts nobody has verified yet.
-2. Entering a shift, with the volunteer picker and the verify button.
-3. A verification letter, ready to print.
-4. Checking a reference code somebody has phoned in about.
+1. The dashboard: what needs doing, ordered by what is lost if it waits.
+2. The hours list, filtered to shifts nobody has verified yet.
+3. Entering a shift, with the volunteer picker and the verify button.
+4. A verification letter, ready to print.
+5. Checking a reference code somebody has phoned in about.
+6. The schedule, with an event and the ordinary shifts around it.
+7. Building an event: one occasion, its roles, and the times under each.
+8. The roster for an event, split by role and time, ready for the clipboard.
 
 == Changelog ==
+
+= 0.15.0 =
+* A **Permissions** tab. Choose which roles can verify hours and which can issue letters, on a screen, instead of needing a separate plugin or a line of PHP to tell them apart.
+* Checking a reference somebody has phoned in about no longer requires permission to issue letters. Answering the phone and signing a letter were the same key; they are not the same job.
+* Fixed: an event placed with the **Volunteer Event block** was never matched to the page it was on, so its cancellation links arrived empty. The block is the placement we recommend, and it was the one that did not work.
+* The event editor now tells you which page an event is visible on, and says plainly when no page shows it. Publishing an event does not give it a web address, and the wording implied it did.
+* Removing a time from an event, or a whole role, could be counted as "hours not logged" on the dashboard while no screen offered anywhere to log them. Each time on an event roster now has its own **Log the hours** link, and the event's row says how many are waiting.
+* The letter now writes every date the way your site writes dates. It used to print "August 6, 2026" at the top and "2026-03-04" in the table below.
+* A warning before you print a letter that has no organization name, no contact and no signatory — each falls back to something reasonable, and together they produce a letter headed with your website's title over your webmaster's address.
+* The shift form now says what it corrected. Hours it could not read, a date moved back from the future, a volunteer that could not be attached: all three used to happen in silence.
+* It also says when rounding changed the figure, rather than only explaining rounding in a setting nobody has opened.
+* Withdrawing verification in bulk now asks first, and says that verifying again records a new name and date rather than restoring the old one.
+* A first-run dashboard. A brand-new site used to be told that everything logged had been verified and no shift was short of people, which is true of an empty database and no use to anybody.
+* The volunteer list has a filter and a sortable deadline, and the dashboard's "past their deadline" line now links to those people rather than to everybody.
+* The hours form no longer accepts submissions into nowhere when a second copy is placed on a page it is not pinned to. It says which page to use.
+* A **Removing this plugin** section on the Privacy tab, saying exactly what deleting it does and does not remove. It removes no records — which is deliberate, and was written down nowhere anybody would find it.
+* The staging-mail guard is documented at last, in the readme and in the help tabs. `GWCVT_MAIL_MODE` is what stops a restored copy of your site emailing your real volunteers.
+* Help tabs for events, and for running a copy of your site.
+* Fixed: strings in the block editor could never be translated.
+* Labels and help text for the fields that had none, and the hours form's hints are now read out by screen readers.
+* Screenshots, an icon and a banner, so this page shows the plugin rather than a list of captions with nothing behind them.
+* The demo fixture now builds an event, which it had never done — so the newest feature was the one thing that could not be photographed.
 
 = 0.14.0 =
 * Events: one occasion with several roles, each offered at several times, each with its own numbers. A festival, a meal service, a collection drive.
@@ -209,6 +264,9 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 0.15.0 =
+Fixes events placed with the block never finding their page, and gives event hours somewhere to be logged. Adds a Permissions tab. Existing records, letters and reference codes are untouched.
 
 = 0.14.0 =
 Adds events — one occasion with several roles at several times. Existing shifts, signups and letters are untouched.
