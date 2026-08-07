@@ -35,7 +35,14 @@ function gwcvt_add_help_tab( $screen, string $id, string $title, array $paragrap
 	$content = '';
 
 	foreach ( $paragraphs as $paragraph ) {
-		$content .= '<p>' . wp_kses( $paragraph, array( 'strong' => array(), 'em' => array(), 'code' => array() ) ) . '</p>';
+		$content .= '<p>' . wp_kses(
+			$paragraph,
+			array(
+				'strong' => array(),
+				'em'     => array(),
+				'code'   => array(),
+			)
+		) . '</p>';
 	}
 
 	$screen->add_help_tab(

@@ -18,6 +18,17 @@ phpunit.phar
 phpunit-*.phar
 tests
 
+# Coding standards. All of it is development-only: the plugin has no runtime
+# Composer dependencies and loads no autoloader, so vendor/ holds nothing but
+# PHPCS and WPCS. It is listed because `wp dist-archive` reads the working
+# directory rather than git, and an installed vendor/ would otherwise add
+# several MB of linter to the zip.
+composer.json
+composer.lock
+phpcs.xml.dist
+.phpcs.cache
+vendor
+
 node_modules
 README.md
 .DS_Store

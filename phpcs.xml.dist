@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<ruleset name="Groundwork Common Volunteer Tracker">
+
+	<description>
+		WordPress-Extra plus WordPress-Docs, which is what a WordPress.org
+		reviewer runs — so the same output is available here before they see it.
+
+		Deliberately the same ruleset as the sibling post portal and location
+		finder, rather than a gentler one chosen to make this repository's first
+		run look better. Three plugins held to three standards is how one of them
+		quietly drifts.
+
+		This repository carries around 126 phpcs:ignore annotations, each with a
+		written justification, and until this ruleset existed nothing verified
+		that any of them still silenced something real. An annotation outlives
+		the code it was written for silently: the only signal that it has stopped
+		being true is a sniff that no longer fires, and nothing was running the
+		sniffs.
+	</description>
+
+	<!--
+		The shipped plugin, and only that. tests/ is in .distignore, never
+		reaches a user or a reviewer, and is written against a different set of
+		constraints — its whole job is to declare functions named after core's
+		and echo "PASS" to a terminal, both of which this standard rightly
+		objects to in a plugin and wrongly objects to in a test.
+	-->
+	<file>.</file>
+
+	<exclude-pattern>/vendor/</exclude-pattern>
+	<exclude-pattern>/node_modules/</exclude-pattern>
+	<exclude-pattern>/languages/</exclude-pattern>
+	<exclude-pattern>/.wordpress-org/</exclude-pattern>
+	<exclude-pattern>/tests/</exclude-pattern>
+
+	<!-- Developer tooling, not shipped. .distignore drops it from the zip. -->
+	<exclude-pattern>/bin/</exclude-pattern>
+
+	<!--
+		`edit.asset.php` is the filename @wordpress/scripts generates and the one
+		register_block_type() looks for. Not ours to rename — and here they are
+		hand-written to match, which does not change whose filename it is.
+	-->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>*.asset.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+		<exclude-pattern>*.asset.php</exclude-pattern>
+	</rule>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg name="basepath" value="."/>
+	<arg name="parallel" value="8"/>
+	<arg value="ps"/>
+
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs"/>
+
+	<!--
+		Everything the sniffs need to know about this plugin, declared once so
+		the prefix, domain and version rules actually have something to check
+		against rather than passing vacuously.
+	-->
+	<config name="minimum_wp_version" value="6.3"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="gwcvt"/>
+				<element value="GWCVT"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="groundwork-common-volunteer-tracker"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!--
+		── The block-comment heading, and why phpcbf must not "fix" it ──────
+
+		Squiz.Commenting.BlockComment.NoNewLine wants a block comment's text to
+		start on the line after the opener. This codebase heads its long
+		explanatory comments with a rule:
+
+		    /* ── Why there is a route here at all ─────────────────────────
+		     * The sibling plugins in this family register none, and ...
+
+		The heading has to sit on the opening line for that to read as a
+		heading, and there are around 400 of them — these comments are how the
+		plugin explains itself.
+
+		This is not a style preference, it is a trap. The sniff is auto-fixable,
+		so phpcbf will happily "correct" all of them, and what it produces is a
+		bare `/*` on its own line followed by a heading stripped of its ` * `
+		prefix. That output then violates BlockComment.CloserSameLine, which is
+		*not* auto-fixable — so one phpcbf run turns a clean-ish codebase into
+		roughly 420 unfixable errors while destroying the comment style. That
+		happened once, on a branch, and is the reason this block is here rather
+		than in a commit message nobody would read.
+
+		The sibling location finder reached the same conclusion independently
+		and overrules the same single sniff. The rest of
+		Squiz.Commenting.BlockComment still applies: indentation, capitals,
+		punctuation, and the closer.
+	-->
+	<rule ref="Squiz.Commenting.BlockComment.NoNewLine">
+		<severity>0</severity>
+	</rule>
+
+	<!--
+		── The only rule switched off wholesale ─────────────────────────────
+
+		Callback parameters this plugin does not use but cannot rename or drop,
+		because the signature belongs to the hook rather than to us. A callback
+		that ignores an argument it is handed is not a defect — it is a callback
+		honouring a contract.
+
+		Off for the same reason and on the same terms as in the post portal.
+		Every other WPCS rule is on. Where a rule is genuinely wrong for one
+		line, that line carries an annotated phpcs:ignore saying so, which is
+		reviewable in a way a silent ruleset-wide severity 0 is not.
+	-->
+	<rule ref="Generic.CodeAnalysis.UnusedFunctionParameter">
+		<severity>0</severity>
+	</rule>
+
+</ruleset>

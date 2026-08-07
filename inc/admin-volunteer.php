@@ -178,6 +178,7 @@ function gwcvt_apply_volunteer_filter( $query ): void {
 	$vars = gwcvt_volunteer_query_vars(
 		$state,
 		(string) $query->get( 'orderby' ),
+		// phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- WP_Query::get() returns '' for an unset key, not null, so ?? would keep the empty string.
 		(string) ( $query->get( 'order' ) ?: 'ASC' ),
 		'overdue' === $state ? gwcvt_overdue_requirement_ids() : array()
 	);

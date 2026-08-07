@@ -218,7 +218,7 @@ function gwcvt_user_can_issue( int $user_id ): bool {
 /**
  * Stop the request unless the current user holds a capability.
  *
- * wp_die() rather than a return value, deliberately. A handler that returns
+ * Deliberately wp_die() rather than a return value. A handler that returns
  * early on a failed check relies on every caller remembering to check what it
  * returned, and the failure mode of forgetting is that the action goes ahead.
  * Dying here means the only way to reach the code below the call is to have

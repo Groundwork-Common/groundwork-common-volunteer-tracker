@@ -184,8 +184,10 @@ function gwcvt_render_quick_add_row( int $index, bool $walk_in = false ): void {
 	?>
 	<tr class="gwcvt-quick-add__row">
 		<?php if ( $walk_in ) : ?>
-			<?php /* No tick box: a blank row is not somebody who failed to turn up,
-			       * it is nobody. Filling it in is the whole signal. */ ?>
+			<?php
+			/* No tick box: a blank row is not somebody who failed to turn up,
+					* it is nobody. Filling it in is the whole signal. */
+			?>
 			<td class="gwcvt-quick-add__came" aria-hidden="true"></td>
 		<?php endif; ?>
 		<td>
@@ -580,10 +582,10 @@ function gwcvt_handle_quick_add(): void {
 	$signups  = array_map( 'absint', (array) ( $posted['gwcvt_signup'] ?? array() ) );
 	$attended = (array) ( $posted['gwcvt_attended'] ?? array() );
 
-	$made      = 0;
-	$skipped   = 0;
-	$no_shows  = 0;
-	$logged    = array();
+	$made     = 0;
+	$skipped  = 0;
+	$no_shows = 0;
+	$logged   = array();
 
 	foreach ( $volunteers as $index => $volunteer_id ) {
 		$typed     = trim( (string) ( $hours[ $index ] ?? '' ) );
@@ -818,7 +820,15 @@ function gwcvt_quick_add_notice(): void {
 		'<div class="notice notice-%1$s is-dismissible"><p>%2$s <a href="%3$s">%4$s</a></p></div>',
 		esc_attr( $skipped > 0 ? 'warning' : 'success' ),
 		esc_html( $message ),
-		esc_url( add_query_arg( array( 'post_type' => GWCVT_ENTRY_TYPE, 'gwcvt_state' => 'unverified' ), admin_url( 'edit.php' ) ) ),
+		esc_url(
+			add_query_arg(
+				array(
+					'post_type'   => GWCVT_ENTRY_TYPE,
+					'gwcvt_state' => 'unverified',
+				),
+				admin_url( 'edit.php' )
+			)
+		),
 		esc_html__( 'Verify them now', 'groundwork-common-volunteer-tracker' )
 	);
 }

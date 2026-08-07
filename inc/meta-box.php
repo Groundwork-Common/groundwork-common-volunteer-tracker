@@ -782,7 +782,7 @@ function gwcvt_should_save( int $post_id, string $nonce_field, string $nonce_act
 /**
  * A date, or ''.
  *
- * checkdate() rather than a regex alone: '2026-02-31' matches the shape and is
+ * Uses checkdate() rather than a regex alone: '2026-02-31' matches the shape and is
  * not a day, and an entry dated on a day that does not exist is one that sorts
  * into a range it is not in.
  *

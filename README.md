@@ -18,7 +18,7 @@ What the letter does instead is report what the organization recorded, say plain
 
 ## Requirements
 
-WordPress 6.3, PHP 7.4. No build step, no Composer, no npm for anything that ships.
+WordPress 6.3, PHP 7.4. No build step and no npm: every file that runs on a user's site is a file in this repository, byte for byte. Composer is present, but only as a linter — it installs no runtime dependency and everything it touches is in `.distignore`. See **Coding standards**.
 
 The PHP 7.4 floor is tested, not assumed. PHPUnit 11 needs PHP 8.2, so the unit suite *cannot* run on 7.4 — which means without a deliberate job the compatibility claim in the plugin header would be verified by nobody. The Tests workflow runs the integration scripts against a real 7.4 site, and parses every shipping file with 7.4's own parser. To check it yourself:
 
@@ -125,7 +125,7 @@ npx @wordpress/env start --config=.wp-env.php74.json
 
 Both are argued at length in the plan and in the code; the short version:
 
-- **A few plain typed classes exist**, for computed in-memory values only — the letter model and its rows, and the totals object. Persisted config (the field schema, field definitions) stays an array, exactly as in the siblings. The rule is *objects for computed values, arrays for persisted config*, and it exists because the letter model is the one structure whose correctness is the entire product. There is still no Composer, no autoloader, and no build step.
+- **A few plain typed classes exist**, for computed in-memory values only — the letter model and its rows, and the totals object. Persisted config (the field schema, field definitions) stays an array, exactly as in the siblings. The rule is *objects for computed values, arrays for persisted config*, and it exists because the letter model is the one structure whose correctness is the entire product. There is still no autoloader and no build step, and Composer appears only as a linter that ships nothing.
 - **There is one REST route**, `gwcvt/v1/volunteers`, for the entry screen's volunteer picker. Every post type stays `show_in_rest => false`. The siblings' "no REST" rule is really an argument against *auto-generated* CPT routes, which is right and is kept; for a purpose-built lookup, `permission_callback` and an `args` schema are better guard rails than a hand-rolled `check_ajax_referer` that fails open when forgotten.
 
 ## Hooks
@@ -185,7 +185,7 @@ Every hook in the plugin is in this table. If you add one, add its row.
 
 ## Tests
 
-PHPUnit 11, run from a downloaded phar. There is no Composer dependency.
+PHPUnit 11, run from a downloaded phar rather than installed by Composer. (Composer is in this repo, but only to run the coding standard — see below.)
 
 ```bash
 curl -sLO https://phar.phpunit.de/phpunit-11.phar && php phpunit-11.phar
@@ -207,14 +207,34 @@ npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-
 
 ## Continuous integration
 
-`.github/workflows/test.yml` runs four jobs on every push and pull request:
+`.github/workflows/test.yml` runs six jobs on every push and pull request:
 
 | Job | What it answers |
 | --- | --- |
 | `lint` | Does every shipping file parse on PHP 7.4 — the version the header promises? |
+| `standards` | Does it satisfy the coding standard a directory reviewer runs, and does it only call what PHP 7.4 actually has? |
+| `js` | Does the event grid still renumber a cloned row? The one hand-written script with logic worth checking. |
 | `unit` | Is the logic right? PHPUnit 11 on 8.2, 8.3, 8.4. |
 | `integration` | Does it actually run? The six scripts under wp-env, on **7.4 and 8.3** — the two ends where the interesting failures are. |
 | `version` | Do the header, the constant, `Stable tag` and the changelog still agree? |
+
+## Coding standards
+
+WordPress-Extra plus WordPress-Docs — what a WordPress.org reviewer runs, available here before they see it:
+
+```bash
+composer install
+composer lint          # phpcs against phpcs.xml.dist
+composer compat        # PHPCompatibilityWP against the 7.4 floor
+```
+
+The point is the ~126 `phpcs:ignore` annotations across `inc/`. Each carries a written justification, and until this ran nothing verified that any of them still silenced something real — an annotation outlives the code it was written for silently, because the only signal that it has stopped being true is a sniff that no longer fires.
+
+`composer compat` answers a question `php -l` cannot. Parsing on 7.4 is not the same as *running* on 7.4: a PHP 8 function parses perfectly and then fails at runtime, on exactly the shared hosting this plugin is installed on.
+
+**Composer is a linter here and nothing else** — no runtime dependency, no autoloader, and `composer.json`, `composer.lock`, `phpcs.xml.dist` and `vendor/` are all in `.distignore`, so none of it reaches the zip. PHPUnit stays a downloaded phar.
+
+One sniff is overruled beyond the shared `UnusedFunctionParameter`, and it is a trap rather than a preference. `Squiz.Commenting.BlockComment.NoNewLine` wants a block comment's text to begin after the opener; this codebase heads ~400 of them on the opening line, and the sniff is auto-fixable. Letting `phpcbf` "correct" them leaves a bare `/*` above each one and a heading stripped of its ` * `, which then violates `CloserSameLine` — which is *not* auto-fixable. One run turns 144 findings into 566 and destroys the comment style. The reasoning is written out in `phpcs.xml.dist`; the sibling location finder overrules the same sniff for the same reason.
 
 ## Demo data
 

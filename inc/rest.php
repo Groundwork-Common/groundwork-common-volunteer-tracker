@@ -59,7 +59,7 @@ function gwcvt_register_rest_routes(): void {
 /**
  * Who may look a volunteer up.
  *
- * edit_posts, which is what it takes to create an hour entry in the first
+ * Gated on edit_posts, which is what it takes to create an hour entry in the first
  * place. Anybody who can log a shift has to be able to say whose it was, and
  * anybody who cannot has no reason to be enumerating the volunteer list.
  *

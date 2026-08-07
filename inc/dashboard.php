@@ -323,6 +323,7 @@ function gwcvt_overdue_requirement_ids(): array {
 			'post_type'              => GWCVT_VOLUNTEER_TYPE,
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
 			'fields'                 => 'ids',
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the volunteer roster, counted in one pass. 200 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
 			'posts_per_page'         => 200,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
@@ -411,6 +412,7 @@ function gwcvt_org_totals( string $from, string $to ): array {
 			'post_type'              => GWCVT_ENTRY_TYPE,
 			'post_status'            => array( 'publish', 'pending' ),
 			'fields'                 => 'ids',
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- entries inside the reporting window, counted in one pass. 5000 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
 			'posts_per_page'         => 5000,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,

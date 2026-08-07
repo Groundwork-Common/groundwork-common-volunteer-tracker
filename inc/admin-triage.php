@@ -210,7 +210,15 @@ function gwcvt_triage_queue_notice(): void {
 				$waiting
 			)
 		),
-		esc_url( add_query_arg( array( 'post_type' => GWCVT_ENTRY_TYPE, 'gwcvt_state' => 'unmatched' ), admin_url( 'edit.php' ) ) ),
+		esc_url(
+			add_query_arg(
+				array(
+					'post_type'   => GWCVT_ENTRY_TYPE,
+					'gwcvt_state' => 'unmatched',
+				),
+				admin_url( 'edit.php' )
+			)
+		),
 		esc_html__( 'Match them now', 'groundwork-common-volunteer-tracker' )
 	);
 }
@@ -375,7 +383,13 @@ function gwcvt_triage_redirect( int $entry_id, string $result ): void {
 	$from_list = isset( $_GET['returnto'] ) && 'list' === sanitize_key( wp_unslash( $_GET['returnto'] ) );
 
 	$target = $from_list
-		? add_query_arg( array( 'post_type' => GWCVT_ENTRY_TYPE, 'gwcvt_state' => 'unmatched' ), admin_url( 'edit.php' ) )
+		? add_query_arg(
+			array(
+				'post_type'   => GWCVT_ENTRY_TYPE,
+				'gwcvt_state' => 'unmatched',
+			),
+			admin_url( 'edit.php' )
+		)
 		: (string) get_edit_post_link( $entry_id, 'url' );
 
 	wp_safe_redirect( add_query_arg( 'gwcvt_triage', $result, $target ) );

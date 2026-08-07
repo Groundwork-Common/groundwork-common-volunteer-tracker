@@ -99,9 +99,35 @@ failure is legible.
 Each integration script prints `ALL PASS` or a count of failures, so a run is
 checked by grepping for the former rather than by reading the output.
 
-There is no phpcs ruleset and no Composer in this repo, despite the
-`phpcs:ignore` annotations throughout. They are documentation for a run that does
-not happen here. Never add one without a `--` reason.
+The coding standard runs, and the `phpcs:ignore` annotations throughout are
+checked by it rather than decorative:
+
+```bash
+composer install
+composer lint          # phpcs against phpcs.xml.dist
+composer lint:fix      # only what phpcbf can fix — read the warning below first
+composer compat        # PHPCompatibilityWP against the 7.4 floor
+```
+
+Never add a `phpcs:ignore` without a `--` reason after it; every existing one
+explains itself, and there are around 126 of them.
+
+**Composer here is a linter and nothing else.** No runtime dependency, no
+autoloader, and `composer.json`, `composer.lock`, `phpcs.xml.dist` and `vendor/`
+are all in `.distignore`, so none of it reaches the zip. PHPUnit stays a fetched
+phar rather than a Composer dependency — that is the workflow above, and it
+works. See hard rule 8, which is narrower than it used to be.
+
+**Do not run `composer lint:fix` expecting it to be safe on comments.** It is
+safe *now*, because `phpcs.xml.dist` sets
+`Squiz.Commenting.BlockComment.NoNewLine` to severity 0. That sniff wants a block
+comment's text to start on the line after the opener, this codebase heads ~400
+of them on the opening line, and the sniff is auto-fixable. Letting phpcbf
+"correct" them leaves a bare `/*` above each and a heading stripped of its
+` * ` — which then violates `CloserSameLine`, which is **not** auto-fixable. One
+run turns 144 findings into 566 and destroys the comment style. The long version
+is in `phpcs.xml.dist`; the location finder overrules the same sniff for the same
+reason. Do not re-enable it.
 
 Ports are pinned in `.wp-env.override.json`, which is gitignored — a fresh clone
 gets wp-env defaults.
@@ -215,7 +241,15 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
    add one, add its row.
 7. **Bump the version in all four places together** — header, `GWCVT_VERSION`,
    `readme.txt` Stable tag, changelog — or `VersionTest` and the deploy gate fail.
-8. Do not add Composer, npm, or a build step.
+8. **Nothing may stand between the source and the shipped plugin.** No build
+   step, no npm, no transpiler, no autoloader: every file that runs on a user's
+   site is a file in this repository, byte for byte. That is what makes
+   `blocks/*/edit.js` hand-written ES5 and `edit.asset.php` hand-written to
+   match. This rule used to read "do not add Composer" and was narrowed when the
+   coding standard was wired into CI — Composer is permitted **for development
+   tooling only**, installs no runtime dependency, and every file it touches is
+   in `.distignore`. If a change would make Composer, npm or a build step
+   necessary to produce the zip, it is out of scope for this plugin.
 9. **Every new block editor script needs `wp_set_script_translations()`.**
    Registration is in `inc/block.php`; a handle missing from that loop has its
    strings extracted into the POT and rendered in English forever.

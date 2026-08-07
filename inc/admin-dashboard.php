@@ -59,7 +59,7 @@ function gwcvt_render_dashboard(): void {
 				<span class="gwcvt-dash__org"><?php echo esc_html( gwcvt_org_name() ); ?></span>
 			</div>
 			<span class="gwcvt-dash__date">
-				<?php echo esc_html( wp_date( (string) get_option( 'date_format' ) ?: 'j F Y' ) ); ?>
+				<?php echo esc_html( wp_date( (string) get_option( 'date_format' ) ?: 'j F Y' ) ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- an empty date_format must fall back too, which ?? does not do; spelling it out would call get_option() twice. ?>
 			</span>
 		</header>
 
@@ -425,7 +425,13 @@ function gwcvt_dashboard_map(): array {
 			'links' => array(
 				array(
 					'label' => __( 'Log a day', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg( array( 'post_type' => GWCVT_ENTRY_TYPE, 'page' => GWCVT_QUICK_ADD_PAGE ), admin_url( 'edit.php' ) ),
+					'url'   => add_query_arg(
+						array(
+							'post_type' => GWCVT_ENTRY_TYPE,
+							'page'      => GWCVT_QUICK_ADD_PAGE,
+						),
+						admin_url( 'edit.php' )
+					),
 				),
 				array(
 					'label' => __( 'Log a single shift', 'groundwork-common-volunteer-tracker' ),
@@ -459,11 +465,23 @@ function gwcvt_dashboard_map(): array {
 			'links' => array(
 				array(
 					'label' => __( 'Produce a letter', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg( array( 'post_type' => GWCVT_ENTRY_TYPE, 'page' => GWCVT_LETTERS_PAGE ), admin_url( 'edit.php' ) ),
+					'url'   => add_query_arg(
+						array(
+							'post_type' => GWCVT_ENTRY_TYPE,
+							'page'      => GWCVT_LETTERS_PAGE,
+						),
+						admin_url( 'edit.php' )
+					),
 				),
 				array(
 					'label' => __( 'Check a reference', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg( array( 'post_type' => GWCVT_ENTRY_TYPE, 'page' => GWCVT_LETTERS_PAGE ), admin_url( 'edit.php' ) ) . '#gwcvt-reference',
+					'url'   => add_query_arg(
+						array(
+							'post_type' => GWCVT_ENTRY_TYPE,
+							'page'      => GWCVT_LETTERS_PAGE,
+						),
+						admin_url( 'edit.php' )
+					) . '#gwcvt-reference',
 				),
 			),
 		);
@@ -474,7 +492,13 @@ function gwcvt_dashboard_map(): array {
 	if ( current_user_can( gwcvt_cap( 'manage' ) ) ) {
 		$setup[] = array(
 			'label' => __( 'Settings', 'groundwork-common-volunteer-tracker' ),
-			'url'   => add_query_arg( array( 'post_type' => GWCVT_ENTRY_TYPE, 'page' => GWCVT_SETTINGS_PAGE ), admin_url( 'edit.php' ) ),
+			'url'   => add_query_arg(
+				array(
+					'post_type' => GWCVT_ENTRY_TYPE,
+					'page'      => GWCVT_SETTINGS_PAGE,
+				),
+				admin_url( 'edit.php' )
+			),
 		);
 	}
 

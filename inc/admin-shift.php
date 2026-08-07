@@ -892,6 +892,7 @@ function gwcvt_render_roster_document( int $shift_id ): void {
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="noindex, nofollow, noarchive" />
 	<title><?php echo esc_html( get_the_title( $shift_id ) ); ?></title>
+	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- this is a standalone document with its own <head>, not a WordPress page, so there is no enqueue queue to join. The plugin owning this markup outright is the point: see the note about theme-overridable templates. ?>
 	<link rel="stylesheet" href="<?php echo esc_url( GWCVT_URL . 'assets/css/letter.css' ); ?>" />
 </head>
 <body class="gwcvt-roster-print">
@@ -1026,6 +1027,7 @@ function gwcvt_shift_redirect( int $shift_id, string $result, array $extra = arr
 function gwcvt_location_vocabulary(): array {
 	$raw = (string) gwcvt_setting( 'shift_locations' );
 
+	// phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- preg_split() returns false on failure, not null, so ?? would not catch it; spelling it out would run the split twice.
 	$lines = array_filter( array_map( 'trim', preg_split( '/\R/', $raw ) ?: array() ), 'strlen' );
 
 	return array_values( $lines );

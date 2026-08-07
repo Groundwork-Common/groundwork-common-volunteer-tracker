@@ -296,7 +296,7 @@ function gwcvt_entry_column( $column, $post_id ): void {
  * @return array
  */
 function gwcvt_entry_sortable_columns( $columns ): array {
-	$columns              = (array) $columns;
+	$columns               = (array) $columns;
 	$columns['gwcvt_date'] = 'gwcvt_date';
 
 	return $columns;

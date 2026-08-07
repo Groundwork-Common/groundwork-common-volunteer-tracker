@@ -55,6 +55,7 @@ function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): 
 	<meta name="robots" content="noindex, nofollow" />
 	<title><?php echo esc_html( gwcvt_letter_title( $letter ) ); ?></title>
 	<?php if ( 'print' === $medium ) : ?>
+		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- this is a standalone document with its own <head>, not a WordPress page, so there is no enqueue queue to join. The plugin owning this markup outright is the point: see the note about theme-overridable templates. ?>
 		<link rel="stylesheet" href="<?php echo esc_url( GWCVT_URL . 'assets/css/letter.css?ver=' . GWCVT_VERSION ); ?>" />
 	<?php endif; ?>
 </head>
@@ -124,19 +125,19 @@ function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): 
  */
 function gwcvt_letter_strings( GWCVT_Letter $letter ): array {
 	$strings = array(
-		'heading'         => __( 'Volunteer Service Verification', 'groundwork-common-volunteer-tracker' ),
-		'shifts_heading'  => __( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ),
-		'label_volunteer' => __( 'Volunteer', 'groundwork-common-volunteer-tracker' ),
-		'label_period'    => __( 'Period covered', 'groundwork-common-volunteer-tracker' ),
-		'label_hours'     => __( 'Verified hours', 'groundwork-common-volunteer-tracker' ),
-		'label_shifts'    => __( 'Shifts', 'groundwork-common-volunteer-tracker' ),
-		'col_date'        => __( 'Date', 'groundwork-common-volunteer-tracker' ),
-		'col_hours'       => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
-		'col_activity'    => __( 'Activity', 'groundwork-common-volunteer-tracker' ),
-		'col_supervisor'  => __( 'Supervised by', 'groundwork-common-volunteer-tracker' ),
+		'heading'          => __( 'Volunteer Service Verification', 'groundwork-common-volunteer-tracker' ),
+		'shifts_heading'   => __( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ),
+		'label_volunteer'  => __( 'Volunteer', 'groundwork-common-volunteer-tracker' ),
+		'label_period'     => __( 'Period covered', 'groundwork-common-volunteer-tracker' ),
+		'label_hours'      => __( 'Verified hours', 'groundwork-common-volunteer-tracker' ),
+		'label_shifts'     => __( 'Shifts', 'groundwork-common-volunteer-tracker' ),
+		'col_date'         => __( 'Date', 'groundwork-common-volunteer-tracker' ),
+		'col_hours'        => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
+		'col_activity'     => __( 'Activity', 'groundwork-common-volunteer-tracker' ),
+		'col_supervisor'   => __( 'Supervised by', 'groundwork-common-volunteer-tracker' ),
 		'col_verification' => __( 'Verification', 'groundwork-common-volunteer-tracker' ),
-		'unverified_cell' => __( 'Not verified — not included in the total above', 'groundwork-common-volunteer-tracker' ),
-		'signature_blank' => __( 'Signature', 'groundwork-common-volunteer-tracker' ),
+		'unverified_cell'  => __( 'Not verified — not included in the total above', 'groundwork-common-volunteer-tracker' ),
+		'signature_blank'  => __( 'Signature', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	/**
@@ -339,7 +340,7 @@ function gwcvt_letter_tokens( GWCVT_Letter $letter ): array {
 /**
  * The site's timezone, named the way a person would name it.
  *
- * wp_timezone_string() returns whatever is in the setting, which for a site
+ * WordPress's wp_timezone_string() returns whatever is in the setting, which for a site
  * configured by UTC offset is a string like "+00:00". On a letter that reads as
  * a bug — "Generated 5 August 2026 3:53 pm (+00:00)" — and the timestamp is one
  * of the things making this document credible, so it cannot look broken.
@@ -506,32 +507,32 @@ function gwcvt_org_contact(): string {
  */
 function gwcvt_inline_letter_styles( string $html ): string {
 	$rules = array(
-		'gwcvt-letter'            => 'font-family:Georgia,"Times New Roman",serif;font-size:12pt;line-height:1.55;color:#1a1a1a;max-width:44em;margin:0 auto;padding:16px;',
-		'gwcvt-letterhead'        => 'border-bottom:1px solid #999;padding-bottom:10px;margin-bottom:22px;',
-		'gwcvt-org-logo'          => 'display:block;max-height:56px;width:auto;margin:0 0 8px;',
-		'gwcvt-org'               => 'font-size:15pt;font-weight:bold;margin:0 0 3px;',
-		'gwcvt-org-address'       => 'margin:0;font-size:10pt;color:#444;',
-		'gwcvt-org-contact'       => 'margin:2px 0 0;font-size:10pt;color:#444;',
-		'gwcvt-date'              => 'margin:0 0 18px;font-size:11pt;color:#444;',
-		'gwcvt-heading'           => 'font-size:15pt;margin:0 0 14px;',
-		'gwcvt-subheading'        => 'font-size:12pt;margin:26px 0 8px;',
-		'gwcvt-intro'             => 'margin:0 0 20px;',
-		'gwcvt-summary-table'     => 'border-collapse:collapse;width:100%;margin:0 0 8px;',
-		'gwcvt-entries'           => 'border-collapse:collapse;width:100%;font-size:10.5pt;',
+		'gwcvt-letter'           => 'font-family:Georgia,"Times New Roman",serif;font-size:12pt;line-height:1.55;color:#1a1a1a;max-width:44em;margin:0 auto;padding:16px;',
+		'gwcvt-letterhead'       => 'border-bottom:1px solid #999;padding-bottom:10px;margin-bottom:22px;',
+		'gwcvt-org-logo'         => 'display:block;max-height:56px;width:auto;margin:0 0 8px;',
+		'gwcvt-org'              => 'font-size:15pt;font-weight:bold;margin:0 0 3px;',
+		'gwcvt-org-address'      => 'margin:0;font-size:10pt;color:#444;',
+		'gwcvt-org-contact'      => 'margin:2px 0 0;font-size:10pt;color:#444;',
+		'gwcvt-date'             => 'margin:0 0 18px;font-size:11pt;color:#444;',
+		'gwcvt-heading'          => 'font-size:15pt;margin:0 0 14px;',
+		'gwcvt-subheading'       => 'font-size:12pt;margin:26px 0 8px;',
+		'gwcvt-intro'            => 'margin:0 0 20px;',
+		'gwcvt-summary-table'    => 'border-collapse:collapse;width:100%;margin:0 0 8px;',
+		'gwcvt-entries'          => 'border-collapse:collapse;width:100%;font-size:10.5pt;',
 		/* Carries the cell padding as well as its own size, because the classless
 		 * cell pass below deliberately leaves classed cells alone — otherwise
 		 * this one would be styled twice and lose whichever came second. */
-		'gwcvt-total'             => 'padding:4px 0;vertical-align:top;font-size:13pt;',
-		'gwcvt-row--unverified'   => 'color:#555;font-style:italic;',
-		'gwcvt-unverified-note'   => 'font-size:10pt;color:#555;margin:10px 0 0;',
-		'gwcvt-signature'         => 'margin:40px 0 0;',
-		'gwcvt-signature__rule'   => 'border-bottom:1px solid #333;width:22em;margin:0 0 6px;height:2.4em;',
-		'gwcvt-signature__name'   => 'margin:0;font-weight:bold;',
-		'gwcvt-signature__title'  => 'margin:0;font-size:10.5pt;color:#444;',
-		'gwcvt-signature__org'    => 'margin:0;font-size:10.5pt;color:#444;',
-		'gwcvt-disclaimer'        => 'margin:34px 0 0;padding-top:12px;border-top:1px solid #ccc;font-size:9.5pt;color:#444;line-height:1.5;',
-		'gwcvt-reference-note'    => 'margin:8px 0 0;',
-		'gwcvt-reference'         => 'margin:8px 0 0;font-family:Menlo,Consolas,monospace;font-size:10pt;color:#1a1a1a;letter-spacing:.04em;',
+		'gwcvt-total'            => 'padding:4px 0;vertical-align:top;font-size:13pt;',
+		'gwcvt-row--unverified'  => 'color:#555;font-style:italic;',
+		'gwcvt-unverified-note'  => 'font-size:10pt;color:#555;margin:10px 0 0;',
+		'gwcvt-signature'        => 'margin:40px 0 0;',
+		'gwcvt-signature__rule'  => 'border-bottom:1px solid #333;width:22em;margin:0 0 6px;height:2.4em;',
+		'gwcvt-signature__name'  => 'margin:0;font-weight:bold;',
+		'gwcvt-signature__title' => 'margin:0;font-size:10.5pt;color:#444;',
+		'gwcvt-signature__org'   => 'margin:0;font-size:10.5pt;color:#444;',
+		'gwcvt-disclaimer'       => 'margin:34px 0 0;padding-top:12px;border-top:1px solid #ccc;font-size:9.5pt;color:#444;line-height:1.5;',
+		'gwcvt-reference-note'   => 'margin:8px 0 0;',
+		'gwcvt-reference'        => 'margin:8px 0 0;font-family:Menlo,Consolas,monospace;font-size:10pt;color:#1a1a1a;letter-spacing:.04em;',
 	);
 
 	/* ── One pass, exact class names, one style attribute ────────────────────
@@ -552,20 +553,20 @@ function gwcvt_inline_letter_styles( string $html ): string {
 	 * ─────────────────────────────────────────────────────────────────────── */
 	return (string) preg_replace_callback(
 		'/<([a-z]+)([^>]*\bclass="([^"]*)"[^>]*?)>/i',
-		static function ( array $match ) use ( $rules ): string {
+		static function ( array $matched ) use ( $rules ): string {
 			$declarations = '';
 
-			foreach ( preg_split( '/\s+/', trim( $match[3] ) ) as $class ) {
+			foreach ( preg_split( '/\s+/', trim( $matched[3] ) ) as $class ) {
 				if ( '' !== $class && isset( $rules[ $class ] ) ) {
 					$declarations .= $rules[ $class ];
 				}
 			}
 
 			if ( '' === $declarations ) {
-				return $match[0];
+				return $matched[0];
 			}
 
-			$attributes = rtrim( $match[2] );
+			$attributes = rtrim( $matched[2] );
 			$closes     = '';
 
 			// <img … /> — the slash belongs after the attributes, not inside them.
@@ -574,7 +575,7 @@ function gwcvt_inline_letter_styles( string $html ): string {
 				$closes     = ' /';
 			}
 
-			return '<' . $match[1] . $attributes . ' style="' . $declarations . '"' . $closes . '>';
+			return '<' . $matched[1] . $attributes . ' style="' . $declarations . '"' . $closes . '>';
 		},
 		gwcvt_inline_letter_cells( $html )
 	);

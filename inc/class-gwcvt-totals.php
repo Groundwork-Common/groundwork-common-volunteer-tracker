@@ -28,27 +28,57 @@ defined( 'ABSPATH' ) || exit;
  * explicit constructor — no promotion, no readonly, no enums. That is enough.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-class GWCVT_Totals { // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names is StudlyCaps with underscores.
+/**
+ * A volunteer's hours, added up.
+ */
+class GWCVT_Totals {
+ // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names is StudlyCaps with underscores.
 
-	/** @var int Minutes a staff member has attested to. */
+	/**
+	 * Minutes a staff member has attested to.
+	 *
+	 * @var int
+	 */
 	public int $verified_minutes = 0;
 
-	/** @var int Minutes logged but not yet attested to. */
+	/**
+	 * Minutes logged but not yet attested to.
+	 *
+	 * @var int
+	 */
 	public int $pending_minutes = 0;
 
-	/** @var int How many entries went into this. */
+	/**
+	 * How many entries went into this.
+	 *
+	 * @var int
+	 */
 	public int $entries = 0;
 
-	/** @var string Date of the earliest entry, Y-m-d, or '' if there are none. */
+	/**
+	 * Date of the earliest entry, Y-m-d, or '' if there are none.
+	 *
+	 * @var string
+	 */
 	public string $first = '';
 
-	/** @var string Date of the latest entry, Y-m-d, or '' if there are none. */
+	/**
+	 * Date of the latest entry, Y-m-d, or '' if there are none.
+	 *
+	 * @var string
+	 */
 	public string $last = '';
 
-	/** @var int When this was computed, as a Unix timestamp. */
+	/**
+	 * When this was computed, as a Unix timestamp.
+	 *
+	 * @var int
+	 */
 	public int $computed_at = 0;
 
 	/**
+	 * Build a totals figure.
+	 *
 	 * @param int    $verified_minutes Attested minutes.
 	 * @param int    $pending_minutes  Unattested minutes.
 	 * @param int    $entries          Number of entries.

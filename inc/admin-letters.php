@@ -62,7 +62,13 @@ function gwcvt_render_letters_screen(): void {
 	$to = isset( $_GET['to'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
 	$letter = $volunteer_id > 0
-		? gwcvt_build_letter( $volunteer_id, array( 'from' => $from, 'to' => $to ) )
+		? gwcvt_build_letter(
+			$volunteer_id,
+			array(
+				'from' => $from,
+				'to'   => $to,
+			)
+		)
 		: null;
 	?>
 	<div class="wrap gwcvt-wrap">
@@ -272,7 +278,6 @@ function gwcvt_letter_action_url( string $action, int $volunteer_id, string $fro
 /**
  * The shared front half of both issue handlers.
  *
- * @param string $action admin_post action and nonce prefix.
  * @return array{letter:GWCVT_Letter, volunteer_id:int, from:string, to:string}
  */
 function gwcvt_letter_request(): array {
@@ -290,7 +295,13 @@ function gwcvt_letter_request(): array {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified directly above.
 	$to = isset( $_GET['to'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
-	$letter = gwcvt_build_letter( $volunteer_id, array( 'from' => $from, 'to' => $to ) );
+	$letter = gwcvt_build_letter(
+		$volunteer_id,
+		array(
+			'from' => $from,
+			'to'   => $to,
+		)
+	);
 
 	if ( ! $letter instanceof GWCVT_Letter ) {
 		wp_die(
