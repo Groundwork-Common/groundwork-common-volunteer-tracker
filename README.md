@@ -215,7 +215,7 @@ npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-
 | `standards` | Does it satisfy the coding standard a directory reviewer runs, and does it only call what PHP 7.4 actually has? |
 | `js` | Does the event grid still renumber a cloned row? The one hand-written script with logic worth checking. |
 | `unit` | Is the logic right? PHPUnit 11 on 8.2, 8.3, 8.4. |
-| `integration` | Does it actually run? The six scripts under wp-env, on **7.4 and 8.3** — the two ends where the interesting failures are. |
+| `integration` | Does it actually run? Every script in `tests/integration/` under wp-env, on **7.4 and 8.3** — the two ends where the interesting failures are. The workflow globs the directory, so a new script is picked up without being listed anywhere, including here. |
 | `version` | Do the header, the constant, `Stable tag` and the changelog still agree? |
 
 ## Coding standards
