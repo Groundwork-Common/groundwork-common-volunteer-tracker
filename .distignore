@@ -38,6 +38,5 @@ README.md
 # plugin. bin/ especially: the beta deploy script carries an SSH login, and this
 # file is the only thing standing between it and a public zip on wordpress.org.
 CLAUDE.md
-PLAN-events.md
 .claude
 bin

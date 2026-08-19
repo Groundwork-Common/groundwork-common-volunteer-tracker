@@ -331,7 +331,7 @@ Scheduling arrived in four parts and is complete: 0.8.0 built the schedule and i
 
 0.12.0 added what a mandated volunteer still has to complete — how many hours, by when, and for whom — on their record and on the volunteer list, and nowhere near a letter.
 
-0.14.0 added **events** — one occasion with several roles at several times, built as a container over shifts so that nothing underneath them changed. The prototype the screens were drawn against is kept on the branch that built them, at `.design/events-ux-prototype.html`.
+0.14.0 added **events** — one occasion with several roles at several times, built as a container over shifts so that nothing underneath them changed. The prototype the screens were drawn against is kept at `.design/events-ux-prototype.html`.
 
 0.15.0 was a pass over the whole thing from a user's seat rather than a feature milestone, and most of what it found were gaps *between* screens rather than screens that were wrong: an event that could not be reached because it has no URL and nothing said so, event hours counted by a nag no screen could act on, three letterhead fallbacks that compound into a court letter headed with a website's title, a self-log form that submitted into nothing when placed on the wrong page, and two capabilities the code argues must be separable with no way to separate them. The Permissions tab, the first-run dashboard, the "Removing this plugin" section and the documented mail guard all come from that pass.
 
