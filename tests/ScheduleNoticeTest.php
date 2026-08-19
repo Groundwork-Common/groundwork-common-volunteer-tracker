@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class ScheduleNoticeTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
@@ -25,8 +25,8 @@ final class ScheduleNoticeTest extends TestCase {
 	 * @param array $settings Settings to store.
 	 */
 	private function settings( array $settings ): void {
-		update_option( GWCVT_SETTINGS_OPTION, $settings );
-		gwcvt_settings_cache( null, true );
+		update_option( GWC_VT_SETTINGS_OPTION, $settings );
+		gwc_vt_settings_cache( null, true );
 	}
 
 	/* ── The events exist only while the feature does ────────────────────────
@@ -37,19 +37,19 @@ final class ScheduleNoticeTest extends TestCase {
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_no_events_are_scheduled_while_shifts_are_off(): void {
-		gwcvt_schedule_shift_events();
+		gwc_vt_schedule_shift_events();
 
-		$this->assertFalse( wp_next_scheduled( GWCVT_REMINDER_EVENT ) );
-		$this->assertFalse( wp_next_scheduled( GWCVT_DIGEST_EVENT ) );
+		$this->assertFalse( wp_next_scheduled( GWC_VT_REMINDER_EVENT ) );
+		$this->assertFalse( wp_next_scheduled( GWC_VT_DIGEST_EVENT ) );
 	}
 
 	public function test_turning_shifts_on_schedules_both(): void {
 		$this->settings( array( 'shifts_enabled' => true ) );
 
-		gwcvt_schedule_shift_events();
+		gwc_vt_schedule_shift_events();
 
-		$this->assertNotFalse( wp_next_scheduled( GWCVT_REMINDER_EVENT ) );
-		$this->assertNotFalse( wp_next_scheduled( GWCVT_DIGEST_EVENT ) );
+		$this->assertNotFalse( wp_next_scheduled( GWC_VT_REMINDER_EVENT ) );
+		$this->assertNotFalse( wp_next_scheduled( GWC_VT_DIGEST_EVENT ) );
 	}
 
 	/**
@@ -58,13 +58,13 @@ final class ScheduleNoticeTest extends TestCase {
 	 */
 	public function test_turning_shifts_off_unschedules_both(): void {
 		$this->settings( array( 'shifts_enabled' => true ) );
-		gwcvt_schedule_shift_events();
+		gwc_vt_schedule_shift_events();
 
 		$this->settings( array( 'shifts_enabled' => false ) );
-		gwcvt_schedule_shift_events();
+		gwc_vt_schedule_shift_events();
 
-		$this->assertFalse( wp_next_scheduled( GWCVT_REMINDER_EVENT ) );
-		$this->assertFalse( wp_next_scheduled( GWCVT_DIGEST_EVENT ) );
+		$this->assertFalse( wp_next_scheduled( GWC_VT_REMINDER_EVENT ) );
+		$this->assertFalse( wp_next_scheduled( GWC_VT_DIGEST_EVENT ) );
 	}
 
     /**
@@ -73,12 +73,12 @@ final class ScheduleNoticeTest extends TestCase {
 	public function test_scheduling_twice_does_not_move_the_events(): void {
 		$this->settings( array( 'shifts_enabled' => true ) );
 
-		gwcvt_schedule_shift_events();
-		$first = wp_next_scheduled( GWCVT_REMINDER_EVENT );
+		gwc_vt_schedule_shift_events();
+		$first = wp_next_scheduled( GWC_VT_REMINDER_EVENT );
 
-		gwcvt_schedule_shift_events();
+		gwc_vt_schedule_shift_events();
 
-		$this->assertSame( $first, wp_next_scheduled( GWCVT_REMINDER_EVENT ) );
+		$this->assertSame( $first, wp_next_scheduled( GWC_VT_REMINDER_EVENT ) );
 	}
 
 	/* ── Neither pass does anything while it is switched off ─────────────── */
@@ -86,25 +86,25 @@ final class ScheduleNoticeTest extends TestCase {
 	public function test_reminders_do_nothing_while_shifts_are_off(): void {
 		$this->settings( array( 'reminder_enabled' => true ) );
 
-		$this->assertSame( 0, gwcvt_run_reminders() );
+		$this->assertSame( 0, gwc_vt_run_reminders() );
 	}
 
 	public function test_reminders_do_nothing_while_reminders_are_off(): void {
 		$this->settings( array( 'shifts_enabled' => true ) );
 
-		$this->assertSame( 0, gwcvt_run_reminders() );
+		$this->assertSame( 0, gwc_vt_run_reminders() );
 	}
 
 	public function test_the_digest_does_nothing_while_it_is_off(): void {
 		$this->settings( array( 'shifts_enabled' => true ) );
 
-		$this->assertFalse( gwcvt_run_digest() );
+		$this->assertFalse( gwc_vt_run_digest() );
 	}
 
 	public function test_the_digest_does_nothing_while_shifts_are_off(): void {
 		$this->settings( array( 'digest_enabled' => true ) );
 
-		$this->assertFalse( gwcvt_run_digest() );
+		$this->assertFalse( gwc_vt_run_digest() );
 	}
 
 	/* ── A message with nowhere to point ─────────────────────────────────────
@@ -118,8 +118,8 @@ final class ScheduleNoticeTest extends TestCase {
 	public function test_there_is_no_manage_link_without_a_pinned_page(): void {
 		$this->settings( array( 'shifts_enabled' => true ) );
 
-		$this->assertSame( '', gwcvt_signup_manage_url( 10 ) );
-		$this->assertSame( '', gwcvt_signup_ics_url( 10 ) );
+		$this->assertSame( '', gwc_vt_signup_manage_url( 10 ) );
+		$this->assertSame( '', gwc_vt_signup_ics_url( 10 ) );
 	}
 
 	/* ── What counts as a change ─────────────────────────────────────────────
@@ -143,48 +143,48 @@ final class ScheduleNoticeTest extends TestCase {
 			'location' => 'Main warehouse',
 		);
 
-		gwcvt_test_add_post( 5, GWCVT_SHIFT_TYPE );
+		gwc_vt_test_add_post( 5, GWC_VT_SHIFT_TYPE );
 
-		update_post_meta( 5, GWCVT_SHIFT_DATE, '2026-03-14' );
-		update_post_meta( 5, GWCVT_SHIFT_START, '09:00' );
-		update_post_meta( 5, GWCVT_SHIFT_END, '12:00' );
-		update_post_meta( 5, GWCVT_SHIFT_LOCATION, 'Main warehouse' );
-		update_post_meta( 5, GWCVT_SHIFT_ACTIVITY, 'Sorting' );
-		update_post_meta( 5, GWCVT_SHIFT_SUPERVISOR, 'Dana Reyes' );
-		update_post_meta( 5, GWCVT_SHIFT_NOTES, 'Closed shoes' );
-		update_post_meta( 5, GWCVT_SHIFT_MAX, 6 );
+		update_post_meta( 5, GWC_VT_SHIFT_DATE, '2026-03-14' );
+		update_post_meta( 5, GWC_VT_SHIFT_START, '09:00' );
+		update_post_meta( 5, GWC_VT_SHIFT_END, '12:00' );
+		update_post_meta( 5, GWC_VT_SHIFT_LOCATION, 'Main warehouse' );
+		update_post_meta( 5, GWC_VT_SHIFT_ACTIVITY, 'Sorting' );
+		update_post_meta( 5, GWC_VT_SHIFT_SUPERVISOR, 'Dana Reyes' );
+		update_post_meta( 5, GWC_VT_SHIFT_NOTES, 'Closed shoes' );
+		update_post_meta( 5, GWC_VT_SHIFT_MAX, 6 );
 
 		update_post_meta( 5, $key, $value );
 
-		$this->assertSame( $expected, gwcvt_shift_moved( 5, $was ) );
+		$this->assertSame( $expected, gwc_vt_shift_moved( 5, $was ) );
 	}
 
 	public static function changes(): array {
 		return array(
-			'the date moved'          => array( GWCVT_SHIFT_DATE, '2026-03-21', true ),
-			'the start time moved'    => array( GWCVT_SHIFT_START, '10:00', true ),
-			'the end time moved'      => array( GWCVT_SHIFT_END, '13:00', true ),
-			'it became an overnight'  => array( GWCVT_SHIFT_OVERNIGHT, '1', true ),
-			'the place moved'         => array( GWCVT_SHIFT_LOCATION, 'The community centre', true ),
+			'the date moved'          => array( GWC_VT_SHIFT_DATE, '2026-03-21', true ),
+			'the start time moved'    => array( GWC_VT_SHIFT_START, '10:00', true ),
+			'the end time moved'      => array( GWC_VT_SHIFT_END, '13:00', true ),
+			'it became an overnight'  => array( GWC_VT_SHIFT_OVERNIGHT, '1', true ),
+			'the place moved'         => array( GWC_VT_SHIFT_LOCATION, 'The community centre', true ),
 
 			/* None of these change whether somebody can come. */
-			'the activity was reworded' => array( GWCVT_SHIFT_ACTIVITY, 'Sorting the produce delivery', false ),
-			'the supervisor changed'    => array( GWCVT_SHIFT_SUPERVISOR, 'Marcus Bell', false ),
-			'the notes were expanded'   => array( GWCVT_SHIFT_NOTES, 'Closed shoes, park round the back', false ),
-			'the capacity changed'      => array( GWCVT_SHIFT_MAX, '8', false ),
+			'the activity was reworded' => array( GWC_VT_SHIFT_ACTIVITY, 'Sorting the produce delivery', false ),
+			'the supervisor changed'    => array( GWC_VT_SHIFT_SUPERVISOR, 'Marcus Bell', false ),
+			'the notes were expanded'   => array( GWC_VT_SHIFT_NOTES, 'Closed shoes, park round the back', false ),
+			'the capacity changed'      => array( GWC_VT_SHIFT_MAX, '8', false ),
 		);
 	}
 
 	public function test_saving_a_shift_unchanged_tells_nobody(): void {
-		gwcvt_test_add_post( 5, GWCVT_SHIFT_TYPE );
+		gwc_vt_test_add_post( 5, GWC_VT_SHIFT_TYPE );
 
-		update_post_meta( 5, GWCVT_SHIFT_DATE, '2026-03-14' );
-		update_post_meta( 5, GWCVT_SHIFT_START, '09:00' );
-		update_post_meta( 5, GWCVT_SHIFT_END, '12:00' );
-		update_post_meta( 5, GWCVT_SHIFT_LOCATION, 'Main warehouse' );
+		update_post_meta( 5, GWC_VT_SHIFT_DATE, '2026-03-14' );
+		update_post_meta( 5, GWC_VT_SHIFT_START, '09:00' );
+		update_post_meta( 5, GWC_VT_SHIFT_END, '12:00' );
+		update_post_meta( 5, GWC_VT_SHIFT_LOCATION, 'Main warehouse' );
 
 		$this->assertFalse(
-			gwcvt_shift_moved(
+			gwc_vt_shift_moved(
 				5,
 				array(
 					'date'     => '2026-03-14',
@@ -204,27 +204,27 @@ final class ScheduleNoticeTest extends TestCase {
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_queued_mail_is_held_until_the_request_is_answered(): void {
-		$GLOBALS['gwcvt_pending_mail'] = array();
+		$GLOBALS['gwc_vt_pending_mail'] = array();
 
-		gwcvt_queue_signup_mail( 'cancelled', 11, array( 'reason' => 'Van in for repairs' ) );
-		gwcvt_queue_signup_mail( 'cancelled', 12, array( 'reason' => 'Van in for repairs' ) );
+		gwc_vt_queue_signup_mail( 'cancelled', 11, array( 'reason' => 'Van in for repairs' ) );
+		gwc_vt_queue_signup_mail( 'cancelled', 12, array( 'reason' => 'Van in for repairs' ) );
 
-		$this->assertCount( 2, $GLOBALS['gwcvt_pending_mail'] );
-		$this->assertSame( 'cancelled', $GLOBALS['gwcvt_pending_mail'][0]['kind'] );
-		$this->assertSame( 11, $GLOBALS['gwcvt_pending_mail'][0]['signup'] );
-		$this->assertSame( 'Van in for repairs', $GLOBALS['gwcvt_pending_mail'][0]['context']['reason'] );
+		$this->assertCount( 2, $GLOBALS['gwc_vt_pending_mail'] );
+		$this->assertSame( 'cancelled', $GLOBALS['gwc_vt_pending_mail'][0]['kind'] );
+		$this->assertSame( 11, $GLOBALS['gwc_vt_pending_mail'][0]['signup'] );
+		$this->assertSame( 'Van in for repairs', $GLOBALS['gwc_vt_pending_mail'][0]['context']['reason'] );
 	}
 
 	/**
 	 * Drained on the way out, so a second shutdown cannot send everything twice.
 	 */
 	public function test_the_queue_is_emptied_when_it_is_sent(): void {
-		$GLOBALS['gwcvt_pending_mail'] = array();
+		$GLOBALS['gwc_vt_pending_mail'] = array();
 
-		gwcvt_queue_signup_mail( 'cancelled', 999 );
+		gwc_vt_queue_signup_mail( 'cancelled', 999 );
 
-		gwcvt_send_queued_confirmations();
+		gwc_vt_send_queued_confirmations();
 
-		$this->assertSame( array(), $GLOBALS['gwcvt_pending_mail'] );
+		$this->assertSame( array(), $GLOBALS['gwc_vt_pending_mail'] );
 	}
 }

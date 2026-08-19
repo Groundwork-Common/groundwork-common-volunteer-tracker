@@ -8,10 +8,10 @@
 defined( 'ABSPATH' ) || exit;
 
 /** How long the reporting-year figures are cached for. */
-const GWCVT_YEAR_TOTALS_TTL = HOUR_IN_SECONDS;
+const GWC_VT_YEAR_TOTALS_TTL = HOUR_IN_SECONDS;
 
 /** The transient the reporting-year figures live in. */
-const GWCVT_YEAR_TOTALS_KEY = 'gwcvt_year_totals';
+const GWC_VT_YEAR_TOTALS_KEY = 'gwc_vt_year_totals';
 
 /* ── Everything here is a queue ──────────────────────────────────────────────
  * That is the test a line has to pass to appear on the dashboard: dealing with
@@ -48,11 +48,11 @@ const GWCVT_YEAR_TOTALS_KEY = 'gwcvt_year_totals';
  *
  * @return bool
  */
-function gwcvt_has_any_records(): bool {
+function gwc_vt_has_any_records(): bool {
 	$looking = array(
-		GWCVT_VOLUNTEER_TYPE => array( 'publish' ),
-		GWCVT_ENTRY_TYPE     => array( 'publish' ),
-		GWCVT_SHIFT_TYPE     => array( 'publish', 'draft' ),
+		GWC_VT_VOLUNTEER_TYPE => array( 'publish' ),
+		GWC_VT_ENTRY_TYPE     => array( 'publish' ),
+		GWC_VT_SHIFT_TYPE     => array( 'publish', 'draft' ),
 	);
 
 	foreach ( $looking as $type => $statuses ) {
@@ -73,13 +73,13 @@ function gwcvt_has_any_records(): bool {
  *
  * @return array<string, int>
  */
-function gwcvt_dashboard_counts(): array {
+function gwc_vt_dashboard_counts(): array {
 	return array(
-		'unreconciled' => count( gwcvt_unreconciled_shift_ids( 20 ) ),
-		'understaffed' => count( gwcvt_understaffed_shift_ids( 7 ) ),
-		'overdue'      => count( gwcvt_overdue_requirement_ids() ),
-		'unverified'   => gwcvt_unverified_count(),
-		'unmatched'    => gwcvt_unmatched_count(),
+		'unreconciled' => count( gwc_vt_unreconciled_shift_ids( 20 ) ),
+		'understaffed' => count( gwc_vt_understaffed_shift_ids( 7 ) ),
+		'overdue'      => count( gwc_vt_overdue_requirement_ids() ),
+		'unverified'   => gwc_vt_unverified_count(),
+		'unmatched'    => gwc_vt_unmatched_count(),
 	);
 }
 
@@ -102,10 +102,10 @@ function gwcvt_dashboard_counts(): array {
  * fixed today. Verifying and matching come last: both keep, and neither loses
  * anything overnight.
  *
- * @param array<string, int> $counts From gwcvt_dashboard_counts().
+ * @param array<string, int> $counts From gwc_vt_dashboard_counts().
  * @return array<int, array{key:string, count:int, severity:string, what:string, why:string, action:string}>
  */
-function gwcvt_dashboard_items( array $counts ): array {
+function gwc_vt_dashboard_items( array $counts ): array {
 	/* Neither form carries the number. The count is rendered beside the sentence
 	 * as its own element, large, because that is the thing being scanned — so a
 	 * sentence that restated it read "2  2 shifts this week are short of people".
@@ -202,40 +202,40 @@ function gwcvt_dashboard_items( array $counts ): array {
 	 * @param array $items  The lines, in order.
 	 * @param array $counts What they were built from.
 	 */
-	return (array) apply_filters( 'gwcvt_dashboard_items', $items, $counts );
+	return (array) apply_filters( 'gwc_vt_dashboard_items', $items, $counts );
 }
 
 /**
  * Where each worklist line goes.
  *
  * Separate from the item itself because it is the one part that needs the admin
- * loaded — gwcvt_dashboard_items() stays pure and testable.
+ * loaded — gwc_vt_dashboard_items() stays pure and testable.
  *
  * @param string $key Item key.
  * @return string
  */
-function gwcvt_dashboard_item_url( string $key ): string {
+function gwc_vt_dashboard_item_url( string $key ): string {
 	switch ( $key ) {
 		case 'unreconciled':
-			$waiting = gwcvt_unreconciled_shift_ids( 1 );
+			$waiting = gwc_vt_unreconciled_shift_ids( 1 );
 
 			return $waiting
-				? gwcvt_shift_log_url( (int) $waiting[0] )
-				: gwcvt_schedule_url( array( 'when' => 'past' ) );
+				? gwc_vt_shift_log_url( (int) $waiting[0] )
+				: gwc_vt_schedule_url( array( 'when' => 'past' ) );
 
 		case 'understaffed':
-			return gwcvt_schedule_url();
+			return gwc_vt_schedule_url();
 
 		case 'overdue':
 			/* Filtered to the people this line counted. The bare list was every
 			 * volunteer the site has ever had, in no order, under a link reading
 			 * "See who". The filter's slug is spelled out rather than referenced
-			 * through GWCVT_VOLUNTEER_FILTER because that constant lives in the
+			 * through GWC_VT_VOLUNTEER_FILTER because that constant lives in the
 			 * admin bundle and this file is loaded for cron and WP-CLI too. */
 			return add_query_arg(
 				array(
-					'post_type'         => GWCVT_VOLUNTEER_TYPE,
-					'gwcvt_requirement' => 'overdue',
+					'post_type'          => GWC_VT_VOLUNTEER_TYPE,
+					'gwc_vt_requirement' => 'overdue',
 				),
 				admin_url( 'edit.php' )
 			);
@@ -243,8 +243,8 @@ function gwcvt_dashboard_item_url( string $key ): string {
 		case 'unverified':
 			return add_query_arg(
 				array(
-					'post_type'   => GWCVT_ENTRY_TYPE,
-					'gwcvt_state' => 'unverified',
+					'post_type'    => GWC_VT_ENTRY_TYPE,
+					'gwc_vt_state' => 'unverified',
 				),
 				admin_url( 'edit.php' )
 			);
@@ -252,14 +252,14 @@ function gwcvt_dashboard_item_url( string $key ): string {
 		case 'unmatched':
 			return add_query_arg(
 				array(
-					'post_type'   => GWCVT_ENTRY_TYPE,
-					'gwcvt_state' => 'unmatched',
+					'post_type'    => GWC_VT_ENTRY_TYPE,
+					'gwc_vt_state' => 'unmatched',
 				),
 				admin_url( 'edit.php' )
 			);
 	}
 
-	return admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE );
+	return admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE );
 }
 
 /* ── Where this week stops ───────────────────────────────────────────────────
@@ -285,7 +285,7 @@ function gwcvt_dashboard_item_url( string $key ): string {
  * @param int    $start_of_week 0 for Sunday through 6 for Saturday, as WordPress stores it.
  * @return array{this_week:string, fortnight:string}
  */
-function gwcvt_fortnight_bounds( string $today, int $start_of_week ): array {
+function gwc_vt_fortnight_bounds( string $today, int $start_of_week ): array {
 	$midnight = (int) strtotime( $today . ' 00:00:00 UTC' );
 
 	if ( ! $midnight ) {
@@ -318,7 +318,7 @@ function gwcvt_fortnight_bounds( string $today, int $start_of_week ): array {
  * report".
  *
  * Neither can be answered by a COUNT in SQL. Whether a volunteer is overdue
- * needs gwcvt_requirement_progress() per person, and the totals need each
+ * needs gwc_vt_requirement_progress() per person, and the totals need each
  * entry's minutes and verification state, so both have to walk the rows.
  *
  * So walk them a page at a time. Every individual query stays bounded — which
@@ -335,7 +335,7 @@ function gwcvt_fortnight_bounds( string $today, int $start_of_week ): array {
  * @param callable $handle Receives one post ID per matching row.
  * @param int      $page   Rows per query.
  */
-function gwcvt_walk_matching_ids( array $args, callable $handle, int $page = 500 ): void {
+function gwc_vt_walk_matching_ids( array $args, callable $handle, int $page = 500 ): void {
 	$offset = 0;
 
 	do {
@@ -395,30 +395,30 @@ function gwcvt_walk_matching_ids( array $args, callable $handle, int $page = 500
  *
  * @return int[]
  */
-function gwcvt_overdue_requirement_ids(): array {
+function gwc_vt_overdue_requirement_ids(): array {
 	$overdue = array();
 
-	gwcvt_walk_matching_ids(
+	gwc_vt_walk_matching_ids(
 		array(
-			'post_type'              => GWCVT_VOLUNTEER_TYPE,
+			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
 			'update_post_term_cache' => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- two indexed keys, once per dashboard load.
 			'meta_query'             => array(
 				array(
-					'key'     => GWCVT_VOLUNTEER_REQUIRED_BY,
-					'value'   => gwcvt_today(),
+					'key'     => GWC_VT_VOLUNTEER_REQUIRED_BY,
+					'value'   => gwc_vt_today(),
 					'compare' => '<',
 					'type'    => 'CHAR',
 				),
 			),
 		),
 		static function ( int $volunteer_id ) use ( &$overdue ): void {
-			if ( ! gwcvt_has_requirement( $volunteer_id ) ) {
+			if ( ! gwc_vt_has_requirement( $volunteer_id ) ) {
 				return;
 			}
 
-			if ( gwcvt_requirement_progress( $volunteer_id )['overdue'] ) {
+			if ( gwc_vt_requirement_progress( $volunteer_id )['overdue'] ) {
 				$overdue[] = $volunteer_id;
 			}
 		}
@@ -445,7 +445,7 @@ function gwcvt_overdue_requirement_ids(): array {
  *
  * @return string
  */
-function gwcvt_reporting_year_start(): string {
+function gwc_vt_reporting_year_start(): string {
 	$start = gmdate( 'Y' ) . '-01-01';
 
 	/**
@@ -453,9 +453,9 @@ function gwcvt_reporting_year_start(): string {
 	 *
 	 * @param string $start Y-m-d.
 	 */
-	$start = (string) apply_filters( 'gwcvt_reporting_year_start', $start );
+	$start = (string) apply_filters( 'gwc_vt_reporting_year_start', $start );
 
-	return '' !== gwcvt_sanitize_date( $start ) ? $start : gmdate( 'Y' ) . '-01-01';
+	return '' !== gwc_vt_sanitize_date( $start ) ? $start : gmdate( 'Y' ) . '-01-01';
 }
 
 /**
@@ -470,8 +470,8 @@ function gwcvt_reporting_year_start(): string {
  * @param string $to   Y-m-d.
  * @return array{verified:int, pending:int, entries:int, volunteers:int}
  */
-function gwcvt_org_totals( string $from, string $to ): array {
-	$cache_key = GWCVT_YEAR_TOTALS_KEY . '_' . md5( $from . '|' . $to );
+function gwc_vt_org_totals( string $from, string $to ): array {
+	$cache_key = GWC_VT_YEAR_TOTALS_KEY . '_' . md5( $from . '|' . $to );
 	$cached    = get_transient( $cache_key );
 
 	if ( is_array( $cached ) ) {
@@ -487,15 +487,15 @@ function gwcvt_org_totals( string $from, string $to ): array {
 
 	$people = array();
 
-	gwcvt_walk_matching_ids(
+	gwc_vt_walk_matching_ids(
 		array(
-			'post_type'              => GWCVT_ENTRY_TYPE,
+			'post_type'              => GWC_VT_ENTRY_TYPE,
 			'post_status'            => array( 'publish', 'pending' ),
 			'update_post_term_cache' => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed range, cached for an hour.
 			'meta_query'             => array(
 				array(
-					'key'     => GWCVT_ENTRY_DATE,
+					'key'     => GWC_VT_ENTRY_DATE,
 					'value'   => array( $from, $to ),
 					'compare' => 'BETWEEN',
 					'type'    => 'CHAR',
@@ -503,13 +503,13 @@ function gwcvt_org_totals( string $from, string $to ): array {
 			),
 		),
 		static function ( int $entry_id ) use ( &$totals, &$people ): void {
-			$minutes = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
+			$minutes = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
 
 			if ( $minutes < 1 ) {
 				return;
 			}
 
-			if ( '' !== (string) get_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_AT, true ) ) {
+			if ( '' !== (string) get_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_AT, true ) ) {
 				$totals['verified'] += $minutes;
 			} else {
 				$totals['pending'] += $minutes;
@@ -517,7 +517,7 @@ function gwcvt_org_totals( string $from, string $to ): array {
 
 			++$totals['entries'];
 
-			$volunteer = (int) get_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, true );
+			$volunteer = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true );
 
 			if ( $volunteer > 0 ) {
 				$people[ $volunteer ] = true;
@@ -527,7 +527,7 @@ function gwcvt_org_totals( string $from, string $to ): array {
 
 	$totals['volunteers'] = count( $people );
 
-	set_transient( $cache_key, $totals, GWCVT_YEAR_TOTALS_TTL );
+	set_transient( $cache_key, $totals, GWC_VT_YEAR_TOTALS_TTL );
 
 	return $totals;
 }
@@ -539,19 +539,19 @@ function gwcvt_org_totals( string $from, string $to ): array {
  * coordinator who logs a day does not then read an hour-old total and wonder
  * where their afternoon went.
  */
-function gwcvt_forget_org_totals(): void {
-	delete_transient( GWCVT_YEAR_TOTALS_KEY . '_' . md5( gwcvt_reporting_year_start() . '|' . gwcvt_today() ) );
+function gwc_vt_forget_org_totals(): void {
+	delete_transient( GWC_VT_YEAR_TOTALS_KEY . '_' . md5( gwc_vt_reporting_year_start() . '|' . gwc_vt_today() ) );
 }
 
-add_action( 'gwcvt_entry_saved', 'gwcvt_forget_org_totals' );
-add_action( 'gwcvt_entry_verified', 'gwcvt_forget_org_totals' );
-add_action( 'gwcvt_entry_unverified', 'gwcvt_forget_org_totals' );
+add_action( 'gwc_vt_entry_saved', 'gwc_vt_forget_org_totals' );
+add_action( 'gwc_vt_entry_verified', 'gwc_vt_forget_org_totals' );
+add_action( 'gwc_vt_entry_unverified', 'gwc_vt_forget_org_totals' );
 
 /* The two paths that create or move hours without going through
- * gwcvt_entry_saved. A submission through the public form lands as a pending
+ * gwc_vt_entry_saved. A submission through the public form lands as a pending
  * entry and shifts the "awaiting verification" figure; attaching one to a
  * volunteer changes how many people the year counts. Neither is urgent enough
  * to matter much, and both are one line, and a figure that is quietly an hour
  * out is the kind of thing somebody eventually reports as a bug. */
-add_action( 'gwcvt_self_log_received', 'gwcvt_forget_org_totals' );
-add_action( 'gwcvt_entry_attached', 'gwcvt_forget_org_totals' );
+add_action( 'gwc_vt_self_log_received', 'gwc_vt_forget_org_totals' );
+add_action( 'gwc_vt_entry_attached', 'gwc_vt_forget_org_totals' );

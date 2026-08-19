@@ -16,7 +16,7 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  *
  * So uninstall removes NOTHING unless the site has explicitly armed it:
  *
- *   update_option( 'gwcvt_allow_destructive_uninstall', true );
+ *   update_option( 'gwc_vt_allow_destructive_uninstall', true );
  *
  * And even armed, it deletes only this plugin's OPTIONS. Never posts, never
  * post meta. The hour entries, the volunteer records and the issued-letter log
@@ -34,7 +34,7 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /* One family of options is deliberately absent from the list below: the
- * per-shift signup locks, 'gwcvt_signup_lock_<id>'. They are named after a post
+ * per-shift signup locks, 'gwc_vt_signup_lock_<id>'. They are named after a post
  * ID, so they cannot be enumerated without a query, and they do not need to be —
  * each is released by the request that took it, stolen and reused if that
  * request died, and deleted outright when its shift is. A stray one is a single
@@ -42,39 +42,39 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  * $wpdb LIKE sweep to catch it would be the plugin's only raw query, run at the
  * least testable moment in its life, to tidy something already self-tidying.
  *
- * 'gwcvt_schema' used to be listed and is not any more. Nothing has ever written
+ * 'gwc_vt_schema' used to be listed and is not any more. Nothing has ever written
  * it: the stored field schema described in the original plan was never built, so
  * the entry deleted an option no site has. It read as evidence that the feature
  * exists. If it is ever built, this is where its option goes back. */
 
 /** Every option this plugin writes. */
-const GWCVT_UNINSTALL_OPTIONS = array(
-	'gwcvt_settings',
-	'gwcvt_retention_log',
-	'gwcvt_needs_rewrite_flush',
-	'gwcvt_event_page_gen',
-	'gwcvt_allow_destructive_uninstall',
+const GWC_VT_UNINSTALL_OPTIONS = array(
+	'gwc_vt_settings',
+	'gwc_vt_retention_log',
+	'gwc_vt_needs_rewrite_flush',
+	'gwc_vt_event_page_gen',
+	'gwc_vt_allow_destructive_uninstall',
 );
 
 /**
  * Clean up one site.
  */
-function gwcvt_uninstall_site(): void {
-	foreach ( array( 'gwcvt_daily_retention', 'gwcvt_shift_reminders', 'gwcvt_coordinator_digest' ) as $gwcvt_event ) {
-		$gwcvt_next = wp_next_scheduled( $gwcvt_event );
+function gwc_vt_uninstall_site(): void {
+	foreach ( array( 'gwc_vt_daily_retention', 'gwc_vt_shift_reminders', 'gwc_vt_coordinator_digest' ) as $gwc_vt_event ) {
+		$gwc_vt_next = wp_next_scheduled( $gwc_vt_event );
 
-		if ( $gwcvt_next ) {
-			wp_unschedule_event( $gwcvt_next, $gwcvt_event );
+		if ( $gwc_vt_next ) {
+			wp_unschedule_event( $gwc_vt_next, $gwc_vt_event );
 		}
 	}
 
-	delete_transient( 'gwcvt_unverified_count' );
+	delete_transient( 'gwc_vt_unverified_count' );
 
-	if ( ! get_option( 'gwcvt_allow_destructive_uninstall' ) ) {
+	if ( ! get_option( 'gwc_vt_allow_destructive_uninstall' ) ) {
 		return;
 	}
 
-	foreach ( GWCVT_UNINSTALL_OPTIONS as $option ) {
+	foreach ( GWC_VT_UNINSTALL_OPTIONS as $option ) {
 		delete_option( $option );
 	}
 }
@@ -84,18 +84,18 @@ if ( is_multisite() ) {
 	 * administrator who deletes plugins with WP-CLI, and a query that tries to
 	 * load every site on a large network is one that dies partway through and
 	 * leaves half the job done with no record of which half. */
-	$gwcvt_sites = get_sites(
+	$gwc_vt_sites = get_sites(
 		array(
 			'fields' => 'ids',
 			'number' => 1000,
 		)
 	);
 
-	foreach ( $gwcvt_sites as $gwcvt_site_id ) {
-		switch_to_blog( (int) $gwcvt_site_id );
-		gwcvt_uninstall_site();
+	foreach ( $gwc_vt_sites as $gwc_vt_site_id ) {
+		switch_to_blog( (int) $gwc_vt_site_id );
+		gwc_vt_uninstall_site();
 		restore_current_blog();
 	}
 } else {
-	gwcvt_uninstall_site();
+	gwc_vt_uninstall_site();
 }

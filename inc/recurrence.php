@@ -8,10 +8,10 @@
 defined( 'ABSPATH' ) || exit;
 
 /** No single run may create more shifts than this. */
-const GWCVT_RECURRENCE_MAX = 200;
+const GWC_VT_RECURRENCE_MAX = 200;
 
 /** Nor reach further ahead than this, in months. */
-const GWCVT_RECURRENCE_HORIZON_MONTHS = 12;
+const GWC_VT_RECURRENCE_HORIZON_MONTHS = 12;
 
 /* ── Occurrences are materialised, not computed ──────────────────────────────
  * "Every Saturday through 31 December" creates twenty-odd real shift posts up
@@ -44,7 +44,7 @@ const GWCVT_RECURRENCE_HORIZON_MONTHS = 12;
  *
  * @return array<string, string>
  */
-function gwcvt_recurrence_patterns(): array {
+function gwc_vt_recurrence_patterns(): array {
 	static $patterns = null;
 
 	if ( null === $patterns ) {
@@ -80,23 +80,23 @@ function gwcvt_recurrence_patterns(): array {
  * fixed zone stops PHP's default timezone from making it drift.
  *
  * @param string $start   First occurrence, Y-m-d.
- * @param string $pattern One of gwcvt_recurrence_patterns().
+ * @param string $pattern One of gwc_vt_recurrence_patterns().
  * @param string $until   Last date to consider, Y-m-d. Ignored for 'once'.
  * @return array{dates: string[], capped: string} 'capped' is '', 'count' or 'horizon'.
  */
-function gwcvt_recurrence_dates( string $start, string $pattern, string $until ): array {
+function gwc_vt_recurrence_dates( string $start, string $pattern, string $until ): array {
 	$none = array(
 		'dates'  => array(),
 		'capped' => '',
 	);
 
-	$from = gwcvt_recurrence_date( $start );
+	$from = gwc_vt_recurrence_date( $start );
 
 	if ( null === $from ) {
 		return $none;
 	}
 
-	if ( ! isset( gwcvt_recurrence_patterns()[ $pattern ] ) ) {
+	if ( ! isset( gwc_vt_recurrence_patterns()[ $pattern ] ) ) {
 		return $none;
 	}
 
@@ -107,7 +107,7 @@ function gwcvt_recurrence_dates( string $start, string $pattern, string $until )
 		);
 	}
 
-	$to = gwcvt_recurrence_date( $until );
+	$to = gwc_vt_recurrence_date( $until );
 
 	/* No end date is not "forever" — it is a question nobody answered, and the
 	 * honest answer is one shift rather than two hundred. */
@@ -118,7 +118,7 @@ function gwcvt_recurrence_dates( string $start, string $pattern, string $until )
 		);
 	}
 
-	$horizon = $from->modify( '+' . GWCVT_RECURRENCE_HORIZON_MONTHS . ' months' );
+	$horizon = $from->modify( '+' . GWC_VT_RECURRENCE_HORIZON_MONTHS . ' months' );
 	$capped  = '';
 
 	if ( $to > $horizon ) {
@@ -134,11 +134,11 @@ function gwcvt_recurrence_dates( string $start, string $pattern, string $until )
 	 * only by how many dates it has collected would spin on a pattern that stops
 	 * producing them. Twice the cap is far more headroom than any real pattern
 	 * needs and is still a number rather than a hope. */
-	$ceiling = GWCVT_RECURRENCE_MAX * 2;
+	$ceiling = GWC_VT_RECURRENCE_MAX * 2;
 
 	// phpcs:ignore Squiz.PHP.DisallowSizeFunctionsInLoops.Found -- $dates grows inside the loop; its count is the cap being enforced, so hoisting it would make the guard never fire.
-	while ( count( $dates ) < GWCVT_RECURRENCE_MAX && $step < $ceiling ) {
-		$date = gwcvt_recurrence_step( $from, $pattern, $step );
+	while ( count( $dates ) < GWC_VT_RECURRENCE_MAX && $step < $ceiling ) {
+		$date = gwc_vt_recurrence_step( $from, $pattern, $step );
 		++$step;
 
 		if ( null === $date ) {
@@ -156,11 +156,11 @@ function gwcvt_recurrence_dates( string $start, string $pattern, string $until )
 		$dates[] = $date->format( 'Y-m-d' );
 	}
 
-	if ( count( $dates ) >= GWCVT_RECURRENCE_MAX ) {
+	if ( count( $dates ) >= GWC_VT_RECURRENCE_MAX ) {
 		/* Only report the count cap if it actually bit — a run that lands on
 		 * exactly two hundred occurrences and then hits its end date has not been
 		 * truncated, and saying so would send somebody looking for lost shifts. */
-		$next = gwcvt_recurrence_step( $from, $pattern, $step );
+		$next = gwc_vt_recurrence_step( $from, $pattern, $step );
 
 		if ( null !== $next && $next <= $to ) {
 			$capped = 'count';
@@ -181,7 +181,7 @@ function gwcvt_recurrence_dates( string $start, string $pattern, string $until )
  * @param int               $step    0 is the first occurrence itself.
  * @return DateTimeImmutable|null
  */
-function gwcvt_recurrence_step( DateTimeImmutable $from, string $pattern, int $step ): ?DateTimeImmutable {
+function gwc_vt_recurrence_step( DateTimeImmutable $from, string $pattern, int $step ): ?DateTimeImmutable {
 	if ( 0 === $step ) {
 		return $from;
 	}
@@ -197,10 +197,10 @@ function gwcvt_recurrence_step( DateTimeImmutable $from, string $pattern, int $s
 			return $from->modify( '+' . ( $step * 2 ) . ' weeks' );
 
 		case 'weekdays':
-			return gwcvt_recurrence_weekday_step( $from, $step );
+			return gwc_vt_recurrence_weekday_step( $from, $step );
 
 		case 'monthly':
-			return gwcvt_recurrence_monthly_step( $from, $step );
+			return gwc_vt_recurrence_monthly_step( $from, $step );
 	}
 
 	return null;
@@ -218,7 +218,7 @@ function gwcvt_recurrence_step( DateTimeImmutable $from, string $pattern, int $s
  * @param int               $step How many weekdays on.
  * @return DateTimeImmutable
  */
-function gwcvt_recurrence_weekday_step( DateTimeImmutable $from, int $step ): DateTimeImmutable {
+function gwc_vt_recurrence_weekday_step( DateTimeImmutable $from, int $step ): DateTimeImmutable {
 	$date = $from;
 
 	for ( $i = 0; $i < $step; $i++ ) {
@@ -241,7 +241,7 @@ function gwcvt_recurrence_weekday_step( DateTimeImmutable $from, int $step ): Da
  * @param int               $step  How many months on.
  * @return DateTimeImmutable|null Null when that month has no such weekday.
  */
-function gwcvt_recurrence_monthly_step( DateTimeImmutable $from, int $step ): ?DateTimeImmutable {
+function gwc_vt_recurrence_monthly_step( DateTimeImmutable $from, int $step ): ?DateTimeImmutable {
 	$weekday = (int) $from->format( 'N' );
 	$ordinal = (int) floor( ( (int) $from->format( 'j' ) - 1 ) / 7 ) + 1;
 
@@ -265,13 +265,13 @@ function gwcvt_recurrence_monthly_step( DateTimeImmutable $from, int $step ): ?D
  * Read a Y-m-d into a date, or null.
  *
  * Stricter than DateTimeImmutable's own parsing, which happily reads '2026-02-31'
- * as 3 March. The same check gwcvt_sanitize_date() makes, and made separately
+ * as 3 March. The same check gwc_vt_sanitize_date() makes, and made separately
  * here so this file stays free of the rest of the plugin.
  *
  * @param string $value Y-m-d.
  * @return DateTimeImmutable|null
  */
-function gwcvt_recurrence_date( string $value ): ?DateTimeImmutable {
+function gwc_vt_recurrence_date( string $value ): ?DateTimeImmutable {
 	$value = trim( $value );
 
 	if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m ) ) {

@@ -7,17 +7,17 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_ENTRY_TYPE = 'gwcvt_entry';
+const GWC_VT_ENTRY_TYPE = 'gwc_vt_entry';
 
 /* Core entry meta. Named as constants because the query layer, the meta box,
  * the letter and the privacy eraser all read them, and a typo in a meta key is
  * silent — it reads as an empty value rather than as an error. */
-const GWCVT_ENTRY_VOLUNTEER  = '_gwcvt_volunteer';
-const GWCVT_ENTRY_DATE       = '_gwcvt_date';
-const GWCVT_ENTRY_MINUTES    = '_gwcvt_minutes';
-const GWCVT_ENTRY_ACTIVITY   = '_gwcvt_activity';
-const GWCVT_ENTRY_SUPERVISOR = '_gwcvt_supervisor';
-const GWCVT_ENTRY_SOURCE     = '_gwcvt_source';
+const GWC_VT_ENTRY_VOLUNTEER  = '_gwc_vt_volunteer';
+const GWC_VT_ENTRY_DATE       = '_gwc_vt_date';
+const GWC_VT_ENTRY_MINUTES    = '_gwc_vt_minutes';
+const GWC_VT_ENTRY_ACTIVITY   = '_gwc_vt_activity';
+const GWC_VT_ENTRY_SUPERVISOR = '_gwc_vt_supervisor';
+const GWC_VT_ENTRY_SOURCE     = '_gwc_vt_source';
 
 /* The scheduled shift these hours were logged from, when they came from one.
  * Absent on every entry typed by hand, which is most of them.
@@ -27,7 +27,7 @@ const GWCVT_ENTRY_SOURCE     = '_gwcvt_source';
  * the facts the organisation observed. That a plan existed beforehand is not one
  * of them, and adding it to the printed document would invalidate every
  * reference code ever issued for the sake of a line no reader needs. */
-const GWCVT_ENTRY_SHIFT = '_gwcvt_entry_shift';
+const GWC_VT_ENTRY_SHIFT = '_gwc_vt_entry_shift';
 
 /* The attestation. Absent means unverified — there is no 'false' to store and
  * no third state, which is what stops "verified" and "not verified yet" from
@@ -38,20 +38,20 @@ const GWCVT_ENTRY_SHIFT = '_gwcvt_entry_shift';
  * that moves house when its behaviour does is a constant nobody can find.
  * inc/verify.php owns the writing.
  *
- * GWCVT_ENTRY_VERIFIED_METHOD holds 'staff' and, in this version, nothing else.
+ * GWC_VT_ENTRY_VERIFIED_METHOD holds 'staff' and, in this version, nothing else.
  * It exists from the first release precisely so it never has to be backfilled:
- * gwcvt_entry_method() reads an absent value as 'staff', so every entry logged
+ * gwc_vt_entry_method() reads an absent value as 'staff', so every entry logged
  * before supervisor confirmation exists will still read correctly after it
  * ships. Read-time defaults, never a migration. */
-const GWCVT_ENTRY_VERIFIED_AT     = '_gwcvt_verified_at';
-const GWCVT_ENTRY_VERIFIED_BY     = '_gwcvt_verified_by';
-const GWCVT_ENTRY_VERIFIED_METHOD = '_gwcvt_verified_method';
+const GWC_VT_ENTRY_VERIFIED_AT     = '_gwc_vt_verified_at';
+const GWC_VT_ENTRY_VERIFIED_BY     = '_gwc_vt_verified_by';
+const GWC_VT_ENTRY_VERIFIED_METHOD = '_gwc_vt_verified_method';
 
-add_action( 'init', 'gwcvt_register_post_type' );
-add_filter( 'manage_' . GWCVT_ENTRY_TYPE . '_posts_columns', 'gwcvt_entry_columns' );
-add_action( 'manage_' . GWCVT_ENTRY_TYPE . '_posts_custom_column', 'gwcvt_entry_column', 10, 2 );
-add_filter( 'manage_edit-' . GWCVT_ENTRY_TYPE . '_sortable_columns', 'gwcvt_entry_sortable_columns' );
-add_filter( 'post_row_actions', 'gwcvt_entry_volunteer_row_action', 9, 2 );
+add_action( 'init', 'gwc_vt_register_post_type' );
+add_filter( 'manage_' . GWC_VT_ENTRY_TYPE . '_posts_columns', 'gwc_vt_entry_columns' );
+add_action( 'manage_' . GWC_VT_ENTRY_TYPE . '_posts_custom_column', 'gwc_vt_entry_column', 10, 2 );
+add_filter( 'manage_edit-' . GWC_VT_ENTRY_TYPE . '_sortable_columns', 'gwc_vt_entry_sortable_columns' );
+add_filter( 'post_row_actions', 'gwc_vt_entry_volunteer_row_action', 9, 2 );
 
 /**
  * Register the hour entry type.
@@ -64,7 +64,7 @@ add_filter( 'post_row_actions', 'gwcvt_entry_volunteer_row_action', 9, 2 );
  * show_in_rest is false rather than absent, and it is the single most
  * consequential line in the file. Turning it on would publish volunteer names
  * and every custom field an organisation has added — case numbers, referral
- * agencies — at /wp-json/wp/v2/gwcvt_entry to anybody the site lets read. There
+ * agencies — at /wp-json/wp/v2/gwc_vt_entry to anybody the site lets read. There
  * IS one REST route in this plugin, in inc/rest.php, and it returns display
  * names to staff who already hold edit_posts and nothing else. The difference
  * between a purpose-built route and the auto-generated one is the whole point.
@@ -75,7 +75,7 @@ add_filter( 'post_row_actions', 'gwcvt_entry_volunteer_row_action', 9, 2 );
  * The two genuinely new decisions — attesting and issuing — are the only ones
  * that got custom capabilities. See inc/access.php.
  */
-function gwcvt_register_post_type(): void {
+function gwc_vt_register_post_type(): void {
 	$labels = array(
 		'name'               => _x( 'Volunteer Hours', 'post type general name', 'groundwork-common-volunteer-tracker' ),
 		'singular_name'      => _x( 'Hour Entry', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
@@ -108,7 +108,7 @@ function gwcvt_register_post_type(): void {
 
 		/* Supports nothing — not even 'title', which every other post type in
 		 * this family declares. An entry's title is derived on save from the
-		 * volunteer, the date and the duration (gwcvt_entry_title), so a title
+		 * volunteer, the date and the duration (gwc_vt_entry_title), so a title
 		 * field on the editor would be a box whose contents are overwritten the
 		 * moment somebody presses Update.
 		 *
@@ -138,7 +138,7 @@ function gwcvt_register_post_type(): void {
 	 *
 	 * @param array $args register_post_type() arguments.
 	 */
-	register_post_type( GWCVT_ENTRY_TYPE, apply_filters( 'gwcvt_post_type_args', $args ) );
+	register_post_type( GWC_VT_ENTRY_TYPE, apply_filters( 'gwc_vt_post_type_args', $args ) );
 }
 
 /* ── The title ───────────────────────────────────────────────────────────────
@@ -156,10 +156,10 @@ function gwcvt_register_post_type(): void {
  * @param int $entry_id Entry post ID.
  * @return string
  */
-function gwcvt_entry_title( int $entry_id ): string {
-	$volunteer_id = (int) get_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, true );
-	$date         = (string) get_post_meta( $entry_id, GWCVT_ENTRY_DATE, true );
-	$minutes      = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
+function gwc_vt_entry_title( int $entry_id ): string {
+	$volunteer_id = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true );
+	$date         = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true );
+	$minutes      = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
 
 	$name = $volunteer_id > 0 ? get_the_title( $volunteer_id ) : '';
 
@@ -167,7 +167,7 @@ function gwcvt_entry_title( int $entry_id ): string {
 		/* A self-logged entry nobody has attached to a volunteer yet. The name
 		 * the submitter typed is a claim rather than an identity, and the list
 		 * has to say so — otherwise triage cannot tell the two apart. */
-		$claimed = (string) get_post_meta( $entry_id, '_gwcvt_claim_name', true );
+		$claimed = (string) get_post_meta( $entry_id, '_gwc_vt_claim_name', true );
 		$name    = '' !== $claimed
 			/* translators: %s: the name somebody typed into the public form. */
 			? sprintf( __( '%s (unmatched)', 'groundwork-common-volunteer-tracker' ), $claimed )
@@ -179,7 +179,7 @@ function gwcvt_entry_title( int $entry_id ): string {
 		__( '%1$s — %2$s — %3$s', 'groundwork-common-volunteer-tracker' ),
 		$name,
 		'' !== $date ? $date : __( 'no date', 'groundwork-common-volunteer-tracker' ),
-		gwcvt_format_hours( $minutes )
+		gwc_vt_format_hours( $minutes )
 	);
 }
 
@@ -196,7 +196,7 @@ function gwcvt_entry_title( int $entry_id ): string {
  * @param array $columns Existing columns.
  * @return array
  */
-function gwcvt_entry_columns( $columns ): array {
+function gwc_vt_entry_columns( $columns ): array {
 	$columns = (array) $columns;
 
 	/* The title is rebuilt from the same three facts the dedicated columns
@@ -207,11 +207,11 @@ function gwcvt_entry_columns( $columns ): array {
 	return array_merge(
 		array_slice( $columns, 0, 1, true ),
 		array(
-			'gwcvt_volunteer'  => __( 'Volunteer', 'groundwork-common-volunteer-tracker' ),
-			'gwcvt_date'       => __( 'Date', 'groundwork-common-volunteer-tracker' ),
-			'gwcvt_hours'      => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
-			'gwcvt_activity'   => __( 'Activity', 'groundwork-common-volunteer-tracker' ),
-			'gwcvt_supervisor' => __( 'Supervisor', 'groundwork-common-volunteer-tracker' ),
+			'gwc_vt_volunteer'  => __( 'Volunteer', 'groundwork-common-volunteer-tracker' ),
+			'gwc_vt_date'       => __( 'Date', 'groundwork-common-volunteer-tracker' ),
+			'gwc_vt_hours'      => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
+			'gwc_vt_activity'   => __( 'Activity', 'groundwork-common-volunteer-tracker' ),
+			'gwc_vt_supervisor' => __( 'Supervisor', 'groundwork-common-volunteer-tracker' ),
 		),
 		array_slice( $columns, 1, null, true )
 	);
@@ -223,11 +223,11 @@ function gwcvt_entry_columns( $columns ): array {
  * @param string $column  Column key.
  * @param int    $post_id Entry post ID.
  */
-function gwcvt_entry_column( $column, $post_id ): void {
+function gwc_vt_entry_column( $column, $post_id ): void {
 	$post_id = (int) $post_id;
 
 	switch ( $column ) {
-		case 'gwcvt_volunteer':
+		case 'gwc_vt_volunteer':
 			/* ── This links to the SHIFT, not to the volunteer ────────────────
 			 * Which looks wrong in a column headed "Volunteer", and is not.
 			 *
@@ -240,9 +240,9 @@ function gwcvt_entry_column( $column, $post_id ): void {
 			 *
 			 * So the primary link goes where the row's own actions go, and
 			 * reaching the volunteer is its own row action — see
-			 * gwcvt_entry_volunteer_row_action().
+			 * gwc_vt_entry_volunteer_row_action().
 			 * ─────────────────────────────────────────────────────────────── */
-			$volunteer_id = (int) get_post_meta( $post_id, GWCVT_ENTRY_VOLUNTEER, true );
+			$volunteer_id = (int) get_post_meta( $post_id, GWC_VT_ENTRY_VOLUNTEER, true );
 			$edit_entry   = (string) get_edit_post_link( $post_id );
 
 			if ( $volunteer_id > 0 ) {
@@ -254,7 +254,7 @@ function gwcvt_entry_column( $column, $post_id ): void {
 				break;
 			}
 
-			$claimed = (string) get_post_meta( $post_id, '_gwcvt_claim_name', true );
+			$claimed = (string) get_post_meta( $post_id, '_gwc_vt_claim_name', true );
 			printf(
 				'<strong><a class="row-title" href="%1$s"><span class="gwcvt-unmatched">%2$s</span></a></strong>',
 				esc_url( $edit_entry ),
@@ -267,20 +267,20 @@ function gwcvt_entry_column( $column, $post_id ): void {
 			);
 			break;
 
-		case 'gwcvt_date':
-			echo esc_html( (string) get_post_meta( $post_id, GWCVT_ENTRY_DATE, true ) );
+		case 'gwc_vt_date':
+			echo esc_html( (string) get_post_meta( $post_id, GWC_VT_ENTRY_DATE, true ) );
 			break;
 
-		case 'gwcvt_hours':
-			echo esc_html( gwcvt_format_hours( (int) get_post_meta( $post_id, GWCVT_ENTRY_MINUTES, true ) ) );
+		case 'gwc_vt_hours':
+			echo esc_html( gwc_vt_format_hours( (int) get_post_meta( $post_id, GWC_VT_ENTRY_MINUTES, true ) ) );
 			break;
 
-		case 'gwcvt_activity':
-			echo esc_html( (string) get_post_meta( $post_id, GWCVT_ENTRY_ACTIVITY, true ) );
+		case 'gwc_vt_activity':
+			echo esc_html( (string) get_post_meta( $post_id, GWC_VT_ENTRY_ACTIVITY, true ) );
 			break;
 
-		case 'gwcvt_supervisor':
-			echo esc_html( (string) get_post_meta( $post_id, GWCVT_ENTRY_SUPERVISOR, true ) );
+		case 'gwc_vt_supervisor':
+			echo esc_html( (string) get_post_meta( $post_id, GWC_VT_ENTRY_SUPERVISOR, true ) );
 			break;
 	}
 }
@@ -295,9 +295,9 @@ function gwcvt_entry_column( $column, $post_id ): void {
  * @param array $columns Sortable columns.
  * @return array
  */
-function gwcvt_entry_sortable_columns( $columns ): array {
-	$columns               = (array) $columns;
-	$columns['gwcvt_date'] = 'gwcvt_date';
+function gwc_vt_entry_sortable_columns( $columns ): array {
+	$columns                = (array) $columns;
+	$columns['gwc_vt_date'] = 'gwc_vt_date';
 
 	return $columns;
 }
@@ -316,14 +316,14 @@ function gwcvt_entry_sortable_columns( $columns ): array {
  * @param WP_Post $post    The row's post.
  * @return array
  */
-function gwcvt_entry_volunteer_row_action( $actions, $post ): array {
+function gwc_vt_entry_volunteer_row_action( $actions, $post ): array {
 	$actions = (array) $actions;
 
-	if ( GWCVT_ENTRY_TYPE !== $post->post_type ) {
+	if ( GWC_VT_ENTRY_TYPE !== $post->post_type ) {
 		return $actions;
 	}
 
-	$volunteer_id = (int) get_post_meta( (int) $post->ID, GWCVT_ENTRY_VOLUNTEER, true );
+	$volunteer_id = (int) get_post_meta( (int) $post->ID, GWC_VT_ENTRY_VOLUNTEER, true );
 
 	if ( $volunteer_id < 1 || ! current_user_can( 'edit_post', $volunteer_id ) ) {
 		return $actions;
@@ -336,7 +336,7 @@ function gwcvt_entry_volunteer_row_action( $actions, $post ): array {
 	);
 
 	if ( ! isset( $actions['edit'] ) ) {
-		$actions['gwcvt_volunteer_record'] = $link;
+		$actions['gwc_vt_volunteer_record'] = $link;
 		return $actions;
 	}
 
@@ -346,7 +346,7 @@ function gwcvt_entry_volunteer_row_action( $actions, $post ): array {
 		$rebuilt[ $key ] = $markup;
 
 		if ( 'edit' === $key ) {
-			$rebuilt['gwcvt_volunteer_record'] = $link;
+			$rebuilt['gwc_vt_volunteer_record'] = $link;
 		}
 	}
 

@@ -40,7 +40,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @return array<string, string>
  */
-function gwcvt_verification_labels(): array {
+function gwc_vt_verification_labels(): array {
 	static $labels = null;
 	if ( null !== $labels ) {
 		return $labels;
@@ -61,8 +61,8 @@ function gwcvt_verification_labels(): array {
  * @param string $state State key.
  * @return string
  */
-function gwcvt_verification_label( string $state ): string {
-	$labels = gwcvt_verification_labels();
+function gwc_vt_verification_label( string $state ): string {
+	$labels = gwc_vt_verification_labels();
 	return $labels[ $state ] ?? $labels['unverified'];
 }
 
@@ -76,7 +76,7 @@ function gwcvt_verification_label( string $state ): string {
  *
  * @return array<string, string>
  */
-function gwcvt_hour_format_labels(): array {
+function gwc_vt_hour_format_labels(): array {
 	static $labels = null;
 	if ( null !== $labels ) {
 		return $labels;
@@ -96,7 +96,7 @@ function gwcvt_hour_format_labels(): array {
  * ── Read the box comment at the top of the main plugin file before editing ──
  *
  * This is the sentence that keeps the whole feature honest, and it is why the
- * setting behind it cannot be saved empty: gwcvt_disclaimer() falls back here
+ * setting behind it cannot be saved empty: gwc_vt_disclaimer() falls back here
  * when the stored value sanitizes to ''. An organisation's counsel may well need
  * different wording — that is what the setting is for — but "no disclaimer at
  * all" is not a wording choice, it is the plugin quietly starting to imply that
@@ -113,12 +113,12 @@ function gwcvt_hour_format_labels(): array {
  * plugin cannot know that. It knows what was recorded and who attested to it,
  * and saying more would be the exact overclaim this plugin exists to avoid.
  *
- * Placeholders are substituted by gwcvt_render_letter(): {org}, {contact},
+ * Placeholders are substituted by gwc_vt_render_letter(): {org}, {contact},
  * {timestamp}, {timezone}, {reference}.
  *
  * @return string
  */
-function gwcvt_default_disclaimer(): string {
+function gwc_vt_default_disclaimer(): string {
 	static $text = null;
 	if ( null !== $text ) {
 		return $text;
@@ -142,7 +142,7 @@ function gwcvt_default_disclaimer(): string {
  *
  * @return string
  */
-function gwcvt_default_reference_note(): string {
+function gwc_vt_default_reference_note(): string {
 	static $text = null;
 	if ( null !== $text ) {
 		return $text;

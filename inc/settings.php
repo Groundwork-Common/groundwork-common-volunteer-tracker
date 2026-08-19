@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_SETTINGS_OPTION = 'gwcvt_settings';
+const GWC_VT_SETTINGS_OPTION = 'gwc_vt_settings';
 
 /* ── Minutes, not hours ──────────────────────────────────────────────────────
  * Every duration in this plugin is an integer number of minutes. Three and a
@@ -23,8 +23,8 @@ const GWCVT_SETTINGS_OPTION = 'gwcvt_settings';
  * file calls them rather than doing arithmetic of its own.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-/** The longest a single entry may be, in minutes. See gwcvt_parse_hours(). */
-const GWCVT_MAX_ENTRY_MINUTES = 1440;
+/** The longest a single entry may be, in minutes. See gwc_vt_parse_hours(). */
+const GWC_VT_MAX_ENTRY_MINUTES = 1440;
 
 /**
  * Every setting, with the value a fresh install behaves as.
@@ -36,7 +36,7 @@ const GWCVT_MAX_ENTRY_MINUTES = 1440;
  *
  * @return array
  */
-function gwcvt_setting_defaults(): array {
+function gwc_vt_setting_defaults(): array {
 	return array(
 
 		/* ── The letter ──────────────────────────────────────────────────── */
@@ -57,7 +57,7 @@ function gwcvt_setting_defaults(): array {
 
 		/* Empty means "use the built-in wording" for all three. The disclaimer
 		 * and the reference note additionally cannot be *saved* empty — see
-		 * gwcvt_disclaimer() and the box comment in inc/i18n.php. */
+		 * gwc_vt_disclaimer() and the box comment in inc/i18n.php. */
 		'letter_intro'              => '',
 		'letter_disclaimer'         => '',
 		'letter_reference_note'     => '',
@@ -150,7 +150,7 @@ function gwcvt_setting_defaults(): array {
 
 		/* Pinned by ID, so renaming the page cannot quietly break the handler.
 		 * Enabled without a page pinned does not count as enabled — see
-		 * gwcvt_signups_open(). */
+		 * gwc_vt_signups_open(). */
 		'schedule_page'             => 0,
 
 		/* A shared code, if the site wants one. Not a security control; it is the
@@ -207,10 +207,10 @@ function gwcvt_setting_defaults(): array {
 /**
  * The per-request settings memo.
  *
- * Its own function rather than a static inside gwcvt_setting(), because a
+ * Its own function rather than a static inside gwc_vt_setting(), because a
  * writer needs a way to invalidate a reader's cache and PHP has no way to reach
  * another function's static variable. Without this, a script that calls
- * update_option() and then reads gwcvt_setting() in the same request — a
+ * update_option() and then reads gwc_vt_setting() in the same request — a
  * migration, WP-CLI, another plugin — would silently see the value from before
  * the write.
  *
@@ -218,7 +218,7 @@ function gwcvt_setting_defaults(): array {
  * @param bool       $clear Forget the cached value.
  * @return array|null
  */
-function gwcvt_settings_cache( ?array $set = null, bool $clear = false ): ?array {
+function gwc_vt_settings_cache( ?array $set = null, bool $clear = false ): ?array {
 	static $cache = null;
 	if ( $clear ) {
 		$cache = null;
@@ -230,8 +230,8 @@ function gwcvt_settings_cache( ?array $set = null, bool $clear = false ): ?array
 	return $cache;
 }
 
-add_action( 'update_option_' . GWCVT_SETTINGS_OPTION, 'gwcvt_reset_settings_cache' );
-add_action( 'add_option_' . GWCVT_SETTINGS_OPTION, 'gwcvt_reset_settings_cache' );
+add_action( 'update_option_' . GWC_VT_SETTINGS_OPTION, 'gwc_vt_reset_settings_cache' );
+add_action( 'add_option_' . GWC_VT_SETTINGS_OPTION, 'gwc_vt_reset_settings_cache' );
 
 /**
  * Clear the settings memo. Hooked to both add_option_* and update_option_* —
@@ -239,8 +239,8 @@ add_action( 'add_option_' . GWCVT_SETTINGS_OPTION, 'gwcvt_reset_settings_cache' 
  * every write after, so a site's very first Settings save needs the same
  * invalidation as every one after it.
  */
-function gwcvt_reset_settings_cache(): void {
-	gwcvt_settings_cache( null, true );
+function gwc_vt_reset_settings_cache(): void {
+	gwc_vt_settings_cache( null, true );
 }
 
 /**
@@ -249,12 +249,12 @@ function gwcvt_reset_settings_cache(): void {
  * @param string $key Setting key.
  * @return mixed
  */
-function gwcvt_setting( string $key ) {
-	$settings = gwcvt_settings_cache();
+function gwc_vt_setting( string $key ) {
+	$settings = gwc_vt_settings_cache();
 	if ( null === $settings ) {
-		$stored   = get_option( GWCVT_SETTINGS_OPTION );
-		$settings = gwcvt_settings_cache(
-			array_merge( gwcvt_setting_defaults(), is_array( $stored ) ? $stored : array() )
+		$stored   = get_option( GWC_VT_SETTINGS_OPTION );
+		$settings = gwc_vt_settings_cache(
+			array_merge( gwc_vt_setting_defaults(), is_array( $stored ) ? $stored : array() )
 		);
 	}
 	return $settings[ $key ] ?? null;
@@ -265,8 +265,8 @@ function gwcvt_setting( string $key ) {
  *
  * @return string
  */
-function gwcvt_org_name(): string {
-	$name = trim( (string) gwcvt_setting( 'org_name' ) );
+function gwc_vt_org_name(): string {
+	$name = trim( (string) gwc_vt_setting( 'org_name' ) );
 	return '' !== $name ? $name : (string) get_bloginfo( 'name' );
 }
 
@@ -282,9 +282,9 @@ function gwcvt_org_name(): string {
  *
  * @return string
  */
-function gwcvt_disclaimer(): string {
-	$text = trim( (string) gwcvt_setting( 'letter_disclaimer' ) );
-	return '' !== $text ? $text : gwcvt_default_disclaimer();
+function gwc_vt_disclaimer(): string {
+	$text = trim( (string) gwc_vt_setting( 'letter_disclaimer' ) );
+	return '' !== $text ? $text : gwc_vt_default_disclaimer();
 }
 
 /**
@@ -292,9 +292,9 @@ function gwcvt_disclaimer(): string {
  *
  * @return string
  */
-function gwcvt_reference_note(): string {
-	$text = trim( (string) gwcvt_setting( 'letter_reference_note' ) );
-	return '' !== $text ? $text : gwcvt_default_reference_note();
+function gwc_vt_reference_note(): string {
+	$text = trim( (string) gwc_vt_setting( 'letter_reference_note' ) );
+	return '' !== $text ? $text : gwc_vt_default_reference_note();
 }
 
 /**
@@ -307,7 +307,7 @@ function gwcvt_reference_note(): string {
  *
  * @return DateTimeZone
  */
-function gwcvt_timezone(): DateTimeZone {
+function gwc_vt_timezone(): DateTimeZone {
 	return wp_timezone();
 }
 
@@ -316,7 +316,7 @@ function gwcvt_timezone(): DateTimeZone {
  *
  * @return string
  */
-function gwcvt_today(): string {
+function gwc_vt_today(): string {
 	return (string) current_time( 'Y-m-d' );
 }
 
@@ -325,15 +325,15 @@ function gwcvt_today(): string {
  *
  * @return int
  */
-function gwcvt_hour_increment(): int {
-	$minutes = (int) gwcvt_setting( 'hour_increment' );
+function gwc_vt_hour_increment(): int {
+	$minutes = (int) gwc_vt_setting( 'hour_increment' );
 
 	/**
 	 * The increment every logged duration is rounded to, in minutes.
 	 *
 	 * @param int $minutes Increment in minutes; 0 disables rounding.
 	 */
-	$minutes = (int) apply_filters( 'gwcvt_hour_increment', $minutes );
+	$minutes = (int) apply_filters( 'gwc_vt_hour_increment', $minutes );
 
 	return max( 0, $minutes );
 }
@@ -347,7 +347,7 @@ function gwcvt_hour_increment(): int {
  * and ten HOURS by the rule that a bare number is hours, which is a shift
  * nobody worked — it is somebody typing minutes into a field expecting minutes.
  * Rather than silently record a quarter of a year, anything over
- * GWCVT_MAX_ENTRY_MINUTES is refused so the form can say so and the person can
+ * GWC_VT_MAX_ENTRY_MINUTES is refused so the form can say so and the person can
  * write 210m. An entry is one shift; a shift is not longer than a day.
  *
  * Rejected alternative: guessing that a bare number above some threshold "must
@@ -366,7 +366,7 @@ function gwcvt_hour_increment(): int {
  *                      changing it in silence on the number a court reads.
  * @return int|null Minutes, or null if it could not be read as a duration.
  */
-function gwcvt_parse_hours( string $raw, bool $round = true ): ?int {
+function gwc_vt_parse_hours( string $raw, bool $round = true ): ?int {
 	$value = strtolower( trim( $raw ) );
 	$value = str_replace( ',', '', $value );
 
@@ -395,11 +395,11 @@ function gwcvt_parse_hours( string $raw, bool $round = true ): ?int {
 
 	$minutes = (int) round( $minutes );
 
-	if ( $minutes < 0 || $minutes > GWCVT_MAX_ENTRY_MINUTES ) {
+	if ( $minutes < 0 || $minutes > GWC_VT_MAX_ENTRY_MINUTES ) {
 		return null;
 	}
 
-	return $round ? gwcvt_round_minutes( $minutes ) : $minutes;
+	return $round ? gwc_vt_round_minutes( $minutes ) : $minutes;
 }
 
 /**
@@ -412,8 +412,8 @@ function gwcvt_parse_hours( string $raw, bool $round = true ): ?int {
  * @param int $minutes Minutes.
  * @return int
  */
-function gwcvt_round_minutes( int $minutes ): int {
-	$increment = gwcvt_hour_increment();
+function gwc_vt_round_minutes( int $minutes ): int {
+	$increment = gwc_vt_hour_increment();
 
 	if ( $increment < 1 ) {
 		return $minutes;
@@ -429,8 +429,8 @@ function gwcvt_round_minutes( int $minutes ): int {
  * @param string|null $format  'decimal', 'hm', or null for the site's setting.
  * @return string
  */
-function gwcvt_format_hours( int $minutes, ?string $format = null ): string {
-	$format = $format ?? (string) gwcvt_setting( 'hour_format' );
+function gwc_vt_format_hours( int $minutes, ?string $format = null ): string {
+	$format = $format ?? (string) gwc_vt_setting( 'hour_format' );
 
 	if ( 'hm' === $format ) {
 		$hours = intdiv( $minutes, 60 );

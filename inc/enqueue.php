@@ -7,8 +7,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'init', 'gwcvt_register_front_assets' );
-add_action( 'admin_enqueue_scripts', 'gwcvt_enqueue_admin_assets' );
+add_action( 'init', 'gwc_vt_register_front_assets' );
+add_action( 'admin_enqueue_scripts', 'gwc_vt_enqueue_admin_assets' );
 
 /**
  * Register the front-end stylesheet.
@@ -18,12 +18,12 @@ add_action( 'admin_enqueue_scripts', 'gwcvt_enqueue_admin_assets' );
  * actually contain the block — which is the whole benefit of naming a handle
  * there rather than a file. The shortcode path enqueues it explicitly.
  */
-function gwcvt_register_front_assets(): void {
+function gwc_vt_register_front_assets(): void {
 	wp_register_style(
-		'gwcvt-form',
-		GWCVT_URL . 'assets/css/form.css',
+		'gwc-vt-form',
+		GWC_VT_URL . 'assets/css/form.css',
 		array(),
-		GWCVT_VERSION
+		GWC_VT_VERSION
 	);
 
 	/* The shift list's stylesheet, on the same terms: blocks/shift-list's
@@ -32,10 +32,10 @@ function gwcvt_register_front_assets(): void {
 	 * surfaces are independent — a site can run the hours form without the
 	 * schedule, or the schedule without the hours form. */
 	wp_register_style(
-		'gwcvt-schedule',
-		GWCVT_URL . 'assets/css/schedule.css',
+		'gwc-vt-schedule',
+		GWC_VT_URL . 'assets/css/schedule.css',
 		array(),
-		GWCVT_VERSION
+		GWC_VT_VERSION
 	);
 
 	/* The letter's own stylesheet, registered rather than enqueued. The print
@@ -44,10 +44,10 @@ function gwcvt_register_front_assets(): void {
 	 * inside wp-admin. One stylesheet either way — see the note at the top of
 	 * inc/render.php about the printed and emailed letters being one document. */
 	wp_register_style(
-		'gwcvt-letter',
-		GWCVT_URL . 'assets/css/letter.css',
+		'gwc-vt-letter',
+		GWC_VT_URL . 'assets/css/letter.css',
 		array(),
-		GWCVT_VERSION
+		GWC_VT_VERSION
 	);
 }
 
@@ -60,28 +60,28 @@ function gwcvt_register_front_assets(): void {
  *
  * @param string $hook_suffix The current admin page.
  */
-function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
-	if ( ! gwcvt_is_plugin_screen() ) {
+function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
+	if ( ! gwc_vt_is_plugin_screen() ) {
 		return;
 	}
 
 	wp_enqueue_style(
-		'gwcvt-admin',
-		GWCVT_URL . 'assets/css/admin.css',
+		'gwc-vt-admin',
+		GWC_VT_URL . 'assets/css/admin.css',
 		array(),
-		GWCVT_VERSION
+		GWC_VT_VERSION
 	);
 
 	$screen = get_current_screen();
 
 	// The logo chooser, on the settings screen only.
-	if ( $screen && false !== strpos( (string) $screen->id, GWCVT_SETTINGS_PAGE ) ) {
+	if ( $screen && false !== strpos( (string) $screen->id, GWC_VT_SETTINGS_PAGE ) ) {
 		wp_enqueue_media();
 		wp_enqueue_script(
-			'gwcvt-admin-media',
-			GWCVT_URL . 'assets/js/admin-media.js',
+			'gwc-vt-admin-media',
+			GWC_VT_URL . 'assets/js/admin-media.js',
 			array(),
-			GWCVT_VERSION,
+			GWC_VT_VERSION,
 			true
 		);
 	}
@@ -91,11 +91,11 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 	 * the page rather than to a known ID, so a third caller costs nothing. */
 	$on_entry_editor = in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true )
 		&& $screen
-		&& GWCVT_ENTRY_TYPE === $screen->post_type;
+		&& GWC_VT_ENTRY_TYPE === $screen->post_type;
 
-	$on_letters   = $screen && false !== strpos( (string) $screen->id, GWCVT_LETTERS_PAGE );
-	$on_quick_add = $screen && false !== strpos( (string) $screen->id, GWCVT_QUICK_ADD_PAGE );
-	$on_schedule  = $screen && false !== strpos( (string) $screen->id, GWCVT_SCHEDULE_PAGE );
+	$on_letters   = $screen && false !== strpos( (string) $screen->id, GWC_VT_LETTERS_PAGE );
+	$on_quick_add = $screen && false !== strpos( (string) $screen->id, GWC_VT_QUICK_ADD_PAGE );
+	$on_schedule  = $screen && false !== strpos( (string) $screen->id, GWC_VT_SCHEDULE_PAGE );
 
 	if ( ! $on_entry_editor && ! $on_letters && ! $on_quick_add && ! $on_schedule ) {
 		return;
@@ -105,19 +105,19 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 	 * half of why the lookup is a REST route rather than an admin-ajax action:
 	 * nothing here has to ship a nonce to the browser or remember to send it. */
 	wp_enqueue_script(
-		'gwcvt-admin-picker',
-		GWCVT_URL . 'assets/js/admin-picker.js',
+		'gwc-vt-admin-picker',
+		GWC_VT_URL . 'assets/js/admin-picker.js',
 		array( 'wp-api-fetch' ),
-		GWCVT_VERSION,
+		GWC_VT_VERSION,
 		true
 	);
 
 	if ( $on_quick_add ) {
 		wp_enqueue_script(
-			'gwcvt-quick-add',
-			GWCVT_URL . 'assets/js/admin-quick-add.js',
-			array( 'gwcvt-admin-picker' ),
-			GWCVT_VERSION,
+			'gwc-vt-quick-add',
+			GWC_VT_URL . 'assets/js/admin-quick-add.js',
+			array( 'gwc-vt-admin-picker' ),
+			GWC_VT_VERSION,
 			true
 		);
 	}
@@ -127,17 +127,17 @@ function gwcvt_enqueue_admin_assets( $hook_suffix ): void {
 	 * anything blank, so the grid is buildable with this script absent. */
 	if ( $on_schedule ) {
 		wp_enqueue_script(
-			'gwcvt-event-grid',
-			GWCVT_URL . 'assets/js/admin-event-grid.js',
+			'gwc-vt-event-grid',
+			GWC_VT_URL . 'assets/js/admin-event-grid.js',
 			array(),
-			GWCVT_VERSION,
+			GWC_VT_VERSION,
 			true
 		);
 	}
 
 	wp_set_script_translations(
-		'gwcvt-admin-picker',
+		'gwc-vt-admin-picker',
 		'groundwork-common-volunteer-tracker',
-		GWCVT_DIR . 'languages'
+		GWC_VT_DIR . 'languages'
 	);
 }

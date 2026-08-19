@@ -106,7 +106,7 @@
 
 		function lookup( term ) {
 			wp.apiFetch( {
-				path: '/gwcvt/v1/volunteers?search=' + encodeURIComponent( term )
+				path: '/gwc-vt/v1/volunteers?search=' + encodeURIComponent( term )
 			} ).then( function ( results ) {
 				// The field may have moved on while the request was in flight.
 				if ( search.value.trim() === term ) {
@@ -178,5 +178,5 @@
 	}
 
 	ready( setUpAll );
-	document.addEventListener( 'gwcvt:pickers-added', setUpAll );
+	document.addEventListener( 'gwc-vt:pickers-added', setUpAll );
 }( window.wp || {} ) );

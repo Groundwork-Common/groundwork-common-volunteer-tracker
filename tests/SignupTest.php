@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class SignupTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
@@ -25,8 +25,8 @@ final class SignupTest extends TestCase {
 	 * @param string $created GMT datetime.
 	 */
 	private function signup( int $id, string $created = '2026-03-01 10:00:00' ): void {
-		gwcvt_test_add_post( $id, GWCVT_SIGNUP_TYPE );
-		update_post_meta( $id, GWCVT_SIGNUP_CREATED, $created );
+		gwc_vt_test_add_post( $id, GWC_VT_SIGNUP_TYPE );
+		update_post_meta( $id, GWC_VT_SIGNUP_CREATED, $created );
 	}
 
 	/* ── The cancellation token ──────────────────────────────────────────── */
@@ -34,7 +34,7 @@ final class SignupTest extends TestCase {
 	public function test_a_signup_answers_to_its_own_token(): void {
 		$this->signup( 10 );
 
-		$this->assertTrue( gwcvt_signup_token_valid( 10, gwcvt_signup_token( 10 ) ) );
+		$this->assertTrue( gwc_vt_signup_token_valid( 10, gwc_vt_signup_token( 10 ) ) );
 	}
 
 	/**
@@ -45,7 +45,7 @@ final class SignupTest extends TestCase {
 		$this->signup( 10 );
 		$this->signup( 11 );
 
-		$this->assertFalse( gwcvt_signup_token_valid( 11, gwcvt_signup_token( 10 ) ) );
+		$this->assertFalse( gwc_vt_signup_token_valid( 11, gwc_vt_signup_token( 10 ) ) );
 	}
 
 	/**
@@ -54,12 +54,12 @@ final class SignupTest extends TestCase {
 	 */
 	public function test_a_token_dies_when_the_signup_is_made_again(): void {
 		$this->signup( 10 );
-		$old = gwcvt_signup_token( 10 );
+		$old = gwc_vt_signup_token( 10 );
 
-		update_post_meta( 10, GWCVT_SIGNUP_REVISION, 2 );
+		update_post_meta( 10, GWC_VT_SIGNUP_REVISION, 2 );
 
-		$this->assertFalse( gwcvt_signup_token_valid( 10, $old ) );
-		$this->assertTrue( gwcvt_signup_token_valid( 10, gwcvt_signup_token( 10 ) ) );
+		$this->assertFalse( gwc_vt_signup_token_valid( 10, $old ) );
+		$this->assertTrue( gwc_vt_signup_token_valid( 10, gwc_vt_signup_token( 10 ) ) );
 	}
 
 	/**
@@ -74,21 +74,21 @@ final class SignupTest extends TestCase {
 	 */
 	public function test_a_token_dies_even_when_the_clock_has_not_moved(): void {
 		$this->signup( 10 );
-		update_post_meta( 10, GWCVT_SIGNUP_REVISION, 1 );
+		update_post_meta( 10, GWC_VT_SIGNUP_REVISION, 1 );
 
-		$old = gwcvt_signup_token( 10 );
+		$old = gwc_vt_signup_token( 10 );
 
 		// Same second, same created value — only the revision moves.
-		update_post_meta( 10, GWCVT_SIGNUP_REVISION, 2 );
+		update_post_meta( 10, GWC_VT_SIGNUP_REVISION, 2 );
 
-		$this->assertFalse( gwcvt_signup_token_valid( 10, $old ) );
+		$this->assertFalse( gwc_vt_signup_token_valid( 10, $old ) );
 	}
 
 	public function test_a_forged_token_is_refused(): void {
 		$this->signup( 10 );
 
-		$this->assertFalse( gwcvt_signup_token_valid( 10, str_repeat( 'a', 64 ) ) );
-		$this->assertFalse( gwcvt_signup_token_valid( 10, '' ) );
+		$this->assertFalse( gwc_vt_signup_token_valid( 10, str_repeat( 'a', 64 ) ) );
+		$this->assertFalse( gwc_vt_signup_token_valid( 10, '' ) );
 	}
 
 	/**
@@ -96,11 +96,11 @@ final class SignupTest extends TestCase {
 	 * so a token cannot be aimed at an hour entry or a volunteer record.
 	 */
 	public function test_a_token_for_something_that_is_not_a_signup_is_refused(): void {
-		gwcvt_test_add_post( 20, GWCVT_ENTRY_TYPE );
-		update_post_meta( 20, GWCVT_SIGNUP_CREATED, '2026-03-01 10:00:00' );
+		gwc_vt_test_add_post( 20, GWC_VT_ENTRY_TYPE );
+		update_post_meta( 20, GWC_VT_SIGNUP_CREATED, '2026-03-01 10:00:00' );
 
-		$this->assertFalse( gwcvt_signup_token_valid( 20, gwcvt_signup_token( 20 ) ) );
-		$this->assertFalse( gwcvt_signup_token_valid( 999, gwcvt_signup_token( 999 ) ) );
+		$this->assertFalse( gwc_vt_signup_token_valid( 20, gwc_vt_signup_token( 20 ) ) );
+		$this->assertFalse( gwc_vt_signup_token_valid( 999, gwc_vt_signup_token( 999 ) ) );
 	}
 
 	/**
@@ -110,26 +110,26 @@ final class SignupTest extends TestCase {
 	public function test_the_token_is_stable(): void {
 		$this->signup( 10 );
 
-		$this->assertSame( gwcvt_signup_token( 10 ), gwcvt_signup_token( 10 ) );
+		$this->assertSame( gwc_vt_signup_token( 10 ), gwc_vt_signup_token( 10 ) );
 	}
 
 	/* ── The settling lock ───────────────────────────────────────────────── */
 
 	public function test_only_one_caller_holds_the_lock(): void {
-		$this->assertTrue( gwcvt_take_signup_lock( 5 ) );
-		$this->assertFalse( gwcvt_take_signup_lock( 5 ) );
+		$this->assertTrue( gwc_vt_take_signup_lock( 5 ) );
+		$this->assertFalse( gwc_vt_take_signup_lock( 5 ) );
 	}
 
 	public function test_the_lock_is_per_shift(): void {
-		$this->assertTrue( gwcvt_take_signup_lock( 5 ) );
-		$this->assertTrue( gwcvt_take_signup_lock( 6 ) );
+		$this->assertTrue( gwc_vt_take_signup_lock( 5 ) );
+		$this->assertTrue( gwc_vt_take_signup_lock( 6 ) );
 	}
 
 	public function test_releasing_the_lock_lets_the_next_caller_in(): void {
-		gwcvt_take_signup_lock( 5 );
-		gwcvt_release_signup_lock( 5 );
+		gwc_vt_take_signup_lock( 5 );
+		gwc_vt_release_signup_lock( 5 );
 
-		$this->assertTrue( gwcvt_take_signup_lock( 5 ) );
+		$this->assertTrue( gwc_vt_take_signup_lock( 5 ) );
 	}
 
 	/**
@@ -138,15 +138,15 @@ final class SignupTest extends TestCase {
 	 * so waiting would wedge the shift's capacity permanently.
 	 */
 	public function test_an_abandoned_lock_is_stolen(): void {
-		update_option( 'gwcvt_signup_lock_5', time() - ( GWCVT_SIGNUP_LOCK_TTL + 5 ), false );
+		update_option( 'gwc_vt_signup_lock_5', time() - ( GWC_VT_SIGNUP_LOCK_TTL + 5 ), false );
 
-		$this->assertTrue( gwcvt_take_signup_lock( 5 ) );
+		$this->assertTrue( gwc_vt_take_signup_lock( 5 ) );
 	}
 
 	public function test_a_lock_that_is_merely_recent_is_not_stolen(): void {
-		update_option( 'gwcvt_signup_lock_5', time() - 1, false );
+		update_option( 'gwc_vt_signup_lock_5', time() - 1, false );
 
-		$this->assertFalse( gwcvt_take_signup_lock( 5 ) );
+		$this->assertFalse( gwc_vt_take_signup_lock( 5 ) );
 	}
 
 	/**
@@ -154,9 +154,9 @@ final class SignupTest extends TestCase {
 	 * after an abandonment do not both decide it is theirs.
 	 */
 	public function test_stealing_the_lock_resets_its_clock(): void {
-		update_option( 'gwcvt_signup_lock_5', time() - ( GWCVT_SIGNUP_LOCK_TTL + 5 ), false );
+		update_option( 'gwc_vt_signup_lock_5', time() - ( GWC_VT_SIGNUP_LOCK_TTL + 5 ), false );
 
-		$this->assertTrue( gwcvt_take_signup_lock( 5 ) );
-		$this->assertFalse( gwcvt_take_signup_lock( 5 ) );
+		$this->assertTrue( gwc_vt_take_signup_lock( 5 ) );
+		$this->assertFalse( gwc_vt_take_signup_lock( 5 ) );
 	}
 }

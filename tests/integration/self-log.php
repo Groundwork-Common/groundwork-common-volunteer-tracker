@@ -14,26 +14,26 @@
  * @package VolunteerTracker
  */
 
-$GLOBALS['gwcvt_failures'] = 0;
-$GLOBALS['gwcvt_made']     = array();
+$GLOBALS['gwc_vt_failures'] = 0;
+$GLOBALS['gwc_vt_made']     = array();
 
 /* Every entry this script's own submissions create, and nothing else.
  *
  * The first version swept up every pending entry on the site at cleanup,
- * because gwcvt_submit() posts through the handler and does not hand an ID
+ * because gwc_vt_submit() posts through the handler and does not hand an ID
  * back. That deleted records this script never created — it quietly destroyed
  * the seeded demo organisation's two self-logged submissions every time it ran,
  * and on a site with real pending entries it would have destroyed those.
  *
- * gwcvt_self_log_received fires with the ID of each entry the handler stores,
+ * gwc_vt_self_log_received fires with the ID of each entry the handler stores,
  * which is exactly the hook needed and was already there. */
-$GLOBALS['gwcvt_last_entry'] = 0;
+$GLOBALS['gwc_vt_last_entry'] = 0;
 
 add_action(
-	'gwcvt_self_log_received',
+	'gwc_vt_self_log_received',
 	static function ( $entry_id ): void {
-		$GLOBALS['gwcvt_made'][]     = (int) $entry_id;
-		$GLOBALS['gwcvt_last_entry'] = (int) $entry_id;
+		$GLOBALS['gwc_vt_made'][]     = (int) $entry_id;
+		$GLOBALS['gwc_vt_last_entry'] = (int) $entry_id;
 	}
 );
 
@@ -44,9 +44,9 @@ add_action(
  * @param bool   $ok    Whether it passed.
  * @param string $got   Optional. What was actually seen.
  */
-function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
+function gwc_vt_check( string $label, bool $ok, string $got = '' ): void {
 	if ( ! $ok ) {
-		++$GLOBALS['gwcvt_failures'];
+		++$GLOBALS['gwc_vt_failures'];
 	}
 
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ), $label, ( '' !== $got ? '  [got: ' . $got . ']' : '' ), "\n";
@@ -58,21 +58,21 @@ function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
  * @param array $overrides Fields to change or remove.
  * @return string The result key the handler recorded.
  */
-function gwcvt_submit( array $overrides = array() ): string {
+function gwc_vt_submit( array $overrides = array() ): string {
 	$stamp = time() - 30;
 
 	$_POST = array_merge(
 		array(
-			'gwcvt_log_hours'      => '1',
-			'gwcvt_self_log_nonce' => wp_create_nonce( 'gwcvt_self_log' ),
-			'gwcvt_t'              => $stamp . '.' . hash_hmac( 'sha256', (string) $stamp, wp_salt( 'gwcvt_form' ) ),
-			'gwcvt_website'        => '',
-			'gwcvt_name'           => 'Zzytest Rosa Iqbal',
-			'gwcvt_email'          => 'rosa@example.test',
-			'gwcvt_date'           => '2026-07-11',
-			'gwcvt_hours'          => '3:30',
-			'gwcvt_activity'       => 'Sorting donations',
-			'gwcvt_supervisor'     => 'Dana Reyes',
+			'gwc_vt_log_hours'      => '1',
+			'gwc_vt_self_log_nonce' => wp_create_nonce( 'gwc_vt_self_log' ),
+			'gwc_vt_t'              => $stamp . '.' . hash_hmac( 'sha256', (string) $stamp, wp_salt( 'gwc_vt_form' ) ),
+			'gwc_vt_website'        => '',
+			'gwc_vt_name'           => 'Zzytest Rosa Iqbal',
+			'gwc_vt_email'          => 'rosa@example.test',
+			'gwc_vt_date'           => '2026-07-11',
+			'gwc_vt_hours'          => '3:30',
+			'gwc_vt_activity'       => 'Sorting donations',
+			'gwc_vt_supervisor'     => 'Dana Reyes',
 		),
 		$overrides
 	);
@@ -83,19 +83,19 @@ function gwcvt_submit( array $overrides = array() ): string {
 		}
 	}
 
-	unset( $GLOBALS['gwcvt_self_log_result'] );
+	unset( $GLOBALS['gwc_vt_self_log_result'] );
 
-	gwcvt_handle_self_log();
+	gwc_vt_handle_self_log();
 
-	return (string) ( $GLOBALS['gwcvt_self_log_result'] ?? '' );
+	return (string) ( $GLOBALS['gwc_vt_self_log_result'] ?? '' );
 }
 
 /** How many pending self-logged entries exist. */
-function gwcvt_pending_count(): int {
+function gwc_vt_pending_count(): int {
 	return count(
 		get_posts(
 			array(
-				'post_type'      => GWCVT_ENTRY_TYPE,
+				'post_type'      => GWC_VT_ENTRY_TYPE,
 				'post_status'    => 'pending',
 				'fields'         => 'ids',
 				'posts_per_page' => -1,
@@ -107,7 +107,7 @@ function gwcvt_pending_count(): int {
 
 
 /* ── Put the site's own settings back afterwards ─────────────────────────────
- * This script rewrites gwcvt_settings to exercise the plugin under particular
+ * This script rewrites gwc_vt_settings to exercise the plugin under particular
  * configurations. The first version then DELETED the option at cleanup, which
  * does not restore anything — it wipes the site's entire plugin configuration:
  * letterhead, signatory, disclaimer wording, retention policy, and whether the
@@ -120,22 +120,22 @@ function gwcvt_pending_count(): int {
  * So: snapshot first, restore last, including the "there was nothing here"
  * case. A test that changes global configuration has to put it back.
  * ─────────────────────────────────────────────────────────────────────────── */
-$GLOBALS['gwcvt_saved_options'] = array();
+$GLOBALS['gwc_vt_saved_options'] = array();
 
 /**
  * Remember an option's current value so it can be restored.
  *
  * @param string $name Option name.
  */
-function gwcvt_borrow_option( string $name ): void {
-	$GLOBALS['gwcvt_saved_options'][ $name ] = get_option( $name );
+function gwc_vt_borrow_option( string $name ): void {
+	$GLOBALS['gwc_vt_saved_options'][ $name ] = get_option( $name );
 }
 
 /**
  * Put every borrowed option back exactly as it was.
  */
-function gwcvt_return_options(): void {
-	foreach ( $GLOBALS['gwcvt_saved_options'] as $name => $value ) {
+function gwc_vt_return_options(): void {
+	foreach ( $GLOBALS['gwc_vt_saved_options'] as $name => $value ) {
 		if ( false === $value ) {
 			delete_option( $name );
 			continue;
@@ -144,167 +144,167 @@ function gwcvt_return_options(): void {
 		update_option( $name, $value );
 	}
 
-	gwcvt_settings_cache( null, true );
+	gwc_vt_settings_cache( null, true );
 }
 
 wp_set_current_user( 0 );
 
-gwcvt_borrow_option( 'gwcvt_settings' );
-gwcvt_borrow_option( GWCVT_RATE_LIMIT_OPTION );
+gwc_vt_borrow_option( 'gwc_vt_settings' );
+gwc_vt_borrow_option( GWC_VT_RATE_LIMIT_OPTION );
 
-$gwcvt_page = wp_insert_post(
+$gwc_vt_page = wp_insert_post(
 	array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Zzytest Log your hours' )
 );
-$GLOBALS['gwcvt_made'][] = $gwcvt_page;
+$GLOBALS['gwc_vt_made'][] = $gwc_vt_page;
 
 /* ── Off by default ──────────────────────────────────────────────────────── */
 
-update_option( 'gwcvt_settings', array( 'self_log_enabled' => false, 'self_log_page' => $gwcvt_page ) );
-gwcvt_settings_cache( null, true );
-delete_option( GWCVT_RATE_LIMIT_OPTION );
+update_option( 'gwc_vt_settings', array( 'self_log_enabled' => false, 'self_log_page' => $gwc_vt_page ) );
+gwc_vt_settings_cache( null, true );
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
 
-gwcvt_check( 'the form is off', ! gwcvt_self_log_enabled() );
-gwcvt_check( 'and renders nothing', '' === gwcvt_render_self_log_form() );
+gwc_vt_check( 'the form is off', ! gwc_vt_self_log_enabled() );
+gwc_vt_check( 'and renders nothing', '' === gwc_vt_render_self_log_form() );
 
-$gwcvt_before = gwcvt_pending_count();
-gwcvt_dispatch();
-gwcvt_check( 'dispatch while off stores nothing', $gwcvt_before === gwcvt_pending_count() );
+$gwc_vt_before = gwc_vt_pending_count();
+gwc_vt_dispatch();
+gwc_vt_check( 'dispatch while off stores nothing', $gwc_vt_before === gwc_vt_pending_count() );
 
 /* ── Switched on ─────────────────────────────────────────────────────────── */
 
-update_option( 'gwcvt_settings', array( 'self_log_enabled' => true, 'self_log_page' => $gwcvt_page ) );
-gwcvt_settings_cache( null, true );
+update_option( 'gwc_vt_settings', array( 'self_log_enabled' => true, 'self_log_page' => $gwc_vt_page ) );
+gwc_vt_settings_cache( null, true );
 
-gwcvt_check( 'the form is on', gwcvt_self_log_enabled() );
+gwc_vt_check( 'the form is on', gwc_vt_self_log_enabled() );
 
-$gwcvt_markup = gwcvt_render_self_log_form();
-gwcvt_check( 'it renders a form', false !== strpos( $gwcvt_markup, 'gwcvt_log_hours' ) );
-gwcvt_check( 'it carries a honeypot', false !== strpos( $gwcvt_markup, 'gwcvt_website' ) );
-gwcvt_check( 'the honeypot is not type=hidden', false === strpos( $gwcvt_markup, 'type="hidden" id="gwcvt-website"' ) );
-gwcvt_check( 'it carries a timing stamp', false !== strpos( $gwcvt_markup, 'gwcvt_t' ) );
-gwcvt_check( 'it carries a nonce', false !== strpos( $gwcvt_markup, 'gwcvt_self_log_nonce' ) );
+$gwc_vt_markup = gwc_vt_render_self_log_form();
+gwc_vt_check( 'it renders a form', false !== strpos( $gwc_vt_markup, 'gwc_vt_log_hours' ) );
+gwc_vt_check( 'it carries a honeypot', false !== strpos( $gwc_vt_markup, 'gwc_vt_website' ) );
+gwc_vt_check( 'the honeypot is not type=hidden', false === strpos( $gwc_vt_markup, 'type="hidden" id="gwcvt-website"' ) );
+gwc_vt_check( 'it carries a timing stamp', false !== strpos( $gwc_vt_markup, 'gwc_vt_t' ) );
+gwc_vt_check( 'it carries a nonce', false !== strpos( $gwc_vt_markup, 'gwc_vt_self_log_nonce' ) );
 
 /* ── A real submission ───────────────────────────────────────────────────── */
 
-$gwcvt_before = gwcvt_pending_count();
-$gwcvt_result = gwcvt_submit();
+$gwc_vt_before = gwc_vt_pending_count();
+$gwc_vt_result = gwc_vt_submit();
 
-gwcvt_check( 'a good submission is accepted', 'accepted' === $gwcvt_result, $gwcvt_result );
-gwcvt_check( 'and stores one entry', gwcvt_pending_count() === $gwcvt_before + 1 );
+gwc_vt_check( 'a good submission is accepted', 'accepted' === $gwc_vt_result, $gwc_vt_result );
+gwc_vt_check( 'and stores one entry', gwc_vt_pending_count() === $gwc_vt_before + 1 );
 
 /* The ID the handler reported, not "whichever pending entry is newest" —
  * that guess would pick up a seeded record the moment anything else on the
  * site was pending, and this script then deletes what it captures. */
-$gwcvt_entry = (int) $GLOBALS['gwcvt_last_entry'];
+$gwc_vt_entry = (int) $GLOBALS['gwc_vt_last_entry'];
 
-gwcvt_check( 'it is pending', 'pending' === get_post_status( $gwcvt_entry ), (string) get_post_status( $gwcvt_entry ) );
-gwcvt_check( 'it is marked as self-logged', 'self' === get_post_meta( $gwcvt_entry, GWCVT_ENTRY_SOURCE, true ) );
-gwcvt_check( 'it is attached to nobody', 0 === (int) get_post_meta( $gwcvt_entry, GWCVT_ENTRY_VOLUNTEER, true ) );
-gwcvt_check( 'it is not verified', ! gwcvt_entry_is_verified( $gwcvt_entry ) );
-gwcvt_check( 'the name is stored as a claim', 'Zzytest Rosa Iqbal' === get_post_meta( $gwcvt_entry, '_gwcvt_claim_name', true ) );
-gwcvt_check( 'the email is stored as a claim', 'rosa@example.test' === get_post_meta( $gwcvt_entry, '_gwcvt_claim_email', true ) );
-gwcvt_check( 'the duration was parsed', 210 === (int) get_post_meta( $gwcvt_entry, GWCVT_ENTRY_MINUTES, true ), (string) get_post_meta( $gwcvt_entry, GWCVT_ENTRY_MINUTES, true ) );
-gwcvt_check( 'the title says it is unmatched', false !== strpos( get_the_title( $gwcvt_entry ), 'unmatched' ), get_the_title( $gwcvt_entry ) );
+gwc_vt_check( 'it is pending', 'pending' === get_post_status( $gwc_vt_entry ), (string) get_post_status( $gwc_vt_entry ) );
+gwc_vt_check( 'it is marked as self-logged', 'self' === get_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_SOURCE, true ) );
+gwc_vt_check( 'it is attached to nobody', 0 === (int) get_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_VOLUNTEER, true ) );
+gwc_vt_check( 'it is not verified', ! gwc_vt_entry_is_verified( $gwc_vt_entry ) );
+gwc_vt_check( 'the name is stored as a claim', 'Zzytest Rosa Iqbal' === get_post_meta( $gwc_vt_entry, '_gwc_vt_claim_name', true ) );
+gwc_vt_check( 'the email is stored as a claim', 'rosa@example.test' === get_post_meta( $gwc_vt_entry, '_gwc_vt_claim_email', true ) );
+gwc_vt_check( 'the duration was parsed', 210 === (int) get_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_MINUTES, true ), (string) get_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_MINUTES, true ) );
+gwc_vt_check( 'the title says it is unmatched', false !== strpos( get_the_title( $gwc_vt_entry ), 'unmatched' ), get_the_title( $gwc_vt_entry ) );
 
 /* A submission must never reach a letter, whatever else happens to it. */
-$gwcvt_volunteer = wp_insert_post(
-	array( 'post_type' => GWCVT_VOLUNTEER_TYPE, 'post_status' => 'publish', 'post_title' => 'Zzytest Rosa Iqbal' )
+$gwc_vt_volunteer = wp_insert_post(
+	array( 'post_type' => GWC_VT_VOLUNTEER_TYPE, 'post_status' => 'publish', 'post_title' => 'Zzytest Rosa Iqbal' )
 );
-$GLOBALS['gwcvt_made'][] = $gwcvt_volunteer;
+$GLOBALS['gwc_vt_made'][] = $gwc_vt_volunteer;
 
-gwcvt_check(
+gwc_vt_check(
 	'an untriaged submission is not counted for anybody',
-	0 === gwcvt_compute_totals( (int) $gwcvt_volunteer )->entries
+	0 === gwc_vt_compute_totals( (int) $gwc_vt_volunteer )->entries
 );
 
 /* ── The checks ──────────────────────────────────────────────────────────── */
 
-delete_option( GWCVT_RATE_LIMIT_OPTION );
-$gwcvt_before = gwcvt_pending_count();
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
+$gwc_vt_before = gwc_vt_pending_count();
 
-gwcvt_check( 'a filled honeypot is silently dropped', 'accepted' === gwcvt_submit( array( 'gwcvt_website' => 'http://spam.test' ) ) );
-gwcvt_check( 'and stores nothing', $gwcvt_before === gwcvt_pending_count() );
+gwc_vt_check( 'a filled honeypot is silently dropped', 'accepted' === gwc_vt_submit( array( 'gwc_vt_website' => 'http://spam.test' ) ) );
+gwc_vt_check( 'and stores nothing', $gwc_vt_before === gwc_vt_pending_count() );
 
-$gwcvt_instant = time();
-gwcvt_check(
+$gwc_vt_instant = time();
+gwc_vt_check(
 	'a submission three seconds after render is dropped',
-	'accepted' === gwcvt_submit( array( 'gwcvt_t' => $gwcvt_instant . '.' . hash_hmac( 'sha256', (string) $gwcvt_instant, wp_salt( 'gwcvt_form' ) ) ) )
+	'accepted' === gwc_vt_submit( array( 'gwc_vt_t' => $gwc_vt_instant . '.' . hash_hmac( 'sha256', (string) $gwc_vt_instant, wp_salt( 'gwc_vt_form' ) ) ) )
 );
-gwcvt_check( 'and stores nothing', $gwcvt_before === gwcvt_pending_count() );
+gwc_vt_check( 'and stores nothing', $gwc_vt_before === gwc_vt_pending_count() );
 
-gwcvt_check( 'a forged timing stamp is refused', 'expired' === gwcvt_submit( array( 'gwcvt_t' => time() . '.deadbeef' ) ) );
-gwcvt_check( 'a bad nonce is refused', 'expired' === gwcvt_submit( array( 'gwcvt_self_log_nonce' => 'nope' ) ) );
-gwcvt_check( 'a missing name is refused', 'incomplete' === gwcvt_submit( array( 'gwcvt_name' => '' ) ) );
-gwcvt_check( 'a missing duration is refused', 'incomplete' === gwcvt_submit( array( 'gwcvt_hours' => '' ) ) );
-gwcvt_check( 'an unreadable duration is refused', 'incomplete' === gwcvt_submit( array( 'gwcvt_hours' => 'ages' ) ) );
-gwcvt_check( 'a future date is refused', 'incomplete' === gwcvt_submit( array( 'gwcvt_date' => '2099-01-01' ) ) );
-gwcvt_check( 'nothing above stored anything', $gwcvt_before === gwcvt_pending_count(), (string) gwcvt_pending_count() );
+gwc_vt_check( 'a forged timing stamp is refused', 'expired' === gwc_vt_submit( array( 'gwc_vt_t' => time() . '.deadbeef' ) ) );
+gwc_vt_check( 'a bad nonce is refused', 'expired' === gwc_vt_submit( array( 'gwc_vt_self_log_nonce' => 'nope' ) ) );
+gwc_vt_check( 'a missing name is refused', 'incomplete' === gwc_vt_submit( array( 'gwc_vt_name' => '' ) ) );
+gwc_vt_check( 'a missing duration is refused', 'incomplete' === gwc_vt_submit( array( 'gwc_vt_hours' => '' ) ) );
+gwc_vt_check( 'an unreadable duration is refused', 'incomplete' === gwc_vt_submit( array( 'gwc_vt_hours' => 'ages' ) ) );
+gwc_vt_check( 'a future date is refused', 'incomplete' === gwc_vt_submit( array( 'gwc_vt_date' => '2099-01-01' ) ) );
+gwc_vt_check( 'nothing above stored anything', $gwc_vt_before === gwc_vt_pending_count(), (string) gwc_vt_pending_count() );
 
 /* ── Fields it must refuse to write ──────────────────────────────────────── */
 
-delete_option( GWCVT_RATE_LIMIT_OPTION );
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
 
-gwcvt_submit(
+gwc_vt_submit(
 	array(
-		'gwcvt_name'      => 'Zzytest Crafted Post',
-		'gwcvt_volunteer' => '999',
-		'_gwcvt_verified_at' => '2026-01-01 00:00:00',
-		'gwcvt_verified_at'  => '2026-01-01 00:00:00',
+		'gwc_vt_name'      => 'Zzytest Crafted Post',
+		'gwc_vt_volunteer' => '999',
+		'_gwc_vt_verified_at' => '2026-01-01 00:00:00',
+		'gwc_vt_verified_at'  => '2026-01-01 00:00:00',
 	)
 );
 
-$gwcvt_crafted = (int) $GLOBALS['gwcvt_last_entry'];
+$gwc_vt_crafted = (int) $GLOBALS['gwc_vt_last_entry'];
 
-gwcvt_check( 'a crafted volunteer id is ignored', 0 === (int) get_post_meta( $gwcvt_crafted, GWCVT_ENTRY_VOLUNTEER, true ) );
-gwcvt_check( 'a crafted verification is ignored', ! gwcvt_entry_is_verified( $gwcvt_crafted ) );
+gwc_vt_check( 'a crafted volunteer id is ignored', 0 === (int) get_post_meta( $gwc_vt_crafted, GWC_VT_ENTRY_VOLUNTEER, true ) );
+gwc_vt_check( 'a crafted verification is ignored', ! gwc_vt_entry_is_verified( $gwc_vt_crafted ) );
 
 /* ── The shared code ─────────────────────────────────────────────────────── */
 
-update_option( 'gwcvt_settings', array( 'self_log_enabled' => true, 'self_log_page' => $gwcvt_page, 'self_log_code' => 'RIVERBEND' ) );
-gwcvt_settings_cache( null, true );
-delete_option( GWCVT_RATE_LIMIT_OPTION );
+update_option( 'gwc_vt_settings', array( 'self_log_enabled' => true, 'self_log_page' => $gwc_vt_page, 'self_log_code' => 'RIVERBEND' ) );
+gwc_vt_settings_cache( null, true );
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
 
-gwcvt_check( 'a missing code is refused', 'bad-code' === gwcvt_submit() );
-gwcvt_check( 'a wrong code is refused', 'bad-code' === gwcvt_submit( array( 'gwcvt_code' => 'nope' ) ) );
-gwcvt_check( 'the right code is accepted', 'accepted' === gwcvt_submit( array( 'gwcvt_code' => 'RIVERBEND' ) ) );
+gwc_vt_check( 'a missing code is refused', 'bad-code' === gwc_vt_submit() );
+gwc_vt_check( 'a wrong code is refused', 'bad-code' === gwc_vt_submit( array( 'gwc_vt_code' => 'nope' ) ) );
+gwc_vt_check( 'the right code is accepted', 'accepted' === gwc_vt_submit( array( 'gwc_vt_code' => 'RIVERBEND' ) ) );
 
 
 
 /* ── Rate limiting, end to end ───────────────────────────────────────────── */
 
-update_option( 'gwcvt_settings', array( 'self_log_enabled' => true, 'self_log_page' => $gwcvt_page ) );
-gwcvt_settings_cache( null, true );
-delete_option( GWCVT_RATE_LIMIT_OPTION );
+update_option( 'gwc_vt_settings', array( 'self_log_enabled' => true, 'self_log_page' => $gwc_vt_page ) );
+gwc_vt_settings_cache( null, true );
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
 
-$gwcvt_before = gwcvt_pending_count();
+$gwc_vt_before = gwc_vt_pending_count();
 
-for ( $gwcvt_i = 0; $gwcvt_i < 6; $gwcvt_i++ ) {
-	gwcvt_submit( array( 'gwcvt_email' => 'flood@example.test' ) );
+for ( $gwc_vt_i = 0; $gwc_vt_i < 6; $gwc_vt_i++ ) {
+	gwc_vt_submit( array( 'gwc_vt_email' => 'flood@example.test' ) );
 }
 
-$gwcvt_after_six = gwcvt_pending_count();
-$gwcvt_result    = gwcvt_submit( array( 'gwcvt_email' => 'flood@example.test' ) );
+$gwc_vt_after_six = gwc_vt_pending_count();
+$gwc_vt_result    = gwc_vt_submit( array( 'gwc_vt_email' => 'flood@example.test' ) );
 
-gwcvt_check( 'six submissions land', $gwcvt_after_six === $gwcvt_before + 6, (string) ( $gwcvt_after_six - $gwcvt_before ) );
-gwcvt_check( 'the seventh is refused', $gwcvt_after_six === gwcvt_pending_count() );
-gwcvt_check(
+gwc_vt_check( 'six submissions land', $gwc_vt_after_six === $gwc_vt_before + 6, (string) ( $gwc_vt_after_six - $gwc_vt_before ) );
+gwc_vt_check( 'the seventh is refused', $gwc_vt_after_six === gwc_vt_pending_count() );
+gwc_vt_check(
 	'and looks exactly like an acceptance',
-	'accepted' === $gwcvt_result && gwcvt_self_log_message( $gwcvt_result ) === gwcvt_self_log_message( 'accepted' ),
-	$gwcvt_result
+	'accepted' === $gwc_vt_result && gwc_vt_self_log_message( $gwc_vt_result ) === gwc_vt_self_log_message( 'accepted' ),
+	$gwc_vt_result
 );
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
 $_POST = array();
 
-foreach ( array_unique( $GLOBALS['gwcvt_made'] ) as $gwcvt_id ) {
-	wp_delete_post( (int) $gwcvt_id, true );
+foreach ( array_unique( $GLOBALS['gwc_vt_made'] ) as $gwc_vt_id ) {
+	wp_delete_post( (int) $gwc_vt_id, true );
 }
 
-gwcvt_return_options();
+gwc_vt_return_options();
 
-echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? "ALL PASS\n" : $GLOBALS['gwcvt_failures'] . " CHECK(S) FAILED\n" );
+echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
-if ( $GLOBALS['gwcvt_failures'] > 0 ) {
+if ( $GLOBALS['gwc_vt_failures'] > 0 ) {
 	exit( 1 );
 }

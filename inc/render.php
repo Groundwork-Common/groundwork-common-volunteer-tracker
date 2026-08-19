@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * between the media is how the styling gets attached:
  *
  *   print  links assets/css/letter.css
- *   email  runs the same markup through gwcvt_inline_letter_styles()
+ *   email  runs the same markup through gwc_vt_inline_letter_styles()
  *
  * That inliner is about a dozen selector-to-declaration rules applied as style
  * attributes. Writing one by hand is only possible because this plugin controls
@@ -34,15 +34,15 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Render a letter.
  *
- * @param GWCVT_Letter $letter The letter.
- * @param string       $medium 'print' or 'email'.
+ * @param GWC_VT_Letter $letter The letter.
+ * @param string        $medium 'print' or 'email'.
  * @return string A complete HTML document.
  */
-function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): string {
-	$body = gwcvt_letter_body( $letter, $medium );
+function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' ): string {
+	$body = gwc_vt_letter_body( $letter, $medium );
 
 	if ( 'email' === $medium ) {
-		$body = gwcvt_inline_letter_styles( $body );
+		$body = gwc_vt_inline_letter_styles( $body );
 	}
 
 	ob_start();
@@ -53,10 +53,10 @@ function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): 
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="noindex, nofollow" />
-	<title><?php echo esc_html( gwcvt_letter_title( $letter ) ); ?></title>
+	<title><?php echo esc_html( gwc_vt_letter_title( $letter ) ); ?></title>
 	<?php if ( 'print' === $medium ) : ?>
 		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- this is a standalone document with its own <head>, not a WordPress page, so there is no enqueue queue to join. The plugin owning this markup outright is the point: see the note about theme-overridable templates. ?>
-		<link rel="stylesheet" href="<?php echo esc_url( GWCVT_URL . 'assets/css/letter.css?ver=' . GWCVT_VERSION ); ?>" />
+		<link rel="stylesheet" href="<?php echo esc_url( GWC_VT_URL . 'assets/css/letter.css?ver=' . GWC_VT_VERSION ); ?>" />
 	<?php endif; ?>
 </head>
 <body class="gwcvt-letter-page">
@@ -80,21 +80,21 @@ function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): 
 	 * the whole credibility argument rests on. So it goes above, as a note
 	 * accompanying the letter rather than part of it. */
 	if ( 'email' === $medium ) {
-		$note = trim( (string) gwcvt_setting( 'email_intro' ) );
+		$note = trim( (string) gwc_vt_setting( 'email_intro' ) );
 
 		if ( '' !== $note ) {
 			printf(
 				'<div class="gwcvt-covering-note" style="font-family:Georgia,\'Times New Roman\',serif;font-size:12pt;line-height:1.55;color:#1a1a1a;max-width:44em;margin:0 auto 8px;padding:16px 16px 0;">%s</div>',
 				wp_kses(
-					nl2br( gwcvt_replace_tokens( $note, gwcvt_letter_tokens( $letter ) ) ),
-					gwcvt_letter_allowed_html()
+					nl2br( gwc_vt_replace_tokens( $note, gwc_vt_letter_tokens( $letter ) ) ),
+					gwc_vt_letter_allowed_html()
 				)
 			);
 		}
 	}
 	?>
 
-	<?php echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in gwcvt_letter_body(). ?>
+	<?php echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in gwc_vt_letter_body(). ?>
 </body>
 </html>
 	<?php
@@ -120,10 +120,10 @@ function gwcvt_render_letter( GWCVT_Letter $letter, string $medium = 'print' ): 
 /**
  * The letter's fixed wording, all of it, in one filterable table.
  *
- * @param GWCVT_Letter $letter The letter being rendered.
+ * @param GWC_VT_Letter $letter The letter being rendered.
  * @return array<string, string>
  */
-function gwcvt_letter_strings( GWCVT_Letter $letter ): array {
+function gwc_vt_letter_strings( GWC_VT_Letter $letter ): array {
 	$strings = array(
 		'heading'          => __( 'Volunteer Service Verification', 'groundwork-common-volunteer-tracker' ),
 		'shifts_heading'   => __( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ),
@@ -144,28 +144,28 @@ function gwcvt_letter_strings( GWCVT_Letter $letter ): array {
 	 * The letter's fixed wording.
 	 *
 	 * @param array<string, string> $strings Keyed by role in the document.
-	 * @param GWCVT_Letter          $letter  The letter being rendered.
+	 * @param GWC_VT_Letter          $letter  The letter being rendered.
 	 */
-	return (array) apply_filters( 'gwcvt_letter_strings', $strings, $letter );
+	return (array) apply_filters( 'gwc_vt_letter_strings', $strings, $letter );
 }
 
 /**
  * The letter itself, without the document wrapper.
  *
- * @param GWCVT_Letter $letter The letter.
- * @param string       $medium 'print' or 'email'.
+ * @param GWC_VT_Letter $letter The letter.
+ * @param string        $medium 'print' or 'email'.
  * @return string
  */
-function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
-	$org       = gwcvt_org_name();
-	$tokens    = gwcvt_letter_tokens( $letter );
-	$itemize   = (bool) gwcvt_setting( 'letter_itemize' );
-	$signatory = trim( (string) gwcvt_setting( 'signatory_name' ) );
-	$title     = trim( (string) gwcvt_setting( 'signatory_title' ) );
-	$address   = trim( (string) gwcvt_setting( 'org_address' ) );
-	$contact   = gwcvt_org_contact();
-	$strings   = gwcvt_letter_strings( $letter );
-	$logo      = gwcvt_letter_logo_url();
+function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium ): string {
+	$org       = gwc_vt_org_name();
+	$tokens    = gwc_vt_letter_tokens( $letter );
+	$itemize   = (bool) gwc_vt_setting( 'letter_itemize' );
+	$signatory = trim( (string) gwc_vt_setting( 'signatory_name' ) );
+	$title     = trim( (string) gwc_vt_setting( 'signatory_title' ) );
+	$address   = trim( (string) gwc_vt_setting( 'org_address' ) );
+	$contact   = gwc_vt_org_contact();
+	$strings   = gwc_vt_letter_strings( $letter );
+	$logo      = gwc_vt_letter_logo_url();
 
 	ob_start();
 	?>
@@ -199,7 +199,7 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 
 		<h1 class="gwcvt-heading"><?php echo esc_html( $strings['heading'] ); ?></h1>
 
-		<p class="gwcvt-intro"><?php echo wp_kses( gwcvt_letter_intro( $tokens ), gwcvt_letter_allowed_html() ); ?></p>
+		<p class="gwcvt-intro"><?php echo wp_kses( gwc_vt_letter_intro( $tokens ), gwc_vt_letter_allowed_html() ); ?></p>
 
 		<table class="gwcvt-summary-table">
 			<tbody>
@@ -209,11 +209,11 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 				</tr>
 				<tr>
 					<th scope="row"><?php echo esc_html( $strings['label_period'] ); ?></th>
-					<td><?php echo esc_html( gwcvt_letter_period( $letter ) ); ?></td>
+					<td><?php echo esc_html( gwc_vt_letter_period( $letter ) ); ?></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php echo esc_html( $strings['label_hours'] ); ?></th>
-					<td class="gwcvt-total"><strong><?php echo esc_html( gwcvt_format_hours( $letter->verified_minutes ) ); ?></strong></td>
+					<td class="gwcvt-total"><strong><?php echo esc_html( gwc_vt_format_hours( $letter->verified_minutes ) ); ?></strong></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php echo esc_html( $strings['label_shifts'] ); ?></th>
@@ -243,8 +243,8 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 				<tbody>
 					<?php foreach ( $letter->entries as $entry ) : ?>
 						<tr class="<?php echo $entry->verified ? 'gwcvt-row' : 'gwcvt-row gwcvt-row--unverified'; ?>">
-							<td><?php echo esc_html( gwcvt_display_date( $entry->date ) ); ?></td>
-							<td><?php echo esc_html( gwcvt_format_hours( $entry->minutes ) ); ?></td>
+							<td><?php echo esc_html( gwc_vt_display_date( $entry->date ) ); ?></td>
+							<td><?php echo esc_html( gwc_vt_format_hours( $entry->minutes ) ); ?></td>
 							<td><?php echo esc_html( $entry->activity ); ?></td>
 							<td><?php echo esc_html( $entry->supervisor ); ?></td>
 							<td>
@@ -263,7 +263,7 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 					printf(
 						/* translators: %s: a duration, e.g. "1.5". */
 						esc_html__( 'This letter also lists %s of recorded but unverified time. No member of staff has attested to those shifts, and they are excluded from the verified total above.', 'groundwork-common-volunteer-tracker' ),
-						esc_html( gwcvt_format_hours( $letter->unverified_minutes ) )
+						esc_html( gwc_vt_format_hours( $letter->unverified_minutes ) )
 					);
 					?>
 				</p>
@@ -292,8 +292,8 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
 		</div>
 
 		<footer class="gwcvt-disclaimer">
-			<p><?php echo wp_kses( gwcvt_replace_tokens( gwcvt_disclaimer(), $tokens ), gwcvt_letter_allowed_html() ); ?></p>
-			<p class="gwcvt-reference-note"><?php echo wp_kses( gwcvt_replace_tokens( gwcvt_reference_note(), $tokens ), gwcvt_letter_allowed_html() ); ?></p>
+			<p><?php echo wp_kses( gwc_vt_replace_tokens( gwc_vt_disclaimer(), $tokens ), gwc_vt_letter_allowed_html() ); ?></p>
+			<p class="gwcvt-reference-note"><?php echo wp_kses( gwc_vt_replace_tokens( gwc_vt_reference_note(), $tokens ), gwc_vt_letter_allowed_html() ); ?></p>
 			<p class="gwcvt-reference"><?php echo esc_html( $letter->reference ); ?></p>
 		</footer>
 	</div>
@@ -309,7 +309,7 @@ function gwcvt_letter_body( GWCVT_Letter $letter, string $medium ): string {
  *
  * @return array
  */
-function gwcvt_letter_allowed_html(): array {
+function gwc_vt_letter_allowed_html(): array {
 	return array(
 		'strong' => array(),
 		'em'     => array(),
@@ -320,20 +320,20 @@ function gwcvt_letter_allowed_html(): array {
 /**
  * The values a letter's configurable text can refer to.
  *
- * @param GWCVT_Letter $letter The letter.
+ * @param GWC_VT_Letter $letter The letter.
  * @return array<string, string>
  */
-function gwcvt_letter_tokens( GWCVT_Letter $letter ): array {
+function gwc_vt_letter_tokens( GWC_VT_Letter $letter ): array {
 	return array(
-		'{org}'       => gwcvt_org_name(),
+		'{org}'       => gwc_vt_org_name(),
 		'{name}'      => $letter->volunteer_name,
-		'{hours}'     => gwcvt_format_hours( $letter->verified_minutes ),
+		'{hours}'     => gwc_vt_format_hours( $letter->verified_minutes ),
 		'{shifts}'    => (string) number_format_i18n( $letter->verified_count() ),
-		'{period}'    => gwcvt_letter_period( $letter ),
-		'{contact}'   => gwcvt_org_contact(),
+		'{period}'    => gwc_vt_letter_period( $letter ),
+		'{contact}'   => gwc_vt_org_contact(),
 		'{reference}' => $letter->reference,
 		'{timestamp}' => (string) wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), $letter->issued_at ),
-		'{timezone}'  => gwcvt_timezone_label( $letter->issued_at ),
+		'{timezone}'  => gwc_vt_timezone_label( $letter->issued_at ),
 	);
 }
 
@@ -351,7 +351,7 @@ function gwcvt_letter_tokens( GWCVT_Letter $letter ): array {
  * @param int $timestamp When the letter was produced.
  * @return string
  */
-function gwcvt_timezone_label( int $timestamp ): string {
+function gwc_vt_timezone_label( int $timestamp ): string {
 	$zone = (string) wp_timezone_string();
 
 	if ( '' === $zone ) {
@@ -383,7 +383,7 @@ function gwcvt_timezone_label( int $timestamp ): string {
  * @param array  $tokens Token map.
  * @return string
  */
-function gwcvt_replace_tokens( string $text, array $tokens ): string {
+function gwc_vt_replace_tokens( string $text, array $tokens ): string {
 	return str_replace( array_keys( $tokens ), array_values( $tokens ), $text );
 }
 
@@ -393,28 +393,28 @@ function gwcvt_replace_tokens( string $text, array $tokens ): string {
  * @param array $tokens Token map.
  * @return string
  */
-function gwcvt_letter_intro( array $tokens ): string {
-	$intro = trim( (string) gwcvt_setting( 'letter_intro' ) );
+function gwc_vt_letter_intro( array $tokens ): string {
+	$intro = trim( (string) gwc_vt_setting( 'letter_intro' ) );
 
 	if ( '' === $intro ) {
 		$intro = __( 'This letter confirms that {name} performed {hours} hours of verified volunteer service with {org} during {period}. The shifts below are recorded in our volunteer hour log, and each was attested to by a member of our staff.', 'groundwork-common-volunteer-tracker' );
 	}
 
-	return gwcvt_replace_tokens( $intro, $tokens );
+	return gwc_vt_replace_tokens( $intro, $tokens );
 }
 
 /**
  * The period, in words.
  *
- * @param GWCVT_Letter $letter The letter.
+ * @param GWC_VT_Letter $letter The letter.
  * @return string
  */
-function gwcvt_letter_period( GWCVT_Letter $letter ): string {
+function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
 	/* Formatted, like every other date on the document. The stored Y-m-d is what
 	 * the reference code is computed over and what the checker compares — this is
 	 * only how it is written on the page. */
-	$from = gwcvt_display_date( $letter->from );
-	$to   = gwcvt_display_date( $letter->to );
+	$from = gwc_vt_display_date( $letter->from );
+	$to   = gwc_vt_display_date( $letter->to );
 
 	if ( '' !== $letter->from && '' !== $letter->to ) {
 		return sprintf(
@@ -441,15 +441,15 @@ function gwcvt_letter_period( GWCVT_Letter $letter ): string {
 /**
  * The document's title, which is also the suggested filename when printing.
  *
- * @param GWCVT_Letter $letter The letter.
+ * @param GWC_VT_Letter $letter The letter.
  * @return string
  */
-function gwcvt_letter_title( GWCVT_Letter $letter ): string {
+function gwc_vt_letter_title( GWC_VT_Letter $letter ): string {
 	return sprintf(
 		/* translators: 1: a volunteer's name, 2: the organisation's name. */
 		__( 'Volunteer service verification — %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
 		$letter->volunteer_name,
-		gwcvt_org_name()
+		gwc_vt_org_name()
 	);
 }
 
@@ -462,8 +462,8 @@ function gwcvt_letter_title( GWCVT_Letter $letter ): string {
  *
  * @return string An absolute URL, or ''.
  */
-function gwcvt_letter_logo_url(): string {
-	$attachment = (int) gwcvt_setting( 'org_logo' );
+function gwc_vt_letter_logo_url(): string {
+	$attachment = (int) gwc_vt_setting( 'org_logo' );
 
 	if ( $attachment < 1 ) {
 		return '';
@@ -481,8 +481,8 @@ function gwcvt_letter_logo_url(): string {
  *
  * @return string
  */
-function gwcvt_org_contact(): string {
-	$contact = trim( (string) gwcvt_setting( 'org_contact' ) );
+function gwc_vt_org_contact(): string {
+	$contact = trim( (string) gwc_vt_setting( 'org_contact' ) );
 
 	return '' !== $contact ? $contact : (string) get_option( 'admin_email' );
 }
@@ -505,7 +505,7 @@ function gwcvt_org_contact(): string {
  * @param string $html The letter body.
  * @return string
  */
-function gwcvt_inline_letter_styles( string $html ): string {
+function gwc_vt_inline_letter_styles( string $html ): string {
 	$rules = array(
 		'gwcvt-letter'           => 'font-family:Georgia,"Times New Roman",serif;font-size:12pt;line-height:1.55;color:#1a1a1a;max-width:44em;margin:0 auto;padding:16px;',
 		'gwcvt-letterhead'       => 'border-bottom:1px solid #999;padding-bottom:10px;margin-bottom:22px;',
@@ -577,7 +577,7 @@ function gwcvt_inline_letter_styles( string $html ): string {
 
 			return '<' . $matched[1] . $attributes . ' style="' . $declarations . '"' . $closes . '>';
 		},
-		gwcvt_inline_letter_cells( $html )
+		gwc_vt_inline_letter_cells( $html )
 	);
 }
 
@@ -587,7 +587,7 @@ function gwcvt_inline_letter_styles( string $html ): string {
  * @param string $html The letter body.
  * @return string
  */
-function gwcvt_inline_letter_cells( string $html ): string {
+function gwc_vt_inline_letter_cells( string $html ): string {
 	/* Only cells with NO class of their own. A classed cell is handled by the
 	 * class pass, and styling it here as well would give it two style
 	 * attributes — of which HTML silently keeps the first. */

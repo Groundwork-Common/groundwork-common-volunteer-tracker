@@ -7,9 +7,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'admin_post_gwcvt_event_roster_add', 'gwcvt_handle_event_roster_add' );
-add_action( 'admin_post_gwcvt_signup_promote', 'gwcvt_handle_signup_promote' );
-add_action( 'admin_post_gwcvt_event_roster_print', 'gwcvt_handle_event_roster_print' );
+add_action( 'admin_post_gwc_vt_event_roster_add', 'gwc_vt_handle_event_roster_add' );
+add_action( 'admin_post_gwc_vt_signup_promote', 'gwc_vt_handle_signup_promote' );
+add_action( 'admin_post_gwc_vt_event_roster_print', 'gwc_vt_handle_event_roster_print' );
 
 /* ── The one screen that shows names ─────────────────────────────────────────
  * The public grid shows counts and never names, and there is no setting that
@@ -26,20 +26,20 @@ add_action( 'admin_post_gwcvt_event_roster_print', 'gwcvt_handle_event_roster_pr
  *
  * @param int $event_id Event post ID.
  */
-function gwcvt_render_event_roster( int $event_id ): void {
-	$roles     = gwcvt_event_roles( $event_id, array( 'publish', 'draft', GWCVT_SHIFT_CANCELLED ) );
-	$clashes   = gwcvt_event_clashes( $event_id );
-	$capacity  = gwcvt_event_capacity( $event_id );
-	$slot_list = gwcvt_event_slot_ids( $event_id, array( 'publish', 'draft' ) );
+function gwc_vt_render_event_roster( int $event_id ): void {
+	$roles     = gwc_vt_event_roles( $event_id, array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ) );
+	$clashes   = gwc_vt_event_clashes( $event_id );
+	$capacity  = gwc_vt_event_capacity( $event_id );
+	$slot_list = gwc_vt_event_slot_ids( $event_id, array( 'publish', 'draft' ) );
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php echo esc_html( gwcvt_event_name( $event_id ) ); ?></h1>
+		<h1><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></h1>
 
 		<p class="description">
 			<?php
-			echo esc_html( gwcvt_event_date_label( $event_id ) );
+			echo esc_html( gwc_vt_event_date_label( $event_id ) );
 
-			$where = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) );
+			$where = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_LOCATION, true ) );
 
 			if ( '' !== $where ) {
 				echo ' · ' . esc_html( $where );
@@ -48,18 +48,18 @@ function gwcvt_render_event_roster( int $event_id ): void {
 			echo ' · ';
 			echo esc_html(
 				null !== $capacity
-					? gwcvt_event_fill_label( $event_id ) . ' ' . __( 'places filled', 'groundwork-common-volunteer-tracker' )
-					: gwcvt_event_fill_label( $event_id )
+					? gwc_vt_event_fill_label( $event_id ) . ' ' . __( 'places filled', 'groundwork-common-volunteer-tracker' )
+					: gwc_vt_event_fill_label( $event_id )
 			);
 			?>
 		</p>
 
 		<p>
-			<a class="button" href="<?php echo esc_url( gwcvt_event_edit_url( $event_id ) ); ?>">
+			<a class="button" href="<?php echo esc_url( gwc_vt_event_edit_url( $event_id ) ); ?>">
 				<?php esc_html_e( 'Edit the event', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 			<?php if ( $slot_list ) : ?>
-				<a class="button" href="<?php echo esc_url( gwcvt_event_print_url( $event_id ) ); ?>" target="_blank" rel="noopener noreferrer">
+				<a class="button" href="<?php echo esc_url( gwc_vt_event_print_url( $event_id ) ); ?>" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
 				<span class="description"><?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use "Log the hours" beside each time — everybody who signed up is already listed and ticked.', 'groundwork-common-volunteer-tracker' ); ?></span>
@@ -74,8 +74,8 @@ function gwcvt_render_event_roster( int $event_id ): void {
 						/* translators: 1: a person's name, 2: one slot, 3: another slot. */
 						esc_html__( '%1$s is down for two times that overlap: %2$s and %3$s. Nothing has been blocked.', 'groundwork-common-volunteer-tracker' ),
 						'<strong>' . esc_html( $clash['who'] ) . '</strong>',
-						esc_html( gwcvt_slot_label( $clash['a'] ) ),
-						esc_html( gwcvt_slot_label( $clash['b'] ) )
+						esc_html( gwc_vt_slot_label( $clash['a'] ) ),
+						esc_html( gwc_vt_slot_label( $clash['b'] ) )
 					);
 					?>
 				</p>
@@ -90,7 +90,7 @@ function gwcvt_render_event_roster( int $event_id ): void {
 			<h2><?php echo esc_html( (string) $role ); ?></h2>
 
 			<?php foreach ( $slot_ids as $shift_id ) : ?>
-				<?php gwcvt_render_event_slot_roster( (int) $shift_id ); ?>
+				<?php gwc_vt_render_event_slot_roster( (int) $shift_id ); ?>
 			<?php endforeach; ?>
 		<?php endforeach; ?>
 
@@ -99,9 +99,9 @@ function gwcvt_render_event_roster( int $event_id ): void {
 			<h2><?php esc_html_e( 'Put somebody on', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="gwcvt_event_roster_add" />
-				<input type="hidden" name="gwcvt_event" value="<?php echo esc_attr( (string) $event_id ); ?>" />
-				<?php wp_nonce_field( 'gwcvt_event_roster_add_' . $event_id ); ?>
+				<input type="hidden" name="action" value="gwc_vt_event_roster_add" />
+				<input type="hidden" name="gwc_vt_event" value="<?php echo esc_attr( (string) $event_id ); ?>" />
+				<?php wp_nonce_field( 'gwc_vt_event_roster_add_' . $event_id ); ?>
 
 				<table class="form-table" role="presentation">
 					<tbody>
@@ -127,7 +127,7 @@ function gwcvt_render_event_roster( int $event_id ): void {
 										aria-controls="gwcvt-event-roster-results"
 										placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
 									/>
-									<input type="hidden" name="gwcvt_volunteer" value="0" />
+									<input type="hidden" name="gwc_vt_volunteer" value="0" />
 									<ul id="gwcvt-event-roster-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
 								</div>
 								<p class="description">
@@ -138,21 +138,21 @@ function gwcvt_render_event_roster( int $event_id ): void {
 						<tr>
 							<th scope="row"><label for="gwcvt-event-roster-slot"><?php esc_html_e( 'Which one', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 							<td>
-								<select id="gwcvt-event-roster-slot" name="gwcvt_shift" required>
+								<select id="gwcvt-event-roster-slot" name="gwc_vt_shift" required>
 									<?php foreach ( $slot_list as $shift_id ) : ?>
 										<option value="<?php echo esc_attr( (string) $shift_id ); ?>">
 											<?php
-											$short = gwcvt_shift_is_understaffed( (int) $shift_id )
+											$short = gwc_vt_shift_is_understaffed( (int) $shift_id )
 												? sprintf(
 													/* translators: %d: how many more people are needed. */
 													__( 'needs %d more', 'groundwork-common-volunteer-tracker' ),
-													max( 0, (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true ) - gwcvt_shift_filled( (int) $shift_id ) )
+													max( 0, (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true ) - gwc_vt_shift_filled( (int) $shift_id ) )
 												)
-												: gwcvt_shift_fill_label( (int) $shift_id );
+												: gwc_vt_shift_fill_label( (int) $shift_id );
 
 											printf(
 												'%s — %s',
-												esc_html( gwcvt_slot_label( (int) $shift_id ) ),
+												esc_html( gwc_vt_slot_label( (int) $shift_id ) ),
 												esc_html( $short )
 											);
 											?>
@@ -179,12 +179,12 @@ function gwcvt_render_event_roster( int $event_id ): void {
  *
  * @param int $shift_id Shift post ID.
  */
-function gwcvt_render_event_slot_roster( int $shift_id ): void {
-	$roster    = gwcvt_shift_signup_ids( $shift_id );
-	$waiting   = gwcvt_shift_signup_ids( $shift_id, array( GWCVT_SIGNUP_WAITLIST ) );
-	$gone      = gwcvt_shift_signup_ids( $shift_id, array( GWCVT_SIGNUP_WITHDRAWN ) );
-	$cancelled = gwcvt_shift_is_cancelled( $shift_id );
-	$min       = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true );
+function gwc_vt_render_event_slot_roster( int $shift_id ): void {
+	$roster    = gwc_vt_shift_signup_ids( $shift_id );
+	$waiting   = gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WAITLIST ) );
+	$gone      = gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WITHDRAWN ) );
+	$cancelled = gwc_vt_shift_is_cancelled( $shift_id );
+	$min       = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true );
 	$short     = max( 0, $min - count( $roster ) );
 
 	/* A time that has finished can be turned into hours, exactly as a standalone
@@ -192,17 +192,17 @@ function gwcvt_render_event_slot_roster( int $shift_id ): void {
 	 * counted by the unlogged-hours nag, and the only screens offering the
 	 * pre-filled reconciliation listed standalone shifts. The instruction on the
 	 * print sheet — type it into Log a day — meant retyping the roster by hand. */
-	$ended      = ! $cancelled && gwcvt_shift_has_ended( $shift_id );
-	$reconciled = $ended && gwcvt_shift_is_reconciled( $shift_id );
+	$ended      = ! $cancelled && gwc_vt_shift_has_ended( $shift_id );
+	$reconciled = $ended && gwc_vt_shift_is_reconciled( $shift_id );
 	?>
 	<h3 style="margin-bottom:4px">
-		<?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?>
+		<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
 		<span class="description" style="font-weight:400">
 			<?php
 			if ( $cancelled ) {
 				esc_html_e( '— called off', 'groundwork-common-volunteer-tracker' );
 			} else {
-				echo esc_html( gwcvt_shift_fill_label( $shift_id ) );
+				echo esc_html( gwc_vt_shift_fill_label( $shift_id ) );
 
 				if ( $short > 0 ) {
 					printf(
@@ -219,7 +219,7 @@ function gwcvt_render_event_slot_roster( int $shift_id ): void {
 			<a
 				class="gwcvt-badge <?php echo $reconciled ? 'gwcvt-badge--verified' : 'gwcvt-badge--waiting gwcvt-badge--action'; ?>"
 				style="font-weight:400"
-				href="<?php echo esc_url( gwcvt_shift_log_url( $shift_id ) ); ?>"
+				href="<?php echo esc_url( gwc_vt_shift_log_url( $shift_id ) ); ?>"
 			>
 				<?php
 				echo $reconciled
@@ -246,15 +246,15 @@ function gwcvt_render_event_slot_roster( int $shift_id ): void {
 			<?php endif; ?>
 
 			<?php foreach ( $roster as $signup_id ) : ?>
-				<?php gwcvt_render_event_roster_row( (int) $signup_id, __( 'On the roster', 'groundwork-common-volunteer-tracker' ), false ); ?>
+				<?php gwc_vt_render_event_roster_row( (int) $signup_id, __( 'On the roster', 'groundwork-common-volunteer-tracker' ), false ); ?>
 			<?php endforeach; ?>
 
 			<?php foreach ( $waiting as $signup_id ) : ?>
-				<?php gwcvt_render_event_roster_row( (int) $signup_id, __( 'Waiting list', 'groundwork-common-volunteer-tracker' ), true ); ?>
+				<?php gwc_vt_render_event_roster_row( (int) $signup_id, __( 'Waiting list', 'groundwork-common-volunteer-tracker' ), true ); ?>
 			<?php endforeach; ?>
 
 			<?php foreach ( $gone as $signup_id ) : ?>
-				<?php gwcvt_render_event_roster_row( (int) $signup_id, __( 'Withdrew', 'groundwork-common-volunteer-tracker' ), false ); ?>
+				<?php gwc_vt_render_event_roster_row( (int) $signup_id, __( 'Withdrew', 'groundwork-common-volunteer-tracker' ), false ); ?>
 			<?php endforeach; ?>
 		</tbody>
 	</table>
@@ -268,19 +268,19 @@ function gwcvt_render_event_slot_roster( int $shift_id ): void {
  * @param string $standing   What to call their status.
  * @param bool   $promotable Whether to offer the promote action.
  */
-function gwcvt_render_event_roster_row( int $signup_id, string $standing, bool $promotable ): void {
-	$volunteer_id = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true );
-	$email        = gwcvt_signup_email( $signup_id );
-	$created      = (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CREATED, true );
+function gwc_vt_render_event_roster_row( int $signup_id, string $standing, bool $promotable ): void {
+	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
+	$email        = gwc_vt_signup_email( $signup_id );
+	$created      = (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CREATED, true );
 	?>
 	<tr>
 		<td>
 			<?php if ( $volunteer_id > 0 ) : ?>
 				<a href="<?php echo esc_url( (string) get_edit_post_link( $volunteer_id ) ); ?>">
-					<?php echo esc_html( gwcvt_signup_name( $signup_id ) ); ?>
+					<?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?>
 				</a>
 			<?php else : ?>
-				<?php echo esc_html( gwcvt_signup_name( $signup_id ) ); ?>
+				<?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?>
 			<?php endif; ?>
 		</td>
 		<td><?php echo '' !== $email ? esc_html( $email ) : '<span class="description">—</span>'; ?></td>
@@ -295,9 +295,9 @@ function gwcvt_render_event_roster_row( int $signup_id, string $standing, bool $
 		<td>
 			<?php if ( $promotable ) : ?>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
-					<input type="hidden" name="action" value="gwcvt_signup_promote" />
-					<input type="hidden" name="gwcvt_signup" value="<?php echo esc_attr( (string) $signup_id ); ?>" />
-					<?php wp_nonce_field( 'gwcvt_signup_promote_' . $signup_id ); ?>
+					<input type="hidden" name="action" value="gwc_vt_signup_promote" />
+					<input type="hidden" name="gwc_vt_signup" value="<?php echo esc_attr( (string) $signup_id ); ?>" />
+					<?php wp_nonce_field( 'gwc_vt_signup_promote_' . $signup_id ); ?>
 					<button type="submit" class="button-link"><?php esc_html_e( 'Give them a place', 'groundwork-common-volunteer-tracker' ); ?></button>
 				</form>
 			<?php endif; ?>
@@ -322,12 +322,12 @@ function gwcvt_render_event_roster_row( int $signup_id, string $standing, bool $
  * @param int $event_id Event post ID.
  * @return array<int, array{who: string, a: int, b: int}>
  */
-function gwcvt_event_clashes( int $event_id ): array {
+function gwc_vt_event_clashes( int $event_id ): array {
 	$by_person = array();
 
-	foreach ( gwcvt_event_slot_ids( $event_id ) as $shift_id ) {
-		foreach ( gwcvt_shift_signup_ids( $shift_id ) as $signup_id ) {
-			$key = gwcvt_signup_person_key( (int) $signup_id );
+	foreach ( gwc_vt_event_slot_ids( $event_id ) as $shift_id ) {
+		foreach ( gwc_vt_shift_signup_ids( $shift_id ) as $signup_id ) {
+			$key = gwc_vt_signup_person_key( (int) $signup_id );
 
 			if ( '' === $key ) {
 				continue;
@@ -335,7 +335,7 @@ function gwcvt_event_clashes( int $event_id ): array {
 
 			if ( ! isset( $by_person[ $key ] ) ) {
 				$by_person[ $key ] = array(
-					'who'    => gwcvt_signup_name( (int) $signup_id ),
+					'who'    => gwc_vt_signup_name( (int) $signup_id ),
 					'shifts' => array(),
 				);
 			}
@@ -347,7 +347,7 @@ function gwcvt_event_clashes( int $event_id ): array {
 	$clashes = array();
 
 	foreach ( $by_person as $person ) {
-		$pair = gwcvt_first_overlapping_pair( $person['shifts'] );
+		$pair = gwc_vt_first_overlapping_pair( $person['shifts'] );
 
 		if ( $pair ) {
 			$clashes[] = array(
@@ -366,25 +366,25 @@ function gwcvt_event_clashes( int $event_id ): array {
 /**
  * Put somebody on one of an event's times.
  */
-function gwcvt_handle_event_roster_add(): void {
-	gwcvt_require_shift_cap();
+function gwc_vt_handle_event_roster_add(): void {
+	gwc_vt_require_shift_cap();
 
-	$event_id = isset( $_POST['gwcvt_event'] ) ? absint( wp_unslash( $_POST['gwcvt_event'] ) ) : 0;
+	$event_id = isset( $_POST['gwc_vt_event'] ) ? absint( wp_unslash( $_POST['gwc_vt_event'] ) ) : 0;
 
-	check_admin_referer( 'gwcvt_event_roster_add_' . $event_id );
+	check_admin_referer( 'gwc_vt_event_roster_add_' . $event_id );
 
 	$posted = wp_unslash( $_POST );
 
-	$volunteer_id = absint( $posted['gwcvt_volunteer'] ?? 0 );
-	$shift_id     = absint( $posted['gwcvt_shift'] ?? 0 );
+	$volunteer_id = absint( $posted['gwc_vt_volunteer'] ?? 0 );
+	$shift_id     = absint( $posted['gwc_vt_shift'] ?? 0 );
 
 	/* The slot has to belong to this event. Without the check, a crafted form
 	 * could add somebody to any shift on the site through this nonce. */
-	if ( $volunteer_id < 1 || gwcvt_event_for_shift( $shift_id ) !== $event_id ) {
-		gwcvt_event_roster_redirect( $event_id, 'saved' );
+	if ( $volunteer_id < 1 || gwc_vt_event_for_shift( $shift_id ) !== $event_id ) {
+		gwc_vt_event_roster_redirect( $event_id, 'saved' );
 	}
 
-	gwcvt_add_signup(
+	gwc_vt_add_signup(
 		$shift_id,
 		array(
 			'volunteer_id' => $volunteer_id,
@@ -392,14 +392,14 @@ function gwcvt_handle_event_roster_add(): void {
 		)
 	);
 
-	gwcvt_event_roster_redirect( $event_id, 'rostered' );
+	gwc_vt_event_roster_redirect( $event_id, 'rostered' );
 }
 
 /**
  * Give somebody on the waiting list a place.
  *
  * ── Why this exists ──────────────────────────────────────────────────────────
- * gwcvt_settle_signups() promotes automatically, but it only ever runs when
+ * gwc_vt_settle_signups() promotes automatically, but it only ever runs when
  * somebody is added or somebody withdraws. A coordinator who KNOWS a place is
  * soft — somebody rang and said they probably cannot make it, somebody has not
  * answered in three weeks — had no way to free it, and the person on the waiting
@@ -414,21 +414,21 @@ function gwcvt_handle_event_roster_add(): void {
  * bounce them back out again, and a coordinator who has decided to squeeze one
  * more person in has decided.
  */
-function gwcvt_handle_signup_promote(): void {
-	gwcvt_require_shift_cap();
+function gwc_vt_handle_signup_promote(): void {
+	gwc_vt_require_shift_cap();
 
-	$signup_id = isset( $_POST['gwcvt_signup'] ) ? absint( wp_unslash( $_POST['gwcvt_signup'] ) ) : 0;
+	$signup_id = isset( $_POST['gwc_vt_signup'] ) ? absint( wp_unslash( $_POST['gwc_vt_signup'] ) ) : 0;
 
-	check_admin_referer( 'gwcvt_signup_promote_' . $signup_id );
+	check_admin_referer( 'gwc_vt_signup_promote_' . $signup_id );
 
-	if ( GWCVT_SIGNUP_TYPE !== get_post_type( $signup_id ) ) {
-		gwcvt_event_roster_redirect( 0, 'unknown' );
+	if ( GWC_VT_SIGNUP_TYPE !== get_post_type( $signup_id ) ) {
+		gwc_vt_event_roster_redirect( 0, 'unknown' );
 	}
 
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
-	$event_id = gwcvt_event_for_shift( $shift_id );
+	$event_id = gwc_vt_event_for_shift( $shift_id );
 
-	if ( GWCVT_SIGNUP_WAITLIST === get_post_status( $signup_id ) ) {
+	if ( GWC_VT_SIGNUP_WAITLIST === get_post_status( $signup_id ) ) {
 		wp_update_post(
 			array(
 				'ID'          => $signup_id,
@@ -442,14 +442,14 @@ function gwcvt_handle_signup_promote(): void {
 		 * @param int $signup_id The signup.
 		 * @param int $shift_id  The shift.
 		 */
-		do_action( 'gwcvt_signup_promoted', $signup_id, $shift_id );
+		do_action( 'gwc_vt_signup_promoted', $signup_id, $shift_id );
 	}
 
 	if ( $event_id > 0 ) {
-		gwcvt_event_roster_redirect( $event_id, 'promoted' );
+		gwc_vt_event_roster_redirect( $event_id, 'promoted' );
 	}
 
-	gwcvt_shift_redirect( $shift_id, 'promoted' );
+	gwc_vt_shift_redirect( $shift_id, 'promoted' );
 }
 
 /**
@@ -458,18 +458,18 @@ function gwcvt_handle_signup_promote(): void {
  * @param int    $event_id Event post ID, or 0 for the list.
  * @param string $result   What to say.
  */
-function gwcvt_event_roster_redirect( int $event_id, string $result ): void {
+function gwc_vt_event_roster_redirect( int $event_id, string $result ): void {
 	if ( $event_id < 1 ) {
-		wp_safe_redirect( gwcvt_schedule_url( array( 'view' => 'events' ) ) );
+		wp_safe_redirect( gwc_vt_schedule_url( array( 'view' => 'events' ) ) );
 		exit;
 	}
 
 	wp_safe_redirect(
-		gwcvt_schedule_url(
+		gwc_vt_schedule_url(
 			array(
-				'gwcvt_event'        => $event_id,
-				'view'               => 'roster',
-				'gwcvt_event_result' => $result,
+				'gwc_vt_event'        => $event_id,
+				'view'                => 'roster',
+				'gwc_vt_event_result' => $result,
 			)
 		)
 	);
@@ -490,25 +490,25 @@ function gwcvt_event_roster_redirect( int $event_id, string $result ): void {
  * @param int $event_id Event post ID.
  * @return string
  */
-function gwcvt_event_print_url( int $event_id ): string {
+function gwc_vt_event_print_url( int $event_id ): string {
 	return wp_nonce_url(
-		admin_url( 'admin-post.php?action=gwcvt_event_roster_print&gwcvt_event=' . $event_id ),
-		'gwcvt_event_roster_print_' . $event_id
+		admin_url( 'admin-post.php?action=gwc_vt_event_roster_print&gwc_vt_event=' . $event_id ),
+		'gwc_vt_event_roster_print_' . $event_id
 	);
 }
 
 /**
  * Render an event's roster as a standalone document.
  */
-function gwcvt_handle_event_roster_print(): void {
-	gwcvt_require_shift_cap();
+function gwc_vt_handle_event_roster_print(): void {
+	gwc_vt_require_shift_cap();
 
 	// Verified immediately below against this value.
-	$event_id = isset( $_GET['gwcvt_event'] ) ? absint( wp_unslash( $_GET['gwcvt_event'] ) ) : 0;
+	$event_id = isset( $_GET['gwc_vt_event'] ) ? absint( wp_unslash( $_GET['gwc_vt_event'] ) ) : 0;
 
-	check_admin_referer( 'gwcvt_event_roster_print_' . $event_id );
+	check_admin_referer( 'gwc_vt_event_roster_print_' . $event_id );
 
-	if ( GWCVT_EVENT_TYPE !== get_post_type( $event_id ) ) {
+	if ( GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) ) {
 		wp_die(
 			esc_html__( 'That event no longer exists.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Not found', 'groundwork-common-volunteer-tracker' ),
@@ -522,7 +522,7 @@ function gwcvt_handle_event_roster_print(): void {
 	header( 'Referrer-Policy: no-referrer' );
 	header( 'Content-Type: text/html; charset=utf-8' );
 
-	gwcvt_render_event_roster_document( $event_id );
+	gwc_vt_render_event_roster_document( $event_id );
 	exit;
 }
 
@@ -531,8 +531,8 @@ function gwcvt_handle_event_roster_print(): void {
  *
  * @param int $event_id Event post ID.
  */
-function gwcvt_render_event_roster_document( int $event_id ): void {
-	$roles = gwcvt_event_roles( $event_id );
+function gwc_vt_render_event_roster_document( int $event_id ): void {
+	$roles = gwc_vt_event_roles( $event_id );
 	?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -540,25 +540,25 @@ function gwcvt_render_event_roster_document( int $event_id ): void {
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="noindex, nofollow, noarchive" />
-	<title><?php echo esc_html( gwcvt_event_name( $event_id ) ); ?></title>
+	<title><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></title>
 	<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- this is a standalone document with its own <head>, not a WordPress page, so there is no enqueue queue to join. The plugin owning this markup outright is the point: see the note about theme-overridable templates. ?>
-	<link rel="stylesheet" href="<?php echo esc_url( GWCVT_URL . 'assets/css/letter.css' ); ?>" />
+	<link rel="stylesheet" href="<?php echo esc_url( GWC_VT_URL . 'assets/css/letter.css' ); ?>" />
 </head>
 <body class="gwcvt-roster-print">
-	<h1><?php echo esc_html( gwcvt_org_name() ); ?></h1>
+	<h1><?php echo esc_html( gwc_vt_org_name() ); ?></h1>
 
-	<h2><?php echo esc_html( gwcvt_event_name( $event_id ) ); ?></h2>
+	<h2><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></h2>
 
 	<p>
-		<strong><?php echo esc_html( gwcvt_event_date_label( $event_id ) ); ?></strong>
+		<strong><?php echo esc_html( gwc_vt_event_date_label( $event_id ) ); ?></strong>
 		<?php
-		$location = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) );
+		$location = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_LOCATION, true ) );
 
 		if ( '' !== $location ) {
 			echo '<br />' . esc_html( $location );
 		}
 
-		$supervisor = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_SUPERVISOR, true ) );
+		$supervisor = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_SUPERVISOR, true ) );
 
 		if ( '' !== $supervisor ) {
 			printf(
@@ -581,12 +581,12 @@ function gwcvt_render_event_roster_document( int $event_id ): void {
 		<?php foreach ( $slot_ids as $shift_id ) : ?>
 			<?php
 			$shift_id = (int) $shift_id;
-			$roster   = gwcvt_shift_signup_ids( $shift_id );
-			$waiting  = gwcvt_shift_signup_ids( $shift_id, array( GWCVT_SIGNUP_WAITLIST ) );
-			$where    = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) );
+			$roster   = gwc_vt_shift_signup_ids( $shift_id );
+			$waiting  = gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WAITLIST ) );
+			$where    = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) );
 			?>
 			<p>
-				<strong><?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?></strong>
+				<strong><?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?></strong>
 				<?php if ( '' !== $where && $where !== $location ) : ?>
 					— <?php echo esc_html( $where ); ?>
 				<?php endif; ?>
@@ -605,8 +605,8 @@ function gwcvt_render_event_roster_document( int $event_id ): void {
 				<tbody>
 					<?php foreach ( $roster as $signup_id ) : ?>
 						<tr>
-							<td><?php echo esc_html( gwcvt_signup_name( (int) $signup_id ) ); ?></td>
-							<td><?php echo esc_html( gwcvt_signup_email( (int) $signup_id ) ); ?></td>
+							<td><?php echo esc_html( gwc_vt_signup_name( (int) $signup_id ) ); ?></td>
+							<td><?php echo esc_html( gwc_vt_signup_email( (int) $signup_id ) ); ?></td>
 							<td></td>
 							<td></td>
 							<td></td>
@@ -616,10 +616,10 @@ function gwcvt_render_event_roster_document( int $event_id ): void {
 					<?php foreach ( $waiting as $signup_id ) : ?>
 						<tr>
 							<td>
-								<?php echo esc_html( gwcvt_signup_name( (int) $signup_id ) ); ?>
+								<?php echo esc_html( gwc_vt_signup_name( (int) $signup_id ) ); ?>
 								<?php esc_html_e( '(waiting list)', 'groundwork-common-volunteer-tracker' ); ?>
 							</td>
-							<td><?php echo esc_html( gwcvt_signup_email( (int) $signup_id ) ); ?></td>
+							<td><?php echo esc_html( gwc_vt_signup_email( (int) $signup_id ) ); ?></td>
 							<td></td>
 							<td></td>
 							<td></td>

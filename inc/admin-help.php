@@ -7,8 +7,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'gwcvt_settings_screen_loaded', 'gwcvt_add_settings_help' );
-add_action( 'current_screen', 'gwcvt_add_screen_help' );
+add_action( 'gwc_vt_settings_screen_loaded', 'gwc_vt_add_settings_help' );
+add_action( 'current_screen', 'gwc_vt_add_screen_help' );
 
 /* ── Why the Help tab and not a notice ───────────────────────────────────────
  * Everything here is the answer to a question somebody has once and then never
@@ -31,7 +31,7 @@ add_action( 'current_screen', 'gwcvt_add_screen_help' );
  * @param string    $title   Tab title.
  * @param string[]  $paragraphs Body paragraphs, already translated.
  */
-function gwcvt_add_help_tab( $screen, string $id, string $title, array $paragraphs ): void {
+function gwc_vt_add_help_tab( $screen, string $id, string $title, array $paragraphs ): void {
 	$content = '';
 
 	foreach ( $paragraphs as $paragraph ) {
@@ -59,32 +59,32 @@ function gwcvt_add_help_tab( $screen, string $id, string $title, array $paragrap
  *
  * @param WP_Screen $screen The screen.
  */
-function gwcvt_add_help_sidebar( $screen ): void {
+function gwc_vt_add_help_sidebar( $screen ): void {
 	$screen->set_help_sidebar(
 		'<p><strong>' . esc_html__( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ) . '</strong></p>' .
-		'<p><a href="' . esc_url( gwcvt_settings_url() ) . '">' . esc_html__( 'Settings', 'groundwork-common-volunteer-tracker' ) . '</a></p>' .
-		'<p><a href="https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker/issues" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Report a problem', 'groundwork-common-volunteer-tracker' ) . '</a></p>'
+		'<p><a href="' . esc_url( gwc_vt_settings_url() ) . '">' . esc_html__( 'Settings', 'groundwork-common-volunteer-tracker' ) . '</a></p>' .
+		'<p><a href="' . esc_url( GWC_VT_SUPPORT_URL ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Report a problem', 'groundwork-common-volunteer-tracker' ) . '</a></p>'
 	);
 }
 
 /**
  * Help for the settings screen.
  *
- * Hooked to gwcvt_settings_screen_loaded, which fires from the screen's own
+ * Hooked to gwc_vt_settings_screen_loaded, which fires from the screen's own
  * `load-` hook — help tabs have to be added before anything is output, and
  * adding them from the renderer is the mistake that makes them silently not
  * appear.
  */
-function gwcvt_add_settings_help(): void {
+function gwc_vt_add_settings_help(): void {
 	$screen = get_current_screen();
 
 	if ( ! $screen ) {
 		return;
 	}
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-letter',
+		'gwc-vt-help-letter',
 		__( 'The letter', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Everything the letter says about your organization comes from this screen: the letterhead, who signs it, and the wording of the opening paragraph.', 'groundwork-common-volunteer-tracker' ),
@@ -93,9 +93,9 @@ function gwcvt_add_settings_help(): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-logging',
+		'gwc-vt-help-logging',
 		__( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Durations are stored as whole minutes and can be typed however you think of them: <code>3.5</code>, <code>3:30</code>, <code>3h 30m</code> or <code>210m</code> all record three and a half hours.', 'groundwork-common-volunteer-tracker' ),
@@ -105,9 +105,9 @@ function gwcvt_add_settings_help(): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-shifts',
+		'gwc-vt-help-shifts',
 		__( 'Shifts', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Off until you switch it on. With it on, a Schedule screen appears where you can plan shifts ahead of time, put volunteers on them and print a roster. Nothing about it touches hours: a scheduled shift is a plan, and hours are still logged afterwards and still have to be verified.', 'groundwork-common-volunteer-tracker' ),
@@ -117,9 +117,9 @@ function gwcvt_add_settings_help(): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-privacy',
+		'gwc-vt-help-privacy',
 		__( 'Keeping and removing records', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Nothing is ever deleted while records are kept indefinitely, which is the default. That default is deliberate: a plugin that deleted on a schedule it chose would eventually destroy the weeks of Saturdays somebody needs for a court date they have not reached yet.', 'groundwork-common-volunteer-tracker' ),
@@ -131,19 +131,19 @@ function gwcvt_add_settings_help(): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-copies',
+		'gwc-vt-help-copies',
 		__( 'Staging and copies of this site', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'A copy of this site restored from a backup — a staging server, a developer\'s machine, a clone made to try an upgrade — has the real volunteers and the real email addresses in it. Left running, it will send reminders, confirmations and verification letters to those people, about court-ordered service, from a site nobody is watching.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Two constants stop it, and they go in <code>wp-config.php</code> on the copy rather than on the live site, because the copy is what you control when you make one.', 'groundwork-common-volunteer-tracker' ),
-			__( 'Set <code>GWCVT_MAIL_MODE</code> to <code>off</code> and this plugin sends nothing at all. Set it to <code>trap</code>, and also set <code>GWCVT_MAIL_ALLOW</code> to your own address, and every message is redirected there instead, with the site\'s name in the subject and a line saying who it was really addressed to.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Set <code>GWC_VT_MAIL_MODE</code> to <code>off</code> and this plugin sends nothing at all. Set it to <code>trap</code>, and also set <code>GWC_VT_MAIL_ALLOW</code> to your own address, and every message is redirected there instead, with the site\'s name in the subject and a line saying who it was really addressed to.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Neither constant needs to exist on the live site. Unset means normal delivery, so a site that has never heard of them behaves exactly as you would expect. Trap mode with no address to trap to sends nothing rather than falling through to the real recipient.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
-	gwcvt_add_help_sidebar( $screen );
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**
@@ -155,38 +155,38 @@ function gwcvt_add_settings_help(): void {
  *
  * @param WP_Screen $screen The screen being loaded.
  */
-function gwcvt_add_screen_help( $screen ): void {
+function gwc_vt_add_screen_help( $screen ): void {
 	if ( ! $screen instanceof WP_Screen ) {
 		return;
 	}
 
-	if ( 'edit-' . GWCVT_ENTRY_TYPE === $screen->id ) {
-		gwcvt_add_hours_help( $screen );
+	if ( 'edit-' . GWC_VT_ENTRY_TYPE === $screen->id ) {
+		gwc_vt_add_hours_help( $screen );
 		return;
 	}
 
-	if ( 'edit-' . GWCVT_VOLUNTEER_TYPE === $screen->id ) {
-		gwcvt_add_volunteers_help( $screen );
+	if ( 'edit-' . GWC_VT_VOLUNTEER_TYPE === $screen->id ) {
+		gwc_vt_add_volunteers_help( $screen );
 		return;
 	}
 
-	if ( false !== strpos( (string) $screen->id, GWCVT_LETTERS_PAGE ) ) {
-		gwcvt_add_letters_help( $screen );
+	if ( false !== strpos( (string) $screen->id, GWC_VT_LETTERS_PAGE ) ) {
+		gwc_vt_add_letters_help( $screen );
 		return;
 	}
 
-	if ( false !== strpos( (string) $screen->id, GWCVT_DASHBOARD_PAGE ) ) {
-		gwcvt_add_dashboard_help( $screen );
+	if ( false !== strpos( (string) $screen->id, GWC_VT_DASHBOARD_PAGE ) ) {
+		gwc_vt_add_dashboard_help( $screen );
 		return;
 	}
 
-	if ( false !== strpos( (string) $screen->id, GWCVT_SCHEDULE_PAGE ) ) {
-		gwcvt_add_schedule_help( $screen );
+	if ( false !== strpos( (string) $screen->id, GWC_VT_SCHEDULE_PAGE ) ) {
+		gwc_vt_add_schedule_help( $screen );
 		return;
 	}
 
-	if ( false !== strpos( (string) $screen->id, GWCVT_QUICK_ADD_PAGE ) ) {
-		gwcvt_add_quick_add_help( $screen );
+	if ( false !== strpos( (string) $screen->id, GWC_VT_QUICK_ADD_PAGE ) ) {
+		gwc_vt_add_quick_add_help( $screen );
 	}
 }
 
@@ -195,10 +195,10 @@ function gwcvt_add_screen_help( $screen ): void {
  *
  * @param WP_Screen $screen The screen.
  */
-function gwcvt_add_dashboard_help( $screen ): void {
-	gwcvt_add_help_tab(
+function gwc_vt_add_dashboard_help( $screen ): void {
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-dashboard',
+		'gwc-vt-help-dashboard',
 		__( 'What this screen shows', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Two things: what is waiting for you, and every way out of here. Nothing on it is a number for its own sake — each line in <strong>Needs you</strong> is something to do, and the count is what tells you whether to do it now.', 'groundwork-common-volunteer-tracker' ),
@@ -208,18 +208,18 @@ function gwcvt_add_dashboard_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-year',
+		'gwc-vt-help-year',
 		__( 'The year’s figure', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Verified hours only, for the same reason a letter states only those: nobody has attested to the rest. Hours still waiting are counted beside it rather than folded in.', 'groundwork-common-volunteer-tracker' ),
 			__( 'It is the number your Form 990 and your grant reports want, and it is the only thing on this screen that leaves the building. Everything else is a prompt to do something.', 'groundwork-common-volunteer-tracker' ),
-			__( 'The year runs from 1 January. If yours does not, a developer can set the start date with the <code>gwcvt_reporting_year_start</code> filter — it is not a setting, because a wrong answer here quietly misstates a figure that goes to a funder.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The year runs from 1 January. If yours does not, a developer can set the start date with the <code>gwc_vt_reporting_year_start</code> filter — it is not a setting, because a wrong answer here quietly misstates a figure that goes to a funder.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
-	gwcvt_add_help_sidebar( $screen );
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**
@@ -230,10 +230,10 @@ function gwcvt_add_dashboard_help( $screen ): void {
  *
  * @param WP_Screen $screen The screen.
  */
-function gwcvt_add_schedule_help( $screen ): void {
-	gwcvt_add_help_tab(
+function gwc_vt_add_schedule_help( $screen ): void {
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-planning',
+		'gwc-vt-help-planning',
 		__( 'Planning shifts', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'A shift here is a plan, not a record. Nobody accrues hours by being on a shift — hours are logged afterwards, by somebody who was there, and still have to be verified like any others.', 'groundwork-common-volunteer-tracker' ),
@@ -245,11 +245,11 @@ function gwcvt_add_schedule_help( $screen ): void {
 	);
 
 	/* Events share this screen, so they are tabs here rather than a registration
-	 * of their own — gwcvt_event_edit_url() and gwcvt_event_roster_url() are both
+	 * of their own — gwc_vt_event_edit_url() and gwc_vt_event_roster_url() are both
 	 * the schedule page with an argument. */
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-events',
+		'gwc-vt-help-events',
 		__( 'Events', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'An event is one occasion with several roles, each offered at several times — a festival, a meal service, a collection drive. Underneath it there is nothing new: every time on an event is an ordinary shift, so waiting lists, reminders, rosters and hours all behave exactly as they do for a shift you scheduled on its own.', 'groundwork-common-volunteer-tracker' ),
@@ -260,12 +260,12 @@ function gwcvt_add_schedule_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-event-page',
+		'gwc-vt-help-event-page',
 		__( 'Where volunteers see an event', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'An event has no web address of its own, and publishing one does not give it one. It is seen only on a page you put it on: add the <strong>Volunteer Event</strong> block to a page and pick the event, or paste the <code>[volunteer_event]</code> shortcode with the event’s id into one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An event has no web address of its own, and publishing one does not give it one. It is seen only on a page you put it on: add the <strong>Volunteer Event</strong> block to a page and pick the event, or paste the <code>[gwc_vt_event_grid]</code> shortcode with the event’s id into one.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The event editor tells you which page currently shows it, and says so plainly when no page does. That is the fastest way to check, because the answer is found by looking for the block rather than stored anywhere.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Three things have to be true before anybody can sign up: signing up from your site is switched on, a shifts page is pinned under Settings → Shifts, and the event is published. The pinned shifts page is needed even though the event sits on a page of its own — every public signup goes through it.', 'groundwork-common-volunteer-tracker' ),
 			__( 'An event’s times never appear on the general shifts page. That page lists shifts you scheduled on their own; an event is shown whole, on its own page, or not at all.', 'groundwork-common-volunteer-tracker' ),
@@ -273,9 +273,9 @@ function gwcvt_add_schedule_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-roster',
+		'gwc-vt-help-roster',
 		__( 'Who is coming', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'You can put anybody on a shift yourself, which is how most offers of help at this size arrive — somebody rings up. They need a volunteer record first.', 'groundwork-common-volunteer-tracker' ),
@@ -286,9 +286,9 @@ function gwcvt_add_schedule_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-logging-a-shift',
+		'gwc-vt-help-logging-a-shift',
 		__( 'Turning a shift into hours', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Once a shift has finished, <strong>Log the hours</strong> opens it with everybody who signed up already ticked and the hours it was scheduled for filled in. Untick whoever did not turn up, change the hours for anybody who left early, add the people who walked in, and save once.', 'groundwork-common-volunteer-tracker' ),
@@ -299,7 +299,7 @@ function gwcvt_add_schedule_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_sidebar( $screen );
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**
@@ -307,10 +307,10 @@ function gwcvt_add_schedule_help( $screen ): void {
  *
  * @param WP_Screen $screen The screen.
  */
-function gwcvt_add_hours_help( $screen ): void {
-	gwcvt_add_help_tab(
+function gwc_vt_add_hours_help( $screen ): void {
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-verifying',
+		'gwc-vt-help-verifying',
 		__( 'Verifying hours', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Click the <strong>Not yet verified</strong> badge to verify a shift. Your name and the date are recorded and appear on any letter that includes it, so verifying is you attesting, as a member of staff, that these hours were worked.', 'groundwork-common-volunteer-tracker' ),
@@ -319,9 +319,9 @@ function gwcvt_add_hours_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-matching',
+		'gwc-vt-help-matching',
 		__( 'Hours sent in by volunteers', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Shifts sent through the public form arrive attached to nobody, shown in italics as <em>not yet matched</em>. The name and email on them are what somebody typed into a form — treat them as claims until you have checked.', 'groundwork-common-volunteer-tracker' ),
@@ -330,7 +330,7 @@ function gwcvt_add_hours_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_sidebar( $screen );
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**
@@ -338,10 +338,10 @@ function gwcvt_add_hours_help( $screen ): void {
  *
  * @param WP_Screen $screen The screen.
  */
-function gwcvt_add_volunteers_help( $screen ): void {
-	gwcvt_add_help_tab(
+function gwc_vt_add_volunteers_help( $screen ): void {
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-volunteers',
+		'gwc-vt-help-volunteers',
 		__( 'Volunteer records', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'One record per person, which is what makes a letter possible — forty shifts typed as “Jane Doe”, “jane doe” and “J. Doe” cannot be added together.', 'groundwork-common-volunteer-tracker' ),
@@ -351,7 +351,7 @@ function gwcvt_add_volunteers_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_sidebar( $screen );
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**
@@ -359,10 +359,10 @@ function gwcvt_add_volunteers_help( $screen ): void {
  *
  * @param WP_Screen $screen The screen.
  */
-function gwcvt_add_letters_help( $screen ): void {
-	gwcvt_add_help_tab(
+function gwc_vt_add_letters_help( $screen ): void {
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-producing',
+		'gwc-vt-help-producing',
 		__( 'Producing a letter', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Choose a volunteer and, if you need one, a date range. Leaving both dates empty covers their whole time volunteering.', 'groundwork-common-volunteer-tracker' ),
@@ -371,9 +371,9 @@ function gwcvt_add_letters_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_tab(
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-references',
+		'gwc-vt-help-references',
 		__( 'Checking a reference', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Every letter carries a reference code. Somebody who has been sent one — a court, a school, an employer — can phone and read it out, and this screen will tell you whether the letter still matches your records.', 'groundwork-common-volunteer-tracker' ),
@@ -383,7 +383,7 @@ function gwcvt_add_letters_help( $screen ): void {
 		)
 	);
 
-	gwcvt_add_help_sidebar( $screen );
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**
@@ -391,10 +391,10 @@ function gwcvt_add_letters_help( $screen ): void {
  *
  * @param WP_Screen $screen The screen.
  */
-function gwcvt_add_quick_add_help( $screen ): void {
-	gwcvt_add_help_tab(
+function gwc_vt_add_quick_add_help( $screen ): void {
+	gwc_vt_add_help_tab(
 		$screen,
-		'gwcvt-help-quick-add',
+		'gwc-vt-help-quick-add',
 		__( 'Logging a day', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'For typing up a sign-in sheet. Whatever the shift had in common — the date, what people were doing, who supervised — goes in once at the top, and each volunteer and their hours go in the list below.', 'groundwork-common-volunteer-tracker' ),
@@ -407,10 +407,10 @@ function gwcvt_add_quick_add_help( $screen ): void {
 	 * somebody who has never opened it that way has no reason to know it can be.
 	 * Only offered where it is true: on a site with shifts switched off, this
 	 * screen only ever has the blank-day form on it. */
-	if ( gwcvt_shifts_enabled() ) {
-		gwcvt_add_help_tab(
+	if ( gwc_vt_shifts_enabled() ) {
+		gwc_vt_add_help_tab(
 			$screen,
-			'gwcvt-help-from-a-shift',
+			'gwc-vt-help-from-a-shift',
 			__( 'Logging from a shift', 'groundwork-common-volunteer-tracker' ),
 			array(
 				__( 'Opened from a shift on the schedule, this screen fills itself in: the date, the activity and the supervisor come from the shift, and everybody who signed up is already listed and ticked with the hours it was scheduled for.', 'groundwork-common-volunteer-tracker' ),
@@ -420,5 +420,5 @@ function gwcvt_add_quick_add_help( $screen ): void {
 		);
 	}
 
-	gwcvt_add_help_sidebar( $screen );
+	gwc_vt_add_help_sidebar( $screen );
 }

@@ -10,15 +10,15 @@ defined( 'ABSPATH' ) || exit;
 /**
  * A single shift, as the letter states it.
  *
- * Built once by gwcvt_build_letter() and read by the renderer. Typed
+ * Built once by gwc_vt_build_letter() and read by the renderer. Typed
  * properties rather than an array because these values are what a court reads:
  * a date in the minutes field or a duration in the activity field would render
  * without complaint and be wrong on a document somebody is relying on.
  *
- * See the box comment in inc/class-gwcvt-totals.php for the rule about which
+ * See the box comment in inc/class-gwc-vt-totals.php for the rule about which
  * things in this plugin are objects and which stay arrays.
  */
-class GWCVT_Letter_Entry {
+class GWC_VT_Letter_Entry {
  // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
 
 	/**

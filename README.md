@@ -32,7 +32,7 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **The dashboard names nobody.** Every line is a count and a link; the names live on the screen the link goes to, which is somewhere a person has gone deliberately. The overdue line is the one it would be tempting to expand, and it is the one that must not be. `DashboardTest` asserts the exact field set of a worklist line, so adding anywhere to put a name fails the build.
 - **The worklist is ordered by what is lost if it waits,** not by which number is biggest. Eight shifts to verify is a bigger number than one unlogged shift and a smaller problem: verification keeps, and hours nobody typed up get further from anybody's memory every week. The order is fixed rather than derived, and asserted.
 - **A queue at zero does not appear.** The same rule as the daily summary. A screen reporting "none waiting" five times over is one people stop reading, and then the line that says Saturday is short gets skimmed with it.
-- **The map offers only what the person can reach.** Somebody without `gwcvt_issue_letters` gets no Letters group rather than three links that will refuse them — a link that fails when clicked teaches somebody the screen is broken; an absent one teaches them nothing.
+- **The map offers only what the person can reach.** Somebody without `gwc_vt_issue_letters` gets no Letters group rather than three links that will refuse them — a link that fails when clicked teaches somebody the screen is broken; an absent one teaches them nothing.
 - **Every worklist line names a job, verb first.** "Write up a shift that has already happened", not "a shift has happened and its hours are not logged". A description makes the reader translate a state into a task before they can decide anything; the state belongs on the second line, which is there to answer "and if I leave it?".
 - **Coming up runs a fortnight, split at the end of this week.** The two halves answer different questions — this week is still fixable by ringing round, next week is only worth knowing about — and fourteen undifferentiated rows answer neither. Where the week breaks is the site's business, so it comes from `start_of_week`; a great many places outside Europe and North America answer Saturday or Sunday.
 - **The reporting year is a filter, not a setting.** Most organizations report on the calendar year. The ones that do not know exactly when theirs begins and have somebody who can add a line to a theme — where a setting would put a question on the Settings screen that almost nobody needs, and answering it wrongly would quietly misstate a figure that goes to a funder.
@@ -41,9 +41,9 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **A deadline is reported, never predicted.** Overdue means the date has passed and the hours are not there. There is no "on track" indicator, because that needs a rate this plugin has no business inventing, and being told you are behind by software that guessed is worse than not being told.
 - **Anonymizing removes the requirement along with the name.** The hours survive because they are the organization's own service record and identify nobody. "120 hours required by 15 November for Franklin County Municipal Court" says a real person was under a real order, names it and dates it — and it does not stop being a disclosure because the name above it has gone.
 - **A scheduled shift and a logged hour are different nouns, and never the same record.** A shift is a plan — Saturday nine to twelve, food sorting, we need six. An hour entry is a claim about the past that a staff member has attested to. If a signup could become an hour by sitting on the calendar until the date passed, somebody who never turned up would accrue hours towards a document a probation officer reads, and nobody would find out until they read it. So they are separate post types, and turning a roster into hours is an explicit act by a person who was there.
-- **A shift cannot be logged until it has ended.** `gwcvt_save_entry()` silently clamps a future date to today, so logging Saturday on Friday would date Saturday's hours to Friday — on the document a court reads, with nothing on screen to say it happened. Refused rather than warned about, in the screen *and* in the handler, because the screen is not the only thing that can post to it.
+- **A shift cannot be logged until it has ended.** `gwc_vt_save_entry()` silently clamps a future date to today, so logging Saturday on Friday would date Saturday's hours to Friday — on the document a court reads, with nothing on screen to say it happened. Refused rather than warned about, in the screen *and* in the handler, because the screen is not the only thing that can post to it.
 - **Reconciling does not verify.** Three questions, three answers, three people's jobs: matching says whose hours these are, logging says the shift has been written up, verifying says it happened. Hours that arrive from a roster are unverified like every other kind, and a letter cannot tell the two apart.
-- **The "came" checkboxes carry an explicit row index.** An unticked checkbox posts nothing at all, so a positional `gwcvt_attended[]` would arrive with its indexes closed up and every row after the first no-show would read somebody else's answer — silently crediting hours to the wrong person. `tests/integration/reconcile.php` posts a roster with a gap in the middle for exactly this.
+- **The "came" checkboxes carry an explicit row index.** An unticked checkbox posts nothing at all, so a positional `gwc_vt_attended[]` would arrive with its indexes closed up and every row after the first no-show would read somebody else's answer — silently crediting hours to the wrong person. `tests/integration/reconcile.php` posts a roster with a gap in the middle for exactly this.
 - **Nothing records that somebody did not turn up.** A no-show is derived: a logged shift, a place on the roster, and no entry. A stored absence flag would be a behaviour file on people working off court orders, kept by a plugin with no business keeping one.
 - **Reopening a logged shift cannot double anybody.** Rows that already have an entry render without a tick box and post nobody, so a coordinator can come back to add the walk-in they forgot without silently doubling everybody else's hours.
 - **The public shift list shows counts and never names, and there is no setting that changes it.** A visitor may see that Saturday exists, what the work is, and that three places are left. On a site running a court-ordered service programme, who is volunteering Saturday is a list of people working one off. A place count says nothing about anybody; a first name says everything about one person.
@@ -54,14 +54,14 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **Nobody on the waiting list is reminded.** They do not have a place, and telling them to turn up on Saturday would be telling them something untrue.
 - **A shift that already started is never reminded about.** A message about a shift that began an hour ago is worse than none: it tells somebody who forgot that they have already let people down.
 - **Mailing the roster is a tick box, never a side effect.** Cancelling or moving a shift shows the count and asks. And only a *move* counts — the date, the times, the overnight flag, the place. Rewording the activity, correcting the supervisor, expanding the notes or changing the capacity emails nobody, because mailing thirty people about a spelling fix is how an organization teaches its volunteers to ignore its email.
-- **A message with nowhere to point carries no link.** A site can run shifts and reminders without ever pinning a public page — the coordinator takes names on the phone. `gwcvt_signup_manage_url()` returns empty there and every caller checks, because "click here to cancel" pointing at the front page is worse than no link: the volunteer clicks it, finds nothing, and assumes they have cancelled.
+- **A message with nowhere to point carries no link.** A site can run shifts and reminders without ever pinning a public page — the coordinator takes names on the phone. `gwc_vt_signup_manage_url()` returns empty there and every caller checks, because "click here to cancel" pointing at the front page is worse than no link: the volunteer clicks it, finds nothing, and assumes they have cancelled.
 - **The daily summary is silent on a quiet day.** One that arrives every morning saying "nothing to report" gets a filter rule inside a fortnight — and then the one that says "Saturday has two of six" gets filtered with it.
 - **The two scheduled events exist only while shifts are on.** Unlike the retention sweep, which applies to every install, these have nothing to do on a site that never turns scheduling on — and an hourly event pointing at a function that returns immediately is still a permanent row in every cron listing that site's owner ever looks at. Unscheduling when the setting goes off matters as much as scheduling when it comes on.
 - **The confirmation email is not a setting.** A signup with no confirmation leaves somebody with no record of what they agreed to, no note of where to go, and no way out except telephoning during office hours. That is not a lighter-weight version of the feature, it is a broken one. It is sent on `shutdown` rather than inline, because `wp_mail()` over SMTP can take seconds and a signup that visibly takes four while a honeypot hit takes a quarter of one has told the sender which they triggered.
 - **The calendar file is a link, not an attachment,** and carries UTC instants rather than a hand-written `VTIMEZONE`. A transcription of somebody else's timezone database goes stale silently and is wrong exactly when the clocks change; a UTC instant is computed once from the same wall time everything else uses. `METHOD:PUBLISH`, never `REQUEST` — the latter makes a client offer Accept and Decline buttons that RSVP to an address nothing is listening on.
 - **A signup nobody matched is still somebody's personal data.** Every privacy path in the plugin used to start from a volunteer record, which would never have found a name typed into the public form by a person who then never turned up. The exporter, the eraser and the retention sweep all reach those directly now — the place on the shift survives, the name and address do not.
 - **Scheduling is off until you switch it on**, like the public form and for a related reason. A menu item, a set of screens and eventually mail leaving the site should not appear because somebody updated a plugin they installed to log hours. An organization taking signups on a clipboard is not doing it wrong.
-- **A shift stores wall-clock time, never an instant.** The Saturday nine o'clock shift is at nine o'clock in March and at nine o'clock in November; storing a timestamp and adding a week across a clock change moves it to ten. Instants are derived at read time through `gwcvt_timezone()`, and recurrence is calendar arithmetic on dates that never touches a clock at all. `ShiftTest` asserts both sides of a real daylight-saving boundary.
+- **A shift stores wall-clock time, never an instant.** The Saturday nine o'clock shift is at nine o'clock in March and at nine o'clock in November; storing a timestamp and adding a week across a clock change moves it to ten. Instants are derived at read time through `gwc_vt_timezone()`, and recurrence is calendar arithmetic on dates that never touches a clock at all. `ShiftTest` asserts both sides of a real daylight-saving boundary.
 - **Recurrence creates real shifts, not a rule to be evaluated later.** "Every Saturday through December" is twenty-odd rows. The moment somebody closes the Saturday after Thanksgiving, a stored rule needs an exception list — and then every query has to reconcile the two, a signup has to attach to something that is not a row, and "which shifts is Jane on" stops being a query. The cost is a cap, which is *reported* rather than silently applied: a screen that quietly makes fewer shifts than you asked for loses you a month of Saturdays, and you find out when nobody turns up.
 - **Capacity is advisory.** A signup over the maximum goes on a waiting list rather than being refused. Somebody working off a court order with a deadline should not be bounced by a number a coordinator typed in March; a coordinator who can see the list can have a conversation, whereas a refusal is a dead end the volunteer cannot appeal. Settling runs under an `add_option()` lock — false on an existing key is an atomic test-and-set — and a failed lock settles anyway, because overfilling by one is a conversation and stranding somebody on a waiting list for a shift with room is not.
 - **Settling never demotes.** Lowering a shift's maximum below the number already on it makes the shift smaller; it does not un-invite the four people who were already coming.
@@ -69,13 +69,13 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **Attendance is derived, never stored.** Attended means an hour entry exists; a no-show is a reconciled shift with a roster place and no entry. A stored no-show flag would be a behaviour record on people working off court orders, and this plugin has no business keeping one.
 - **The cancellation token is a counter, not a timestamp.** It was the created time first, and `current_time( 'mysql' )` has one-second resolution — so withdrawing and signing up again inside the same second produced an identical digest and left the link in the first email live. A double-submit is enough to hit that. `tests/integration/signups.php` caught it; `SignupTest` now pins it. How long a capability URL stays valid must not depend on how fast somebody clicks.
 - **A shift with people on it is cancelled, never deleted,** and the screen only offers delete while the roster is empty. Cancelling says it was called off and everybody can see that it was; deleting says it never existed, which is only true of a typo.
-- **Signup meta keys are deliberately not the entry's** — `_gwcvt_signup_volunteer`, not `_gwcvt_volunteer`. The totals cache invalidates from meta writes by key name, so a shared key would dirty and recompute a volunteer's rollup every time they signed up for something they had not yet worked.
+- **Signup meta keys are deliberately not the entry's** — `_gwc_vt_signup_volunteer`, not `_gwc_vt_volunteer`. The totals cache invalidates from meta writes by key name, so a shared key would dirty and recompute a volunteer's rollup every time they signed up for something they had not yet worked.
 - **Durations are integer minutes, never float hours.** Three and a half hours is `210`. Floats do not sum exactly, and a letter reading "42.30000000000001 hours" is not a rounding curiosity a court will overlook — it is the moment the reader stops believing the document. `HoursTest` sums a thousand entries both ways to keep the argument honest.
 - **A bare number over 24 hours is refused rather than guessed at.** `210` means 210 *hours* by the rule that a bare number is hours, which is somebody typing minutes into the wrong field. Guessing "that must have meant minutes" works right up until the volunteer who really did log 30 hours over a weekend retreat.
 - **Rounding is to the nearest increment, never up.** Rounding up is the organization systematically crediting hours nobody worked, which on this document is the one direction of error that matters.
 - **The disclaimer is editable but cannot be emptied.** An organization's counsel may need particular wording; "no disclaimer" is not a wording choice, it is the plugin quietly starting to imply it certified something. An empty stored value reads as "use the default".
 - **Capabilities are granted on `init`, not on activation.** An activation hook runs once, and a site that loses them to a security plugin rebuilding roles or a restore from an old backup would need a deactivate/reactivate cycle to get them back.
-- **A capability set to `false` is left alone; one removed entirely is restored.** That is the isset() check in `gwcvt_grant_capabilities()`, and it is the only way to tell a deliberate revocation from a loss. See the note on the function.
+- **A capability set to `false` is left alone; one removed entirely is restored.** That is the isset() check in `gwc_vt_grant_capabilities()`, and it is the only way to tell a deliberate revocation from a loss. See the note on the function.
 - **The admin menu reads forwards, and is reordered once at the end rather than registered in order.** Schedule, Volunteers, All hours, Log a day, Log hours, Letters, Settings — what is coming, who is coming, what they did, writing it up, what gets produced. Left alone it came out as All hours, Log hours, Volunteers, Settings, Letters, Log a day, Schedule, with Settings fourth in the middle of the working screens, because one file registers at the default priority and the screens added in later releases registered at 11, 12 and 13. Nobody chose that; it is the order the files load in. `add_submenu_page()`'s position argument looks like the fix and is not: positions are uncoordinated integers between plugins, WordPress ignores them for post type submenus, and two items claiming a slot resolve by float-key collision. Rewriting the array once, at priority 99, is the only method that says what it means.
 - **The colophon is collapsible, never dismissible,** and stores *when* it was collapsed rather than *that* it was — so thirty days falls out of a comparison instead of needing a scheduled event to clear a flag.
 - **No `load_plugin_textdomain()` call.** WordPress has loaded translations for directory-hosted plugins by itself since 4.6; calling it explicitly forces the `.mo` read on every request. `wp_set_script_translations()` is a different thing and is still needed.
@@ -94,15 +94,15 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **The issued-letter log survives a purge.** A letter having been issued is a fact about the organization's own conduct. It holds a reference, an ID and a date — no name.
 - **Retention reads the cached rollup; the letter refuses to.** Same data, different question: a cache a few hours stale can't change whether a record is over two years old, but it could change what a court reads.
 - **Uninstall deletes nothing unless armed,** and even armed removes only options — never posts, never post meta, never the capabilities. The arming is a tick box on the Privacy tab under **Removing this plugin**, and the same section says plainly what deletion does and does not remove — because the policy being right is not much use if the only place it is written down is `uninstall.php`. Both failures were reachable in silence: an organization that deleted the plugin believing the records went with it, and one obliged to remove those records with no route short of WP-CLI.
-- **A copy of this site must not email the real people on it.** `GWCVT_MAIL_MODE` set to `off` sends nothing; set to `trap`, with `GWCVT_MAIL_ALLOW` naming an address, redirects every message there with the site's host in the subject. Both go in `wp-config.php` **on the copy**, because the copy is what you control when you make one; unset means normal delivery, so production needs no configuration. Trap mode with no valid address sends nothing rather than falling through to the real recipient — falling through would defeat the setting at precisely the moment somebody was relying on it. This is the single most consequential operational fact about running this plugin, and it is documented in `readme.txt`, in the Privacy help tab and here, rather than only in `inc/emails.php`.
+- **A copy of this site must not email the real people on it.** `GWC_VT_MAIL_MODE` set to `off` sends nothing; set to `trap`, with `GWC_VT_MAIL_ALLOW` naming an address, redirects every message there with the site's host in the subject. Both go in `wp-config.php` **on the copy**, because the copy is what you control when you make one; unset means normal delivery, so production needs no configuration. Trap mode with no valid address sends nothing rather than falling through to the real recipient — falling through would defeat the setting at precisely the moment somebody was relying on it. This is the single most consequential operational fact about running this plugin, and it is documented in `readme.txt`, in the Privacy help tab and here, rather than only in `inc/emails.php`.
 - **Printing is logged, not just emailing.** A printed letter has left the building just as much as an emailed one, and a log that only knew about email would answer "no letter was issued" about a letter somebody is holding.
-- **There is no theme-overridable letter template, on purpose.** All the prose an organization is likely to change — intro, disclaimer, reference note, letterhead, signatory, email subject and covering note — is a setting on the Letter tab, with `{org} {name} {hours} {shifts} {period} {contact} {reference} {timestamp} {timezone}` placeholders. The document's furniture (headings, column headers, row labels) is filterable via `gwcvt_letter_strings`. What there is *not* is a template file a theme can own — because a theme that owns the markup is a theme that can delete the disclaimer, and the disclaimer not being deletable is the one structural promise this plugin makes about its own output.
+- **There is no theme-overridable letter template, on purpose.** All the prose an organization is likely to change — intro, disclaimer, reference note, letterhead, signatory, email subject and covering note — is a setting on the Letter tab, with `{org} {name} {hours} {shifts} {period} {contact} {reference} {timestamp} {timezone}` placeholders. The document's furniture (headings, column headers, row labels) is filterable via `gwc_vt_letter_strings`. What there is *not* is a template file a theme can own — because a theme that owns the markup is a theme that can delete the disclaimer, and the disclaimer not being deletable is the one structural promise this plugin makes about its own output.
 - **The email's covering note sits outside the letter.** A short "here is your letter" message is reasonable to want; putting it *inside* the document would mean the emailed and printed letters were no longer the same document.
 - **The emailed and printed letters come from one template.** Two templates drift, and the day they have drifted is the day a court receives a letter that differs from the organization's copy. The email's CSS is inlined by a hand-written ~20-rule map, which is only possible because the intro and disclaimer are sanitized to plain text rather than `wp_kses_post()`.
 
-- **An event is a container over shifts, never a new kind of slot.** A SignUp Genius slot is *(a role) × (a time window) × (how many people)*, and a `gwcvt_shift` is already exactly that — so `gwcvt_event` sits above shifts by `post_parent` and every slot stays a shift, every signup stays a signup. Waiting lists and the settling lock, reminders and their idempotency flag, cancellation tokens, calendar files, the privacy exporter, the retention sweep, no-show derivation and reconciliation into hours all keep working with no new code. A parallel slot type would need every one of those written twice, and the one that would hurt is reconciliation: two paths by which hours reach a court letter is two places for hours to reach a court letter *wrongly*, and the second would be the one nobody has been staring at for four releases.
-- **`gwcvt_shifts_between()`'s `parent` argument defaults to everything, and must stay that way.** The understaffed and unreconciled queries both run through it. Filter parented shifts out by default and the reconciliation nag silently stops covering events — hours nobody typed up, on the number a letter is built from, with nothing on any screen to say so. Exactly two callers opt *in* to `parent => 0`, and both show events separately instead.
-- **A post status must fit twenty characters.** `wp_posts.post_status` is `varchar(20)`. A longer one is not an error, is not truncated and is not warned about — `wp_insert_post()` sanitises what it cannot store and the row keeps the status it already had. `gwcvt_event_cancelled` was twenty-one, so calling an event off reported success while the event stayed published and went on taking signups. `tests/integration/events.php` asserts a cancelled event reads back as cancelled, and asserts every registered status fits.
+- **An event is a container over shifts, never a new kind of slot.** A SignUp Genius slot is *(a role) × (a time window) × (how many people)*, and a `gwc_vt_shift` is already exactly that — so `gwc_vt_event` sits above shifts by `post_parent` and every slot stays a shift, every signup stays a signup. Waiting lists and the settling lock, reminders and their idempotency flag, cancellation tokens, calendar files, the privacy exporter, the retention sweep, no-show derivation and reconciliation into hours all keep working with no new code. A parallel slot type would need every one of those written twice, and the one that would hurt is reconciliation: two paths by which hours reach a court letter is two places for hours to reach a court letter *wrongly*, and the second would be the one nobody has been staring at for four releases.
+- **`gwc_vt_shifts_between()`'s `parent` argument defaults to everything, and must stay that way.** The understaffed and unreconciled queries both run through it. Filter parented shifts out by default and the reconciliation nag silently stops covering events — hours nobody typed up, on the number a letter is built from, with nothing on any screen to say so. Exactly two callers opt *in* to `parent => 0`, and both show events separately instead.
+- **A post status must fit twenty characters.** `wp_posts.post_status` is `varchar(20)`. A longer one is not an error, is not truncated and is not warned about — `wp_insert_post()` sanitises what it cannot store and the row keeps the status it already had. `gwc_vt_event_cancelled` was twenty-one, so calling an event off reported success while the event stayed published and went on taking signups. `tests/integration/events.php` asserts a cancelled event reads back as cancelled, and asserts every registered status fits.
 - **The grid is role-major.** A role is named once and its times hang underneath it, so "Greeter" and "greeter" cannot both exist inside one event — which is what makes a role taxonomy unnecessary. Everything a role passes down — supervisor, location, what-to-know — follows one rule: the most specific non-empty value wins, and **nothing appends**. A chain where one inherited field appends while the others replace is a rule nobody remembers. A genuine one-off note goes in the single-shift editor, which an event slot already has.
 - **The grid works with no JavaScript**, by rendering blank rows the way the quick-add screen renders eight of them. There is no build step, so a grid that needed a script to add a row would be a screen that does nothing when the script fails to load. Field names carry explicit indexes — an unticked checkbox posts nothing at all, so a positional array arrives with its indexes closed up and every row after the first gap reads its neighbour's answer.
 - **Removing a time from the grid cancels it when anybody is on it and deletes it only when nobody is,** and the row says which before you save. The rule that a shift with a roster is cancelled rather than deleted does not lapse because the removal arrived from a grid instead of a button. Removing a whole role decides that per time rather than for the role: the busy Saturday stays on the schedule, called off, and the three empty ones go.
@@ -110,11 +110,11 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **Lifecycle is an action, never a field on the form.** Calling a time off, putting it back, deleting an empty one and dropping a role are each a button with their own nonce that happen at once and report what they did — the shape `inc/admin-shift.php` already used. They began as checkboxes on the grid's one Save, and every UX defect this feature shipped was a symptom of that: the tell was copy reading *"all 3 of its times go **when you save**"*, a sentence that only has to exist because the action is deferred. An immediate action does not predict a future, and the screen it returns to cannot look identical to the one it left.
 - **The two that cost somebody something stop to ask.** Calling off a time people are on, and dropping a whole role, each get a screen with one decision on it — because both need a reason typed and both decide whether people get an email, and neither fits on a row. Putting a time back on and deleting one nobody is on happen on a nonced link, exactly as taking somebody off a roster does. A mutating GET is fine here and is not fine on the public side: the rule against it is about links that arrive in email, where a mail client's prefetch would follow them.
 - **A cancelled time has to look cancelled.** It first came back from a cancellation looking exactly like every other row — editable times, and a Remove box still offering to cancel a thing already cancelled — with the word "Cancelled" in one column the only difference. So a coordinator ticked the box, saved, saw an unchanged row and concluded it had not worked, when it had. That is worse than a feature that fails, because the state is real and nothing on the screen agrees with it. The row is now struck through, carries its reason, cannot be edited, and offers the one action that makes sense on it.
-- **Tests that call the function under the form cannot see that class of bug.** `tests/integration/events.php` drove `gwcvt_save_event_grid()` and passed throughout. `tests/integration/event-editing.php` drives `gwcvt_handle_save_event()` through `$_POST` the way the browser fills it, and asserts what the *next screen says* as well as what the database holds.
+- **Tests that call the function under the form cannot see that class of bug.** `tests/integration/events.php` drove `gwc_vt_save_event_grid()` and passed throughout. `tests/integration/event-editing.php` drives `gwc_vt_handle_save_event()` through `$_POST` the way the browser fills it, and asserts what the *next screen says* as well as what the database holds.
 - **Emptying a role's name while it still has times is refused, not guessed at.** Keeping the old name hides a rename that did not happen; dropping the times loses a roster. Neither is a decision to make on somebody's behalf.
 - **The event grid shows counts and never names,** exactly as the shift list does. This is where the plugin deliberately diverges from the products it resembles, which publish their rosters by design.
 - **A multi-slot signup returns the same message as a single one, with no count.** The leak is not the digit — it is a digit that reports *what the write did*. Signing up is idempotent and the form never checks whose address it was given, so "3 added" against "2 added, 1 you were already on" tells a stranger which slots somebody else was already on. A count of what was *ticked* would in fact be safe; the rule bans all of them because "no digits" is one assertion a test can hold, and "only digits from the request" is a rule the next friendly copy edit will break.
-- **An overlap is warned about inside one submission and only flagged across them.** Inside a submission both slots are in the POST, so nothing is looked up. Across submissions the check would need a query keyed on an email address whose answer changes the page — and *"its answer changes nothing the visitor can see"* is the single clause `gwcvt_find_signup()`'s licence rests on. It is a warning rather than a refusal, because ducking out of the kitchen at noon to greet is a real thing people do; and it runs **before** the honeypot branch, so the same POST gets the same answer either way and the difference cannot be used to detect the honeypot. Touching is not overlapping.
+- **An overlap is warned about inside one submission and only flagged across them.** Inside a submission both slots are in the POST, so nothing is looked up. Across submissions the check would need a query keyed on an email address whose answer changes the page — and *"its answer changes nothing the visitor can see"* is the single clause `gwc_vt_find_signup()`'s licence rests on. It is a warning rather than a refusal, because ducking out of the kitchen at noon to greet is a real thing people do; and it runs **before** the honeypot branch, so the same POST gets the same answer either way and the difference cannot be used to detect the honeypot. Touching is not overlapping.
 - **One confirmation per submission, carrying one cancel link and one calendar link per slot.** That is what keeps a token scoped to a single slot — widening one to everything an address holds would mean a forwarded email disclosing the lot — while still answering "I can only drop the Sunday".
 - **The reminder lists every slot inside the window, and the invariant is not one flag per email.** It is: *a slot's flag is set if and only if that slot was named in a message that was sent.* Mark every slot you are about to mention, before sending, then send once. Name one without marking it and it goes twice; mark one without naming it and it is **never** reminded about — silently, which is why the integration test asserts it directly.
 - **Nobody is asked to confirm they are still coming.** An unclicked cancel link means nothing; an unclicked confirm link looks like an answer, and every reading of that answer is bad — a place dropped because somebody did not read an email, or a sorted list of people who do not reply, kept about a population working off court orders. Prefetching makes it worse rather than merely awkward: a scanner that follows the link confirms everybody, and nothing tells the real ones apart. What the waiting list gets instead is a coordinator who can promote somebody by hand, on actual information rather than an inference from silence.
@@ -126,7 +126,7 @@ npx @wordpress/env start --config=.wp-env.php74.json
 Both are argued at length in the plan and in the code; the short version:
 
 - **A few plain typed classes exist**, for computed in-memory values only — the letter model and its rows, and the totals object. Persisted config (the field schema, field definitions) stays an array, exactly as in the siblings. The rule is *objects for computed values, arrays for persisted config*, and it exists because the letter model is the one structure whose correctness is the entire product. There is still no autoloader and no build step, and Composer appears only as a linter that ships nothing.
-- **There is one REST route**, `gwcvt/v1/volunteers`, for the entry screen's volunteer picker. Every post type stays `show_in_rest => false`. The siblings' "no REST" rule is really an argument against *auto-generated* CPT routes, which is right and is kept; for a purpose-built lookup, `permission_callback` and an `args` schema are better guard rails than a hand-rolled `check_ajax_referer` that fails open when forgotten.
+- **There is one REST route**, `gwc-vt/v1/volunteers`, for the entry screen's volunteer picker. Every post type stays `show_in_rest => false`. The siblings' "no REST" rule is really an argument against *auto-generated* CPT routes, which is right and is kept; for a purpose-built lookup, `permission_callback` and an `args` schema are better guard rails than a hand-rolled `check_ajax_referer` that fails open when forgotten.
 
 ## Hooks
 
@@ -134,54 +134,54 @@ Every hook in the plugin is in this table. If you add one, add its row.
 
 | Hook | Type | Purpose |
 | --- | --- | --- |
-| `gwcvt_capabilities` | filter | Remap the capabilities gating verification, letter issuance and settings. |
-| `gwcvt_default_cap_roles` | filter | Which roles are granted the plugin's capabilities when first seen. |
-| `gwcvt_hour_increment` | filter | The increment every logged duration is rounded to, in minutes. |
-| `gwcvt_post_type_args` | filter | `register_post_type()` arguments for hour entries. |
-| `gwcvt_volunteer_post_type_args` | filter | `register_post_type()` arguments for volunteers. |
-| `gwcvt_admin_tabs` | filter | The settings screen's tabs, keyed by slug. |
-| `gwcvt_menu_order` | filter | The order of the Volunteer Hours submenu, by slug. |
-| `gwcvt_dashboard_items` | filter | The dashboard's worklist, after empty queues are dropped. |
-| `gwcvt_dashboard_map` | filter | The dashboard's map of everywhere else, already filtered by capability. |
-| `gwcvt_reporting_year_start` | filter | The first day of the reporting year. |
-| `gwcvt_entry_saved` | action | After an hour entry is saved from the admin. |
-| `gwcvt_settings_screen_loaded` | action | When the settings screen loads, before output. |
-| `gwcvt_render_tab_<slug>` | action | Render the body of one settings tab. |
-| `gwcvt_attestation_methods` | filter | The ways an entry can be attested to, keyed by slug. |
-| `gwcvt_entry_verified` | action | After an entry is attested to. |
-| `gwcvt_entry_unverified` | action | After an attestation is withdrawn. |
-| `gwcvt_letter_post_type_args` | filter | `register_post_type()` arguments for the issued-letter log. |
-| `gwcvt_letter_model` | filter | The assembled letter, before it is rendered. |
-| `gwcvt_letter_reference` | filter | A letter's reference code. |
-| `gwcvt_email` | filter | A message (to, subject, body, headers) before it is sent. |
-| `gwcvt_letter_issued` | action | After a letter is produced and logged, for print as well as email. |
-| `gwcvt_letter_strings` | filter | The letter's fixed wording — headings, column headers, row labels. |
-| `gwcvt_settings_fields` | filter | The settable settings, keyed by name. |
-| `gwcvt_settings_saved` | action | After the settings have been saved. |
-| `gwcvt_retention_due` | filter | Whether a volunteer's record is due for purging. |
-| `gwcvt_before_purge` | action | Before a record is anonymized or deleted — last chance to export it. |
-| `gwcvt_purged` | action | After a record has been purged. |
-| `gwcvt_rate_limits` | filter | The public form's rate limits, keyed by scope. |
-| `gwcvt_self_log_received` | action | After the public form has recorded a submission. |
-| `gwcvt_entry_attached` | action | After a self-logged entry is attached to a volunteer. |
-| `gwcvt_shift_post_type_args` | filter | `register_post_type()` arguments for scheduled shifts. |
-| `gwcvt_signup_post_type_args` | filter | `register_post_type()` arguments for signups. |
-| `gwcvt_shift_created` | action | After a shift is put on the schedule, once per occurrence of a repeat. |
-| `gwcvt_shift_cancelled` | action | After a shift is called off, carrying the reason and the roster it had. |
-| `gwcvt_shift_reconciled` | action | After a shift's roster is turned into hour entries, carrying the entries made. |
-| `gwcvt_schedule_visible_shifts` | filter | The shifts shown on the public list; anything removed is also refused by the handler. |
-| `gwcvt_ics_event` | filter | A shift's calendar-file lines, before they are folded. |
-| `gwcvt_signup_received` | action | After somebody is put on a shift. |
-| `gwcvt_signup_withdrawn` | action | After somebody comes off a shift. |
-| `gwcvt_signup_attached` | action | After a signup is matched to a volunteer record. |
-| `gwcvt_signup_promoted` | action | After somebody is moved off the waiting list by hand. |
-| `gwcvt_event_post_type_args` | filter | `register_post_type()` arguments for events. |
-| `gwcvt_event_created` | action | After an event is copied to a new date, carrying the event it came from. |
-| `gwcvt_event_cancelled` | action | After an event is called off, carrying the reason and how many people were told. |
-| `gwcvt_event_slots_saved` | action | After a grid save, carrying slots made, updated, cancelled and deleted. |
-| `gwcvt_event_visible_slots` | filter | The slots shown on an event's public grid, keyed by role. |
-| `gwcvt_event_signup_limit` | filter | The most slots one submission may take. |
-| `gwcvt_event_role_dropped` | action | After a whole role is dropped from an event, carrying what was cancelled, deleted and told. |
+| `gwc_vt_capabilities` | filter | Remap the capabilities gating verification, letter issuance and settings. |
+| `gwc_vt_default_cap_roles` | filter | Which roles are granted the plugin's capabilities when first seen. |
+| `gwc_vt_hour_increment` | filter | The increment every logged duration is rounded to, in minutes. |
+| `gwc_vt_post_type_args` | filter | `register_post_type()` arguments for hour entries. |
+| `gwc_vt_volunteer_post_type_args` | filter | `register_post_type()` arguments for volunteers. |
+| `gwc_vt_admin_tabs` | filter | The settings screen's tabs, keyed by slug. |
+| `gwc_vt_menu_order` | filter | The order of the Volunteer Hours submenu, by slug. |
+| `gwc_vt_dashboard_items` | filter | The dashboard's worklist, after empty queues are dropped. |
+| `gwc_vt_dashboard_map` | filter | The dashboard's map of everywhere else, already filtered by capability. |
+| `gwc_vt_reporting_year_start` | filter | The first day of the reporting year. |
+| `gwc_vt_entry_saved` | action | After an hour entry is saved from the admin. |
+| `gwc_vt_settings_screen_loaded` | action | When the settings screen loads, before output. |
+| `gwc_vt_render_tab_<slug>` | action | Render the body of one settings tab. |
+| `gwc_vt_attestation_methods` | filter | The ways an entry can be attested to, keyed by slug. |
+| `gwc_vt_entry_verified` | action | After an entry is attested to. |
+| `gwc_vt_entry_unverified` | action | After an attestation is withdrawn. |
+| `gwc_vt_letter_post_type_args` | filter | `register_post_type()` arguments for the issued-letter log. |
+| `gwc_vt_letter_model` | filter | The assembled letter, before it is rendered. |
+| `gwc_vt_letter_reference` | filter | A letter's reference code. |
+| `gwc_vt_email` | filter | A message (to, subject, body, headers) before it is sent. |
+| `gwc_vt_letter_issued` | action | After a letter is produced and logged, for print as well as email. |
+| `gwc_vt_letter_strings` | filter | The letter's fixed wording — headings, column headers, row labels. |
+| `gwc_vt_settings_fields` | filter | The settable settings, keyed by name. |
+| `gwc_vt_settings_saved` | action | After the settings have been saved. |
+| `gwc_vt_retention_due` | filter | Whether a volunteer's record is due for purging. |
+| `gwc_vt_before_purge` | action | Before a record is anonymized or deleted — last chance to export it. |
+| `gwc_vt_purged` | action | After a record has been purged. |
+| `gwc_vt_rate_limits` | filter | The public form's rate limits, keyed by scope. |
+| `gwc_vt_self_log_received` | action | After the public form has recorded a submission. |
+| `gwc_vt_entry_attached` | action | After a self-logged entry is attached to a volunteer. |
+| `gwc_vt_shift_post_type_args` | filter | `register_post_type()` arguments for scheduled shifts. |
+| `gwc_vt_signup_post_type_args` | filter | `register_post_type()` arguments for signups. |
+| `gwc_vt_shift_created` | action | After a shift is put on the schedule, once per occurrence of a repeat. |
+| `gwc_vt_shift_cancelled` | action | After a shift is called off, carrying the reason and the roster it had. |
+| `gwc_vt_shift_reconciled` | action | After a shift's roster is turned into hour entries, carrying the entries made. |
+| `gwc_vt_schedule_visible_shifts` | filter | The shifts shown on the public list; anything removed is also refused by the handler. |
+| `gwc_vt_ics_event` | filter | A shift's calendar-file lines, before they are folded. |
+| `gwc_vt_signup_received` | action | After somebody is put on a shift. |
+| `gwc_vt_signup_withdrawn` | action | After somebody comes off a shift. |
+| `gwc_vt_signup_attached` | action | After a signup is matched to a volunteer record. |
+| `gwc_vt_signup_promoted` | action | After somebody is moved off the waiting list by hand. |
+| `gwc_vt_event_post_type_args` | filter | `register_post_type()` arguments for events. |
+| `gwc_vt_event_created` | action | After an event is copied to a new date, carrying the event it came from. |
+| `gwc_vt_event_cancelled` | action | After an event is called off, carrying the reason and how many people were told. |
+| `gwc_vt_event_slots_saved` | action | After a grid save, carrying slots made, updated, cancelled and deleted. |
+| `gwc_vt_event_visible_slots` | filter | The slots shown on an event's public grid, keyed by role. |
+| `gwc_vt_event_signup_limit` | filter | The most slots one submission may take. |
+| `gwc_vt_event_role_dropped` | action | After a whole role is dropped from an event, carrying what was cancelled, deleted and told. |
 
 ## Tests
 
@@ -239,6 +239,40 @@ That is not hypothetical here. The first sweep found **40 of 148 were suppressin
 **Composer is a linter here and nothing else** — no runtime dependency, no autoloader, and `composer.json`, `composer.lock`, `phpcs.xml.dist` and `vendor/` are all in `.distignore`, so none of it reaches the zip. PHPUnit stays a downloaded phar.
 
 One sniff is overruled beyond the shared `UnusedFunctionParameter`, and it is a trap rather than a preference. `Squiz.Commenting.BlockComment.NoNewLine` wants a block comment's text to begin after the opener; this codebase heads ~400 of them on the opening line, and the sniff is auto-fixable. Letting `phpcbf` "correct" them leaves a bare `/*` above each one and a heading stripped of its ` * `, which then violates `CloserSameLine` — which is *not* auto-fixable. One run turns 144 findings into 566 and destroys the comment style. The reasoning is written out in `phpcs.xml.dist`; the sibling location finder overrules the same sniff for the same reason.
+
+## The directory's own checker
+
+`composer lint` is the coding standard, and the section above calls it "what a
+WordPress.org reviewer runs". That is half of it. The directory also has its own
+scanner — **Plugin Check** — and it looks at things phpcs cannot see: the
+readme's headers and their limits, the plugin header, what file types are in the
+zip, trademarks in the name, and whether every PHP file refuses to be fetched
+directly.
+
+Run it against **what actually ships**, not the checkout. Pointed at the working
+tree it spends its time objecting to `vendor/` and `tests/`, neither of which is
+in the zip:
+
+```bash
+# Stage the release payload under the slug, the way it will be installed.
+mkdir -p /tmp/pc/groundwork-common-volunteer-tracker
+rsync -a --exclude-from=<(grep -v '^#' .distignore | grep -v '^$') \
+  ./ /tmp/pc/groundwork-common-volunteer-tracker/
+printf '{"core":null,"plugins":["./groundwork-common-volunteer-tracker"],"testsEnvironment":false}' \
+  > /tmp/pc/.wp-env.json
+
+cd /tmp/pc
+npx @wordpress/env start
+npx @wordpress/env run cli -- wp plugin install plugin-check --activate
+npx @wordpress/env run cli -- wp plugin check groundwork-common-volunteer-tracker
+npx @wordpress/env run cli -- wp plugin check groundwork-common-volunteer-tracker --include-experimental
+```
+
+It found three errors the first time it was run, before 1.0.0, and all three
+were the same one: the hand-written `blocks/*/edit.asset.php` files had no
+`ABSPATH` guard. Each returns an array and discloses nothing when fetched
+directly, which is exactly why nobody had noticed — but the checker does not
+grade on harmlessness, and neither does a reviewer reading its output.
 
 ## Demo data
 
@@ -301,8 +335,8 @@ Scheduling arrived in four parts and is complete: 0.8.0 built the schedule and i
 
 0.15.0 was a pass over the whole thing from a user's seat rather than a feature milestone, and most of what it found were gaps *between* screens rather than screens that were wrong: an event that could not be reached because it has no URL and nothing said so, event hours counted by a nag no screen could act on, three letterhead fallbacks that compound into a court letter headed with a website's title, a self-log form that submitted into nothing when placed on the wrong page, and two capabilities the code argues must be separable with no way to separate them. The Permissions tab, the first-run dashboard, the "Removing this plugin" section and the documented mail guard all come from that pass.
 
-Next: **screenshots.** `readme.txt` advertises eight and `.wordpress-org/` holds none — no icon either, which is the first thing a stranger sees. `tests/seed.php` builds every state worth photographing, and the shooting guide in `.wordpress-org/README.md` is current.
+**1.0.0 is the first release on WordPress.org**, and nothing about the plugin's behaviour changed from 0.15.0 to reach it. What changed is what the directory needs and the plugin did not have: the page assets now exist — eight screenshots, an icon and two banners, drawn from `.wordpress-org/assets-source.html` and shot against `tests/seed.php` — and `readme.txt` gained the Installation section a listing is expected to carry. Publishing is a `git tag` and a GitHub release; `.github/workflows/deploy.yml` does the rest, and cannot run for real until the plugin is approved, because the SVN repository does not exist before then.
 
-Then a decision rather than a feature: the field schema from the original plan — `schema.php`, the Fields tab, the "Court-ordered service" preset — was never built, and `GWCVT_SCHEMA_VERSION` still has no migration runner behind it. Hours-required covered part of what that preset was for, so it is worth settling whether the rest is still wanted before building anything else that might have belonged there.
+Then a decision rather than a feature: the field schema from the original plan — `schema.php`, the Fields tab, the "Court-ordered service" preset — was never built, and `GWC_VT_SCHEMA_VERSION` still has no migration runner behind it. Hours-required covered part of what that preset was for, so it is worth settling whether the rest is still wanted before building anything else that might have belonged there.
 
 Emailed supervisor confirmation — a link a shift supervisor clicks, with no account — is still the first thing after 1.0.

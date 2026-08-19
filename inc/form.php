@@ -15,8 +15,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * @return string
  */
-function gwcvt_render_self_log_form(): string {
-	if ( ! gwcvt_self_log_enabled() ) {
+function gwc_vt_render_self_log_form(): string {
+	if ( ! gwc_vt_self_log_enabled() ) {
 		/* Silent on the front end. Somebody reading a public page should not be
 		 * told that a feature exists but is switched off — that is a note for
 		 * the administrator, and the block editor shows them one. */
@@ -24,7 +24,7 @@ function gwcvt_render_self_log_form(): string {
 	}
 
 	/* ── Not on the pinned page ──────────────────────────────────────────────
-	 * gwcvt_dispatch() refuses to handle a submission that did not come from the
+	 * gwc_vt_dispatch() refuses to handle a submission that did not come from the
 	 * pinned page, and this used to render a complete, working-looking form
 	 * anywhere the shortcode was put. So a volunteer filled it in, pressed Send
 	 * my hours, and got the page back with their answers still in the fields and
@@ -35,16 +35,16 @@ function gwcvt_render_self_log_form(): string {
 	 * a blank space and no reason for it. So the form is replaced by a plain
 	 * statement, with no fields to fill in and nothing to submit.
 	 * ─────────────────────────────────────────────────────────────────────── */
-	if ( ! gwcvt_is_self_log_page() ) {
+	if ( ! gwc_vt_is_self_log_page() ) {
 		return sprintf(
 			'<div class="gwcvt-form"><div class="gwcvt-form__message gwcvt-form__message--problem"><p>%s</p></div></div>',
 			esc_html__( 'This form is set up on another page, so it cannot take hours here. Please use the hours form on the page your organization gave you.', 'groundwork-common-volunteer-tracker' )
 		);
 	}
 
-	$result  = (string) ( $GLOBALS['gwcvt_self_log_result'] ?? '' );
-	$message = '' !== $result ? gwcvt_self_log_message( $result ) : '';
-	$code    = (string) gwcvt_setting( 'self_log_code' );
+	$result  = (string) ( $GLOBALS['gwc_vt_self_log_result'] ?? '' );
+	$message = '' !== $result ? gwc_vt_self_log_message( $result ) : '';
+	$code    = (string) gwc_vt_setting( 'self_log_code' );
 
 	/* Accepted, and the form does not come back. Re-rendering it filled in
 	 * invites a second identical submission from somebody who is not sure the
@@ -63,7 +63,7 @@ function gwcvt_render_self_log_form(): string {
 
 	/* Values are handed back on every other outcome. Somebody whose form went
 	 * stale over lunch should not have to retype it. */
-	$keep = gwcvt_submitted_values();
+	$keep = gwc_vt_submitted_values();
 
 	ob_start();
 	?>
@@ -75,8 +75,8 @@ function gwcvt_render_self_log_form(): string {
 		<?php endif; ?>
 
 		<form method="post" class="gwcvt-form__fields">
-			<?php wp_nonce_field( 'gwcvt_self_log', 'gwcvt_self_log_nonce' ); ?>
-			<input type="hidden" name="gwcvt_t" value="<?php echo esc_attr( gwcvt_form_stamp() ); ?>" />
+			<?php wp_nonce_field( 'gwc_vt_self_log', 'gwc_vt_self_log_nonce' ); ?>
+			<input type="hidden" name="gwc_vt_t" value="<?php echo esc_attr( gwc_vt_form_stamp() ); ?>" />
 
 			<?php
 			/* The honeypot. Off screen via a stylesheet class rather than
@@ -86,7 +86,7 @@ function gwcvt_render_self_log_form(): string {
 			?>
 			<div class="gwcvt-form__hp" aria-hidden="true">
 				<label for="gwcvt-website"><?php esc_html_e( 'Leave this field empty', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-website" name="gwcvt_website" tabindex="-1" autocomplete="off" value="" />
+				<input type="text" id="gwcvt-website" name="gwc_vt_website" tabindex="-1" autocomplete="off" value="" />
 			</div>
 
 			<?php
@@ -103,7 +103,7 @@ function gwcvt_render_self_log_form(): string {
 
 			<p class="gwcvt-form__field">
 				<label for="gwcvt-self-name"><?php esc_html_e( 'Your name', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-self-name" name="gwcvt_name" maxlength="100" required value="<?php echo esc_attr( $keep['name'] ?? '' ); ?>" />
+				<input type="text" id="gwcvt-self-name" name="gwc_vt_name" maxlength="100" required value="<?php echo esc_attr( $keep['name'] ?? '' ); ?>" />
 			</p>
 
 			<p class="gwcvt-form__field">
@@ -114,7 +114,7 @@ function gwcvt_render_self_log_form(): string {
 				 * about how to write a duration, is exactly what prevents the
 				 * most common rejection. */
 				?>
-				<input type="email" id="gwcvt-self-email" name="gwcvt_email" maxlength="200" aria-describedby="gwcvt-self-email-help" value="<?php echo esc_attr( $keep['email'] ?? '' ); ?>" />
+				<input type="email" id="gwcvt-self-email" name="gwc_vt_email" maxlength="200" aria-describedby="gwcvt-self-email-help" value="<?php echo esc_attr( $keep['email'] ?? '' ); ?>" />
 				<span class="gwcvt-form__help" id="gwcvt-self-email-help"><?php esc_html_e( 'Helps staff match these hours to your record. Optional.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 
@@ -123,23 +123,23 @@ function gwcvt_render_self_log_form(): string {
 				<input
 					type="date"
 					id="gwcvt-self-date"
-					name="gwcvt_date"
+					name="gwc_vt_date"
 					required
-					<?php echo gwcvt_setting( 'allow_future_dates' ) ? '' : 'max="' . esc_attr( gwcvt_today() ) . '"'; ?>
+					<?php echo gwc_vt_setting( 'allow_future_dates' ) ? '' : 'max="' . esc_attr( gwc_vt_today() ) . '"'; ?>
 					value="<?php echo esc_attr( $keep['date'] ?? '' ); ?>"
 				/>
 			</p>
 
 			<p class="gwcvt-form__field">
 				<label for="gwcvt-self-hours"><?php esc_html_e( 'How long you worked', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-self-hours" name="gwcvt_hours" inputmode="decimal" required aria-describedby="gwcvt-self-hours-help" value="<?php echo esc_attr( $keep['hours'] ?? '' ); ?>" />
+				<input type="text" id="gwcvt-self-hours" name="gwc_vt_hours" inputmode="decimal" required aria-describedby="gwcvt-self-hours-help" value="<?php echo esc_attr( $keep['hours'] ?? '' ); ?>" />
 				<span class="gwcvt-form__help" id="gwcvt-self-hours-help"><?php esc_html_e( 'For example 3.5, 3:30, or 3h 30m. A plain number means hours, so for two hundred and ten minutes write 210m.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 
 			<p class="gwcvt-form__field">
 				<label for="gwcvt-self-activity"><?php esc_html_e( 'What you did', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-self-activity" name="gwcvt_activity" maxlength="200" list="gwcvt-self-activities" value="<?php echo esc_attr( $keep['activity'] ?? '' ); ?>" />
-				<?php $vocabulary = gwcvt_activity_vocabulary(); ?>
+				<input type="text" id="gwcvt-self-activity" name="gwc_vt_activity" maxlength="200" list="gwcvt-self-activities" value="<?php echo esc_attr( $keep['activity'] ?? '' ); ?>" />
+				<?php $vocabulary = gwc_vt_activity_vocabulary(); ?>
 				<?php if ( $vocabulary ) : ?>
 					<datalist id="gwcvt-self-activities">
 						<?php foreach ( $vocabulary as $option ) : ?>
@@ -151,20 +151,20 @@ function gwcvt_render_self_log_form(): string {
 
 			<p class="gwcvt-form__field">
 				<label for="gwcvt-self-supervisor"><?php esc_html_e( 'Who supervised you', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-self-supervisor" name="gwcvt_supervisor" maxlength="100" value="<?php echo esc_attr( $keep['supervisor'] ?? '' ); ?>" />
+				<input type="text" id="gwcvt-self-supervisor" name="gwc_vt_supervisor" maxlength="100" value="<?php echo esc_attr( $keep['supervisor'] ?? '' ); ?>" />
 			</p>
 
 			<?php if ( '' !== $code ) : ?>
 				<p class="gwcvt-form__field">
 					<label for="gwcvt-self-code"><?php esc_html_e( 'Code from the front desk', 'groundwork-common-volunteer-tracker' ); ?></label>
-					<input type="text" id="gwcvt-self-code" name="gwcvt_code" autocomplete="off" required value="" />
+					<input type="text" id="gwcvt-self-code" name="gwc_vt_code" autocomplete="off" required value="" />
 				</p>
 			<?php endif; ?>
 
 			</fieldset>
 
 			<p class="gwcvt-form__actions">
-				<button type="submit" name="gwcvt_log_hours" value="1"><?php esc_html_e( 'Send my hours', 'groundwork-common-volunteer-tracker' ); ?></button>
+				<button type="submit" name="gwc_vt_log_hours" value="1"><?php esc_html_e( 'Send my hours', 'groundwork-common-volunteer-tracker' ); ?></button>
 			</p>
 
 			<p class="gwcvt-form__note">
@@ -181,20 +181,20 @@ function gwcvt_render_self_log_form(): string {
  *
  * @return array<string, string>
  */
-function gwcvt_submitted_values(): array {
+function gwc_vt_submitted_values(): array {
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only; these values are only echoed back into the form the visitor just posted, and every one is escaped at output.
 	$posted = wp_unslash( $_POST );
 
-	if ( ! isset( $posted['gwcvt_log_hours'] ) ) {
+	if ( ! isset( $posted['gwc_vt_log_hours'] ) ) {
 		return array();
 	}
 
 	return array(
-		'name'       => mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_name'] ?? '' ) ), 0, 100 ),
-		'email'      => sanitize_email( (string) ( $posted['gwcvt_email'] ?? '' ) ),
-		'date'       => gwcvt_sanitize_date( sanitize_text_field( (string) ( $posted['gwcvt_date'] ?? '' ) ) ),
-		'hours'      => mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_hours'] ?? '' ) ), 0, 20 ),
-		'activity'   => mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_activity'] ?? '' ) ), 0, 200 ),
-		'supervisor' => mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_supervisor'] ?? '' ) ), 0, 100 ),
+		'name'       => mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 100 ),
+		'email'      => sanitize_email( (string) ( $posted['gwc_vt_email'] ?? '' ) ),
+		'date'       => gwc_vt_sanitize_date( sanitize_text_field( (string) ( $posted['gwc_vt_date'] ?? '' ) ) ),
+		'hours'      => mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_hours'] ?? '' ) ), 0, 20 ),
+		'activity'   => mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_activity'] ?? '' ) ), 0, 200 ),
+		'supervisor' => mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 ),
 	);
 }

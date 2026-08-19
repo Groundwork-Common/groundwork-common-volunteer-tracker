@@ -8,15 +8,15 @@
 defined( 'ABSPATH' ) || exit;
 
 /** No event may hold more slots than this. A grid past it is a mistake. */
-const GWCVT_EVENT_MAX_SLOTS = 200;
+const GWC_VT_EVENT_MAX_SLOTS = 200;
 
 /* ── An event owns nothing of its own ────────────────────────────────────────
  * Every question about an event is really a question about its slots, and every
- * slot is an ordinary gwcvt_shift. So this file is joins and sums, and it holds
+ * slot is an ordinary gwc_vt_shift. So this file is joins and sums, and it holds
  * no state that a shift does not already hold.
  *
  * The one exception is the pair of derived dates, written back onto the event by
- * gwcvt_event_refresh_dates() so that a list of events can be ordered by meta in
+ * gwc_vt_event_refresh_dates() so that a list of events can be ordered by meta in
  * one query. See the box comment in inc/event-cpt.php.
  * ─────────────────────────────────────────────────────────────────────────── */
 
@@ -32,17 +32,17 @@ const GWCVT_EVENT_MAX_SLOTS = 200;
  * @param string[] $statuses Which statuses to include.
  * @return int[] Shift post IDs.
  */
-function gwcvt_event_slot_ids( int $event_id, array $statuses = array( 'publish' ) ): array {
+function gwc_vt_event_slot_ids( int $event_id, array $statuses = array( 'publish' ) ): array {
 	if ( $event_id < 1 ) {
 		return array();
 	}
 
 	$ids = get_posts(
 		array(
-			'post_type'        => GWCVT_SHIFT_TYPE,
+			'post_type'        => GWC_VT_SHIFT_TYPE,
 			'post_parent'      => $event_id,
 			'post_status'      => $statuses,
-			'posts_per_page'   => GWCVT_EVENT_MAX_SLOTS,
+			'posts_per_page'   => GWC_VT_EVENT_MAX_SLOTS,
 			'fields'           => 'ids',
 			'no_found_rows'    => true,
 			'suppress_filters' => false,
@@ -60,7 +60,7 @@ function gwcvt_event_slot_ids( int $event_id, array $statuses = array( 'publish'
 	 * seventy-two queries. */
 	update_postmeta_cache( $ids );
 
-	usort( $ids, 'gwcvt_compare_slots' );
+	usort( $ids, 'gwc_vt_compare_slots' );
 
 	return $ids;
 }
@@ -75,9 +75,9 @@ function gwcvt_event_slot_ids( int $event_id, array $statuses = array( 'publish'
  * @param int $b Shift post ID.
  * @return int
  */
-function gwcvt_compare_slots( int $a, int $b ): int {
-	$a_key = (string) get_post_meta( $a, GWCVT_SHIFT_DATE, true ) . ' ' . (string) get_post_meta( $a, GWCVT_SHIFT_START, true );
-	$b_key = (string) get_post_meta( $b, GWCVT_SHIFT_DATE, true ) . ' ' . (string) get_post_meta( $b, GWCVT_SHIFT_START, true );
+function gwc_vt_compare_slots( int $a, int $b ): int {
+	$a_key = (string) get_post_meta( $a, GWC_VT_SHIFT_DATE, true ) . ' ' . (string) get_post_meta( $a, GWC_VT_SHIFT_START, true );
+	$b_key = (string) get_post_meta( $b, GWC_VT_SHIFT_DATE, true ) . ' ' . (string) get_post_meta( $b, GWC_VT_SHIFT_START, true );
 
 	$compared = strcmp( $a_key, $b_key );
 
@@ -90,10 +90,10 @@ function gwcvt_compare_slots( int $a, int $b ): int {
  * @param int $shift_id Shift post ID.
  * @return int
  */
-function gwcvt_event_for_shift( int $shift_id ): int {
+function gwc_vt_event_for_shift( int $shift_id ): int {
 	$parent = (int) get_post_field( 'post_parent', $shift_id );
 
-	if ( $parent < 1 || GWCVT_EVENT_TYPE !== get_post_type( $parent ) ) {
+	if ( $parent < 1 || GWC_VT_EVENT_TYPE !== get_post_type( $parent ) ) {
 		return 0;
 	}
 
@@ -110,11 +110,11 @@ function gwcvt_event_for_shift( int $shift_id ): int {
  * @param string[] $statuses Which slot statuses to include.
  * @return array<string, int[]> Role name => shift post IDs.
  */
-function gwcvt_event_roles( int $event_id, array $statuses = array( 'publish' ) ): array {
+function gwc_vt_event_roles( int $event_id, array $statuses = array( 'publish' ) ): array {
 	$roles = array();
 
-	foreach ( gwcvt_event_slot_ids( $event_id, $statuses ) as $shift_id ) {
-		$role = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) );
+	foreach ( gwc_vt_event_slot_ids( $event_id, $statuses ) as $shift_id ) {
+		$role = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) );
 
 		if ( '' === $role ) {
 			$role = __( 'Volunteering', 'groundwork-common-volunteer-tracker' );
@@ -139,11 +139,11 @@ function gwcvt_event_roles( int $event_id, array $statuses = array( 'publish' ) 
  * @param int $event_id Event post ID.
  * @return int
  */
-function gwcvt_event_filled( int $event_id ): int {
+function gwc_vt_event_filled( int $event_id ): int {
 	$filled = 0;
 
-	foreach ( gwcvt_event_slot_ids( $event_id ) as $shift_id ) {
-		$filled += gwcvt_shift_filled( $shift_id );
+	foreach ( gwc_vt_event_slot_ids( $event_id ) as $shift_id ) {
+		$filled += gwc_vt_shift_filled( $shift_id );
 	}
 
 	return $filled;
@@ -159,8 +159,8 @@ function gwcvt_event_filled( int $event_id ): int {
  * @param int $event_id Event post ID.
  * @return int|null
  */
-function gwcvt_event_capacity( int $event_id ): ?int {
-	$slots = gwcvt_event_slot_ids( $event_id );
+function gwc_vt_event_capacity( int $event_id ): ?int {
+	$slots = gwc_vt_event_slot_ids( $event_id );
 
 	if ( ! $slots ) {
 		return null;
@@ -169,7 +169,7 @@ function gwcvt_event_capacity( int $event_id ): ?int {
 	$total = 0;
 
 	foreach ( $slots as $shift_id ) {
-		$max = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
+		$max = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true );
 
 		if ( $max < 1 ) {
 			return null;
@@ -187,11 +187,11 @@ function gwcvt_event_capacity( int $event_id ): ?int {
  * @param int $event_id Event post ID.
  * @return int[] Shift post IDs.
  */
-function gwcvt_event_short_slot_ids( int $event_id ): array {
+function gwc_vt_event_short_slot_ids( int $event_id ): array {
 	$short = array();
 
-	foreach ( gwcvt_event_slot_ids( $event_id ) as $shift_id ) {
-		if ( gwcvt_shift_is_understaffed( $shift_id ) ) {
+	foreach ( gwc_vt_event_slot_ids( $event_id ) as $shift_id ) {
+		if ( gwc_vt_shift_is_understaffed( $shift_id ) ) {
 			$short[] = $shift_id;
 		}
 	}
@@ -202,7 +202,7 @@ function gwcvt_event_short_slot_ids( int $event_id ): array {
 /**
  * Times on this event that have happened and whose hours are not logged.
  *
- * The same three conditions gwcvt_unreconciled_shift_ids() uses, asked of one
+ * The same three conditions gwc_vt_unreconciled_shift_ids() uses, asked of one
  * event's slots — deliberately the same, because that function is what counts
  * for the dashboard and the nag, and a badge here that disagreed with the number
  * being nagged about would be worse than no badge.
@@ -214,16 +214,16 @@ function gwcvt_event_short_slot_ids( int $event_id ): array {
  * @param int $event_id Event post ID.
  * @return int[]
  */
-function gwcvt_event_unlogged_slot_ids( int $event_id ): array {
+function gwc_vt_event_unlogged_slot_ids( int $event_id ): array {
 	$due = array();
 
-	foreach ( gwcvt_event_slot_ids( $event_id ) as $shift_id ) {
-		if ( gwcvt_shift_is_reconciled( $shift_id ) || ! gwcvt_shift_has_ended( $shift_id ) ) {
+	foreach ( gwc_vt_event_slot_ids( $event_id ) as $shift_id ) {
+		if ( gwc_vt_shift_is_reconciled( $shift_id ) || ! gwc_vt_shift_has_ended( $shift_id ) ) {
 			continue;
 		}
 
 		// A time nobody came to is not a chore somebody forgot. Same rule, same reason.
-		if ( 0 === gwcvt_shift_filled( $shift_id ) ) {
+		if ( 0 === gwc_vt_shift_filled( $shift_id ) ) {
 			continue;
 		}
 
@@ -239,9 +239,9 @@ function gwcvt_event_unlogged_slot_ids( int $event_id ): array {
  * @param int $event_id Event post ID.
  * @return string
  */
-function gwcvt_event_fill_label( int $event_id ): string {
-	$filled   = gwcvt_event_filled( $event_id );
-	$capacity = gwcvt_event_capacity( $event_id );
+function gwc_vt_event_fill_label( int $event_id ): string {
+	$filled   = gwc_vt_event_filled( $event_id );
+	$capacity = gwc_vt_event_capacity( $event_id );
 
 	if ( null !== $capacity ) {
 		return sprintf(
@@ -270,27 +270,27 @@ function gwcvt_event_fill_label( int $event_id ): string {
  *
  * @param int $event_id Event post ID.
  */
-function gwcvt_event_refresh_dates( int $event_id ): void {
+function gwc_vt_event_refresh_dates( int $event_id ): void {
 	$dates = array();
 
-	foreach ( gwcvt_event_slot_ids( $event_id, array( 'publish', 'draft', GWCVT_SHIFT_CANCELLED ) ) as $shift_id ) {
-		$date = (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+	foreach ( gwc_vt_event_slot_ids( $event_id, array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ) ) as $shift_id ) {
+		$date = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true );
 
-		if ( null !== gwcvt_recurrence_date( $date ) ) {
+		if ( null !== gwc_vt_recurrence_date( $date ) ) {
 			$dates[] = $date;
 		}
 	}
 
 	if ( ! $dates ) {
-		delete_post_meta( $event_id, GWCVT_EVENT_DATE );
-		delete_post_meta( $event_id, GWCVT_EVENT_END_DATE );
+		delete_post_meta( $event_id, GWC_VT_EVENT_DATE );
+		delete_post_meta( $event_id, GWC_VT_EVENT_END_DATE );
 		return;
 	}
 
 	sort( $dates );
 
-	update_post_meta( $event_id, GWCVT_EVENT_DATE, $dates[0] );
-	update_post_meta( $event_id, GWCVT_EVENT_END_DATE, $dates[ count( $dates ) - 1 ] );
+	update_post_meta( $event_id, GWC_VT_EVENT_DATE, $dates[0] );
+	update_post_meta( $event_id, GWC_VT_EVENT_END_DATE, $dates[ count( $dates ) - 1 ] );
 }
 
 /**
@@ -299,15 +299,15 @@ function gwcvt_event_refresh_dates( int $event_id ): void {
  * @param int $event_id Event post ID.
  * @return bool
  */
-function gwcvt_event_has_ended( int $event_id ): bool {
-	$slots = gwcvt_event_slot_ids( $event_id );
+function gwc_vt_event_has_ended( int $event_id ): bool {
+	$slots = gwc_vt_event_slot_ids( $event_id );
 
 	if ( ! $slots ) {
 		return false;
 	}
 
 	foreach ( $slots as $shift_id ) {
-		if ( ! gwcvt_shift_has_ended( $shift_id ) ) {
+		if ( ! gwc_vt_shift_has_ended( $shift_id ) ) {
 			return false;
 		}
 	}
@@ -319,19 +319,19 @@ function gwcvt_event_has_ended( int $event_id ): bool {
  * Is this event taking signups at all?
  *
  * True when the event is published and at least one of its slots is still open.
- * The per-slot answer is still gwcvt_shift_is_signup_visible(); this only says
+ * The per-slot answer is still gwc_vt_shift_is_signup_visible(); this only says
  * whether the page is worth rendering.
  *
  * @param int $event_id Event post ID.
  * @return bool
  */
-function gwcvt_event_is_open( int $event_id ): bool {
+function gwc_vt_event_is_open( int $event_id ): bool {
 	if ( 'publish' !== get_post_status( $event_id ) ) {
 		return false;
 	}
 
-	foreach ( gwcvt_event_slot_ids( $event_id ) as $shift_id ) {
-		if ( gwcvt_shift_is_open( $shift_id ) ) {
+	foreach ( gwc_vt_event_slot_ids( $event_id ) as $shift_id ) {
+		if ( gwc_vt_shift_is_open( $shift_id ) ) {
 			return true;
 		}
 	}
@@ -342,15 +342,15 @@ function gwcvt_event_is_open( int $event_id ): bool {
 /**
  * Events in a date range, soonest first.
  *
- * The same named-meta-clause construction gwcvt_shifts_between() uses, and for
+ * The same named-meta-clause construction gwc_vt_shifts_between() uses, and for
  * the same reason: "when is it" and "when was it typed in" are different
  * questions and only one of them is being asked.
  *
  * @param array $args from, to (Y-m-d), statuses, limit.
  * @return int[] Event post IDs.
  */
-function gwcvt_events_between( array $args = array() ): array {
-	$from     = (string) ( $args['from'] ?? gwcvt_today() );
+function gwc_vt_events_between( array $args = array() ): array {
+	$from     = (string) ( $args['from'] ?? gwc_vt_today() );
 	$to       = (string) ( $args['to'] ?? '' );
 	$statuses = (array) ( $args['statuses'] ?? array( 'publish' ) );
 	$limit    = (int) ( $args['limit'] ?? 100 );
@@ -359,7 +359,7 @@ function gwcvt_events_between( array $args = array() ): array {
 	 * its second morning. Comparing the first day would drop a festival off the
 	 * schedule halfway through itself. */
 	$range = array(
-		'key'     => GWCVT_EVENT_END_DATE,
+		'key'     => GWC_VT_EVENT_END_DATE,
 		'value'   => $from,
 		'compare' => '>=',
 		'type'    => 'CHAR',
@@ -367,15 +367,15 @@ function gwcvt_events_between( array $args = array() ): array {
 
 	if ( '' !== $to ) {
 		$range = array(
-			'relation'         => 'AND',
-			'ends_after'       => array(
-				'key'     => GWCVT_EVENT_END_DATE,
+			'relation'          => 'AND',
+			'ends_after'        => array(
+				'key'     => GWC_VT_EVENT_END_DATE,
 				'value'   => $from,
 				'compare' => '>=',
 				'type'    => 'CHAR',
 			),
-			'gwcvt_event_date' => array(
-				'key'     => GWCVT_EVENT_DATE,
+			'gwc_vt_event_date' => array(
+				'key'     => GWC_VT_EVENT_DATE,
 				'value'   => $to,
 				'compare' => '<=',
 				'type'    => 'CHAR',
@@ -385,15 +385,15 @@ function gwcvt_events_between( array $args = array() ): array {
 
 	$ids = get_posts(
 		array(
-			'post_type'      => GWCVT_EVENT_TYPE,
+			'post_type'      => GWC_VT_EVENT_TYPE,
 			'post_status'    => $statuses,
 			'posts_per_page' => $limit,
 			'fields'         => 'ids',
 			'no_found_rows'  => true,
 			'meta_query'     => $range, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the only way to order by the event's own dates; the table is two rows per event.
 			'orderby'        => array(
-				'gwcvt_event_date' => 'ASC',
-				'ID'               => 'ASC',
+				'gwc_vt_event_date' => 'ASC',
+				'ID'                => 'ASC',
 			),
 		)
 	);
@@ -417,7 +417,7 @@ function gwcvt_events_between( array $args = array() ): array {
  * setting, and this does not deserve a setting.
  *
  * Instants rather than wall-clock strings, so an event spanning midnight or two
- * days compares correctly. gwcvt_shift_ends() already accounts for the overnight
+ * days compares correctly. gwc_vt_shift_ends() already accounts for the overnight
  * flag.
  * ─────────────────────────────────────────────────────────────────────────── */
 
@@ -429,15 +429,15 @@ function gwcvt_events_between( array $args = array() ): array {
  * @return bool False when either has no readable time — an unreadable slot is
  *              not evidence of a clash.
  */
-function gwcvt_shifts_overlap( int $a, int $b ): bool {
+function gwc_vt_shifts_overlap( int $a, int $b ): bool {
 	if ( $a === $b ) {
 		return false;
 	}
 
-	$a_from = gwcvt_shift_starts( $a );
-	$a_to   = gwcvt_shift_ends( $a );
-	$b_from = gwcvt_shift_starts( $b );
-	$b_to   = gwcvt_shift_ends( $b );
+	$a_from = gwc_vt_shift_starts( $a );
+	$a_to   = gwc_vt_shift_ends( $a );
+	$b_from = gwc_vt_shift_starts( $b );
+	$b_to   = gwc_vt_shift_ends( $b );
 
 	if ( null === $a_from || null === $a_to || null === $b_from || null === $b_to ) {
 		return false;
@@ -457,13 +457,13 @@ function gwcvt_shifts_overlap( int $a, int $b ): bool {
  * @param int[] $shift_ids Shift post IDs.
  * @return int[] Two shift IDs, or empty.
  */
-function gwcvt_first_overlapping_pair( array $shift_ids ): array {
+function gwc_vt_first_overlapping_pair( array $shift_ids ): array {
 	$shift_ids = array_values( array_unique( array_map( 'intval', $shift_ids ) ) );
 	$count     = count( $shift_ids );
 
 	for ( $i = 0; $i < $count; $i++ ) {
 		for ( $j = $i + 1; $j < $count; $j++ ) {
-			if ( gwcvt_shifts_overlap( $shift_ids[ $i ], $shift_ids[ $j ] ) ) {
+			if ( gwc_vt_shifts_overlap( $shift_ids[ $i ], $shift_ids[ $j ] ) ) {
 				return array( $shift_ids[ $i ], $shift_ids[ $j ] );
 			}
 		}
@@ -481,9 +481,9 @@ function gwcvt_first_overlapping_pair( array $shift_ids ): array {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_slot_label( int $shift_id ): string {
-	$role = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) );
-	$when = gwcvt_shift_time_label( $shift_id );
+function gwc_vt_slot_label( int $shift_id ): string {
+	$role = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) );
+	$when = gwc_vt_shift_time_label( $shift_id );
 
 	if ( '' === $role ) {
 		$role = __( 'Volunteering', 'groundwork-common-volunteer-tracker' );
@@ -502,7 +502,7 @@ function gwcvt_slot_label( int $shift_id ): string {
 }
 
 /* ── Where the admin screens live ────────────────────────────────────────────
- * URL builders rather than screens, beside gwcvt_schedule_url() and for the same
+ * URL builders rather than screens, beside gwc_vt_schedule_url() and for the same
  * reason: the daily summary builds them and the summary runs on cron, where the
  * admin bundle is not loaded at all.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -513,8 +513,8 @@ function gwcvt_slot_label( int $shift_id ): string {
  * @param int $event_id Event post ID, or 0 for a new one.
  * @return string
  */
-function gwcvt_event_edit_url( int $event_id ): string {
-	return gwcvt_schedule_url( array( 'gwcvt_event' => $event_id > 0 ? $event_id : 'new' ) );
+function gwc_vt_event_edit_url( int $event_id ): string {
+	return gwc_vt_schedule_url( array( 'gwc_vt_event' => $event_id > 0 ? $event_id : 'new' ) );
 }
 
 /**
@@ -523,11 +523,11 @@ function gwcvt_event_edit_url( int $event_id ): string {
  * @param int $event_id Event post ID.
  * @return string
  */
-function gwcvt_event_roster_url( int $event_id ): string {
-	return gwcvt_schedule_url(
+function gwc_vt_event_roster_url( int $event_id ): string {
+	return gwc_vt_schedule_url(
 		array(
-			'gwcvt_event' => $event_id,
-			'view'        => 'roster',
+			'gwc_vt_event' => $event_id,
+			'view'         => 'roster',
 		)
 	);
 }

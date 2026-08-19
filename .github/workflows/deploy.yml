@@ -72,7 +72,7 @@ jobs:
           tag="${tag#v}"
           header=$(grep -m1 -oE '^ \* Version:[[:space:]]*\S+' groundwork-common-volunteer-tracker.php | awk '{print $NF}')
           stable=$(grep -m1 -oE '^Stable tag:[[:space:]]*\S+' readme.txt | awk '{print $NF}')
-          constant=$(grep -m1 -oE "GWCVT_VERSION[[:space:]]*=[[:space:]]*'[^']+'" groundwork-common-volunteer-tracker.php | grep -oE "'[^']+'" | tr -d "'")
+          constant=$(grep -m1 -oE "GWC_VT_VERSION[[:space:]]*=[[:space:]]*'[^']+'" groundwork-common-volunteer-tracker.php | grep -oE "'[^']+'" | tr -d "'")
 
           echo "tag=$tag header=$header stable=$stable constant=$constant"
 

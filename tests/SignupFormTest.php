@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class SignupFormTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
@@ -28,14 +28,14 @@ final class SignupFormTest extends TestCase {
 	 * @param array $settings Settings to store.
 	 */
 	private function settings( array $settings ): void {
-		update_option( GWCVT_SETTINGS_OPTION, $settings );
-		gwcvt_settings_cache( null, true );
+		update_option( GWC_VT_SETTINGS_OPTION, $settings );
+		gwc_vt_settings_cache( null, true );
 	}
 
 	/* ── Off until somebody turns it on ──────────────────────────────────── */
 
 	public function test_signups_are_closed_on_a_fresh_install(): void {
-		$this->assertFalse( gwcvt_signups_open() );
+		$this->assertFalse( gwc_vt_signups_open() );
 	}
 
 	/**
@@ -50,7 +50,7 @@ final class SignupFormTest extends TestCase {
 	public function test_it_takes_both_switches_and_a_page( array $settings, bool $expected ): void {
 		$this->settings( $settings );
 
-		$this->assertSame( $expected, gwcvt_signups_open() );
+		$this->assertSame( $expected, gwc_vt_signups_open() );
 	}
 
 	public static function switches(): array {
@@ -68,7 +68,7 @@ final class SignupFormTest extends TestCase {
 	 * a form that quietly never accepts anything.
 	 */
 	public function test_the_list_renders_nothing_while_signups_are_closed(): void {
-		$this->assertSame( '', gwcvt_render_shift_list() );
+		$this->assertSame( '', gwc_vt_render_shift_list() );
 	}
 
 	/* ── What the visitor is told ────────────────────────────────────────────
@@ -80,12 +80,12 @@ final class SignupFormTest extends TestCase {
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_accepted_honeypotted_and_rate_limited_are_byte_identical(): void {
-		$accepted = gwcvt_signup_message( 'accepted' );
+		$accepted = gwc_vt_signup_message( 'accepted' );
 
 		$this->assertNotSame( '', $accepted );
 
 		foreach ( array( 'accepted', 'accepted', 'accepted' ) as $path ) {
-			$this->assertSame( $accepted, gwcvt_signup_message( $path ) );
+			$this->assertSame( $accepted, gwc_vt_signup_message( $path ) );
 		}
 	}
 
@@ -94,7 +94,7 @@ final class SignupFormTest extends TestCase {
 	 * the same answer, so the URL cannot be used to ask which signup IDs exist.
 	 */
 	public function test_a_used_and_a_forged_cancellation_link_read_the_same(): void {
-		$this->assertNotSame( '', gwcvt_signup_message( 'cancel-unknown' ) );
+		$this->assertNotSame( '', gwc_vt_signup_message( 'cancel-unknown' ) );
 	}
 
 	/**
@@ -102,7 +102,7 @@ final class SignupFormTest extends TestCase {
 	 */
 	#[DataProvider( 'results' )]
 	public function test_every_outcome_has_something_to_say( string $result ): void {
-		$this->assertNotSame( '', gwcvt_signup_message( $result ) );
+		$this->assertNotSame( '', gwc_vt_signup_message( $result ) );
 	}
 
 	public static function results(): array {
@@ -123,11 +123,11 @@ final class SignupFormTest extends TestCase {
 	 * response the other refusals use.
 	 */
 	public function test_a_mistyped_code_is_told_apart_from_a_signup(): void {
-		$this->assertNotSame( gwcvt_signup_message( 'accepted' ), gwcvt_signup_message( 'bad-code' ) );
+		$this->assertNotSame( gwc_vt_signup_message( 'accepted' ), gwc_vt_signup_message( 'bad-code' ) );
 	}
 
 	public function test_an_unknown_result_says_nothing_rather_than_guessing(): void {
-		$this->assertSame( '', gwcvt_signup_message( 'something-else' ) );
+		$this->assertSame( '', gwc_vt_signup_message( 'something-else' ) );
 	}
 
 	/* ── The rate limiter is shared ──────────────────────────────────────────
@@ -136,14 +136,14 @@ final class SignupFormTest extends TestCase {
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_the_two_public_forms_share_one_rate_limit(): void {
-		$limits = gwcvt_rate_limits();
+		$limits = gwc_vt_rate_limits();
 
 		for ( $i = 0; $i < $limits['email']['max']; $i++ ) {
-			$this->assertFalse( gwcvt_rate_limited( '198.51.100.7', 'someone@example.test' ) );
+			$this->assertFalse( gwc_vt_rate_limited( '198.51.100.7', 'someone@example.test' ) );
 		}
 
 		// The next attempt is over, whichever form it arrives at.
-		$this->assertTrue( gwcvt_rate_limited( '198.51.100.7', 'someone@example.test' ) );
+		$this->assertTrue( gwc_vt_rate_limited( '198.51.100.7', 'someone@example.test' ) );
 	}
 
 	/* ── The calendar file ───────────────────────────────────────────────── */
@@ -154,7 +154,7 @@ final class SignupFormTest extends TestCase {
 	 */
 	#[DataProvider( 'escapes' )]
 	public function test_it_escapes_what_a_calendar_file_cannot_carry( string $raw, string $expected ): void {
-		$this->assertSame( $expected, gwcvt_ics_escape( $raw ) );
+		$this->assertSame( $expected, gwc_vt_ics_escape( $raw ) );
 	}
 
 	public static function escapes(): array {
@@ -173,12 +173,12 @@ final class SignupFormTest extends TestCase {
 	}
 
 	public function test_a_short_line_is_not_folded(): void {
-		$this->assertSame( 'SUMMARY:Sorting', gwcvt_ics_fold( 'SUMMARY:Sorting' ) );
+		$this->assertSame( 'SUMMARY:Sorting', gwc_vt_ics_fold( 'SUMMARY:Sorting' ) );
 	}
 
 	public function test_a_long_line_is_folded_with_a_leading_space(): void {
 		$line   = 'DESCRIPTION:' . str_repeat( 'a', 200 );
-		$folded = gwcvt_ics_fold( $line );
+		$folded = gwc_vt_ics_fold( $line );
 
 		$this->assertStringContainsString( "\r\n ", $folded );
 
@@ -198,7 +198,7 @@ final class SignupFormTest extends TestCase {
 	 */
 	public function test_folding_never_cuts_a_character_in_half(): void {
 		$line   = 'LOCATION:' . str_repeat( 'é', 120 );
-		$folded = gwcvt_ics_fold( $line );
+		$folded = gwc_vt_ics_fold( $line );
 
 		$this->assertSame( $line, str_replace( "\r\n ", '', $folded ) );
 
@@ -211,6 +211,6 @@ final class SignupFormTest extends TestCase {
 	public function test_folding_handles_a_line_of_exactly_the_limit(): void {
 		$line = str_repeat( 'a', 75 );
 
-		$this->assertSame( $line, gwcvt_ics_fold( $line ) );
+		$this->assertSame( $line, gwc_vt_ics_fold( $line ) );
 	}
 }

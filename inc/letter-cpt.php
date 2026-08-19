@@ -7,19 +7,19 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_LETTER_TYPE = 'gwcvt_letter';
+const GWC_VT_LETTER_TYPE = 'gwc_vt_letter';
 
-const GWCVT_LETTER_VOLUNTEER  = '_gwcvt_letter_volunteer';
-const GWCVT_LETTER_BY         = '_gwcvt_letter_by';
-const GWCVT_LETTER_MEDIUM     = '_gwcvt_letter_medium';
-const GWCVT_LETTER_RECIPIENT  = '_gwcvt_letter_recipient';
-const GWCVT_LETTER_RANGE_FROM = '_gwcvt_letter_from';
-const GWCVT_LETTER_RANGE_TO   = '_gwcvt_letter_to';
-const GWCVT_LETTER_MINUTES    = '_gwcvt_letter_minutes';
-const GWCVT_LETTER_ENTRIES    = '_gwcvt_letter_entries';
-const GWCVT_LETTER_SENT_OK    = '_gwcvt_letter_sent_ok';
+const GWC_VT_LETTER_VOLUNTEER  = '_gwc_vt_letter_volunteer';
+const GWC_VT_LETTER_BY         = '_gwc_vt_letter_by';
+const GWC_VT_LETTER_MEDIUM     = '_gwc_vt_letter_medium';
+const GWC_VT_LETTER_RECIPIENT  = '_gwc_vt_letter_recipient';
+const GWC_VT_LETTER_RANGE_FROM = '_gwc_vt_letter_from';
+const GWC_VT_LETTER_RANGE_TO   = '_gwc_vt_letter_to';
+const GWC_VT_LETTER_MINUTES    = '_gwc_vt_letter_minutes';
+const GWC_VT_LETTER_ENTRIES    = '_gwc_vt_letter_entries';
+const GWC_VT_LETTER_SENT_OK    = '_gwc_vt_letter_sent_ok';
 
-add_action( 'init', 'gwcvt_register_letter_type' );
+add_action( 'init', 'gwc_vt_register_letter_type' );
 
 /* ── Where the house convention bends, and why ───────────────────────────────
  * Everything else in this family stores data as post meta on the thing it
@@ -51,7 +51,7 @@ add_action( 'init', 'gwcvt_register_letter_type' );
 /**
  * Register the letter log.
  */
-function gwcvt_register_letter_type(): void {
+function gwc_vt_register_letter_type(): void {
 	$args = array(
 		'labels'              => array(
 			'name'          => _x( 'Issued letters', 'post type general name', 'groundwork-common-volunteer-tracker' ),
@@ -78,7 +78,7 @@ function gwcvt_register_letter_type(): void {
 	 *
 	 * @param array $args register_post_type() arguments.
 	 */
-	register_post_type( GWCVT_LETTER_TYPE, apply_filters( 'gwcvt_letter_post_type_args', $args ) );
+	register_post_type( GWC_VT_LETTER_TYPE, apply_filters( 'gwc_vt_letter_post_type_args', $args ) );
 }
 
 /**
@@ -89,16 +89,16 @@ function gwcvt_register_letter_type(): void {
  * about email would answer "no letter was issued" about a letter somebody is
  * holding.
  *
- * @param GWCVT_Letter $letter    The letter.
- * @param string       $medium    'print' or 'email'.
- * @param string       $recipient Address it went to, for email.
- * @param bool         $sent_ok   Whether delivery was accepted.
+ * @param GWC_VT_Letter $letter    The letter.
+ * @param string        $medium    'print' or 'email'.
+ * @param string        $recipient Address it went to, for email.
+ * @param bool          $sent_ok   Whether delivery was accepted.
  * @return int The log post ID.
  */
-function gwcvt_log_letter( GWCVT_Letter $letter, string $medium, string $recipient = '', bool $sent_ok = true ): int {
+function gwc_vt_log_letter( GWC_VT_Letter $letter, string $medium, string $recipient = '', bool $sent_ok = true ): int {
 	$record_id = wp_insert_post(
 		array(
-			'post_type'   => GWCVT_LETTER_TYPE,
+			'post_type'   => GWC_VT_LETTER_TYPE,
 			'post_status' => 'publish',
 			'post_title'  => $letter->reference,
 		)
@@ -110,24 +110,24 @@ function gwcvt_log_letter( GWCVT_Letter $letter, string $medium, string $recipie
 
 	$record_id = (int) $record_id;
 
-	update_post_meta( $record_id, GWCVT_LETTER_VOLUNTEER, $letter->volunteer_id );
-	update_post_meta( $record_id, GWCVT_LETTER_BY, get_current_user_id() );
-	update_post_meta( $record_id, GWCVT_LETTER_MEDIUM, $medium );
-	update_post_meta( $record_id, GWCVT_LETTER_RECIPIENT, $recipient );
-	update_post_meta( $record_id, GWCVT_LETTER_RANGE_FROM, $letter->from );
-	update_post_meta( $record_id, GWCVT_LETTER_RANGE_TO, $letter->to );
-	update_post_meta( $record_id, GWCVT_LETTER_MINUTES, $letter->verified_minutes );
-	update_post_meta( $record_id, GWCVT_LETTER_ENTRIES, $letter->entry_count() );
-	update_post_meta( $record_id, GWCVT_LETTER_SENT_OK, $sent_ok ? 1 : 0 );
+	update_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, $letter->volunteer_id );
+	update_post_meta( $record_id, GWC_VT_LETTER_BY, get_current_user_id() );
+	update_post_meta( $record_id, GWC_VT_LETTER_MEDIUM, $medium );
+	update_post_meta( $record_id, GWC_VT_LETTER_RECIPIENT, $recipient );
+	update_post_meta( $record_id, GWC_VT_LETTER_RANGE_FROM, $letter->from );
+	update_post_meta( $record_id, GWC_VT_LETTER_RANGE_TO, $letter->to );
+	update_post_meta( $record_id, GWC_VT_LETTER_MINUTES, $letter->verified_minutes );
+	update_post_meta( $record_id, GWC_VT_LETTER_ENTRIES, $letter->entry_count() );
+	update_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, $sent_ok ? 1 : 0 );
 
 	/**
 	 * Fires after a letter has been issued and logged.
 	 *
 	 * @param int          $record_id The log post ID.
-	 * @param GWCVT_Letter $letter    The letter.
+	 * @param GWC_VT_Letter $letter    The letter.
 	 * @param string       $medium    'print' or 'email'.
 	 */
-	do_action( 'gwcvt_letter_issued', $record_id, $letter, $medium );
+	do_action( 'gwc_vt_letter_issued', $record_id, $letter, $medium );
 
 	return $record_id;
 }
@@ -138,7 +138,7 @@ function gwcvt_log_letter( GWCVT_Letter $letter, string $medium, string $recipie
  * @param string $reference The reference code.
  * @return array|null
  */
-function gwcvt_find_letter_record( string $reference ) {
+function gwc_vt_find_letter_record( string $reference ) {
 	$reference = strtoupper( trim( $reference ) );
 
 	if ( '' === $reference ) {
@@ -147,7 +147,7 @@ function gwcvt_find_letter_record( string $reference ) {
 
 	$ids = get_posts(
 		array(
-			'post_type'              => GWCVT_LETTER_TYPE,
+			'post_type'              => GWC_VT_LETTER_TYPE,
 			'post_status'            => 'publish',
 			'fields'                 => 'ids',
 			'posts_per_page'         => 1,
@@ -166,7 +166,7 @@ function gwcvt_find_letter_record( string $reference ) {
 		return null;
 	}
 
-	return gwcvt_letter_record( (int) $ids[0] );
+	return gwc_vt_letter_record( (int) $ids[0] );
 }
 
 /**
@@ -175,19 +175,19 @@ function gwcvt_find_letter_record( string $reference ) {
  * @param int $record_id Log post ID.
  * @return array
  */
-function gwcvt_letter_record( int $record_id ): array {
+function gwc_vt_letter_record( int $record_id ): array {
 	return array(
 		'id'           => $record_id,
 		'reference'    => (string) get_the_title( $record_id ),
-		'volunteer_id' => (int) get_post_meta( $record_id, GWCVT_LETTER_VOLUNTEER, true ),
-		'issued_by'    => (int) get_post_meta( $record_id, GWCVT_LETTER_BY, true ),
-		'medium'       => (string) get_post_meta( $record_id, GWCVT_LETTER_MEDIUM, true ),
-		'recipient'    => (string) get_post_meta( $record_id, GWCVT_LETTER_RECIPIENT, true ),
-		'from'         => (string) get_post_meta( $record_id, GWCVT_LETTER_RANGE_FROM, true ),
-		'to'           => (string) get_post_meta( $record_id, GWCVT_LETTER_RANGE_TO, true ),
-		'minutes'      => (int) get_post_meta( $record_id, GWCVT_LETTER_MINUTES, true ),
-		'entries'      => (int) get_post_meta( $record_id, GWCVT_LETTER_ENTRIES, true ),
-		'sent_ok'      => (bool) get_post_meta( $record_id, GWCVT_LETTER_SENT_OK, true ),
+		'volunteer_id' => (int) get_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, true ),
+		'issued_by'    => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),
+		'medium'       => (string) get_post_meta( $record_id, GWC_VT_LETTER_MEDIUM, true ),
+		'recipient'    => (string) get_post_meta( $record_id, GWC_VT_LETTER_RECIPIENT, true ),
+		'from'         => (string) get_post_meta( $record_id, GWC_VT_LETTER_RANGE_FROM, true ),
+		'to'           => (string) get_post_meta( $record_id, GWC_VT_LETTER_RANGE_TO, true ),
+		'minutes'      => (int) get_post_meta( $record_id, GWC_VT_LETTER_MINUTES, true ),
+		'entries'      => (int) get_post_meta( $record_id, GWC_VT_LETTER_ENTRIES, true ),
+		'sent_ok'      => (bool) get_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, true ),
 		'issued_at'    => (string) get_post_field( 'post_date', $record_id ),
 	);
 }
@@ -203,10 +203,10 @@ function gwcvt_letter_record( int $record_id ): array {
  * @param int $limit How many to return.
  * @return array[]
  */
-function gwcvt_recent_letters( int $limit = 20 ): array {
+function gwc_vt_recent_letters( int $limit = 20 ): array {
 	$ids = get_posts(
 		array(
-			'post_type'              => GWCVT_LETTER_TYPE,
+			'post_type'              => GWC_VT_LETTER_TYPE,
 			'post_status'            => 'publish',
 			'fields'                 => 'ids',
 			'posts_per_page'         => max( 1, $limit ),
@@ -217,5 +217,5 @@ function gwcvt_recent_letters( int $limit = 20 ): array {
 		)
 	);
 
-	return array_map( 'gwcvt_letter_record', array_map( 'intval', (array) $ids ) );
+	return array_map( 'gwc_vt_letter_record', array_map( 'intval', (array) $ids ) );
 }

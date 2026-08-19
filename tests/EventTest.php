@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class EventTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
@@ -29,13 +29,13 @@ final class EventTest extends TestCase {
 	 * @param int    $max   Capacity, 0 for none.
 	 */
 	private function slot( int $id, string $date, string $start, string $end, string $role = 'Greeter', int $max = 4 ): void {
-		gwcvt_test_add_post( $id, GWCVT_SHIFT_TYPE );
+		gwc_vt_test_add_post( $id, GWC_VT_SHIFT_TYPE );
 
-		update_post_meta( $id, GWCVT_SHIFT_DATE, $date );
-		update_post_meta( $id, GWCVT_SHIFT_START, $start );
-		update_post_meta( $id, GWCVT_SHIFT_END, $end );
-		update_post_meta( $id, GWCVT_SHIFT_ACTIVITY, $role );
-		update_post_meta( $id, GWCVT_SHIFT_MAX, $max );
+		update_post_meta( $id, GWC_VT_SHIFT_DATE, $date );
+		update_post_meta( $id, GWC_VT_SHIFT_START, $start );
+		update_post_meta( $id, GWC_VT_SHIFT_END, $end );
+		update_post_meta( $id, GWC_VT_SHIFT_ACTIVITY, $role );
+		update_post_meta( $id, GWC_VT_SHIFT_MAX, $max );
 	}
 
 	/* ── Overlap ─────────────────────────────────────────────────────────────
@@ -56,8 +56,8 @@ final class EventTest extends TestCase {
 		$this->slot( 101, '2026-10-12', $a_start, $a_end );
 		$this->slot( 102, '2026-10-12', $b_start, $b_end );
 
-		$this->assertSame( $clash, gwcvt_shifts_overlap( 101, 102 ) );
-		$this->assertSame( $clash, gwcvt_shifts_overlap( 102, 101 ), 'overlap is symmetric' );
+		$this->assertSame( $clash, gwc_vt_shifts_overlap( 101, 102 ) );
+		$this->assertSame( $clash, gwc_vt_shifts_overlap( 102, 101 ), 'overlap is symmetric' );
 	}
 
 	public static function pairs(): array {
@@ -76,21 +76,21 @@ final class EventTest extends TestCase {
 	public function test_a_slot_does_not_overlap_itself(): void {
 		$this->slot( 101, '2026-10-12', '09:00', '12:00' );
 
-		$this->assertFalse( gwcvt_shifts_overlap( 101, 101 ) );
+		$this->assertFalse( gwc_vt_shifts_overlap( 101, 101 ) );
 	}
 
 	public function test_different_days_do_not_overlap(): void {
 		$this->slot( 101, '2026-10-12', '09:00', '17:00' );
 		$this->slot( 102, '2026-10-13', '09:00', '17:00' );
 
-		$this->assertFalse( gwcvt_shifts_overlap( 101, 102 ) );
+		$this->assertFalse( gwc_vt_shifts_overlap( 101, 102 ) );
 	}
 
 	public function test_a_slot_with_no_readable_time_is_not_evidence_of_a_clash(): void {
 		$this->slot( 101, '2026-10-12', '09:00', '12:00' );
 		$this->slot( 102, '2026-10-12', '', '' );
 
-		$this->assertFalse( gwcvt_shifts_overlap( 101, 102 ) );
+		$this->assertFalse( gwc_vt_shifts_overlap( 101, 102 ) );
 	}
 
 	public function test_it_reports_the_first_clashing_pair(): void {
@@ -98,7 +98,7 @@ final class EventTest extends TestCase {
 		$this->slot( 102, '2026-10-12', '09:00', '12:00' );
 		$this->slot( 103, '2026-10-12', '08:00', '14:00' );
 
-		$pair = gwcvt_first_overlapping_pair( array( 101, 102, 103 ) );
+		$pair = gwc_vt_first_overlapping_pair( array( 101, 102, 103 ) );
 
 		$this->assertCount( 2, $pair );
 		$this->assertContains( 103, $pair );
@@ -109,20 +109,20 @@ final class EventTest extends TestCase {
 		$this->slot( 102, '2026-10-12', '09:00', '12:00' );
 		$this->slot( 103, '2026-10-12', '12:00', '15:00' );
 
-		$this->assertSame( array(), gwcvt_first_overlapping_pair( array( 101, 102, 103 ) ) );
+		$this->assertSame( array(), gwc_vt_first_overlapping_pair( array( 101, 102, 103 ) ) );
 	}
 
 	public function test_one_slot_cannot_clash(): void {
 		$this->slot( 101, '2026-10-12', '09:00', '12:00' );
 
-		$this->assertSame( array(), gwcvt_first_overlapping_pair( array( 101 ) ) );
-		$this->assertSame( array(), gwcvt_first_overlapping_pair( array() ) );
+		$this->assertSame( array(), gwc_vt_first_overlapping_pair( array( 101 ) ) );
+		$this->assertSame( array(), gwc_vt_first_overlapping_pair( array() ) );
 	}
 
 	public function test_the_same_slot_twice_is_not_a_clash(): void {
 		$this->slot( 101, '2026-10-12', '09:00', '12:00' );
 
-		$this->assertSame( array(), gwcvt_first_overlapping_pair( array( 101, 101 ) ) );
+		$this->assertSame( array(), gwc_vt_first_overlapping_pair( array( 101, 101 ) ) );
 	}
 
 	/* ── Ordering ────────────────────────────────────────────────────────── */
@@ -133,7 +133,7 @@ final class EventTest extends TestCase {
 		$this->slot( 103, '2026-10-12', '08:00', '09:00' );
 
 		$ids = array( 101, 102, 103 );
-		usort( $ids, 'gwcvt_compare_slots' );
+		usort( $ids, 'gwc_vt_compare_slots' );
 
 		$this->assertSame( array( 103, 102, 101 ), $ids );
 	}
@@ -142,8 +142,8 @@ final class EventTest extends TestCase {
 		$this->slot( 101, '2026-10-12', '09:00', '12:00' );
 		$this->slot( 102, '2026-10-12', '09:00', '12:00' );
 
-		$this->assertLessThan( 0, gwcvt_compare_slots( 101, 102 ) );
-		$this->assertGreaterThan( 0, gwcvt_compare_slots( 102, 101 ) );
+		$this->assertLessThan( 0, gwc_vt_compare_slots( 101, 102 ) );
+		$this->assertGreaterThan( 0, gwc_vt_compare_slots( 102, 101 ) );
 	}
 
 	/* ── Labels ──────────────────────────────────────────────────────────── */
@@ -151,13 +151,13 @@ final class EventTest extends TestCase {
 	public function test_a_slot_is_named_by_role_and_time(): void {
 		$this->slot( 101, '2026-10-12', '09:00', '12:00', 'Kitchen' );
 
-		$this->assertStringContainsString( 'Kitchen', gwcvt_slot_label( 101 ) );
+		$this->assertStringContainsString( 'Kitchen', gwc_vt_slot_label( 101 ) );
 	}
 
 	public function test_a_slot_with_no_role_still_has_a_name(): void {
 		$this->slot( 101, '2026-10-12', '09:00', '12:00', '' );
 
-		$this->assertNotSame( '', gwcvt_slot_label( 101 ) );
+		$this->assertNotSame( '', gwc_vt_slot_label( 101 ) );
 	}
 
 	/* ── A status has to fit the column ──────────────────────────────────────
@@ -165,7 +165,7 @@ final class EventTest extends TestCase {
 	 * truncated and is not warned about: wp_insert_post() sanitises what it
 	 * cannot store and the row keeps the status it already had.
 	 *
-	 * GWCVT_EVENT_CANCELLED was twenty-one characters, so calling an event off
+	 * GWC_VT_EVENT_CANCELLED was twenty-one characters, so calling an event off
 	 * reported success while the event stayed published and went on taking
 	 * signups. Nothing on any screen said otherwise.
 	 * ─────────────────────────────────────────────────────────────────────── */
@@ -184,10 +184,10 @@ final class EventTest extends TestCase {
 
 	public static function statuses(): array {
 		return array(
-			'a cancelled event'  => array( GWCVT_EVENT_CANCELLED ),
-			'a cancelled shift'  => array( GWCVT_SHIFT_CANCELLED ),
-			'a waiting signup'   => array( GWCVT_SIGNUP_WAITLIST ),
-			'a withdrawn signup' => array( GWCVT_SIGNUP_WITHDRAWN ),
+			'a cancelled event'  => array( GWC_VT_EVENT_CANCELLED ),
+			'a cancelled shift'  => array( GWC_VT_SHIFT_CANCELLED ),
+			'a waiting signup'   => array( GWC_VT_SIGNUP_WAITLIST ),
+			'a withdrawn signup' => array( GWC_VT_SIGNUP_WITHDRAWN ),
 		);
 	}
 
@@ -209,7 +209,7 @@ final class EventTest extends TestCase {
 	public function test_no_public_message_carries_a_number( string $key ): void {
 		$this->assertDoesNotMatchRegularExpression(
 			'/\d/',
-			gwcvt_signup_message( $key ),
+			gwc_vt_signup_message( $key ),
 			'A number here would report what the database did, which is a disclosure about somebody else.'
 		);
 	}
@@ -231,12 +231,12 @@ final class EventTest extends TestCase {
 	public function test_an_accepted_signup_and_a_honeypot_hit_read_identically(): void {
 		/* Both paths end on the same key, so this is really an assertion that
 		 * nothing has quietly given the honeypot a key of its own. */
-		$this->assertSame( gwcvt_signup_message( 'accepted' ), gwcvt_signup_message( 'accepted' ) );
-		$this->assertNotSame( '', gwcvt_signup_message( 'accepted' ) );
+		$this->assertSame( gwc_vt_signup_message( 'accepted' ), gwc_vt_signup_message( 'accepted' ) );
+		$this->assertNotSame( '', gwc_vt_signup_message( 'accepted' ) );
 	}
 
 	public function test_an_unknown_result_says_nothing(): void {
-		$this->assertSame( '', gwcvt_signup_message( 'made-up' ) );
+		$this->assertSame( '', gwc_vt_signup_message( 'made-up' ) );
 	}
 
 	/* ── Which page shows which event ────────────────────────────────────────
@@ -247,45 +247,45 @@ final class EventTest extends TestCase {
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_the_shortcode_names_its_event(): void {
-		$this->assertTrue( gwcvt_content_places_event( '[volunteer_event id="12"]', 12 ) );
-		$this->assertTrue( gwcvt_content_places_event( "[volunteer_event id='12']", 12 ) );
-		$this->assertTrue( gwcvt_content_places_event( '[volunteer_event id=12]', 12 ) );
+		$this->assertTrue( gwc_vt_content_places_event( '[gwc_vt_event_grid id="12"]', 12 ) );
+		$this->assertTrue( gwc_vt_content_places_event( "[gwc_vt_event_grid id='12']", 12 ) );
+		$this->assertTrue( gwc_vt_content_places_event( '[gwc_vt_event_grid id=12]', 12 ) );
 	}
 
 	public function test_the_block_names_its_event(): void {
 		$block = '<!-- wp:groundwork-common-volunteer-tracker/event-grid {"eventId":12} /-->';
 
-		$this->assertTrue( gwcvt_content_places_event( $block, 12 ) );
+		$this->assertTrue( gwc_vt_content_places_event( $block, 12 ) );
 	}
 
 	/* The bug this replaces: a bare strpos() for "12" was true of a page holding
 	 * event 1, event 2, event 120, and of the year 2012 in the prose above the
 	 * block. */
 	public function test_an_id_is_not_matched_by_a_substring_of_another(): void {
-		$page = '[volunteer_event id="12"]';
+		$page = '[gwc_vt_event_grid id="12"]';
 
-		$this->assertFalse( gwcvt_content_places_event( $page, 1 ) );
-		$this->assertFalse( gwcvt_content_places_event( $page, 2 ) );
-		$this->assertFalse( gwcvt_content_places_event( $page, 120 ) );
+		$this->assertFalse( gwc_vt_content_places_event( $page, 1 ) );
+		$this->assertFalse( gwc_vt_content_places_event( $page, 2 ) );
+		$this->assertFalse( gwc_vt_content_places_event( $page, 120 ) );
 	}
 
 	public function test_prose_around_the_placement_is_not_an_id(): void {
 		$page = '<p>Every autumn since 2012.</p><!-- wp:groundwork-common-volunteer-tracker/event-grid {"eventId":7} /-->';
 
-		$this->assertFalse( gwcvt_content_places_event( $page, 2012 ) );
-		$this->assertTrue( gwcvt_content_places_event( $page, 7 ) );
+		$this->assertFalse( gwc_vt_content_places_event( $page, 2012 ) );
+		$this->assertTrue( gwc_vt_content_places_event( $page, 7 ) );
 	}
 
 	public function test_a_page_with_several_placements_answers_for_each(): void {
-		$page = '[volunteer_event id="3"] and [volunteer_event id="9"]';
+		$page = '[gwc_vt_event_grid id="3"] and [gwc_vt_event_grid id="9"]';
 
-		$this->assertTrue( gwcvt_content_places_event( $page, 3 ) );
-		$this->assertTrue( gwcvt_content_places_event( $page, 9 ) );
-		$this->assertFalse( gwcvt_content_places_event( $page, 4 ) );
+		$this->assertTrue( gwc_vt_content_places_event( $page, 3 ) );
+		$this->assertTrue( gwc_vt_content_places_event( $page, 9 ) );
+		$this->assertFalse( gwc_vt_content_places_event( $page, 4 ) );
 	}
 
 	public function test_nothing_places_event_zero(): void {
-		$this->assertFalse( gwcvt_content_places_event( '[volunteer_event id="0"]', 0 ) );
-		$this->assertFalse( gwcvt_content_places_event( '', 12 ) );
+		$this->assertFalse( gwc_vt_content_places_event( '[gwc_vt_event_grid id="0"]', 0 ) );
+		$this->assertFalse( gwc_vt_content_places_event( '', 12 ) );
 	}
 }

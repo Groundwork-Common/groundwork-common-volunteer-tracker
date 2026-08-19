@@ -8,9 +8,9 @@
 defined( 'ABSPATH' ) || exit;
 
 /* Both fire for any page write, and both only bump a number — see the box
- * comment above gwcvt_event_page_generation(). */
-add_action( 'save_post', 'gwcvt_maybe_flush_event_page_cache', 10, 2 );
-add_action( 'deleted_post', 'gwcvt_maybe_flush_event_page_cache', 10, 2 );
+ * comment above gwc_vt_event_page_generation(). */
+add_action( 'save_post', 'gwc_vt_maybe_flush_event_page_cache', 10, 2 );
+add_action( 'deleted_post', 'gwc_vt_maybe_flush_event_page_cache', 10, 2 );
 
 /* ── Counts, never names. Still. ─────────────────────────────────────────────
  * Everything in the box comment at the top of inc/signup-form.php applies here
@@ -28,7 +28,7 @@ add_action( 'deleted_post', 'gwcvt_maybe_flush_event_page_cache', 10, 2 );
  * about what it may say back is in inc/signup-handler.php, because that is where
  * saying the wrong thing would be a disclosure.
  *
- * Field names carry the shift ID: gwcvt_slots[9001]. Never a positional array —
+ * Field names carry the shift ID: gwc_vt_slots[9001]. Never a positional array —
  * an unticked checkbox posts nothing at all, so a positional one arrives with
  * its indexes closed up.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -41,37 +41,37 @@ add_action( 'deleted_post', 'gwcvt_maybe_flush_event_page_cache', 10, 2 );
  *                open, so a page that still has the block on it renders nothing
  *                rather than something broken.
  */
-function gwcvt_render_event_grid( int $event_id ): string {
-	if ( ! gwcvt_signups_open() ) {
+function gwc_vt_render_event_grid( int $event_id ): string {
+	if ( ! gwc_vt_signups_open() ) {
 		return '';
 	}
 
-	$manage = gwcvt_render_signup_manage();
+	$manage = gwc_vt_render_signup_manage();
 
 	if ( '' !== $manage ) {
 		return $manage;
 	}
 
-	if ( GWCVT_EVENT_TYPE !== get_post_type( $event_id ) || 'publish' !== get_post_status( $event_id ) ) {
+	if ( GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) || 'publish' !== get_post_status( $event_id ) ) {
 		return '';
 	}
 
-	$result = (string) ( $GLOBALS['gwcvt_signup_result'] ?? '' );
-	$picked = array_map( 'intval', (array) ( $GLOBALS['gwcvt_signup_picked'] ?? array() ) );
-	$clash  = array_map( 'intval', (array) ( $GLOBALS['gwcvt_signup_clash'] ?? array() ) );
-	$roles  = gwcvt_event_visible_roles( $event_id );
-	$code   = (string) gwcvt_setting( 'signup_code' );
+	$result = (string) ( $GLOBALS['gwc_vt_signup_result'] ?? '' );
+	$picked = array_map( 'intval', (array) ( $GLOBALS['gwc_vt_signup_picked'] ?? array() ) );
+	$clash  = array_map( 'intval', (array) ( $GLOBALS['gwc_vt_signup_clash'] ?? array() ) );
+	$roles  = gwc_vt_event_visible_roles( $event_id );
+	$code   = (string) gwc_vt_setting( 'signup_code' );
 
-	$description = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_DESCRIPTION, true ) );
-	$where       = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) );
+	$description = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_DESCRIPTION, true ) );
+	$where       = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_LOCATION, true ) );
 
 	ob_start();
 	?>
 	<div class="gwcvt-shifts gwcvt-event">
-		<h2 class="gwcvt-event__name"><?php echo esc_html( gwcvt_event_name( $event_id ) ); ?></h2>
+		<h2 class="gwcvt-event__name"><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></h2>
 
 		<p class="gwcvt-event__when">
-			<?php echo esc_html( gwcvt_event_date_label( $event_id ) ); ?>
+			<?php echo esc_html( gwc_vt_event_date_label( $event_id ) ); ?>
 			<?php if ( '' !== $where ) : ?>
 				· <?php echo esc_html( $where ); ?>
 			<?php endif; ?>
@@ -82,7 +82,7 @@ function gwcvt_render_event_grid( int $event_id ): string {
 		<?php endif; ?>
 
 		<?php if ( '' !== $result ) : ?>
-			<p class="gwcvt-shifts__message" role="status"><?php echo esc_html( gwcvt_signup_message( $result ) ); ?></p>
+			<p class="gwcvt-shifts__message" role="status"><?php echo esc_html( gwc_vt_signup_message( $result ) ); ?></p>
 		<?php endif; ?>
 
 		<?php if ( 'clash' === $result && 2 === count( $clash ) ) : ?>
@@ -91,8 +91,8 @@ function gwcvt_render_event_grid( int $event_id ): string {
 				printf(
 					/* translators: 1: one slot, 2: another slot. */
 					esc_html__( 'You have picked %1$s and %2$s, and they overlap.', 'groundwork-common-volunteer-tracker' ),
-					'<strong>' . esc_html( gwcvt_slot_label( $clash[0] ) ) . '</strong>',
-					'<strong>' . esc_html( gwcvt_slot_label( $clash[1] ) ) . '</strong>'
+					'<strong>' . esc_html( gwc_vt_slot_label( $clash[0] ) ) . '</strong>',
+					'<strong>' . esc_html( gwc_vt_slot_label( $clash[1] ) ) . '</strong>'
 				);
 				?>
 			</p>
@@ -109,9 +109,9 @@ function gwcvt_render_event_grid( int $event_id ): string {
 		?>
 
 		<form method="post" class="gwcvt-shifts__form">
-			<?php wp_nonce_field( 'gwcvt_signup', 'gwcvt_signup_nonce' ); ?>
-			<input type="hidden" name="gwcvt_t" value="<?php echo esc_attr( gwcvt_form_stamp() ); ?>" />
-			<input type="hidden" name="gwcvt_event" value="<?php echo esc_attr( (string) $event_id ); ?>" />
+			<?php wp_nonce_field( 'gwc_vt_signup', 'gwc_vt_signup_nonce' ); ?>
+			<input type="hidden" name="gwc_vt_t" value="<?php echo esc_attr( gwc_vt_form_stamp() ); ?>" />
+			<input type="hidden" name="gwc_vt_event" value="<?php echo esc_attr( (string) $event_id ); ?>" />
 
 			<p class="gwcvt-event__ask"><?php esc_html_e( 'Choose the times you can help.', 'groundwork-common-volunteer-tracker' ); ?></p>
 			<p class="gwcvt-shifts__help"><?php esc_html_e( 'You can pick more than one.', 'groundwork-common-volunteer-tracker' ); ?></p>
@@ -121,7 +121,7 @@ function gwcvt_render_event_grid( int $event_id ): string {
 					<legend><?php echo esc_html( (string) $role ); ?></legend>
 
 					<?php foreach ( $slot_ids as $shift_id ) : ?>
-						<?php gwcvt_render_event_slot_choice( (int) $shift_id, $picked, $clash ); ?>
+						<?php gwc_vt_render_event_slot_choice( (int) $shift_id, $picked, $clash ); ?>
 					<?php endforeach; ?>
 				</fieldset>
 			<?php endforeach; ?>
@@ -129,7 +129,7 @@ function gwcvt_render_event_grid( int $event_id ): string {
 			<?php if ( 'clash' === $result ) : ?>
 				<div class="gwcvt-shifts__field gwcvt-shifts__confirm">
 					<label>
-						<input type="checkbox" name="gwcvt_clash_ok" value="1" />
+						<input type="checkbox" name="gwc_vt_clash_ok" value="1" />
 						<?php esc_html_e( 'I know — I am doing both, and I will move between them.', 'groundwork-common-volunteer-tracker' ); ?>
 					</label>
 				</div>
@@ -137,12 +137,12 @@ function gwcvt_render_event_grid( int $event_id ): string {
 
 			<div class="gwcvt-shifts__field">
 				<label for="gwcvt-signup-name"><?php esc_html_e( 'Your name', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-signup-name" name="gwcvt_name" required maxlength="100" autocomplete="name" value="<?php echo esc_attr( (string) ( $GLOBALS['gwcvt_signup_name'] ?? '' ) ); ?>" />
+				<input type="text" id="gwcvt-signup-name" name="gwc_vt_name" required maxlength="100" autocomplete="name" value="<?php echo esc_attr( (string) ( $GLOBALS['gwc_vt_signup_name'] ?? '' ) ); ?>" />
 			</div>
 
 			<div class="gwcvt-shifts__field">
 				<label for="gwcvt-signup-email"><?php esc_html_e( 'Your email address', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="email" id="gwcvt-signup-email" name="gwcvt_email" required maxlength="200" autocomplete="email" value="<?php echo esc_attr( (string) ( $GLOBALS['gwcvt_signup_email'] ?? '' ) ); ?>" />
+				<input type="email" id="gwcvt-signup-email" name="gwc_vt_email" required maxlength="200" autocomplete="email" value="<?php echo esc_attr( (string) ( $GLOBALS['gwc_vt_signup_email'] ?? '' ) ); ?>" />
 				<p class="gwcvt-shifts__help">
 					<?php esc_html_e( 'So we can send you the details and a link to cancel if you need to. It does not create an account.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
@@ -151,7 +151,7 @@ function gwcvt_render_event_grid( int $event_id ): string {
 			<?php if ( '' !== $code ) : ?>
 				<div class="gwcvt-shifts__field">
 					<label for="gwcvt-signup-code"><?php esc_html_e( 'The code you were given', 'groundwork-common-volunteer-tracker' ); ?></label>
-					<input type="text" id="gwcvt-signup-code" name="gwcvt_code" maxlength="50" autocomplete="off" />
+					<input type="text" id="gwcvt-signup-code" name="gwc_vt_code" maxlength="50" autocomplete="off" />
 				</div>
 			<?php endif; ?>
 
@@ -162,11 +162,11 @@ function gwcvt_render_event_grid( int $event_id ): string {
 			?>
 			<div class="gwcvt-shifts__hp" aria-hidden="true">
 				<label for="gwcvt-signup-website"><?php esc_html_e( 'Leave this field empty', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-signup-website" name="gwcvt_website" tabindex="-1" autocomplete="off" />
+				<input type="text" id="gwcvt-signup-website" name="gwc_vt_website" tabindex="-1" autocomplete="off" />
 			</div>
 
 			<p>
-				<button type="submit" name="gwcvt_event_submit" value="1" class="gwcvt-shifts__button">
+				<button type="submit" name="gwc_vt_event_submit" value="1" class="gwcvt-shifts__button">
 					<?php esc_html_e( 'Sign me up', 'groundwork-common-volunteer-tracker' ); ?>
 				</button>
 			</p>
@@ -184,11 +184,11 @@ function gwcvt_render_event_grid( int $event_id ): string {
  * @param int[] $picked   Slots the visitor had already ticked, for a re-render.
  * @param int[] $clash    The two slots that clash, if any.
  */
-function gwcvt_render_event_slot_choice( int $shift_id, array $picked, array $clash = array() ): void {
-	$spots    = gwcvt_shift_spots_left( $shift_id );
+function gwc_vt_render_event_slot_choice( int $shift_id, array $picked, array $clash = array() ): void {
+	$spots    = gwc_vt_shift_spots_left( $shift_id );
 	$full     = null !== $spots && $spots < 1;
-	$notes    = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_NOTES, true ) );
-	$where    = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) );
+	$notes    = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) );
+	$where    = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) );
 	$row_id   = 'gwcvt-slot-' . $shift_id;
 	$clashing = in_array( $shift_id, $clash, true );
 
@@ -206,15 +206,15 @@ function gwcvt_render_event_slot_choice( int $shift_id, array $picked, array $cl
 		<input
 			type="checkbox"
 			id="<?php echo esc_attr( $row_id ); ?>"
-			name="gwcvt_slots[<?php echo esc_attr( (string) $shift_id ); ?>]"
+			name="gwc_vt_slots[<?php echo esc_attr( (string) $shift_id ); ?>]"
 			value="1"
 			<?php checked( in_array( $shift_id, $picked, true ) ); ?>
 		/>
 		<label for="<?php echo esc_attr( $row_id ); ?>">
-			<span class="gwcvt-shift__when"><?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?></span>
+			<span class="gwcvt-shift__when"><?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?></span>
 
-			<?php if ( gwcvt_event_is_multi_day( gwcvt_event_for_shift( $shift_id ) ) ) : ?>
-				<span class="gwcvt-shift__day"><?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?></span>
+			<?php if ( gwc_vt_event_is_multi_day( gwc_vt_event_for_shift( $shift_id ) ) ) : ?>
+				<span class="gwcvt-shift__day"><?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?></span>
 			<?php endif; ?>
 
 			<?php if ( '' !== $where ) : ?>
@@ -252,14 +252,14 @@ function gwcvt_render_event_slot_choice( int $shift_id, array $picked, array $cl
  * @param int $event_id Event post ID.
  * @return array<string, int[]>
  */
-function gwcvt_event_visible_roles( int $event_id ): array {
+function gwc_vt_event_visible_roles( int $event_id ): array {
 	$roles = array();
 
-	foreach ( gwcvt_event_roles( $event_id ) as $role => $slot_ids ) {
+	foreach ( gwc_vt_event_roles( $event_id ) as $role => $slot_ids ) {
 		$visible = array();
 
 		foreach ( $slot_ids as $shift_id ) {
-			if ( gwcvt_shift_is_signup_visible( (int) $shift_id ) ) {
+			if ( gwc_vt_shift_is_signup_visible( (int) $shift_id ) ) {
 				$visible[] = (int) $shift_id;
 			}
 		}
@@ -273,12 +273,12 @@ function gwcvt_event_visible_roles( int $event_id ): array {
 	 * The slots shown on an event's public grid, keyed by role.
 	 *
 	 * Anything removed here is also refused by the handler, because both read
-	 * gwcvt_shift_is_signup_visible().
+	 * gwc_vt_shift_is_signup_visible().
 	 *
 	 * @param array<string, int[]> $roles    Role name => shift post IDs.
 	 * @param int                  $event_id The event.
 	 */
-	return (array) apply_filters( 'gwcvt_event_visible_slots', $roles, $event_id );
+	return (array) apply_filters( 'gwc_vt_event_visible_slots', $roles, $event_id );
 }
 
 /**
@@ -301,17 +301,17 @@ function gwcvt_event_visible_roles( int $event_id ): array {
  * @param int $signup_id Signup post ID.
  * @return string
  */
-function gwcvt_signup_return_url( int $signup_id ): string {
+function gwc_vt_signup_return_url( int $signup_id ): string {
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
-	$event_id = gwcvt_event_for_shift( $shift_id );
+	$event_id = gwc_vt_event_for_shift( $shift_id );
 
 	if ( $event_id < 1 ) {
-		$page = (int) gwcvt_setting( 'schedule_page' );
+		$page = (int) gwc_vt_setting( 'schedule_page' );
 
 		return $page > 0 ? (string) get_permalink( $page ) : '';
 	}
 
-	$page = gwcvt_event_page_id( $event_id );
+	$page = gwc_vt_event_page_id( $event_id );
 
 	return $page > 0 ? (string) get_permalink( $page ) : '';
 }
@@ -325,7 +325,7 @@ function gwcvt_signup_return_url( int $signup_id ): string {
  * Two markers, because there are two ways to place one and they look nothing
  * alike in post_content:
  *
- *   [volunteer_event id="12"]
+ *   [gwc_vt_event_grid id="12"]
  *   <!-- wp:groundwork-common-volunteer-tracker/event-grid {"eventId":12} /-->
  *
  * Both are searched for, and both are then matched on the ID with a real
@@ -345,8 +345,8 @@ function gwcvt_signup_return_url( int $signup_id ): string {
  *
  * @return int
  */
-function gwcvt_event_page_generation(): int {
-	return max( 1, (int) get_option( 'gwcvt_event_page_gen', 1 ) );
+function gwc_vt_event_page_generation(): int {
+	return max( 1, (int) get_option( 'gwc_vt_event_page_gen', 1 ) );
 }
 
 /**
@@ -356,8 +356,8 @@ function gwcvt_event_page_generation(): int {
  * that just changed may be the one being REMOVED — in which case the event it
  * used to name is not derivable from the content we are now looking at.
  */
-function gwcvt_flush_event_page_cache(): void {
-	update_option( 'gwcvt_event_page_gen', gwcvt_event_page_generation() + 1, false );
+function gwc_vt_flush_event_page_cache(): void {
+	update_option( 'gwc_vt_event_page_gen', gwc_vt_event_page_generation() + 1, false );
 }
 
 /**
@@ -366,7 +366,7 @@ function gwcvt_flush_event_page_cache(): void {
  * @param int     $post_id Post ID.
  * @param WP_Post $post    The post.
  */
-function gwcvt_maybe_flush_event_page_cache( $post_id, $post = null ): void {
+function gwc_vt_maybe_flush_event_page_cache( $post_id, $post = null ): void {
 	if ( ! $post instanceof WP_Post || 'page' !== $post->post_type ) {
 		return;
 	}
@@ -375,7 +375,7 @@ function gwcvt_maybe_flush_event_page_cache( $post_id, $post = null ): void {
 		return;
 	}
 
-	gwcvt_flush_event_page_cache();
+	gwc_vt_flush_event_page_cache();
 }
 
 /**
@@ -387,14 +387,14 @@ function gwcvt_maybe_flush_event_page_cache( $post_id, $post = null ): void {
  * @param int    $event_id Event post ID.
  * @return bool
  */
-function gwcvt_content_places_event( string $content, int $event_id ): bool {
+function gwc_vt_content_places_event( string $content, int $event_id ): bool {
 	if ( $event_id < 1 || '' === $content ) {
 		return false;
 	}
 
 	/* The shortcode, with the id quoted, single-quoted or bare. \b on the closing
 	 * side so id="1" does not answer for event 12. */
-	if ( preg_match_all( '/\[volunteer_event\b[^\]]*/', $content, $tags ) ) {
+	if ( preg_match_all( '/\[gwc_vt_event_grid\b[^\]]*/', $content, $tags ) ) {
 		foreach ( $tags[0] as $tag ) {
 			if ( preg_match( '/\bid\s*=\s*["\']?(\d+)/', $tag, $m ) && (int) $m[1] === $event_id ) {
 				return true;
@@ -420,12 +420,12 @@ function gwcvt_content_places_event( string $content, int $event_id ): bool {
  * @param int $event_id Event post ID.
  * @return int
  */
-function gwcvt_event_page_id( int $event_id ): int {
+function gwc_vt_event_page_id( int $event_id ): int {
 	if ( $event_id < 1 ) {
 		return 0;
 	}
 
-	$key    = 'gwcvt_event_page_' . gwcvt_event_page_generation() . '_' . $event_id;
+	$key    = 'gwc_vt_event_page_' . gwc_vt_event_page_generation() . '_' . $event_id;
 	$cached = get_transient( $key );
 
 	if ( false !== $cached ) {
@@ -434,14 +434,18 @@ function gwcvt_event_page_id( int $event_id ): int {
 
 	$found = 0;
 
-	/* Two searches rather than one. The shortcode contains the literal
-	 * "volunteer_event"; the block contains "volunteer-tracker/event-grid" and
-	 * no such string, so a single search on the first marker silently never
-	 * returned a block-placed page — which is the placement the editor
-	 * recommends. */
+	/* Two searches rather than one, and the reason survived the 1.0.0 rename of
+	 * the shortcode even though its shape changed. The shortcode is written
+	 * "[gwc_vt_event_grid"; the block serialises as
+	 * "volunteer-tracker/event-grid". Since the rename the two do share a tail —
+	 * "event-grid" — but neither marker is a substring of the other, so a search
+	 * on either one alone still returns nothing for pages using the other
+	 * placement, and the block is the placement the editor recommends. Searching
+	 * the shared "event-grid" instead would match both and also match any page
+	 * that merely writes the words, which is why this stays two exact searches. */
 	$page_ids = array();
 
-	foreach ( array( '[volunteer_event', 'volunteer-tracker/event-grid' ) as $marker ) {
+	foreach ( array( '[gwc_vt_event_grid', 'volunteer-tracker/event-grid' ) as $marker ) {
 		$page_ids = array_merge(
 			$page_ids,
 			(array) get_posts(
@@ -459,7 +463,7 @@ function gwcvt_event_page_id( int $event_id ): int {
 	}
 
 	foreach ( array_unique( array_map( 'intval', $page_ids ) ) as $page_id ) {
-		if ( gwcvt_content_places_event( (string) get_post_field( 'post_content', $page_id ), $event_id ) ) {
+		if ( gwc_vt_content_places_event( (string) get_post_field( 'post_content', $page_id ), $event_id ) ) {
 			$found = (int) $page_id;
 			break;
 		}

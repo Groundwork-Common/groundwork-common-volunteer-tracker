@@ -21,11 +21,11 @@ defined( 'ABSPATH' ) || exit;
  * property, and getting it wrong is a TypeError on the line that made the
  * mistake rather than a number on a letter a court is reading.
  *
- * Constructed in exactly one place — gwcvt_build_letter() — so there is a
+ * Constructed in exactly one place — gwc_vt_build_letter() — so there is a
  * single path from records to document, and LetterTest asserts that no other
  * caller invokes the constructor.
  */
-class GWCVT_Letter {
+class GWC_VT_Letter {
  // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names.
 
 	/**
@@ -59,7 +59,7 @@ class GWCVT_Letter {
 	/**
 	 * The shifts, oldest first.
 	 *
-	 * @var GWCVT_Letter_Entry[]
+	 * @var GWC_VT_Letter_Entry[]
 	 */
 	public array $entries = array();
 
@@ -105,7 +105,7 @@ class GWCVT_Letter {
 	 * @param string $volunteer_name      Display name.
 	 * @param string $from                Y-m-d or ''.
 	 * @param string $to                  Y-m-d or ''.
-	 * @param array  $entries             GWCVT_Letter_Entry objects.
+	 * @param array  $entries             GWC_VT_Letter_Entry objects.
 	 * @param int    $verified_minutes    Attested minutes.
 	 * @param int    $unverified_minutes  Unattested minutes shown.
 	 * @param bool   $includes_unverified Whether unattested shifts are listed.
@@ -113,7 +113,7 @@ class GWCVT_Letter {
 	 * @param int    $issued_at           Unix timestamp.
 	 *
 	 * @throws InvalidArgumentException If $entries holds anything that is not a
-	 *                                  GWCVT_Letter_Entry. The letter is the one
+	 *                                  GWC_VT_Letter_Entry. The letter is the one
 	 *                                  output here that has to be exact, so a
 	 *                                  wrong-typed row fails loudly at
 	 *                                  construction rather than rendering blank.
@@ -144,8 +144,8 @@ class GWCVT_Letter {
 		 * trust. A stray array in here would render as the word "Array" in a
 		 * table cell on a document somebody hands to a probation officer. */
 		foreach ( $entries as $entry ) {
-			if ( ! $entry instanceof GWCVT_Letter_Entry ) {
-				throw new InvalidArgumentException( 'A letter entry must be a GWCVT_Letter_Entry.' );
+			if ( ! $entry instanceof GWC_VT_Letter_Entry ) {
+				throw new InvalidArgumentException( 'A letter entry must be a GWC_VT_Letter_Entry.' );
 			}
 
 			$this->entries[] = $entry;

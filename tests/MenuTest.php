@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 final class MenuTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 		$GLOBALS['submenu'] = array();
 	}
 
@@ -26,13 +26,13 @@ final class MenuTest extends TestCase {
 	 */
 	private function as_registered(): array {
 		return array(
-			array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ),
-			array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWCVT_ENTRY_TYPE ),
-			array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWCVT_VOLUNTEER_TYPE ),
-			array( 'Settings', 'manage_options', GWCVT_SETTINGS_PAGE ),
-			array( 'Letters', 'gwcvt_issue_letters', GWCVT_LETTERS_PAGE ),
-			array( 'Log a day', 'edit_posts', GWCVT_QUICK_ADD_PAGE ),
-			array( 'Schedule', 'edit_posts', GWCVT_SCHEDULE_PAGE ),
+			array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+			array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+			array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
+			array( 'Settings', 'manage_options', GWC_VT_SETTINGS_PAGE ),
+			array( 'Letters', 'gwc_vt_issue_letters', GWC_VT_LETTERS_PAGE ),
+			array( 'Log a day', 'edit_posts', GWC_VT_QUICK_ADD_PAGE ),
+			array( 'Schedule', 'edit_posts', GWC_VT_SCHEDULE_PAGE ),
 		);
 	}
 
@@ -46,7 +46,7 @@ final class MenuTest extends TestCase {
 			static function ( array $item ): string {
 				return (string) $item[0];
 			},
-			(array) ( $GLOBALS['submenu'][ GWCVT_MENU_SLUG ] ?? array() )
+			(array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() )
 		);
 	}
 
@@ -55,9 +55,9 @@ final class MenuTest extends TestCase {
 	 * up, then what gets produced for them. It reads forwards.
 	 */
 	public function test_it_puts_the_screens_in_the_order_things_happen(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$this->assertSame(
 			array( 'Schedule', 'Volunteers', 'All hours', 'Log a day', 'Log hours', 'Letters', 'Settings' ),
@@ -71,9 +71,9 @@ final class MenuTest extends TestCase {
 	 * in later releases registered at 11, 12 and 13.
 	 */
 	public function test_settings_is_last(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$labels = $this->labels();
 
@@ -91,18 +91,18 @@ final class MenuTest extends TestCase {
 	 * matter, so it is checked.
 	 */
 	public function test_the_parents_own_screen_is_still_present(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$slugs = array_map(
 			static function ( array $item ): string {
 				return (string) $item[2];
 			},
-			$GLOBALS['submenu'][ GWCVT_MENU_SLUG ]
+			$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ]
 		);
 
-		$this->assertContains( GWCVT_MENU_SLUG, $slugs );
+		$this->assertContains( GWC_VT_MENU_SLUG, $slugs );
 	}
 
 	/* ── Somebody else's screen ──────────────────────────────────────────────
@@ -114,9 +114,9 @@ final class MenuTest extends TestCase {
 		$items   = $this->as_registered();
 		$items[] = array( 'Grant report', 'edit_posts', 'acme-grant-report' );
 
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $items;
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $items;
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$this->assertContains( 'Grant report', $this->labels() );
 	}
@@ -125,9 +125,9 @@ final class MenuTest extends TestCase {
 		$items   = $this->as_registered();
 		$items[] = array( 'Grant report', 'edit_posts', 'acme-grant-report' );
 
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $items;
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $items;
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$labels = $this->labels();
 
@@ -141,9 +141,9 @@ final class MenuTest extends TestCase {
 	/* ── Not losing anything ─────────────────────────────────────────────── */
 
 	public function test_nothing_is_added_or_dropped(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$before = array_map(
 			static function ( array $item ): string {
@@ -156,7 +156,7 @@ final class MenuTest extends TestCase {
 			static function ( array $item ): string {
 				return (string) $item[2];
 			},
-			$GLOBALS['submenu'][ GWCVT_MENU_SLUG ]
+			$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ]
 		);
 
 		sort( $before );
@@ -171,24 +171,24 @@ final class MenuTest extends TestCase {
 	 * started — the change would appear to do nothing at all.
 	 */
 	public function test_the_result_is_a_list_not_a_sparse_array(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = array(
-			5  => array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ),
-			10 => array( 'Settings', 'manage_options', GWCVT_SETTINGS_PAGE ),
-			15 => array( 'Schedule', 'edit_posts', GWCVT_SCHEDULE_PAGE ),
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
+			5  => array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+			10 => array( 'Settings', 'manage_options', GWC_VT_SETTINGS_PAGE ),
+			15 => array( 'Schedule', 'edit_posts', GWC_VT_SCHEDULE_PAGE ),
 		);
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$this->assertSame(
 			array( 0, 1, 2 ),
-			array_keys( $GLOBALS['submenu'][ GWCVT_MENU_SLUG ] )
+			array_keys( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] )
 		);
 	}
 
 	/* ── Nothing to do ───────────────────────────────────────────────────── */
 
 	public function test_it_does_nothing_when_the_menu_is_not_there(): void {
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$this->assertSame( array(), $GLOBALS['submenu'] );
 	}
@@ -199,12 +199,12 @@ final class MenuTest extends TestCase {
 	 * leaving a hole.
 	 */
 	public function test_a_screen_the_user_cannot_see_is_simply_absent(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = array(
-			array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ),
-			array( 'Log a day', 'edit_posts', GWCVT_QUICK_ADD_PAGE ),
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
+			array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+			array( 'Log a day', 'edit_posts', GWC_VT_QUICK_ADD_PAGE ),
 		);
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$this->assertSame( array( 'All hours', 'Log a day' ), $this->labels() );
 		$this->assertCount( 2, $this->labels(), 'a screen that was never added must not appear' );
@@ -215,16 +215,16 @@ final class MenuTest extends TestCase {
 	 * still gets Settings at the bottom.
 	 */
 	public function test_a_filter_reorders_and_settings_still_lands_last(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
 		add_filter(
-			'gwcvt_menu_order',
+			'gwc_vt_menu_order',
 			static function (): array {
-				return array( GWCVT_SCHEDULE_PAGE, GWCVT_LETTERS_PAGE );
+				return array( GWC_VT_SCHEDULE_PAGE, GWC_VT_LETTERS_PAGE );
 			}
 		);
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$labels = $this->labels();
 
@@ -232,7 +232,7 @@ final class MenuTest extends TestCase {
 		$this->assertSame( 'Letters', $labels[1] );
 		$this->assertSame( 'Settings', end( $labels ) );
 
-		gwcvt_test_reset_filters();
+		gwc_vt_test_reset_filters();
 	}
 
 	/**
@@ -242,22 +242,22 @@ final class MenuTest extends TestCase {
 	 * own admin menu.
 	 */
 	public function test_a_filter_that_names_settings_wins(): void {
-		$GLOBALS['submenu'][ GWCVT_MENU_SLUG ] = $this->as_registered();
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
 		add_filter(
-			'gwcvt_menu_order',
+			'gwc_vt_menu_order',
 			static function (): array {
-				return array( GWCVT_SETTINGS_PAGE, GWCVT_SCHEDULE_PAGE );
+				return array( GWC_VT_SETTINGS_PAGE, GWC_VT_SCHEDULE_PAGE );
 			}
 		);
 
-		gwcvt_order_menu();
+		gwc_vt_order_menu();
 
 		$labels = $this->labels();
 
 		$this->assertSame( 'Settings', $labels[0] );
 		$this->assertSame( 'Schedule', $labels[1] );
 
-		gwcvt_test_reset_filters();
+		gwc_vt_test_reset_filters();
 	}
 }

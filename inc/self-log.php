@@ -7,18 +7,18 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_RATE_LIMIT_OPTION = 'gwcvt_rate_limits';
+const GWC_VT_RATE_LIMIT_OPTION = 'gwc_vt_rate_limits';
 
 /** No scope may accumulate more keys than this before it is emptied. */
-const GWCVT_RATE_LIMIT_CEILING = 5000;
+const GWC_VT_RATE_LIMIT_CEILING = 5000;
 
 /** How long a rendered form stays submittable. */
-const GWCVT_FORM_MAX_AGE = 6 * HOUR_IN_SECONDS;
+const GWC_VT_FORM_MAX_AGE = 6 * HOUR_IN_SECONDS;
 
 /** How fast a submission has to arrive to be a machine. */
-const GWCVT_FORM_MIN_AGE = 3;
+const GWC_VT_FORM_MIN_AGE = 3;
 
-add_action( 'template_redirect', 'gwcvt_dispatch' );
+add_action( 'template_redirect', 'gwc_vt_dispatch' );
 
 /* ── What this file is defending ─────────────────────────────────────────────
  * Everywhere else in this plugin the person on the other end is a member of
@@ -53,20 +53,20 @@ add_action( 'template_redirect', 'gwcvt_dispatch' );
 /**
  * Handle a front-end submission.
  */
-function gwcvt_dispatch(): void {
+function gwc_vt_dispatch(): void {
 	/* The first line, and deliberately not merely "do not render the form".
 	 * A handler that ran while only the form was hidden would accept posts to a
 	 * feature the site had switched off. */
-	if ( ! gwcvt_self_log_enabled() ) {
+	if ( ! gwc_vt_self_log_enabled() ) {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- presence check only; the nonce is verified in gwcvt_handle_self_log().
-	if ( ! isset( $_POST['gwcvt_log_hours'] ) ) {
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- presence check only; the nonce is verified in gwc_vt_handle_self_log().
+	if ( ! isset( $_POST['gwc_vt_log_hours'] ) ) {
 		return;
 	}
 
-	if ( ! is_page( (int) gwcvt_setting( 'self_log_page' ) ) ) {
+	if ( ! is_page( (int) gwc_vt_setting( 'self_log_page' ) ) ) {
 		return;
 	}
 
@@ -80,7 +80,7 @@ function gwcvt_dispatch(): void {
 
 	nocache_headers();
 
-	gwcvt_handle_self_log();
+	gwc_vt_handle_self_log();
 }
 
 /**
@@ -88,22 +88,22 @@ function gwcvt_dispatch(): void {
  *
  * @return bool
  */
-function gwcvt_self_log_enabled(): bool {
-	return (bool) gwcvt_setting( 'self_log_enabled' ) && (int) gwcvt_setting( 'self_log_page' ) > 0;
+function gwc_vt_self_log_enabled(): bool {
+	return (bool) gwc_vt_setting( 'self_log_enabled' ) && (int) gwc_vt_setting( 'self_log_page' ) > 0;
 }
 
 /**
  * Is this request the page the form is pinned to?
  *
- * The same question gwcvt_dispatch() asks before it will accept a submission,
+ * The same question gwc_vt_dispatch() asks before it will accept a submission,
  * named once so the renderer cannot drift from the handler. They disagreed:
  * the handler required the pinned page and the renderer did not, so a second
  * copy of the form posted into nothing and said nothing about it.
  *
  * @return bool
  */
-function gwcvt_is_self_log_page(): bool {
-	if ( ! gwcvt_self_log_enabled() ) {
+function gwc_vt_is_self_log_page(): bool {
+	if ( ! gwc_vt_self_log_enabled() ) {
 		return false;
 	}
 
@@ -114,19 +114,19 @@ function gwcvt_is_self_log_page(): bool {
 		return true;
 	}
 
-	return is_page( (int) gwcvt_setting( 'self_log_page' ) );
+	return is_page( (int) gwc_vt_setting( 'self_log_page' ) );
 }
 
 /**
  * Read, check and record one submission.
  */
-function gwcvt_handle_self_log(): void {
+function gwc_vt_handle_self_log(): void {
 	$started = microtime( true );
 
-	$nonce = isset( $_POST['gwcvt_self_log_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_self_log_nonce'] ) ) : '';
+	$nonce = isset( $_POST['gwc_vt_self_log_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwc_vt_self_log_nonce'] ) ) : '';
 
-	if ( ! wp_verify_nonce( $nonce, 'gwcvt_self_log' ) ) {
-		gwcvt_self_log_result( 'expired', $started );
+	if ( ! wp_verify_nonce( $nonce, 'gwc_vt_self_log' ) ) {
+		gwc_vt_self_log_result( 'expired', $started );
 		return;
 	}
 
@@ -135,61 +135,61 @@ function gwcvt_handle_self_log(): void {
 	/* The honeypot. A visible text input in an off-screen wrapper — not
 	 * type="hidden" and not an inline display:none, both of which the scripts
 	 * worth stopping already know to skip. A real person never sees it. */
-	if ( '' !== trim( (string) ( $posted['gwcvt_website'] ?? '' ) ) ) {
-		gwcvt_self_log_result( 'accepted', $started );
+	if ( '' !== trim( (string) ( $posted['gwc_vt_website'] ?? '' ) ) ) {
+		gwc_vt_self_log_result( 'accepted', $started );
 		return;
 	}
 
-	$age = gwcvt_form_age( (string) ( $posted['gwcvt_t'] ?? '' ) );
+	$age = gwc_vt_form_age( (string) ( $posted['gwc_vt_t'] ?? '' ) );
 
-	if ( null === $age || $age > GWCVT_FORM_MAX_AGE ) {
+	if ( null === $age || $age > GWC_VT_FORM_MAX_AGE ) {
 		/* Stale, or the stamp was forged. Re-rendered rather than discarded, so
 		 * somebody who left the tab open over lunch gets their values back
 		 * instead of losing the form. */
-		gwcvt_self_log_result( 'expired', $started );
+		gwc_vt_self_log_result( 'expired', $started );
 		return;
 	}
 
-	if ( $age < GWCVT_FORM_MIN_AGE ) {
-		gwcvt_self_log_result( 'accepted', $started );
+	if ( $age < GWC_VT_FORM_MIN_AGE ) {
+		gwc_vt_self_log_result( 'accepted', $started );
 		return;
 	}
 
-	$code = (string) gwcvt_setting( 'self_log_code' );
+	$code = (string) gwc_vt_setting( 'self_log_code' );
 
-	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwcvt_code'] ?? '' ) ) ) ) {
+	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
 		/* Wrong shared code. A distinct message, because this one is not a
 		 * security boundary — it is a note handed out at the front desk, and
 		 * somebody who mistypes it needs to be told so. */
-		gwcvt_self_log_result( 'bad-code', $started );
+		gwc_vt_self_log_result( 'bad-code', $started );
 		return;
 	}
 
-	$name  = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_name'] ?? '' ) ), 0, 100 );
-	$email = sanitize_email( (string) ( $posted['gwcvt_email'] ?? '' ) );
-	$date  = gwcvt_sanitize_date( sanitize_text_field( (string) ( $posted['gwcvt_date'] ?? '' ) ) );
-	$hours = gwcvt_parse_hours( (string) ( $posted['gwcvt_hours'] ?? '' ) );
+	$name  = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 100 );
+	$email = sanitize_email( (string) ( $posted['gwc_vt_email'] ?? '' ) );
+	$date  = gwc_vt_sanitize_date( sanitize_text_field( (string) ( $posted['gwc_vt_date'] ?? '' ) ) );
+	$hours = gwc_vt_parse_hours( (string) ( $posted['gwc_vt_hours'] ?? '' ) );
 
 	if ( '' === $name || '' === $date || null === $hours || $hours < 1 ) {
-		gwcvt_self_log_result( 'incomplete', $started );
+		gwc_vt_self_log_result( 'incomplete', $started );
 		return;
 	}
 
-	if ( '' !== $date && ! gwcvt_setting( 'allow_future_dates' ) && $date > gwcvt_today() ) {
-		gwcvt_self_log_result( 'incomplete', $started );
+	if ( '' !== $date && ! gwc_vt_setting( 'allow_future_dates' ) && $date > gwc_vt_today() ) {
+		gwc_vt_self_log_result( 'incomplete', $started );
 		return;
 	}
 
 	/* Counted before it is reported, so a refused attempt still counts against
 	 * the limit — otherwise the limiter is a speed bump somebody can sit on. */
-	if ( gwcvt_rate_limited( gwcvt_client_ip(), $email ) ) {
-		gwcvt_self_log_result( 'accepted', $started );
+	if ( gwc_vt_rate_limited( gwc_vt_client_ip(), $email ) ) {
+		gwc_vt_self_log_result( 'accepted', $started );
 		return;
 	}
 
-	gwcvt_insert_self_logged_entry( $name, $email, $date, (int) $hours, $posted );
+	gwc_vt_insert_self_logged_entry( $name, $email, $date, (int) $hours, $posted );
 
-	gwcvt_self_log_result( 'accepted', $started );
+	gwc_vt_self_log_result( 'accepted', $started );
 }
 
 /**
@@ -202,10 +202,10 @@ function gwcvt_handle_self_log(): void {
  * @param array  $posted The rest of the submission.
  * @return int
  */
-function gwcvt_insert_self_logged_entry( string $name, string $email, string $date, int $hours, array $posted ): int {
+function gwc_vt_insert_self_logged_entry( string $name, string $email, string $date, int $hours, array $posted ): int {
 	$entry_id = wp_insert_post(
 		array(
-			'post_type'   => GWCVT_ENTRY_TYPE,
+			'post_type'   => GWC_VT_ENTRY_TYPE,
 			/* Pending, meaning no human has accepted this record yet. It is not
 			 * a draft — a draft reads as unfinished work by staff — and it is
 			 * certainly not published, which would put an unreviewed claim into
@@ -224,14 +224,14 @@ function gwcvt_insert_self_logged_entry( string $name, string $email, string $da
 	/* Volunteer left at 0, on purpose. See the box comment at the top: matching
 	 * here would mean a code path whose behaviour depends on whether a person
 	 * exists, which is the oracle this design removes structurally. */
-	update_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, '0' );
-	update_post_meta( $entry_id, GWCVT_ENTRY_DATE, $date );
-	update_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, $hours );
-	update_post_meta( $entry_id, GWCVT_ENTRY_SOURCE, 'self' );
-	update_post_meta( $entry_id, '_gwcvt_claim_name', $name );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, '0' );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_DATE, $date );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, $hours );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_SOURCE, 'self' );
+	update_post_meta( $entry_id, '_gwc_vt_claim_name', $name );
 
 	if ( '' !== $email && is_email( $email ) ) {
-		update_post_meta( $entry_id, '_gwcvt_claim_email', $email );
+		update_post_meta( $entry_id, '_gwc_vt_claim_email', $email );
 	}
 
 	/* An allow-list, not a copy of everything posted. Only these three fields
@@ -239,24 +239,24 @@ function gwcvt_insert_self_logged_entry( string $name, string $email, string $da
 	 * verification timestamp finds nothing here that would accept it. */
 	update_post_meta(
 		$entry_id,
-		GWCVT_ENTRY_ACTIVITY,
-		mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_activity'] ?? '' ) ), 0, 200 )
+		GWC_VT_ENTRY_ACTIVITY,
+		mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_activity'] ?? '' ) ), 0, 200 )
 	);
 	update_post_meta(
 		$entry_id,
-		GWCVT_ENTRY_SUPERVISOR,
-		mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_supervisor'] ?? '' ) ), 0, 100 )
+		GWC_VT_ENTRY_SUPERVISOR,
+		mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 )
 	);
 
-	gwcvt_retitle_entry( $entry_id );
-	gwcvt_forget_unverified_count();
+	gwc_vt_retitle_entry( $entry_id );
+	gwc_vt_forget_unverified_count();
 
 	/**
 	 * Fires after the public form has recorded a submission.
 	 *
 	 * @param int $entry_id The pending entry.
 	 */
-	do_action( 'gwcvt_self_log_received', $entry_id );
+	do_action( 'gwc_vt_self_log_received', $entry_id );
 
 	return $entry_id;
 }
@@ -274,7 +274,7 @@ function gwcvt_insert_self_logged_entry( string $name, string $email, string $da
  * @param string $result  What to tell them.
  * @param float  $started microtime when the handler began.
  */
-function gwcvt_self_log_result( string $result, float $started ): void {
+function gwc_vt_self_log_result( string $result, float $started ): void {
 	$elapsed = microtime( true ) - $started;
 	$floor   = 0.25;
 
@@ -282,7 +282,7 @@ function gwcvt_self_log_result( string $result, float $started ): void {
 		usleep( (int) ( ( $floor - $elapsed ) * 1000000 ) );
 	}
 
-	$GLOBALS['gwcvt_self_log_result'] = $result;
+	$GLOBALS['gwc_vt_self_log_result'] = $result;
 }
 
 /**
@@ -296,7 +296,7 @@ function gwcvt_self_log_result( string $result, float $started ): void {
  * @param string $result Result key.
  * @return string
  */
-function gwcvt_self_log_message( string $result ): string {
+function gwc_vt_self_log_message( string $result ): string {
 	$messages = array(
 		'accepted'   => __( 'Thank you — your hours have been sent to staff and will appear on your record once somebody has checked them.', 'groundwork-common-volunteer-tracker' ),
 		'incomplete' => __( 'Please give your name, the date, and how long you worked.', 'groundwork-common-volunteer-tracker' ),
@@ -322,10 +322,10 @@ function gwcvt_self_log_message( string $result ): string {
  *
  * @return string
  */
-function gwcvt_form_stamp(): string {
+function gwc_vt_form_stamp(): string {
 	$now = time();
 
-	return $now . '.' . hash_hmac( 'sha256', (string) $now, wp_salt( 'gwcvt_form' ) );
+	return $now . '.' . hash_hmac( 'sha256', (string) $now, wp_salt( 'gwc_vt_form' ) );
 }
 
 /**
@@ -334,14 +334,14 @@ function gwcvt_form_stamp(): string {
  * @param string $stamp The posted stamp.
  * @return int|null Null when the stamp is missing or forged.
  */
-function gwcvt_form_age( string $stamp ): ?int {
+function gwc_vt_form_age( string $stamp ): ?int {
 	$parts = explode( '.', trim( $stamp ), 2 );
 
 	if ( 2 !== count( $parts ) || ! ctype_digit( $parts[0] ) ) {
 		return null;
 	}
 
-	$expected = hash_hmac( 'sha256', $parts[0], wp_salt( 'gwcvt_form' ) );
+	$expected = hash_hmac( 'sha256', $parts[0], wp_salt( 'gwc_vt_form' ) );
 
 	if ( ! hash_equals( $expected, $parts[1] ) ) {
 		return null;
@@ -372,7 +372,7 @@ function gwcvt_form_age( string $stamp ): ?int {
  *
  * @return array<string, array{max:int, window:int}>
  */
-function gwcvt_rate_limits(): array {
+function gwc_vt_rate_limits(): array {
 	$limits = array(
 		'ip'    => array(
 			'max'    => 10,
@@ -393,7 +393,7 @@ function gwcvt_rate_limits(): array {
 	 *
 	 * @param array $limits Keyed by scope.
 	 */
-	return (array) apply_filters( 'gwcvt_rate_limits', $limits );
+	return (array) apply_filters( 'gwc_vt_rate_limits', $limits );
 }
 
 /**
@@ -403,11 +403,11 @@ function gwcvt_rate_limits(): array {
  * @param string $email The submitted address, if any.
  * @return bool
  */
-function gwcvt_rate_limited( string $ip, string $email ): bool {
-	$limits = gwcvt_rate_limits();
+function gwc_vt_rate_limited( string $ip, string $email ): bool {
+	$limits = gwc_vt_rate_limits();
 	$now    = time();
 
-	$store = get_option( GWCVT_RATE_LIMIT_OPTION );
+	$store = get_option( GWC_VT_RATE_LIMIT_OPTION );
 	$store = is_array( $store ) ? $store : array();
 
 	$keys = array(
@@ -436,7 +436,7 @@ function gwcvt_rate_limited( string $ip, string $email ): bool {
 			}
 		}
 
-		if ( count( $bucket ) > GWCVT_RATE_LIMIT_CEILING ) {
+		if ( count( $bucket ) > GWC_VT_RATE_LIMIT_CEILING ) {
 			$bucket = array();
 		}
 
@@ -454,7 +454,7 @@ function gwcvt_rate_limited( string $ip, string $email ): bool {
 		}
 	}
 
-	update_option( GWCVT_RATE_LIMIT_OPTION, $store, false );
+	update_option( GWC_VT_RATE_LIMIT_OPTION, $store, false );
 
 	return $limited;
 }
@@ -470,7 +470,7 @@ function gwcvt_rate_limited( string $ip, string $email ): bool {
  *
  * @return string
  */
-function gwcvt_client_ip(): string {
+function gwc_vt_client_ip(): string {
 	$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 
 	return (string) filter_var( $ip, FILTER_VALIDATE_IP );

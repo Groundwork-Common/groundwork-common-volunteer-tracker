@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /* ── One method today, and the shape for the next one ────────────────────────
- * In this version a staff member with gwcvt_verify_hours attests to a shift.
+ * In this version a staff member with gwc_vt_verify_hours attests to a shift.
  * That is the same trust model as the paper forms this replaces — somebody at
  * the organisation signs to say it happened — and it is deliberately all that
  * ships first, because the alternative designs all involve emailing a link to
@@ -18,17 +18,17 @@ defined( 'ABSPATH' ) || exit;
  * The registry below exists so that adding one costs an add_filter rather than
  * a migration. Three things make that true:
  *
- *   1. _gwcvt_verified_method is written from the very first release, holding
- *      'staff'. It is never backfilled — gwcvt_entry_method() reads an absent
+ *   1. _gwc_vt_verified_method is written from the very first release, holding
+ *      'staff'. It is never backfilled — gwc_vt_entry_method() reads an absent
  *      value as 'staff' — so entries logged today read correctly forever.
  *   2. Nothing outside this file branches on the method string. The letter asks
  *      the registry for a line of text; the admin asks it for a badge. Neither
  *      knows what methods exist.
  *   3. New meta keys are free. This plugin never calls register_meta and never
- *      runs dbDelta, so _gwcvt_supervisor_email and a token hash can appear
+ *      runs dbDelta, so _gwc_vt_supervisor_email and a token hash can appear
  *      later and read as '' on every row that predates them.
  *
- * So GWCVT_SCHEMA_VERSION does not move when supervisor confirmation lands.
+ * So GWC_VT_SCHEMA_VERSION does not move when supervisor confirmation lands.
  * That is what decoupling it from the plugin version is for.
  * ─────────────────────────────────────────────────────────────────────────── */
 
@@ -42,7 +42,7 @@ defined( 'ABSPATH' ) || exit;
  *   admin_badge fn( array $context ): string       Short label for a list cell.
  *   can_apply   fn( int $user_id, int $entry_id ): bool
  *
- * can_apply takes the user FIRST, matching gwcvt_user_can_verify() — which is
+ * can_apply takes the user FIRST, matching gwc_vt_user_can_verify() — which is
  * the plugin's single answer to "may this person attest to this record" and is
  * what the built-in method points at directly. The argument order is worth
  * stating because getting it backwards is silent: the check runs, both values
@@ -51,13 +51,13 @@ defined( 'ABSPATH' ) || exit;
  *
  * @return array<string, array<string, callable>>
  */
-function gwcvt_attestation_methods(): array {
+function gwc_vt_attestation_methods(): array {
 	$methods = array(
 		'staff' => array(
 			'label'       => static fn(): string => __( 'Staff attestation', 'groundwork-common-volunteer-tracker' ),
-			'letter_line' => 'gwcvt_staff_letter_line',
-			'admin_badge' => 'gwcvt_staff_admin_badge',
-			'can_apply'   => 'gwcvt_user_can_verify',
+			'letter_line' => 'gwc_vt_staff_letter_line',
+			'admin_badge' => 'gwc_vt_staff_admin_badge',
+			'can_apply'   => 'gwc_vt_user_can_verify',
 		),
 	);
 
@@ -66,7 +66,7 @@ function gwcvt_attestation_methods(): array {
 	 *
 	 * @param array<string, array<string, callable>> $methods Keyed by method slug.
 	 */
-	return (array) apply_filters( 'gwcvt_attestation_methods', $methods );
+	return (array) apply_filters( 'gwc_vt_attestation_methods', $methods );
 }
 
 /**
@@ -80,8 +80,8 @@ function gwcvt_attestation_methods(): array {
  * @param string $method Method slug.
  * @return array<string, callable>
  */
-function gwcvt_attestation_method( string $method ): array {
-	$methods = gwcvt_attestation_methods();
+function gwc_vt_attestation_method( string $method ): array {
+	$methods = gwc_vt_attestation_methods();
 
 	if ( isset( $methods[ $method ] ) && is_array( $methods[ $method ] ) ) {
 		return $methods[ $method ];
@@ -96,9 +96,9 @@ function gwcvt_attestation_method( string $method ): array {
  * @param int $entry_id Entry post ID.
  * @return array{verified:bool, at:string, by:int, by_name:string, method:string}
  */
-function gwcvt_attestation_context( int $entry_id ): array {
-	$at = (string) get_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_AT, true );
-	$by = (int) get_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_BY, true );
+function gwc_vt_attestation_context( int $entry_id ): array {
+	$at = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_AT, true );
+	$by = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_BY, true );
 
 	$user = $by > 0 ? get_userdata( $by ) : null;
 
@@ -112,22 +112,22 @@ function gwcvt_attestation_context( int $entry_id ): array {
 		 * the same hours disagree about who signed them. A deleted account
 		 * leaves the ID, which is the honest record — see the fallback below. */
 		'by_name'  => $user ? (string) $user->display_name : '',
-		'method'   => gwcvt_entry_method( $entry_id ),
+		'method'   => gwc_vt_entry_method( $entry_id ),
 	);
 }
 
 /**
  * The letter's sentence for a staff-attested shift.
  *
- * @param array $context From gwcvt_attestation_context().
+ * @param array $context From gwc_vt_attestation_context().
  * @return string
  */
-function gwcvt_staff_letter_line( array $context ): string {
+function gwc_vt_staff_letter_line( array $context ): string {
 	if ( ! $context['verified'] ) {
 		return __( 'Not verified', 'groundwork-common-volunteer-tracker' );
 	}
 
-	$date = gwcvt_local_date( $context['at'] );
+	$date = gwc_vt_local_date( $context['at'] );
 
 	if ( '' === $context['by_name'] ) {
 		/* The account has been deleted since. Saying so is better than naming
@@ -152,13 +152,13 @@ function gwcvt_staff_letter_line( array $context ): string {
 /**
  * The short form, for an admin list cell.
  *
- * @param array $context From gwcvt_attestation_context().
+ * @param array $context From gwc_vt_attestation_context().
  * @return string
  */
-function gwcvt_staff_admin_badge( array $context ): string {
+function gwc_vt_staff_admin_badge( array $context ): string {
 	return $context['verified']
-		? gwcvt_verification_label( 'verified' )
-		: gwcvt_verification_label( 'unverified' );
+		? gwc_vt_verification_label( 'verified' )
+		: gwc_vt_verification_label( 'unverified' );
 }
 
 /**
@@ -167,7 +167,7 @@ function gwcvt_staff_admin_badge( array $context ): string {
  * @param string $gmt_datetime Y-m-d H:i:s in GMT.
  * @return string
  */
-function gwcvt_local_date( string $gmt_datetime ): string {
+function gwc_vt_local_date( string $gmt_datetime ): string {
 	if ( '' === $gmt_datetime ) {
 		return '';
 	}
@@ -178,7 +178,7 @@ function gwcvt_local_date( string $gmt_datetime ): string {
 }
 
 /* ── A calendar date, as the site writes dates ───────────────────────────────
- * Beside gwcvt_local_date() rather than folded into it, because the two answer
+ * Beside gwc_vt_local_date() rather than folded into it, because the two answer
  * different questions. That one converts an instant — a GMT timestamp recorded
  * when somebody attested — into a date in the site's timezone. This one formats
  * a date that never was an instant: a shift happened on a day, and no timezone
@@ -198,7 +198,7 @@ function gwcvt_local_date( string $gmt_datetime ): string {
  * @param string $date Y-m-d.
  * @return string The formatted date, or the input unchanged if it is not one.
  */
-function gwcvt_display_date( string $date ): string {
+function gwc_vt_display_date( string $date ): string {
 	$date = trim( $date );
 
 	if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $date, $m ) ) {
@@ -232,9 +232,9 @@ function gwcvt_display_date( string $date ): string {
  * @param int $entry_id Entry post ID.
  * @return string
  */
-function gwcvt_attestation_line( int $entry_id ): string {
-	$context = gwcvt_attestation_context( $entry_id );
-	$method  = gwcvt_attestation_method( $context['method'] );
+function gwc_vt_attestation_line( int $entry_id ): string {
+	$context = gwc_vt_attestation_context( $entry_id );
+	$method  = gwc_vt_attestation_method( $context['method'] );
 
 	if ( empty( $method['letter_line'] ) || ! is_callable( $method['letter_line'] ) ) {
 		return '';
@@ -249,9 +249,9 @@ function gwcvt_attestation_line( int $entry_id ): string {
  * @param int $entry_id Entry post ID.
  * @return string
  */
-function gwcvt_attestation_badge( int $entry_id ): string {
-	$context = gwcvt_attestation_context( $entry_id );
-	$method  = gwcvt_attestation_method( $context['method'] );
+function gwc_vt_attestation_badge( int $entry_id ): string {
+	$context = gwc_vt_attestation_context( $entry_id );
+	$method  = gwc_vt_attestation_method( $context['method'] );
 
 	if ( empty( $method['admin_badge'] ) || ! is_callable( $method['admin_badge'] ) ) {
 		return '';
@@ -275,16 +275,16 @@ function gwcvt_attestation_badge( int $entry_id ): string {
  * @param string $method   Attestation method slug.
  * @return bool Whether the entry is verified after this call.
  */
-function gwcvt_verify_entry( int $entry_id, int $user_id, string $method = 'staff' ): bool {
-	if ( get_post_type( $entry_id ) !== GWCVT_ENTRY_TYPE ) {
+function gwc_vt_verify_entry( int $entry_id, int $user_id, string $method = 'staff' ): bool {
+	if ( get_post_type( $entry_id ) !== GWC_VT_ENTRY_TYPE ) {
 		return false;
 	}
 
-	if ( gwcvt_entry_is_verified( $entry_id ) ) {
+	if ( gwc_vt_entry_is_verified( $entry_id ) ) {
 		return true;
 	}
 
-	$methods = gwcvt_attestation_methods();
+	$methods = gwc_vt_attestation_methods();
 
 	if ( ! isset( $methods[ $method ] ) ) {
 		return false;
@@ -296,9 +296,9 @@ function gwcvt_verify_entry( int $entry_id, int $user_id, string $method = 'staf
 		return false;
 	}
 
-	update_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_AT, (string) current_time( 'mysql', true ) );
-	update_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_BY, $user_id );
-	update_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_METHOD, $method );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_AT, (string) current_time( 'mysql', true ) );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_BY, $user_id );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_METHOD, $method );
 
 	/* A self-logged entry arrives as 'pending' — meaning no human has accepted
 	 * this record yet — and attesting to it IS that acceptance. Publishing it
@@ -313,7 +313,7 @@ function gwcvt_verify_entry( int $entry_id, int $user_id, string $method = 'staf
 		);
 	}
 
-	gwcvt_forget_unverified_count();
+	gwc_vt_forget_unverified_count();
 
 	/**
 	 * Fires after an entry has been attested to.
@@ -322,7 +322,7 @@ function gwcvt_verify_entry( int $entry_id, int $user_id, string $method = 'staf
 	 * @param int    $user_id  Who attested.
 	 * @param string $method   Attestation method slug.
 	 */
-	do_action( 'gwcvt_entry_verified', $entry_id, $user_id, $method );
+	do_action( 'gwc_vt_entry_verified', $entry_id, $user_id, $method );
 
 	return true;
 }
@@ -331,33 +331,33 @@ function gwcvt_verify_entry( int $entry_id, int $user_id, string $method = 'staf
  * Withdraw an attestation.
  *
  * Clears all three keys together. Leaving the method behind would make
- * gwcvt_entry_method() report how an entry was verified that is not verified,
+ * gwc_vt_entry_method() report how an entry was verified that is not verified,
  * which is the sort of half-state that later reads as a bug in the letter.
  *
  * @param int $entry_id Entry post ID.
  * @return bool
  */
-function gwcvt_unverify_entry( int $entry_id ): bool {
-	if ( get_post_type( $entry_id ) !== GWCVT_ENTRY_TYPE ) {
+function gwc_vt_unverify_entry( int $entry_id ): bool {
+	if ( get_post_type( $entry_id ) !== GWC_VT_ENTRY_TYPE ) {
 		return false;
 	}
 
-	if ( ! gwcvt_entry_is_verified( $entry_id ) ) {
+	if ( ! gwc_vt_entry_is_verified( $entry_id ) ) {
 		return true;
 	}
 
-	delete_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_AT );
-	delete_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_BY );
-	delete_post_meta( $entry_id, GWCVT_ENTRY_VERIFIED_METHOD );
+	delete_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_AT );
+	delete_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_BY );
+	delete_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_METHOD );
 
-	gwcvt_forget_unverified_count();
+	gwc_vt_forget_unverified_count();
 
 	/**
 	 * Fires after an attestation has been withdrawn.
 	 *
 	 * @param int $entry_id Entry post ID.
 	 */
-	do_action( 'gwcvt_entry_unverified', $entry_id );
+	do_action( 'gwc_vt_entry_unverified', $entry_id );
 
 	return true;
 }
@@ -370,15 +370,15 @@ function gwcvt_unverify_entry( int $entry_id ): bool {
  * corrects itself rather than persisting until someone notices.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_UNVERIFIED_COUNT_KEY = 'gwcvt_unverified_count';
+const GWC_VT_UNVERIFIED_COUNT_KEY = 'gwc_vt_unverified_count';
 
 /**
  * How many entries nobody has attested to.
  *
  * @return int
  */
-function gwcvt_unverified_count(): int {
-	$cached = get_transient( GWCVT_UNVERIFIED_COUNT_KEY );
+function gwc_vt_unverified_count(): int {
+	$cached = get_transient( GWC_VT_UNVERIFIED_COUNT_KEY );
 
 	if ( false !== $cached ) {
 		return (int) $cached;
@@ -391,7 +391,7 @@ function gwcvt_unverified_count(): int {
 	 * costs a COUNT and gives the real figure. */
 	$query = new WP_Query(
 		array(
-			'post_type'              => GWCVT_ENTRY_TYPE,
+			'post_type'              => GWC_VT_ENTRY_TYPE,
 			'post_status'            => array( 'publish', 'pending' ),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 1,
@@ -401,7 +401,7 @@ function gwcvt_unverified_count(): int {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- cached below; see the note above.
 			'meta_query'             => array(
 				array(
-					'key'     => GWCVT_ENTRY_VERIFIED_AT,
+					'key'     => GWC_VT_ENTRY_VERIFIED_AT,
 					'compare' => 'NOT EXISTS',
 				),
 			),
@@ -410,7 +410,7 @@ function gwcvt_unverified_count(): int {
 
 	$count = (int) $query->found_posts;
 
-	set_transient( GWCVT_UNVERIFIED_COUNT_KEY, $count, 5 * MINUTE_IN_SECONDS );
+	set_transient( GWC_VT_UNVERIFIED_COUNT_KEY, $count, 5 * MINUTE_IN_SECONDS );
 
 	return $count;
 }
@@ -418,11 +418,11 @@ function gwcvt_unverified_count(): int {
 /**
  * Drop the cached count.
  */
-function gwcvt_forget_unverified_count(): void {
-	delete_transient( GWCVT_UNVERIFIED_COUNT_KEY );
+function gwc_vt_forget_unverified_count(): void {
+	delete_transient( GWC_VT_UNVERIFIED_COUNT_KEY );
 }
 
-add_action( 'save_post_' . GWCVT_ENTRY_TYPE, 'gwcvt_forget_unverified_count' );
-add_action( 'deleted_post', 'gwcvt_forget_unverified_count' );
-add_action( 'trashed_post', 'gwcvt_forget_unverified_count' );
-add_action( 'untrashed_post', 'gwcvt_forget_unverified_count' );
+add_action( 'save_post_' . GWC_VT_ENTRY_TYPE, 'gwc_vt_forget_unverified_count' );
+add_action( 'deleted_post', 'gwc_vt_forget_unverified_count' );
+add_action( 'trashed_post', 'gwc_vt_forget_unverified_count' );
+add_action( 'untrashed_post', 'gwc_vt_forget_unverified_count' );

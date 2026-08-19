@@ -23,8 +23,8 @@
  * top-level assignment is a LOCAL while `global` in a helper reaches the real
  * global — two different variables, one incremented and the other read, and the
  * script prints ALL PASS over a list of failures. See tests/integration/entries.php. */
-$GLOBALS['gwcvt_failures'] = 0;
-$GLOBALS['gwcvt_made']     = array();
+$GLOBALS['gwc_vt_failures'] = 0;
+$GLOBALS['gwc_vt_made']     = array();
 
 /**
  * Assert, tersely.
@@ -33,9 +33,9 @@ $GLOBALS['gwcvt_made']     = array();
  * @param bool   $ok    Whether it passed.
  * @param string $got   Optional. What was actually seen.
  */
-function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
+function gwc_vt_check( string $label, bool $ok, string $got = '' ): void {
 	if ( ! $ok ) {
-		++$GLOBALS['gwcvt_failures'];
+		++$GLOBALS['gwc_vt_failures'];
 	}
 
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ), $label, ( '' !== $got ? '  [got: ' . $got . ']' : '' ), "\n";
@@ -43,7 +43,7 @@ function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
 
 /* The settings this script writes, put back at the end. These scripts run
  * against a database that belongs to somebody else. */
-$GLOBALS['gwcvt_settings_before'] = get_option( GWCVT_SETTINGS_OPTION );
+$GLOBALS['gwc_vt_settings_before'] = get_option( GWC_VT_SETTINGS_OPTION );
 
 /**
  * Create a shift.
@@ -55,134 +55,134 @@ $GLOBALS['gwcvt_settings_before'] = get_option( GWCVT_SETTINGS_OPTION );
  * @param string $status   Post status.
  * @return int
  */
-function gwcvt_make_shift( string $date, string $start = '09:00', string $end = '12:00', array $extra = array(), string $status = 'publish' ): int {
+function gwc_vt_make_shift( string $date, string $start = '09:00', string $end = '12:00', array $extra = array(), string $status = 'publish' ): int {
 	$id = wp_insert_post(
 		array(
-			'post_type'   => GWCVT_SHIFT_TYPE,
+			'post_type'   => GWC_VT_SHIFT_TYPE,
 			'post_status' => $status,
 			'post_title'  => 'tmp',
 		)
 	);
 
-	update_post_meta( $id, GWCVT_SHIFT_DATE, $date );
-	update_post_meta( $id, GWCVT_SHIFT_START, $start );
-	update_post_meta( $id, GWCVT_SHIFT_END, $end );
-	update_post_meta( $id, GWCVT_SHIFT_ACTIVITY, 'Zzytest sorting donations' );
-	update_post_meta( $id, GWCVT_SHIFT_SUPERVISOR, 'Dana Reyes' );
+	update_post_meta( $id, GWC_VT_SHIFT_DATE, $date );
+	update_post_meta( $id, GWC_VT_SHIFT_START, $start );
+	update_post_meta( $id, GWC_VT_SHIFT_END, $end );
+	update_post_meta( $id, GWC_VT_SHIFT_ACTIVITY, 'Zzytest sorting donations' );
+	update_post_meta( $id, GWC_VT_SHIFT_SUPERVISOR, 'Dana Reyes' );
 
 	foreach ( $extra as $key => $value ) {
 		update_post_meta( $id, $key, $value );
 	}
 
-	gwcvt_retitle_shift( (int) $id );
+	gwc_vt_retitle_shift( (int) $id );
 
-	$GLOBALS['gwcvt_made'][] = $id;
+	$GLOBALS['gwc_vt_made'][] = $id;
 
 	return (int) $id;
 }
 
 /* ── The post type is registered, and invisible ──────────────────────────── */
 
-gwcvt_check( 'the shift type is registered', post_type_exists( GWCVT_SHIFT_TYPE ) );
-gwcvt_check( 'the signup type is registered', post_type_exists( GWCVT_SIGNUP_TYPE ) );
+gwc_vt_check( 'the shift type is registered', post_type_exists( GWC_VT_SHIFT_TYPE ) );
+gwc_vt_check( 'the signup type is registered', post_type_exists( GWC_VT_SIGNUP_TYPE ) );
 
-$gwcvt_object = get_post_type_object( GWCVT_SHIFT_TYPE );
-gwcvt_check( 'shifts are not public', $gwcvt_object && false === $gwcvt_object->public );
-gwcvt_check( 'shifts are not in REST', $gwcvt_object && false === $gwcvt_object->show_in_rest );
-gwcvt_check( 'shifts are excluded from search', $gwcvt_object && true === $gwcvt_object->exclude_from_search );
+$gwc_vt_object = get_post_type_object( GWC_VT_SHIFT_TYPE );
+gwc_vt_check( 'shifts are not public', $gwc_vt_object && false === $gwc_vt_object->public );
+gwc_vt_check( 'shifts are not in REST', $gwc_vt_object && false === $gwc_vt_object->show_in_rest );
+gwc_vt_check( 'shifts are excluded from search', $gwc_vt_object && true === $gwc_vt_object->exclude_from_search );
 
-gwcvt_check( 'the cancelled status is registered', null !== get_post_status_object( GWCVT_SHIFT_CANCELLED ) );
-gwcvt_check( 'the waiting list status is registered', null !== get_post_status_object( GWCVT_SIGNUP_WAITLIST ) );
-gwcvt_check( 'the withdrawn status is registered', null !== get_post_status_object( GWCVT_SIGNUP_WITHDRAWN ) );
+gwc_vt_check( 'the cancelled status is registered', null !== get_post_status_object( GWC_VT_SHIFT_CANCELLED ) );
+gwc_vt_check( 'the waiting list status is registered', null !== get_post_status_object( GWC_VT_SIGNUP_WAITLIST ) );
+gwc_vt_check( 'the withdrawn status is registered', null !== get_post_status_object( GWC_VT_SIGNUP_WITHDRAWN ) );
 
 /* The assertion that matters most here. A shift carries a location and a
  * supervisor's name, and its children carry the names and email addresses of
  * everybody who signed up. Neither may be served by the auto-generated route. */
-$gwcvt_routes = rest_get_server()->get_routes();
+$gwc_vt_routes = rest_get_server()->get_routes();
 
-foreach ( array( GWCVT_SHIFT_TYPE, GWCVT_SIGNUP_TYPE ) as $gwcvt_type ) {
-	gwcvt_check( '/wp/v2/' . $gwcvt_type . ' is not registered', ! isset( $gwcvt_routes[ '/wp/v2/' . $gwcvt_type ] ) );
+foreach ( array( GWC_VT_SHIFT_TYPE, GWC_VT_SIGNUP_TYPE ) as $gwc_vt_type ) {
+	gwc_vt_check( '/wp/v2/' . $gwc_vt_type . ' is not registered', ! isset( $gwc_vt_routes[ '/wp/v2/' . $gwc_vt_type ] ) );
 
-	$gwcvt_response = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/' . $gwcvt_type ) );
-	gwcvt_check( '/wp/v2/' . $gwcvt_type . ' 404s', 404 === $gwcvt_response->get_status(), (string) $gwcvt_response->get_status() );
+	$gwc_vt_response = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/' . $gwc_vt_type ) );
+	gwc_vt_check( '/wp/v2/' . $gwc_vt_type . ' 404s', 404 === $gwc_vt_response->get_status(), (string) $gwc_vt_response->get_status() );
 }
 
 /* ── Ordering is by when the shift is, not when it was typed ─────────────── */
 
-$gwcvt_third  = gwcvt_make_shift( '2030-04-20' );
-$gwcvt_first  = gwcvt_make_shift( '2030-04-06' );
-$gwcvt_second = gwcvt_make_shift( '2030-04-13' );
+$gwc_vt_third  = gwc_vt_make_shift( '2030-04-20' );
+$gwc_vt_first  = gwc_vt_make_shift( '2030-04-06' );
+$gwc_vt_second = gwc_vt_make_shift( '2030-04-13' );
 
-$gwcvt_found = gwcvt_shifts_between(
+$gwc_vt_found = gwc_vt_shifts_between(
 	array(
 		'from' => '2030-04-01',
 		'to'   => '2030-04-30',
 	)
 );
 
-gwcvt_check( 'a month of shifts is found', 3 === count( $gwcvt_found ), (string) count( $gwcvt_found ) );
-gwcvt_check(
+gwc_vt_check( 'a month of shifts is found', 3 === count( $gwc_vt_found ), (string) count( $gwc_vt_found ) );
+gwc_vt_check(
 	'they come back in date order, not the order they were created',
-	array( $gwcvt_first, $gwcvt_second, $gwcvt_third ) === $gwcvt_found,
-	implode( ',', $gwcvt_found )
+	array( $gwc_vt_first, $gwc_vt_second, $gwc_vt_third ) === $gwc_vt_found,
+	implode( ',', $gwc_vt_found )
 );
 
-$gwcvt_narrow = gwcvt_shifts_between(
+$gwc_vt_narrow = gwc_vt_shifts_between(
 	array(
 		'from' => '2030-04-13',
 		'to'   => '2030-04-13',
 	)
 );
-gwcvt_check( 'a range is inclusive at both ends', array( $gwcvt_second ) === $gwcvt_narrow, implode( ',', $gwcvt_narrow ) );
+gwc_vt_check( 'a range is inclusive at both ends', array( $gwc_vt_second ) === $gwc_vt_narrow, implode( ',', $gwc_vt_narrow ) );
 
-$gwcvt_open = gwcvt_shifts_between( array( 'from' => '2030-04-14' ) );
-gwcvt_check( 'an open-ended range works', in_array( $gwcvt_third, $gwcvt_open, true ) && ! in_array( $gwcvt_first, $gwcvt_open, true ) );
+$gwc_vt_open = gwc_vt_shifts_between( array( 'from' => '2030-04-14' ) );
+gwc_vt_check( 'an open-ended range works', in_array( $gwc_vt_third, $gwc_vt_open, true ) && ! in_array( $gwc_vt_first, $gwc_vt_open, true ) );
 
 /* A draft is not on the schedule unless it is asked for. */
-$gwcvt_draft = gwcvt_make_shift( '2030-04-08', '09:00', '12:00', array(), 'draft' );
+$gwc_vt_draft = gwc_vt_make_shift( '2030-04-08', '09:00', '12:00', array(), 'draft' );
 
-$gwcvt_published_only = gwcvt_shifts_between(
+$gwc_vt_published_only = gwc_vt_shifts_between(
 	array(
 		'from' => '2030-04-01',
 		'to'   => '2030-04-30',
 	)
 );
-gwcvt_check( 'a draft shift is left out by default', ! in_array( $gwcvt_draft, $gwcvt_published_only, true ) );
+gwc_vt_check( 'a draft shift is left out by default', ! in_array( $gwc_vt_draft, $gwc_vt_published_only, true ) );
 
-$gwcvt_with_drafts = gwcvt_shifts_between(
+$gwc_vt_with_drafts = gwc_vt_shifts_between(
 	array(
 		'from'     => '2030-04-01',
 		'to'       => '2030-04-30',
 		'statuses' => array( 'publish', 'draft' ),
 	)
 );
-gwcvt_check( 'a draft shift is found when asked for', in_array( $gwcvt_draft, $gwcvt_with_drafts, true ) );
+gwc_vt_check( 'a draft shift is found when asked for', in_array( $gwc_vt_draft, $gwc_vt_with_drafts, true ) );
 
 /* ── Durations and instants ──────────────────────────────────────────────── */
 
-gwcvt_check( 'a morning shift is three hours', 180 === gwcvt_shift_minutes( $gwcvt_first ), (string) gwcvt_shift_minutes( $gwcvt_first ) );
+gwc_vt_check( 'a morning shift is three hours', 180 === gwc_vt_shift_minutes( $gwc_vt_first ), (string) gwc_vt_shift_minutes( $gwc_vt_first ) );
 
-$gwcvt_overnight = gwcvt_make_shift(
+$gwc_vt_overnight = gwc_vt_make_shift(
 	'2030-05-01',
 	'22:00',
 	'06:00',
-	array( GWCVT_SHIFT_OVERNIGHT => 1 )
+	array( GWC_VT_SHIFT_OVERNIGHT => 1 )
 );
 
-gwcvt_check( 'an overnight shift is eight hours', 480 === gwcvt_shift_minutes( $gwcvt_overnight ), (string) gwcvt_shift_minutes( $gwcvt_overnight ) );
+gwc_vt_check( 'an overnight shift is eight hours', 480 === gwc_vt_shift_minutes( $gwc_vt_overnight ), (string) gwc_vt_shift_minutes( $gwc_vt_overnight ) );
 
-$gwcvt_ends = gwcvt_shift_ends( $gwcvt_overnight );
-gwcvt_check(
+$gwc_vt_ends = gwc_vt_shift_ends( $gwc_vt_overnight );
+gwc_vt_check(
 	'an overnight shift ends the following morning',
-	null !== $gwcvt_ends && '2030-05-02 06:00' === $gwcvt_ends->format( 'Y-m-d H:i' ),
-	null !== $gwcvt_ends ? $gwcvt_ends->format( 'Y-m-d H:i' ) : 'null'
+	null !== $gwc_vt_ends && '2030-05-02 06:00' === $gwc_vt_ends->format( 'Y-m-d H:i' ),
+	null !== $gwc_vt_ends ? $gwc_vt_ends->format( 'Y-m-d H:i' ) : 'null'
 );
 
-$gwcvt_starts = gwcvt_shift_starts( $gwcvt_overnight );
-gwcvt_check(
+$gwc_vt_starts = gwc_vt_shift_starts( $gwc_vt_overnight );
+gwc_vt_check(
 	'and starts the evening before',
-	null !== $gwcvt_starts && '2030-05-01 22:00' === $gwcvt_starts->format( 'Y-m-d H:i' ),
-	null !== $gwcvt_starts ? $gwcvt_starts->format( 'Y-m-d H:i' ) : 'null'
+	null !== $gwc_vt_starts && '2030-05-01 22:00' === $gwc_vt_starts->format( 'Y-m-d H:i' ),
+	null !== $gwc_vt_starts ? $gwc_vt_starts->format( 'Y-m-d H:i' ) : 'null'
 );
 
 /* ── Has it happened, and is it open ─────────────────────────────────────────
@@ -190,80 +190,80 @@ gwcvt_check(
  * timezone the site is in cannot flip the answer.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-$gwcvt_yesterday = gwcvt_make_shift( gmdate( 'Y-m-d', time() - DAY_IN_SECONDS ) );
-$gwcvt_tomorrow  = gwcvt_make_shift( gmdate( 'Y-m-d', time() + DAY_IN_SECONDS ) );
+$gwc_vt_yesterday = gwc_vt_make_shift( gmdate( 'Y-m-d', time() - DAY_IN_SECONDS ) );
+$gwc_vt_tomorrow  = gwc_vt_make_shift( gmdate( 'Y-m-d', time() + DAY_IN_SECONDS ) );
 
-gwcvt_check( 'yesterday’s shift has ended', gwcvt_shift_has_ended( $gwcvt_yesterday ) );
-gwcvt_check( 'tomorrow’s has not', ! gwcvt_shift_has_ended( $gwcvt_tomorrow ) );
+gwc_vt_check( 'yesterday’s shift has ended', gwc_vt_shift_has_ended( $gwc_vt_yesterday ) );
+gwc_vt_check( 'tomorrow’s has not', ! gwc_vt_shift_has_ended( $gwc_vt_tomorrow ) );
 
-gwcvt_check( 'tomorrow’s shift is open for signups', gwcvt_shift_is_open( $gwcvt_tomorrow ) );
-gwcvt_check( 'yesterday’s is not', ! gwcvt_shift_is_open( $gwcvt_yesterday ) );
-gwcvt_check( 'a draft is never open', ! gwcvt_shift_is_open( $gwcvt_draft ) );
+gwc_vt_check( 'tomorrow’s shift is open for signups', gwc_vt_shift_is_open( $gwc_vt_tomorrow ) );
+gwc_vt_check( 'yesterday’s is not', ! gwc_vt_shift_is_open( $gwc_vt_yesterday ) );
+gwc_vt_check( 'a draft is never open', ! gwc_vt_shift_is_open( $gwc_vt_draft ) );
 
 /* The cutoff closes signups early. Two days is enough to cover tomorrow whatever
  * the site's offset from UTC. */
-$gwcvt_settings                        = (array) get_option( GWCVT_SETTINGS_OPTION );
-$gwcvt_settings['signup_cutoff_hours'] = 48;
-update_option( GWCVT_SETTINGS_OPTION, $gwcvt_settings );
+$gwc_vt_settings                        = (array) get_option( GWC_VT_SETTINGS_OPTION );
+$gwc_vt_settings['signup_cutoff_hours'] = 48;
+update_option( GWC_VT_SETTINGS_OPTION, $gwc_vt_settings );
 
-gwcvt_check( 'a cutoff closes a shift that is too soon', ! gwcvt_shift_is_open( $gwcvt_tomorrow ) );
-gwcvt_check( 'and leaves a distant one open', gwcvt_shift_is_open( $gwcvt_first ) );
+gwc_vt_check( 'a cutoff closes a shift that is too soon', ! gwc_vt_shift_is_open( $gwc_vt_tomorrow ) );
+gwc_vt_check( 'and leaves a distant one open', gwc_vt_shift_is_open( $gwc_vt_first ) );
 
-$gwcvt_settings['signup_cutoff_hours'] = 0;
-update_option( GWCVT_SETTINGS_OPTION, $gwcvt_settings );
+$gwc_vt_settings['signup_cutoff_hours'] = 0;
+update_option( GWC_VT_SETTINGS_OPTION, $gwc_vt_settings );
 
 /* ── Cancelling ──────────────────────────────────────────────────────────── */
 
 wp_update_post(
 	array(
-		'ID'          => $gwcvt_third,
-		'post_status' => GWCVT_SHIFT_CANCELLED,
+		'ID'          => $gwc_vt_third,
+		'post_status' => GWC_VT_SHIFT_CANCELLED,
 	)
 );
 
-gwcvt_check( 'a cancelled shift reads as cancelled', gwcvt_shift_is_cancelled( $gwcvt_third ) );
-gwcvt_check( 'a cancelled shift is not open', ! gwcvt_shift_is_open( $gwcvt_third ) );
+gwc_vt_check( 'a cancelled shift reads as cancelled', gwc_vt_shift_is_cancelled( $gwc_vt_third ) );
+gwc_vt_check( 'a cancelled shift is not open', ! gwc_vt_shift_is_open( $gwc_vt_third ) );
 
 /* It is still on the schedule. A shift people committed to that vanished would
  * leave them with no way to find out it was called off. */
-$gwcvt_including_cancelled = gwcvt_shifts_between(
+$gwc_vt_including_cancelled = gwc_vt_shifts_between(
 	array(
 		'from'     => '2030-04-01',
 		'to'       => '2030-04-30',
-		'statuses' => array( 'publish', GWCVT_SHIFT_CANCELLED ),
+		'statuses' => array( 'publish', GWC_VT_SHIFT_CANCELLED ),
 	)
 );
-gwcvt_check( 'a cancelled shift stays on the schedule', in_array( $gwcvt_third, $gwcvt_including_cancelled, true ) );
+gwc_vt_check( 'a cancelled shift stays on the schedule', in_array( $gwc_vt_third, $gwc_vt_including_cancelled, true ) );
 
 /* ── Reconciliation state ────────────────────────────────────────────────── */
 
-gwcvt_check( 'a new shift is not reconciled', ! gwcvt_shift_is_reconciled( $gwcvt_yesterday ) );
+gwc_vt_check( 'a new shift is not reconciled', ! gwc_vt_shift_is_reconciled( $gwc_vt_yesterday ) );
 
-update_post_meta( $gwcvt_yesterday, GWCVT_SHIFT_RECONCILED, gmdate( 'Y-m-d H:i:s' ) );
-gwcvt_check( 'a stamped shift is reconciled', gwcvt_shift_is_reconciled( $gwcvt_yesterday ) );
+update_post_meta( $gwc_vt_yesterday, GWC_VT_SHIFT_RECONCILED, gmdate( 'Y-m-d H:i:s' ) );
+gwc_vt_check( 'a stamped shift is reconciled', gwc_vt_shift_is_reconciled( $gwc_vt_yesterday ) );
 
 /* ── The derived title ───────────────────────────────────────────────────── */
 
-gwcvt_check(
+gwc_vt_check(
 	'the title says what and when',
-	false !== strpos( get_the_title( $gwcvt_first ), 'Zzytest sorting donations' ),
-	get_the_title( $gwcvt_first )
+	false !== strpos( get_the_title( $gwc_vt_first ), 'Zzytest sorting donations' ),
+	get_the_title( $gwc_vt_first )
 );
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
-foreach ( $GLOBALS['gwcvt_made'] as $gwcvt_id ) {
-	wp_delete_post( $gwcvt_id, true );
+foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {
+	wp_delete_post( $gwc_vt_id, true );
 }
 
-if ( false === $GLOBALS['gwcvt_settings_before'] ) {
-	delete_option( GWCVT_SETTINGS_OPTION );
+if ( false === $GLOBALS['gwc_vt_settings_before'] ) {
+	delete_option( GWC_VT_SETTINGS_OPTION );
 } else {
-	update_option( GWCVT_SETTINGS_OPTION, $GLOBALS['gwcvt_settings_before'] );
+	update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_settings_before'] );
 }
 
-echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? "ALL PASS\n" : $GLOBALS['gwcvt_failures'] . " CHECK(S) FAILED\n" );
+echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
-if ( $GLOBALS['gwcvt_failures'] > 0 ) {
+if ( $GLOBALS['gwc_vt_failures'] > 0 ) {
 	exit( 1 );
 }

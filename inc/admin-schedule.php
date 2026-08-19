@@ -7,8 +7,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'admin_menu', 'gwcvt_register_schedule_menu', 13 );
-add_action( 'admin_notices', 'gwcvt_unreconciled_notice' );
+add_action( 'admin_menu', 'gwc_vt_register_schedule_menu', 13 );
+add_action( 'admin_notices', 'gwc_vt_unreconciled_notice' );
 
 /* ── What this screen is for ─────────────────────────────────────────────────
  * A coordinator does not open the schedule to read a list of posts. They open it
@@ -29,18 +29,18 @@ add_action( 'admin_notices', 'gwcvt_unreconciled_notice' );
 /**
  * Hang the schedule off the Volunteer Hours menu.
  */
-function gwcvt_register_schedule_menu(): void {
-	if ( ! gwcvt_shifts_enabled() ) {
+function gwc_vt_register_schedule_menu(): void {
+	if ( ! gwc_vt_shifts_enabled() ) {
 		return;
 	}
 
 	add_submenu_page(
-		GWCVT_MENU_SLUG,
+		GWC_VT_MENU_SLUG,
 		__( 'Schedule', 'groundwork-common-volunteer-tracker' ),
 		__( 'Schedule', 'groundwork-common-volunteer-tracker' ),
 		'edit_posts',
-		GWCVT_SCHEDULE_PAGE,
-		'gwcvt_render_schedule_screen'
+		GWC_VT_SCHEDULE_PAGE,
+		'gwc_vt_render_schedule_screen'
 	);
 }
 
@@ -54,14 +54,14 @@ function gwcvt_register_schedule_menu(): void {
  *
  * @return bool
  */
-function gwcvt_shifts_enabled(): bool {
-	return (bool) gwcvt_setting( 'shifts_enabled' );
+function gwc_vt_shifts_enabled(): bool {
+	return (bool) gwc_vt_setting( 'shifts_enabled' );
 }
 
 /**
  * The screen, in whichever of its three views was asked for.
  */
-function gwcvt_render_schedule_screen(): void {
+function gwc_vt_render_schedule_screen(): void {
 	if ( ! current_user_can( 'edit_posts' ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to manage the schedule.', 'groundwork-common-volunteer-tracker' ),
@@ -71,20 +71,20 @@ function gwcvt_render_schedule_screen(): void {
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation between views.
-	$event = isset( $_GET['gwcvt_event'] ) ? sanitize_text_field( wp_unslash( $_GET['gwcvt_event'] ) ) : '';
+	$event = isset( $_GET['gwc_vt_event'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_event'] ) ) : '';
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : '';
 
 	if ( 'new' === $event ) {
-		gwcvt_render_event_editor( 0 );
+		gwc_vt_render_event_editor( 0 );
 		return;
 	}
 
 	$event_id = absint( $event );
 
-	if ( $event_id > 0 && GWCVT_EVENT_TYPE === get_post_type( $event_id ) ) {
+	if ( $event_id > 0 && GWC_VT_EVENT_TYPE === get_post_type( $event_id ) ) {
 		if ( 'roster' === $view ) {
-			gwcvt_render_event_roster( $event_id );
+			gwc_vt_render_event_roster( $event_id );
 			return;
 		}
 
@@ -95,8 +95,8 @@ function gwcvt_render_schedule_screen(): void {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; the POST it leads to carries the nonce.
 			$slot = isset( $_GET['slot'] ) ? absint( wp_unslash( $_GET['slot'] ) ) : 0;
 
-			if ( gwcvt_event_for_shift( $slot ) === $event_id ) {
-				gwcvt_render_call_off_slot( $slot );
+			if ( gwc_vt_event_for_shift( $slot ) === $event_id ) {
+				gwc_vt_render_call_off_slot( $slot );
 				return;
 			}
 		}
@@ -112,17 +112,17 @@ function gwcvt_render_schedule_screen(): void {
 			$role = isset( $_GET['role'] ) ? sanitize_text_field( rawurldecode( wp_unslash( $_GET['role'] ) ) ) : '';
 
 			if ( '' !== $role ) {
-				gwcvt_render_drop_role( $event_id, $role );
+				gwc_vt_render_drop_role( $event_id, $role );
 				return;
 			}
 		}
 
-		gwcvt_render_event_editor( $event_id );
+		gwc_vt_render_event_editor( $event_id );
 		return;
 	}
 
 	if ( 'events' === $view ) {
-		gwcvt_render_events_list();
+		gwc_vt_render_events_list();
 		return;
 	}
 
@@ -130,55 +130,55 @@ function gwcvt_render_schedule_screen(): void {
 	$wanted = isset( $_GET['shift'] ) ? sanitize_text_field( wp_unslash( $_GET['shift'] ) ) : '';
 
 	if ( 'new' === $wanted ) {
-		gwcvt_render_shift_editor( 0 );
+		gwc_vt_render_shift_editor( 0 );
 		return;
 	}
 
 	$shift_id = absint( $wanted );
 
-	if ( $shift_id > 0 && GWCVT_SHIFT_TYPE === get_post_type( $shift_id ) ) {
-		gwcvt_render_shift_editor( $shift_id );
+	if ( $shift_id > 0 && GWC_VT_SHIFT_TYPE === get_post_type( $shift_id ) ) {
+		gwc_vt_render_shift_editor( $shift_id );
 		return;
 	}
 
-	gwcvt_render_schedule_list();
+	gwc_vt_render_schedule_list();
 }
 
 /**
  * Everything coming up, soonest first.
  */
-function gwcvt_render_schedule_list(): void {
+function gwc_vt_render_schedule_list(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks which half of the calendar to show.
 	$when = isset( $_GET['when'] ) && 'past' === $_GET['when'] ? 'past' : 'upcoming';
 
-	$from = 'past' === $when ? gmdate( 'Y-m-d', time() - ( 120 * DAY_IN_SECONDS ) ) : gwcvt_today();
-	$to   = 'past' === $when ? gwcvt_today() : gmdate( 'Y-m-d', time() + ( 400 * DAY_IN_SECONDS ) );
+	$from = 'past' === $when ? gmdate( 'Y-m-d', time() - ( 120 * DAY_IN_SECONDS ) ) : gwc_vt_today();
+	$to   = 'past' === $when ? gwc_vt_today() : gmdate( 'Y-m-d', time() + ( 400 * DAY_IN_SECONDS ) );
 
 	/* Standalone shifts only, because an event appears here as ONE row rather
 	 * than as its six slots. Interleaving a festival's times among next
 	 * Saturday's ordinary shifts buries both; leaving the event out entirely is
 	 * a list that lies by omission. A summary row that links through is the
-	 * middle, and gwcvt_schedule_rows() below merges the two by date. */
-	$shifts = gwcvt_shifts_between(
+	 * middle, and gwc_vt_schedule_rows() below merges the two by date. */
+	$shifts = gwc_vt_shifts_between(
 		array(
 			'from'     => $from,
 			'to'       => $to,
-			'statuses' => array( 'publish', 'draft', GWCVT_SHIFT_CANCELLED ),
+			'statuses' => array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ),
 			'limit'    => 200,
 			'parent'   => 0,
 		)
 	);
 
-	$events = gwcvt_events_between(
+	$events = gwc_vt_events_between(
 		array(
 			'from'     => $from,
 			'to'       => $to,
-			'statuses' => array( 'publish', 'draft', GWCVT_EVENT_CANCELLED ),
+			'statuses' => array( 'publish', 'draft', GWC_VT_EVENT_CANCELLED ),
 			'limit'    => 100,
 		)
 	);
 
-	$rows = gwcvt_schedule_rows( $shifts, $events );
+	$rows = gwc_vt_schedule_rows( $shifts, $events );
 
 	if ( 'past' === $when ) {
 		$rows = array_reverse( $rows );
@@ -186,8 +186,8 @@ function gwcvt_render_schedule_list(): void {
 
 	$base = add_query_arg(
 		array(
-			'post_type' => GWCVT_ENTRY_TYPE,
-			'page'      => GWCVT_SCHEDULE_PAGE,
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_SCHEDULE_PAGE,
 		),
 		admin_url( 'edit.php' )
 	);
@@ -197,13 +197,13 @@ function gwcvt_render_schedule_list(): void {
 		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
-		<a href="<?php echo esc_url( add_query_arg( 'gwcvt_event', 'new', $base ) ); ?>" class="page-title-action">
+		<a href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
 		<hr class="wp-header-end" />
 
-		<?php gwcvt_schedule_notice(); ?>
-		<?php gwcvt_event_notice(); ?>
+		<?php gwc_vt_schedule_notice(); ?>
+		<?php gwc_vt_event_notice(); ?>
 
 		<ul class="subsubsub">
 			<li>
@@ -248,11 +248,11 @@ function gwcvt_render_schedule_list(): void {
 				<?php foreach ( $rows as $row ) : ?>
 					<?php
 					if ( 'event' === $row['type'] ) {
-						gwcvt_render_event_summary_row( $row['id'] );
+						gwc_vt_render_event_summary_row( $row['id'] );
 						continue;
 					}
 
-					gwcvt_render_schedule_row( $row['id'], $base );
+					gwc_vt_render_schedule_row( $row['id'], $base );
 					?>
 				<?php endforeach; ?>
 			</tbody>
@@ -267,12 +267,12 @@ function gwcvt_render_schedule_list(): void {
  * @param int    $shift_id Shift post ID.
  * @param string $base     The screen's own URL.
  */
-function gwcvt_render_schedule_row( int $shift_id, string $base ): void {
-	$cancelled    = gwcvt_shift_is_cancelled( $shift_id );
-	$ended        = gwcvt_shift_has_ended( $shift_id );
-	$reconciled   = gwcvt_shift_is_reconciled( $shift_id );
-	$filled       = gwcvt_shift_filled( $shift_id );
-	$understaffed = ! $cancelled && ! $ended && gwcvt_shift_is_understaffed( $shift_id );
+function gwc_vt_render_schedule_row( int $shift_id, string $base ): void {
+	$cancelled    = gwc_vt_shift_is_cancelled( $shift_id );
+	$ended        = gwc_vt_shift_has_ended( $shift_id );
+	$reconciled   = gwc_vt_shift_is_reconciled( $shift_id );
+	$filled       = gwc_vt_shift_filled( $shift_id );
+	$understaffed = ! $cancelled && ! $ended && gwc_vt_shift_is_understaffed( $shift_id );
 	$edit_url     = add_query_arg( 'shift', $shift_id, $base );
 
 	/* Waiting to be typed up: it happened, somebody was on it, and no hours came
@@ -292,12 +292,12 @@ function gwcvt_render_schedule_row( int $shift_id, string $base ): void {
 	?>
 	<tr class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 		<td>
-			<strong><?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?></strong><br />
-			<span class="gwcvt-schedule__time"><?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?></span>
+			<strong><?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?></strong><br />
+			<span class="gwcvt-schedule__time"><?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?></span>
 		</td>
 		<td>
 			<a class="row-title" href="<?php echo esc_url( $edit_url ); ?>">
-				<?php echo esc_html( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) ); ?>
+				<?php echo esc_html( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) ); ?>
 			</a>
 
 			<?php if ( $cancelled ) : ?>
@@ -305,7 +305,7 @@ function gwcvt_render_schedule_row( int $shift_id, string $base ): void {
 			<?php elseif ( 'draft' === get_post_status( $shift_id ) ) : ?>
 				<span class="gwcvt-badge"><?php esc_html_e( 'Not published', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php elseif ( $awaiting ) : ?>
-				<a class="gwcvt-badge gwcvt-badge--waiting gwcvt-badge--action" href="<?php echo esc_url( gwcvt_shift_log_url( $shift_id ) ); ?>">
+				<a class="gwcvt-badge gwcvt-badge--waiting gwcvt-badge--action" href="<?php echo esc_url( gwc_vt_shift_log_url( $shift_id ) ); ?>">
 					<?php esc_html_e( 'Hours not logged', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
 			<?php elseif ( $reconciled ) : ?>
@@ -319,7 +319,7 @@ function gwcvt_render_schedule_row( int $shift_id, string $base ): void {
 				<?php if ( $ended && ! $cancelled ) : ?>
 					|
 					<span class="gwcvt-log">
-						<a href="<?php echo esc_url( gwcvt_shift_log_url( $shift_id ) ); ?>">
+						<a href="<?php echo esc_url( gwc_vt_shift_log_url( $shift_id ) ); ?>">
 							<?php
 							echo $reconciled
 								? esc_html__( 'Log more hours', 'groundwork-common-volunteer-tracker' )
@@ -331,26 +331,26 @@ function gwcvt_render_schedule_row( int $shift_id, string $base ): void {
 				<?php if ( $filled > 0 ) : ?>
 					|
 					<span class="view">
-						<a href="<?php echo esc_url( gwcvt_roster_print_url( $shift_id ) ); ?>" target="_blank" rel="noopener noreferrer">
+						<a href="<?php echo esc_url( gwc_vt_roster_print_url( $shift_id ) ); ?>" target="_blank" rel="noopener noreferrer">
 							<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
 						</a>
 					</span>
 				<?php endif; ?>
 			</div>
 		</td>
-		<td><?php echo esc_html( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) ); ?></td>
+		<td><?php echo esc_html( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) ); ?></td>
 		<td>
 			<?php if ( $understaffed ) : ?>
 				<strong class="gwcvt-schedule__short">
-					<?php echo esc_html( gwcvt_shift_fill_label( $shift_id ) ); ?>
+					<?php echo esc_html( gwc_vt_shift_fill_label( $shift_id ) ); ?>
 				</strong>
 				<span class="screen-reader-text"><?php esc_html_e( 'Short of people', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php else : ?>
-				<?php echo esc_html( gwcvt_shift_fill_label( $shift_id ) ); ?>
+				<?php echo esc_html( gwc_vt_shift_fill_label( $shift_id ) ); ?>
 			<?php endif; ?>
 
 			<?php
-			$waiting = count( gwcvt_shift_signup_ids( $shift_id, array( GWCVT_SIGNUP_WAITLIST ) ) );
+			$waiting = count( gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WAITLIST ) ) );
 
 			if ( $waiting > 0 ) :
 				?>
@@ -373,16 +373,16 @@ function gwcvt_render_schedule_row( int $shift_id, string $base ): void {
 /**
  * Say what the last action did.
  */
-function gwcvt_schedule_notice(): void {
+function gwc_vt_schedule_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks a sentence after a redirect.
-	$result = isset( $_GET['gwcvt_shift_result'] ) ? sanitize_key( wp_unslash( $_GET['gwcvt_shift_result'] ) ) : '';
+	$result = isset( $_GET['gwc_vt_shift_result'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_shift_result'] ) ) : '';
 
 	if ( '' === $result ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$count = isset( $_GET['gwcvt_count'] ) ? absint( wp_unslash( $_GET['gwcvt_count'] ) ) : 0;
+	$count = isset( $_GET['gwc_vt_count'] ) ? absint( wp_unslash( $_GET['gwc_vt_count'] ) ) : 0;
 
 	$errors = array(
 		'bad-date'  => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
@@ -405,9 +405,9 @@ function gwcvt_schedule_notice(): void {
 	);
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$told = isset( $_GET['gwcvt_told'] ) ? absint( wp_unslash( $_GET['gwcvt_told'] ) ) : 0;
+	$told = isset( $_GET['gwc_vt_told'] ) ? absint( wp_unslash( $_GET['gwc_vt_told'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$slot = isset( $_GET['gwcvt_slot'] ) ? absint( wp_unslash( $_GET['gwcvt_slot'] ) ) : 0;
+	$slot = isset( $_GET['gwc_vt_slot'] ) ? absint( wp_unslash( $_GET['gwc_vt_slot'] ) ) : 0;
 
 	if ( 'created' === $result ) {
 		$message = sprintf(
@@ -432,7 +432,7 @@ function gwcvt_schedule_notice(): void {
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$capped = isset( $_GET['gwcvt_capped'] ) ? sanitize_key( wp_unslash( $_GET['gwcvt_capped'] ) ) : '';
+	$capped = isset( $_GET['gwc_vt_capped'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_capped'] ) ) : '';
 
 	/* A run that was truncated says so. A screen that quietly makes fewer shifts
 	 * than somebody asked for is a screen that loses them a month of Saturdays,
@@ -441,13 +441,13 @@ function gwcvt_schedule_notice(): void {
 		$message .= ' ' . sprintf(
 			/* translators: %d: the maximum number of shifts one repeat can create. */
 			__( 'That is the most one repeat can add at a time (%d). Add the rest by repeating from the last one.', 'groundwork-common-volunteer-tracker' ),
-			GWCVT_RECURRENCE_MAX
+			GWC_VT_RECURRENCE_MAX
 		);
 	} elseif ( 'horizon' === $capped ) {
 		$message .= ' ' . sprintf(
 			/* translators: %d: how many months ahead a repeat may reach. */
 			__( 'Repeats reach %d months ahead at most, so the later dates were not added.', 'groundwork-common-volunteer-tracker' ),
-			GWCVT_RECURRENCE_HORIZON_MONTHS
+			GWC_VT_RECURRENCE_HORIZON_MONTHS
 		);
 	}
 
@@ -475,18 +475,18 @@ function gwcvt_schedule_notice(): void {
 /**
  * Say plainly that hours are waiting to be typed up.
  */
-function gwcvt_unreconciled_notice(): void {
-	if ( ! gwcvt_shifts_enabled() || ! current_user_can( 'edit_posts' ) ) {
+function gwc_vt_unreconciled_notice(): void {
+	if ( ! gwc_vt_shifts_enabled() || ! current_user_can( 'edit_posts' ) ) {
 		return;
 	}
 
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
-	if ( ! $screen || 'edit-' . GWCVT_ENTRY_TYPE !== $screen->id ) {
+	if ( ! $screen || 'edit-' . GWC_VT_ENTRY_TYPE !== $screen->id ) {
 		return;
 	}
 
-	$waiting = gwcvt_unreconciled_shift_ids( 20 );
+	$waiting = gwc_vt_unreconciled_shift_ids( 20 );
 
 	if ( ! $waiting ) {
 		return;
@@ -506,7 +506,7 @@ function gwcvt_unreconciled_notice(): void {
 				count( $waiting )
 			)
 		),
-		esc_url( gwcvt_shift_log_url( (int) $waiting[0] ) ),
+		esc_url( gwc_vt_shift_log_url( (int) $waiting[0] ) ),
 		esc_html__( 'Log them now', 'groundwork-common-volunteer-tracker' )
 	);
 }
@@ -526,14 +526,14 @@ function gwcvt_unreconciled_notice(): void {
  * @param int[] $events Event post IDs.
  * @return array<int, array{type: string, id: int, date: string}>
  */
-function gwcvt_schedule_rows( array $shifts, array $events ): array {
+function gwc_vt_schedule_rows( array $shifts, array $events ): array {
 	$rows = array();
 
 	foreach ( $shifts as $shift_id ) {
 		$rows[] = array(
 			'type' => 'shift',
 			'id'   => (int) $shift_id,
-			'date' => (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true ),
+			'date' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
 		);
 	}
 
@@ -541,7 +541,7 @@ function gwcvt_schedule_rows( array $shifts, array $events ): array {
 		$rows[] = array(
 			'type' => 'event',
 			'id'   => (int) $event_id,
-			'date' => (string) get_post_meta( $event_id, GWCVT_EVENT_DATE, true ),
+			'date' => (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true ),
 		);
 	}
 
@@ -562,12 +562,12 @@ function gwcvt_schedule_rows( array $shifts, array $events ): array {
  *
  * @param int $event_id Event post ID.
  */
-function gwcvt_render_event_summary_row( int $event_id ): void {
-	$cancelled = gwcvt_event_is_cancelled( $event_id );
-	$short     = $cancelled ? array() : gwcvt_event_short_slot_ids( $event_id );
-	$unlogged  = $cancelled ? array() : gwcvt_event_unlogged_slot_ids( $event_id );
-	$slots     = gwcvt_event_slot_ids( $event_id, array( 'publish', 'draft' ) );
-	$roles     = count( gwcvt_event_roles( $event_id, array( 'publish', 'draft' ) ) );
+function gwc_vt_render_event_summary_row( int $event_id ): void {
+	$cancelled = gwc_vt_event_is_cancelled( $event_id );
+	$short     = $cancelled ? array() : gwc_vt_event_short_slot_ids( $event_id );
+	$unlogged  = $cancelled ? array() : gwc_vt_event_unlogged_slot_ids( $event_id );
+	$slots     = gwc_vt_event_slot_ids( $event_id, array( 'publish', 'draft' ) );
+	$roles     = count( gwc_vt_event_roles( $event_id, array( 'publish', 'draft' ) ) );
 
 	$classes = array( 'gwcvt-schedule__row', 'gwcvt-schedule__row--event' );
 
@@ -579,13 +579,13 @@ function gwcvt_render_event_summary_row( int $event_id ): void {
 	?>
 	<tr class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 		<td>
-			<strong><?php echo esc_html( gwcvt_event_date_label( $event_id ) ); ?></strong>
+			<strong><?php echo esc_html( gwc_vt_event_date_label( $event_id ) ); ?></strong>
 			<div class="row-actions" style="left:auto">
 				<?php echo esc_html( _x( 'Event', 'a row on the schedule', 'groundwork-common-volunteer-tracker' ) ); ?>
 			</div>
 		</td>
 		<td>
-			<a href="<?php echo esc_url( gwcvt_event_edit_url( $event_id ) ); ?>"><strong><?php echo esc_html( gwcvt_event_name( $event_id ) ); ?></strong></a>
+			<a href="<?php echo esc_url( gwc_vt_event_edit_url( $event_id ) ); ?>"><strong><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></strong></a>
 
 			<?php if ( $unlogged ) : ?>
 				<?php
@@ -593,7 +593,7 @@ function gwcvt_render_event_summary_row( int $event_id ): void {
 				 * event has several times and there is no one of them to send
 				 * somebody to. The roster lists them with a log link each. */
 				?>
-				<a class="gwcvt-badge gwcvt-badge--waiting gwcvt-badge--action" href="<?php echo esc_url( gwcvt_event_roster_url( $event_id ) ); ?>">
+				<a class="gwcvt-badge gwcvt-badge--waiting gwcvt-badge--action" href="<?php echo esc_url( gwc_vt_event_roster_url( $event_id ) ); ?>">
 					<?php
 					printf(
 						esc_html(
@@ -607,8 +607,8 @@ function gwcvt_render_event_summary_row( int $event_id ): void {
 			<?php endif; ?>
 
 			<div class="row-actions">
-				<span><a href="<?php echo esc_url( gwcvt_event_roster_url( $event_id ) ); ?>"><?php esc_html_e( 'Roster', 'groundwork-common-volunteer-tracker' ); ?></a> | </span>
-				<span><a href="<?php echo esc_url( gwcvt_event_edit_url( $event_id ) ); ?>"><?php esc_html_e( 'Edit', 'groundwork-common-volunteer-tracker' ); ?></a></span>
+				<span><a href="<?php echo esc_url( gwc_vt_event_roster_url( $event_id ) ); ?>"><?php esc_html_e( 'Roster', 'groundwork-common-volunteer-tracker' ); ?></a> | </span>
+				<span><a href="<?php echo esc_url( gwc_vt_event_edit_url( $event_id ) ); ?>"><?php esc_html_e( 'Edit', 'groundwork-common-volunteer-tracker' ); ?></a></span>
 			</div>
 			<div class="row-actions" style="left:auto">
 				<?php
@@ -623,12 +623,12 @@ function gwcvt_render_event_summary_row( int $event_id ): void {
 				?>
 			</div>
 		</td>
-		<td><?php echo esc_html( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) ); ?></td>
+		<td><?php echo esc_html( (string) get_post_meta( $event_id, GWC_VT_EVENT_LOCATION, true ) ); ?></td>
 		<td>
 			<?php if ( $cancelled ) : ?>
 				<strong><?php esc_html_e( 'Called off', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			<?php else : ?>
-				<strong><?php echo esc_html( gwcvt_event_fill_label( $event_id ) ); ?></strong>
+				<strong><?php echo esc_html( gwc_vt_event_fill_label( $event_id ) ); ?></strong>
 				<?php if ( $short ) : ?>
 					<div class="row-actions" style="left:auto">
 						<?php
@@ -655,32 +655,32 @@ function gwcvt_render_event_summary_row( int $event_id ): void {
  * people, and how soon — so the fill figure is the loudest thing in the row and
  * the event's name is not.
  */
-function gwcvt_render_events_list(): void {
+function gwc_vt_render_events_list(): void {
 	$base = add_query_arg(
 		array(
-			'post_type' => GWCVT_ENTRY_TYPE,
-			'page'      => GWCVT_SCHEDULE_PAGE,
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_SCHEDULE_PAGE,
 		),
 		admin_url( 'edit.php' )
 	);
 
-	$events = gwcvt_events_between(
+	$events = gwc_vt_events_between(
 		array(
 			'from'     => gmdate( 'Y-m-d', time() - ( 120 * DAY_IN_SECONDS ) ),
 			'to'       => gmdate( 'Y-m-d', time() + ( 400 * DAY_IN_SECONDS ) ),
-			'statuses' => array( 'publish', 'draft', GWCVT_EVENT_CANCELLED ),
+			'statuses' => array( 'publish', 'draft', GWC_VT_EVENT_CANCELLED ),
 			'limit'    => 100,
 		)
 	);
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1 class="wp-heading-inline"><?php esc_html_e( 'Events', 'groundwork-common-volunteer-tracker' ); ?></h1>
-		<a href="<?php echo esc_url( add_query_arg( 'gwcvt_event', 'new', $base ) ); ?>" class="page-title-action">
+		<a href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
 		<hr class="wp-header-end" />
 
-		<?php gwcvt_event_notice(); ?>
+		<?php gwc_vt_event_notice(); ?>
 
 		<ul class="subsubsub">
 			<li>
@@ -708,7 +708,7 @@ function gwcvt_render_events_list(): void {
 				<?php endif; ?>
 
 				<?php foreach ( $events as $event_id ) : ?>
-					<?php gwcvt_render_event_summary_row( (int) $event_id ); ?>
+					<?php gwc_vt_render_event_summary_row( (int) $event_id ); ?>
 				<?php endforeach; ?>
 			</tbody>
 		</table>
@@ -719,24 +719,24 @@ function gwcvt_render_events_list(): void {
 /**
  * What just happened to an event, if anything.
  */
-function gwcvt_event_notice(): void {
+function gwc_vt_event_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a word about a completed redirect; nothing acts on it.
-	$result = isset( $_GET['gwcvt_event_result'] ) ? sanitize_key( wp_unslash( $_GET['gwcvt_event_result'] ) ) : '';
+	$result = isset( $_GET['gwc_vt_event_result'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_event_result'] ) ) : '';
 
 	if ( '' === $result ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$made = isset( $_GET['gwcvt_made'] ) ? absint( wp_unslash( $_GET['gwcvt_made'] ) ) : 0;
+	$made = isset( $_GET['gwc_vt_made'] ) ? absint( wp_unslash( $_GET['gwc_vt_made'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$cancelled = isset( $_GET['gwcvt_cancelled'] ) ? absint( wp_unslash( $_GET['gwcvt_cancelled'] ) ) : 0;
+	$cancelled = isset( $_GET['gwc_vt_cancelled'] ) ? absint( wp_unslash( $_GET['gwc_vt_cancelled'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$deleted = isset( $_GET['gwcvt_deleted'] ) ? absint( wp_unslash( $_GET['gwcvt_deleted'] ) ) : 0;
+	$deleted = isset( $_GET['gwc_vt_deleted'] ) ? absint( wp_unslash( $_GET['gwc_vt_deleted'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$told = isset( $_GET['gwcvt_told'] ) ? absint( wp_unslash( $_GET['gwcvt_told'] ) ) : 0;
+	$told = isset( $_GET['gwc_vt_told'] ) ? absint( wp_unslash( $_GET['gwc_vt_told'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$slot = isset( $_GET['gwcvt_slot'] ) ? absint( wp_unslash( $_GET['gwcvt_slot'] ) ) : 0;
+	$slot = isset( $_GET['gwc_vt_slot'] ) ? absint( wp_unslash( $_GET['gwc_vt_slot'] ) ) : 0;
 
 	$messages = array(
 		'saved'           => __( 'Saved.', 'groundwork-common-volunteer-tracker' ),
@@ -749,14 +749,14 @@ function gwcvt_event_notice(): void {
 			? sprintf(
 				/* translators: %s: a role and a time. */
 				__( '%s was called off. It stays on the schedule rather than being deleted.', 'groundwork-common-volunteer-tracker' ),
-				gwcvt_slot_label( $slot )
+				gwc_vt_slot_label( $slot )
 			)
 			: __( 'That time was called off.', 'groundwork-common-volunteer-tracker' ),
 		'restored-slot'   => $slot > 0
 			? sprintf(
 				/* translators: %s: a role and a time. */
 				__( '%s is back on.', 'groundwork-common-volunteer-tracker' ),
-				gwcvt_slot_label( $slot )
+				gwc_vt_slot_label( $slot )
 			)
 			: __( 'That time is back on.', 'groundwork-common-volunteer-tracker' ),
 		'deleted-slot'    => __( 'That time was deleted. Nobody was on it.', 'groundwork-common-volunteer-tracker' ),

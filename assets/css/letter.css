@@ -1,7 +1,7 @@
 /* The verification letter.
 
    Hand-written, no build step. Every rule here has a counterpart in
-   gwcvt_inline_letter_styles() in inc/render.php, which applies the same
+   gwc_vt_inline_letter_styles() in inc/render.php, which applies the same
    styling as style attributes for the emailed copy — because the printed and
    emailed letters have to be the same document. Add a class here and you add a
    row there. */

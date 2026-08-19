@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class DashboardTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
@@ -40,7 +40,7 @@ final class DashboardTest extends TestCase {
 	 * @return string[]
 	 */
 	private function keys( array $counts ): array {
-		return array_column( gwcvt_dashboard_items( $counts ), 'key' );
+		return array_column( gwc_vt_dashboard_items( $counts ), 'key' );
 	}
 
 	/* ── Ordered by what is lost if it waits ─────────────────────────────────
@@ -91,11 +91,11 @@ final class DashboardTest extends TestCase {
 	}
 
 	public function test_nothing_waiting_is_an_empty_list(): void {
-		$this->assertSame( array(), gwcvt_dashboard_items( array() ) );
+		$this->assertSame( array(), gwc_vt_dashboard_items( array() ) );
 
 		$this->assertSame(
 			array(),
-			gwcvt_dashboard_items(
+			gwc_vt_dashboard_items(
 				array(
 					'unverified'   => 0,
 					'unmatched'    => 0,
@@ -122,7 +122,7 @@ final class DashboardTest extends TestCase {
 	/* ── What each line says ─────────────────────────────────────────────── */
 
 	public function test_every_line_carries_a_count_a_sentence_and_an_action(): void {
-		foreach ( gwcvt_dashboard_items( $this->everything() ) as $item ) {
+		foreach ( gwc_vt_dashboard_items( $this->everything() ) as $item ) {
 			$this->assertGreaterThan( 0, $item['count'] );
 			$this->assertNotSame( '', $item['what'], $item['key'] . ' has nothing to say' );
 			$this->assertNotSame( '', $item['why'], $item['key'] . ' does not say why it matters' );
@@ -146,7 +146,7 @@ final class DashboardTest extends TestCase {
 	 */
 	#[DataProvider( 'singulars' )]
 	public function test_the_sentence_leaves_the_number_to_the_column( string $key, int $count ): void {
-		$items = gwcvt_dashboard_items( array( $key => $count ) );
+		$items = gwc_vt_dashboard_items( array( $key => $count ) );
 
 		$this->assertCount( 1, $items );
 		$this->assertSame( $count, $items[0]['count'] );
@@ -175,7 +175,7 @@ final class DashboardTest extends TestCase {
 	 * but the reinforcement should still be pointing at the right lines.
 	 */
 	public function test_only_the_time_critical_lines_are_loud(): void {
-		$severity = array_column( gwcvt_dashboard_items( $this->everything() ), 'severity', 'key' );
+		$severity = array_column( gwc_vt_dashboard_items( $this->everything() ), 'severity', 'key' );
 
 		$this->assertSame( 'critical', $severity['unreconciled'] );
 		$this->assertSame( 'critical', $severity['understaffed'] );
@@ -192,7 +192,7 @@ final class DashboardTest extends TestCase {
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_a_line_carries_no_room_for_a_name(): void {
-		foreach ( gwcvt_dashboard_items( $this->everything() ) as $item ) {
+		foreach ( gwc_vt_dashboard_items( $this->everything() ) as $item ) {
 			$this->assertSame(
 				array( 'key', 'count', 'severity', 'what', 'why', 'action' ),
 				array_keys( $item ),
@@ -202,7 +202,7 @@ final class DashboardTest extends TestCase {
 	}
 
 	public function test_the_overdue_line_points_at_the_list_rather_than_naming_anybody(): void {
-		$items = gwcvt_dashboard_items( array( 'overdue' => 2 ) );
+		$items = gwc_vt_dashboard_items( array( 'overdue' => 2 ) );
 
 		$this->assertStringNotContainsStringIgnoringCase( 'court', $items[0]['what'] );
 		$this->assertStringNotContainsStringIgnoringCase( 'court', $items[0]['why'] );
@@ -219,7 +219,7 @@ final class DashboardTest extends TestCase {
 	 * leave it?".
 	 */
 	public function test_every_line_opens_with_something_to_do(): void {
-		foreach ( gwcvt_dashboard_items( $this->everything() ) as $item ) {
+		foreach ( gwc_vt_dashboard_items( $this->everything() ) as $item ) {
 			$this->assertMatchesRegularExpression(
 				'/^(Write up|Find|Check on|Verify|Match)\b/',
 				$item['what'],
@@ -242,7 +242,7 @@ final class DashboardTest extends TestCase {
 	 */
 	#[DataProvider( 'fortnights' )]
 	public function test_the_week_ends_where_the_site_says_it_does( string $today, int $start, string $ends, string $further ): void {
-		$bounds = gwcvt_fortnight_bounds( $today, $start );
+		$bounds = gwc_vt_fortnight_bounds( $today, $start );
 
 		$this->assertSame( $ends, $bounds['this_week'] );
 		$this->assertSame( $further, $bounds['fortnight'] );
@@ -277,14 +277,14 @@ final class DashboardTest extends TestCase {
 	 * option.
 	 */
 	public function test_a_nonsense_week_start_still_produces_a_week(): void {
-		$sane = gwcvt_fortnight_bounds( '2026-08-06', 1 );
+		$sane = gwc_vt_fortnight_bounds( '2026-08-06', 1 );
 
-		$this->assertSame( $sane, gwcvt_fortnight_bounds( '2026-08-06', 8 ) );
-		$this->assertSame( $sane, gwcvt_fortnight_bounds( '2026-08-06', -6 ) );
+		$this->assertSame( $sane, gwc_vt_fortnight_bounds( '2026-08-06', 8 ) );
+		$this->assertSame( $sane, gwc_vt_fortnight_bounds( '2026-08-06', -6 ) );
 	}
 
 	public function test_an_unreadable_date_falls_back_to_today(): void {
-		$bounds = gwcvt_fortnight_bounds( 'the day after tomorrow', 1 );
+		$bounds = gwc_vt_fortnight_bounds( 'the day after tomorrow', 1 );
 
 		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $bounds['this_week'] );
 		$this->assertGreaterThan( $bounds['this_week'], $bounds['fortnight'] );
@@ -294,7 +294,7 @@ final class DashboardTest extends TestCase {
 
 	public function test_a_site_can_add_a_line_of_its_own(): void {
 		add_filter(
-			'gwcvt_dashboard_items',
+			'gwc_vt_dashboard_items',
 			static function ( array $items ): array {
 				$items[] = array(
 					'key'      => 'acme',
@@ -311,6 +311,6 @@ final class DashboardTest extends TestCase {
 
 		$this->assertContains( 'acme', $this->keys( $this->everything() ) );
 
-		gwcvt_test_reset_filters();
+		gwc_vt_test_reset_filters();
 	}
 }

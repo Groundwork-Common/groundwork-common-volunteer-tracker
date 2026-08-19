@@ -17,34 +17,34 @@ final class HoursTest extends TestCase {
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_the_parser_can_be_asked_not_to_round(): void {
-		gwcvt_test_reset();
-		update_option( GWCVT_SETTINGS_OPTION, array( 'hour_increment' => 15 ) );
-		gwcvt_settings_cache( null, true );
+		gwc_vt_test_reset();
+		update_option( GWC_VT_SETTINGS_OPTION, array( 'hour_increment' => 15 ) );
+		gwc_vt_settings_cache( null, true );
 
-		$this->assertSame( 187, gwcvt_parse_hours( '3:07', false ) );
-		$this->assertSame( 180, gwcvt_parse_hours( '3:07' ) );
+		$this->assertSame( 187, gwc_vt_parse_hours( '3:07', false ) );
+		$this->assertSame( 180, gwc_vt_parse_hours( '3:07' ) );
 	}
 
 	public function test_not_rounding_still_refuses_what_rounding_refuses(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 
 		// A bare number is hours, so 210 is longer than a day either way.
-		$this->assertNull( gwcvt_parse_hours( '210', false ) );
-		$this->assertNull( gwcvt_parse_hours( 'nonsense', false ) );
-		$this->assertSame( 210, gwcvt_parse_hours( '210m', false ) );
+		$this->assertNull( gwc_vt_parse_hours( '210', false ) );
+		$this->assertNull( gwc_vt_parse_hours( 'nonsense', false ) );
+		$this->assertSame( 210, gwc_vt_parse_hours( '210m', false ) );
 	}
 
 	public function test_an_exact_value_is_unchanged_by_rounding(): void {
-		gwcvt_test_reset();
-		update_option( GWCVT_SETTINGS_OPTION, array( 'hour_increment' => 15 ) );
-		gwcvt_settings_cache( null, true );
+		gwc_vt_test_reset();
+		update_option( GWC_VT_SETTINGS_OPTION, array( 'hour_increment' => 15 ) );
+		gwc_vt_settings_cache( null, true );
 
 		// Nothing to report when the two agree — this is the common case.
-		$this->assertSame( gwcvt_parse_hours( '3:30', false ), gwcvt_parse_hours( '3:30' ) );
+		$this->assertSame( gwc_vt_parse_hours( '3:30', false ), gwc_vt_parse_hours( '3:30' ) );
 	}
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
@@ -58,8 +58,8 @@ final class HoursTest extends TestCase {
 	 * @param array $settings Settings to store.
 	 */
 	private function settings( array $settings ): void {
-		update_option( GWCVT_SETTINGS_OPTION, $settings );
-		gwcvt_settings_cache( null, true );
+		update_option( GWC_VT_SETTINGS_OPTION, $settings );
+		gwc_vt_settings_cache( null, true );
 	}
 
 	/* ── Parsing ─────────────────────────────────────────────────────────── */
@@ -72,7 +72,7 @@ final class HoursTest extends TestCase {
 	public function test_it_reads_the_five_things_people_actually_type( string $typed, ?int $expected ): void {
 		$this->settings( array( 'hour_increment' => 0 ) );
 
-		$this->assertSame( $expected, gwcvt_parse_hours( $typed ), 'Input: ' . var_export( $typed, true ) );
+		$this->assertSame( $expected, gwc_vt_parse_hours( $typed ), 'Input: ' . var_export( $typed, true ) );
 	}
 
 	public static function durations(): array {
@@ -112,9 +112,9 @@ final class HoursTest extends TestCase {
 	public function test_it_rounds_to_the_configured_increment(): void {
 		$this->settings( array( 'hour_increment' => 15 ) );
 
-		$this->assertSame( 180, gwcvt_parse_hours( '3.1' ), '186 minutes is nearer 180 than 195.' );
-		$this->assertSame( 195, gwcvt_parse_hours( '3.2' ), '192 minutes is nearer 195 than 180.' );
-		$this->assertSame( 210, gwcvt_parse_hours( '3.5' ) );
+		$this->assertSame( 180, gwc_vt_parse_hours( '3.1' ), '186 minutes is nearer 180 than 195.' );
+		$this->assertSame( 195, gwc_vt_parse_hours( '3.2' ), '192 minutes is nearer 195 than 180.' );
+		$this->assertSame( 210, gwc_vt_parse_hours( '3.5' ) );
 	}
 
 	public function test_it_rounds_to_the_nearest_and_never_up(): void {
@@ -123,26 +123,26 @@ final class HoursTest extends TestCase {
 		/* Rounding up would be the organisation systematically crediting hours
 		 * nobody worked, which on this document is the one direction of error
 		 * that matters. One minute past the hour is the hour. */
-		$this->assertSame( 180, gwcvt_parse_hours( '3h 1m' ) );
-		$this->assertSame( 180, gwcvt_parse_hours( '3h 7m' ) );
-		$this->assertSame( 195, gwcvt_parse_hours( '3h 8m' ) );
+		$this->assertSame( 180, gwc_vt_parse_hours( '3h 1m' ) );
+		$this->assertSame( 180, gwc_vt_parse_hours( '3h 7m' ) );
+		$this->assertSame( 195, gwc_vt_parse_hours( '3h 8m' ) );
 	}
 
 	public function test_a_zero_increment_switches_rounding_off(): void {
 		$this->settings( array( 'hour_increment' => 0 ) );
 
-		$this->assertSame( 187, gwcvt_parse_hours( '3h 7m' ) );
+		$this->assertSame( 187, gwc_vt_parse_hours( '3h 7m' ) );
 	}
 
 	public function test_the_increment_is_filterable(): void {
 		$this->settings( array( 'hour_increment' => 15 ) );
 
 		$sixths = static fn() => 10;
-		add_filter( 'gwcvt_hour_increment', $sixths );
+		add_filter( 'gwc_vt_hour_increment', $sixths );
 
-		$this->assertSame( 190, gwcvt_parse_hours( '3h 7m' ), '187 minutes rounds to 190 in tens.' );
+		$this->assertSame( 190, gwc_vt_parse_hours( '3h 7m' ), '187 minutes rounds to 190 in tens.' );
 
-		remove_filter( 'gwcvt_hour_increment', $sixths );
+		remove_filter( 'gwc_vt_hour_increment', $sixths );
 	}
 
 	/* ── Formatting ──────────────────────────────────────────────────────── */
@@ -150,25 +150,25 @@ final class HoursTest extends TestCase {
 	public function test_decimal_formatting_does_not_pad(): void {
 		/* "3.00 hours" on a letter looks machine-generated in a way that invites
 		 * exactly the doubt this document exists to prevent. */
-		$this->assertSame( '3', gwcvt_format_hours( 180, 'decimal' ) );
-		$this->assertSame( '3.5', gwcvt_format_hours( 210, 'decimal' ) );
-		$this->assertSame( '3.25', gwcvt_format_hours( 195, 'decimal' ) );
-		$this->assertSame( '0', gwcvt_format_hours( 0, 'decimal' ) );
+		$this->assertSame( '3', gwc_vt_format_hours( 180, 'decimal' ) );
+		$this->assertSame( '3.5', gwc_vt_format_hours( 210, 'decimal' ) );
+		$this->assertSame( '3.25', gwc_vt_format_hours( 195, 'decimal' ) );
+		$this->assertSame( '0', gwc_vt_format_hours( 0, 'decimal' ) );
 	}
 
 	public function test_hours_and_minutes_formatting_drops_the_empty_half(): void {
-		$this->assertSame( '3h 30m', gwcvt_format_hours( 210, 'hm' ) );
-		$this->assertSame( '3h', gwcvt_format_hours( 180, 'hm' ) );
-		$this->assertSame( '30m', gwcvt_format_hours( 30, 'hm' ) );
-		$this->assertSame( '0m', gwcvt_format_hours( 0, 'hm' ) );
+		$this->assertSame( '3h 30m', gwc_vt_format_hours( 210, 'hm' ) );
+		$this->assertSame( '3h', gwc_vt_format_hours( 180, 'hm' ) );
+		$this->assertSame( '30m', gwc_vt_format_hours( 30, 'hm' ) );
+		$this->assertSame( '0m', gwc_vt_format_hours( 0, 'hm' ) );
 	}
 
 	public function test_formatting_follows_the_setting_when_not_told_otherwise(): void {
 		$this->settings( array( 'hour_format' => 'hm' ) );
-		$this->assertSame( '3h 30m', gwcvt_format_hours( 210 ) );
+		$this->assertSame( '3h 30m', gwc_vt_format_hours( 210 ) );
 
 		$this->settings( array( 'hour_format' => 'decimal' ) );
-		$this->assertSame( '3.5', gwcvt_format_hours( 210 ) );
+		$this->assertSame( '3.5', gwc_vt_format_hours( 210 ) );
 	}
 
 	public function test_a_formatted_duration_parses_back_to_itself(): void {
@@ -178,7 +178,7 @@ final class HoursTest extends TestCase {
 			foreach ( array( 'decimal', 'hm' ) as $format ) {
 				$this->assertSame(
 					$minutes,
-					gwcvt_parse_hours( gwcvt_format_hours( $minutes, $format ) ),
+					gwc_vt_parse_hours( gwc_vt_format_hours( $minutes, $format ) ),
 					$minutes . ' minutes did not survive a round trip through ' . $format
 				);
 			}
@@ -209,7 +209,7 @@ final class HoursTest extends TestCase {
 		}
 
 		$this->assertSame( 6000, $minutes );
-		$this->assertSame( '100', gwcvt_format_hours( $minutes, 'decimal' ) );
+		$this->assertSame( '100', gwc_vt_format_hours( $minutes, 'decimal' ) );
 
 		$this->assertNotSame(
 			100.0,

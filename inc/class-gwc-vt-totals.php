@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * A volunteer's hours, added up.
  */
-class GWCVT_Totals {
+class GWC_VT_Totals {
  // phpcs:ignore WordPress.NamingConventions.ValidClassName.NotSnakeCaseClassName -- WP core's own convention for class names is StudlyCaps with underscores.
 
 	/**

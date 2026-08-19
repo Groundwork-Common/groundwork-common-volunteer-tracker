@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_EVENT_TYPE = 'gwcvt_event';
+const GWC_VT_EVENT_TYPE = 'gwc_vt_event';
 
 /* Called off, as a status rather than a meta flag, for the same reason a shift's
  * is: post_status is where this plugin keeps lifecycle. A cancelled event is
@@ -15,7 +15,7 @@ const GWCVT_EVENT_TYPE = 'gwcvt_event';
  * is an answer the organisation owes them.
  *
  * ── The name is short because wp_posts.post_status is varchar(20) ────────────
- * This was 'gwcvt_event_cancelled' first, which is twenty-one characters. The
+ * This was 'gwc_vt_event_cancelled' first, which is twenty-one characters. The
  * column takes twenty. WordPress does not error, does not truncate and does not
  * warn: wp_insert_post() sanitises a status it cannot store and the row keeps
  * the one it already had.
@@ -26,29 +26,29 @@ const GWCVT_EVENT_TYPE = 'gwcvt_event';
  * reason — the unit suite never touches a database and could not have caught it.
  *
  * Anything added here has to fit in twenty characters. Count them. */
-const GWCVT_EVENT_CANCELLED = 'gwcvt_ev_cancelled';
+const GWC_VT_EVENT_CANCELLED = 'gwc_vt_ev_cancelled';
 
 /* Event meta. Constants for the same reason the shift's are: the schedule
  * screen, the editor, the public grid and the emails all read these, and a typo
  * in a meta key reads as an empty value rather than as an error. */
-const GWCVT_EVENT_DATE        = '_gwcvt_event_date';
-const GWCVT_EVENT_END_DATE    = '_gwcvt_event_end_date';
-const GWCVT_EVENT_LOCATION    = '_gwcvt_event_location';
-const GWCVT_EVENT_DESCRIPTION = '_gwcvt_event_description';
-const GWCVT_EVENT_SUPERVISOR  = '_gwcvt_event_supervisor';
-const GWCVT_EVENT_REASON      = '_gwcvt_event_cancelled_reason';
+const GWC_VT_EVENT_DATE        = '_gwc_vt_event_date';
+const GWC_VT_EVENT_END_DATE    = '_gwc_vt_event_end_date';
+const GWC_VT_EVENT_LOCATION    = '_gwc_vt_event_location';
+const GWC_VT_EVENT_DESCRIPTION = '_gwc_vt_event_description';
+const GWC_VT_EVENT_SUPERVISOR  = '_gwc_vt_event_supervisor';
+const GWC_VT_EVENT_REASON      = '_gwc_vt_event_cancelled_reason';
 
-add_action( 'init', 'gwcvt_register_event_type' );
+add_action( 'init', 'gwc_vt_register_event_type' );
 
 /**
  * Register the event type and its cancelled status.
  *
  * ── Why an event is not a new kind of slot ───────────────────────────────────
  * A SignUp Genius slot is (a role) x (a time window) x (how many people). A
- * gwcvt_shift is already exactly that. So an event is a CONTAINER over shifts
+ * gwc_vt_shift is already exactly that. So an event is a CONTAINER over shifts
  * and nothing below it changes:
  *
- *   gwcvt_event --post_parent--> gwcvt_shift --post_parent--> gwcvt_signup
+ *   gwc_vt_event --post_parent--> gwc_vt_shift --post_parent--> gwc_vt_signup
  *
  * Every slot stays a shift and every signup stays a signup, so waiting lists and
  * the settling lock, reminders and their idempotency flag, cancellation tokens,
@@ -60,13 +60,13 @@ add_action( 'init', 'gwcvt_register_event_type' );
  * letter is two places for hours to reach a court letter WRONGLY, and the second
  * would be the one nobody has been staring at for four releases.
  *
- * post_parent does not collide with GWCVT_SHIFT_SERIES. A series is "this shift,
+ * post_parent does not collide with GWC_VT_SHIFT_SERIES. A series is "this shift,
  * repeated"; an event is "these different roles, one occasion". They are
  * orthogonal and they compose, which is what keeps a recurring festival
  * representable.
  *
  * ── Why there is no admin UI ─────────────────────────────────────────────────
- * show_ui is false, following gwcvt_shift. The default post list cannot show
+ * show_ui is false, following gwc_vt_shift. The default post list cannot show
  * what a coordinator needs to know about an event — the question is never "list
  * the posts", it is "which of these is short of people, and how soon".
  * inc/admin-event.php is that view.
@@ -75,9 +75,9 @@ add_action( 'init', 'gwcvt_register_event_type' );
  * no archive, no REST. An event carries a location and a description, and its
  * children carry the names of the people who signed up.
  */
-function gwcvt_register_event_type(): void {
+function gwc_vt_register_event_type(): void {
 	register_post_status(
-		GWCVT_EVENT_CANCELLED,
+		GWC_VT_EVENT_CANCELLED,
 		array(
 			'label'                     => _x( 'Cancelled', 'event status', 'groundwork-common-volunteer-tracker' ),
 			'public'                    => false,
@@ -129,12 +129,12 @@ function gwcvt_register_event_type(): void {
 	 *
 	 * @param array $args register_post_type() arguments.
 	 */
-	register_post_type( GWCVT_EVENT_TYPE, apply_filters( 'gwcvt_event_post_type_args', $args ) );
+	register_post_type( GWC_VT_EVENT_TYPE, apply_filters( 'gwc_vt_event_post_type_args', $args ) );
 }
 
 /* ── The dates are derived, and that is the point ────────────────────────────
  * An event stores a first and last day, but nobody types them. They are written
- * from the slots on every grid save by gwcvt_event_refresh_dates() in
+ * from the slots on every grid save by gwc_vt_event_refresh_dates() in
  * inc/events.php, which is where the slots can be read.
  *
  * A coordinator building a grid has already said when every slot is. A date
@@ -153,8 +153,8 @@ function gwcvt_register_event_type(): void {
  * @param int $event_id Event post ID.
  * @return bool
  */
-function gwcvt_event_is_cancelled( int $event_id ): bool {
-	return GWCVT_EVENT_CANCELLED === get_post_status( $event_id );
+function gwc_vt_event_is_cancelled( int $event_id ): bool {
+	return GWC_VT_EVENT_CANCELLED === get_post_status( $event_id );
 }
 
 /**
@@ -167,7 +167,7 @@ function gwcvt_event_is_cancelled( int $event_id ): bool {
  * @param int $event_id Event post ID.
  * @return string
  */
-function gwcvt_event_name( int $event_id ): string {
+function gwc_vt_event_name( int $event_id ): string {
 	$title = trim( (string) get_the_title( $event_id ) );
 
 	if ( '' === $title ) {
@@ -183,9 +183,9 @@ function gwcvt_event_name( int $event_id ): string {
  * @param int $event_id Event post ID.
  * @return string
  */
-function gwcvt_event_date_label( int $event_id ): string {
-	$from = (string) get_post_meta( $event_id, GWCVT_EVENT_DATE, true );
-	$to   = (string) get_post_meta( $event_id, GWCVT_EVENT_END_DATE, true );
+function gwc_vt_event_date_label( int $event_id ): string {
+	$from = (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true );
+	$to   = (string) get_post_meta( $event_id, GWC_VT_EVENT_END_DATE, true );
 
 	if ( '' === $from ) {
 		return '';
@@ -194,7 +194,7 @@ function gwcvt_event_date_label( int $event_id ): string {
 	$format = (string) get_option( 'date_format' );
 	$format = '' !== $format ? $format : 'D j M Y';
 
-	$starts = gwcvt_recurrence_date( $from );
+	$starts = gwc_vt_recurrence_date( $from );
 
 	if ( null === $starts ) {
 		return '';
@@ -206,7 +206,7 @@ function gwcvt_event_date_label( int $event_id ): string {
 		return $first;
 	}
 
-	$ends = gwcvt_recurrence_date( $to );
+	$ends = gwc_vt_recurrence_date( $to );
 
 	if ( null === $ends ) {
 		return $first;
@@ -226,9 +226,9 @@ function gwcvt_event_date_label( int $event_id ): string {
  * @param int $event_id Event post ID.
  * @return bool
  */
-function gwcvt_event_is_multi_day( int $event_id ): bool {
-	$from = (string) get_post_meta( $event_id, GWCVT_EVENT_DATE, true );
-	$to   = (string) get_post_meta( $event_id, GWCVT_EVENT_END_DATE, true );
+function gwc_vt_event_is_multi_day( int $event_id ): bool {
+	$from = (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true );
+	$to   = (string) get_post_meta( $event_id, GWC_VT_EVENT_END_DATE, true );
 
 	return '' !== $from && '' !== $to && $to !== $from;
 }

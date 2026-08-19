@@ -2,7 +2,7 @@
 /**
  * The capabilities, against real roles.
  *
- * The unit suite can only prove that gwcvt_grant_capabilities() writes what it
+ * The unit suite can only prove that gwc_vt_grant_capabilities() writes what it
  * says it writes into a role double. What it cannot prove — because the stub
  * does not implement map_meta_cap — is that the capabilities actually land on
  * real WordPress roles and survive being taken away and re-granted. That is
@@ -22,7 +22,7 @@
  * the real global. The two are different variables, the counter increments one
  * and the summary reads the other, and the script cheerfully prints ALL PASS
  * underneath a list of failures. That happened. */
-$GLOBALS['gwcvt_failures'] = 0;
+$GLOBALS['gwc_vt_failures'] = 0;
 
 /**
  * Assert, tersely.
@@ -30,9 +30,9 @@ $GLOBALS['gwcvt_failures'] = 0;
  * @param string $label What is being checked.
  * @param bool   $ok    Whether it passed.
  */
-function gwcvt_check( string $label, bool $ok ): void {
+function gwc_vt_check( string $label, bool $ok ): void {
 	if ( ! $ok ) {
-		++$GLOBALS['gwcvt_failures'];
+		++$GLOBALS['gwc_vt_failures'];
 	}
 
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ), $label, "\n";
@@ -40,29 +40,29 @@ function gwcvt_check( string $label, bool $ok ): void {
 
 /* ── They are granted ────────────────────────────────────────────────────── */
 
-foreach ( array( 'administrator', 'editor' ) as $gwcvt_role_name ) {
-	$gwcvt_role = get_role( $gwcvt_role_name );
+foreach ( array( 'administrator', 'editor' ) as $gwc_vt_role_name ) {
+	$gwc_vt_role = get_role( $gwc_vt_role_name );
 
-	gwcvt_check( $gwcvt_role_name . ' exists', (bool) $gwcvt_role );
+	gwc_vt_check( $gwc_vt_role_name . ' exists', (bool) $gwc_vt_role );
 
-	if ( ! $gwcvt_role ) {
+	if ( ! $gwc_vt_role ) {
 		continue;
 	}
 
-	gwcvt_check( $gwcvt_role_name . ' can verify hours', $gwcvt_role->has_cap( 'gwcvt_verify_hours' ) );
-	gwcvt_check( $gwcvt_role_name . ' can issue letters', $gwcvt_role->has_cap( 'gwcvt_issue_letters' ) );
+	gwc_vt_check( $gwc_vt_role_name . ' can verify hours', $gwc_vt_role->has_cap( 'gwc_vt_verify_hours' ) );
+	gwc_vt_check( $gwc_vt_role_name . ' can issue letters', $gwc_vt_role->has_cap( 'gwc_vt_issue_letters' ) );
 }
 
 /* ── And not to everybody ────────────────────────────────────────────────── */
 
-$gwcvt_subscriber = get_role( 'subscriber' );
-gwcvt_check(
+$gwc_vt_subscriber = get_role( 'subscriber' );
+gwc_vt_check(
 	'subscriber cannot verify hours',
-	$gwcvt_subscriber && ! $gwcvt_subscriber->has_cap( 'gwcvt_verify_hours' )
+	$gwc_vt_subscriber && ! $gwc_vt_subscriber->has_cap( 'gwc_vt_verify_hours' )
 );
-gwcvt_check(
+gwc_vt_check(
 	'subscriber cannot issue letters',
-	$gwcvt_subscriber && ! $gwcvt_subscriber->has_cap( 'gwcvt_issue_letters' )
+	$gwc_vt_subscriber && ! $gwc_vt_subscriber->has_cap( 'gwc_vt_issue_letters' )
 );
 
 /* ── A role that lost them gets them back ────────────────────────────────────
@@ -71,44 +71,44 @@ gwcvt_check(
  * backup taken before install, leaves behind.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-$gwcvt_editor = get_role( 'editor' );
-$gwcvt_editor->remove_cap( 'gwcvt_verify_hours' );
+$gwc_vt_editor = get_role( 'editor' );
+$gwc_vt_editor->remove_cap( 'gwc_vt_verify_hours' );
 
-gwcvt_check(
+gwc_vt_check(
 	'the capability really was removed',
-	! get_role( 'editor' )->has_cap( 'gwcvt_verify_hours' )
+	! get_role( 'editor' )->has_cap( 'gwc_vt_verify_hours' )
 );
 
-gwcvt_grant_capabilities();
+gwc_vt_grant_capabilities();
 
-gwcvt_check(
+gwc_vt_check(
 	'a lost capability is restored by the next init',
-	get_role( 'editor' )->has_cap( 'gwcvt_verify_hours' )
+	get_role( 'editor' )->has_cap( 'gwc_vt_verify_hours' )
 );
 
 /* ── One set to false is a decision, and is respected ─────────────────────── */
 
-$gwcvt_editor = get_role( 'editor' );
-$gwcvt_editor->add_cap( 'gwcvt_issue_letters', false );
+$gwc_vt_editor = get_role( 'editor' );
+$gwc_vt_editor->add_cap( 'gwc_vt_issue_letters', false );
 
-gwcvt_grant_capabilities();
+gwc_vt_grant_capabilities();
 
-gwcvt_check(
+gwc_vt_check(
 	'a capability unticked in a role manager stays unticked',
-	! get_role( 'editor' )->has_cap( 'gwcvt_issue_letters' )
+	! get_role( 'editor' )->has_cap( 'gwc_vt_issue_letters' )
 );
 
 // Put it back, so re-running this script starts from where it started.
-get_role( 'editor' )->add_cap( 'gwcvt_issue_letters', true );
+get_role( 'editor' )->add_cap( 'gwc_vt_issue_letters', true );
 
 /* ── The helpers agree with the constants ────────────────────────────────── */
 
-gwcvt_check( 'gwcvt_cap(verify)', 'gwcvt_verify_hours' === gwcvt_cap( 'verify' ) );
-gwcvt_check( 'gwcvt_cap(issue)', 'gwcvt_issue_letters' === gwcvt_cap( 'issue' ) );
-gwcvt_check( 'gwcvt_cap(manage)', 'manage_options' === gwcvt_cap( 'manage' ) );
+gwc_vt_check( 'gwc_vt_cap(verify)', 'gwc_vt_verify_hours' === gwc_vt_cap( 'verify' ) );
+gwc_vt_check( 'gwc_vt_cap(issue)', 'gwc_vt_issue_letters' === gwc_vt_cap( 'issue' ) );
+gwc_vt_check( 'gwc_vt_cap(manage)', 'manage_options' === gwc_vt_cap( 'manage' ) );
 
-echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? "ALL PASS\n" : $GLOBALS['gwcvt_failures'] . " CHECK(S) FAILED\n" );
+echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
-if ( $GLOBALS['gwcvt_failures'] > 0 ) {
+if ( $GLOBALS['gwc_vt_failures'] > 0 ) {
 	exit( 1 );
 }

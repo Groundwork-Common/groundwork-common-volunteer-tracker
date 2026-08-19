@@ -7,26 +7,26 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_RETENTION_EVENT = 'gwcvt_daily_retention';
-const GWCVT_RETENTION_LOG   = 'gwcvt_retention_log';
+const GWC_VT_RETENTION_EVENT = 'gwc_vt_daily_retention';
+const GWC_VT_RETENTION_LOG   = 'gwc_vt_retention_log';
 
 /** How many volunteers one sweep will touch. */
-const GWCVT_RETENTION_BATCH = 50;
+const GWC_VT_RETENTION_BATCH = 50;
 
 /** How many sweeps the log remembers. */
-const GWCVT_RETENTION_LOG_SIZE = 30;
+const GWC_VT_RETENTION_LOG_SIZE = 30;
 
-const GWCVT_VOLUNTEER_HOLD_REASON = '_gwcvt_hold_reason';
+const GWC_VT_VOLUNTEER_HOLD_REASON = '_gwc_vt_hold_reason';
 
-add_action( 'init', 'gwcvt_schedule_retention' );
-add_action( GWCVT_RETENTION_EVENT, 'gwcvt_run_retention' );
+add_action( 'init', 'gwc_vt_schedule_retention' );
+add_action( GWC_VT_RETENTION_EVENT, 'gwc_vt_run_retention' );
 
 /* Registered unconditionally, and not behind a setting. Privacy tooling that
  * has to be switched on is privacy tooling that is off on every site that
  * needed it. A site with no retention policy still has to be able to answer a
  * request under GDPR, CCPA, or a volunteer simply asking what you hold. */
-add_filter( 'wp_privacy_personal_data_exporters', 'gwcvt_register_exporter' );
-add_filter( 'wp_privacy_personal_data_erasers', 'gwcvt_register_eraser' );
+add_filter( 'wp_privacy_personal_data_exporters', 'gwc_vt_register_exporter' );
+add_filter( 'wp_privacy_personal_data_erasers', 'gwc_vt_register_eraser' );
 
 /* ── Why the default keeps everything ────────────────────────────────────────
  * retention_months defaults to 0, meaning never purge, and that is not
@@ -52,9 +52,9 @@ add_filter( 'wp_privacy_personal_data_erasers', 'gwcvt_register_eraser' );
  * loses its cron entry to a migration or a restore gets it back on the next
  * page load rather than needing a deactivate/reactivate cycle.
  */
-function gwcvt_schedule_retention(): void {
-	if ( ! wp_next_scheduled( GWCVT_RETENTION_EVENT ) ) {
-		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', GWCVT_RETENTION_EVENT );
+function gwc_vt_schedule_retention(): void {
+	if ( ! wp_next_scheduled( GWC_VT_RETENTION_EVENT ) ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', GWC_VT_RETENTION_EVENT );
 	}
 }
 
@@ -70,7 +70,7 @@ function gwcvt_schedule_retention(): void {
  * @param string $today  Y-m-d.
  * @return string Y-m-d, or '' when retention is off.
  */
-function gwcvt_retention_cutoff( int $months, string $today ): string {
+function gwc_vt_retention_cutoff( int $months, string $today ): string {
 	if ( $months < 1 || '' === $today ) {
 		return '';
 	}
@@ -90,8 +90,8 @@ function gwcvt_retention_cutoff( int $months, string $today ): string {
  * @param int $volunteer_id Volunteer post ID.
  * @return string Y-m-d, or '' if it cannot be determined.
  */
-function gwcvt_retention_anchor_date( int $volunteer_id ): string {
-	$anchor = (string) gwcvt_setting( 'retention_anchor' );
+function gwc_vt_retention_anchor_date( int $volunteer_id ): string {
+	$anchor = (string) gwc_vt_setting( 'retention_anchor' );
 
 	/* The cached rollup here, where the letter deliberately refuses it.
 	 *
@@ -102,15 +102,15 @@ function gwcvt_retention_anchor_date( int $volunteer_id ): string {
 	 * answer, and the sweep walks fifty volunteers per run, so a fresh query
 	 * each would be fifty queries to learn something the rollup already knows.
 	 *
-	 * gwcvt_volunteer_totals() recomputes anyway when no cache exists, so the
+	 * gwc_vt_volunteer_totals() recomputes anyway when no cache exists, so the
 	 * worst case is correct rather than merely fast. */
-	$totals = gwcvt_volunteer_totals( $volunteer_id );
+	$totals = gwc_vt_volunteer_totals( $volunteer_id );
 
 	if ( 'verified_at' === $anchor ) {
 		$latest = '';
 
-		foreach ( gwcvt_entry_ids_for_volunteer( $volunteer_id ) as $entry_id ) {
-			$at = (string) get_post_meta( (int) $entry_id, GWCVT_ENTRY_VERIFIED_AT, true );
+		foreach ( gwc_vt_entry_ids_for_volunteer( $volunteer_id ) as $entry_id ) {
+			$at = (string) get_post_meta( (int) $entry_id, GWC_VT_ENTRY_VERIFIED_AT, true );
 
 			if ( '' !== $at && $at > $latest ) {
 				$latest = $at;
@@ -142,19 +142,19 @@ function gwcvt_retention_anchor_date( int $volunteer_id ): string {
  * @param string $today        Y-m-d. Defaults to today in the site's timezone.
  * @return bool
  */
-function gwcvt_retention_due( int $volunteer_id, string $today = '' ): bool {
-	$months = (int) gwcvt_setting( 'retention_months' );
+function gwc_vt_retention_due( int $volunteer_id, string $today = '' ): bool {
+	$months = (int) gwc_vt_setting( 'retention_months' );
 
 	if ( $months < 1 ) {
 		return false;
 	}
 
-	if ( gwcvt_retention_held( $volunteer_id ) ) {
+	if ( gwc_vt_retention_held( $volunteer_id ) ) {
 		return false;
 	}
 
-	$cutoff = gwcvt_retention_cutoff( $months, '' !== $today ? $today : gwcvt_today() );
-	$anchor = gwcvt_retention_anchor_date( $volunteer_id );
+	$cutoff = gwc_vt_retention_cutoff( $months, '' !== $today ? $today : gwc_vt_today() );
+	$anchor = gwc_vt_retention_anchor_date( $volunteer_id );
 
 	if ( '' === $cutoff || '' === $anchor ) {
 		return false;
@@ -169,7 +169,7 @@ function gwcvt_retention_due( int $volunteer_id, string $today = '' ): bool {
 	 * @param int    $volunteer_id Volunteer post ID.
 	 * @param string $anchor       The date the clock ran from.
 	 */
-	return (bool) apply_filters( 'gwcvt_retention_due', $due, $volunteer_id, $anchor );
+	return (bool) apply_filters( 'gwc_vt_retention_due', $due, $volunteer_id, $anchor );
 }
 
 /**
@@ -182,8 +182,8 @@ function gwcvt_retention_due( int $volunteer_id, string $today = '' ): bool {
  * @param int $volunteer_id Volunteer post ID.
  * @return bool
  */
-function gwcvt_retention_held( int $volunteer_id ): bool {
-	return (bool) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD, true );
+function gwc_vt_retention_held( int $volunteer_id ): bool {
+	return (bool) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD, true );
 }
 
 /* ── Purging ─────────────────────────────────────────────────────────────── */
@@ -199,8 +199,8 @@ function gwcvt_retention_held( int $volunteer_id ): bool {
  * @param int $volunteer_id Volunteer post ID.
  * @return bool
  */
-function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
-	if ( GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
+	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 		return false;
 	}
 
@@ -212,7 +212,7 @@ function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
 	 * @param int    $volunteer_id Volunteer post ID.
 	 * @param string $action       'anonymize' or 'delete'.
 	 */
-	do_action( 'gwcvt_before_purge', $volunteer_id, 'anonymize' );
+	do_action( 'gwc_vt_before_purge', $volunteer_id, 'anonymize' );
 
 	wp_update_post(
 		array(
@@ -225,8 +225,8 @@ function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
 		)
 	);
 
-	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_EMAIL );
-	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_PHONE );
+	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_EMAIL );
+	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHONE );
 
 	/* The requirement goes too, and it is the most important thing in this list.
 	 * The hours survive anonymisation because they are the organisation's own
@@ -235,26 +235,26 @@ function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
 	 * person was under a court order, names the court, and dates it. That is a
 	 * disclosure about a real event, and it does not stop being one because the
 	 * name above it has been removed. */
-	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED );
-	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_BY );
-	delete_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_FOR );
+	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED );
+	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_BY );
+	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR );
 
 	/* The claimed name and email on any self-logged entry are personal data too,
 	 * and they sit on the ENTRY rather than the volunteer — so anonymising only
 	 * the volunteer record would leave the name behind on every shift somebody
 	 * submitted through the public form. */
-	foreach ( gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
-		delete_post_meta( (int) $entry_id, '_gwcvt_claim_name' );
-		delete_post_meta( (int) $entry_id, '_gwcvt_claim_email' );
-		gwcvt_retitle_entry( (int) $entry_id );
+	foreach ( gwc_vt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
+		delete_post_meta( (int) $entry_id, '_gwc_vt_claim_name' );
+		delete_post_meta( (int) $entry_id, '_gwc_vt_claim_email' );
+		gwc_vt_retitle_entry( (int) $entry_id );
 	}
 
 	/* And the same again on their signups, which carry their own copy of a name
 	 * and an address typed into the public form. The shift and the place on it
 	 * survive — that is the organisation's record of what it ran and who staffed
 	 * it, and anonymised it identifies nobody. */
-	foreach ( gwcvt_signup_ids_for_volunteer( $volunteer_id ) as $signup_id ) {
-		gwcvt_clear_signup_claims( (int) $signup_id );
+	foreach ( gwc_vt_signup_ids_for_volunteer( $volunteer_id ) as $signup_id ) {
+		gwc_vt_clear_signup_claims( (int) $signup_id );
 	}
 
 	/**
@@ -263,7 +263,7 @@ function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
 	 * @param int    $volunteer_id Volunteer post ID.
 	 * @param string $action       'anonymize' or 'delete'.
 	 */
-	do_action( 'gwcvt_purged', $volunteer_id, 'anonymize' );
+	do_action( 'gwc_vt_purged', $volunteer_id, 'anonymize' );
 
 	return true;
 }
@@ -274,14 +274,14 @@ function gwcvt_anonymize_volunteer( int $volunteer_id ): bool {
  * @param int $volunteer_id Volunteer post ID.
  * @return bool
  */
-function gwcvt_delete_volunteer( int $volunteer_id ): bool {
-	if ( GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+function gwc_vt_delete_volunteer( int $volunteer_id ): bool {
+	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 		return false;
 	}
 
-	do_action( 'gwcvt_before_purge', $volunteer_id, 'delete' );
+	do_action( 'gwc_vt_before_purge', $volunteer_id, 'delete' );
 
-	foreach ( gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
+	foreach ( gwc_vt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
 		wp_delete_post( (int) $entry_id, true );
 	}
 
@@ -293,7 +293,7 @@ function gwcvt_delete_volunteer( int $volunteer_id ): bool {
 	 * somebody no longer on file" is exactly what a court asking about it needs
 	 * to hear. The log holds a reference, an ID and a date; it holds no name. */
 
-	do_action( 'gwcvt_purged', $volunteer_id, 'delete' );
+	do_action( 'gwc_vt_purged', $volunteer_id, 'delete' );
 
 	return true;
 }
@@ -306,21 +306,21 @@ function gwcvt_delete_volunteer( int $volunteer_id ): bool {
  * in one cron request and time out halfway through, leaving nobody able to say
  * which half.
  */
-function gwcvt_run_retention(): void {
-	$months = (int) gwcvt_setting( 'retention_months' );
+function gwc_vt_run_retention(): void {
+	$months = (int) gwc_vt_setting( 'retention_months' );
 
 	if ( $months < 1 ) {
 		return;
 	}
 
-	$action = 'delete' === gwcvt_setting( 'retention_action' ) ? 'delete' : 'anonymize';
+	$action = 'delete' === gwc_vt_setting( 'retention_action' ) ? 'delete' : 'anonymize';
 
 	$candidates = get_posts(
 		array(
-			'post_type'              => GWCVT_VOLUNTEER_TYPE,
+			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
 			'fields'                 => 'ids',
-			'posts_per_page'         => GWCVT_RETENTION_BATCH,
+			'posts_per_page'         => GWC_VT_RETENTION_BATCH,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			'orderby'                => 'date',
@@ -334,27 +334,27 @@ function gwcvt_run_retention(): void {
 	foreach ( (array) $candidates as $volunteer_id ) {
 		$volunteer_id = (int) $volunteer_id;
 
-		if ( gwcvt_retention_held( $volunteer_id ) ) {
+		if ( gwc_vt_retention_held( $volunteer_id ) ) {
 			++$held;
 			continue;
 		}
 
-		if ( ! gwcvt_retention_due( $volunteer_id ) ) {
+		if ( ! gwc_vt_retention_due( $volunteer_id ) ) {
 			continue;
 		}
 
 		$done = 'delete' === $action
-			? gwcvt_delete_volunteer( $volunteer_id )
-			: gwcvt_anonymize_volunteer( $volunteer_id );
+			? gwc_vt_delete_volunteer( $volunteer_id )
+			: gwc_vt_anonymize_volunteer( $volunteer_id );
 
 		if ( $done ) {
 			++$purged;
 		}
 	}
 
-	$purged += gwcvt_sweep_orphan_signups( $months );
+	$purged += gwc_vt_sweep_orphan_signups( $months );
 
-	gwcvt_log_retention_run( $action, $purged, $held );
+	gwc_vt_log_retention_run( $action, $purged, $held );
 }
 
 /**
@@ -382,15 +382,15 @@ function gwcvt_run_retention(): void {
  * @param int $months The retention period.
  * @return int How many were stripped.
  */
-function gwcvt_sweep_orphan_signups( int $months ): int {
+function gwc_vt_sweep_orphan_signups( int $months ): int {
 	$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-' . $months . ' months' ) );
 
 	$candidates = get_posts(
 		array(
-			'post_type'              => GWCVT_SIGNUP_TYPE,
-			'post_status'            => array( 'publish', GWCVT_SIGNUP_WAITLIST, GWCVT_SIGNUP_WITHDRAWN ),
+			'post_type'              => GWC_VT_SIGNUP_TYPE,
+			'post_status'            => array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ),
 			'fields'                 => 'ids',
-			'posts_per_page'         => GWCVT_RETENTION_BATCH,
+			'posts_per_page'         => GWC_VT_RETENTION_BATCH,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			'orderby'                => 'date',
@@ -398,7 +398,7 @@ function gwcvt_sweep_orphan_signups( int $months ): int {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed key, once a day on cron.
 			'meta_query'             => array(
 				array(
-					'key'   => GWCVT_SIGNUP_VOLUNTEER,
+					'key'   => GWC_VT_SIGNUP_VOLUNTEER,
 					'value' => '0',
 				),
 			),
@@ -410,7 +410,7 @@ function gwcvt_sweep_orphan_signups( int $months ): int {
 	foreach ( (array) $candidates as $signup_id ) {
 		$signup_id = (int) $signup_id;
 
-		$created = (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CREATED, true );
+		$created = (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CREATED, true );
 
 		if ( '' === $created || $created > $cutoff ) {
 			continue;
@@ -418,18 +418,18 @@ function gwcvt_sweep_orphan_signups( int $months ): int {
 
 		/* Nothing to strip is not a purge. Counting it would make the retention
 		 * log report work on every run forever. */
-		if ( '' === (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_NAME, true )
-			&& '' === (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_EMAIL, true ) ) {
+		if ( '' === (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_NAME, true )
+			&& '' === (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_EMAIL, true ) ) {
 			continue;
 		}
 
 		/** This action is documented in inc/privacy.php */
-		do_action( 'gwcvt_before_purge', $signup_id, 'anonymize' );
+		do_action( 'gwc_vt_before_purge', $signup_id, 'anonymize' );
 
-		gwcvt_clear_signup_claims( $signup_id );
+		gwc_vt_clear_signup_claims( $signup_id );
 
 		/** This action is documented in inc/privacy.php */
-		do_action( 'gwcvt_purged', $signup_id, 'anonymize' );
+		do_action( 'gwc_vt_purged', $signup_id, 'anonymize' );
 
 		++$stripped;
 	}
@@ -447,8 +447,8 @@ function gwcvt_sweep_orphan_signups( int $months ): int {
  * @param int    $purged How many records.
  * @param int    $held   How many were exempt.
  */
-function gwcvt_log_retention_run( string $action, int $purged, int $held ): void {
-	$log = get_option( GWCVT_RETENTION_LOG );
+function gwc_vt_log_retention_run( string $action, int $purged, int $held ): void {
+	$log = get_option( GWC_VT_RETENTION_LOG );
 	$log = is_array( $log ) ? $log : array();
 
 	array_unshift(
@@ -461,7 +461,7 @@ function gwcvt_log_retention_run( string $action, int $purged, int $held ): void
 		)
 	);
 
-	update_option( GWCVT_RETENTION_LOG, array_slice( $log, 0, GWCVT_RETENTION_LOG_SIZE ), false );
+	update_option( GWC_VT_RETENTION_LOG, array_slice( $log, 0, GWC_VT_RETENTION_LOG_SIZE ), false );
 }
 
 /**
@@ -469,8 +469,8 @@ function gwcvt_log_retention_run( string $action, int $purged, int $held ): void
  *
  * @return array[]
  */
-function gwcvt_retention_log(): array {
-	$log = get_option( GWCVT_RETENTION_LOG );
+function gwc_vt_retention_log(): array {
+	$log = get_option( GWC_VT_RETENTION_LOG );
 
 	return is_array( $log ) ? $log : array();
 }
@@ -488,7 +488,7 @@ function gwcvt_retention_log(): array {
  * @param string $email The address.
  * @return int[]
  */
-function gwcvt_volunteers_by_email( string $email ): array {
+function gwc_vt_volunteers_by_email( string $email ): array {
 	$email = sanitize_email( $email );
 
 	if ( '' === $email || ! is_email( $email ) ) {
@@ -497,14 +497,14 @@ function gwcvt_volunteers_by_email( string $email ): array {
 
 	$ids = get_posts(
 		array(
-			'post_type'              => GWCVT_VOLUNTEER_TYPE,
+			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
 			'fields'                 => 'ids',
 			'posts_per_page'         => -1,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- indexed by meta_key; run once per privacy request, not per page load.
-			'meta_key'               => GWCVT_VOLUNTEER_EMAIL,
+			'meta_key'               => GWC_VT_VOLUNTEER_EMAIL,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
 			'meta_value'             => $email,
 		)
@@ -519,12 +519,12 @@ function gwcvt_volunteers_by_email( string $email ): array {
  * @param array $exporters Existing exporters.
  * @return array
  */
-function gwcvt_register_exporter( $exporters ): array {
+function gwc_vt_register_exporter( $exporters ): array {
 	$exporters = (array) $exporters;
 
 	$exporters['groundwork-common-volunteer-tracker'] = array(
 		'exporter_friendly_name' => __( 'Volunteer hours', 'groundwork-common-volunteer-tracker' ),
-		'callback'               => 'gwcvt_export_personal_data',
+		'callback'               => 'gwc_vt_export_personal_data',
 	);
 
 	return $exporters;
@@ -537,17 +537,17 @@ function gwcvt_register_exporter( $exporters ): array {
  * @param int    $page  1-based page number.
  * @return array
  */
-function gwcvt_export_personal_data( $email, $page = 1 ) {
+function gwc_vt_export_personal_data( $email, $page = 1 ) {
 	$page  = max( 1, (int) $page );
 	$items = array();
 
-	$volunteers = gwcvt_volunteers_by_email( (string) $email );
+	$volunteers = gwc_vt_volunteers_by_email( (string) $email );
 
 	foreach ( $volunteers as $volunteer_id ) {
-		$totals = gwcvt_compute_totals( $volunteer_id );
+		$totals = gwc_vt_compute_totals( $volunteer_id );
 
 		$items[] = array(
-			'group_id'    => 'gwcvt_volunteer',
+			'group_id'    => 'gwc_vt_volunteer',
 			'group_label' => __( 'Volunteer record', 'groundwork-common-volunteer-tracker' ),
 			'item_id'     => 'gwcvt-volunteer-' . $volunteer_id,
 			'data'        => array(
@@ -557,31 +557,31 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 				),
 				array(
 					'name'  => __( 'Email', 'groundwork-common-volunteer-tracker' ),
-					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_EMAIL, true ),
+					'value' => (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true ),
 				),
 				array(
 					'name'  => __( 'Phone', 'groundwork-common-volunteer-tracker' ),
-					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_PHONE, true ),
+					'value' => (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHONE, true ),
 				),
 				array(
 					'name'  => __( 'Verified hours', 'groundwork-common-volunteer-tracker' ),
-					'value' => gwcvt_format_hours( $totals->verified_minutes ),
+					'value' => gwc_vt_format_hours( $totals->verified_minutes ),
 				),
 				array(
 					'name'  => __( 'Hours awaiting verification', 'groundwork-common-volunteer-tracker' ),
-					'value' => gwcvt_format_hours( $totals->pending_minutes ),
+					'value' => gwc_vt_format_hours( $totals->pending_minutes ),
 				),
 				array(
 					'name'  => __( 'Hours they are required to complete', 'groundwork-common-volunteer-tracker' ),
-					'value' => gwcvt_has_requirement( $volunteer_id ) ? gwcvt_format_hours( gwcvt_required_minutes( $volunteer_id ) ) : '',
+					'value' => gwc_vt_has_requirement( $volunteer_id ) ? gwc_vt_format_hours( gwc_vt_required_minutes( $volunteer_id ) ) : '',
 				),
 				array(
 					'name'  => __( 'Required by', 'groundwork-common-volunteer-tracker' ),
-					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_BY, true ),
+					'value' => (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_BY, true ),
 				),
 				array(
 					'name'  => __( 'Who requires it', 'groundwork-common-volunteer-tracker' ),
-					'value' => (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_FOR, true ),
+					'value' => (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR, true ),
 				),
 			),
 		);
@@ -589,36 +589,36 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 		/* Paginated over this volunteer's shifts. An exporter that returned
 		 * everything at once is one that times out on the volunteer with four
 		 * years of Saturdays — which is exactly the person most likely to ask. */
-		$entry_ids = gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) );
-		$slice     = array_slice( $entry_ids, ( $page - 1 ) * GWCVT_RETENTION_BATCH, GWCVT_RETENTION_BATCH );
+		$entry_ids = gwc_vt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) );
+		$slice     = array_slice( $entry_ids, ( $page - 1 ) * GWC_VT_RETENTION_BATCH, GWC_VT_RETENTION_BATCH );
 
 		foreach ( $slice as $entry_id ) {
 			$entry_id = (int) $entry_id;
 
 			$items[] = array(
-				'group_id'    => 'gwcvt_entry',
+				'group_id'    => 'gwc_vt_entry',
 				'group_label' => __( 'Volunteer shifts', 'groundwork-common-volunteer-tracker' ),
 				'item_id'     => 'gwcvt-entry-' . $entry_id,
 				'data'        => array(
 					array(
 						'name'  => __( 'Date', 'groundwork-common-volunteer-tracker' ),
-						'value' => (string) get_post_meta( $entry_id, GWCVT_ENTRY_DATE, true ),
+						'value' => (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true ),
 					),
 					array(
 						'name'  => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
-						'value' => gwcvt_format_hours( (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true ) ),
+						'value' => gwc_vt_format_hours( (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true ) ),
 					),
 					array(
 						'name'  => __( 'Activity', 'groundwork-common-volunteer-tracker' ),
-						'value' => (string) get_post_meta( $entry_id, GWCVT_ENTRY_ACTIVITY, true ),
+						'value' => (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true ),
 					),
 					array(
 						'name'  => __( 'Supervised by', 'groundwork-common-volunteer-tracker' ),
-						'value' => (string) get_post_meta( $entry_id, GWCVT_ENTRY_SUPERVISOR, true ),
+						'value' => (string) get_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, true ),
 					),
 					array(
 						'name'  => __( 'Verification', 'groundwork-common-volunteer-tracker' ),
-						'value' => gwcvt_attestation_line( $entry_id ),
+						'value' => gwc_vt_attestation_line( $entry_id ),
 					),
 				),
 			);
@@ -626,9 +626,9 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 
 		// The letters issued about them, on the first page only.
 		if ( 1 === $page ) {
-			foreach ( gwcvt_letters_for_volunteer( $volunteer_id ) as $record ) {
+			foreach ( gwc_vt_letters_for_volunteer( $volunteer_id ) as $record ) {
 				$items[] = array(
-					'group_id'    => 'gwcvt_letter',
+					'group_id'    => 'gwc_vt_letter',
 					'group_label' => __( 'Verification letters issued', 'groundwork-common-volunteer-tracker' ),
 					'item_id'     => 'gwcvt-letter-' . $record['id'],
 					'data'        => array(
@@ -646,7 +646,7 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 						),
 						array(
 							'name'  => __( 'Hours stated', 'groundwork-common-volunteer-tracker' ),
-							'value' => gwcvt_format_hours( $record['minutes'] ),
+							'value' => gwc_vt_format_hours( $record['minutes'] ),
 						),
 					),
 				);
@@ -658,16 +658,16 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 	 * Found by the address itself rather than through a volunteer record,
 	 * because the interesting case is somebody who signed up through the public
 	 * form, was never matched to anybody, and is asking what this site holds
-	 * about them. Starting from gwcvt_volunteers_by_email() would answer
+	 * about them. Starting from gwc_vt_volunteers_by_email() would answer
 	 * "nothing" while their name sat on a roster.
 	 *
 	 * Signups belonging to a matched volunteer are picked up by the same query,
 	 * because the claim is kept alongside the match rather than replaced by it. */
 	if ( 1 === $page ) {
-		$signup_ids = gwcvt_signups_by_claim_email( (string) $email );
+		$signup_ids = gwc_vt_signups_by_claim_email( (string) $email );
 
 		foreach ( $volunteers as $volunteer_id ) {
-			$signup_ids = array_merge( $signup_ids, gwcvt_signup_ids_for_volunteer( $volunteer_id ) );
+			$signup_ids = array_merge( $signup_ids, gwc_vt_signup_ids_for_volunteer( $volunteer_id ) );
 		}
 
 		foreach ( array_unique( $signup_ids ) as $signup_id ) {
@@ -675,7 +675,7 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 			$shift_id  = (int) get_post_field( 'post_parent', $signup_id );
 
 			$items[] = array(
-				'group_id'    => 'gwcvt_signup',
+				'group_id'    => 'gwc_vt_signup',
 				'group_label' => __( 'Shifts signed up for', 'groundwork-common-volunteer-tracker' ),
 				'item_id'     => 'gwcvt-signup-' . $signup_id,
 				'data'        => array(
@@ -685,19 +685,19 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 					),
 					array(
 						'name'  => __( 'Name given', 'groundwork-common-volunteer-tracker' ),
-						'value' => (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_NAME, true ),
+						'value' => (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_NAME, true ),
 					),
 					array(
 						'name'  => __( 'Email given', 'groundwork-common-volunteer-tracker' ),
-						'value' => (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_EMAIL, true ),
+						'value' => (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_EMAIL, true ),
 					),
 					array(
 						'name'  => __( 'Signed up', 'groundwork-common-volunteer-tracker' ),
-						'value' => (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CREATED, true ),
+						'value' => (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CREATED, true ),
 					),
 					array(
 						'name'  => __( 'Standing', 'groundwork-common-volunteer-tracker' ),
-						'value' => gwcvt_signup_standing_label( $signup_id ),
+						'value' => gwc_vt_signup_standing_label( $signup_id ),
 					),
 				),
 			);
@@ -707,12 +707,12 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
 	$most_entries = 0;
 
 	foreach ( $volunteers as $volunteer_id ) {
-		$most_entries = max( $most_entries, count( gwcvt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) ) );
+		$most_entries = max( $most_entries, count( gwc_vt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) ) );
 	}
 
 	return array(
 		'data' => $items,
-		'done' => ( $page * GWCVT_RETENTION_BATCH ) >= $most_entries,
+		'done' => ( $page * GWC_VT_RETENTION_BATCH ) >= $most_entries,
 	);
 }
 
@@ -722,14 +722,14 @@ function gwcvt_export_personal_data( $email, $page = 1 ) {
  * @param int $signup_id Signup post ID.
  * @return string
  */
-function gwcvt_signup_standing_label( int $signup_id ): string {
+function gwc_vt_signup_standing_label( int $signup_id ): string {
 	$status = (string) get_post_status( $signup_id );
 
-	if ( GWCVT_SIGNUP_WITHDRAWN === $status ) {
+	if ( GWC_VT_SIGNUP_WITHDRAWN === $status ) {
 		return __( 'Withdrawn', 'groundwork-common-volunteer-tracker' );
 	}
 
-	if ( GWCVT_SIGNUP_WAITLIST === $status ) {
+	if ( GWC_VT_SIGNUP_WAITLIST === $status ) {
 		return __( 'Waiting list', 'groundwork-common-volunteer-tracker' );
 	}
 
@@ -742,23 +742,23 @@ function gwcvt_signup_standing_label( int $signup_id ): string {
  * @param int $volunteer_id Volunteer post ID.
  * @return array[]
  */
-function gwcvt_letters_for_volunteer( int $volunteer_id ): array {
+function gwc_vt_letters_for_volunteer( int $volunteer_id ): array {
 	$ids = get_posts(
 		array(
-			'post_type'              => GWCVT_LETTER_TYPE,
+			'post_type'              => GWC_VT_LETTER_TYPE,
 			'post_status'            => 'publish',
 			'fields'                 => 'ids',
 			'posts_per_page'         => -1,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- run once per privacy request.
-			'meta_key'               => GWCVT_LETTER_VOLUNTEER,
+			'meta_key'               => GWC_VT_LETTER_VOLUNTEER,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
 			'meta_value'             => (string) $volunteer_id,
 		)
 	);
 
-	return array_map( 'gwcvt_letter_record', array_map( 'intval', (array) $ids ) );
+	return array_map( 'gwc_vt_letter_record', array_map( 'intval', (array) $ids ) );
 }
 
 /**
@@ -767,12 +767,12 @@ function gwcvt_letters_for_volunteer( int $volunteer_id ): array {
  * @param array $erasers Existing erasers.
  * @return array
  */
-function gwcvt_register_eraser( $erasers ): array {
+function gwc_vt_register_eraser( $erasers ): array {
 	$erasers = (array) $erasers;
 
 	$erasers['groundwork-common-volunteer-tracker'] = array(
 		'eraser_friendly_name' => __( 'Volunteer hours', 'groundwork-common-volunteer-tracker' ),
-		'callback'             => 'gwcvt_erase_personal_data',
+		'callback'             => 'gwc_vt_erase_personal_data',
 	);
 
 	return $erasers;
@@ -790,18 +790,18 @@ function gwcvt_register_eraser( $erasers ): array {
  * @param int    $page  1-based page number.
  * @return array
  */
-function gwcvt_erase_personal_data( $email, $page = 1 ) {
+function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 	$removed  = false;
 	$retained = false;
 	$messages = array();
 
-	$volunteers = gwcvt_volunteers_by_email( (string) $email );
+	$volunteers = gwc_vt_volunteers_by_email( (string) $email );
 
 	foreach ( $volunteers as $volunteer_id ) {
-		if ( gwcvt_retention_held( $volunteer_id ) ) {
+		if ( gwc_vt_retention_held( $volunteer_id ) ) {
 			$retained = true;
 
-			$reason = (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD_REASON, true );
+			$reason = (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD_REASON, true );
 
 			$messages[] = '' !== $reason
 				? sprintf(
@@ -819,17 +819,17 @@ function gwcvt_erase_personal_data( $email, $page = 1 ) {
 		 * a Form 990 — and they identify nobody once the name and contact
 		 * details are gone. Quietly destroying them would damage the
 		 * organisation to no benefit for the person asking. */
-		$letters = gwcvt_letters_for_volunteer( $volunteer_id );
-		$totals  = gwcvt_compute_totals( $volunteer_id );
+		$letters = gwc_vt_letters_for_volunteer( $volunteer_id );
+		$totals  = gwc_vt_compute_totals( $volunteer_id );
 
-		if ( gwcvt_anonymize_volunteer( $volunteer_id ) ) {
+		if ( gwc_vt_anonymize_volunteer( $volunteer_id ) ) {
 			$removed  = true;
 			$retained = true;
 
 			$messages[] = sprintf(
 				/* translators: %s: a duration, already formatted — "42.5" or "42h 30m" depending on the site's setting, so the sentence must not add a unit of its own. */
 				__( 'The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymised, they identify nobody, and the organization needs them for its own service reporting.', 'groundwork-common-volunteer-tracker' ),
-				gwcvt_format_hours( $totals->verified_minutes + $totals->pending_minutes )
+				gwc_vt_format_hours( $totals->verified_minutes + $totals->pending_minutes )
 			);
 
 			/* Naming the affected letters, because silently destroying the record
@@ -859,17 +859,17 @@ function gwcvt_erase_personal_data( $email, $page = 1 ) {
 	$erased_signups = 0;
 	$held_signups   = 0;
 
-	foreach ( gwcvt_signups_by_claim_email( (string) $email ) as $signup_id ) {
+	foreach ( gwc_vt_signups_by_claim_email( (string) $email ) as $signup_id ) {
 		$signup_id = (int) $signup_id;
-		$owner     = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true );
+		$owner     = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
 
-		if ( $owner > 0 && gwcvt_retention_held( $owner ) ) {
+		if ( $owner > 0 && gwc_vt_retention_held( $owner ) ) {
 			++$held_signups;
 			$retained = true;
 			continue;
 		}
 
-		gwcvt_clear_signup_claims( $signup_id );
+		gwc_vt_clear_signup_claims( $signup_id );
 
 		$removed  = true;
 		$retained = true;

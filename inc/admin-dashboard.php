@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'admin_menu', 'gwcvt_register_dashboard_menu', 9 );
+add_action( 'admin_menu', 'gwc_vt_register_dashboard_menu', 9 );
 
 /* ── The page does two things ────────────────────────────────────────────────
  * Above: what is true right now and what is owed. Below and to the side: every
@@ -24,23 +24,23 @@ add_action( 'admin_menu', 'gwcvt_register_dashboard_menu', 9 );
  * Hang the dashboard off the Volunteer Hours menu.
  *
  * Priority 9, before every other screen registers, so it is first in the list
- * even before gwcvt_order_menu() has its say.
+ * even before gwc_vt_order_menu() has its say.
  */
-function gwcvt_register_dashboard_menu(): void {
+function gwc_vt_register_dashboard_menu(): void {
 	add_submenu_page(
-		GWCVT_MENU_SLUG,
+		GWC_VT_MENU_SLUG,
 		__( 'Volunteer Hours', 'groundwork-common-volunteer-tracker' ),
 		__( 'Dashboard', 'groundwork-common-volunteer-tracker' ),
 		'edit_posts',
-		GWCVT_DASHBOARD_PAGE,
-		'gwcvt_render_dashboard'
+		GWC_VT_DASHBOARD_PAGE,
+		'gwc_vt_render_dashboard'
 	);
 }
 
 /**
  * The dashboard.
  */
-function gwcvt_render_dashboard(): void {
+function gwc_vt_render_dashboard(): void {
 	if ( ! current_user_can( 'edit_posts' ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
@@ -49,14 +49,14 @@ function gwcvt_render_dashboard(): void {
 		);
 	}
 
-	$items = gwcvt_dashboard_items( gwcvt_dashboard_counts() );
+	$items = gwc_vt_dashboard_items( gwc_vt_dashboard_counts() );
 	?>
 	<div class="wrap gwcvt-wrap gwcvt-dash">
 
 		<header class="gwcvt-dash__masthead">
 			<div>
 				<h1><?php esc_html_e( 'Volunteer Hours', 'groundwork-common-volunteer-tracker' ); ?></h1>
-				<span class="gwcvt-dash__org"><?php echo esc_html( gwcvt_org_name() ); ?></span>
+				<span class="gwcvt-dash__org"><?php echo esc_html( gwc_vt_org_name() ); ?></span>
 			</div>
 			<span class="gwcvt-dash__date">
 				<?php echo esc_html( wp_date( (string) get_option( 'date_format' ) ?: 'j F Y' ) ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- an empty date_format must fall back too, which ?? does not do; spelling it out would call get_option() twice. ?>
@@ -66,13 +66,13 @@ function gwcvt_render_dashboard(): void {
 		<div class="gwcvt-dash__columns">
 
 			<div class="gwcvt-dash__column">
-				<?php gwcvt_render_dashboard_worklist( $items ); ?>
-				<?php gwcvt_render_dashboard_upcoming(); ?>
+				<?php gwc_vt_render_dashboard_worklist( $items ); ?>
+				<?php gwc_vt_render_dashboard_upcoming(); ?>
 			</div>
 
 			<div class="gwcvt-dash__column">
-				<?php gwcvt_render_dashboard_year(); ?>
-				<?php gwcvt_render_dashboard_map(); ?>
+				<?php gwc_vt_render_dashboard_year(); ?>
+				<?php gwc_vt_render_dashboard_map(); ?>
 			</div>
 
 		</div>
@@ -83,9 +83,9 @@ function gwcvt_render_dashboard(): void {
 /**
  * What is waiting.
  *
- * @param array $items From gwcvt_dashboard_items().
+ * @param array $items From gwc_vt_dashboard_items().
  */
-function gwcvt_render_dashboard_worklist( array $items ): void {
+function gwc_vt_render_dashboard_worklist( array $items ): void {
 	?>
 	<section>
 		<div class="gwcvt-dash__head">
@@ -96,12 +96,12 @@ function gwcvt_render_dashboard_worklist( array $items ): void {
 		</div>
 
 		<div class="gwcvt-dash__panel gwcvt-docket">
-			<?php if ( ! $items && ! gwcvt_has_any_records() ) : ?>
+			<?php if ( ! $items && ! gwc_vt_has_any_records() ) : ?>
 				<?php
 				/* Nothing waiting because nothing has started. Telling this person
 				 * that everything logged has been verified is true of an empty
 				 * database and no use to anybody. */
-				gwcvt_render_dashboard_start_here();
+				gwc_vt_render_dashboard_start_here();
 				?>
 			<?php elseif ( ! $items ) : ?>
 				<?php
@@ -116,7 +116,7 @@ function gwcvt_render_dashboard_worklist( array $items ): void {
 			<?php endif; ?>
 
 			<?php foreach ( $items as $item ) : ?>
-				<a class="gwcvt-docket__row gwcvt-docket__row--<?php echo esc_attr( $item['severity'] ); ?>" href="<?php echo esc_url( gwcvt_dashboard_item_url( (string) $item['key'] ) ); ?>">
+				<a class="gwcvt-docket__row gwcvt-docket__row--<?php echo esc_attr( $item['severity'] ); ?>" href="<?php echo esc_url( gwc_vt_dashboard_item_url( (string) $item['key'] ) ); ?>">
 					<span class="gwcvt-docket__stripe" aria-hidden="true"></span>
 					<span class="gwcvt-docket__count"><?php echo esc_html( number_format_i18n( (int) $item['count'] ) ); ?></span>
 					<span class="gwcvt-docket__body">
@@ -146,38 +146,38 @@ function gwcvt_render_dashboard_worklist( array $items ): void {
 /**
  * What to do first, on a site with nothing in it yet.
  */
-function gwcvt_render_dashboard_start_here(): void {
+function gwc_vt_render_dashboard_start_here(): void {
 	$steps = array();
 
-	if ( current_user_can( gwcvt_cap( 'manage' ) ) ) {
+	if ( current_user_can( gwc_vt_cap( 'manage' ) ) ) {
 		$steps[] = array(
-			'url'  => gwcvt_settings_url( 'letter' ),
+			'url'  => gwc_vt_settings_url( 'letter' ),
 			'what' => __( 'Tell the letter who you are', 'groundwork-common-volunteer-tracker' ),
 			'why'  => __( 'Your organization\'s name, the address, and who signs. Left empty, a letter goes out headed with this website\'s title.', 'groundwork-common-volunteer-tracker' ),
-			'done' => ! gwcvt_letterhead_gaps(),
+			'done' => ! gwc_vt_letterhead_gaps(),
 		);
 	}
 
 	$steps[] = array(
-		'url'  => admin_url( 'post-new.php?post_type=' . GWCVT_VOLUNTEER_TYPE ),
+		'url'  => admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 		'what' => __( 'Add your first volunteer', 'groundwork-common-volunteer-tracker' ),
 		'why'  => __( 'A record of a person, not a WordPress account. Nobody signs in.', 'groundwork-common-volunteer-tracker' ),
 		'done' => false,
 	);
 
 	$steps[] = array(
-		'url'  => admin_url( 'post-new.php?post_type=' . GWCVT_ENTRY_TYPE ),
+		'url'  => admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 		'what' => __( 'Log a shift they worked', 'groundwork-common-volunteer-tracker' ),
 		'why'  => __( 'One occasion of work. A member of staff then verifies it, and verified hours are what a letter reports.', 'groundwork-common-volunteer-tracker' ),
 		'done' => false,
 	);
 
-	if ( current_user_can( gwcvt_cap( 'manage' ) ) ) {
+	if ( current_user_can( gwc_vt_cap( 'manage' ) ) ) {
 		$steps[] = array(
-			'url'  => gwcvt_settings_url( 'privacy' ),
+			'url'  => gwc_vt_settings_url( 'privacy' ),
 			'what' => __( 'Decide how long records are kept', 'groundwork-common-volunteer-tracker' ),
 			'why'  => __( 'Keeping them indefinitely is a perfectly good answer. Not having decided is not, which is why this one asks until you do.', 'groundwork-common-volunteer-tracker' ),
-			'done' => (bool) gwcvt_setting( 'retention_decided' ),
+			'done' => (bool) gwc_vt_setting( 'retention_decided' ),
 		);
 	}
 	?>
@@ -209,15 +209,15 @@ function gwcvt_render_dashboard_start_here(): void {
 /**
  * The next fortnight, split at the end of this week.
  */
-function gwcvt_render_dashboard_upcoming(): void {
-	if ( ! gwcvt_shifts_enabled() ) {
+function gwc_vt_render_dashboard_upcoming(): void {
+	if ( ! gwc_vt_shifts_enabled() ) {
 		return;
 	}
 
-	$today  = gwcvt_today();
-	$bounds = gwcvt_fortnight_bounds( $today, (int) get_option( 'start_of_week' ) );
+	$today  = gwc_vt_today();
+	$bounds = gwc_vt_fortnight_bounds( $today, (int) get_option( 'start_of_week' ) );
 
-	$shifts = gwcvt_shifts_between(
+	$shifts = gwc_vt_shifts_between(
 		array(
 			'from'  => $today,
 			'to'    => $bounds['fortnight'],
@@ -235,7 +235,7 @@ function gwcvt_render_dashboard_upcoming(): void {
 	);
 
 	foreach ( $shifts as $shift_id ) {
-		$date = (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+		$date = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true );
 
 		$weeks[ $date <= $bounds['this_week'] ? 'this' : 'next' ][] = (int) $shift_id;
 	}
@@ -256,7 +256,7 @@ function gwcvt_render_dashboard_upcoming(): void {
 				<h3 class="gwcvt-shiftweek"><?php echo esc_html( $titles[ $when ] ); ?></h3>
 
 				<?php foreach ( $ids as $shift_id ) : ?>
-					<?php gwcvt_render_dashboard_shiftline( (int) $shift_id ); ?>
+					<?php gwc_vt_render_dashboard_shiftline( (int) $shift_id ); ?>
 				<?php endforeach; ?>
 			<?php endforeach; ?>
 		</div>
@@ -267,7 +267,7 @@ function gwcvt_render_dashboard_upcoming(): void {
 		 * the whole fortnight. */
 		?>
 		<p class="gwcvt-dash__more">
-			<a href="<?php echo esc_url( gwcvt_schedule_url() ); ?>"><?php esc_html_e( 'Open the schedule', 'groundwork-common-volunteer-tracker' ); ?></a>
+			<a href="<?php echo esc_url( gwc_vt_schedule_url() ); ?>"><?php esc_html_e( 'Open the schedule', 'groundwork-common-volunteer-tracker' ); ?></a>
 		</p>
 	</section>
 	<?php
@@ -278,10 +278,10 @@ function gwcvt_render_dashboard_upcoming(): void {
  *
  * @param int $shift_id Shift post ID.
  */
-function gwcvt_render_dashboard_shiftline( int $shift_id ): void {
-	$max    = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
-	$filled = gwcvt_shift_filled( $shift_id );
-	$short  = gwcvt_shift_is_understaffed( $shift_id );
+function gwc_vt_render_dashboard_shiftline( int $shift_id ): void {
+	$max    = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true );
+	$filled = gwc_vt_shift_filled( $shift_id );
+	$short  = gwc_vt_shift_is_understaffed( $shift_id );
 	$full   = $max > 0 && $filled >= $max;
 
 	/* A hair of width even at zero, so an empty shift still reads as a meter
@@ -289,8 +289,8 @@ function gwcvt_render_dashboard_shiftline( int $shift_id ): void {
 	$width = $max > 0 ? max( 2, (int) round( ( $filled / $max ) * 100 ) ) : 2;
 
 	$class  = $short ? ' gwcvt-shiftline--short' : ( $full ? ' gwcvt-shiftline--full' : '' );
-	$starts = gwcvt_shift_starts( $shift_id );
-	$where  = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) );
+	$starts = gwc_vt_shift_starts( $shift_id );
+	$where  = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) );
 	?>
 	<div class="gwcvt-shiftline<?php echo esc_attr( $class ); ?>">
 		<span class="gwcvt-shiftline__when">
@@ -303,13 +303,13 @@ function gwcvt_render_dashboard_shiftline( int $shift_id ): void {
 					?>
 					<span class="gwcvt-shiftline__day"><?php echo esc_html( (string) wp_date( 'D', $starts->getTimestamp() ) ); ?></span>
 				<?php endif; ?>
-				<?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?>
+				<?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?>
 			</span>
-			<span class="gwcvt-shiftline__time"><?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?></span>
+			<span class="gwcvt-shiftline__time"><?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?></span>
 		</span>
 		<span class="gwcvt-shiftline__what">
-			<a href="<?php echo esc_url( gwcvt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>">
-				<?php echo esc_html( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) ); ?>
+			<a href="<?php echo esc_url( gwc_vt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>">
+				<?php echo esc_html( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) ); ?>
 			</a>
 			<?php if ( '' !== $where ) : ?>
 				<span class="gwcvt-shiftline__where"><?php echo esc_html( $where ); ?></span>
@@ -319,9 +319,9 @@ function gwcvt_render_dashboard_shiftline( int $shift_id ): void {
 			<span class="gwcvt-meter"><span class="gwcvt-meter__bar" style="width: <?php echo esc_attr( (string) $width ); ?>%"></span></span>
 			<span class="gwcvt-shiftline__count">
 				<?php
-				echo esc_html( gwcvt_shift_fill_label( $shift_id ) );
+				echo esc_html( gwc_vt_shift_fill_label( $shift_id ) );
 
-				$min = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true );
+				$min = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true );
 
 				/* The number is not enough on its own: "3 of 8" does not say
 				 * whether three is a problem. Colour does not say it either, for
@@ -345,10 +345,10 @@ function gwcvt_render_dashboard_shiftline( int $shift_id ): void {
 /**
  * The one figure that leaves the building.
  */
-function gwcvt_render_dashboard_year(): void {
-	$from   = gwcvt_reporting_year_start();
-	$to     = gwcvt_today();
-	$totals = gwcvt_org_totals( $from, $to );
+function gwc_vt_render_dashboard_year(): void {
+	$from   = gwc_vt_reporting_year_start();
+	$to     = gwc_vt_today();
+	$totals = gwc_vt_org_totals( $from, $to );
 	?>
 	<section>
 		<div class="gwcvt-dash__head">
@@ -357,12 +357,12 @@ function gwcvt_render_dashboard_year(): void {
 
 		<div class="gwcvt-dash__panel gwcvt-year">
 			<p class="gwcvt-year__figure">
-				<?php echo esc_html( gwcvt_format_hours( (int) $totals['verified'] ) ); ?>
+				<?php echo esc_html( gwc_vt_format_hours( (int) $totals['verified'] ) ); ?>
 				<span class="gwcvt-year__unit"><?php esc_html_e( 'verified hours', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 
 			<dl class="gwcvt-year__rows">
-				<div><dt><?php esc_html_e( 'Awaiting verification', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( gwcvt_format_hours( (int) $totals['pending'] ) ); ?></dd></div>
+				<div><dt><?php esc_html_e( 'Awaiting verification', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( gwc_vt_format_hours( (int) $totals['pending'] ) ); ?></dd></div>
 				<div><dt><?php esc_html_e( 'Volunteers with hours', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( number_format_i18n( (int) $totals['volunteers'] ) ); ?></dd></div>
 				<div><dt><?php esc_html_e( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( number_format_i18n( (int) $totals['entries'] ) ); ?></dd></div>
 			</dl>
@@ -372,7 +372,7 @@ function gwcvt_render_dashboard_year(): void {
 				printf(
 					/* translators: %s: a date. */
 					esc_html__( 'Since %s. Verified hours only — the rest is counted separately because nobody has attested to it yet.', 'groundwork-common-volunteer-tracker' ),
-					esc_html( gwcvt_local_date( $from . ' 00:00:00' ) )
+					esc_html( gwc_vt_local_date( $from . ' 00:00:00' ) )
 				);
 				?>
 			</p>
@@ -385,7 +385,7 @@ function gwcvt_render_dashboard_year(): void {
  * Every way out of this page, grouped by what it is about.
  *
  * Filtered to what the person looking at it can actually reach: an editor
- * without gwcvt_issue_letters gets no Letters group at all rather than three
+ * without gwc_vt_issue_letters gets no Letters group at all rather than three
  * links that will refuse them. A link that fails when clicked is worse than an
  * absent one, because the first teaches somebody the screen is broken and the
  * second teaches them nothing.
@@ -396,24 +396,24 @@ function gwcvt_render_dashboard_year(): void {
  *
  * @return array<int, array{title:string, links:array<int, array{label:string, url:string}>}>
  */
-function gwcvt_dashboard_map(): array {
+function gwc_vt_dashboard_map(): array {
 	$groups = array();
 
-	if ( gwcvt_shifts_enabled() && current_user_can( 'edit_posts' ) ) {
+	if ( gwc_vt_shifts_enabled() && current_user_can( 'edit_posts' ) ) {
 		$groups[] = array(
 			'title' => __( 'Shifts', 'groundwork-common-volunteer-tracker' ),
 			'links' => array(
 				array(
 					'label' => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwcvt_schedule_url( array( 'shift' => 'new' ) ),
+					'url'   => gwc_vt_schedule_url( array( 'shift' => 'new' ) ),
 				),
 				array(
 					'label' => __( 'Open the schedule', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwcvt_schedule_url(),
+					'url'   => gwc_vt_schedule_url(),
 				),
 				array(
 					'label' => __( 'Shifts already run', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwcvt_schedule_url( array( 'when' => 'past' ) ),
+					'url'   => gwc_vt_schedule_url( array( 'when' => 'past' ) ),
 				),
 			),
 		);
@@ -427,19 +427,19 @@ function gwcvt_dashboard_map(): array {
 					'label' => __( 'Log a day', 'groundwork-common-volunteer-tracker' ),
 					'url'   => add_query_arg(
 						array(
-							'post_type' => GWCVT_ENTRY_TYPE,
-							'page'      => GWCVT_QUICK_ADD_PAGE,
+							'post_type' => GWC_VT_ENTRY_TYPE,
+							'page'      => GWC_VT_QUICK_ADD_PAGE,
 						),
 						admin_url( 'edit.php' )
 					),
 				),
 				array(
 					'label' => __( 'Log a single shift', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'post-new.php?post_type=' . GWCVT_ENTRY_TYPE ),
+					'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 				),
 				array(
 					'label' => __( 'All hours', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ),
+					'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 				),
 			),
 		);
@@ -449,17 +449,17 @@ function gwcvt_dashboard_map(): array {
 			'links' => array(
 				array(
 					'label' => __( 'Add a volunteer', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'post-new.php?post_type=' . GWCVT_VOLUNTEER_TYPE ),
+					'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 				),
 				array(
 					'label' => __( 'Find somebody’s record', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'edit.php?post_type=' . GWCVT_VOLUNTEER_TYPE ),
+					'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 				),
 			),
 		);
 	}
 
-	if ( current_user_can( gwcvt_cap( 'issue' ) ) ) {
+	if ( current_user_can( gwc_vt_cap( 'issue' ) ) ) {
 		$groups[] = array(
 			'title' => __( 'Letters', 'groundwork-common-volunteer-tracker' ),
 			'links' => array(
@@ -467,8 +467,8 @@ function gwcvt_dashboard_map(): array {
 					'label' => __( 'Produce a letter', 'groundwork-common-volunteer-tracker' ),
 					'url'   => add_query_arg(
 						array(
-							'post_type' => GWCVT_ENTRY_TYPE,
-							'page'      => GWCVT_LETTERS_PAGE,
+							'post_type' => GWC_VT_ENTRY_TYPE,
+							'page'      => GWC_VT_LETTERS_PAGE,
 						),
 						admin_url( 'edit.php' )
 					),
@@ -477,8 +477,8 @@ function gwcvt_dashboard_map(): array {
 					'label' => __( 'Check a reference', 'groundwork-common-volunteer-tracker' ),
 					'url'   => add_query_arg(
 						array(
-							'post_type' => GWCVT_ENTRY_TYPE,
-							'page'      => GWCVT_LETTERS_PAGE,
+							'post_type' => GWC_VT_ENTRY_TYPE,
+							'page'      => GWC_VT_LETTERS_PAGE,
 						),
 						admin_url( 'edit.php' )
 					) . '#gwcvt-reference',
@@ -489,13 +489,13 @@ function gwcvt_dashboard_map(): array {
 
 	$setup = array();
 
-	if ( current_user_can( gwcvt_cap( 'manage' ) ) ) {
+	if ( current_user_can( gwc_vt_cap( 'manage' ) ) ) {
 		$setup[] = array(
 			'label' => __( 'Settings', 'groundwork-common-volunteer-tracker' ),
 			'url'   => add_query_arg(
 				array(
-					'post_type' => GWCVT_ENTRY_TYPE,
-					'page'      => GWCVT_SETTINGS_PAGE,
+					'post_type' => GWC_VT_ENTRY_TYPE,
+					'page'      => GWC_VT_SETTINGS_PAGE,
 				),
 				admin_url( 'edit.php' )
 			),
@@ -521,14 +521,14 @@ function gwcvt_dashboard_map(): array {
 	 *
 	 * @param array $groups Groups of links, already filtered by capability.
 	 */
-	return (array) apply_filters( 'gwcvt_dashboard_map', $groups );
+	return (array) apply_filters( 'gwc_vt_dashboard_map', $groups );
 }
 
 /**
  * Render it.
  */
-function gwcvt_render_dashboard_map(): void {
-	$groups = gwcvt_dashboard_map();
+function gwc_vt_render_dashboard_map(): void {
+	$groups = gwc_vt_dashboard_map();
 
 	if ( ! $groups ) {
 		return;

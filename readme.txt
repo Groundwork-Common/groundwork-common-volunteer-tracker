@@ -2,10 +2,10 @@
 Contributors: groundworkcommon
 Donate link: https://www.groundworkcommon.com/support/
 Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
-Requires at least: 6.3
+Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.15.0
+Stable tag: 1.0.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,26 @@ That disclaimer is editable, because your counsel may want different wording. It
 
 Volunteer records here are more sensitive than most plugin data — in the mandated-service case they reveal that a named person is working off a court order. So none of it is public, none of it is searchable, and none of it is exposed on the REST API. Retention is a decision you make on the Privacy tab; the plugin will not quietly delete records for you, and it will not quietly keep them forever without asking either.
 
+== Installation ==
+
+1. Install through **Plugins → Add New**, or upload the zip under **Plugins → Add New → Upload Plugin**.
+2. Activate it. A **Volunteer Hours** menu appears.
+3. Open **Volunteer Hours → Settings → Letter** and fill in the organization name, the contact a court or school should phone about a letter, and who signs. Each of those falls back to something reasonable on its own — the site title, the administrator's email address, an unlabelled line — and together those fallbacks produce a letter headed with your website's title over your webmaster's address. The letter screen warns you before you print one, but it is quicker to fill them in now.
+4. On the **Permissions** tab, choose which roles may verify hours and which may issue letters. They are frequently different people, which is why they are separate.
+5. On the **Privacy** tab, decide how long records are kept. The plugin will not choose for you, and it will not quietly keep them forever either.
+
+Then log a shift under **Volunteer Hours → Log hours**, verify it, and produce a letter from **Letters**. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
+
+Nothing here is public until you say so. The shift signup form and the volunteer self-log form are both switched off on a new install — they live under **Settings → Shifts** and **Settings → Logging**.
+
+= If you copy this site =
+
+Do this before the copy runs, not after. A staging site, or a restored backup, carries your real volunteers' email addresses and a working cron — so it will send them shift reminders, waiting-list promotions and cancellation notices, from a site nobody thinks of as live. Add one line to `wp-config.php` on any copy:
+
+`define( 'GWC_VT_MAIL_MODE', 'off' );`
+
+That sends nothing at all. To see what would have gone out instead, use `'trap'` and name an address to receive it — the FAQ below has the detail. Neither constant is needed on your live site: unset means normal delivery.
+
 == Frequently Asked Questions ==
 
 = Do volunteers need a WordPress login? =
@@ -78,7 +98,7 @@ It produces a letter styled for print — use your browser's Print to PDF. Bundl
 
 = How do volunteers reach an event? =
 
-You put it on a page. An event has no web address of its own, and publishing it does not give it one — add the **Volunteer Event** block to a page and pick the event, or paste the `[volunteer_event]` shortcode with the event's id into one. The event editor tells you which page currently shows it, and says so when none does.
+You put it on a page. An event has no web address of its own, and publishing it does not give it one — add the **Volunteer Event** block to a page and pick the event, or paste the `[gwc_vt_event_grid]` shortcode with the event's id into one. The event editor tells you which page currently shows it, and says so when none does.
 
 An event's times never appear on the general shifts page. That page lists shifts you scheduled on their own; an event is shown whole, on its own page.
 
@@ -94,12 +114,12 @@ Yes, unless you stop it — and this is the most important thing to know about r
 
 Put one of these in `wp-config.php` **on the copy**:
 
-`define( 'GWCVT_MAIL_MODE', 'off' );`
+`define( 'GWC_VT_MAIL_MODE', 'off' );`
 
 That sends nothing at all. Or, to see what would have gone out:
 
-`define( 'GWCVT_MAIL_MODE', 'trap' );`
-`define( 'GWCVT_MAIL_ALLOW', 'you@example.com' );`
+`define( 'GWC_VT_MAIL_MODE', 'trap' );`
+`define( 'GWC_VT_MAIL_ALLOW', 'you@example.com' );`
 
 Every message then goes to that address instead, with the site's name in the subject line and a note saying who it was really addressed to. Neither constant is needed on your live site — unset means normal delivery.
 
@@ -110,11 +130,20 @@ Every message then goes to that address instead, with the site's name in the sub
 3. Entering a shift, with the volunteer picker and the verify button.
 4. A verification letter, ready to print.
 5. Checking a reference code somebody has phoned in about.
-6. The schedule, with an event and the ordinary shifts around it.
+6. The schedule: what is coming up, how full each shift is, and a repeat that has been called off.
 7. Building an event: one occasion, its roles, and the times under each.
 8. The roster for an event, split by role and time, ready for the clipboard.
 
 == Changelog ==
+
+= 1.0.0 =
+The first release on WordPress.org.
+
+* **The three shortcodes were renamed** to carry the plugin's own prefix, and the old names are gone rather than kept as aliases — an unprefixed name registered globally is the collision this rename exists to avoid, so leaving one behind would defeat it. `[volunteer_hours_form]` → `[gwc_vt_hours_form]`, `[volunteer_shifts]` → `[gwc_vt_shift_list]`, `[volunteer_event]` → `[gwc_vt_event_grid]`. Each now matches the block it is the shortcode for. **If you used a development build, update any page carrying one.** The blocks are unaffected and need no change.
+* **Every global name the plugin registers now carries the `gwc_vt_` prefix**, matching its sibling plugins — functions, constants, hooks, post types, meta keys, options, the settings form, the stylesheet handles and the one REST route (`gwc-vt/v1`). This is invisible on a fresh install. It is listed because the action and filter names in the developer documentation all moved with it, and because records written by a development build use the old post types and will not be seen by this version. CSS class names deliberately keep their shorter form — they are page markup, not registered names.
+* The plugin and author links now point at the canonical host rather than the bare domain that redirects to it.
+
+Otherwise nothing about the plugin's behaviour changed between 0.15.0 and this. The entries below are the development history, kept rather than tidied away, because a plugin whose whole purpose is to show its working should be able to show its own.
 
 = 0.15.0 =
 * A **Permissions** tab. Choose which roles can verify hours and which can issue letters, on a screen, instead of needing a separate plugin or a line of PHP to tell them apart.
@@ -131,7 +160,7 @@ Every message then goes to that address instead, with the site's name in the sub
 * The volunteer list has a filter and a sortable deadline, and the dashboard's "past their deadline" line now links to those people rather than to everybody.
 * The hours form no longer accepts submissions into nowhere when a second copy is placed on a page it is not pinned to. It says which page to use.
 * A **Removing this plugin** section on the Privacy tab, saying exactly what deleting it does and does not remove. It removes no records — which is deliberate, and was written down nowhere anybody would find it.
-* The staging-mail guard is documented at last, in the readme and in the help tabs. `GWCVT_MAIL_MODE` is what stops a restored copy of your site emailing your real volunteers.
+* The staging-mail guard is documented at last, in the readme and in the help tabs. `GWC_VT_MAIL_MODE` is what stops a restored copy of your site emailing your real volunteers.
 * Help tabs for events, and for running a copy of your site.
 * Fixed: strings in the block editor could never be translated.
 * Labels and help text for the fields that had none, and the hours form's hints are now read out by screen readers.
@@ -183,7 +212,7 @@ Every message then goes to that address instead, with the site's name in the sub
 * The two scheduled jobs exist only while shifts are switched on, and are removed when you switch them off.
 
 = 0.10.0 =
-* People can now sign up for shifts from your own site — the Volunteer Shifts block, or the [volunteer_shifts] shortcode. Off until you switch it on, and pinned to one page.
+* People can now sign up for shifts from your own site — the Volunteer Shifts block, or the [gwc_vt_shift_list] shortcode. Off until you switch it on, and pinned to one page.
 * The public list shows what each shift is, where, when, what to bring, and how many places are left. It never shows who else is coming, and there is no setting that makes it.
 * No account, ever. A signup records a name and an email address as a claim; a staff member matches it to a volunteer record exactly as with the hours form.
 * A confirmation email with the details, a link to add the shift to a calendar, and a link to cancel. No login needed for either.
@@ -236,7 +265,7 @@ Every message then goes to that address instead, with the site's name in the sub
 * An optional public form volunteers can send their own hours through — off until you switch it on, and pinned to one page.
 * Everything sent arrives unverified, attached to nobody, and waits for a staff member to match and check it.
 * Honeypot, timing checks, and rate limiting by address and email. An optional shared code you can hand out at the front desk.
-* Available as the Volunteer Hours Form block or the [volunteer_hours_form] shortcode.
+* Available as the Volunteer Hours Form block or the [gwc_vt_hours_form] shortcode.
 
 = 0.4.0 =
 * Retention: choose how long volunteer records are kept, and whether old ones are anonymized or deleted. Defaults to keeping everything, and asks you to decide.
@@ -264,6 +293,9 @@ Every message then goes to that address instead, with the site's name in the sub
 * Settings screen with Letter, Logging and Privacy tabs — the tabs themselves land in later releases.
 
 == Upgrade Notice ==
+
+= 1.0.0 =
+The first public release. If you ran a development build, the three shortcodes were renamed to carry the plugin's prefix and the old names no longer work — update any page using one. The blocks are unaffected.
 
 = 0.15.0 =
 Fixes events placed with the block never finding their page, and gives event hours somewhere to be logged. Adds a Permissions tab. Existing records, letters and reference codes are untouched.

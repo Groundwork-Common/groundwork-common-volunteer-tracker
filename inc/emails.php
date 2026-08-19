@@ -18,9 +18,9 @@ defined( 'ABSPATH' ) || exit;
  * So two constants, both defined in wp-config.php on the copy rather than on
  * production, because the copy is what you control when you make it:
  *
- *   GWCVT_MAIL_MODE   'off'   send nothing at all
- *                     'trap'  redirect every message to GWCVT_MAIL_ALLOW
- *   GWCVT_MAIL_ALLOW  the address 'trap' redirects to
+ *   GWC_VT_MAIL_MODE   'off'   send nothing at all
+ *                     'trap'  redirect every message to GWC_VT_MAIL_ALLOW
+ *   GWC_VT_MAIL_ALLOW  the address 'trap' redirects to
  *
  * Undefined means normal delivery, so production needs no configuration and a
  * site that never heard of these constants behaves exactly as expected.
@@ -35,15 +35,15 @@ defined( 'ABSPATH' ) || exit;
  * @param array  $headers Extra headers.
  * @return bool Whether the message was accepted for delivery.
  */
-function gwcvt_send_email( string $to, string $subject, string $body, array $headers = array() ): bool {
-	$mode = defined( 'GWCVT_MAIL_MODE' ) ? strtolower( (string) GWCVT_MAIL_MODE ) : '';
+function gwc_vt_send_email( string $to, string $subject, string $body, array $headers = array() ): bool {
+	$mode = defined( 'GWC_VT_MAIL_MODE' ) ? strtolower( (string) GWC_VT_MAIL_MODE ) : '';
 
 	if ( 'off' === $mode ) {
 		return false;
 	}
 
 	if ( 'trap' === $mode ) {
-		$trap = defined( 'GWCVT_MAIL_ALLOW' ) ? (string) GWCVT_MAIL_ALLOW : '';
+		$trap = defined( 'GWC_VT_MAIL_ALLOW' ) ? (string) GWC_VT_MAIL_ALLOW : '';
 
 		/* Trap mode with nowhere to send is the same as off. Falling through to
 		 * the real recipient here would defeat the entire point of the setting
@@ -56,7 +56,7 @@ function gwcvt_send_email( string $to, string $subject, string $body, array $hea
 		$body    = '<p><strong>' . esc_html(
 			sprintf(
 				/* translators: %s: the address the message was originally addressed to. */
-				__( 'Trapped by GWCVT_MAIL_MODE. This was addressed to %s.', 'groundwork-common-volunteer-tracker' ),
+				__( 'Trapped by GWC_VT_MAIL_MODE. This was addressed to %s.', 'groundwork-common-volunteer-tracker' ),
 				$to
 			)
 		) . '</strong></p>' . $body;
@@ -70,13 +70,13 @@ function gwcvt_send_email( string $to, string $subject, string $body, array $hea
 
 	$headers[] = 'Content-Type: text/html; charset=UTF-8';
 
-	$from_name  = trim( (string) gwcvt_setting( 'from_name' ) );
-	$from_email = trim( (string) gwcvt_setting( 'from_email' ) );
+	$from_name  = trim( (string) gwc_vt_setting( 'from_name' ) );
+	$from_email = trim( (string) gwc_vt_setting( 'from_email' ) );
 
 	if ( '' !== $from_email && is_email( $from_email ) ) {
 		$headers[] = sprintf(
 			'From: %s <%s>',
-			'' !== $from_name ? $from_name : gwcvt_org_name(),
+			'' !== $from_name ? $from_name : gwc_vt_org_name(),
 			$from_email
 		);
 	}
@@ -87,7 +87,7 @@ function gwcvt_send_email( string $to, string $subject, string $body, array $hea
 	 * @param array $message to, subject, body and headers.
 	 */
 	$message = (array) apply_filters(
-		'gwcvt_email',
+		'gwc_vt_email',
 		array(
 			'to'      => $to,
 			'subject' => $subject,
@@ -107,15 +107,15 @@ function gwcvt_send_email( string $to, string $subject, string $body, array $hea
 /**
  * The subject line for a verification letter.
  *
- * @param GWCVT_Letter $letter The letter.
+ * @param GWC_VT_Letter $letter The letter.
  * @return string
  */
-function gwcvt_letter_subject( GWCVT_Letter $letter ): string {
-	$subject = trim( (string) gwcvt_setting( 'email_subject' ) );
+function gwc_vt_letter_subject( GWC_VT_Letter $letter ): string {
+	$subject = trim( (string) gwc_vt_setting( 'email_subject' ) );
 
 	if ( '' === $subject ) {
 		$subject = __( 'Your volunteer service verification from {org}', 'groundwork-common-volunteer-tracker' );
 	}
 
-	return gwcvt_replace_tokens( $subject, gwcvt_letter_tokens( $letter ) );
+	return gwc_vt_replace_tokens( $subject, gwc_vt_letter_tokens( $letter ) );
 }

@@ -746,7 +746,7 @@ a { color: var(--accent); }
       <p class="screen__q">A fourth view beside the three the schedule screen already has. The coordinator opens it to answer one question — <strong>which of these is short of people, and how soon</strong> — so the fill figure is the loudest thing in the row and the event's name is not.</p>
 
       <div class="plate">
-        <div class="plate__chrome">wp-admin/edit.php?post_type=gwcvt_entry&amp;page=gwcvt-schedule&amp;view=<span>events</span></div>
+        <div class="plate__chrome">wp-admin/edit.php?post_type=gwc_vt_entry&amp;page=gwc-vt-schedule&amp;view=<span>events</span></div>
         <div class="wp">
           <h1>Schedule</h1><a class="btn wp__pagetitleaction" href="#s2">Add an event</a>
 
@@ -843,7 +843,7 @@ a { color: var(--accent); }
       <p class="screen__q">The screen the whole feature stands on. It is <strong>role-major</strong>: you name a role once and hang times underneath it, so the role string is typed once and copied to every shift that role creates. That is what makes a taxonomy unnecessary — "Greeter" and "greeter" cannot both exist inside one event. <strong>Add a role, add a time and remove all work here.</strong></p>
 
       <div class="plate">
-        <div class="plate__chrome">wp-admin/edit.php?post_type=gwcvt_entry&amp;page=gwcvt-schedule&amp;event=<span>1482</span></div>
+        <div class="plate__chrome">wp-admin/edit.php?post_type=gwc_vt_entry&amp;page=gwc-vt-schedule&amp;event=<span>1482</span></div>
         <div class="wp">
           <h1>Edit event</h1>
 
@@ -1045,7 +1045,7 @@ a { color: var(--accent); }
 
       <div class="note">
         <span class="note__label">"What to know" sits on the role, not on the time</span>
-        <p>It is the existing <code>_gwcvt_shift_notes</code> — already on every shift, already labelled "What to know", and already reaching four places: the public list, the calendar file's description, the confirmation and the reminder. Nothing new is stored; the grid types it once per role and copies it to every shift that role creates, exactly as it does the role's name.</p>
+        <p>It is the existing <code>_gwc_vt_shift_notes</code> — already on every shift, already labelled "What to know", and already reaching four places: the public list, the calendar file's description, the confirmation and the reminder. Nothing new is stored; the grid types it once per role and copies it to every shift that role creates, exactly as it does the role's name.</p>
         <p>Because near enough every note anybody writes on a grid — <em>hot work and closed shoes, some lifting, ring the bell at the north gate</em> — is a fact about the work rather than about a particular hour. The consequence is that it shows on <b>every</b> time in that role, which is why both set-up times carry the lifting warning overleaf.</p>
         <p>For a genuine one-off, the grid links each row to the single-shift editor that already exists — an event slot <em>is</em> a shift. That avoids a second notes box in the grid, and with it the question of whether a slot's note replaces the role's or is added to it.</p>
       </div>
@@ -1236,7 +1236,7 @@ a { color: var(--accent); }
 
       <div class="note">
         <span class="note__label">Adding by hand already exists — it needs one field</span>
-        <p><code>gwcvt_handle_roster_add()</code> takes a volunteer ID and calls <code>gwcvt_add_signup()</code> with <code>source =&gt; 'staff'</code>. It refuses an ID of 0 on purpose: a staff member typing a name and an address would be manufacturing an untriaged claim, which is the public form's job. The coordinator's job is to say <em>who this is</em>.</p>
+        <p><code>gwc_vt_handle_roster_add()</code> takes a volunteer ID and calls <code>gwc_vt_add_signup()</code> with <code>source =&gt; 'staff'</code>. It refuses an ID of 0 on purpose: a staff member typing a name and an address would be manufacturing an untriaged claim, which is the public form's job. The coordinator's job is to say <em>who this is</em>.</p>
         <p>Events add the slot picker, and put the volunteer first — somebody doing this is on the phone to a person they already know, hunting for a time that suits. The fill count sits in each option so they can steer the call.</p>
       </div>
 
@@ -1336,7 +1336,7 @@ a { color: var(--accent); }
       <div class="note">
         <span class="note__label">The clash warning stops at the edge of the submission</span>
         <p>Both slots are in the POST, so the check reads only what the sender just ticked and looks nothing up. That is what makes it safe — and it is also exactly why the <em>other</em> half cannot exist.</p>
-        <p>Asking whether the address just typed already holds an overlapping slot means querying earlier signups by email and then changing the page by the answer. That is the neighbour attack again: type somebody's address, tick Kitchen 08:00–14:00, and "that clashes with something you are already down for" reports that they hold something across those hours. <code>gwcvt_find_signup()</code> is licensed for its email lookup by one clause — <em>"its answer changes nothing the visitor can see"</em> — and a cross-submission warning spends that clause.</p>
+        <p>Asking whether the address just typed already holds an overlapping slot means querying earlier signups by email and then changing the page by the answer. That is the neighbour attack again: type somebody's address, tick Kitchen 08:00–14:00, and "that clashes with something you are already down for" reports that they hold something across those hours. <code>gwc_vt_find_signup()</code> is licensed for its email lookup by one clause — <em>"its answer changes nothing the visitor can see"</em> — and a cross-submission warning spends that clause.</p>
         <p>So a clash with an earlier submission is a coordinator-side flag on the roster, which is where screen 04 shows it.</p>
       </div>
 
@@ -1349,7 +1349,7 @@ a { color: var(--accent); }
       <div class="note">
         <span class="note__label">Counts, never names — and no setting changes it</span>
         <p>This is the hardest divergence from the products this resembles, which publish their rosters by design. On a site running a court-ordered service programme, who is coming on Saturday is a list of people working one off. A place count says nothing about anybody; a first name says everything about one.</p>
-        <p>It is also why "2 places left" on a cached page is harmless. The page is a hint; <code>gwcvt_settle_signups()</code> is the authority, and it puts the overflow on a waiting list rather than turning anybody away.</p>
+        <p>It is also why "2 places left" on a cached page is harmless. The page is a hint; <code>gwc_vt_settle_signups()</code> is the authority, and it puts the overflow on a waiting list rather than turning anybody away.</p>
       </div>
     </section>
 
@@ -1375,7 +1375,7 @@ a { color: var(--accent); }
 
       <div class="note">
         <span class="note__label">The attack this is guarding against</span>
-        <p><code>gwcvt_add_signup()</code> is idempotent: signing up twice for the same slot refreshes the first rather than making a second. And the form never checks whether the address belongs to anybody.</p>
+        <p><code>gwc_vt_add_signup()</code> is idempotent: signing up twice for the same slot refreshes the first rather than making a second. And the form never checks whether the address belongs to anybody.</p>
         <p>So a stranger types <b>your neighbour's</b> email and ticks three boxes. Three new signups, or two new and one refresh, or three refreshes — if the response tells those apart, they have learned which of those slots your neighbour was already on, without ever being told a name. On a site running court-ordered service, that is a fact about a person they did not publish.</p>
         <p>The leak is therefore a count of <b>what the write did</b>. A count of what was <em>ticked</em> reports only what the sender already knew, and a honeypot hit or a rate-limited attempt can produce that one too — so it does not break the byte-identical rule.</p>
       </div>
@@ -1435,7 +1435,7 @@ a { color: var(--accent); }
 
       <div class="note">
         <span class="note__label">Why the queue groups, and why reminders do not</span>
-        <p>Confirmations already defer to <code>shutdown</code>; grouping them by claimed address and event is a change to the queue and nothing else. <b>Reminders stay one per slot.</b> Grouping them would break the one-to-one between a send and the <code>_gwcvt_signup_reminded_at</code> flag, and that flag is the whole reason a missed cron run sends late rather than never or twice.</p>
+        <p>Confirmations already defer to <code>shutdown</code>; grouping them by claimed address and event is a change to the queue and nothing else. <b>Reminders stay one per slot.</b> Grouping them would break the one-to-one between a send and the <code>_gwc_vt_signup_reminded_at</code> flag, and that flag is the whole reason a missed cron run sends late rather than never or twice.</p>
       </div>
     </section>
 
@@ -1507,7 +1507,7 @@ a { color: var(--accent); }
       <p class="screen__q">The link from the email lands on a page with a <strong>button</strong>, never a bare GET. Mail clients prefetch links and security appliances follow them to see where they go — a GET that withdrew a place would eventually be withdrawn by a spam filter, and the volunteer would find out by not being expected.</p>
 
       <div class="plate plate--fe">
-        <div class="plate__chrome">example.org/volunteer/fall-festival?gwcvt_signup=<span>44120</span>&amp;gwcvt_k=…</div>
+        <div class="plate__chrome">example.org/volunteer/fall-festival?gwc_vt_signup=<span>44120</span>&amp;gwc_vt_k=…</div>
         <div class="fe">
           <div class="fe__inner">
             <h1>Your place</h1>
@@ -1553,12 +1553,12 @@ a { color: var(--accent); }
 
       <div class="open">
         <p class="open__q">Does the volunteer need to see which roles they already hold when they come back to the page?</p>
-        <p class="open__a">Currently no — the grid is identical for everybody, which is what keeps it free of any lookup keyed on identity. The cost is that somebody who signs up twice sees no acknowledgement on the page. <code>gwcvt_add_signup()</code> is already idempotent so nothing breaks; it is only unsatisfying.</p>
+        <p class="open__a">Currently no — the grid is identical for everybody, which is what keeps it free of any lookup keyed on identity. The cost is that somebody who signs up twice sees no acknowledgement on the page. <code>gwc_vt_add_signup()</code> is already idempotent so nothing breaks; it is only unsatisfying.</p>
       </div>
 
       <div class="open">
         <p class="open__q">Is "Need" and "Most" the right pair of words?</p>
-        <p class="open__a">They are <code>_gwcvt_shift_min</code> and <code>_gwcvt_shift_max</code>, and the schedule screen currently never asks a coordinator to hold both in mind at once. Across a grid of eight rows it might want to be one number with an "or as many as turn up" option.</p>
+        <p class="open__a">They are <code>_gwc_vt_shift_min</code> and <code>_gwc_vt_shift_max</code>, and the schedule screen currently never asks a coordinator to hold both in mind at once. Across a grid of eight rows it might want to be one number with an "or as many as turn up" option.</p>
       </div>
 
       <div class="open">
