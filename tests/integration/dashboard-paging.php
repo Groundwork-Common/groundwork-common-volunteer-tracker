@@ -21,8 +21,8 @@
  * @package VolunteerTracker
  */
 
-$GLOBALS['gwcvt_failures'] = 0;
-$GLOBALS['gwcvt_made']     = array();
+$GLOBALS['gwc_vt_failures'] = 0;
+$GLOBALS['gwc_vt_made']     = array();
 
 /**
  * Assert, tersely.
@@ -31,9 +31,9 @@ $GLOBALS['gwcvt_made']     = array();
  * @param bool   $ok    Whether it passed.
  * @param string $got   Optional. What was actually seen.
  */
-function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
+function gwc_vt_check( string $label, bool $ok, string $got = '' ): void {
 	if ( ! $ok ) {
-		++$GLOBALS['gwcvt_failures'];
+		++$GLOBALS['gwc_vt_failures'];
 	}
 
 	printf( "%s %s%s\n", $ok ? 'PASS' : 'FAIL', $label, '' !== $got ? "  ($got)" : '' );
@@ -48,110 +48,110 @@ function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
  * a coordinator logging a morning's worth of shifts all produce them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-$gwcvt_volunteer = wp_insert_post(
+$gwc_vt_volunteer = wp_insert_post(
 	array(
-		'post_type'   => GWCVT_VOLUNTEER_TYPE,
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
 		'post_status' => 'publish',
 		'post_title'  => 'Paging Fixture',
 	)
 );
 
-$GLOBALS['gwcvt_made'][] = $gwcvt_volunteer;
+$GLOBALS['gwc_vt_made'][] = $gwc_vt_volunteer;
 
 /* A date in the past, and that matters. wp_insert_post() silently rewrites a
  * 'publish' post whose post_date is in the future to the 'future' status, so a
  * fixture dated next decade is invisible to any query filtering on publish —
  * which reads exactly like a walker that returns nothing. */
-$gwcvt_when     = '2017-03-04 09:00:00';
-$gwcvt_day      = '2017-03-04';
-$gwcvt_from     = '2017-01-01';
-$gwcvt_to       = '2017-12-31';
-$gwcvt_expected = array();
-$gwcvt_minutes  = 0;
+$gwc_vt_when     = '2017-03-04 09:00:00';
+$gwc_vt_day      = '2017-03-04';
+$gwc_vt_from     = '2017-01-01';
+$gwc_vt_to       = '2017-12-31';
+$gwc_vt_expected = array();
+$gwc_vt_minutes  = 0;
 
 /* Whatever is already in that window, so the assertions hold on a site that has
  * records there rather than only on an empty one. */
-delete_transient( GWCVT_YEAR_TOTALS_KEY . '_' . md5( $gwcvt_from . '|' . $gwcvt_to ) );
-$gwcvt_baseline = gwcvt_org_totals( $gwcvt_from, $gwcvt_to );
+delete_transient( GWC_VT_YEAR_TOTALS_KEY . '_' . md5( $gwc_vt_from . '|' . $gwc_vt_to ) );
+$gwc_vt_baseline = gwc_vt_org_totals( $gwc_vt_from, $gwc_vt_to );
 
-for ( $gwcvt_i = 0; $gwcvt_i < 7; $gwcvt_i++ ) {
-	$gwcvt_entry = wp_insert_post(
+for ( $gwc_vt_i = 0; $gwc_vt_i < 7; $gwc_vt_i++ ) {
+	$gwc_vt_entry = wp_insert_post(
 		array(
-			'post_type'     => GWCVT_ENTRY_TYPE,
+			'post_type'     => GWC_VT_ENTRY_TYPE,
 			'post_status'   => 'publish',
-			'post_title'    => 'paging fixture ' . $gwcvt_i,
-			'post_date'     => $gwcvt_when,
-			'post_date_gmt' => $gwcvt_when,
+			'post_title'    => 'paging fixture ' . $gwc_vt_i,
+			'post_date'     => $gwc_vt_when,
+			'post_date_gmt' => $gwc_vt_when,
 		)
 	);
 
-	update_post_meta( $gwcvt_entry, GWCVT_ENTRY_DATE, $gwcvt_day );
-	update_post_meta( $gwcvt_entry, GWCVT_ENTRY_MINUTES, 60 );
-	update_post_meta( $gwcvt_entry, GWCVT_ENTRY_VOLUNTEER, (string) $gwcvt_volunteer );
+	update_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_DATE, $gwc_vt_day );
+	update_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_MINUTES, 60 );
+	update_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_VOLUNTEER, (string) $gwc_vt_volunteer );
 
-	$GLOBALS['gwcvt_made'][] = $gwcvt_entry;
-	$gwcvt_expected[]        = (int) $gwcvt_entry;
-	$gwcvt_minutes          += 60;
+	$GLOBALS['gwc_vt_made'][] = $gwc_vt_entry;
+	$gwc_vt_expected[]        = (int) $gwc_vt_entry;
+	$gwc_vt_minutes          += 60;
 }
 
-sort( $gwcvt_expected );
+sort( $gwc_vt_expected );
 
-printf( "%d entries, all sharing one post_date.\n\n", count( $gwcvt_expected ) );
+printf( "%d entries, all sharing one post_date.\n\n", count( $gwc_vt_expected ) );
 
 /* ── The walk, at every page size that straddles the boundary ───────────────── */
 
-$gwcvt_args = array(
-	'post_type'   => GWCVT_ENTRY_TYPE,
+$gwc_vt_args = array(
+	'post_type'   => GWC_VT_ENTRY_TYPE,
 	'post_status' => array( 'publish', 'pending' ),
 	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- a fixture, scoped to this run's own rows.
-	'meta_key'    => GWCVT_ENTRY_DATE,
+	'meta_key'    => GWC_VT_ENTRY_DATE,
 	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
-	'meta_value'  => $gwcvt_day,
+	'meta_value'  => $gwc_vt_day,
 );
 
-foreach ( array( 1, 2, 3, 6, 7, 8 ) as $gwcvt_page ) {
-	$gwcvt_seen = array();
+foreach ( array( 1, 2, 3, 6, 7, 8 ) as $gwc_vt_page ) {
+	$gwc_vt_seen = array();
 
-	gwcvt_walk_matching_ids(
-		$gwcvt_args,
-		static function ( int $id ) use ( &$gwcvt_seen ): void {
-			$gwcvt_seen[] = $id;
+	gwc_vt_walk_matching_ids(
+		$gwc_vt_args,
+		static function ( int $id ) use ( &$gwc_vt_seen ): void {
+			$gwc_vt_seen[] = $id;
 		},
-		$gwcvt_page
+		$gwc_vt_page
 	);
 
-	sort( $gwcvt_seen );
+	sort( $gwc_vt_seen );
 
-	gwcvt_check(
-		sprintf( 'page size %d walks every row exactly once', $gwcvt_page ),
-		$gwcvt_seen === $gwcvt_expected,
-		sprintf( 'walked %d, unique %d, expected %d', count( $gwcvt_seen ), count( array_unique( $gwcvt_seen ) ), count( $gwcvt_expected ) )
+	gwc_vt_check(
+		sprintf( 'page size %d walks every row exactly once', $gwc_vt_page ),
+		$gwc_vt_seen === $gwc_vt_expected,
+		sprintf( 'walked %d, unique %d, expected %d', count( $gwc_vt_seen ), count( array_unique( $gwc_vt_seen ) ), count( $gwc_vt_expected ) )
 	);
 }
 
 /* ── And the figure itself ──────────────────────────────────────────────────── */
 
-delete_transient( GWCVT_YEAR_TOTALS_KEY . '_' . md5( $gwcvt_from . '|' . $gwcvt_to ) );
-$gwcvt_totals = gwcvt_org_totals( $gwcvt_from, $gwcvt_to );
+delete_transient( GWC_VT_YEAR_TOTALS_KEY . '_' . md5( $gwc_vt_from . '|' . $gwc_vt_to ) );
+$gwc_vt_totals = gwc_vt_org_totals( $gwc_vt_from, $gwc_vt_to );
 
-gwcvt_check(
+gwc_vt_check(
 	'the year total counts every entry',
-	(int) $gwcvt_baseline['entries'] + count( $gwcvt_expected ) === (int) $gwcvt_totals['entries'],
-	sprintf( 'entries=%d expected=%d', $gwcvt_totals['entries'], (int) $gwcvt_baseline['entries'] + count( $gwcvt_expected ) )
+	(int) $gwc_vt_baseline['entries'] + count( $gwc_vt_expected ) === (int) $gwc_vt_totals['entries'],
+	sprintf( 'entries=%d expected=%d', $gwc_vt_totals['entries'], (int) $gwc_vt_baseline['entries'] + count( $gwc_vt_expected ) )
 );
 
-gwcvt_check(
+gwc_vt_check(
 	'the year total sums every minute',
-	(int) $gwcvt_baseline['pending'] + $gwcvt_minutes === (int) $gwcvt_totals['pending'],
-	sprintf( 'pending=%d expected=%d', $gwcvt_totals['pending'], (int) $gwcvt_baseline['pending'] + $gwcvt_minutes )
+	(int) $gwc_vt_baseline['pending'] + $gwc_vt_minutes === (int) $gwc_vt_totals['pending'],
+	sprintf( 'pending=%d expected=%d', $gwc_vt_totals['pending'], (int) $gwc_vt_baseline['pending'] + $gwc_vt_minutes )
 );
 
 /* ── Clean up ───────────────────────────────────────────────────────────────── */
 
-foreach ( $GLOBALS['gwcvt_made'] as $gwcvt_id ) {
-	wp_delete_post( (int) $gwcvt_id, true );
+foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {
+	wp_delete_post( (int) $gwc_vt_id, true );
 }
 
-delete_transient( GWCVT_YEAR_TOTALS_KEY . '_' . md5( $gwcvt_from . '|' . $gwcvt_to ) );
+delete_transient( GWC_VT_YEAR_TOTALS_KEY . '_' . md5( $gwc_vt_from . '|' . $gwc_vt_to ) );
 
-echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? "ALL PASS\n" : $GLOBALS['gwcvt_failures'] . " CHECK(S) FAILED\n" );
+echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );

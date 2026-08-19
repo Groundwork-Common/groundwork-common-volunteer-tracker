@@ -7,18 +7,18 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'gwcvt_render_tab_letter', 'gwcvt_render_settings_tab' );
-add_action( 'gwcvt_render_tab_logging', 'gwcvt_render_settings_tab' );
-add_action( 'gwcvt_render_tab_shifts', 'gwcvt_render_settings_tab' );
-add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_settings_tab' );
-add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_retention_log', 20 );
-add_action( 'gwcvt_render_tab_privacy', 'gwcvt_render_uninstall_section', 30 );
-add_action( 'admin_post_gwcvt_save_uninstall', 'gwcvt_handle_save_uninstall' );
+add_action( 'gwc_vt_render_tab_letter', 'gwc_vt_render_settings_tab' );
+add_action( 'gwc_vt_render_tab_logging', 'gwc_vt_render_settings_tab' );
+add_action( 'gwc_vt_render_tab_shifts', 'gwc_vt_render_settings_tab' );
+add_action( 'gwc_vt_render_tab_privacy', 'gwc_vt_render_settings_tab' );
+add_action( 'gwc_vt_render_tab_privacy', 'gwc_vt_render_retention_log', 20 );
+add_action( 'gwc_vt_render_tab_privacy', 'gwc_vt_render_uninstall_section', 30 );
+add_action( 'admin_post_gwc_vt_save_uninstall', 'gwc_vt_handle_save_uninstall' );
 
-add_action( 'gwcvt_render_tab_permissions', 'gwcvt_render_permissions_tab' );
-add_action( 'admin_post_gwcvt_save_permissions', 'gwcvt_handle_save_permissions' );
-add_filter( 'gwcvt_admin_tabs', 'gwcvt_add_permissions_tab' );
-add_action( 'admin_post_gwcvt_save_settings', 'gwcvt_handle_save_settings' );
+add_action( 'gwc_vt_render_tab_permissions', 'gwc_vt_render_permissions_tab' );
+add_action( 'admin_post_gwc_vt_save_permissions', 'gwc_vt_handle_save_permissions' );
+add_filter( 'gwc_vt_admin_tabs', 'gwc_vt_add_permissions_tab' );
+add_action( 'admin_post_gwc_vt_save_settings', 'gwc_vt_handle_save_settings' );
 
 /* ── One registry, three jobs ────────────────────────────────────────────────
  * Every setting is described once here, and that description drives the form,
@@ -41,7 +41,7 @@ add_action( 'admin_post_gwcvt_save_settings', 'gwcvt_handle_save_settings' );
  *
  * @return array<string, array>
  */
-function gwcvt_settings_fields(): array {
+function gwc_vt_settings_fields(): array {
 	$fields = array(
 
 		/* ── Letter: letterhead ──────────────────────────────────────────── */
@@ -103,7 +103,7 @@ function gwcvt_settings_fields(): array {
 			'type'        => 'textarea',
 			'rows'        => 4,
 			'label'       => __( 'Opening paragraph', 'groundwork-common-volunteer-tracker' ),
-			'placeholder' => gwcvt_letter_intro( array() ),
+			'placeholder' => gwc_vt_letter_intro( array() ),
 			'help'        => __( 'Leave empty to use the wording shown. Plain text only — bold and italic survive, other markup does not.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
@@ -113,7 +113,7 @@ function gwcvt_settings_fields(): array {
 			'type'        => 'textarea',
 			'rows'        => 5,
 			'label'       => __( 'Disclaimer', 'groundwork-common-volunteer-tracker' ),
-			'placeholder' => gwcvt_default_disclaimer(),
+			'placeholder' => gwc_vt_default_disclaimer(),
 			'help'        => __( 'Your counsel may want particular wording, so this is yours to change. It cannot be emptied: saving it blank restores the default. A letter with no disclaimer is a letter that has quietly started implying this plugin certified something.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
@@ -123,7 +123,7 @@ function gwcvt_settings_fields(): array {
 			'type'        => 'textarea',
 			'rows'        => 3,
 			'label'       => __( 'What the reference code proves', 'groundwork-common-volunteer-tracker' ),
-			'placeholder' => gwcvt_default_reference_note(),
+			'placeholder' => gwc_vt_default_reference_note(),
 			'help'        => __( 'Also cannot be emptied. Without it, a reader reasonably assumes a code means some outside body issued the document.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
@@ -208,7 +208,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'hours',
 			'type'    => 'select',
 			'label'   => __( 'Show hours as', 'groundwork-common-volunteer-tracker' ),
-			'options' => 'gwcvt_hour_format_labels',
+			'options' => 'gwc_vt_hour_format_labels',
 			'help'    => __( 'Decimal is what a court order is usually written in.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'allow_future_dates'        => array(
@@ -230,7 +230,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'selflog',
 			'type'    => 'page',
 			'label'   => __( 'The page the form is on', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Add the Volunteer Hours Form block, or the [volunteer_hours_form] shortcode, to a page and choose it here. Submissions are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Hours Form block, or the [gwc_vt_hours_form] shortcode, to a page and choose it here. Submissions are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'self_log_code'             => array(
 			'tab'     => 'logging',
@@ -244,7 +244,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'retention',
 			'type'    => 'select',
 			'label'   => __( 'Keep volunteer records for', 'groundwork-common-volunteer-tracker' ),
-			'options' => 'gwcvt_retention_period_options',
+			'options' => 'gwc_vt_retention_period_options',
 			'help'    => __( '"Keep indefinitely" is a legitimate answer, and it is the default — a plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date. What is not legitimate is never deciding, which is why this tab nags until you save it.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'retention_action'          => array(
@@ -307,7 +307,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'signup',
 			'type'    => 'page',
 			'label'   => __( 'The page the shifts are on', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Add the Volunteer Shifts block, or the [volunteer_shifts] shortcode, to a page and choose it here. Signups are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Shifts block, or the [gwc_vt_shift_list] shortcode, to a page and choose it here. Signups are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signup_code'               => array(
 			'tab'     => 'shifts',
@@ -321,7 +321,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'signup',
 			'type'    => 'select',
 			'label'   => __( 'Show shifts up to', 'groundwork-common-volunteer-tracker' ),
-			'options' => 'gwcvt_signup_horizon_options',
+			'options' => 'gwc_vt_signup_horizon_options',
 			'help'    => __( 'How far ahead the public list looks. A year of Saturdays is a wall of text nobody reads to the bottom of.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signup_cutoff_hours'       => array(
@@ -329,7 +329,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'signup',
 			'type'    => 'select',
 			'label'   => __( 'Close signups', 'groundwork-common-volunteer-tracker' ),
-			'options' => 'gwcvt_signup_cutoff_options',
+			'options' => 'gwc_vt_signup_cutoff_options',
 			'help'    => __( 'Right up to the start is fine for a warehouse where an extra pair of hands is always welcome. Choose earlier if you have to print a list the night before.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'reminder_enabled'          => array(
@@ -344,7 +344,7 @@ function gwcvt_settings_fields(): array {
 			'section' => 'notices',
 			'type'    => 'select',
 			'label'   => __( 'Send the reminder', 'groundwork-common-volunteer-tracker' ),
-			'options' => 'gwcvt_reminder_lead_options',
+			'options' => 'gwc_vt_reminder_lead_options',
 			'help'    => __( 'Two days is usually right: long enough that somebody who cannot make it still has time to say so, and you still have time to call somebody else.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'digest_enabled'            => array(
@@ -369,7 +369,7 @@ function gwcvt_settings_fields(): array {
 	 *
 	 * @param array $fields Field definitions.
 	 */
-	return (array) apply_filters( 'gwcvt_settings_fields', $fields );
+	return (array) apply_filters( 'gwc_vt_settings_fields', $fields );
 }
 
 /**
@@ -377,7 +377,7 @@ function gwcvt_settings_fields(): array {
  *
  * @return array<string, array<string, string>>
  */
-function gwcvt_settings_sections(): array {
+function gwc_vt_settings_sections(): array {
 	return array(
 		'letter'  => array(
 			'letterhead' => __( 'Letterhead', 'groundwork-common-volunteer-tracker' ),
@@ -418,7 +418,7 @@ function gwcvt_settings_sections(): array {
  *
  * @return array<string, string>
  */
-function gwcvt_retention_period_options(): array {
+function gwc_vt_retention_period_options(): array {
 	return array(
 		'0'  => __( 'Keep indefinitely', 'groundwork-common-volunteer-tracker' ),
 		'12' => __( '1 year', 'groundwork-common-volunteer-tracker' ),
@@ -435,7 +435,7 @@ function gwcvt_retention_period_options(): array {
  *
  * @return array<string, string>
  */
-function gwcvt_signup_horizon_options(): array {
+function gwc_vt_signup_horizon_options(): array {
 	return array(
 		'14'  => __( '2 weeks ahead', 'groundwork-common-volunteer-tracker' ),
 		'30'  => __( 'A month ahead', 'groundwork-common-volunteer-tracker' ),
@@ -450,7 +450,7 @@ function gwcvt_signup_horizon_options(): array {
  *
  * @return array<string, string>
  */
-function gwcvt_signup_cutoff_options(): array {
+function gwc_vt_signup_cutoff_options(): array {
 	return array(
 		'0'  => __( 'Right up to the start', 'groundwork-common-volunteer-tracker' ),
 		'2'  => __( '2 hours before', 'groundwork-common-volunteer-tracker' ),
@@ -465,7 +465,7 @@ function gwcvt_signup_cutoff_options(): array {
  *
  * @return array<string, string>
  */
-function gwcvt_reminder_lead_options(): array {
+function gwc_vt_reminder_lead_options(): array {
 	return array(
 		'12' => __( 'The evening before', 'groundwork-common-volunteer-tracker' ),
 		'24' => __( 'A day before', 'groundwork-common-volunteer-tracker' ),
@@ -477,11 +477,11 @@ function gwcvt_reminder_lead_options(): array {
 /**
  * Render the settings form for the current tab.
  */
-function gwcvt_render_settings_tab(): void {
-	$tab      = gwcvt_current_tab();
-	$sections = gwcvt_settings_sections()[ $tab ] ?? array();
+function gwc_vt_render_settings_tab(): void {
+	$tab      = gwc_vt_current_tab();
+	$sections = gwc_vt_settings_sections()[ $tab ] ?? array();
 	$fields   = array_filter(
-		gwcvt_settings_fields(),
+		gwc_vt_settings_fields(),
 		static fn( array $field ): bool => ( $field['tab'] ?? '' ) === $tab
 	);
 
@@ -490,9 +490,9 @@ function gwcvt_render_settings_tab(): void {
 	}
 	?>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-		<input type="hidden" name="action" value="gwcvt_save_settings" />
+		<input type="hidden" name="action" value="gwc_vt_save_settings" />
 		<input type="hidden" name="tab" value="<?php echo esc_attr( $tab ); ?>" />
-		<?php wp_nonce_field( 'gwcvt_save_settings' ); ?>
+		<?php wp_nonce_field( 'gwc_vt_save_settings' ); ?>
 
 		<?php foreach ( $sections as $section => $section_label ) : ?>
 			<?php
@@ -513,7 +513,7 @@ function gwcvt_render_settings_tab(): void {
 					printf(
 						/* translators: %s: a list of placeholder tokens. */
 						esc_html__( 'These accept placeholders: %s', 'groundwork-common-volunteer-tracker' ),
-						'<code>' . implode( '</code> <code>', array_map( 'esc_html', gwcvt_token_names() ) ) . '</code>'
+						'<code>' . implode( '</code> <code>', array_map( 'esc_html', gwc_vt_token_names() ) ) . '</code>'
 					);
 					?>
 				</p>
@@ -522,7 +522,7 @@ function gwcvt_render_settings_tab(): void {
 			<table class="form-table" role="presentation">
 				<tbody>
 					<?php foreach ( $in_section as $key => $field ) : ?>
-						<?php gwcvt_render_settings_field( $key, $field ); ?>
+						<?php gwc_vt_render_settings_field( $key, $field ); ?>
 					<?php endforeach; ?>
 				</tbody>
 			</table>
@@ -541,10 +541,10 @@ function gwcvt_render_settings_tab(): void {
  *
  * @return string[]
  */
-function gwcvt_token_names(): array {
-	$sample = new GWCVT_Letter( 0, '', '', '', array(), 0, 0, false, '', time() );
+function gwc_vt_token_names(): array {
+	$sample = new GWC_VT_Letter( 0, '', '', '', array(), 0, 0, false, '', time() );
 
-	return array_keys( gwcvt_letter_tokens( $sample ) );
+	return array_keys( gwc_vt_letter_tokens( $sample ) );
 }
 
 /**
@@ -553,9 +553,9 @@ function gwcvt_token_names(): array {
  * @param string $key   Setting name.
  * @param array  $field Field definition.
  */
-function gwcvt_render_settings_field( string $key, array $field ): void {
+function gwc_vt_render_settings_field( string $key, array $field ): void {
 	$type  = (string) ( $field['type'] ?? 'text' );
-	$value = gwcvt_setting( $key );
+	$value = gwc_vt_setting( $key );
 	$id    = 'gwcvt-' . str_replace( '_', '-', $key );
 	?>
 	<tr>
@@ -567,7 +567,7 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 			switch ( $type ) {
 				case 'checkbox':
 					printf(
-						'<label><input type="checkbox" id="%1$s" name="gwcvt[%2$s]" value="1" %3$s /> %4$s</label>',
+						'<label><input type="checkbox" id="%1$s" name="gwc_vt[%2$s]" value="1" %3$s /> %4$s</label>',
 						esc_attr( $id ),
 						esc_attr( $key ),
 						checked( (bool) $value, true, false ),
@@ -577,7 +577,7 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 
 				case 'textarea':
 					printf(
-						'<textarea id="%1$s" name="gwcvt[%2$s]" rows="%3$d" class="large-text" placeholder="%4$s">%5$s</textarea>',
+						'<textarea id="%1$s" name="gwc_vt[%2$s]" rows="%3$d" class="large-text" placeholder="%4$s">%5$s</textarea>',
 						esc_attr( $id ),
 						esc_attr( $key ),
 						(int) ( $field['rows'] ?? 3 ),
@@ -591,7 +591,7 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 					$preview    = $attachment > 0 ? wp_get_attachment_image_url( $attachment, 'medium' ) : '';
 					?>
 					<div class="gwcvt-media" data-gwcvt-media>
-						<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="gwcvt[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $attachment ); ?>" />
+						<input type="hidden" id="<?php echo esc_attr( $id ); ?>" name="gwc_vt[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $attachment ); ?>" />
 						<div class="gwcvt-media__preview" <?php echo '' === $preview ? 'hidden' : ''; ?>>
 							<img src="<?php echo esc_url( $preview ); ?>" alt="" />
 						</div>
@@ -621,7 +621,7 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 					// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 					wp_dropdown_pages(
 						array(
-							'name'              => 'gwcvt[' . $key . ']',
+							'name'              => 'gwc_vt[' . $key . ']',
 							'id'                => $id,
 							'selected'          => (int) $value,
 							'show_option_none'  => esc_html__( '— not set —', 'groundwork-common-volunteer-tracker' ),
@@ -635,7 +635,7 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 					$options = $field['options'] ?? array();
 					$options = is_callable( $options ) ? call_user_func( $options ) : (array) $options;
 
-					printf( '<select id="%1$s" name="gwcvt[%2$s]">', esc_attr( $id ), esc_attr( $key ) );
+					printf( '<select id="%1$s" name="gwc_vt[%2$s]">', esc_attr( $id ), esc_attr( $key ) );
 
 					foreach ( $options as $option_value => $option_label ) {
 						printf(
@@ -651,7 +651,7 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 
 				default:
 					printf(
-						'<input type="%1$s" id="%2$s" name="gwcvt[%3$s]" value="%4$s" class="regular-text" placeholder="%5$s" />',
+						'<input type="%1$s" id="%2$s" name="gwc_vt[%3$s]" value="%4$s" class="regular-text" placeholder="%5$s" />',
 						esc_attr( 'email' === $type ? 'email' : 'text' ),
 						esc_attr( $id ),
 						esc_attr( $key ),
@@ -672,29 +672,29 @@ function gwcvt_render_settings_field( string $key, array $field ): void {
 /**
  * Save the settings form.
  */
-function gwcvt_handle_save_settings(): void {
+function gwc_vt_handle_save_settings(): void {
 	/* Capability before nonce, house rule, and wp_die() rather than a return so
 	 * the only way to reach the write below is to have passed both. */
-	gwcvt_require_cap( 'manage' );
+	gwc_vt_require_cap( 'manage' );
 
-	check_admin_referer( 'gwcvt_save_settings' );
+	check_admin_referer( 'gwc_vt_save_settings' );
 
 	/* Not sanitized here, and that is the design rather than an oversight. This
 	 * is a bag of settings whose types differ per field, so there is no single
 	 * sanitizer that is right for all of them. Nothing is trusted on the way in:
-	 * the loop below reads only the keys gwcvt_settings_fields() declares — a
+	 * the loop below reads only the keys gwc_vt_settings_fields() declares — a
 	 * key nobody declared is never looked at — and every value it does read goes
-	 * through gwcvt_sanitize_setting() against that field's own definition
+	 * through gwc_vt_sanitize_setting() against that field's own definition
 	 * before it reaches $stored. Sanitizing twice, once generically here, would
 	 * flatten the textarea fields the letter depends on. */
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce checked directly above; sanitized per field at the foreach below.
-	$posted = isset( $_POST['gwcvt'] ) ? (array) wp_unslash( $_POST['gwcvt'] ) : array();
+	$posted = isset( $_POST['gwc_vt'] ) ? (array) wp_unslash( $_POST['gwc_vt'] ) : array();
 	$tab    = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : '';
 
-	$stored = get_option( GWCVT_SETTINGS_OPTION );
+	$stored = get_option( GWC_VT_SETTINGS_OPTION );
 	$stored = is_array( $stored ) ? $stored : array();
 
-	foreach ( gwcvt_settings_fields() as $key => $field ) {
+	foreach ( gwc_vt_settings_fields() as $key => $field ) {
 		/* Only this tab's fields. Without the check, saving the Letter tab would
 		 * write every OTHER tab's settings back as their unchecked defaults —
 		 * because a checkbox that is not on the page posts nothing, which is
@@ -703,7 +703,7 @@ function gwcvt_handle_save_settings(): void {
 			continue;
 		}
 
-		$stored[ $key ] = gwcvt_sanitize_setting( $posted[ $key ] ?? null, $field );
+		$stored[ $key ] = gwc_vt_sanitize_setting( $posted[ $key ] ?? null, $field );
 	}
 
 	/* Saving this tab IS the decision, including saving it as "keep
@@ -713,17 +713,17 @@ function gwcvt_handle_save_settings(): void {
 		$stored['retention_decided'] = true;
 	}
 
-	update_option( GWCVT_SETTINGS_OPTION, $stored );
-	gwcvt_settings_cache( null, true );
+	update_option( GWC_VT_SETTINGS_OPTION, $stored );
+	gwc_vt_settings_cache( null, true );
 
 	/**
 	 * Fires after the settings have been saved.
 	 *
 	 * @param string $tab Which tab was saved.
 	 */
-	do_action( 'gwcvt_settings_saved', $tab );
+	do_action( 'gwc_vt_settings_saved', $tab );
 
-	wp_safe_redirect( add_query_arg( 'gwcvt_saved', '1', gwcvt_settings_url( $tab ) ) );
+	wp_safe_redirect( add_query_arg( 'gwc_vt_saved', '1', gwc_vt_settings_url( $tab ) ) );
 	exit;
 }
 
@@ -734,7 +734,7 @@ function gwcvt_handle_save_settings(): void {
  * @param array $field Field definition.
  * @return mixed
  */
-function gwcvt_sanitize_setting( $raw, array $field ) {
+function gwc_vt_sanitize_setting( $raw, array $field ) {
 	$type = (string) ( $field['type'] ?? 'text' );
 
 	switch ( $type ) {
@@ -787,14 +787,14 @@ function gwcvt_sanitize_setting( $raw, array $field ) {
 	}
 }
 
-add_action( 'admin_notices', 'gwcvt_settings_saved_notice' );
+add_action( 'admin_notices', 'gwc_vt_settings_saved_notice' );
 
 /**
  * Confirm a save.
  */
-function gwcvt_settings_saved_notice(): void {
+function gwc_vt_settings_saved_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; decides whether to print a confirmation after a redirect.
-	if ( ! isset( $_GET['gwcvt_saved'] ) || ! gwcvt_is_plugin_screen() ) {
+	if ( ! isset( $_GET['gwc_vt_saved'] ) || ! gwc_vt_is_plugin_screen() ) {
 		return;
 	}
 
@@ -804,7 +804,7 @@ function gwcvt_settings_saved_notice(): void {
 	);
 }
 
-add_action( 'admin_notices', 'gwcvt_retention_undecided_notice' );
+add_action( 'admin_notices', 'gwc_vt_retention_undecided_notice' );
 
 /**
  * Nag until retention has been considered.
@@ -814,12 +814,12 @@ add_action( 'admin_notices', 'gwcvt_retention_undecided_notice' );
  * the opposite of making a decision deliberate. It disappears the moment the
  * Privacy tab is saved, whatever it is saved as.
  */
-function gwcvt_retention_undecided_notice(): void {
-	if ( ! gwcvt_is_plugin_screen() || ! current_user_can( gwcvt_cap( 'manage' ) ) ) {
+function gwc_vt_retention_undecided_notice(): void {
+	if ( ! gwc_vt_is_plugin_screen() || ! current_user_can( gwc_vt_cap( 'manage' ) ) ) {
 		return;
 	}
 
-	if ( gwcvt_setting( 'retention_decided' ) ) {
+	if ( gwc_vt_setting( 'retention_decided' ) ) {
 		return;
 	}
 
@@ -827,7 +827,7 @@ function gwcvt_retention_undecided_notice(): void {
 		'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p><p><a class="button" href="%3$s">%4$s</a></p></div>',
 		esc_html__( 'How long should volunteer records be kept?', 'groundwork-common-volunteer-tracker' ),
 		esc_html__( 'This plugin stores names, contact details and — for court-ordered service — information about somebody’s legal obligations. Nothing is being deleted while this is unanswered. Keeping records indefinitely is a perfectly good answer; not having decided is not.', 'groundwork-common-volunteer-tracker' ),
-		esc_url( gwcvt_settings_url( 'privacy' ) ),
+		esc_url( gwc_vt_settings_url( 'privacy' ) ),
 		esc_html__( 'Decide now', 'groundwork-common-volunteer-tracker' )
 	);
 }
@@ -856,7 +856,7 @@ function gwcvt_retention_undecided_notice(): void {
  * @param array $tabs Slug => label.
  * @return array
  */
-function gwcvt_add_permissions_tab( $tabs ): array {
+function gwc_vt_add_permissions_tab( $tabs ): array {
 	$tabs = (array) $tabs;
 
 	/* Before Privacy, after the three that describe what the plugin does. Who may
@@ -882,7 +882,7 @@ function gwcvt_add_permissions_tab( $tabs ): array {
  *
  * @return array<string, string> Role slug => display name.
  */
-function gwcvt_permission_roles(): array {
+function gwc_vt_permission_roles(): array {
 	$roles = array();
 
 	foreach ( (array) wp_roles()->roles as $slug => $role ) {
@@ -908,7 +908,7 @@ function gwcvt_permission_roles(): array {
  * @param bool   $held  Whether the role holds the capability.
  * @param bool   $fixed Whether it cannot be changed.
  */
-function gwcvt_render_permission_box( string $name, string $slug, string $label, string $title, bool $held, bool $fixed ): void {
+function gwc_vt_render_permission_box( string $name, string $slug, string $label, string $title, bool $held, bool $fixed ): void {
 	?>
 	<label>
 		<input
@@ -940,10 +940,10 @@ function gwcvt_render_permission_box( string $name, string $slug, string $label,
 /**
  * The Permissions tab.
  */
-function gwcvt_render_permissions_tab(): void {
-	$roles  = gwcvt_permission_roles();
-	$verify = gwcvt_cap( 'verify' );
-	$issue  = gwcvt_cap( 'issue' );
+function gwc_vt_render_permissions_tab(): void {
+	$roles  = gwc_vt_permission_roles();
+	$verify = gwc_vt_cap( 'verify' );
+	$issue  = gwc_vt_cap( 'issue' );
 	?>
 	<h2><?php esc_html_e( 'Who can do what', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
@@ -956,8 +956,8 @@ function gwcvt_render_permissions_tab(): void {
 	</p>
 
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-		<input type="hidden" name="action" value="gwcvt_save_permissions" />
-		<?php wp_nonce_field( 'gwcvt_save_permissions' ); ?>
+		<input type="hidden" name="action" value="gwc_vt_save_permissions" />
+		<?php wp_nonce_field( 'gwc_vt_save_permissions' ); ?>
 
 		<table class="widefat striped" style="max-width:44em">
 			<thead>
@@ -977,8 +977,8 @@ function gwcvt_render_permissions_tab(): void {
 						<th scope="row"><?php echo esc_html( $label ); ?></th>
 						<td>
 							<?php
-							gwcvt_render_permission_box(
-								'gwcvt_verify',
+							gwc_vt_render_permission_box(
+								'gwc_vt_verify',
 								(string) $slug,
 								(string) $label,
 								/* translators: %s: a role name. */
@@ -990,8 +990,8 @@ function gwcvt_render_permissions_tab(): void {
 						</td>
 						<td>
 							<?php
-							gwcvt_render_permission_box(
-								'gwcvt_issue',
+							gwc_vt_render_permission_box(
+								'gwc_vt_issue',
 								(string) $slug,
 								(string) $label,
 								/* translators: %s: a role name. */
@@ -1018,18 +1018,18 @@ function gwcvt_render_permissions_tab(): void {
 /**
  * Save the permissions matrix.
  */
-function gwcvt_handle_save_permissions(): void {
-	gwcvt_require_cap( 'manage' );
-	check_admin_referer( 'gwcvt_save_permissions' );
+function gwc_vt_handle_save_permissions(): void {
+	gwc_vt_require_cap( 'manage' );
+	check_admin_referer( 'gwc_vt_save_permissions' );
 
 	$posted = wp_unslash( $_POST );
 
 	$wanted = array(
-		gwcvt_cap( 'verify' ) => array_map( 'sanitize_key', (array) ( $posted['gwcvt_verify'] ?? array() ) ),
-		gwcvt_cap( 'issue' )  => array_map( 'sanitize_key', (array) ( $posted['gwcvt_issue'] ?? array() ) ),
+		gwc_vt_cap( 'verify' ) => array_map( 'sanitize_key', (array) ( $posted['gwc_vt_verify'] ?? array() ) ),
+		gwc_vt_cap( 'issue' )  => array_map( 'sanitize_key', (array) ( $posted['gwc_vt_issue'] ?? array() ) ),
 	);
 
-	foreach ( gwcvt_permission_roles() as $slug => $label ) {
+	foreach ( gwc_vt_permission_roles() as $slug => $label ) {
 		$role = get_role( $slug );
 
 		if ( ! $role ) {
@@ -1050,7 +1050,7 @@ function gwcvt_handle_save_permissions(): void {
 				continue;
 			}
 
-			/* An explicit false rather than remove_cap(). gwcvt_grant_capabilities()
+			/* An explicit false rather than remove_cap(). gwc_vt_grant_capabilities()
 			 * runs on every init and restores a capability whose key is missing
 			 * altogether — it cannot tell "somebody removed this" from "this role
 			 * never heard of it". A stored false is what says a person decided no,
@@ -1059,7 +1059,7 @@ function gwcvt_handle_save_permissions(): void {
 		}
 	}
 
-	wp_safe_redirect( add_query_arg( 'gwcvt_saved', '1', gwcvt_settings_url( 'permissions' ) ) );
+	wp_safe_redirect( add_query_arg( 'gwc_vt_saved', '1', gwc_vt_settings_url( 'permissions' ) ) );
 	exit;
 }
 
@@ -1085,15 +1085,15 @@ function gwcvt_handle_save_permissions(): void {
  *
  * @return bool
  */
-function gwcvt_destructive_uninstall_armed(): bool {
-	return (bool) get_option( 'gwcvt_allow_destructive_uninstall', false );
+function gwc_vt_destructive_uninstall_armed(): bool {
+	return (bool) get_option( 'gwc_vt_allow_destructive_uninstall', false );
 }
 
 /**
  * The "Removing this plugin" section.
  */
-function gwcvt_render_uninstall_section(): void {
-	$armed = gwcvt_destructive_uninstall_armed();
+function gwc_vt_render_uninstall_section(): void {
+	$armed = gwc_vt_destructive_uninstall_armed();
 	?>
 	<h2><?php esc_html_e( 'Removing this plugin', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
@@ -1106,8 +1106,8 @@ function gwcvt_render_uninstall_section(): void {
 	</p>
 
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width:44em">
-		<input type="hidden" name="action" value="gwcvt_save_uninstall" />
-		<?php wp_nonce_field( 'gwcvt_save_uninstall' ); ?>
+		<input type="hidden" name="action" value="gwc_vt_save_uninstall" />
+		<?php wp_nonce_field( 'gwc_vt_save_uninstall' ); ?>
 
 		<table class="form-table" role="presentation">
 			<tbody>
@@ -1115,7 +1115,7 @@ function gwcvt_render_uninstall_section(): void {
 					<th scope="row"><?php esc_html_e( 'On deletion', 'groundwork-common-volunteer-tracker' ); ?></th>
 					<td>
 						<label>
-							<input type="checkbox" name="gwcvt_allow_destructive_uninstall" value="1" <?php checked( $armed ); ?> />
+							<input type="checkbox" name="gwc_vt_allow_destructive_uninstall" value="1" <?php checked( $armed ); ?> />
 							<?php esc_html_e( 'Also remove this plugin\'s settings when it is deleted', 'groundwork-common-volunteer-tracker' ); ?>
 						</label>
 						<p class="description">
@@ -1140,25 +1140,25 @@ function gwcvt_render_uninstall_section(): void {
 /**
  * Save the uninstall preference.
  */
-function gwcvt_handle_save_uninstall(): void {
-	gwcvt_require_cap( 'manage' );
-	check_admin_referer( 'gwcvt_save_uninstall' );
+function gwc_vt_handle_save_uninstall(): void {
+	gwc_vt_require_cap( 'manage' );
+	check_admin_referer( 'gwc_vt_save_uninstall' );
 
-	$armed = ! empty( $_POST['gwcvt_allow_destructive_uninstall'] );
+	$armed = ! empty( $_POST['gwc_vt_allow_destructive_uninstall'] );
 
 	/* Non-autoloaded: read once, by uninstall.php, on a request where nothing
 	 * else of ours is loaded. */
-	update_option( 'gwcvt_allow_destructive_uninstall', $armed, false );
+	update_option( 'gwc_vt_allow_destructive_uninstall', $armed, false );
 
-	wp_safe_redirect( add_query_arg( 'gwcvt_saved', '1', gwcvt_settings_url( 'privacy' ) ) );
+	wp_safe_redirect( add_query_arg( 'gwc_vt_saved', '1', gwc_vt_settings_url( 'privacy' ) ) );
 	exit;
 }
 
 /**
  * What the last few sweeps did.
  */
-function gwcvt_render_retention_log(): void {
-	$log = gwcvt_retention_log();
+function gwc_vt_render_retention_log(): void {
+	$log = gwc_vt_retention_log();
 	?>
 	<h2><?php esc_html_e( 'Recent sweeps', 'groundwork-common-volunteer-tracker' ); ?></h2>
 

@@ -8,13 +8,13 @@
 defined( 'ABSPATH' ) || exit;
 
 /** How many volunteer rows the form starts with. */
-const GWCVT_QUICK_ADD_ROWS = 8;
+const GWC_VT_QUICK_ADD_ROWS = 8;
 
 /** How many blank rows sit under a shift's roster, for people who walked in. */
-const GWCVT_QUICK_ADD_WALK_IN_ROWS = 4;
+const GWC_VT_QUICK_ADD_WALK_IN_ROWS = 4;
 
-add_action( 'admin_menu', 'gwcvt_register_quick_add_menu', 12 );
-add_action( 'admin_post_gwcvt_quick_add', 'gwcvt_handle_quick_add' );
+add_action( 'admin_menu', 'gwc_vt_register_quick_add_menu', 12 );
+add_action( 'admin_post_gwc_vt_quick_add', 'gwc_vt_handle_quick_add' );
 
 /* ── Why this screen exists ──────────────────────────────────────────────────
  * Logging Saturday meant six trips through post-new.php: load the editor, pick
@@ -33,7 +33,7 @@ add_action( 'admin_post_gwcvt_quick_add', 'gwcvt_handle_quick_add' );
  * sign-in sheet in front of them typing it up.
  *
  * ── And what it became ──────────────────────────────────────────────────────
- * With ?gwcvt_shift=<id> this same screen opens against a scheduled shift, and
+ * With ?gwc_vt_shift=<id> this same screen opens against a scheduled shift, and
  * the paper sign-in sheet is already filled in: the date, the activity and the
  * supervisor come off the shift, and there is one row per person who signed up
  * with the hours the shift was scheduled for. The coordinator unticks whoever
@@ -42,27 +42,27 @@ add_action( 'admin_post_gwcvt_quick_add', 'gwcvt_handle_quick_add' );
  * That is the whole reason the schedule exists. Everything before this is a
  * plan; this is the step where a plan becomes a record, and it is deliberately a
  * step a person takes rather than something a scheduled task does at midnight —
- * see gwcvt_log_shift_hours() for what that would cost.
+ * see gwc_vt_log_shift_hours() for what that would cost.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
  * Add the screen under Volunteer Hours.
  */
-function gwcvt_register_quick_add_menu(): void {
+function gwc_vt_register_quick_add_menu(): void {
 	add_submenu_page(
-		GWCVT_MENU_SLUG,
+		GWC_VT_MENU_SLUG,
 		__( 'Log a day’s shifts', 'groundwork-common-volunteer-tracker' ),
 		__( 'Log a day', 'groundwork-common-volunteer-tracker' ),
 		'edit_posts',
-		GWCVT_QUICK_ADD_PAGE,
-		'gwcvt_render_quick_add_screen'
+		GWC_VT_QUICK_ADD_PAGE,
+		'gwc_vt_render_quick_add_screen'
 	);
 }
 
 /**
  * The screen, against a shift or against a blank day.
  */
-function gwcvt_render_quick_add_screen(): void {
+function gwc_vt_render_quick_add_screen(): void {
 	if ( ! current_user_can( 'edit_posts' ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to log hours.', 'groundwork-common-volunteer-tracker' ),
@@ -72,35 +72,35 @@ function gwcvt_render_quick_add_screen(): void {
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; chooses which shift to log against.
-	$shift_id = isset( $_GET['gwcvt_shift'] ) ? absint( wp_unslash( $_GET['gwcvt_shift'] ) ) : 0;
+	$shift_id = isset( $_GET['gwc_vt_shift'] ) ? absint( wp_unslash( $_GET['gwc_vt_shift'] ) ) : 0;
 
-	if ( $shift_id > 0 && GWCVT_SHIFT_TYPE === get_post_type( $shift_id ) ) {
-		gwcvt_render_shift_log_screen( $shift_id );
+	if ( $shift_id > 0 && GWC_VT_SHIFT_TYPE === get_post_type( $shift_id ) ) {
+		gwc_vt_render_shift_log_screen( $shift_id );
 		return;
 	}
 
-	gwcvt_render_blank_day_screen();
+	gwc_vt_render_blank_day_screen();
 }
 
 /**
  * The original screen: a date, an activity, a supervisor, and eight blank rows.
  */
-function gwcvt_render_blank_day_screen(): void {
-	$vocabulary = gwcvt_activity_vocabulary();
-	$max_date   = gwcvt_setting( 'allow_future_dates' ) ? '' : gwcvt_today();
+function gwc_vt_render_blank_day_screen(): void {
+	$vocabulary = gwc_vt_activity_vocabulary();
+	$max_date   = gwc_vt_setting( 'allow_future_dates' ) ? '' : gwc_vt_today();
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1><?php esc_html_e( 'Log a day’s shifts', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
-		<?php gwcvt_quick_add_notice(); ?>
+		<?php gwc_vt_quick_add_notice(); ?>
 
 		<p class="description gwcvt-quick-add__intro">
 			<?php esc_html_e( 'For typing up a sign-in sheet. Everything the shift had in common goes at the top; add each volunteer and the hours they worked below. They arrive unverified, the same as any other entry.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-quick-add">
-			<input type="hidden" name="action" value="gwcvt_quick_add" />
-			<?php wp_nonce_field( 'gwcvt_quick_add' ); ?>
+			<input type="hidden" name="action" value="gwc_vt_quick_add" />
+			<?php wp_nonce_field( 'gwc_vt_quick_add' ); ?>
 
 			<h2><?php esc_html_e( 'The shift', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
@@ -112,9 +112,9 @@ function gwcvt_render_blank_day_screen(): void {
 							<input
 								type="date"
 								id="gwcvt-qa-date"
-								name="gwcvt_date"
+								name="gwc_vt_date"
 								required
-								value="<?php echo esc_attr( gwcvt_today() ); ?>"
+								value="<?php echo esc_attr( gwc_vt_today() ); ?>"
 								<?php echo '' !== $max_date ? 'max="' . esc_attr( $max_date ) . '"' : ''; ?>
 							/>
 						</td>
@@ -122,7 +122,7 @@ function gwcvt_render_blank_day_screen(): void {
 					<tr>
 						<th scope="row"><label for="gwcvt-qa-activity"><?php esc_html_e( 'What they did', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
-							<input type="text" id="gwcvt-qa-activity" name="gwcvt_activity" class="regular-text" maxlength="200" <?php echo $vocabulary ? 'list="gwcvt-qa-activities"' : ''; ?> />
+							<input type="text" id="gwcvt-qa-activity" name="gwc_vt_activity" class="regular-text" maxlength="200" <?php echo $vocabulary ? 'list="gwcvt-qa-activities"' : ''; ?> />
 							<?php if ( $vocabulary ) : ?>
 								<datalist id="gwcvt-qa-activities">
 									<?php foreach ( $vocabulary as $option ) : ?>
@@ -136,7 +136,7 @@ function gwcvt_render_blank_day_screen(): void {
 					<tr>
 						<th scope="row"><label for="gwcvt-qa-supervisor"><?php esc_html_e( 'Supervised by', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
-							<input type="text" id="gwcvt-qa-supervisor" name="gwcvt_supervisor" class="regular-text" maxlength="100" value="<?php echo esc_attr( wp_get_current_user()->display_name ); ?>" />
+							<input type="text" id="gwcvt-qa-supervisor" name="gwc_vt_supervisor" class="regular-text" maxlength="100" value="<?php echo esc_attr( wp_get_current_user()->display_name ); ?>" />
 							<p class="description"><?php esc_html_e( 'The person who was there. Prefilled with your name — change it if it was somebody else.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
@@ -153,8 +153,8 @@ function gwcvt_render_blank_day_screen(): void {
 					</tr>
 				</thead>
 				<tbody id="gwcvt-qa-rows">
-					<?php for ( $i = 0; $i < GWCVT_QUICK_ADD_ROWS; $i++ ) : ?>
-						<?php gwcvt_render_quick_add_row( $i ); ?>
+					<?php for ( $i = 0; $i < GWC_VT_QUICK_ADD_ROWS; $i++ ) : ?>
+						<?php gwc_vt_render_quick_add_row( $i ); ?>
 					<?php endfor; ?>
 				</tbody>
 			</table>
@@ -180,7 +180,7 @@ function gwcvt_render_blank_day_screen(): void {
  * @param bool $walk_in  Whether this row sits under a shift's roster, which has
  *                       a leading "Came" column the row has to line up with.
  */
-function gwcvt_render_quick_add_row( int $index, bool $walk_in = false ): void {
+function gwc_vt_render_quick_add_row( int $index, bool $walk_in = false ): void {
 	?>
 	<tr class="gwcvt-quick-add__row">
 		<?php if ( $walk_in ) : ?>
@@ -212,7 +212,7 @@ function gwcvt_render_quick_add_row( int $index, bool $walk_in = false ): void {
 					aria-controls="gwcvt-qa-results-<?php echo esc_attr( (string) $index ); ?>"
 					placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
 				/>
-				<input type="hidden" name="gwcvt_volunteer[]" value="0" />
+				<input type="hidden" name="gwc_vt_volunteer[]" value="0" />
 				<ul id="gwcvt-qa-results-<?php echo esc_attr( (string) $index ); ?>" class="gwcvt-picker__results" role="listbox" hidden></ul>
 			</div>
 		</td>
@@ -226,7 +226,7 @@ function gwcvt_render_quick_add_row( int $index, bool $walk_in = false ): void {
 				);
 				?>
 			</label>
-			<input type="text" id="gwcvt-qa-hours-<?php echo esc_attr( (string) $index ); ?>" name="gwcvt_hours[]" class="small-text" inputmode="decimal" value="" />
+			<input type="text" id="gwcvt-qa-hours-<?php echo esc_attr( (string) $index ); ?>" name="gwc_vt_hours[]" class="small-text" inputmode="decimal" value="" />
 		</td>
 	</tr>
 	<?php
@@ -239,22 +239,22 @@ function gwcvt_render_quick_add_row( int $index, bool $walk_in = false ): void {
  *
  * @param int $shift_id Shift post ID.
  */
-function gwcvt_render_shift_log_screen( int $shift_id ): void {
-	$vocabulary = gwcvt_activity_vocabulary();
-	$roster     = gwcvt_shift_signup_ids( $shift_id );
-	$ended      = gwcvt_shift_has_ended( $shift_id );
-	$logged_at  = (string) get_post_meta( $shift_id, GWCVT_SHIFT_RECONCILED, true );
+function gwc_vt_render_shift_log_screen( int $shift_id ): void {
+	$vocabulary = gwc_vt_activity_vocabulary();
+	$roster     = gwc_vt_shift_signup_ids( $shift_id );
+	$ended      = gwc_vt_shift_has_ended( $shift_id );
+	$logged_at  = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_RECONCILED, true );
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1><?php esc_html_e( 'Log the hours for this shift', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
 		<p>
-			<a href="<?php echo esc_url( gwcvt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>">
+			<a href="<?php echo esc_url( gwc_vt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>">
 				&larr; <?php esc_html_e( 'Back to the shift', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		</p>
 
-		<?php gwcvt_quick_add_notice(); ?>
+		<?php gwc_vt_quick_add_notice(); ?>
 
 		<h2><?php echo esc_html( get_the_title( $shift_id ) ); ?></h2>
 
@@ -262,7 +262,7 @@ function gwcvt_render_shift_log_screen( int $shift_id ): void {
 		/* ── Not yet ────────────────────────────────────────────────────────
 		 * Refused rather than allowed-with-a-warning, and the reason is the one
 		 * that runs through this whole plugin. An entry dated in the future is
-		 * silently clamped to today by gwcvt_save_entry(), so logging Saturday
+		 * silently clamped to today by gwc_vt_save_entry(), so logging Saturday
 		 * on Friday would write Friday's date onto hours worked on Saturday —
 		 * and that date is printed on a document a court reads. Nobody would
 		 * ever see the clamp happen. */
@@ -287,7 +287,7 @@ function gwcvt_render_shift_log_screen( int $shift_id ): void {
 					printf(
 						/* translators: %s: a date. */
 						esc_html__( 'Hours were already logged for this shift on %s. Anybody who has an entry already is shown below and cannot be logged twice; you can still add somebody who was missed.', 'groundwork-common-volunteer-tracker' ),
-						esc_html( gwcvt_local_date( $logged_at ) )
+						esc_html( gwc_vt_local_date( $logged_at ) )
 					);
 					?>
 				</p>
@@ -295,25 +295,25 @@ function gwcvt_render_shift_log_screen( int $shift_id ): void {
 		<?php endif; ?>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-quick-add">
-			<input type="hidden" name="action" value="gwcvt_quick_add" />
-			<input type="hidden" name="gwcvt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
-			<input type="hidden" name="gwcvt_date" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true ) ); ?>" />
-			<?php wp_nonce_field( 'gwcvt_quick_add' ); ?>
+			<input type="hidden" name="action" value="gwc_vt_quick_add" />
+			<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
+			<input type="hidden" name="gwc_vt_date" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ) ); ?>" />
+			<?php wp_nonce_field( 'gwc_vt_quick_add' ); ?>
 
 			<table class="form-table" role="presentation">
 				<tbody>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Date', 'groundwork-common-volunteer-tracker' ); ?></th>
 						<td>
-							<strong><?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?></strong>,
-							<?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?>
+							<strong><?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?></strong>,
+							<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
 							<p class="description"><?php esc_html_e( 'The shift’s own date. Every entry below is dated that day.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="gwcvt-qa-activity"><?php esc_html_e( 'What they did', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
-							<input type="text" id="gwcvt-qa-activity" name="gwcvt_activity" class="regular-text" maxlength="200" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) ); ?>" <?php echo $vocabulary ? 'list="gwcvt-qa-activities"' : ''; ?> />
+							<input type="text" id="gwcvt-qa-activity" name="gwc_vt_activity" class="regular-text" maxlength="200" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) ); ?>" <?php echo $vocabulary ? 'list="gwcvt-qa-activities"' : ''; ?> />
 							<?php if ( $vocabulary ) : ?>
 								<datalist id="gwcvt-qa-activities">
 									<?php foreach ( $vocabulary as $option ) : ?>
@@ -327,7 +327,7 @@ function gwcvt_render_shift_log_screen( int $shift_id ): void {
 					<tr>
 						<th scope="row"><label for="gwcvt-qa-supervisor"><?php esc_html_e( 'Supervised by', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
-							<input type="text" id="gwcvt-qa-supervisor" name="gwcvt_supervisor" class="regular-text" maxlength="100" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWCVT_SHIFT_SUPERVISOR, true ) ); ?>" />
+							<input type="text" id="gwcvt-qa-supervisor" name="gwc_vt_supervisor" class="regular-text" maxlength="100" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_SUPERVISOR, true ) ); ?>" />
 							<p class="description"><?php esc_html_e( 'From the shift. Change it if somebody else actually covered it.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
@@ -349,12 +349,12 @@ function gwcvt_render_shift_log_screen( int $shift_id ): void {
 					$index = 0;
 
 					foreach ( $roster as $signup_id ) {
-						gwcvt_render_roster_log_row( $index, $signup_id, $shift_id, '' !== $logged_at );
+						gwc_vt_render_roster_log_row( $index, $signup_id, $shift_id, '' !== $logged_at );
 						++$index;
 					}
 
-					for ( $i = 0; $i < GWCVT_QUICK_ADD_WALK_IN_ROWS; $i++ ) {
-						gwcvt_render_quick_add_row( $index, true );
+					for ( $i = 0; $i < GWC_VT_QUICK_ADD_WALK_IN_ROWS; $i++ ) {
+						gwc_vt_render_quick_add_row( $index, true );
 						++$index;
 					}
 					?>
@@ -396,10 +396,10 @@ function gwcvt_render_shift_log_screen( int $shift_id ): void {
  * @param int  $shift_id   Shift post ID.
  * @param bool $reconciled Whether this shift's hours have been logged before.
  */
-function gwcvt_render_roster_log_row( int $index, int $signup_id, int $shift_id, bool $reconciled = false ): void {
-	$volunteer_id = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true );
-	$existing     = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_ENTRY, true );
-	$already      = $existing > 0 && GWCVT_ENTRY_TYPE === get_post_type( $existing );
+function gwc_vt_render_roster_log_row( int $index, int $signup_id, int $shift_id, bool $reconciled = false ): void {
+	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
+	$existing     = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_ENTRY, true );
+	$already      = $existing > 0 && GWC_VT_ENTRY_TYPE === get_post_type( $existing );
 
 	/* Recorded as not having come: the shift was logged and this row got no
 	 * entry out of it. */
@@ -410,10 +410,10 @@ function gwcvt_render_roster_log_row( int $index, int $signup_id, int $shift_id,
 			'volunteer_id' => 0,
 			'matched_on'   => '',
 		)
-		: gwcvt_suggest_volunteer_for_signup( $signup_id );
+		: gwc_vt_suggest_volunteer_for_signup( $signup_id );
 
 	$suggested = (int) $suggestion['volunteer_id'];
-	$hours     = gwcvt_format_hours( gwcvt_shift_minutes( $shift_id ) );
+	$hours     = gwc_vt_format_hours( gwc_vt_shift_minutes( $shift_id ) );
 	$row_id    = 'gwcvt-qa-' . $index;
 	?>
 	<tr class="gwcvt-quick-add__row<?php echo $already ? ' gwcvt-quick-add__row--logged' : ''; ?>">
@@ -421,31 +421,31 @@ function gwcvt_render_roster_log_row( int $index, int $signup_id, int $shift_id,
 			<?php if ( $already ) : ?>
 				<span class="gwcvt-badge gwcvt-badge--verified"><?php esc_html_e( 'Logged', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php else : ?>
-				<input type="checkbox" id="<?php echo esc_attr( $row_id . '-came' ); ?>" name="gwcvt_attended[<?php echo esc_attr( (string) $index ); ?>]" value="1" <?php checked( ! $absent ); ?> />
+				<input type="checkbox" id="<?php echo esc_attr( $row_id . '-came' ); ?>" name="gwc_vt_attended[<?php echo esc_attr( (string) $index ); ?>]" value="1" <?php checked( ! $absent ); ?> />
 				<label for="<?php echo esc_attr( $row_id . '-came' ); ?>" class="screen-reader-text">
 					<?php
 					printf(
 						/* translators: %s: a person's name. */
 						esc_html__( '%s turned up', 'groundwork-common-volunteer-tracker' ),
-						esc_html( gwcvt_signup_name( $signup_id ) )
+						esc_html( gwc_vt_signup_name( $signup_id ) )
 					);
 					?>
 				</label>
-				<input type="hidden" name="gwcvt_signup[<?php echo esc_attr( (string) $index ); ?>]" value="<?php echo esc_attr( (string) $signup_id ); ?>" />
+				<input type="hidden" name="gwc_vt_signup[<?php echo esc_attr( (string) $index ); ?>]" value="<?php echo esc_attr( (string) $signup_id ); ?>" />
 			<?php endif; ?>
 		</td>
 		<td>
 			<?php if ( $volunteer_id > 0 || $already ) : ?>
-				<strong><?php echo esc_html( gwcvt_signup_name( $signup_id ) ); ?></strong>
+				<strong><?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?></strong>
 
 				<?php
 				/* An already-logged row posts nobody and no hours, so the handler
 				 * reads it as an untouched row and passes over it in silence. It
-				 * still posts BOTH fields, because gwcvt_volunteer[] and
-				 * gwcvt_hours[] are positional and a row that skipped them would
+				 * still posts BOTH fields, because gwc_vt_volunteer[] and
+				 * gwc_vt_hours[] are positional and a row that skipped them would
 				 * shift every row beneath it onto the wrong answer. */
 				?>
-				<input type="hidden" name="gwcvt_volunteer[]" value="<?php echo esc_attr( $already ? '0' : (string) $volunteer_id ); ?>" />
+				<input type="hidden" name="gwc_vt_volunteer[]" value="<?php echo esc_attr( $already ? '0' : (string) $volunteer_id ); ?>" />
 
 				<?php if ( $already ) : ?>
 					<div class="row-actions">
@@ -475,7 +475,7 @@ function gwcvt_render_roster_log_row( int $index, int $signup_id, int $shift_id,
 						value="<?php echo esc_attr( $suggested > 0 ? (string) get_the_title( $suggested ) : '' ); ?>"
 						placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
 					/>
-					<input type="hidden" name="gwcvt_volunteer[]" value="<?php echo esc_attr( (string) $suggested ); ?>" />
+					<input type="hidden" name="gwc_vt_volunteer[]" value="<?php echo esc_attr( (string) $suggested ); ?>" />
 					<ul id="<?php echo esc_attr( $row_id . '-results' ); ?>" class="gwcvt-picker__results" role="listbox" hidden></ul>
 				</div>
 
@@ -488,13 +488,13 @@ function gwcvt_render_roster_log_row( int $index, int $signup_id, int $shift_id,
 						printf(
 							/* translators: %s: the name somebody signed up under. */
 							esc_html__( 'Signed up as %s — check this is the right person.', 'groundwork-common-volunteer-tracker' ),
-							esc_html( (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_NAME, true ) )
+							esc_html( (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_NAME, true ) )
 						);
 					} else {
 						printf(
 							/* translators: %s: the name somebody signed up under. */
 							esc_html__( 'Signed up as %s, and is not on file. Pick who they are, or add a volunteer record first.', 'groundwork-common-volunteer-tracker' ),
-							esc_html( (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_NAME, true ) )
+							esc_html( (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_NAME, true ) )
 						);
 					}
 					?>
@@ -507,15 +507,15 @@ function gwcvt_render_roster_log_row( int $index, int $signup_id, int $shift_id,
 				printf(
 					/* translators: %s: a person's name. */
 					esc_html__( 'Hours for %s', 'groundwork-common-volunteer-tracker' ),
-					esc_html( gwcvt_signup_name( $signup_id ) )
+					esc_html( gwc_vt_signup_name( $signup_id ) )
 				);
 				?>
 			</label>
 			<?php if ( $already ) : ?>
-				<?php echo esc_html( gwcvt_format_hours( (int) get_post_meta( $existing, GWCVT_ENTRY_MINUTES, true ) ) ); ?>
-				<input type="hidden" name="gwcvt_hours[]" value="" />
+				<?php echo esc_html( gwc_vt_format_hours( (int) get_post_meta( $existing, GWC_VT_ENTRY_MINUTES, true ) ) ); ?>
+				<input type="hidden" name="gwc_vt_hours[]" value="" />
 			<?php else : ?>
-				<input type="text" id="<?php echo esc_attr( $row_id . '-hours' ); ?>" name="gwcvt_hours[]" class="small-text" inputmode="decimal" value="<?php echo esc_attr( $hours ); ?>" />
+				<input type="text" id="<?php echo esc_attr( $row_id . '-hours' ); ?>" name="gwc_vt_hours[]" class="small-text" inputmode="decimal" value="<?php echo esc_attr( $hours ); ?>" />
 			<?php endif; ?>
 		</td>
 	</tr>
@@ -525,7 +525,7 @@ function gwcvt_render_roster_log_row( int $index, int $signup_id, int $shift_id,
 /**
  * Create one entry per filled row.
  */
-function gwcvt_handle_quick_add(): void {
+function gwc_vt_handle_quick_add(): void {
 	if ( ! current_user_can( 'edit_posts' ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to log hours.', 'groundwork-common-volunteer-tracker' ),
@@ -534,52 +534,52 @@ function gwcvt_handle_quick_add(): void {
 		);
 	}
 
-	check_admin_referer( 'gwcvt_quick_add' );
+	check_admin_referer( 'gwc_vt_quick_add' );
 
 	$posted = wp_unslash( $_POST );
 
-	$shift_id = absint( $posted['gwcvt_shift'] ?? 0 );
+	$shift_id = absint( $posted['gwc_vt_shift'] ?? 0 );
 
-	if ( $shift_id > 0 && GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( $shift_id > 0 && GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		$shift_id = 0;
 	}
 
 	/* The gate, re-checked here and not merely on the screen that offered the
 	 * form. A future-dated entry is silently clamped to today by
-	 * gwcvt_save_entry(), so a posted-early reconciliation would write the wrong
+	 * gwc_vt_save_entry(), so a posted-early reconciliation would write the wrong
 	 * date onto a document a court reads, and nothing would show that it had. */
-	if ( $shift_id > 0 && ! gwcvt_shift_has_ended( $shift_id ) ) {
-		gwcvt_quick_add_redirect( 0, 0, 'not-ended', $shift_id );
+	if ( $shift_id > 0 && ! gwc_vt_shift_has_ended( $shift_id ) ) {
+		gwc_vt_quick_add_redirect( 0, 0, 'not-ended', $shift_id );
 	}
 
-	$date = gwcvt_sanitize_date( sanitize_text_field( (string) ( $posted['gwcvt_date'] ?? '' ) ) );
+	$date = gwc_vt_sanitize_date( sanitize_text_field( (string) ( $posted['gwc_vt_date'] ?? '' ) ) );
 
-	if ( '' === $date || ( ! gwcvt_setting( 'allow_future_dates' ) && $date > gwcvt_today() ) ) {
-		gwcvt_quick_add_redirect( 0, 0, 'bad-date', $shift_id );
+	if ( '' === $date || ( ! gwc_vt_setting( 'allow_future_dates' ) && $date > gwc_vt_today() ) ) {
+		gwc_vt_quick_add_redirect( 0, 0, 'bad-date', $shift_id );
 	}
 
-	$activity   = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_activity'] ?? '' ) ), 0, 200 );
-	$supervisor = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_supervisor'] ?? '' ) ), 0, 100 );
+	$activity   = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_activity'] ?? '' ) ), 0, 200 );
+	$supervisor = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 );
 
-	$volunteers = array_map( 'absint', (array) ( $posted['gwcvt_volunteer'] ?? array() ) );
-	$hours      = array_map( 'strval', (array) ( $posted['gwcvt_hours'] ?? array() ) );
+	$volunteers = array_map( 'absint', (array) ( $posted['gwc_vt_volunteer'] ?? array() ) );
+	$hours      = array_map( 'strval', (array) ( $posted['gwc_vt_hours'] ?? array() ) );
 
 	/* ── Why these two are keyed and the two above are not ───────────────────
-	 * gwcvt_volunteer[] and gwcvt_hours[] are positional, and every row renders
+	 * gwc_vt_volunteer[] and gwc_vt_hours[] are positional, and every row renders
 	 * both, so their indexes line up with the rows on screen.
 	 *
-	 * A checkbox posts nothing at all when it is unticked, so gwcvt_attended[]
+	 * A checkbox posts nothing at all when it is unticked, so gwc_vt_attended[]
 	 * would arrive with its indexes closed up and every row after the first
 	 * no-show would read somebody else's answer. Both of these therefore carry
 	 * an explicit row index, and are read by lookup rather than by position.
 	 *
-	 * gwcvt_signup[] is what tells the two kinds of row apart: a row that has
+	 * gwc_vt_signup[] is what tells the two kinds of row apart: a row that has
 	 * one is somebody who signed up, and needs a tick to count; a row without
 	 * one is a walk-in, and counts if it was filled in. Without that, the walk-in
 	 * rows at the bottom — which have no tick box, because a blank row is not a
 	 * no-show — would every one of them read as absent. */
-	$signups  = array_map( 'absint', (array) ( $posted['gwcvt_signup'] ?? array() ) );
-	$attended = (array) ( $posted['gwcvt_attended'] ?? array() );
+	$signups  = array_map( 'absint', (array) ( $posted['gwc_vt_signup'] ?? array() ) );
+	$attended = (array) ( $posted['gwc_vt_attended'] ?? array() );
 
 	$made     = 0;
 	$skipped  = 0;
@@ -611,12 +611,12 @@ function gwcvt_handle_quick_add(): void {
 			continue;
 		}
 
-		if ( GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+		if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 			++$skipped;
 			continue;
 		}
 
-		$minutes = gwcvt_parse_hours( $typed );
+		$minutes = gwc_vt_parse_hours( $typed );
 
 		if ( null === $minutes || $minutes < 1 ) {
 			++$skipped;
@@ -625,7 +625,7 @@ function gwcvt_handle_quick_add(): void {
 
 		$entry_id = wp_insert_post(
 			array(
-				'post_type'   => GWCVT_ENTRY_TYPE,
+				'post_type'   => GWC_VT_ENTRY_TYPE,
 				'post_status' => 'publish',
 				'post_title'  => 'tmp',
 			)
@@ -638,46 +638,46 @@ function gwcvt_handle_quick_add(): void {
 
 		$entry_id = (int) $entry_id;
 
-		update_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, (string) $volunteer_id );
-		update_post_meta( $entry_id, GWCVT_ENTRY_DATE, $date );
-		update_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, (int) $minutes );
-		update_post_meta( $entry_id, GWCVT_ENTRY_ACTIVITY, $activity );
-		update_post_meta( $entry_id, GWCVT_ENTRY_SUPERVISOR, $supervisor );
-		update_post_meta( $entry_id, GWCVT_ENTRY_SOURCE, 'staff' );
+		update_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, (string) $volunteer_id );
+		update_post_meta( $entry_id, GWC_VT_ENTRY_DATE, $date );
+		update_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, (int) $minutes );
+		update_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, $activity );
+		update_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, $supervisor );
+		update_post_meta( $entry_id, GWC_VT_ENTRY_SOURCE, 'staff' );
 
 		if ( $shift_id > 0 ) {
-			update_post_meta( $entry_id, GWCVT_ENTRY_SHIFT, $shift_id );
+			update_post_meta( $entry_id, GWC_VT_ENTRY_SHIFT, $shift_id );
 		}
 
 		if ( $signup_id > 0 ) {
-			update_post_meta( $signup_id, GWCVT_SIGNUP_ENTRY, $entry_id );
+			update_post_meta( $signup_id, GWC_VT_SIGNUP_ENTRY, $entry_id );
 
 			/* Logging somebody's hours is the coordinator saying who they are, so
 			 * a signup made by a stranger stops being unmatched here rather than
 			 * staying on the roster as a claim forever. Matching, not attesting:
 			 * the entry below still arrives unverified like every other. */
-			if ( (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true ) < 1 ) {
-				gwcvt_attach_signup( $signup_id, $volunteer_id );
+			if ( (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true ) < 1 ) {
+				gwc_vt_attach_signup( $signup_id, $volunteer_id );
 			}
 		}
 
-		gwcvt_retitle_entry( $entry_id );
-		gwcvt_refresh_totals( $volunteer_id );
+		gwc_vt_retitle_entry( $entry_id );
+		gwc_vt_refresh_totals( $volunteer_id );
 
 		/** This filter is documented in inc/meta-box.php */
-		do_action( 'gwcvt_entry_saved', $entry_id );
+		do_action( 'gwc_vt_entry_saved', $entry_id );
 
 		$logged[] = $entry_id;
 		++$made;
 	}
 
-	gwcvt_forget_unverified_count();
+	gwc_vt_forget_unverified_count();
 
 	if ( $shift_id > 0 ) {
 		/* Stamped even when nothing was logged. "Nobody came" is an answer, and a
 		 * shift that keeps asking after somebody has answered it is a nag that
 		 * teaches people to ignore nags. */
-		update_post_meta( $shift_id, GWCVT_SHIFT_RECONCILED, current_time( 'mysql', true ) );
+		update_post_meta( $shift_id, GWC_VT_SHIFT_RECONCILED, current_time( 'mysql', true ) );
 
 		/**
 		 * Fires after a shift's roster has been turned into hour entries.
@@ -685,10 +685,10 @@ function gwcvt_handle_quick_add(): void {
 		 * @param int   $shift_id The shift.
 		 * @param int[] $logged   The entries created, which may be none.
 		 */
-		do_action( 'gwcvt_shift_reconciled', $shift_id, $logged );
+		do_action( 'gwc_vt_shift_reconciled', $shift_id, $logged );
 	}
 
-	gwcvt_quick_add_redirect(
+	gwc_vt_quick_add_redirect(
 		$made,
 		$skipped,
 		$made > 0 ? 'logged' : 'nothing',
@@ -706,18 +706,18 @@ function gwcvt_handle_quick_add(): void {
  * @param int    $shift_id The shift this was logged against, if any.
  * @param int    $no_shows How many people signed up and did not turn up.
  */
-function gwcvt_quick_add_redirect( int $made, int $skipped, string $result, int $shift_id = 0, int $no_shows = 0 ): void {
+function gwc_vt_quick_add_redirect( int $made, int $skipped, string $result, int $shift_id = 0, int $no_shows = 0 ): void {
 	$args = array(
-		'page'          => GWCVT_QUICK_ADD_PAGE,
-		'post_type'     => GWCVT_ENTRY_TYPE,
-		'gwcvt_qa'      => $result,
-		'gwcvt_made'    => $made,
-		'gwcvt_skipped' => $skipped,
+		'page'           => GWC_VT_QUICK_ADD_PAGE,
+		'post_type'      => GWC_VT_ENTRY_TYPE,
+		'gwc_vt_qa'      => $result,
+		'gwc_vt_made'    => $made,
+		'gwc_vt_skipped' => $skipped,
 	);
 
 	if ( $shift_id > 0 ) {
-		$args['gwcvt_shift']    = $shift_id;
-		$args['gwcvt_no_shows'] = $no_shows;
+		$args['gwc_vt_shift']    = $shift_id;
+		$args['gwc_vt_no_shows'] = $no_shows;
 	}
 
 	wp_safe_redirect( add_query_arg( $args, admin_url( 'edit.php' ) ) );
@@ -727,21 +727,21 @@ function gwcvt_quick_add_redirect( int $made, int $skipped, string $result, int 
 /**
  * Say what happened.
  */
-function gwcvt_quick_add_notice(): void {
+function gwc_vt_quick_add_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks a sentence after a redirect.
-	$result = isset( $_GET['gwcvt_qa'] ) ? sanitize_key( wp_unslash( $_GET['gwcvt_qa'] ) ) : '';
+	$result = isset( $_GET['gwc_vt_qa'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_qa'] ) ) : '';
 
 	if ( '' === $result ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$made = isset( $_GET['gwcvt_made'] ) ? absint( wp_unslash( $_GET['gwcvt_made'] ) ) : 0;
+	$made = isset( $_GET['gwc_vt_made'] ) ? absint( wp_unslash( $_GET['gwc_vt_made'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$skipped = isset( $_GET['gwcvt_skipped'] ) ? absint( wp_unslash( $_GET['gwcvt_skipped'] ) ) : 0;
+	$skipped = isset( $_GET['gwc_vt_skipped'] ) ? absint( wp_unslash( $_GET['gwc_vt_skipped'] ) ) : 0;
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$no_shows = isset( $_GET['gwcvt_no_shows'] ) ? absint( wp_unslash( $_GET['gwcvt_no_shows'] ) ) : 0;
+	$no_shows = isset( $_GET['gwc_vt_no_shows'] ) ? absint( wp_unslash( $_GET['gwc_vt_no_shows'] ) ) : 0;
 
 	if ( 'bad-date' === $result ) {
 		printf(
@@ -822,8 +822,8 @@ function gwcvt_quick_add_notice(): void {
 		esc_url(
 			add_query_arg(
 				array(
-					'post_type'   => GWCVT_ENTRY_TYPE,
-					'gwcvt_state' => 'unverified',
+					'post_type'    => GWC_VT_ENTRY_TYPE,
+					'gwc_vt_state' => 'unverified',
 				),
 				admin_url( 'edit.php' )
 			)

@@ -12,7 +12,7 @@
 
 	var el = element.createElement;
 	var __ = i18n.__;
-	var settings = window.GWCVT_EVENT_EDITOR || {};
+	var settings = window.GWC_VT_EVENT_EDITOR || {};
 	var events = settings.events || [];
 
 	blocks.registerBlockType( 'groundwork-common-volunteer-tracker/event-grid', {

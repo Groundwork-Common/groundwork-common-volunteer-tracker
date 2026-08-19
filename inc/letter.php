@@ -19,15 +19,15 @@ defined( 'ABSPATH' ) || exit;
  * about. A cached number that is subtly stale is precisely the failure this
  * plugin cannot have, because the person holding the letter has no way to know.
  *
- * If somebody later "optimises" this to use gwcvt_volunteer_totals(), that is
+ * If somebody later "optimises" this to use gwc_vt_volunteer_totals(), that is
  * the bug.
  *
  * @param int   $volunteer_id Volunteer post ID.
  * @param array $args         Optional. 'from' and 'to' as Y-m-d.
- * @return GWCVT_Letter|null Null if there is no such volunteer.
+ * @return GWC_VT_Letter|null Null if there is no such volunteer.
  */
-function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
-	if ( GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
+	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 		return null;
 	}
 
@@ -36,9 +36,9 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
 
 	$include_unverified = array_key_exists( 'include_unverified', $args )
 		? (bool) $args['include_unverified']
-		: (bool) gwcvt_setting( 'letter_include_unverified' );
+		: (bool) gwc_vt_setting( 'letter_include_unverified' );
 
-	$entry_ids = gwcvt_entry_ids_for_volunteer(
+	$entry_ids = gwc_vt_entry_ids_for_volunteer(
 		$volunteer_id,
 		array(
 			'from'     => $from,
@@ -56,8 +56,8 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
 
 	foreach ( $entry_ids as $entry_id ) {
 		$entry_id    = (int) $entry_id;
-		$is_verified = gwcvt_entry_is_verified( $entry_id );
-		$minutes     = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
+		$is_verified = gwc_vt_entry_is_verified( $entry_id );
+		$minutes     = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
 
 		if ( $is_verified ) {
 			$verified += $minutes;
@@ -72,19 +72,19 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
 			}
 		}
 
-		$rows[] = new GWCVT_Letter_Entry(
-			(string) get_post_meta( $entry_id, GWCVT_ENTRY_DATE, true ),
+		$rows[] = new GWC_VT_Letter_Entry(
+			(string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true ),
 			$minutes,
-			(string) get_post_meta( $entry_id, GWCVT_ENTRY_ACTIVITY, true ),
-			(string) get_post_meta( $entry_id, GWCVT_ENTRY_SUPERVISOR, true ),
+			(string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true ),
+			(string) get_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, true ),
 			$is_verified,
-			$is_verified ? gwcvt_attestation_line( $entry_id ) : ''
+			$is_verified ? gwc_vt_attestation_line( $entry_id ) : ''
 		);
 	}
 
-	usort( $rows, static fn( GWCVT_Letter_Entry $a, GWCVT_Letter_Entry $b ): int => strcmp( $a->date, $b->date ) );
+	usort( $rows, static fn( GWC_VT_Letter_Entry $a, GWC_VT_Letter_Entry $b ): int => strcmp( $a->date, $b->date ) );
 
-	$letter = new GWCVT_Letter(
+	$letter = new GWC_VT_Letter(
 		$volunteer_id,
 		(string) get_the_title( $volunteer_id ),
 		$from,
@@ -93,17 +93,17 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
 		$verified,
 		$include_unverified ? $unverified : 0,
 		$include_unverified,
-		gwcvt_letter_reference( $volunteer_id, $from, $to, $verified, $rows ),
+		gwc_vt_letter_reference( $volunteer_id, $from, $to, $verified, $rows ),
 		time()
 	);
 
 	/**
 	 * The assembled letter, before it is rendered.
 	 *
-	 * @param GWCVT_Letter $letter       The letter.
+	 * @param GWC_VT_Letter $letter       The letter.
 	 * @param int          $volunteer_id Volunteer post ID.
 	 */
-	return apply_filters( 'gwcvt_letter_model', $letter, $volunteer_id );
+	return apply_filters( 'gwc_vt_letter_model', $letter, $volunteer_id );
 }
 
 /* ── The reference code ──────────────────────────────────────────────────────
@@ -152,10 +152,10 @@ function gwcvt_build_letter( int $volunteer_id, array $args = array() ) {
  * document did change, and the screen shows both versions so a human can see
  * that it was a typo and not an alteration.
  *
- * @param GWCVT_Letter_Entry[] $rows The shifts, in the order the letter lists them.
+ * @param GWC_VT_Letter_Entry[] $rows The shifts, in the order the letter lists them.
  * @return array
  */
-function gwcvt_letter_fingerprint( array $rows ): array {
+function gwc_vt_letter_fingerprint( array $rows ): array {
 	$fingerprint = array();
 
 	foreach ( $rows as $row ) {
@@ -174,14 +174,14 @@ function gwcvt_letter_fingerprint( array $rows ): array {
 /**
  * Mint a reference code.
  *
- * @param int                  $volunteer_id     Volunteer post ID.
- * @param string               $from             Y-m-d or ''.
- * @param string               $to               Y-m-d or ''.
- * @param int                  $verified_minutes Attested minutes.
- * @param GWCVT_Letter_Entry[] $rows             The shifts the letter lists.
+ * @param int                   $volunteer_id     Volunteer post ID.
+ * @param string                $from             Y-m-d or ''.
+ * @param string                $to               Y-m-d or ''.
+ * @param int                   $verified_minutes Attested minutes.
+ * @param GWC_VT_Letter_Entry[] $rows             The shifts the letter lists.
  * @return string
  */
-function gwcvt_letter_reference( int $volunteer_id, string $from, string $to, int $verified_minutes, array $rows ): string {
+function gwc_vt_letter_reference( int $volunteer_id, string $from, string $to, int $verified_minutes, array $rows ): string {
 	$canonical = wp_json_encode(
 		array(
 			'volunteer' => $volunteer_id,
@@ -189,13 +189,13 @@ function gwcvt_letter_reference( int $volunteer_id, string $from, string $to, in
 			'to'        => $to,
 			'minutes'   => $verified_minutes,
 			'entries'   => count( $rows ),
-			'rows'      => gwcvt_letter_fingerprint( $rows ),
+			'rows'      => gwc_vt_letter_fingerprint( $rows ),
 		)
 	);
 
-	$digest = substr( hash_hmac( 'sha256', (string) $canonical, wp_salt( 'gwcvt_letter' ) ), 0, 8 );
+	$digest = substr( hash_hmac( 'sha256', (string) $canonical, wp_salt( 'gwc_vt_letter' ) ), 0, 8 );
 
-	$prefix = trim( (string) gwcvt_setting( 'reference_prefix' ) );
+	$prefix = trim( (string) gwc_vt_setting( 'reference_prefix' ) );
 	$prefix = '' !== $prefix ? strtoupper( preg_replace( '/[^A-Za-z0-9]/', '', $prefix ) ) . '-' : '';
 
 	$code = sprintf(
@@ -212,7 +212,7 @@ function gwcvt_letter_reference( int $volunteer_id, string $from, string $to, in
 	 * @param string $code         The code.
 	 * @param int    $volunteer_id Volunteer post ID.
 	 */
-	return (string) apply_filters( 'gwcvt_letter_reference', $code, $volunteer_id );
+	return (string) apply_filters( 'gwc_vt_letter_reference', $code, $volunteer_id );
 }
 
 /**
@@ -234,9 +234,9 @@ function gwcvt_letter_reference( int $volunteer_id, string $from, string $to, in
  * @param string $code The reference code.
  * @return array{status:string, letter:array, current:array}
  */
-function gwcvt_verify_reference( string $code ): array {
+function gwc_vt_verify_reference( string $code ): array {
 	$code   = strtoupper( trim( $code ) );
-	$record = gwcvt_find_letter_record( $code );
+	$record = gwc_vt_find_letter_record( $code );
 
 	if ( ! $record ) {
 		return array(
@@ -259,7 +259,7 @@ function gwcvt_verify_reference( string $code ): array {
 	 * the same digest. tests/integration/letter.php edits a record and asserts
 	 * the code stops matching; that test is the only reason this is right.
 	 * ─────────────────────────────────────────────────────────────────────── */
-	$current = gwcvt_build_letter(
+	$current = gwc_vt_build_letter(
 		$record['volunteer_id'],
 		array(
 			'from' => $record['from'],
@@ -267,7 +267,7 @@ function gwcvt_verify_reference( string $code ): array {
 		)
 	);
 
-	if ( ! $current instanceof GWCVT_Letter ) {
+	if ( ! $current instanceof GWC_VT_Letter ) {
 		/* The volunteer has been purged or deleted. The letter was certainly
 		 * issued — the log says so — but there is nothing left to check it
 		 * against, and saying "matches" would be a claim about records that no
@@ -280,7 +280,7 @@ function gwcvt_verify_reference( string $code ): array {
 		);
 	}
 
-	$expected = gwcvt_letter_reference(
+	$expected = gwc_vt_letter_reference(
 		$record['volunteer_id'],
 		$record['from'],
 		$record['to'],
@@ -292,7 +292,7 @@ function gwcvt_verify_reference( string $code ): array {
 	 * letter from last March can never recompute to a byte-identical code
 	 * today — comparing whole codes would report every letter older than a day
 	 * as changed. The digest is what carries the facts. */
-	$status = gwcvt_reference_digest( $expected ) === gwcvt_reference_digest( $code ) ? 'match' : 'changed';
+	$status = gwc_vt_reference_digest( $expected ) === gwc_vt_reference_digest( $code ) ? 'match' : 'changed';
 
 	return array(
 		'status'  => $status,
@@ -315,7 +315,7 @@ function gwcvt_verify_reference( string $code ): array {
  * @param string $code A reference code.
  * @return string
  */
-function gwcvt_reference_digest( string $code ): string {
+function gwc_vt_reference_digest( string $code ): string {
 	$parts = explode( '-', strtoupper( trim( $code ) ) );
 
 	return (string) end( $parts );

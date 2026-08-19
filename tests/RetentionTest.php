@@ -15,15 +15,15 @@ use PHPUnit\Framework\TestCase;
 final class RetentionTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
 	 * @param array $settings Settings to store.
 	 */
 	private function settings( array $settings ): void {
-		update_option( GWCVT_SETTINGS_OPTION, $settings );
-		gwcvt_settings_cache( null, true );
+		update_option( GWC_VT_SETTINGS_OPTION, $settings );
+		gwc_vt_settings_cache( null, true );
 	}
 
 	/* ── The cutoff ──────────────────────────────────────────────────────── */
@@ -35,7 +35,7 @@ final class RetentionTest extends TestCase {
 	 */
 	#[DataProvider( 'cutoffs' )]
 	public function test_the_cutoff_is_calendar_months( int $months, string $today, string $expected ): void {
-		$this->assertSame( $expected, gwcvt_retention_cutoff( $months, $today ) );
+		$this->assertSame( $expected, gwc_vt_retention_cutoff( $months, $today ) );
 	}
 
 	public static function cutoffs(): array {
@@ -54,13 +54,13 @@ final class RetentionTest extends TestCase {
 	}
 
 	public function test_retention_off_has_no_cutoff(): void {
-		$this->assertSame( '', gwcvt_retention_cutoff( 0, '2026-08-05' ) );
-		$this->assertSame( '', gwcvt_retention_cutoff( -12, '2026-08-05' ) );
+		$this->assertSame( '', gwc_vt_retention_cutoff( 0, '2026-08-05' ) );
+		$this->assertSame( '', gwc_vt_retention_cutoff( -12, '2026-08-05' ) );
 	}
 
 	public function test_a_nonsense_date_has_no_cutoff(): void {
-		$this->assertSame( '', gwcvt_retention_cutoff( 12, 'not a date' ) );
-		$this->assertSame( '', gwcvt_retention_cutoff( 12, '' ) );
+		$this->assertSame( '', gwc_vt_retention_cutoff( 12, 'not a date' ) );
+		$this->assertSame( '', gwc_vt_retention_cutoff( 12, '' ) );
 	}
 
 	/* ── Due, and not due ────────────────────────────────────────────────── */
@@ -74,12 +74,12 @@ final class RetentionTest extends TestCase {
 	private function volunteer_last_active( string $last_shift ): int {
 		$id = 500;
 
-		gwcvt_test_add_post( $id, GWCVT_VOLUNTEER_TYPE, 'publish', 'Jane Quimby' );
+		gwc_vt_test_add_post( $id, GWC_VT_VOLUNTEER_TYPE, 'publish', 'Jane Quimby' );
 
 		update_post_meta(
 			$id,
-			GWCVT_VOLUNTEER_TOTALS,
-			( new GWCVT_Totals( 390, 0, 2, '2020-01-01', $last_shift, time() ) )->to_array()
+			GWC_VT_VOLUNTEER_TOTALS,
+			( new GWC_VT_Totals( 390, 0, 2, '2020-01-01', $last_shift, time() ) )->to_array()
 		);
 
 		return $id;
@@ -92,19 +92,19 @@ final class RetentionTest extends TestCase {
 
 		/* The default, and the one that must never purge. A record twenty-five
 		 * years old is still kept while nobody has chosen a policy. */
-		$this->assertFalse( gwcvt_retention_due( $volunteer, '2026-08-05' ) );
+		$this->assertFalse( gwc_vt_retention_due( $volunteer, '2026-08-05' ) );
 	}
 
 	public function test_a_record_older_than_the_cutoff_is_due(): void {
 		$this->settings( array( 'retention_months' => 24, 'retention_anchor' => 'last_entry' ) );
 
-		$this->assertTrue( gwcvt_retention_due( $this->volunteer_last_active( '2024-08-04' ), '2026-08-05' ) );
+		$this->assertTrue( gwc_vt_retention_due( $this->volunteer_last_active( '2024-08-04' ), '2026-08-05' ) );
 	}
 
 	public function test_a_record_inside_the_cutoff_is_not_due(): void {
 		$this->settings( array( 'retention_months' => 24, 'retention_anchor' => 'last_entry' ) );
 
-		$this->assertFalse( gwcvt_retention_due( $this->volunteer_last_active( '2024-08-06' ), '2026-08-05' ) );
+		$this->assertFalse( gwc_vt_retention_due( $this->volunteer_last_active( '2024-08-06' ), '2026-08-05' ) );
 	}
 
 	public function test_the_boundary_day_itself_is_not_due(): void {
@@ -112,18 +112,18 @@ final class RetentionTest extends TestCase {
 
 		/* Exactly on the cutoff is inside it. Erring the other way means a record
 		 * is destroyed one day before the policy said it could be. */
-		$this->assertFalse( gwcvt_retention_due( $this->volunteer_last_active( '2024-08-05' ), '2026-08-05' ) );
+		$this->assertFalse( gwc_vt_retention_due( $this->volunteer_last_active( '2024-08-05' ), '2026-08-05' ) );
 	}
 
 	public function test_a_hold_exempts_a_record_however_old(): void {
 		$this->settings( array( 'retention_months' => 12, 'retention_anchor' => 'last_entry' ) );
 
 		$volunteer = $this->volunteer_last_active( '2001-01-01' );
-		update_post_meta( $volunteer, GWCVT_VOLUNTEER_HOLD, 1 );
+		update_post_meta( $volunteer, GWC_VT_VOLUNTEER_HOLD, 1 );
 
-		$this->assertTrue( gwcvt_retention_held( $volunteer ) );
+		$this->assertTrue( gwc_vt_retention_held( $volunteer ) );
 		$this->assertFalse(
-			gwcvt_retention_due( $volunteer, '2026-08-05' ),
+			gwc_vt_retention_due( $volunteer, '2026-08-05' ),
 			'A court can require an organisation to keep a record longer than its own policy.'
 		);
 	}
@@ -134,19 +134,19 @@ final class RetentionTest extends TestCase {
 		$volunteer = $this->volunteer_last_active( '2001-01-01' );
 		$never     = static fn(): bool => false;
 
-		add_filter( 'gwcvt_retention_due', $never );
-		$this->assertFalse( gwcvt_retention_due( $volunteer, '2026-08-05' ) );
-		remove_filter( 'gwcvt_retention_due', $never );
+		add_filter( 'gwc_vt_retention_due', $never );
+		$this->assertFalse( gwc_vt_retention_due( $volunteer, '2026-08-05' ) );
+		remove_filter( 'gwc_vt_retention_due', $never );
 
-		$this->assertTrue( gwcvt_retention_due( $volunteer, '2026-08-05' ) );
+		$this->assertTrue( gwc_vt_retention_due( $volunteer, '2026-08-05' ) );
 	}
 
 	/* ── The run log ─────────────────────────────────────────────────────── */
 
 	public function test_a_run_is_recorded(): void {
-		gwcvt_log_retention_run( 'anonymize', 4, 1 );
+		gwc_vt_log_retention_run( 'anonymize', 4, 1 );
 
-		$log = gwcvt_retention_log();
+		$log = gwc_vt_retention_log();
 
 		$this->assertCount( 1, $log );
 		$this->assertSame( 'anonymize', $log[0]['action'] );
@@ -155,34 +155,34 @@ final class RetentionTest extends TestCase {
 	}
 
 	public function test_the_newest_run_is_first(): void {
-		gwcvt_log_retention_run( 'anonymize', 1, 0 );
-		gwcvt_log_retention_run( 'delete', 2, 0 );
+		gwc_vt_log_retention_run( 'anonymize', 1, 0 );
+		gwc_vt_log_retention_run( 'delete', 2, 0 );
 
-		$this->assertSame( 'delete', gwcvt_retention_log()[0]['action'] );
+		$this->assertSame( 'delete', gwc_vt_retention_log()[0]['action'] );
 	}
 
 	public function test_the_log_is_bounded(): void {
-		for ( $i = 0; $i < GWCVT_RETENTION_LOG_SIZE + 10; $i++ ) {
-			gwcvt_log_retention_run( 'anonymize', $i, 0 );
+		for ( $i = 0; $i < GWC_VT_RETENTION_LOG_SIZE + 10; $i++ ) {
+			gwc_vt_log_retention_run( 'anonymize', $i, 0 );
 		}
 
 		/* Written daily forever. Unbounded, this is an option that grows by a row
 		 * a day for the life of the site. */
-		$this->assertCount( GWCVT_RETENTION_LOG_SIZE, gwcvt_retention_log() );
-		$this->assertSame( GWCVT_RETENTION_LOG_SIZE + 9, gwcvt_retention_log()[0]['purged'] );
+		$this->assertCount( GWC_VT_RETENTION_LOG_SIZE, gwc_vt_retention_log() );
+		$this->assertSame( GWC_VT_RETENTION_LOG_SIZE + 9, gwc_vt_retention_log()[0]['purged'] );
 	}
 
 	/* ── Scheduling ──────────────────────────────────────────────────────── */
 
 	public function test_the_sweep_is_scheduled_once(): void {
-		gwcvt_schedule_retention();
-		$first = wp_next_scheduled( GWCVT_RETENTION_EVENT );
+		gwc_vt_schedule_retention();
+		$first = wp_next_scheduled( GWC_VT_RETENTION_EVENT );
 
-		gwcvt_schedule_retention();
+		gwc_vt_schedule_retention();
 
 		$this->assertSame(
 			$first,
-			wp_next_scheduled( GWCVT_RETENTION_EVENT ),
+			wp_next_scheduled( GWC_VT_RETENTION_EVENT ),
 			'Running on every init must not re-schedule, or the sweep never actually fires.'
 		);
 	}
@@ -190,14 +190,14 @@ final class RetentionTest extends TestCase {
 	/* ── The retention period options ────────────────────────────────────── */
 
 	public function test_keeping_indefinitely_is_an_option(): void {
-		$options = gwcvt_retention_period_options();
+		$options = gwc_vt_retention_period_options();
 
 		$this->assertArrayHasKey( '0', $options );
 		$this->assertSame( 'Keep indefinitely', $options['0'] );
 	}
 
 	public function test_no_two_periods_read_the_same(): void {
-		$labels = array_values( gwcvt_retention_period_options() );
+		$labels = array_values( gwc_vt_retention_period_options() );
 
 		/* This shipped broken: the labels were computed as round( $months / 12 ),
 		 * so 18 and 24 months both rendered as "2 years". Two options a person
@@ -212,15 +212,15 @@ final class RetentionTest extends TestCase {
 	}
 
 	public function test_every_period_is_a_whole_number_of_months(): void {
-		foreach ( array_keys( gwcvt_retention_period_options() ) as $months ) {
+		foreach ( array_keys( gwc_vt_retention_period_options() ) as $months ) {
 			$this->assertMatchesRegularExpression( '/^\d+$/', (string) $months );
 		}
 	}
 
 	public function test_the_stored_value_is_months_not_years(): void {
-		$options = gwcvt_retention_period_options();
+		$options = gwc_vt_retention_period_options();
 
-		/* The keys feed gwcvt_retention_cutoff(), which subtracts calendar
+		/* The keys feed gwc_vt_retention_cutoff(), which subtracts calendar
 		 * months. A key meaning years would quietly divide every retention
 		 * period by twelve. */
 		$this->assertArrayHasKey( '12', $options );

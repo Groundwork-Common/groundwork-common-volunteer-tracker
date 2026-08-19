@@ -6,7 +6,7 @@
  * with this script absent you can still build any grid, one save at a time. All
  * this does is save the round trips.
  *
- * Field names carry explicit indexes (gwcvt_roles[2][slots][1][date]), so a
+ * Field names carry explicit indexes (gwc_vt_roles[2][slots][1][date]), so a
  * clone has to be renumbered or the new row overwrites its neighbour's answer.
  */
 ( function () {
@@ -130,7 +130,7 @@
 
 			var copy = source.cloneNode( true );
 
-			renumber( copy, /gwcvt_roles\[\d+\]/, 'gwcvt_roles[' + index + ']' );
+			renumber( copy, /gwc_vt_roles\[\d+\]/, 'gwc_vt_roles[' + index + ']' );
 			renumber( copy, /^gwcvt-role-\d+/, 'gwcvt-role-' + index );
 			renumber( copy, /^gwcvt-slot-\d+-/, 'gwcvt-slot-' + index + '-' );
 			blank( copy );

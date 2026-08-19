@@ -7,13 +7,13 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'template_redirect', 'gwcvt_signup_dispatch' );
+add_action( 'template_redirect', 'gwc_vt_signup_dispatch' );
 
 /* ── The same surface as the hours form, and the same answer ─────────────────
  * inc/self-log.php sets out what this plugin does when the person on the other
  * end is anonymous. Everything there applies here, so this file reuses its
- * defences rather than restating them: gwcvt_rate_limited(), gwcvt_form_stamp(),
- * gwcvt_form_age() and gwcvt_client_ip() are called from here unchanged.
+ * defences rather than restating them: gwc_vt_rate_limited(), gwc_vt_form_stamp(),
+ * gwc_vt_form_age() and gwc_vt_client_ip() are called from here unchanged.
  *
  * One shared limiter across both forms is deliberate. A script hammering the
  * signup form and a script hammering the hours form are the same script, and two
@@ -28,7 +28,7 @@ add_action( 'template_redirect', 'gwcvt_signup_dispatch' );
  *    "who is volunteering Saturday" is a list of people working one off, and a
  *    place count is not.
  *
- * 2. THERE IS ONE LOOKUP AND IT IS NOT AN ORACLE. gwcvt_find_signup() asks
+ * 2. THERE IS ONE LOOKUP AND IT IS NOT AN ORACLE. gwc_vt_find_signup() asks
  *    whether this address is already on THIS shift, so that pressing Submit
  *    twice does not book you twice. It never touches the volunteer table, and
  *    the visible answer is identical either way — only the confirmation email,
@@ -42,20 +42,20 @@ add_action( 'template_redirect', 'gwcvt_signup_dispatch' );
 /**
  * Handle a front-end signup or cancellation.
  */
-function gwcvt_signup_dispatch(): void {
+function gwc_vt_signup_dispatch(): void {
 	/* The first line, and deliberately not merely "do not render the form". A
 	 * handler that ran while only the form was hidden would accept posts to a
 	 * feature the site had switched off. */
-	if ( ! gwcvt_signups_open() ) {
+	if ( ! gwc_vt_signups_open() ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- presence check only; the nonce is verified in each handler.
-	$is_signup = isset( $_POST['gwcvt_signup_submit'] );
+	$is_signup = isset( $_POST['gwc_vt_signup_submit'] );
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
-	$is_cancel = isset( $_POST['gwcvt_cancel_submit'] );
+	$is_cancel = isset( $_POST['gwc_vt_cancel_submit'] );
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
-	$is_event = isset( $_POST['gwcvt_event_submit'] );
+	$is_event = isset( $_POST['gwc_vt_event_submit'] );
 
 	if ( ! $is_signup && ! $is_cancel && ! $is_event ) {
 		return;
@@ -66,7 +66,7 @@ function gwcvt_signup_dispatch(): void {
 	 * only place a submission can legitimately arrive from. What has NOT changed
 	 * is that a handler must never run where no form was rendered — that would be
 	 * accepting posts to a feature the site has not put anywhere. */
-	if ( ! gwcvt_signup_page_allows_posts() ) {
+	if ( ! gwc_vt_signup_page_allows_posts() ) {
 		return;
 	}
 
@@ -81,16 +81,16 @@ function gwcvt_signup_dispatch(): void {
 	nocache_headers();
 
 	if ( $is_cancel ) {
-		gwcvt_handle_public_cancel();
+		gwc_vt_handle_public_cancel();
 		return;
 	}
 
 	if ( $is_event ) {
-		gwcvt_handle_public_event_signup();
+		gwc_vt_handle_public_event_signup();
 		return;
 	}
 
-	gwcvt_handle_public_signup();
+	gwc_vt_handle_public_signup();
 }
 
 /**
@@ -101,8 +101,8 @@ function gwcvt_signup_dispatch(): void {
  *
  * @return bool
  */
-function gwcvt_signup_page_allows_posts(): bool {
-	if ( is_page( (int) gwcvt_setting( 'schedule_page' ) ) ) {
+function gwc_vt_signup_page_allows_posts(): bool {
+	if ( is_page( (int) gwc_vt_setting( 'schedule_page' ) ) ) {
 		return true;
 	}
 
@@ -116,7 +116,7 @@ function gwcvt_signup_page_allows_posts(): bool {
 		return false;
 	}
 
-	return has_shortcode( (string) $post->post_content, 'volunteer_event' )
+	return has_shortcode( (string) $post->post_content, 'gwc_vt_event_grid' )
 		|| has_block( 'groundwork-common-volunteer-tracker/event-grid', $post );
 }
 
@@ -129,22 +129,22 @@ function gwcvt_signup_page_allows_posts(): bool {
  *
  * @return bool
  */
-function gwcvt_signups_open(): bool {
-	return (bool) gwcvt_setting( 'shifts_enabled' )
-		&& (bool) gwcvt_setting( 'signup_enabled' )
-		&& (int) gwcvt_setting( 'schedule_page' ) > 0;
+function gwc_vt_signups_open(): bool {
+	return (bool) gwc_vt_setting( 'shifts_enabled' )
+		&& (bool) gwc_vt_setting( 'signup_enabled' )
+		&& (int) gwc_vt_setting( 'schedule_page' ) > 0;
 }
 
 /**
  * Read, check and record one signup.
  */
-function gwcvt_handle_public_signup(): void {
+function gwc_vt_handle_public_signup(): void {
 	$started = microtime( true );
 
-	$nonce = isset( $_POST['gwcvt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_signup_nonce'] ) ) : '';
+	$nonce = isset( $_POST['gwc_vt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwc_vt_signup_nonce'] ) ) : '';
 
-	if ( ! wp_verify_nonce( $nonce, 'gwcvt_signup' ) ) {
-		gwcvt_signup_result( 'expired', $started );
+	if ( ! wp_verify_nonce( $nonce, 'gwc_vt_signup' ) ) {
+		gwc_vt_signup_result( 'expired', $started );
 		return;
 	}
 
@@ -153,60 +153,60 @@ function gwcvt_handle_public_signup(): void {
 	/* The honeypot. A visible text input in an off-screen wrapper — not
 	 * type="hidden" and not an inline display:none, both of which the scripts
 	 * worth stopping already know to skip. */
-	if ( '' !== trim( (string) ( $posted['gwcvt_website'] ?? '' ) ) ) {
-		gwcvt_signup_result( 'accepted', $started );
+	if ( '' !== trim( (string) ( $posted['gwc_vt_website'] ?? '' ) ) ) {
+		gwc_vt_signup_result( 'accepted', $started );
 		return;
 	}
 
-	$age = gwcvt_form_age( (string) ( $posted['gwcvt_t'] ?? '' ) );
+	$age = gwc_vt_form_age( (string) ( $posted['gwc_vt_t'] ?? '' ) );
 
-	if ( null === $age || $age > GWCVT_FORM_MAX_AGE ) {
-		gwcvt_signup_result( 'expired', $started );
+	if ( null === $age || $age > GWC_VT_FORM_MAX_AGE ) {
+		gwc_vt_signup_result( 'expired', $started );
 		return;
 	}
 
-	if ( $age < GWCVT_FORM_MIN_AGE ) {
-		gwcvt_signup_result( 'accepted', $started );
+	if ( $age < GWC_VT_FORM_MIN_AGE ) {
+		gwc_vt_signup_result( 'accepted', $started );
 		return;
 	}
 
-	$code = (string) gwcvt_setting( 'signup_code' );
+	$code = (string) gwc_vt_setting( 'signup_code' );
 
-	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwcvt_code'] ?? '' ) ) ) ) {
+	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
 		/* A distinct message, because this one is not a security boundary — it is
 		 * a word somebody was given, and a person who mistypes it needs telling. */
-		gwcvt_signup_result( 'bad-code', $started );
+		gwc_vt_signup_result( 'bad-code', $started );
 		return;
 	}
 
-	$shift_id = absint( $posted['gwcvt_shift'] ?? 0 );
-	$name     = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_name'] ?? '' ) ), 0, 100 );
-	$email    = sanitize_email( (string) ( $posted['gwcvt_email'] ?? '' ) );
+	$shift_id = absint( $posted['gwc_vt_shift'] ?? 0 );
+	$name     = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 100 );
+	$email    = sanitize_email( (string) ( $posted['gwc_vt_email'] ?? '' ) );
 
 	/* An address is required here where the hours form leaves it optional, and
 	 * the reason is the confirmation: a signup nobody can be told about is a
 	 * commitment with no record and no way out of it. */
 	if ( '' === $name || '' === $email || ! is_email( $email ) ) {
-		gwcvt_signup_result( 'incomplete', $started );
+		gwc_vt_signup_result( 'incomplete', $started );
 		return;
 	}
 
-	if ( ! gwcvt_shift_is_signup_visible( $shift_id ) ) {
+	if ( ! gwc_vt_shift_is_signup_visible( $shift_id ) ) {
 		/* Closed, cancelled, in the past, a draft, or not a shift at all. One
 		 * message for all of them: the visitor's list was simply out of date, and
 		 * enumerating why would answer questions about shifts they cannot see. */
-		gwcvt_signup_result( 'unavailable', $started );
+		gwc_vt_signup_result( 'unavailable', $started );
 		return;
 	}
 
 	/* Counted before it is reported, so a refused attempt still counts against
 	 * the limit — otherwise the limiter is a speed bump somebody can sit on. */
-	if ( gwcvt_rate_limited( gwcvt_client_ip(), $email ) ) {
-		gwcvt_signup_result( 'accepted', $started );
+	if ( gwc_vt_rate_limited( gwc_vt_client_ip(), $email ) ) {
+		gwc_vt_signup_result( 'accepted', $started );
 		return;
 	}
 
-	$signup_id = gwcvt_add_signup(
+	$signup_id = gwc_vt_add_signup(
 		$shift_id,
 		array(
 			'claim_name'  => $name,
@@ -216,16 +216,16 @@ function gwcvt_handle_public_signup(): void {
 	);
 
 	if ( $signup_id > 0 ) {
-		gwcvt_queue_signup_confirmation( $signup_id );
+		gwc_vt_queue_signup_confirmation( $signup_id );
 	}
 
-	gwcvt_signup_result( 'accepted', $started );
+	gwc_vt_signup_result( 'accepted', $started );
 }
 
 /* ── One submission, several slots ───────────────────────────────────────────
  * The dangerous one, and the danger is entirely in what it says back.
  *
- * gwcvt_add_signup() is idempotent — a second signup for the same slot by the
+ * gwc_vt_add_signup() is idempotent — a second signup for the same slot by the
  * same address refreshes the first rather than making another — and this form
  * never checks whose address it was given. So a stranger can type somebody
  * else's address and tick three boxes. Three new signups, two new and one
@@ -252,37 +252,37 @@ function gwcvt_handle_public_signup(): void {
 /**
  * Read, check and record one submission covering several slots.
  */
-function gwcvt_handle_public_event_signup(): void {
+function gwc_vt_handle_public_event_signup(): void {
 	$started = microtime( true );
 
-	$nonce = isset( $_POST['gwcvt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_signup_nonce'] ) ) : '';
+	$nonce = isset( $_POST['gwc_vt_signup_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwc_vt_signup_nonce'] ) ) : '';
 
-	if ( ! wp_verify_nonce( $nonce, 'gwcvt_signup' ) ) {
-		gwcvt_signup_result( 'expired', $started );
+	if ( ! wp_verify_nonce( $nonce, 'gwc_vt_signup' ) ) {
+		gwc_vt_signup_result( 'expired', $started );
 		return;
 	}
 
 	$posted = wp_unslash( $_POST );
 
-	$event_id = absint( $posted['gwcvt_event'] ?? 0 );
-	$wanted   = array_map( 'absint', array_keys( (array) ( $posted['gwcvt_slots'] ?? array() ) ) );
+	$event_id = absint( $posted['gwc_vt_event'] ?? 0 );
+	$wanted   = array_map( 'absint', array_keys( (array) ( $posted['gwc_vt_slots'] ?? array() ) ) );
 	$wanted   = array_values( array_filter( array_unique( $wanted ) ) );
 
 	/* Kept so the form can be handed back with every tick still in place. A
 	 * visitor who has to answer a question should not have to re-do the grid. */
-	$GLOBALS['gwcvt_signup_picked'] = $wanted;
-	$GLOBALS['gwcvt_signup_name']   = mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_name'] ?? '' ) ), 0, 100 );
-	$GLOBALS['gwcvt_signup_email']  = sanitize_email( (string) ( $posted['gwcvt_email'] ?? '' ) );
+	$GLOBALS['gwc_vt_signup_picked'] = $wanted;
+	$GLOBALS['gwc_vt_signup_name']   = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 100 );
+	$GLOBALS['gwc_vt_signup_email']  = sanitize_email( (string) ( $posted['gwc_vt_email'] ?? '' ) );
 
-	if ( GWCVT_EVENT_TYPE !== get_post_type( $event_id ) || 'publish' !== get_post_status( $event_id ) ) {
-		gwcvt_signup_result( 'unavailable', $started );
+	if ( GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) || 'publish' !== get_post_status( $event_id ) ) {
+		gwc_vt_signup_result( 'unavailable', $started );
 		return;
 	}
 
 	/* A cap on one submission. Safe to report because it depends only on what the
 	 * visitor posted, not on anything the site knows about them. */
-	if ( count( $wanted ) > gwcvt_event_signup_limit() ) {
-		gwcvt_signup_result( 'too-many', $started );
+	if ( count( $wanted ) > gwc_vt_event_signup_limit() ) {
+		gwc_vt_signup_result( 'too-many', $started );
 		return;
 	}
 
@@ -291,56 +291,56 @@ function gwcvt_handle_public_event_signup(): void {
 	$mine = array();
 
 	foreach ( $wanted as $shift_id ) {
-		if ( gwcvt_event_for_shift( $shift_id ) === $event_id ) {
+		if ( gwc_vt_event_for_shift( $shift_id ) === $event_id ) {
 			$mine[] = $shift_id;
 		}
 	}
 
-	if ( ! $mine || '' === $GLOBALS['gwcvt_signup_name'] || '' === $GLOBALS['gwcvt_signup_email'] || ! is_email( $GLOBALS['gwcvt_signup_email'] ) ) {
-		gwcvt_signup_result( 'incomplete', $started );
+	if ( ! $mine || '' === $GLOBALS['gwc_vt_signup_name'] || '' === $GLOBALS['gwc_vt_signup_email'] || ! is_email( $GLOBALS['gwc_vt_signup_email'] ) ) {
+		gwc_vt_signup_result( 'incomplete', $started );
 		return;
 	}
 
-	if ( empty( $posted['gwcvt_clash_ok'] ) ) {
-		$pair = gwcvt_first_overlapping_pair( $mine );
+	if ( empty( $posted['gwc_vt_clash_ok'] ) ) {
+		$pair = gwc_vt_first_overlapping_pair( $mine );
 
 		if ( $pair ) {
-			$GLOBALS['gwcvt_signup_clash'] = $pair;
-			gwcvt_signup_result( 'clash', $started );
+			$GLOBALS['gwc_vt_signup_clash'] = $pair;
+			gwc_vt_signup_result( 'clash', $started );
 			return;
 		}
 	}
 
 	/* The honeypot. Everything above this line is derived from the request;
 	 * everything below it can depend on the database. */
-	if ( '' !== trim( (string) ( $posted['gwcvt_website'] ?? '' ) ) ) {
-		gwcvt_signup_result( 'accepted', $started );
+	if ( '' !== trim( (string) ( $posted['gwc_vt_website'] ?? '' ) ) ) {
+		gwc_vt_signup_result( 'accepted', $started );
 		return;
 	}
 
-	$age = gwcvt_form_age( (string) ( $posted['gwcvt_t'] ?? '' ) );
+	$age = gwc_vt_form_age( (string) ( $posted['gwc_vt_t'] ?? '' ) );
 
-	if ( null === $age || $age > GWCVT_FORM_MAX_AGE ) {
-		gwcvt_signup_result( 'expired', $started );
+	if ( null === $age || $age > GWC_VT_FORM_MAX_AGE ) {
+		gwc_vt_signup_result( 'expired', $started );
 		return;
 	}
 
-	if ( $age < GWCVT_FORM_MIN_AGE ) {
-		gwcvt_signup_result( 'accepted', $started );
+	if ( $age < GWC_VT_FORM_MIN_AGE ) {
+		gwc_vt_signup_result( 'accepted', $started );
 		return;
 	}
 
-	$code = (string) gwcvt_setting( 'signup_code' );
+	$code = (string) gwc_vt_setting( 'signup_code' );
 
-	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwcvt_code'] ?? '' ) ) ) ) {
-		gwcvt_signup_result( 'bad-code', $started );
+	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
+		gwc_vt_signup_result( 'bad-code', $started );
 		return;
 	}
 
 	$open = array();
 
 	foreach ( $mine as $shift_id ) {
-		if ( gwcvt_shift_is_signup_visible( $shift_id ) ) {
+		if ( gwc_vt_shift_is_signup_visible( $shift_id ) ) {
 			$open[] = $shift_id;
 		}
 	}
@@ -350,25 +350,25 @@ function gwcvt_handle_public_event_signup(): void {
 	 * saying which. Their list was out of date; enumerating why would answer
 	 * questions about slots they cannot see. */
 	if ( count( $open ) !== count( $mine ) ) {
-		gwcvt_signup_result( 'unavailable', $started );
+		gwc_vt_signup_result( 'unavailable', $started );
 		return;
 	}
 
 	/* Counted once. It is one person pressing one button, whatever they ticked —
 	 * and counted before it is reported, so a refused attempt still counts. */
-	if ( gwcvt_rate_limited( gwcvt_client_ip(), $GLOBALS['gwcvt_signup_email'] ) ) {
-		gwcvt_signup_result( 'accepted', $started );
+	if ( gwc_vt_rate_limited( gwc_vt_client_ip(), $GLOBALS['gwc_vt_signup_email'] ) ) {
+		gwc_vt_signup_result( 'accepted', $started );
 		return;
 	}
 
 	$made = array();
 
 	foreach ( $open as $shift_id ) {
-		$signup_id = gwcvt_add_signup(
+		$signup_id = gwc_vt_add_signup(
 			$shift_id,
 			array(
-				'claim_name'  => $GLOBALS['gwcvt_signup_name'],
-				'claim_email' => $GLOBALS['gwcvt_signup_email'],
+				'claim_name'  => $GLOBALS['gwc_vt_signup_name'],
+				'claim_email' => $GLOBALS['gwc_vt_signup_email'],
 				'source'      => 'self',
 			)
 		);
@@ -379,13 +379,13 @@ function gwcvt_handle_public_event_signup(): void {
 	}
 
 	if ( $made ) {
-		gwcvt_queue_event_confirmation( $event_id, $made );
+		gwc_vt_queue_event_confirmation( $event_id, $made );
 	}
 
 	/* Every slot accepted, one slot accepted, a honeypot hit and a rate-limited
 	 * attempt all end here, on the same string. */
-	$GLOBALS['gwcvt_signup_picked'] = array();
-	gwcvt_signup_result( 'accepted', $started );
+	$GLOBALS['gwc_vt_signup_picked'] = array();
+	gwc_vt_signup_result( 'accepted', $started );
 }
 
 /**
@@ -393,44 +393,44 @@ function gwcvt_handle_public_event_signup(): void {
  *
  * @return int
  */
-function gwcvt_event_signup_limit(): int {
+function gwc_vt_event_signup_limit(): int {
 	/**
 	 * The most slots one person may take in a single submission.
 	 *
 	 * @param int $limit Generous for any real event.
 	 */
-	return max( 1, (int) apply_filters( 'gwcvt_event_signup_limit', 20 ) );
+	return max( 1, (int) apply_filters( 'gwc_vt_event_signup_limit', 20 ) );
 }
 
 /**
  * Withdraw a signup from the link in somebody's confirmation.
  */
-function gwcvt_handle_public_cancel(): void {
+function gwc_vt_handle_public_cancel(): void {
 	$started = microtime( true );
 
-	$nonce = isset( $_POST['gwcvt_cancel_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwcvt_cancel_nonce'] ) ) : '';
+	$nonce = isset( $_POST['gwc_vt_cancel_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['gwc_vt_cancel_nonce'] ) ) : '';
 
-	if ( ! wp_verify_nonce( $nonce, 'gwcvt_cancel_signup' ) ) {
-		gwcvt_signup_result( 'expired', $started );
+	if ( ! wp_verify_nonce( $nonce, 'gwc_vt_cancel_signup' ) ) {
+		gwc_vt_signup_result( 'expired', $started );
 		return;
 	}
 
 	$posted = wp_unslash( $_POST );
 
-	$signup_id = absint( $posted['gwcvt_signup'] ?? 0 );
-	$token     = sanitize_text_field( (string) ( $posted['gwcvt_k'] ?? '' ) );
+	$signup_id = absint( $posted['gwc_vt_signup'] ?? 0 );
+	$token     = sanitize_text_field( (string) ( $posted['gwc_vt_k'] ?? '' ) );
 
 	/* A bad token and a signup that no longer exists give the same answer. The
 	 * token is the only thing that authorises this, so distinguishing them would
 	 * turn the URL into a way to ask whether a given signup ID is real. */
-	if ( ! gwcvt_signup_token_valid( $signup_id, $token ) ) {
-		gwcvt_signup_result( 'cancel-unknown', $started );
+	if ( ! gwc_vt_signup_token_valid( $signup_id, $token ) ) {
+		gwc_vt_signup_result( 'cancel-unknown', $started );
 		return;
 	}
 
-	gwcvt_withdraw_signup( $signup_id );
+	gwc_vt_withdraw_signup( $signup_id );
 
-	gwcvt_signup_result( 'cancelled', $started );
+	gwc_vt_signup_result( 'cancelled', $started );
 }
 
 /**
@@ -456,28 +456,28 @@ function gwcvt_handle_public_cancel(): void {
  * @param int $shift_id Shift post ID.
  * @return bool
  */
-function gwcvt_shift_is_signup_visible( int $shift_id ): bool {
-	if ( $shift_id < 1 || GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+function gwc_vt_shift_is_signup_visible( int $shift_id ): bool {
+	if ( $shift_id < 1 || GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return false;
 	}
 
-	if ( ! gwcvt_shift_is_open( $shift_id ) ) {
+	if ( ! gwc_vt_shift_is_open( $shift_id ) ) {
 		return false;
 	}
 
-	$starts = gwcvt_shift_starts( $shift_id );
+	$starts = gwc_vt_shift_starts( $shift_id );
 
 	if ( null === $starts ) {
 		return false;
 	}
 
-	$event_id = gwcvt_event_for_shift( $shift_id );
+	$event_id = gwc_vt_event_for_shift( $shift_id );
 
 	if ( $event_id > 0 ) {
 		return 'publish' === get_post_status( $event_id );
 	}
 
-	$horizon = max( 1, (int) gwcvt_setting( 'signup_horizon_days' ) );
+	$horizon = max( 1, (int) gwc_vt_setting( 'signup_horizon_days' ) );
 
 	return $starts->getTimestamp() <= ( time() + ( $horizon * DAY_IN_SECONDS ) );
 }
@@ -487,8 +487,8 @@ function gwcvt_shift_is_signup_visible( int $shift_id ): bool {
  *
  * @return int[]
  */
-function gwcvt_public_shift_ids(): array {
-	$horizon = max( 1, (int) gwcvt_setting( 'signup_horizon_days' ) );
+function gwc_vt_public_shift_ids(): array {
+	$horizon = max( 1, (int) gwc_vt_setting( 'signup_horizon_days' ) );
 
 	/* Standalone shifts only. An event's slots belong on their event's own page,
 	 * where the grid says which role each one is and what the day is; loose on
@@ -496,10 +496,10 @@ function gwcvt_public_shift_ids(): array {
 	 *
 	 * This is a filter on the LIST, not on what may be signed up for — an event
 	 * slot is perfectly signup-able, just from the event's page. The handler
-	 * still asks gwcvt_shift_is_signup_visible(), which knows the difference. */
-	$ids = gwcvt_shifts_between(
+	 * still asks gwc_vt_shift_is_signup_visible(), which knows the difference. */
+	$ids = gwc_vt_shifts_between(
 		array(
-			'from'   => gwcvt_today(),
+			'from'   => gwc_vt_today(),
 			'to'     => gmdate( 'Y-m-d', time() + ( ( $horizon + 1 ) * DAY_IN_SECONDS ) ),
 			'limit'  => 100,
 			'parent' => 0,
@@ -509,7 +509,7 @@ function gwcvt_public_shift_ids(): array {
 	$visible = array();
 
 	foreach ( $ids as $shift_id ) {
-		if ( gwcvt_shift_is_signup_visible( $shift_id ) ) {
+		if ( gwc_vt_shift_is_signup_visible( $shift_id ) ) {
 			$visible[] = $shift_id;
 		}
 	}
@@ -519,11 +519,11 @@ function gwcvt_public_shift_ids(): array {
 	 *
 	 * Filtered rather than fixed so a site can hide a shift from the public list
 	 * while keeping it on the schedule. Anything removed here is also refused by
-	 * the handler, because both read gwcvt_shift_is_signup_visible().
+	 * the handler, because both read gwc_vt_shift_is_signup_visible().
 	 *
 	 * @param int[] $visible Shift post IDs.
 	 */
-	return (array) apply_filters( 'gwcvt_schedule_visible_shifts', $visible );
+	return (array) apply_filters( 'gwc_vt_schedule_visible_shifts', $visible );
 }
 
 /* ── Telling the visitor what happened ───────────────────────────────────── */
@@ -539,7 +539,7 @@ function gwcvt_public_shift_ids(): array {
  * @param string $result  What to tell them.
  * @param float  $started microtime when the handler began.
  */
-function gwcvt_signup_result( string $result, float $started ): void {
+function gwc_vt_signup_result( string $result, float $started ): void {
 	$elapsed = microtime( true ) - $started;
 	$floor   = 0.25;
 
@@ -547,7 +547,7 @@ function gwcvt_signup_result( string $result, float $started ): void {
 		usleep( (int) ( ( $floor - $elapsed ) * 1000000 ) );
 	}
 
-	$GLOBALS['gwcvt_signup_result'] = $result;
+	$GLOBALS['gwc_vt_signup_result'] = $result;
 }
 
 /**
@@ -561,7 +561,7 @@ function gwcvt_signup_result( string $result, float $started ): void {
  * @param string $result Result key.
  * @return string
  */
-function gwcvt_signup_message( string $result ): string {
+function gwc_vt_signup_message( string $result ): string {
 	$messages = array(
 		'accepted'       => __( 'Thank you — you are signed up. We have sent the details to your email address, along with a link you can use if you need to cancel.', 'groundwork-common-volunteer-tracker' ),
 		'incomplete'     => __( 'Please choose a shift and give your name and email address.', 'groundwork-common-volunteer-tracker' ),

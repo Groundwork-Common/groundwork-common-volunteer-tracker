@@ -29,24 +29,24 @@ define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 
-define( 'GWCVT_DIR', dirname( __DIR__ ) . '/' );
-define( 'GWCVT_URL', 'https://example.test/wp-content/plugins/groundwork-common-volunteer-tracker/' );
-define( 'GWCVT_FILE', GWCVT_DIR . 'groundwork-common-volunteer-tracker.php' );
+define( 'GWC_VT_DIR', dirname( __DIR__ ) . '/' );
+define( 'GWC_VT_URL', 'https://example.test/wp-content/plugins/groundwork-common-volunteer-tracker/' );
+define( 'GWC_VT_FILE', GWC_VT_DIR . 'groundwork-common-volunteer-tracker.php' );
 
-const GWCVT_SCHEMA_VERSION = 1;
-const GWCVT_SPONSOR_URL    = 'https://www.groundworkcommon.com/support/';
-const GWCVT_GWC_URL        = 'https://www.groundworkcommon.com/';
+const GWC_VT_SCHEMA_VERSION = 1;
+const GWC_VT_SPONSOR_URL    = 'https://www.groundworkcommon.com/support/';
+const GWC_VT_GWC_URL        = 'https://www.groundworkcommon.com/';
 
 /* Read out of the plugin header rather than hardcoded, so VersionTest compares
  * the header against readme.txt rather than against a copy of one of them made
  * in this file. */
-$gwcvt_header = (string) file_get_contents( GWCVT_DIR . 'groundwork-common-volunteer-tracker.php' );
-preg_match( "/GWCVT_VERSION\s*=\s*'([^']+)'/", $gwcvt_header, $gwcvt_m );
-define( 'GWCVT_VERSION', $gwcvt_m[1] ?? '0.0.0' );
+$gwc_vt_header = (string) file_get_contents( GWC_VT_DIR . 'groundwork-common-volunteer-tracker.php' );
+preg_match( "/GWC_VT_VERSION\s*=\s*'([^']+)'/", $gwc_vt_header, $gwc_vt_m );
+define( 'GWC_VT_VERSION', $gwc_vt_m[1] ?? '0.0.0' );
 
 /* ── The in-memory store ─────────────────────────────────────────────────── */
 
-$GLOBALS['gwcvt_test'] = array(
+$GLOBALS['gwc_vt_test'] = array(
 	'options'    => array(),
 	'transients' => array(),
 	'post_meta' => array(),
@@ -58,7 +58,7 @@ $GLOBALS['gwcvt_test'] = array(
 	'cron'      => array(),
 );
 
-$GLOBALS['gwcvt_test_filters'] = array();
+$GLOBALS['gwc_vt_test_filters'] = array();
 
 /**
  * Reset everything between tests.
@@ -66,8 +66,8 @@ $GLOBALS['gwcvt_test_filters'] = array();
  * Also clears the settings memo, which is otherwise the single most common
  * source of a test that passes alone and fails in a suite.
  */
-function gwcvt_test_reset(): void {
-	$GLOBALS['gwcvt_test'] = array(
+function gwc_vt_test_reset(): void {
+	$GLOBALS['gwc_vt_test'] = array(
 		'options'    => array(),
 		'transients' => array(),
 		'post_meta' => array(),
@@ -79,64 +79,64 @@ function gwcvt_test_reset(): void {
 		'cron'      => array(),
 	);
 
-	gwcvt_settings_cache( null, true );
+	gwc_vt_settings_cache( null, true );
 }
 
 /**
  * Forget every registered filter.
  *
- * Separate from gwcvt_test_reset() and called by almost nothing, on purpose:
+ * Separate from gwc_vt_test_reset() and called by almost nothing, on purpose:
  * the plugin's registries are built by self-registering filters at require
  * time, and a test that clears them has emptied a registry it cannot refill
  * without re-including the files.
  */
-function gwcvt_test_reset_filters(): void {
-	$GLOBALS['gwcvt_test_filters'] = array();
+function gwc_vt_test_reset_filters(): void {
+	$GLOBALS['gwc_vt_test_filters'] = array();
 }
 
 /* ── Options ─────────────────────────────────────────────────────────────── */
 
 function get_option( $name, $default_value = false ) {
-	return $GLOBALS['gwcvt_test']['options'][ $name ] ?? $default_value;
+	return $GLOBALS['gwc_vt_test']['options'][ $name ] ?? $default_value;
 }
 
 function update_option( $name, $value, $autoload = null ) {
-	$GLOBALS['gwcvt_test']['options'][ $name ] = $value;
+	$GLOBALS['gwc_vt_test']['options'][ $name ] = $value;
 	return true;
 }
 
 function add_option( $name, $value, $deprecated = '', $autoload = null ) {
-	if ( isset( $GLOBALS['gwcvt_test']['options'][ $name ] ) ) {
+	if ( isset( $GLOBALS['gwc_vt_test']['options'][ $name ] ) ) {
 		return false;
 	}
-	$GLOBALS['gwcvt_test']['options'][ $name ] = $value;
+	$GLOBALS['gwc_vt_test']['options'][ $name ] = $value;
 	return true;
 }
 
 function delete_option( $name ) {
-	unset( $GLOBALS['gwcvt_test']['options'][ $name ] );
+	unset( $GLOBALS['gwc_vt_test']['options'][ $name ] );
 	return true;
 }
 
 /* ── User meta ───────────────────────────────────────────────────────────── */
 
 function get_user_meta( $user_id, $key = '', $single = false ) {
-	$value = $GLOBALS['gwcvt_test']['user_meta'][ $user_id ][ $key ] ?? '';
+	$value = $GLOBALS['gwc_vt_test']['user_meta'][ $user_id ][ $key ] ?? '';
 	return $single ? $value : array( $value );
 }
 
 function update_user_meta( $user_id, $key, $value, $prev = '' ) {
-	$GLOBALS['gwcvt_test']['user_meta'][ $user_id ][ $key ] = $value;
+	$GLOBALS['gwc_vt_test']['user_meta'][ $user_id ][ $key ] = $value;
 	return true;
 }
 
 function delete_user_meta( $user_id, $key, $value = '' ) {
-	unset( $GLOBALS['gwcvt_test']['user_meta'][ $user_id ][ $key ] );
+	unset( $GLOBALS['gwc_vt_test']['user_meta'][ $user_id ][ $key ] );
 	return true;
 }
 
 /* ── Roles and capabilities ──────────────────────────────────────────────────
- * A real object with a real add_cap(), because gwcvt_grant_capabilities()
+ * A real object with a real add_cap(), because gwc_vt_grant_capabilities()
  * deliberately reads $role->capabilities before writing — a double whose
  * add_cap() did nothing would let the "it does not rewrite the role every
  * request" test pass without the guard being there at all.
@@ -169,18 +169,18 @@ class WP_Role { // phpcs:ignore
 	}
 }
 
-function gwcvt_test_add_role( string $name, array $caps = array() ): WP_Role {
+function gwc_vt_test_add_role( string $name, array $caps = array() ): WP_Role {
 	$role = new WP_Role( $name, $caps );
-	$GLOBALS['gwcvt_test']['roles'][ $name ] = $role;
+	$GLOBALS['gwc_vt_test']['roles'][ $name ] = $role;
 	return $role;
 }
 
 function get_role( $name ) {
-	return $GLOBALS['gwcvt_test']['roles'][ $name ] ?? null;
+	return $GLOBALS['gwc_vt_test']['roles'][ $name ] ?? null;
 }
 
-function gwcvt_test_add_user( int $id, array $caps = array(), string $role = '', string $display_name = '' ): void {
-	$GLOBALS['gwcvt_test']['users'][ $id ] = array(
+function gwc_vt_test_add_user( int $id, array $caps = array(), string $role = '', string $display_name = '' ): void {
+	$GLOBALS['gwc_vt_test']['users'][ $id ] = array(
 		'caps'         => $caps,
 		'role'         => $role,
 		'display_name' => $display_name,
@@ -195,11 +195,11 @@ function gwcvt_test_add_user( int $id, array $caps = array(), string $role = '',
  * is answered from an explicitly granted 'edit_post' rather than by mapping to
  * the post type's capabilities and checking ownership. Tests that care about
  * the mapping itself belong in tests/integration/caps.php, under real
- * WordPress; what this stub can honestly prove is that gwcvt_user_can_verify()
+ * WordPress; what this stub can honestly prove is that gwc_vt_user_can_verify()
  * requires BOTH answers.
  */
 function user_can( $user_id, $capability, ...$args ) {
-	$user = $GLOBALS['gwcvt_test']['users'][ (int) $user_id ] ?? null;
+	$user = $GLOBALS['gwc_vt_test']['users'][ (int) $user_id ] ?? null;
 	if ( ! $user ) {
 		return false;
 	}
@@ -218,11 +218,11 @@ function current_user_can( $capability, ...$args ) {
 }
 
 function get_current_user_id() {
-	return (int) ( $GLOBALS['gwcvt_test']['current_user'] ?? 0 );
+	return (int) ( $GLOBALS['gwc_vt_test']['current_user'] ?? 0 );
 }
 
-function gwcvt_test_set_current_user( int $id ): void {
-	$GLOBALS['gwcvt_test']['current_user'] = $id;
+function gwc_vt_test_set_current_user( int $id ): void {
+	$GLOBALS['gwc_vt_test']['current_user'] = $id;
 }
 
 /* ── Hooks ───────────────────────────────────────────────────────────────────
@@ -251,13 +251,13 @@ function do_action( ...$args ) {
 }
 
 function remove_filter( $hook, $callback, $priority = 10 ) {
-	if ( empty( $GLOBALS['gwcvt_test_filters'][ $hook ][ (int) $priority ] ) ) {
+	if ( empty( $GLOBALS['gwc_vt_test_filters'][ $hook ][ (int) $priority ] ) ) {
 		return false;
 	}
 
-	foreach ( $GLOBALS['gwcvt_test_filters'][ $hook ][ (int) $priority ] as $i => $registered ) {
+	foreach ( $GLOBALS['gwc_vt_test_filters'][ $hook ][ (int) $priority ] as $i => $registered ) {
 		if ( $registered['cb'] === $callback ) {
-			unset( $GLOBALS['gwcvt_test_filters'][ $hook ][ (int) $priority ][ $i ] );
+			unset( $GLOBALS['gwc_vt_test_filters'][ $hook ][ (int) $priority ][ $i ] );
 			return true;
 		}
 	}
@@ -266,7 +266,7 @@ function remove_filter( $hook, $callback, $priority = 10 ) {
 }
 
 function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
-	$GLOBALS['gwcvt_test_filters'][ $hook ][ (int) $priority ][] = array(
+	$GLOBALS['gwc_vt_test_filters'][ $hook ][ (int) $priority ][] = array(
 		'cb'   => $callback,
 		'args' => (int) $accepted_args,
 	);
@@ -274,11 +274,11 @@ function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
 }
 
 function apply_filters( $hook, $value, ...$rest ) {
-	if ( empty( $GLOBALS['gwcvt_test_filters'][ $hook ] ) ) {
+	if ( empty( $GLOBALS['gwc_vt_test_filters'][ $hook ] ) ) {
 		return $value;
 	}
 
-	$by_priority = $GLOBALS['gwcvt_test_filters'][ $hook ];
+	$by_priority = $GLOBALS['gwc_vt_test_filters'][ $hook ];
 	ksort( $by_priority );
 
 	foreach ( $by_priority as $registered ) {
@@ -396,7 +396,7 @@ function current_time( $type, $gmt = 0 ) {
 }
 
 function get_post_field( $field, $post_id = null, $context = 'display' ) {
-	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	$post = $GLOBALS['gwc_vt_test']['posts'][ (int) $post_id ] ?? null;
 	return $post[ $field ] ?? '';
 }
 
@@ -426,7 +426,7 @@ function wp_json_encode( $data, $options = 0, $depth = 512 ) {
 }
 
 function wp_mail( $to, $subject, $message, $headers = array(), $attachments = array() ) {
-	$GLOBALS['gwcvt_test']['mail'][] = compact( 'to', 'subject', 'message', 'headers' );
+	$GLOBALS['gwc_vt_test']['mail'][] = compact( 'to', 'subject', 'message', 'headers' );
 	return true;
 }
 
@@ -456,8 +456,8 @@ function wp_date( $format, $timestamp = null, $timezone = null ) {
  * tests/integration/entries.php instead.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-function gwcvt_test_add_post( int $id, string $post_type, string $post_status = 'publish', string $post_title = '' ): void {
-	$GLOBALS['gwcvt_test']['posts'][ $id ] = array(
+function gwc_vt_test_add_post( int $id, string $post_type, string $post_status = 'publish', string $post_title = '' ): void {
+	$GLOBALS['gwc_vt_test']['posts'][ $id ] = array(
 		'ID'          => $id,
 		'post_type'   => $post_type,
 		'post_status' => $post_status,
@@ -466,30 +466,30 @@ function gwcvt_test_add_post( int $id, string $post_type, string $post_status = 
 }
 
 function get_post_type( $post_id = null ) {
-	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	$post = $GLOBALS['gwc_vt_test']['posts'][ (int) $post_id ] ?? null;
 	return $post ? $post['post_type'] : false;
 }
 
 function get_post_status( $post_id = null ) {
-	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	$post = $GLOBALS['gwc_vt_test']['posts'][ (int) $post_id ] ?? null;
 	return $post ? $post['post_status'] : false;
 }
 
 function get_the_title( $post_id = 0 ) {
-	$post = $GLOBALS['gwcvt_test']['posts'][ (int) $post_id ] ?? null;
+	$post = $GLOBALS['gwc_vt_test']['posts'][ (int) $post_id ] ?? null;
 	return $post ? $post['post_title'] : '';
 }
 
 function wp_update_post( $postarr = array(), $wp_error = false ) {
 	$id = (int) ( $postarr['ID'] ?? 0 );
 
-	if ( ! isset( $GLOBALS['gwcvt_test']['posts'][ $id ] ) ) {
+	if ( ! isset( $GLOBALS['gwc_vt_test']['posts'][ $id ] ) ) {
 		return 0;
 	}
 
 	foreach ( array( 'post_status', 'post_title' ) as $field ) {
 		if ( isset( $postarr[ $field ] ) ) {
-			$GLOBALS['gwcvt_test']['posts'][ $id ][ $field ] = $postarr[ $field ];
+			$GLOBALS['gwc_vt_test']['posts'][ $id ][ $field ] = $postarr[ $field ];
 		}
 	}
 
@@ -497,17 +497,17 @@ function wp_update_post( $postarr = array(), $wp_error = false ) {
 }
 
 function get_post_meta( $post_id, $key = '', $single = false ) {
-	$value = $GLOBALS['gwcvt_test']['post_meta'][ (int) $post_id ][ $key ] ?? '';
+	$value = $GLOBALS['gwc_vt_test']['post_meta'][ (int) $post_id ][ $key ] ?? '';
 	return $single ? $value : ( '' === $value ? array() : array( $value ) );
 }
 
 function update_post_meta( $post_id, $key, $value, $prev = '' ) {
-	$GLOBALS['gwcvt_test']['post_meta'][ (int) $post_id ][ $key ] = $value;
+	$GLOBALS['gwc_vt_test']['post_meta'][ (int) $post_id ][ $key ] = $value;
 	return true;
 }
 
 function delete_post_meta( $post_id, $key, $value = '' ) {
-	unset( $GLOBALS['gwcvt_test']['post_meta'][ (int) $post_id ][ $key ] );
+	unset( $GLOBALS['gwc_vt_test']['post_meta'][ (int) $post_id ][ $key ] );
 	return true;
 }
 
@@ -516,7 +516,7 @@ function update_postmeta_cache( $post_ids ) {
 }
 
 function get_userdata( $user_id ) {
-	$user = $GLOBALS['gwcvt_test']['users'][ (int) $user_id ] ?? null;
+	$user = $GLOBALS['gwc_vt_test']['users'][ (int) $user_id ] ?? null;
 
 	if ( ! $user ) {
 		return false;
@@ -531,16 +531,16 @@ function get_userdata( $user_id ) {
 /* ── Transients ──────────────────────────────────────────────────────────── */
 
 function get_transient( $key ) {
-	return $GLOBALS['gwcvt_test']['transients'][ $key ] ?? false;
+	return $GLOBALS['gwc_vt_test']['transients'][ $key ] ?? false;
 }
 
 function set_transient( $key, $value, $ttl = 0 ) {
-	$GLOBALS['gwcvt_test']['transients'][ $key ] = $value;
+	$GLOBALS['gwc_vt_test']['transients'][ $key ] = $value;
 	return true;
 }
 
 function delete_transient( $key ) {
-	unset( $GLOBALS['gwcvt_test']['transients'][ $key ] );
+	unset( $GLOBALS['gwc_vt_test']['transients'][ $key ] );
 	return true;
 }
 
@@ -551,61 +551,61 @@ function wp_die( $message = '', $title = '', $args = array() ) {
 }
 
 function get_current_screen() {
-	return $GLOBALS['gwcvt_test']['screen'] ?? null;
+	return $GLOBALS['gwc_vt_test']['screen'] ?? null;
 }
 
 function wp_next_scheduled( $hook, $args = array() ) {
-	return $GLOBALS['gwcvt_test']['cron'][ $hook ] ?? false;
+	return $GLOBALS['gwc_vt_test']['cron'][ $hook ] ?? false;
 }
 
 function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array() ) {
-	$GLOBALS['gwcvt_test']['cron'][ $hook ] = $timestamp;
+	$GLOBALS['gwc_vt_test']['cron'][ $hook ] = $timestamp;
 	return true;
 }
 
 function wp_unschedule_event( $timestamp, $hook, $args = array() ) {
-	unset( $GLOBALS['gwcvt_test']['cron'][ $hook ] );
+	unset( $GLOBALS['gwc_vt_test']['cron'][ $hook ] );
 	return true;
 }
 
 /* ── The plugin, in the order the bootstrap requires it ──────────────────── */
 
-require GWCVT_DIR . 'inc/i18n.php';
-require GWCVT_DIR . 'inc/settings.php';
-require GWCVT_DIR . 'inc/access.php';
-require GWCVT_DIR . 'inc/class-gwcvt-totals.php';
-require GWCVT_DIR . 'inc/class-gwcvt-letter-entry.php';
-require GWCVT_DIR . 'inc/class-gwcvt-letter.php';
-require GWCVT_DIR . 'inc/cpt.php';
-require GWCVT_DIR . 'inc/volunteer-cpt.php';
-require GWCVT_DIR . 'inc/recurrence.php';
-require GWCVT_DIR . 'inc/shift-cpt.php';
-require GWCVT_DIR . 'inc/signup-cpt.php';
-require GWCVT_DIR . 'inc/event-cpt.php';
-require GWCVT_DIR . 'inc/shifts.php';
-require GWCVT_DIR . 'inc/events.php';
-require GWCVT_DIR . 'inc/signups.php';
-require GWCVT_DIR . 'inc/signup-handler.php';
-require GWCVT_DIR . 'inc/signup-form.php';
-require GWCVT_DIR . 'inc/event-form.php';
-require GWCVT_DIR . 'inc/ics.php';
-require GWCVT_DIR . 'inc/schedule-emails.php';
-require GWCVT_DIR . 'inc/schedule-cron.php';
-require GWCVT_DIR . 'inc/entries.php';
-require GWCVT_DIR . 'inc/required.php';
-require GWCVT_DIR . 'inc/dashboard.php';
-require GWCVT_DIR . 'inc/verify.php';
-require GWCVT_DIR . 'inc/letter-cpt.php';
-require GWCVT_DIR . 'inc/letter.php';
-require GWCVT_DIR . 'inc/render.php';
-require GWCVT_DIR . 'inc/emails.php';
-require GWCVT_DIR . 'inc/privacy.php';
-require GWCVT_DIR . 'inc/self-log.php';
-require GWCVT_DIR . 'inc/form.php';
-require GWCVT_DIR . 'inc/admin-settings.php';
-require GWCVT_DIR . 'inc/admin-screen.php';
+require GWC_VT_DIR . 'inc/i18n.php';
+require GWC_VT_DIR . 'inc/settings.php';
+require GWC_VT_DIR . 'inc/access.php';
+require GWC_VT_DIR . 'inc/class-gwc-vt-totals.php';
+require GWC_VT_DIR . 'inc/class-gwc-vt-letter-entry.php';
+require GWC_VT_DIR . 'inc/class-gwc-vt-letter.php';
+require GWC_VT_DIR . 'inc/cpt.php';
+require GWC_VT_DIR . 'inc/volunteer-cpt.php';
+require GWC_VT_DIR . 'inc/recurrence.php';
+require GWC_VT_DIR . 'inc/shift-cpt.php';
+require GWC_VT_DIR . 'inc/signup-cpt.php';
+require GWC_VT_DIR . 'inc/event-cpt.php';
+require GWC_VT_DIR . 'inc/shifts.php';
+require GWC_VT_DIR . 'inc/events.php';
+require GWC_VT_DIR . 'inc/signups.php';
+require GWC_VT_DIR . 'inc/signup-handler.php';
+require GWC_VT_DIR . 'inc/signup-form.php';
+require GWC_VT_DIR . 'inc/event-form.php';
+require GWC_VT_DIR . 'inc/ics.php';
+require GWC_VT_DIR . 'inc/schedule-emails.php';
+require GWC_VT_DIR . 'inc/schedule-cron.php';
+require GWC_VT_DIR . 'inc/entries.php';
+require GWC_VT_DIR . 'inc/required.php';
+require GWC_VT_DIR . 'inc/dashboard.php';
+require GWC_VT_DIR . 'inc/verify.php';
+require GWC_VT_DIR . 'inc/letter-cpt.php';
+require GWC_VT_DIR . 'inc/letter.php';
+require GWC_VT_DIR . 'inc/render.php';
+require GWC_VT_DIR . 'inc/emails.php';
+require GWC_VT_DIR . 'inc/privacy.php';
+require GWC_VT_DIR . 'inc/self-log.php';
+require GWC_VT_DIR . 'inc/form.php';
+require GWC_VT_DIR . 'inc/admin-settings.php';
+require GWC_VT_DIR . 'inc/admin-screen.php';
 
 /* admin-volunteer.php's list-table filter is pure arithmetic over query vars —
  * the same split as the dashboard's worklist — so it is unit-testable. The rest
  * of that file renders meta boxes and is covered by tests/integration. */
-require GWCVT_DIR . 'inc/admin-volunteer.php';
+require GWC_VT_DIR . 'inc/admin-volunteer.php';

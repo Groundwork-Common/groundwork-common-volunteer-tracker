@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'template_redirect', 'gwcvt_maybe_serve_ics' );
+add_action( 'template_redirect', 'gwc_vt_maybe_serve_ics' );
 
 /**
  * Serve a calendar file to whoever holds the link.
@@ -16,26 +16,26 @@ add_action( 'template_redirect', 'gwcvt_maybe_serve_ics' );
  * Authorised by the token alone — there is no session here and never will be —
  * and it answers for exactly one signup.
  */
-function gwcvt_maybe_serve_ics(): void {
-	if ( ! gwcvt_signups_open() ) {
+function gwc_vt_maybe_serve_ics(): void {
+	if ( ! gwc_vt_signups_open() ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a capability URL; the token below is what authorises it, and a nonce would tie a mailed link to a session that does not exist.
-	if ( ! isset( $_GET['gwcvt_ics'] ) ) {
+	if ( ! isset( $_GET['gwc_vt_ics'] ) ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$signup_id = absint( wp_unslash( $_GET['gwcvt_ics'] ) );
+	$signup_id = absint( wp_unslash( $_GET['gwc_vt_ics'] ) );
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$token = isset( $_GET['gwcvt_k'] ) ? sanitize_text_field( wp_unslash( $_GET['gwcvt_k'] ) ) : '';
+	$token = isset( $_GET['gwc_vt_k'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_k'] ) ) : '';
 
-	if ( ! gwcvt_signup_token_valid( $signup_id, $token ) ) {
+	if ( ! gwc_vt_signup_token_valid( $signup_id, $token ) ) {
 		return;
 	}
 
-	$ics = gwcvt_signup_ics( $signup_id );
+	$ics = gwc_vt_signup_ics( $signup_id );
 
 	if ( '' === $ics ) {
 		return;
@@ -47,7 +47,7 @@ function gwcvt_maybe_serve_ics(): void {
 	header( 'Content-Type: text/calendar; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename="shift.ics"' );
 
-	echo $ics; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a calendar file, escaped for its own format by gwcvt_ics_escape(); HTML escaping here would corrupt it.
+	echo $ics; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a calendar file, escaped for its own format by gwc_vt_ics_escape(); HTML escaping here would corrupt it.
 	exit;
 }
 
@@ -66,7 +66,7 @@ function gwcvt_maybe_serve_ics(): void {
  * A hand-written VTIMEZONE is a transcription of somebody else's timezone
  * database that goes stale silently and is wrong exactly when the clocks change.
  * A UTC instant is computed once, here, from the same wall time and the same
- * gwcvt_timezone() everything else uses, and it is correct for one fixed
+ * gwc_vt_timezone() everything else uses, and it is correct for one fixed
  * occurrence — which is all these events ever are, because occurrences are real
  * rows rather than a recurrence rule. See inc/recurrence.php.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -77,15 +77,15 @@ function gwcvt_maybe_serve_ics(): void {
  * @param int $signup_id Signup post ID.
  * @return string Empty when the signup or its shift cannot be read.
  */
-function gwcvt_signup_ics( int $signup_id ): string {
+function gwc_vt_signup_ics( int $signup_id ): string {
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
-	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return '';
 	}
 
-	$starts = gwcvt_shift_starts( $shift_id );
-	$ends   = gwcvt_shift_ends( $shift_id );
+	$starts = gwc_vt_shift_starts( $shift_id );
+	$ends   = gwc_vt_shift_ends( $shift_id );
 
 	if ( null === $starts || null === $ends ) {
 		return '';
@@ -93,9 +93,9 @@ function gwcvt_signup_ics( int $signup_id ): string {
 
 	$host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 
-	$description = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_NOTES, true ) );
+	$description = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) );
 
-	$supervisor = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_SUPERVISOR, true ) );
+	$supervisor = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_SUPERVISOR, true ) );
 
 	if ( '' !== $supervisor ) {
 		$description .= ( '' !== $description ? "\n\n" : '' ) . sprintf(
@@ -122,9 +122,9 @@ function gwcvt_signup_ics( int $signup_id ): string {
 		'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ),
 		'DTSTART:' . gmdate( 'Ymd\THis\Z', $starts->getTimestamp() ),
 		'DTEND:' . gmdate( 'Ymd\THis\Z', $ends->getTimestamp() ),
-		'SUMMARY:' . gwcvt_ics_escape( gwcvt_shift_summary( $shift_id ) ),
-		'LOCATION:' . gwcvt_ics_escape( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) ),
-		'DESCRIPTION:' . gwcvt_ics_escape( $description ),
+		'SUMMARY:' . gwc_vt_ics_escape( gwc_vt_shift_summary( $shift_id ) ),
+		'LOCATION:' . gwc_vt_ics_escape( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) ),
+		'DESCRIPTION:' . gwc_vt_ics_escape( $description ),
 		'END:VEVENT',
 		'END:VCALENDAR',
 	);
@@ -136,12 +136,12 @@ function gwcvt_signup_ics( int $signup_id ): string {
 	 * @param int      $signup_id The signup.
 	 * @param int      $shift_id  The shift.
 	 */
-	$lines = (array) apply_filters( 'gwcvt_ics_event', $lines, $signup_id, $shift_id );
+	$lines = (array) apply_filters( 'gwc_vt_ics_event', $lines, $signup_id, $shift_id );
 
 	$folded = array();
 
 	foreach ( $lines as $line ) {
-		$folded[] = gwcvt_ics_fold( (string) $line );
+		$folded[] = gwc_vt_ics_fold( (string) $line );
 	}
 
 	/* CRLF, not "\n". RFC 5545 says CRLF and enough clients enforce it that a
@@ -159,8 +159,8 @@ function gwcvt_signup_ics( int $signup_id ): string {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_summary( int $shift_id ): string {
-	$activity = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) );
+function gwc_vt_shift_summary( int $shift_id ): string {
+	$activity = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) );
 
 	if ( '' === $activity ) {
 		$activity = __( 'Volunteering', 'groundwork-common-volunteer-tracker' );
@@ -175,7 +175,7 @@ function gwcvt_shift_summary( int $shift_id ): string {
 		/* translators: 1: what the shift is, 2: the organisation's name. */
 		_x( '%1$s — %2$s', 'a shift, as it appears in a calendar', 'groundwork-common-volunteer-tracker' ),
 		$activity,
-		gwcvt_org_name()
+		gwc_vt_org_name()
 	);
 }
 
@@ -187,7 +187,7 @@ function gwcvt_shift_summary( int $shift_id ): string {
  * @param string $value Raw text.
  * @return string
  */
-function gwcvt_ics_escape( string $value ): string {
+function gwc_vt_ics_escape( string $value ): string {
 	$value = str_replace( "\r\n", "\n", $value );
 
 	return str_replace(
@@ -208,7 +208,7 @@ function gwcvt_ics_escape( string $value ): string {
  * @param string $line One unfolded content line.
  * @return string
  */
-function gwcvt_ics_fold( string $line ): string {
+function gwc_vt_ics_fold( string $line ): string {
 	if ( strlen( $line ) <= 75 ) {
 		return $line;
 	}

@@ -11,7 +11,7 @@
 
 	var el = element.createElement;
 	var __ = i18n.__;
-	var settings = window.GWCVT_SHIFT_EDITOR || {};
+	var settings = window.GWC_VT_SHIFT_EDITOR || {};
 
 	blocks.registerBlockType( 'groundwork-common-volunteer-tracker/shift-list', {
 		edit: function () {

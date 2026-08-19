@@ -23,15 +23,15 @@ This has been asked for and refused:
 
 ## The shape of the code
 
-Procedural PHP, prefix `gwcvt_`, one file per concern in `inc/`, required from the bootstrap
+Procedural PHP, prefix `gwc_vt_`, one file per concern in `inc/`, required from the bootstrap
 with `function_exists()` guards in a documented order. Several are genuine
 load-time dependencies — **do not reorder without reading the block comments.**
 
-**Three classes, and the rule that allows them** (`inc/class-gwcvt-totals.php`):
+**Three classes, and the rule that allows them** (`inc/class-gwc-vt-totals.php`):
 
 > Objects for computed values, arrays for persisted config.
 
-`GWCVT_Totals`, `GWCVT_Letter_Entry`, `GWCVT_Letter`. Plain PHP 7.4 — typed
+`GWC_VT_Totals`, `GWC_VT_Letter_Entry`, `GWC_VT_Letter`. Plain PHP 7.4 — typed
 properties, explicit constructor, no promotion, no readonly, no enums. Guarded on
 `class_exists()`.
 
@@ -53,16 +53,16 @@ tool this file used to describe, and the later half is easy to miss when scannin
 - **Events** — `event-cpt.php`, `events.php`, `event-form.php`, and the admin
   trio `admin-event.php` / `admin-event-actions.php` / `admin-event-roster.php`.
   An event is a *container over shifts by `post_parent`*: every slot is an
-  ordinary `gwcvt_shift`, which is why waiting lists, reminders, rosters and
+  ordinary `gwc_vt_shift`, which is why waiting lists, reminders, rosters and
   reconciliation all work on one unchanged.
 - **The dashboard** — `dashboard.php` (counts, pure) and `admin-dashboard.php`
   (the screen). Split so the worklist's ordering can be asserted without a
   database.
 - **Three blocks**, not one: `hours-form`, `shift-list`, `event-grid`.
 
-**An event has no URL.** `gwcvt_event` is `public => false`, so it is only ever
-seen on a page somebody placed the block or `[volunteer_event]` on.
-`gwcvt_event_page_id()` finds that page by searching content for either marker —
+**An event has no URL.** `gwc_vt_event` is `public => false`, so it is only ever
+seen on a page somebody placed the block or `[gwc_vt_event_grid]` on.
+`gwc_vt_event_page_id()` finds that page by searching content for either marker —
 two searches, because the shortcode and the block share no substring, and a
 single one silently never matched block placements.
 
@@ -123,6 +123,14 @@ left. Two rules follow:
   `WordPress.DB.SlowDBQuery.slow_meta_query`, which does not exist — the code is
   `slow_db_query_meta_query`. A misspelled code silently matches nothing, and
   nothing tells you.
+
+**Before a release, also run the directory's own scanner** — phpcs is not the
+whole of what a reviewer runs. Plugin Check reads the readme's headers, the file
+types in the zip, the trademark rules, and the `ABSPATH` guard on every PHP
+file. Run it against the **release payload**, never the working tree, or it
+spends the run objecting to `vendor/` and `tests/`; the recipe is under "The
+directory's own checker" in README.md. It caught three unguarded
+`blocks/*/edit.asset.php` files that phpcs is not looking for.
 
 The ruleset is `WordPress`, not `WordPress-Extra` plus `WordPress-Docs`. They
 look equivalent and are not: `WordPress.DB.SlowDBQuery` and the security sniff
@@ -213,14 +221,17 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
 - **Reference codes do not survive a salt rotation, on purpose.** They are keyed
   with `wp_salt()` so they cannot be forged without database access.
 - **A count and the screen it links to must come from one function.** The
-  dashboard counted overdue volunteers with `gwcvt_overdue_requirement_ids()` and
+  dashboard counted overdue volunteers with `gwc_vt_overdue_requirement_ids()` and
   linked to an unfiltered list; the unlogged-hours nag counted event slots with
-  `gwcvt_shifts_between()` and linked to a view passing `parent => 0`, which
+  `gwc_vt_shifts_between()` and linked to a view passing `parent => 0`, which
   excludes them. Both said a number and then showed something else. Where a
   screen acts on a count, it filters by the same function that produced it.
 - **A page-content search must match every way a thing can be placed.** Searching
-  for `volunteer_event` finds the shortcode and never the block, which serialises
-  as `wp:groundwork-common-volunteer-tracker/event-grid` — no shared substring.
+  for `[gwc_vt_event_grid` finds the shortcode and never the block, which
+  serialises as `wp:groundwork-common-volunteer-tracker/event-grid`. Since the
+  shortcode was prefixed in 1.0.0 the two do share the tail `event-grid`, but
+  neither marker contains the other, so one search still misses one placement —
+  and searching the shared tail alone would match any page that writes the words.
   And match an ID with a pattern: a bare `strpos` for `12` is true of a page
   holding event 1, event 2, event 120, or the year 2012 in the prose above it.
 - **A fallback that is right on its own can be wrong in a group.** The org name
@@ -256,7 +267,7 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
    does not remove capabilities.
 6. **Add every new hook to the README table.** The rule is stated there: if you
    add one, add its row.
-7. **Bump the version in all four places together** — header, `GWCVT_VERSION`,
+7. **Bump the version in all four places together** — header, `GWC_VT_VERSION`,
    `readme.txt` Stable tag, changelog — or `VersionTest` and the deploy gate fail.
 8. **Nothing may stand between the source and the shipped plugin.** No build
    step, no npm, no transpiler, no autoloader: every file that runs on a user's
@@ -277,8 +288,8 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
 
 ## Vocabulary
 
-**entry** a `gwcvt_entry` post, one occasion of work · **volunteer** a
-`gwcvt_volunteer` post; never a WP user, never signs in · **attest / verify**
+**entry** a `gwc_vt_entry` post, one occasion of work · **volunteer** a
+`gwc_vt_volunteer` post; never a WP user, never signs in · **attest / verify**
 staff confirming an entry · **letter** the produced document · **issued-letter
 log** the record that a letter went out; survives purges, holds no name ·
 **reference code** a salted digest over every printed field, checkable by phone ·

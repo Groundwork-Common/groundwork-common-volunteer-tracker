@@ -7,10 +7,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'add_meta_boxes', 'gwcvt_add_meta_boxes' );
-add_action( 'save_post_' . GWCVT_ENTRY_TYPE, 'gwcvt_save_entry', 10, 2 );
-add_action( 'save_post_' . GWCVT_VOLUNTEER_TYPE, 'gwcvt_save_volunteer', 10, 2 );
-add_action( 'admin_notices', 'gwcvt_entry_saved_notice' );
+add_action( 'add_meta_boxes', 'gwc_vt_add_meta_boxes' );
+add_action( 'save_post_' . GWC_VT_ENTRY_TYPE, 'gwc_vt_save_entry', 10, 2 );
+add_action( 'save_post_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_save_volunteer', 10, 2 );
+add_action( 'admin_notices', 'gwc_vt_entry_saved_notice' );
 
 /* ── Why every field wrapper here is a div ───────────────────────────────────
  * The obvious markup for a labelled field is a <p>, and it is what wp-admin's
@@ -35,21 +35,21 @@ add_action( 'admin_notices', 'gwcvt_entry_saved_notice' );
  * 'title' support, not from here — see the note in inc/cpt.php for why
  * remove_meta_box( 'titlediv', … ) does not do it.
  */
-function gwcvt_add_meta_boxes(): void {
+function gwc_vt_add_meta_boxes(): void {
 	add_meta_box(
-		'gwcvt-entry',
+		'gwc-vt-entry',
 		__( 'Shift', 'groundwork-common-volunteer-tracker' ),
-		'gwcvt_render_entry_meta_box',
-		GWCVT_ENTRY_TYPE,
+		'gwc_vt_render_entry_meta_box',
+		GWC_VT_ENTRY_TYPE,
 		'normal',
 		'high'
 	);
 
 	add_meta_box(
-		'gwcvt-volunteer',
+		'gwc-vt-volunteer',
 		__( 'Contact details', 'groundwork-common-volunteer-tracker' ),
-		'gwcvt_render_volunteer_meta_box',
-		GWCVT_VOLUNTEER_TYPE,
+		'gwc_vt_render_volunteer_meta_box',
+		GWC_VT_VOLUNTEER_TYPE,
 		'normal',
 		'high'
 	);
@@ -60,16 +60,16 @@ function gwcvt_add_meta_boxes(): void {
  *
  * @param WP_Post $post The entry being edited.
  */
-function gwcvt_render_entry_meta_box( $post ): void {
+function gwc_vt_render_entry_meta_box( $post ): void {
 	$entry_id = (int) $post->ID;
 
-	$volunteer_id = (int) get_post_meta( $entry_id, GWCVT_ENTRY_VOLUNTEER, true );
-	$date         = (string) get_post_meta( $entry_id, GWCVT_ENTRY_DATE, true );
-	$minutes      = (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true );
-	$activity     = (string) get_post_meta( $entry_id, GWCVT_ENTRY_ACTIVITY, true );
-	$supervisor   = (string) get_post_meta( $entry_id, GWCVT_ENTRY_SUPERVISOR, true );
-	$claim_name   = (string) get_post_meta( $entry_id, '_gwcvt_claim_name', true );
-	$claim_email  = (string) get_post_meta( $entry_id, '_gwcvt_claim_email', true );
+	$volunteer_id = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true );
+	$date         = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true );
+	$minutes      = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
+	$activity     = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true );
+	$supervisor   = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, true );
+	$claim_name   = (string) get_post_meta( $entry_id, '_gwc_vt_claim_name', true );
+	$claim_email  = (string) get_post_meta( $entry_id, '_gwc_vt_claim_email', true );
 
 	/* A new entry defaults to today. The overwhelmingly common case is somebody
 	 * logging a shift that just finished, and an empty date field is a required
@@ -80,14 +80,14 @@ function gwcvt_render_entry_meta_box( $post ): void {
 	 * `! $entry_id` is never true — which is how this first shipped with the
 	 * field silently blank. */
 	if ( '' === $date && 'auto-draft' === get_post_status( $entry_id ) ) {
-		$date = gwcvt_today();
+		$date = gwc_vt_today();
 	}
 
-	wp_nonce_field( 'gwcvt_save_entry', 'gwcvt_entry_nonce' );
+	wp_nonce_field( 'gwc_vt_save_entry', 'gwc_vt_entry_nonce' );
 
-	$max_date   = gwcvt_setting( 'allow_future_dates' ) ? '' : gwcvt_today();
-	$vocabulary = gwcvt_activity_vocabulary();
-	$increment  = gwcvt_hour_increment();
+	$max_date   = gwc_vt_setting( 'allow_future_dates' ) ? '' : gwc_vt_today();
+	$vocabulary = gwc_vt_activity_vocabulary();
+	$increment  = gwc_vt_hour_increment();
 	?>
 	<div class="gwcvt-fields">
 
@@ -104,7 +104,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 					);
 					?>
 				</p>
-				<?php gwcvt_render_triage_actions( $entry_id ); ?>
+				<?php gwc_vt_render_triage_actions( $entry_id ); ?>
 			</div>
 		<?php endif; ?>
 
@@ -131,7 +131,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 					placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
 					value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : '' ); ?>"
 				/>
-				<input type="hidden" name="gwcvt_volunteer" id="gwcvt-volunteer-id" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
+				<input type="hidden" name="gwc_vt_volunteer" id="gwcvt-volunteer-id" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
 				<ul id="gwcvt-volunteer-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
 			</div>
 			<span class="description">
@@ -139,7 +139,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 				printf(
 					/* translators: %s: a link to the new-volunteer screen. */
 					esc_html__( 'No record yet? %s first.', 'groundwork-common-volunteer-tracker' ),
-					'<a href="' . esc_url( admin_url( 'post-new.php?post_type=' . GWCVT_VOLUNTEER_TYPE ) ) . '">'
+					'<a href="' . esc_url( admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ) ) . '">'
 						. esc_html__( 'Add the volunteer', 'groundwork-common-volunteer-tracker' )
 						. '</a>'
 				);
@@ -160,7 +160,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 			<input
 				type="date"
 				id="gwcvt-date"
-				name="gwcvt_date"
+				name="gwc_vt_date"
 				required
 				value="<?php echo esc_attr( $date ); ?>"
 				<?php echo '' !== $max_date ? 'max="' . esc_attr( $max_date ) . '"' : ''; ?>
@@ -177,11 +177,11 @@ function gwcvt_render_entry_meta_box( $post ): void {
 			<input
 				type="text"
 				id="gwcvt-hours"
-				name="gwcvt_hours"
+				name="gwc_vt_hours"
 				class="small-text"
 				inputmode="decimal"
 				required
-				value="<?php echo esc_attr( $minutes > 0 ? gwcvt_format_hours( $minutes ) : '' ); ?>"
+				value="<?php echo esc_attr( $minutes > 0 ? gwc_vt_format_hours( $minutes ) : '' ); ?>"
 			/>
 			<span class="description">
 				<?php
@@ -206,7 +206,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 			<input
 				type="text"
 				id="gwcvt-activity"
-				name="gwcvt_activity"
+				name="gwc_vt_activity"
 				class="regular-text"
 				maxlength="200"
 				<?php echo $vocabulary ? 'list="gwcvt-activities"' : ''; ?>
@@ -229,7 +229,7 @@ function gwcvt_render_entry_meta_box( $post ): void {
 			<input
 				type="text"
 				id="gwcvt-supervisor"
-				name="gwcvt_supervisor"
+				name="gwc_vt_supervisor"
 				class="regular-text"
 				maxlength="100"
 				value="<?php echo esc_attr( $supervisor ); ?>"
@@ -245,8 +245,8 @@ function gwcvt_render_entry_meta_box( $post ): void {
  *
  * @return string[]
  */
-function gwcvt_activity_vocabulary(): array {
-	$raw = (string) gwcvt_setting( 'activities' );
+function gwc_vt_activity_vocabulary(): array {
+	$raw = (string) gwc_vt_setting( 'activities' );
 
 	if ( '' === trim( $raw ) ) {
 		return array();
@@ -264,42 +264,42 @@ function gwcvt_activity_vocabulary(): array {
  * @param int     $post_id Entry post ID.
  * @param WP_Post $post    The post.
  */
-function gwcvt_save_entry( $post_id, $post ): void {
+function gwc_vt_save_entry( $post_id, $post ): void {
 	$post_id = (int) $post_id;
 
-	if ( ! gwcvt_should_save( $post_id, 'gwcvt_entry_nonce', 'gwcvt_save_entry' ) ) {
+	if ( ! gwc_vt_should_save( $post_id, 'gwc_vt_entry_nonce', 'gwc_vt_save_entry' ) ) {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by gwcvt_should_save() directly above.
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by gwc_vt_should_save() directly above.
 	$posted = wp_unslash( $_POST );
 
 	/* Everything this save quietly corrected, reported afterwards by
-	 * gwcvt_entry_saved_notice(). Three things used to be fixed up in silence
+	 * gwc_vt_entry_saved_notice(). Three things used to be fixed up in silence
 	 * here, and the only trace was a derived title reading "… — 0". The screen
 	 * that logs a day's shifts has always said what it skipped and why; the
 	 * screen most hours are typed into said nothing. */
 	$problems = array();
 
-	$volunteer_id = isset( $posted['gwcvt_volunteer'] ) ? absint( $posted['gwcvt_volunteer'] ) : 0;
+	$volunteer_id = isset( $posted['gwc_vt_volunteer'] ) ? absint( $posted['gwc_vt_volunteer'] ) : 0;
 
 	/* A volunteer ID that does not name a volunteer is dropped rather than
 	 * stored. Otherwise a stale or hand-edited value leaves an entry pointing at
 	 * a page, an attachment, or nothing — and the letter would silently omit
 	 * those hours with no indication anywhere that it had. */
-	if ( $volunteer_id > 0 && GWCVT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+	if ( $volunteer_id > 0 && GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 		$volunteer_id = 0;
 		$problems[]   = 'volunteer';
 	}
 
-	$date = isset( $posted['gwcvt_date'] ) ? gwcvt_sanitize_date( (string) $posted['gwcvt_date'] ) : '';
+	$date = isset( $posted['gwc_vt_date'] ) ? gwc_vt_sanitize_date( (string) $posted['gwc_vt_date'] ) : '';
 
-	if ( '' !== $date && ! gwcvt_setting( 'allow_future_dates' ) && $date > gwcvt_today() ) {
-		$date       = gwcvt_today();
+	if ( '' !== $date && ! gwc_vt_setting( 'allow_future_dates' ) && $date > gwc_vt_today() ) {
+		$date       = gwc_vt_today();
 		$problems[] = 'future-date';
 	}
 
-	$minutes = isset( $posted['gwcvt_hours'] ) ? gwcvt_parse_hours( (string) $posted['gwcvt_hours'] ) : null;
+	$minutes = isset( $posted['gwc_vt_hours'] ) ? gwc_vt_parse_hours( (string) $posted['gwc_vt_hours'] ) : null;
 
 	if ( null === $minutes ) {
 		$problems[] = 'hours';
@@ -308,31 +308,31 @@ function gwcvt_save_entry( $post_id, $post ): void {
 		 * but it changes the figure a letter prints, and it did so without ever
 		 * saying it had. Somebody typing 3:07 and reading back 3.0 should be told
 		 * which of the two is on the record. */
-		$typed = isset( $posted['gwcvt_hours'] ) ? gwcvt_parse_hours( (string) $posted['gwcvt_hours'], false ) : null;
+		$typed = isset( $posted['gwc_vt_hours'] ) ? gwc_vt_parse_hours( (string) $posted['gwc_vt_hours'], false ) : null;
 
 		if ( null !== $typed && $typed !== $minutes ) {
 			$problems[] = 'rounded';
 		}
 	}
 
-	gwcvt_stash_entry_problems( $post_id, $problems );
+	gwc_vt_stash_entry_problems( $post_id, $problems );
 
-	update_post_meta( $post_id, GWCVT_ENTRY_VOLUNTEER, (string) $volunteer_id );
-	update_post_meta( $post_id, GWCVT_ENTRY_DATE, $date );
-	update_post_meta( $post_id, GWCVT_ENTRY_MINUTES, (int) ( $minutes ?? 0 ) );
+	update_post_meta( $post_id, GWC_VT_ENTRY_VOLUNTEER, (string) $volunteer_id );
+	update_post_meta( $post_id, GWC_VT_ENTRY_DATE, $date );
+	update_post_meta( $post_id, GWC_VT_ENTRY_MINUTES, (int) ( $minutes ?? 0 ) );
 	update_post_meta(
 		$post_id,
-		GWCVT_ENTRY_ACTIVITY,
-		mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_activity'] ?? '' ) ), 0, 200 )
+		GWC_VT_ENTRY_ACTIVITY,
+		mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_activity'] ?? '' ) ), 0, 200 )
 	);
 	update_post_meta(
 		$post_id,
-		GWCVT_ENTRY_SUPERVISOR,
-		mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_supervisor'] ?? '' ) ), 0, 100 )
+		GWC_VT_ENTRY_SUPERVISOR,
+		mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 )
 	);
 
-	if ( '' === (string) get_post_meta( $post_id, GWCVT_ENTRY_SOURCE, true ) ) {
-		update_post_meta( $post_id, GWCVT_ENTRY_SOURCE, 'staff' );
+	if ( '' === (string) get_post_meta( $post_id, GWC_VT_ENTRY_SOURCE, true ) ) {
+		update_post_meta( $post_id, GWC_VT_ENTRY_SOURCE, 'staff' );
 	}
 
 	/* Matching a self-logged entry to a volunteer is what clears the claim. The
@@ -340,14 +340,14 @@ function gwcvt_save_entry( $post_id, $post ): void {
 	 * matched record means two names on one entry and a privacy eraser that has
 	 * to know about both. */
 	if ( $volunteer_id > 0 ) {
-		delete_post_meta( $post_id, '_gwcvt_claim_name' );
-		delete_post_meta( $post_id, '_gwcvt_claim_email' );
+		delete_post_meta( $post_id, '_gwc_vt_claim_name' );
+		delete_post_meta( $post_id, '_gwc_vt_claim_email' );
 	}
 
-	gwcvt_retitle_entry( $post_id );
+	gwc_vt_retitle_entry( $post_id );
 
 	if ( $volunteer_id > 0 ) {
-		gwcvt_refresh_totals( $volunteer_id );
+		gwc_vt_refresh_totals( $volunteer_id );
 	}
 
 	/**
@@ -355,7 +355,7 @@ function gwcvt_save_entry( $post_id, $post ): void {
 	 *
 	 * @param int $post_id Entry post ID.
 	 */
-	do_action( 'gwcvt_entry_saved', $post_id );
+	do_action( 'gwc_vt_entry_saved', $post_id );
 }
 
 /* ── Saying what was corrected ───────────────────────────────────────────────
@@ -375,8 +375,8 @@ function gwcvt_save_entry( $post_id, $post ): void {
  * @param int      $entry_id Entry post ID.
  * @param string[] $problems Problem keys.
  */
-function gwcvt_stash_entry_problems( int $entry_id, array $problems ): void {
-	$key = 'gwcvt_entry_saved_' . $entry_id . '_' . get_current_user_id();
+function gwc_vt_stash_entry_problems( int $entry_id, array $problems ): void {
+	$key = 'gwc_vt_entry_saved_' . $entry_id . '_' . get_current_user_id();
 
 	if ( ! $problems ) {
 		delete_transient( $key );
@@ -394,7 +394,7 @@ function gwcvt_stash_entry_problems( int $entry_id, array $problems ): void {
  *
  * @return array<string, string>
  */
-function gwcvt_entry_problem_messages(): array {
+function gwc_vt_entry_problem_messages(): array {
 	return array(
 		'hours'       => __( 'This shift was saved with no hours on it, because what was typed could not be read as a duration. Hours can be written as 3.5, 3:30, 3h 30m or 210m — a bare number means hours, so anything longer than a single day is refused rather than recorded.', 'groundwork-common-volunteer-tracker' ),
 		'future-date' => __( 'The date was in the future, so it was changed to today. Hours dated ahead would be dated the day they were typed rather than the day they were worked, and that date is what a letter prints. Future dates can be allowed under Settings → Logging.', 'groundwork-common-volunteer-tracker' ),
@@ -405,10 +405,10 @@ function gwcvt_entry_problem_messages(): array {
 /**
  * Report what the last save corrected.
  */
-function gwcvt_entry_saved_notice(): void {
+function gwc_vt_entry_saved_notice(): void {
 	$screen = get_current_screen();
 
-	if ( ! $screen instanceof WP_Screen || GWCVT_ENTRY_TYPE !== $screen->id ) {
+	if ( ! $screen instanceof WP_Screen || GWC_VT_ENTRY_TYPE !== $screen->id ) {
 		return;
 	}
 
@@ -418,7 +418,7 @@ function gwcvt_entry_saved_notice(): void {
 		return;
 	}
 
-	$key      = 'gwcvt_entry_saved_' . $entry_id . '_' . get_current_user_id();
+	$key      = 'gwc_vt_entry_saved_' . $entry_id . '_' . get_current_user_id();
 	$problems = get_transient( $key );
 
 	if ( ! is_array( $problems ) || ! $problems ) {
@@ -427,7 +427,7 @@ function gwcvt_entry_saved_notice(): void {
 
 	delete_transient( $key );
 
-	$messages = gwcvt_entry_problem_messages();
+	$messages = gwc_vt_entry_problem_messages();
 
 	/* A warning and not an error: the entry did save, and calling it an error
 	 * invites somebody to assume it did not and type it a second time. */
@@ -445,8 +445,8 @@ function gwcvt_entry_saved_notice(): void {
 					sprintf(
 						/* translators: 1: a duration as the site formats them, 2: a number of minutes. */
 						__( 'Recorded as %1$s. Hours are rounded to the nearest %2$d minutes — to the nearest, never up, so the organization never credits time nobody worked. The increment is on the Logging tab.', 'groundwork-common-volunteer-tracker' ),
-						gwcvt_format_hours( (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true ) ),
-						(int) gwcvt_setting( 'hour_increment' )
+						gwc_vt_format_hours( (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true ) ),
+						(int) gwc_vt_setting( 'hour_increment' )
 					)
 				)
 			);
@@ -466,8 +466,8 @@ function gwcvt_entry_saved_notice(): void {
  *
  * @param int $entry_id Entry post ID.
  */
-function gwcvt_retitle_entry( int $entry_id ): void {
-	$title = gwcvt_entry_title( $entry_id );
+function gwc_vt_retitle_entry( int $entry_id ): void {
+	$title = gwc_vt_entry_title( $entry_id );
 
 	if ( get_post_field( 'post_title', $entry_id ) === $title ) {
 		return;
@@ -477,7 +477,7 @@ function gwcvt_retitle_entry( int $entry_id ): void {
 	 * a save_post handler. Unhooking around the write is the standard remedy
 	 * and is cheaper than a static re-entry guard, which would also have to be
 	 * reset for WP-CLI runs that save several posts in one process. */
-	remove_action( 'save_post_' . GWCVT_ENTRY_TYPE, 'gwcvt_save_entry', 10 );
+	remove_action( 'save_post_' . GWC_VT_ENTRY_TYPE, 'gwc_vt_save_entry', 10 );
 
 	wp_update_post(
 		array(
@@ -486,7 +486,7 @@ function gwcvt_retitle_entry( int $entry_id ): void {
 		)
 	);
 
-	add_action( 'save_post_' . GWCVT_ENTRY_TYPE, 'gwcvt_save_entry', 10, 2 );
+	add_action( 'save_post_' . GWC_VT_ENTRY_TYPE, 'gwc_vt_save_entry', 10, 2 );
 }
 
 /**
@@ -494,22 +494,22 @@ function gwcvt_retitle_entry( int $entry_id ): void {
  *
  * @param WP_Post $post The volunteer being edited.
  */
-function gwcvt_render_volunteer_meta_box( $post ): void {
+function gwc_vt_render_volunteer_meta_box( $post ): void {
 	$volunteer_id = (int) $post->ID;
 
-	$email = (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_EMAIL, true );
-	$phone = (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_PHONE, true );
+	$email = (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
+	$phone = (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHONE, true );
 
-	wp_nonce_field( 'gwcvt_save_volunteer', 'gwcvt_volunteer_nonce' );
+	wp_nonce_field( 'gwc_vt_save_volunteer', 'gwc_vt_volunteer_nonce' );
 
-	$totals = $volunteer_id > 0 ? gwcvt_volunteer_totals( $volunteer_id ) : new GWCVT_Totals();
+	$totals = $volunteer_id > 0 ? gwc_vt_volunteer_totals( $volunteer_id ) : new GWC_VT_Totals();
 	?>
 	<div class="gwcvt-fields">
 		<div class="gwcvt-field">
 			<label for="gwcvt-email">
 				<strong><?php esc_html_e( 'Email', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
-			<input type="email" id="gwcvt-email" name="gwcvt_email" class="regular-text" value="<?php echo esc_attr( $email ); ?>" />
+			<input type="email" id="gwcvt-email" name="gwc_vt_email" class="regular-text" value="<?php echo esc_attr( $email ); ?>" />
 			<span class="description"><?php esc_html_e( 'Where a verification letter is sent, and how the privacy tools find this record.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
@@ -517,7 +517,7 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 			<label for="gwcvt-phone">
 				<strong><?php esc_html_e( 'Phone', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
-			<input type="text" id="gwcvt-phone" name="gwcvt_phone" class="regular-text" maxlength="40" value="<?php echo esc_attr( $phone ); ?>" />
+			<input type="text" id="gwcvt-phone" name="gwc_vt_phone" class="regular-text" maxlength="40" value="<?php echo esc_attr( $phone ); ?>" />
 			<span class="description"><?php esc_html_e( 'For your own use — ringing round when a shift is short. It is never printed on a letter and never shown publicly.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
@@ -531,7 +531,7 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 		?>
 		<div class="gwcvt-field gwcvt-hold">
 			<label>
-				<input type="checkbox" name="gwcvt_hold" value="1" <?php checked( (bool) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD, true ) ); ?> />
+				<input type="checkbox" name="gwc_vt_hold" value="1" <?php checked( (bool) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD, true ) ); ?> />
 				<strong><?php esc_html_e( 'Keep this record regardless of the retention policy', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
 			<?php
@@ -547,11 +547,11 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 			<input
 				type="text"
 				id="gwcvt-hold-reason"
-				name="gwcvt_hold_reason"
+				name="gwc_vt_hold_reason"
 				class="regular-text"
 				maxlength="200"
 				placeholder="<?php esc_attr_e( 'Why — e.g. court order, open case', 'groundwork-common-volunteer-tracker' ); ?>"
-				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_HOLD_REASON, true ) ); ?>"
+				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD_REASON, true ) ); ?>"
 			/>
 			<span class="description">
 				<?php esc_html_e( 'Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal.', 'groundwork-common-volunteer-tracker' ); ?>
@@ -566,7 +566,7 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 		 *
 		 * It is never printed on a letter. See the note on the constants in
 		 * inc/volunteer-cpt.php for why that is not a detail. */
-		$required = gwcvt_required_minutes( $volunteer_id );
+		$required = gwc_vt_required_minutes( $volunteer_id );
 		?>
 		<div class="gwcvt-field gwcvt-required">
 			<label for="gwcvt-required">
@@ -575,10 +575,10 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 			<input
 				type="text"
 				id="gwcvt-required"
-				name="gwcvt_required"
+				name="gwc_vt_required"
 				class="small-text"
 				inputmode="decimal"
-				value="<?php echo esc_attr( $required > 0 ? gwcvt_format_hours( $required, 'decimal' ) : '' ); ?>"
+				value="<?php echo esc_attr( $required > 0 ? gwc_vt_format_hours( $required, 'decimal' ) : '' ); ?>"
 				placeholder="<?php esc_attr_e( 'e.g. 40', 'groundwork-common-volunteer-tracker' ); ?>"
 			/>
 			<span class="description">
@@ -593,8 +593,8 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 			<input
 				type="date"
 				id="gwcvt-required-by"
-				name="gwcvt_required_by"
-				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_BY, true ) ); ?>"
+				name="gwc_vt_required_by"
+				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_BY, true ) ); ?>"
 			/>
 			<span class="description"><?php esc_html_e( 'Optional. Shown as a countdown on their record and on the volunteer list.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
@@ -606,10 +606,10 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 			<input
 				type="text"
 				id="gwcvt-required-for"
-				name="gwcvt_required_for"
+				name="gwc_vt_required_for"
 				class="regular-text"
 				maxlength="200"
-				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_FOR, true ) ); ?>"
+				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR, true ) ); ?>"
 				placeholder="<?php esc_attr_e( 'e.g. a court, a school, a scouting group', 'groundwork-common-volunteer-tracker' ); ?>"
 			/>
 			<span class="description">
@@ -617,10 +617,10 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 			</span>
 		</div>
 
-		<?php if ( gwcvt_has_requirement( $volunteer_id ) ) : ?>
-			<?php $progress = gwcvt_requirement_progress( $volunteer_id ); ?>
+		<?php if ( gwc_vt_has_requirement( $volunteer_id ) ) : ?>
+			<?php $progress = gwc_vt_requirement_progress( $volunteer_id ); ?>
 			<p class="gwcvt-summary gwcvt-progress<?php echo $progress['overdue'] ? ' gwcvt-progress--overdue' : ''; ?>">
-				<strong><?php echo esc_html( gwcvt_requirement_label( $volunteer_id ) ); ?></strong>
+				<strong><?php echo esc_html( gwc_vt_requirement_label( $volunteer_id ) ); ?></strong>
 
 				<?php if ( ! $progress['met'] ) : ?>
 					—
@@ -628,7 +628,7 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 					printf(
 						/* translators: %s: a number of hours, already formatted. */
 						esc_html__( '%s to go', 'groundwork-common-volunteer-tracker' ),
-						esc_html( gwcvt_format_hours( $progress['remaining'] ) )
+						esc_html( gwc_vt_format_hours( $progress['remaining'] ) )
 					);
 					?>
 
@@ -643,13 +643,13 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 							printf(
 								/* translators: %s: a number of hours, already formatted. */
 								esc_html__( '%s more is logged but not verified yet, so it does not count towards this.', 'groundwork-common-volunteer-tracker' ),
-								esc_html( gwcvt_format_hours( $progress['pending'] ) )
+								esc_html( gwc_vt_format_hours( $progress['pending'] ) )
 							);
 							?>
 						</span>
 					<?php endif; ?>
 
-					<?php $due = gwcvt_requirement_deadline_label( $volunteer_id ); ?>
+					<?php $due = gwc_vt_requirement_deadline_label( $volunteer_id ); ?>
 					<?php if ( '' !== $due ) : ?>
 						<span class="gwcvt-badge__detail"><?php echo esc_html( $due ); ?></span>
 					<?php endif; ?>
@@ -663,8 +663,8 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
 				printf(
 					/* translators: 1: verified hours, 2: unverified hours, 3: number of shifts. */
 					esc_html__( '%1$s verified, %2$s awaiting verification, across %3$s.', 'groundwork-common-volunteer-tracker' ),
-					'<strong>' . esc_html( gwcvt_format_hours( $totals->verified_minutes ) ) . '</strong>',
-					'<strong>' . esc_html( gwcvt_format_hours( $totals->pending_minutes ) ) . '</strong>',
+					'<strong>' . esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ) . '</strong>',
+					'<strong>' . esc_html( gwc_vt_format_hours( $totals->pending_minutes ) ) . '</strong>',
 					'<strong>' . esc_html(
 						sprintf(
 							/* translators: %d: number of shifts. */
@@ -686,59 +686,59 @@ function gwcvt_render_volunteer_meta_box( $post ): void {
  * @param int     $post_id Volunteer post ID.
  * @param WP_Post $post    The post.
  */
-function gwcvt_save_volunteer( $post_id, $post ): void {
+function gwc_vt_save_volunteer( $post_id, $post ): void {
 	$post_id = (int) $post_id;
 
-	if ( ! gwcvt_should_save( $post_id, 'gwcvt_volunteer_nonce', 'gwcvt_save_volunteer' ) ) {
+	if ( ! gwc_vt_should_save( $post_id, 'gwc_vt_volunteer_nonce', 'gwc_vt_save_volunteer' ) ) {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by gwcvt_should_save() directly above.
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by gwc_vt_should_save() directly above.
 	$posted = wp_unslash( $_POST );
 
-	$email = sanitize_email( (string) ( $posted['gwcvt_email'] ?? '' ) );
+	$email = sanitize_email( (string) ( $posted['gwc_vt_email'] ?? '' ) );
 
-	update_post_meta( $post_id, GWCVT_VOLUNTEER_EMAIL, is_email( $email ) ? $email : '' );
+	update_post_meta( $post_id, GWC_VT_VOLUNTEER_EMAIL, is_email( $email ) ? $email : '' );
 	update_post_meta(
 		$post_id,
-		GWCVT_VOLUNTEER_PHONE,
-		mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_phone'] ?? '' ) ), 0, 40 )
+		GWC_VT_VOLUNTEER_PHONE,
+		mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_phone'] ?? '' ) ), 0, 40 )
 	);
 
 	/* Zero means "nothing recorded" and is stored by deleting rather than by
-	 * writing 0, so gwcvt_has_requirement() has one thing to ask and a record
+	 * writing 0, so gwc_vt_has_requirement() has one thing to ask and a record
 	 * that never had a requirement is indistinguishable from one whose
 	 * requirement was cleared. */
-	$required = gwcvt_parse_required( (string) ( $posted['gwcvt_required'] ?? '' ) );
+	$required = gwc_vt_parse_required( (string) ( $posted['gwc_vt_required'] ?? '' ) );
 
 	if ( $required > 0 ) {
-		update_post_meta( $post_id, GWCVT_VOLUNTEER_REQUIRED, $required );
+		update_post_meta( $post_id, GWC_VT_VOLUNTEER_REQUIRED, $required );
 		update_post_meta(
 			$post_id,
-			GWCVT_VOLUNTEER_REQUIRED_BY,
-			gwcvt_sanitize_date( sanitize_text_field( (string) ( $posted['gwcvt_required_by'] ?? '' ) ) )
+			GWC_VT_VOLUNTEER_REQUIRED_BY,
+			gwc_vt_sanitize_date( sanitize_text_field( (string) ( $posted['gwc_vt_required_by'] ?? '' ) ) )
 		);
 		update_post_meta(
 			$post_id,
-			GWCVT_VOLUNTEER_REQUIRED_FOR,
-			mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_required_for'] ?? '' ) ), 0, 200 )
+			GWC_VT_VOLUNTEER_REQUIRED_FOR,
+			mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_required_for'] ?? '' ) ), 0, 200 )
 		);
 	} else {
-		delete_post_meta( $post_id, GWCVT_VOLUNTEER_REQUIRED );
-		delete_post_meta( $post_id, GWCVT_VOLUNTEER_REQUIRED_BY );
-		delete_post_meta( $post_id, GWCVT_VOLUNTEER_REQUIRED_FOR );
+		delete_post_meta( $post_id, GWC_VT_VOLUNTEER_REQUIRED );
+		delete_post_meta( $post_id, GWC_VT_VOLUNTEER_REQUIRED_BY );
+		delete_post_meta( $post_id, GWC_VT_VOLUNTEER_REQUIRED_FOR );
 	}
 
-	if ( isset( $posted['gwcvt_hold'] ) ) {
-		update_post_meta( $post_id, GWCVT_VOLUNTEER_HOLD, 1 );
+	if ( isset( $posted['gwc_vt_hold'] ) ) {
+		update_post_meta( $post_id, GWC_VT_VOLUNTEER_HOLD, 1 );
 		update_post_meta(
 			$post_id,
-			GWCVT_VOLUNTEER_HOLD_REASON,
-			mb_substr( sanitize_text_field( (string) ( $posted['gwcvt_hold_reason'] ?? '' ) ), 0, 200 )
+			GWC_VT_VOLUNTEER_HOLD_REASON,
+			mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_hold_reason'] ?? '' ) ), 0, 200 )
 		);
 	} else {
-		delete_post_meta( $post_id, GWCVT_VOLUNTEER_HOLD );
-		delete_post_meta( $post_id, GWCVT_VOLUNTEER_HOLD_REASON );
+		delete_post_meta( $post_id, GWC_VT_VOLUNTEER_HOLD );
+		delete_post_meta( $post_id, GWC_VT_VOLUNTEER_HOLD_REASON );
 	}
 }
 
@@ -754,7 +754,7 @@ function gwcvt_save_volunteer( $post_id, $post ): void {
  * @param string $nonce_action The action the nonce was created for.
  * @return bool
  */
-function gwcvt_should_save( int $post_id, string $nonce_field, string $nonce_action ): bool {
+function gwc_vt_should_save( int $post_id, string $nonce_field, string $nonce_action ): bool {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 		return false;
 	}
@@ -788,7 +788,7 @@ function gwcvt_should_save( int $post_id, string $nonce_field, string $nonce_act
  * @param string $raw Posted value.
  * @return string Y-m-d, or ''.
  */
-function gwcvt_sanitize_date( string $raw ): string {
+function gwc_vt_sanitize_date( string $raw ): string {
 	$raw = trim( $raw );
 
 	if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $raw, $m ) ) {

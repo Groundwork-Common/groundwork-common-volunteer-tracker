@@ -21,7 +21,7 @@ const source = readFileSync( new URL( '../../assets/js/admin-event-grid.js', imp
 const patterns = {
 	timeName: /renumber\( row, (\/.+?\/), '\[slots\]\[' \+ next/.exec( source ),
 	timeId: /renumber\( row, (\/.+?\/), 'gwcvt-slot-\$1-'/.exec( source ),
-	roleName: /renumber\( copy, (\/.+?\/), 'gwcvt_roles\['/.exec( source ),
+	roleName: /renumber\( copy, (\/.+?\/), 'gwc_vt_roles\['/.exec( source ),
 	roleId: /renumber\( copy, (\/.+?\/), 'gwcvt-role-'/.exec( source ),
 	roleSlot: /renumber\( copy, (\/.+?\/), 'gwcvt-slot-'/.exec( source ),
 };
@@ -45,11 +45,11 @@ const check = ( label, got, want ) => {
 	console.log( `${ ok ? 'PASS ' : 'FAIL ' } ${ label }${ ok ? '' : `\n        got  ${ got }\n        want ${ want }` }` );
 };
 
-/* Exactly what gwcvt_render_event_role_block() and gwcvt_render_event_slot_row()
+/* Exactly what gwc_vt_render_event_role_block() and gwc_vt_render_event_slot_row()
  * put on the page for role 0, time 0. */
 const NAMES = [ 'name', 'supervisor', 'location', 'notes' ]
-	.map( ( f ) => `gwcvt_roles[0][${ f }]` )
-	.concat( [ 'id', 'date', 'start', 'end', 'overnight', 'min', 'max', 'remove' ].map( ( f ) => `gwcvt_roles[0][slots][0][${ f }]` ) );
+	.map( ( f ) => `gwc_vt_roles[0][${ f }]` )
+	.concat( [ 'id', 'date', 'start', 'end', 'overnight', 'min', 'max', 'remove' ].map( ( f ) => `gwc_vt_roles[0][slots][0][${ f }]` ) );
 
 const IDS = [ 'gwcvt-role-0', 'gwcvt-role-0-sup', 'gwcvt-role-0-loc', 'gwcvt-role-0-notes' ]
 	.concat( [ 'date', 'start', 'end', 'min', 'max' ].map( ( f ) => `gwcvt-slot-0-0-${ f }` ) );
@@ -71,7 +71,7 @@ for ( const n of NAMES.filter( ( x ) => ! x.includes( '[slots]' ) ) ) {
 console.log( '\n── add another role, next index 1 ──' );
 
 for ( const n of NAMES ) {
-	check( n, n.replace( re( patterns.roleName ), 'gwcvt_roles[1]' ), n.replace( 'gwcvt_roles[0]', 'gwcvt_roles[1]' ) );
+	check( n, n.replace( re( patterns.roleName ), 'gwc_vt_roles[1]' ), n.replace( 'gwc_vt_roles[0]', 'gwc_vt_roles[1]' ) );
 }
 
 for ( const i of IDS ) {

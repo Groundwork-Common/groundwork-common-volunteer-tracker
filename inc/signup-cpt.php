@@ -7,32 +7,32 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_SIGNUP_TYPE = 'gwcvt_signup';
+const GWC_VT_SIGNUP_TYPE = 'gwc_vt_signup';
 
 /* Over the shift's maximum. Recorded rather than refused — see the note on
  * capacity in inc/signups.php. */
-const GWCVT_SIGNUP_WAITLIST = 'gwcvt_waitlist';
+const GWC_VT_SIGNUP_WAITLIST = 'gwc_vt_waitlist';
 
 /* The volunteer backed out, or a coordinator took them off. Kept rather than
  * trashed: "two people dropped" is something the coordinator needs to see when
  * they look at Saturday, and a trashed post is invisible on the way to being
  * deleted by core's own cleanup. */
-const GWCVT_SIGNUP_WITHDRAWN = 'gwcvt_withdrawn';
+const GWC_VT_SIGNUP_WITHDRAWN = 'gwc_vt_withdrawn';
 
 /* Signup meta.
  *
- * These keys are deliberately NOT the entry's. '_gwcvt_signup_volunteer' rather
- * than '_gwcvt_volunteer', and the difference is load-bearing: inc/entries.php
+ * These keys are deliberately NOT the entry's. '_gwc_vt_signup_volunteer' rather
+ * than '_gwc_vt_volunteer', and the difference is load-bearing: inc/entries.php
  * invalidates a volunteer's cached totals from meta writes, matching on the key
  * name, so a signup sharing the entry's key would dirty and recompute the
  * rollup every time somebody signed up for something they had not yet worked. */
-const GWCVT_SIGNUP_VOLUNTEER   = '_gwcvt_signup_volunteer';
-const GWCVT_SIGNUP_CLAIM_NAME  = '_gwcvt_signup_claim_name';
-const GWCVT_SIGNUP_CLAIM_EMAIL = '_gwcvt_signup_claim_email';
-const GWCVT_SIGNUP_SOURCE      = '_gwcvt_signup_source';
+const GWC_VT_SIGNUP_VOLUNTEER   = '_gwc_vt_signup_volunteer';
+const GWC_VT_SIGNUP_CLAIM_NAME  = '_gwc_vt_signup_claim_name';
+const GWC_VT_SIGNUP_CLAIM_EMAIL = '_gwc_vt_signup_claim_email';
+const GWC_VT_SIGNUP_SOURCE      = '_gwc_vt_signup_source';
 
 /* When it was made, GMT. Shown to the coordinator as "signed up". */
-const GWCVT_SIGNUP_CREATED = '_gwcvt_signup_created';
+const GWC_VT_SIGNUP_CREATED = '_gwc_vt_signup_created';
 
 /* How many times this person has been put on this shift. Bumped every time the
  * signup is made again after a withdrawal, and part of the cancellation token —
@@ -44,20 +44,20 @@ const GWCVT_SIGNUP_CREATED = '_gwcvt_signup_created';
  * is a double-submit away rather than a theoretical race, and tests/integration
  * /signups.php caught it. A token's lifetime should not depend on how fast
  * somebody clicks. */
-const GWCVT_SIGNUP_REVISION = '_gwcvt_signup_revision';
+const GWC_VT_SIGNUP_REVISION = '_gwc_vt_signup_revision';
 
 /* Absent means the reminder has not gone out. Same shape as the attestation
  * timestamp, and it is what makes the reminder pass idempotent: a missed cron
  * run sends late rather than never or twice. */
-const GWCVT_SIGNUP_REMINDED = '_gwcvt_signup_reminded_at';
+const GWC_VT_SIGNUP_REMINDED = '_gwc_vt_signup_reminded_at';
 
 /* The hour entry reconciliation produced, if any. Its absence on a reconciled
  * shift is how a no-show is derived — there is no stored no-show flag, because a
  * record of who does not turn up is a behaviour file on people working off court
  * orders, and this plugin has no business keeping one. */
-const GWCVT_SIGNUP_ENTRY = '_gwcvt_signup_entry';
+const GWC_VT_SIGNUP_ENTRY = '_gwc_vt_signup_entry';
 
-add_action( 'init', 'gwcvt_register_signup_type' );
+add_action( 'init', 'gwc_vt_register_signup_type' );
 
 /**
  * Register the signup type and its two statuses.
@@ -80,9 +80,9 @@ add_action( 'init', 'gwcvt_register_signup_type' );
  * behaviour depends on whether a person already exists, and therefore no oracle
  * to build one out of. See the box comment in inc/self-log.php.
  */
-function gwcvt_register_signup_type(): void {
+function gwc_vt_register_signup_type(): void {
 	register_post_status(
-		GWCVT_SIGNUP_WAITLIST,
+		GWC_VT_SIGNUP_WAITLIST,
 		array(
 			'label'                     => _x( 'Waiting list', 'signup status', 'groundwork-common-volunteer-tracker' ),
 			'public'                    => false,
@@ -96,7 +96,7 @@ function gwcvt_register_signup_type(): void {
 	);
 
 	register_post_status(
-		GWCVT_SIGNUP_WITHDRAWN,
+		GWC_VT_SIGNUP_WITHDRAWN,
 		array(
 			'label'                     => _x( 'Withdrawn', 'signup status', 'groundwork-common-volunteer-tracker' ),
 			'public'                    => false,
@@ -137,7 +137,7 @@ function gwcvt_register_signup_type(): void {
 	 *
 	 * @param array $args register_post_type() arguments.
 	 */
-	register_post_type( GWCVT_SIGNUP_TYPE, apply_filters( 'gwcvt_signup_post_type_args', $args ) );
+	register_post_type( GWC_VT_SIGNUP_TYPE, apply_filters( 'gwc_vt_signup_post_type_args', $args ) );
 }
 
 /**
@@ -150,14 +150,14 @@ function gwcvt_register_signup_type(): void {
  * @param int $signup_id Signup post ID.
  * @return string
  */
-function gwcvt_signup_name( int $signup_id ): string {
-	$volunteer_id = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true );
+function gwc_vt_signup_name( int $signup_id ): string {
+	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
 
 	if ( $volunteer_id > 0 ) {
 		return (string) get_the_title( $volunteer_id );
 	}
 
-	$claimed = trim( (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_NAME, true ) );
+	$claimed = trim( (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_NAME, true ) );
 
 	if ( '' === $claimed ) {
 		return __( 'Someone', 'groundwork-common-volunteer-tracker' );
@@ -179,18 +179,18 @@ function gwcvt_signup_name( int $signup_id ): string {
  * @param int $signup_id Signup post ID.
  * @return string
  */
-function gwcvt_signup_email( int $signup_id ): string {
-	$volunteer_id = (int) get_post_meta( $signup_id, GWCVT_SIGNUP_VOLUNTEER, true );
+function gwc_vt_signup_email( int $signup_id ): string {
+	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
 
 	if ( $volunteer_id > 0 ) {
-		$email = (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_EMAIL, true );
+		$email = (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
 
 		if ( '' !== $email ) {
 			return $email;
 		}
 	}
 
-	return (string) get_post_meta( $signup_id, GWCVT_SIGNUP_CLAIM_EMAIL, true );
+	return (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_EMAIL, true );
 }
 
 /**
@@ -198,7 +198,7 @@ function gwcvt_signup_email( int $signup_id ): string {
  *
  * @param int $signup_id Signup post ID.
  */
-function gwcvt_retitle_signup( int $signup_id ): void {
+function gwc_vt_retitle_signup( int $signup_id ): void {
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
 	wp_update_post(
@@ -207,7 +207,7 @@ function gwcvt_retitle_signup( int $signup_id ): void {
 			'post_title' => sprintf(
 				/* translators: 1: a person's name, 2: a shift. */
 				_x( '%1$s — %2$s', 'a signup, as its derived title', 'groundwork-common-volunteer-tracker' ),
-				gwcvt_signup_name( $signup_id ),
+				gwc_vt_signup_name( $signup_id ),
 				$shift_id > 0 ? get_the_title( $shift_id ) : __( 'a shift', 'groundwork-common-volunteer-tracker' )
 			),
 		)

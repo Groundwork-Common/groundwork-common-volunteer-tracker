@@ -19,6 +19,6 @@
 		"align": [ "wide" ]
 	},
 	"editorScript": "file:./edit.js",
-	"style": "gwcvt-schedule",
+	"style": "gwc-vt-schedule",
 	"render": "file:./render.php"
 }

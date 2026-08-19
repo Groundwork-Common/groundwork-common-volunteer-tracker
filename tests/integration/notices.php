@@ -18,9 +18,9 @@
  */
 
 /* $GLOBALS explicitly — see the note in tests/integration/entries.php. */
-$GLOBALS['gwcvt_failures'] = 0;
-$GLOBALS['gwcvt_made']     = array();
-$GLOBALS['gwcvt_mail']     = array();
+$GLOBALS['gwc_vt_failures'] = 0;
+$GLOBALS['gwc_vt_made']     = array();
+$GLOBALS['gwc_vt_mail']     = array();
 
 /**
  * Assert, tersely.
@@ -29,9 +29,9 @@ $GLOBALS['gwcvt_mail']     = array();
  * @param bool   $ok    Whether it passed.
  * @param string $got   Optional. What was actually seen.
  */
-function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
+function gwc_vt_check( string $label, bool $ok, string $got = '' ): void {
 	if ( ! $ok ) {
-		++$GLOBALS['gwcvt_failures'];
+		++$GLOBALS['gwc_vt_failures'];
 	}
 
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ), $label, ( '' !== $got ? '  [got: ' . $got . ']' : '' ), "\n";
@@ -44,36 +44,36 @@ function gwcvt_check( string $label, bool $ok, string $got = '' ): void {
  * @param array $atts  to, subject, message, headers, attachments.
  * @return bool
  */
-function gwcvt_test_catch_mail( $short, $atts ) {
-	$GLOBALS['gwcvt_mail'][] = $atts;
+function gwc_vt_test_catch_mail( $short, $atts ) {
+	$GLOBALS['gwc_vt_mail'][] = $atts;
 
 	return true;
 }
 
-add_filter( 'pre_wp_mail', 'gwcvt_test_catch_mail', 10, 2 );
+add_filter( 'pre_wp_mail', 'gwc_vt_test_catch_mail', 10, 2 );
 
 /**
  * Everything caught since the last time this was called.
  *
  * @return array
  */
-function gwcvt_drain_mail(): array {
-	$mail                  = $GLOBALS['gwcvt_mail'];
-	$GLOBALS['gwcvt_mail'] = array();
+function gwc_vt_drain_mail(): array {
+	$mail                  = $GLOBALS['gwc_vt_mail'];
+	$GLOBALS['gwc_vt_mail'] = array();
 
 	return $mail;
 }
 
-$GLOBALS['gwcvt_settings_before'] = get_option( GWCVT_SETTINGS_OPTION );
+$GLOBALS['gwc_vt_settings_before'] = get_option( GWC_VT_SETTINGS_OPTION );
 
 /**
  * Store settings and clear the memo.
  *
  * @param array $extra Settings to store.
  */
-function gwcvt_set_settings( array $extra ): void {
-	update_option( GWCVT_SETTINGS_OPTION, $extra );
-	gwcvt_settings_cache( null, true );
+function gwc_vt_set_settings( array $extra ): void {
+	update_option( GWC_VT_SETTINGS_OPTION, $extra );
+	gwc_vt_settings_cache( null, true );
 }
 
 /**
@@ -82,7 +82,7 @@ function gwcvt_set_settings( array $extra ): void {
  * @param array $extra Overrides.
  * @return array
  */
-function gwcvt_base_settings( array $extra = array() ): array {
+function gwc_vt_base_settings( array $extra = array() ): array {
 	return array_merge(
 		array(
 			'shifts_enabled'   => true,
@@ -93,10 +93,10 @@ function gwcvt_base_settings( array $extra = array() ): array {
 			/* Pinned, because every message a volunteer gets carries a link to
 			 * manage their own booking and that link needs somewhere to go. A
 			 * site with shifts on and no public page gets no link at all rather
-			 * than one pointing at the front page — see gwcvt_signup_manage_url(),
+			 * than one pointing at the front page — see gwc_vt_signup_manage_url(),
 			 * which this file caught sending exactly that. */
 			'signup_enabled'   => true,
-			'schedule_page'    => (int) ( $GLOBALS['gwcvt_schedule_page'] ?? 0 ),
+			'schedule_page'    => (int) ( $GLOBALS['gwc_vt_schedule_page'] ?? 0 ),
 		),
 		$extra
 	);
@@ -109,30 +109,30 @@ function gwcvt_base_settings( array $extra = array() ): array {
  * @param int   $min        How many people it needs.
  * @return int
  */
-function gwcvt_make_shift_in( float $hours_away, int $min = 0 ): int {
+function gwc_vt_make_shift_in( float $hours_away, int $min = 0 ): int {
 	$starts = time() + (int) round( $hours_away * HOUR_IN_SECONDS );
 	$local  = new DateTimeImmutable( '@' . $starts );
-	$local  = $local->setTimezone( gwcvt_timezone() );
+	$local  = $local->setTimezone( gwc_vt_timezone() );
 
 	$id = wp_insert_post(
 		array(
-			'post_type'   => GWCVT_SHIFT_TYPE,
+			'post_type'   => GWC_VT_SHIFT_TYPE,
 			'post_status' => 'publish',
 			'post_title'  => 'tmp',
 		)
 	);
 
-	update_post_meta( $id, GWCVT_SHIFT_DATE, $local->format( 'Y-m-d' ) );
-	update_post_meta( $id, GWCVT_SHIFT_START, $local->format( 'H:i' ) );
-	update_post_meta( $id, GWCVT_SHIFT_END, $local->modify( '+3 hours' )->format( 'H:i' ) );
-	update_post_meta( $id, GWCVT_SHIFT_ACTIVITY, 'Zzytest sorting donations' );
-	update_post_meta( $id, GWCVT_SHIFT_LOCATION, 'Zzytest main warehouse' );
-	update_post_meta( $id, GWCVT_SHIFT_SUPERVISOR, 'Dana Reyes' );
-	update_post_meta( $id, GWCVT_SHIFT_MIN, $min );
+	update_post_meta( $id, GWC_VT_SHIFT_DATE, $local->format( 'Y-m-d' ) );
+	update_post_meta( $id, GWC_VT_SHIFT_START, $local->format( 'H:i' ) );
+	update_post_meta( $id, GWC_VT_SHIFT_END, $local->modify( '+3 hours' )->format( 'H:i' ) );
+	update_post_meta( $id, GWC_VT_SHIFT_ACTIVITY, 'Zzytest sorting donations' );
+	update_post_meta( $id, GWC_VT_SHIFT_LOCATION, 'Zzytest main warehouse' );
+	update_post_meta( $id, GWC_VT_SHIFT_SUPERVISOR, 'Dana Reyes' );
+	update_post_meta( $id, GWC_VT_SHIFT_MIN, $min );
 
-	gwcvt_retitle_shift( (int) $id );
+	gwc_vt_retitle_shift( (int) $id );
 
-	$GLOBALS['gwcvt_made'][] = $id;
+	$GLOBALS['gwc_vt_made'][] = $id;
 
 	return (int) $id;
 }
@@ -145,8 +145,8 @@ function gwcvt_make_shift_in( float $hours_away, int $min = 0 ): int {
  * @param string $name     Their name.
  * @return int
  */
-function gwcvt_make_signup( int $shift_id, string $email, string $name = 'Zzytest Somebody' ): int {
-	$id = gwcvt_add_signup(
+function gwc_vt_make_signup( int $shift_id, string $email, string $name = 'Zzytest Somebody' ): int {
+	$id = gwc_vt_add_signup(
 		$shift_id,
 		array(
 			'claim_name'  => $name,
@@ -155,57 +155,57 @@ function gwcvt_make_signup( int $shift_id, string $email, string $name = 'Zzytes
 		)
 	);
 
-	$GLOBALS['gwcvt_made'][] = $id;
+	$GLOBALS['gwc_vt_made'][] = $id;
 
 	/* The confirmation the signup queued is not what this file is about. */
-	$GLOBALS['gwcvt_pending_mail'] = array();
-	gwcvt_drain_mail();
+	$GLOBALS['gwc_vt_pending_mail'] = array();
+	gwc_vt_drain_mail();
 
 	return (int) $id;
 }
 
-$GLOBALS['gwcvt_schedule_page'] = (int) wp_insert_post(
+$GLOBALS['gwc_vt_schedule_page'] = (int) wp_insert_post(
 	array(
 		'post_type'    => 'page',
 		'post_status'  => 'publish',
 		'post_title'   => 'Zzytest shifts',
-		'post_content' => '[volunteer_shifts]',
+		'post_content' => '[gwc_vt_shift_list]',
 	)
 );
 
-$GLOBALS['gwcvt_made'][] = $GLOBALS['gwcvt_schedule_page'];
+$GLOBALS['gwc_vt_made'][] = $GLOBALS['gwc_vt_schedule_page'];
 
 /* ── The events exist only while the feature does ────────────────────────── */
 
-gwcvt_set_settings( array( 'shifts_enabled' => false ) );
-gwcvt_schedule_shift_events();
+gwc_vt_set_settings( array( 'shifts_enabled' => false ) );
+gwc_vt_schedule_shift_events();
 
-gwcvt_check( 'no reminder event while shifts are off', false === wp_next_scheduled( GWCVT_REMINDER_EVENT ) );
-gwcvt_check( 'no digest event while shifts are off', false === wp_next_scheduled( GWCVT_DIGEST_EVENT ) );
+gwc_vt_check( 'no reminder event while shifts are off', false === wp_next_scheduled( GWC_VT_REMINDER_EVENT ) );
+gwc_vt_check( 'no digest event while shifts are off', false === wp_next_scheduled( GWC_VT_DIGEST_EVENT ) );
 
-gwcvt_set_settings( gwcvt_base_settings() );
-gwcvt_schedule_shift_events();
+gwc_vt_set_settings( gwc_vt_base_settings() );
+gwc_vt_schedule_shift_events();
 
-gwcvt_check( 'turning shifts on schedules the reminder pass', false !== wp_next_scheduled( GWCVT_REMINDER_EVENT ) );
-gwcvt_check( 'and the daily summary', false !== wp_next_scheduled( GWCVT_DIGEST_EVENT ) );
+gwc_vt_check( 'turning shifts on schedules the reminder pass', false !== wp_next_scheduled( GWC_VT_REMINDER_EVENT ) );
+gwc_vt_check( 'and the daily summary', false !== wp_next_scheduled( GWC_VT_DIGEST_EVENT ) );
 
 /* ── The reminder pass ───────────────────────────────────────────────────── */
 
-$gwcvt_soon    = gwcvt_make_shift_in( 30 );   // inside a 48-hour lead.
-$gwcvt_distant = gwcvt_make_shift_in( 200 );  // well outside it.
-$gwcvt_gone    = gwcvt_make_shift_in( -5 );   // already started.
+$gwc_vt_soon    = gwc_vt_make_shift_in( 30 );   // inside a 48-hour lead.
+$gwc_vt_distant = gwc_vt_make_shift_in( 200 );  // well outside it.
+$gwc_vt_gone    = gwc_vt_make_shift_in( -5 );   // already started.
 
-$gwcvt_a = gwcvt_make_signup( $gwcvt_soon, 'zzytest-a@example.test', 'Zzytest Ana Ferreira' );
-$gwcvt_b = gwcvt_make_signup( $gwcvt_distant, 'zzytest-b@example.test' );
-$gwcvt_c = gwcvt_make_signup( $gwcvt_gone, 'zzytest-c@example.test' );
+$gwc_vt_a = gwc_vt_make_signup( $gwc_vt_soon, 'zzytest-a@example.test', 'Zzytest Ana Ferreira' );
+$gwc_vt_b = gwc_vt_make_signup( $gwc_vt_distant, 'zzytest-b@example.test' );
+$gwc_vt_c = gwc_vt_make_signup( $gwc_vt_gone, 'zzytest-c@example.test' );
 
-gwcvt_set_settings( gwcvt_base_settings( array( 'reminder_enabled' => false ) ) );
+gwc_vt_set_settings( gwc_vt_base_settings( array( 'reminder_enabled' => false ) ) );
 
-gwcvt_check( 'nothing is sent while reminders are off', 0 === gwcvt_run_reminders() );
-gwcvt_check( 'and no timestamp was written', '' === (string) get_post_meta( $gwcvt_a, GWCVT_SIGNUP_REMINDED, true ) );
+gwc_vt_check( 'nothing is sent while reminders are off', 0 === gwc_vt_run_reminders() );
+gwc_vt_check( 'and no timestamp was written', '' === (string) get_post_meta( $gwc_vt_a, GWC_VT_SIGNUP_REMINDED, true ) );
 
-gwcvt_set_settings(
-	gwcvt_base_settings(
+gwc_vt_set_settings(
+	gwc_vt_base_settings(
 		array(
 			'reminder_enabled'    => true,
 			'reminder_lead_hours' => 48,
@@ -213,137 +213,137 @@ gwcvt_set_settings(
 	)
 );
 
-$gwcvt_sent = gwcvt_run_reminders();
+$gwc_vt_sent = gwc_vt_run_reminders();
 
 /* Only this script's own mail. The reminder pass is site-wide by design, so on
  * a site with seed data — or with any real shift two days out — the total is
  * whatever else happened to be due, and asserting on it makes the test pass or
  * fail depending on what day it is run. It did: this read 1 for weeks and then
  * read 4 the morning a seeded Saturday drifted inside the 48-hour lead. */
-$gwcvt_mail = array_values(
+$gwc_vt_mail = array_values(
 	array_filter(
-		gwcvt_drain_mail(),
-		static function ( array $gwcvt_message ): bool {
-			return 0 === strpos( (string) ( $gwcvt_message['to'] ?? '' ), 'zzytest-' );
+		gwc_vt_drain_mail(),
+		static function ( array $gwc_vt_message ): bool {
+			return 0 === strpos( (string) ( $gwc_vt_message['to'] ?? '' ), 'zzytest-' );
 		}
 	)
 );
 
-gwcvt_check( 'exactly the shift inside the window is reminded', 1 === count( $gwcvt_mail ), (string) count( $gwcvt_mail ) );
-gwcvt_check( 'and the pass counted it', $gwcvt_sent >= 1, (string) $gwcvt_sent );
-gwcvt_check( 'to the right person', 'zzytest-a@example.test' === ( $gwcvt_mail[0]['to'] ?? '' ), (string) ( $gwcvt_mail[0]['to'] ?? '' ) );
-gwcvt_check( 'saying where to go', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'Zzytest main warehouse' ) );
-gwcvt_check( 'and carrying a way to cancel', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'gwcvt_signup=' . $gwcvt_a ) );
+gwc_vt_check( 'exactly the shift inside the window is reminded', 1 === count( $gwc_vt_mail ), (string) count( $gwc_vt_mail ) );
+gwc_vt_check( 'and the pass counted it', $gwc_vt_sent >= 1, (string) $gwc_vt_sent );
+gwc_vt_check( 'to the right person', 'zzytest-a@example.test' === ( $gwc_vt_mail[0]['to'] ?? '' ), (string) ( $gwc_vt_mail[0]['to'] ?? '' ) );
+gwc_vt_check( 'saying where to go', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'Zzytest main warehouse' ) );
+gwc_vt_check( 'and carrying a way to cancel', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'gwc_vt_signup=' . $gwc_vt_a ) );
 
-gwcvt_check( 'a shift too far out is left alone', '' === (string) get_post_meta( $gwcvt_b, GWCVT_SIGNUP_REMINDED, true ) );
+gwc_vt_check( 'a shift too far out is left alone', '' === (string) get_post_meta( $gwc_vt_b, GWC_VT_SIGNUP_REMINDED, true ) );
 
 /* A reminder about a shift that started an hour ago is worse than none: it
  * tells somebody who forgot that they have already let people down. */
-gwcvt_check( 'a shift that already started is left alone', '' === (string) get_post_meta( $gwcvt_c, GWCVT_SIGNUP_REMINDED, true ) );
+gwc_vt_check( 'a shift that already started is left alone', '' === (string) get_post_meta( $gwc_vt_c, GWC_VT_SIGNUP_REMINDED, true ) );
 
 /* ── Idempotence, which is what makes an hourly pass safe ────────────────── */
 
-gwcvt_check( 'the timestamp was written', '' !== (string) get_post_meta( $gwcvt_a, GWCVT_SIGNUP_REMINDED, true ) );
+gwc_vt_check( 'the timestamp was written', '' !== (string) get_post_meta( $gwc_vt_a, GWC_VT_SIGNUP_REMINDED, true ) );
 
-$gwcvt_again = gwcvt_run_reminders();
-gwcvt_drain_mail();
+$gwc_vt_again = gwc_vt_run_reminders();
+gwc_vt_drain_mail();
 
-gwcvt_check( 'running again sends nothing', 0 === $gwcvt_again, (string) $gwcvt_again );
+gwc_vt_check( 'running again sends nothing', 0 === $gwc_vt_again, (string) $gwc_vt_again );
 
 /* ── Somebody on the waiting list has no place to be reminded of ─────────── */
 
-update_post_meta( $gwcvt_soon, GWCVT_SHIFT_MAX, 1 );
+update_post_meta( $gwc_vt_soon, GWC_VT_SHIFT_MAX, 1 );
 
-$gwcvt_waiting = gwcvt_make_signup( $gwcvt_soon, 'zzytest-w@example.test' );
+$gwc_vt_waiting = gwc_vt_make_signup( $gwc_vt_soon, 'zzytest-w@example.test' );
 
-gwcvt_check( 'the extra person is on the waiting list', GWCVT_SIGNUP_WAITLIST === get_post_status( $gwcvt_waiting ), (string) get_post_status( $gwcvt_waiting ) );
+gwc_vt_check( 'the extra person is on the waiting list', GWC_VT_SIGNUP_WAITLIST === get_post_status( $gwc_vt_waiting ), (string) get_post_status( $gwc_vt_waiting ) );
 
-gwcvt_run_reminders();
-gwcvt_drain_mail();
+gwc_vt_run_reminders();
+gwc_vt_drain_mail();
 
-gwcvt_check( 'and is not told to turn up', '' === (string) get_post_meta( $gwcvt_waiting, GWCVT_SIGNUP_REMINDED, true ) );
+gwc_vt_check( 'and is not told to turn up', '' === (string) get_post_meta( $gwc_vt_waiting, GWC_VT_SIGNUP_REMINDED, true ) );
 
 /* Promoted off the waiting list, they are owed one. */
-gwcvt_withdraw_signup( $gwcvt_a );
-$GLOBALS['gwcvt_pending_mail'] = array();
+gwc_vt_withdraw_signup( $gwc_vt_a );
+$GLOBALS['gwc_vt_pending_mail'] = array();
 
-gwcvt_check( 'withdrawing promotes them', 'publish' === get_post_status( $gwcvt_waiting ), (string) get_post_status( $gwcvt_waiting ) );
+gwc_vt_check( 'withdrawing promotes them', 'publish' === get_post_status( $gwc_vt_waiting ), (string) get_post_status( $gwc_vt_waiting ) );
 
-$gwcvt_promoted = gwcvt_run_reminders();
-$gwcvt_mail     = gwcvt_drain_mail();
+$gwc_vt_promoted = gwc_vt_run_reminders();
+$gwc_vt_mail     = gwc_vt_drain_mail();
 
-gwcvt_check( 'and now they are reminded', 1 === $gwcvt_promoted, (string) $gwcvt_promoted );
-gwcvt_check( 'at their own address', 'zzytest-w@example.test' === ( $gwcvt_mail[0]['to'] ?? '' ), (string) ( $gwcvt_mail[0]['to'] ?? '' ) );
+gwc_vt_check( 'and now they are reminded', 1 === $gwc_vt_promoted, (string) $gwc_vt_promoted );
+gwc_vt_check( 'at their own address', 'zzytest-w@example.test' === ( $gwc_vt_mail[0]['to'] ?? '' ), (string) ( $gwc_vt_mail[0]['to'] ?? '' ) );
 
 /* A withdrawn signup is nobody's problem. */
-gwcvt_run_reminders();
-gwcvt_drain_mail();
+gwc_vt_run_reminders();
+gwc_vt_drain_mail();
 
 /* ── Cancelling tells the roster ─────────────────────────────────────────── */
 
-$gwcvt_off  = gwcvt_make_shift_in( 100 );
-$gwcvt_one  = gwcvt_make_signup( $gwcvt_off, 'zzytest-one@example.test' );
-$gwcvt_two  = gwcvt_make_signup( $gwcvt_off, 'zzytest-two@example.test' );
+$gwc_vt_off  = gwc_vt_make_shift_in( 100 );
+$gwc_vt_one  = gwc_vt_make_signup( $gwc_vt_off, 'zzytest-one@example.test' );
+$gwc_vt_two  = gwc_vt_make_signup( $gwc_vt_off, 'zzytest-two@example.test' );
 
-$GLOBALS['gwcvt_pending_mail'] = array();
+$GLOBALS['gwc_vt_pending_mail'] = array();
 
-foreach ( gwcvt_shift_signup_ids( $gwcvt_off, array( 'publish', GWCVT_SIGNUP_WAITLIST ) ) as $gwcvt_id ) {
-	gwcvt_queue_signup_mail( 'cancelled', (int) $gwcvt_id, array( 'reason' => 'Zzytest van is in for repairs' ) );
+foreach ( gwc_vt_shift_signup_ids( $gwc_vt_off, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) ) as $gwc_vt_id ) {
+	gwc_vt_queue_signup_mail( 'cancelled', (int) $gwc_vt_id, array( 'reason' => 'Zzytest van is in for repairs' ) );
 }
 
-gwcvt_send_queued_confirmations();
-$gwcvt_mail = gwcvt_drain_mail();
+gwc_vt_send_queued_confirmations();
+$gwc_vt_mail = gwc_vt_drain_mail();
 
-gwcvt_check( 'everybody on the roster is told', 2 === count( $gwcvt_mail ), (string) count( $gwcvt_mail ) );
-gwcvt_check( 'the subject says it is cancelled', false !== strpos( (string) ( $gwcvt_mail[0]['subject'] ?? '' ), 'cancelled' ), (string) ( $gwcvt_mail[0]['subject'] ?? '' ) );
-gwcvt_check( 'the message says not to come', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'do not come' ) );
-gwcvt_check( 'and gives the reason', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'Zzytest van is in for repairs' ) );
+gwc_vt_check( 'everybody on the roster is told', 2 === count( $gwc_vt_mail ), (string) count( $gwc_vt_mail ) );
+gwc_vt_check( 'the subject says it is cancelled', false !== strpos( (string) ( $gwc_vt_mail[0]['subject'] ?? '' ), 'cancelled' ), (string) ( $gwc_vt_mail[0]['subject'] ?? '' ) );
+gwc_vt_check( 'the message says not to come', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'do not come' ) );
+gwc_vt_check( 'and gives the reason', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'Zzytest van is in for repairs' ) );
 
 /* ── A shift that moves ──────────────────────────────────────────────────── */
 
-$gwcvt_was = array(
-	'date'     => (string) get_post_meta( $gwcvt_off, GWCVT_SHIFT_DATE, true ),
-	'start'    => (string) get_post_meta( $gwcvt_off, GWCVT_SHIFT_START, true ),
-	'end'      => (string) get_post_meta( $gwcvt_off, GWCVT_SHIFT_END, true ),
+$gwc_vt_was = array(
+	'date'     => (string) get_post_meta( $gwc_vt_off, GWC_VT_SHIFT_DATE, true ),
+	'start'    => (string) get_post_meta( $gwc_vt_off, GWC_VT_SHIFT_START, true ),
+	'end'      => (string) get_post_meta( $gwc_vt_off, GWC_VT_SHIFT_END, true ),
 	'next_day' => '',
 	'location' => 'Zzytest main warehouse',
-	'label'    => gwcvt_shift_one_line( $gwcvt_off ),
+	'label'    => gwc_vt_shift_one_line( $gwc_vt_off ),
 );
 
-update_post_meta( $gwcvt_off, GWCVT_SHIFT_LOCATION, 'Zzytest community centre' );
+update_post_meta( $gwc_vt_off, GWC_VT_SHIFT_LOCATION, 'Zzytest community centre' );
 
-gwcvt_check( 'moving the place counts as a change', gwcvt_shift_moved( $gwcvt_off, $gwcvt_was ) );
+gwc_vt_check( 'moving the place counts as a change', gwc_vt_shift_moved( $gwc_vt_off, $gwc_vt_was ) );
 
-$GLOBALS['gwcvt_pending_mail'] = array();
-gwcvt_queue_signup_mail( 'changed', $gwcvt_one, array( 'was' => $gwcvt_was ) );
-gwcvt_send_queued_confirmations();
+$GLOBALS['gwc_vt_pending_mail'] = array();
+gwc_vt_queue_signup_mail( 'changed', $gwc_vt_one, array( 'was' => $gwc_vt_was ) );
+gwc_vt_send_queued_confirmations();
 
-$gwcvt_mail = gwcvt_drain_mail();
+$gwc_vt_mail = gwc_vt_drain_mail();
 
-gwcvt_check( 'the change notice goes out', 1 === count( $gwcvt_mail ), (string) count( $gwcvt_mail ) );
-gwcvt_check( 'carrying the new details', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'Zzytest community centre' ) );
+gwc_vt_check( 'the change notice goes out', 1 === count( $gwc_vt_mail ), (string) count( $gwc_vt_mail ) );
+gwc_vt_check( 'carrying the new details', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'Zzytest community centre' ) );
 
 /* Quoting what it used to be, because "the details have changed" makes the
  * reader go and find the original to work out what. */
-gwcvt_check( 'and what it used to be', false !== strpos( (string) ( $gwcvt_mail[0]['message'] ?? '' ), 'Zzytest main warehouse' ) );
+gwc_vt_check( 'and what it used to be', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'Zzytest main warehouse' ) );
 
 /* Nothing anybody needs to know about. */
-update_post_meta( $gwcvt_off, GWCVT_SHIFT_SUPERVISOR, 'Somebody Else' );
-update_post_meta( $gwcvt_off, GWCVT_SHIFT_ACTIVITY, 'Zzytest reworded' );
+update_post_meta( $gwc_vt_off, GWC_VT_SHIFT_SUPERVISOR, 'Somebody Else' );
+update_post_meta( $gwc_vt_off, GWC_VT_SHIFT_ACTIVITY, 'Zzytest reworded' );
 
-$gwcvt_after_cosmetic = array_merge( $gwcvt_was, array( 'location' => 'Zzytest community centre' ) );
+$gwc_vt_after_cosmetic = array_merge( $gwc_vt_was, array( 'location' => 'Zzytest community centre' ) );
 
-gwcvt_check( 'renaming the activity and the supervisor does not', ! gwcvt_shift_moved( $gwcvt_off, $gwcvt_after_cosmetic ) );
+gwc_vt_check( 'renaming the activity and the supervisor does not', ! gwc_vt_shift_moved( $gwc_vt_off, $gwc_vt_after_cosmetic ) );
 
 /* ── The daily summary ───────────────────────────────────────────────────── */
 
-gwcvt_set_settings( gwcvt_base_settings( array( 'digest_enabled' => false ) ) );
+gwc_vt_set_settings( gwc_vt_base_settings( array( 'digest_enabled' => false ) ) );
 
-gwcvt_check( 'nothing is sent while the summary is off', ! gwcvt_run_digest() );
-gwcvt_drain_mail();
+gwc_vt_check( 'nothing is sent while the summary is off', ! gwc_vt_run_digest() );
+gwc_vt_drain_mail();
 
-gwcvt_set_settings(
-	gwcvt_base_settings(
+gwc_vt_set_settings(
+	gwc_vt_base_settings(
 		array(
 			'digest_enabled'   => true,
 			'digest_recipient' => 'zzytest-coordinator@example.test',
@@ -351,69 +351,69 @@ gwcvt_set_settings(
 	)
 );
 
-$gwcvt_short = gwcvt_make_shift_in( 72, 6 );
-update_post_meta( $gwcvt_short, GWCVT_SHIFT_MAX, 6 );
-gwcvt_make_signup( $gwcvt_short, 'zzytest-lonely@example.test' );
+$gwc_vt_short = gwc_vt_make_shift_in( 72, 6 );
+update_post_meta( $gwc_vt_short, GWC_VT_SHIFT_MAX, 6 );
+gwc_vt_make_signup( $gwc_vt_short, 'zzytest-lonely@example.test' );
 
-$gwcvt_ran  = gwcvt_run_digest();
-$gwcvt_mail = gwcvt_drain_mail();
-$gwcvt_body = (string) ( $gwcvt_mail[0]['message'] ?? '' );
+$gwc_vt_ran  = gwc_vt_run_digest();
+$gwc_vt_mail = gwc_vt_drain_mail();
+$gwc_vt_body = (string) ( $gwc_vt_mail[0]['message'] ?? '' );
 
-gwcvt_check( 'the summary goes out when there is something to say', $gwcvt_ran );
-gwcvt_check( 'to the address configured', 'zzytest-coordinator@example.test' === ( $gwcvt_mail[0]['to'] ?? '' ), (string) ( $gwcvt_mail[0]['to'] ?? '' ) );
-gwcvt_check( 'listing what is short of people', false !== strpos( $gwcvt_body, 'Short of people' ) );
-gwcvt_check( 'naming this shift', false !== strpos( $gwcvt_body, 'Zzytest main warehouse' ) );
-gwcvt_check( 'and how short it is', false !== strpos( $gwcvt_body, '1 of 6' ) );
+gwc_vt_check( 'the summary goes out when there is something to say', $gwc_vt_ran );
+gwc_vt_check( 'to the address configured', 'zzytest-coordinator@example.test' === ( $gwc_vt_mail[0]['to'] ?? '' ), (string) ( $gwc_vt_mail[0]['to'] ?? '' ) );
+gwc_vt_check( 'listing what is short of people', false !== strpos( $gwc_vt_body, 'Short of people' ) );
+gwc_vt_check( 'naming this shift', false !== strpos( $gwc_vt_body, 'Zzytest main warehouse' ) );
+gwc_vt_check( 'and how short it is', false !== strpos( $gwc_vt_body, '1 of 6' ) );
 
 /* The links in it are admin URLs, and they are built by functions that must be
  * loadable on cron — where the admin bundle is not. A digest that fatals at
  * three in the morning simply stops existing, and nobody finds out. */
-gwcvt_check( 'with a link to the shift', false !== strpos( $gwcvt_body, 'page=' . GWCVT_SCHEDULE_PAGE ) );
-gwcvt_check( 'and a link straight to logging the hours', false !== strpos( $gwcvt_body, 'page=' . GWCVT_QUICK_ADD_PAGE ) );
+gwc_vt_check( 'with a link to the shift', false !== strpos( $gwc_vt_body, 'page=' . GWC_VT_SCHEDULE_PAGE ) );
+gwc_vt_check( 'and a link straight to logging the hours', false !== strpos( $gwc_vt_body, 'page=' . GWC_VT_QUICK_ADD_PAGE ) );
 
 /* Scoped to this script's own shift rather than asserting the whole digest goes
  * silent. These scripts run against a database that belongs to somebody else,
  * and the demo data has under-staffed Saturdays of its own — a check that
  * demanded global silence would pass or fail depending on what else is seeded.
  * The unit suite covers "nothing to say, so nothing is sent" directly. */
-gwcvt_check( 'this shift is in the short list', in_array( $gwcvt_short, gwcvt_understaffed_shift_ids( 7 ), true ) );
+gwc_vt_check( 'this shift is in the short list', in_array( $gwc_vt_short, gwc_vt_understaffed_shift_ids( 7 ), true ) );
 
-update_post_meta( $gwcvt_short, GWCVT_SHIFT_MIN, 0 );
+update_post_meta( $gwc_vt_short, GWC_VT_SHIFT_MIN, 0 );
 
-gwcvt_check( 'and drops out once it is no longer short', ! in_array( $gwcvt_short, gwcvt_understaffed_shift_ids( 7 ), true ) );
+gwc_vt_check( 'and drops out once it is no longer short', ! in_array( $gwc_vt_short, gwc_vt_understaffed_shift_ids( 7 ), true ) );
 
-$gwcvt_mail = gwcvt_drain_mail();
+$gwc_vt_mail = gwc_vt_drain_mail();
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
-foreach ( array( GWCVT_REMINDER_EVENT, GWCVT_DIGEST_EVENT ) as $gwcvt_event ) {
-	$gwcvt_next = wp_next_scheduled( $gwcvt_event );
+foreach ( array( GWC_VT_REMINDER_EVENT, GWC_VT_DIGEST_EVENT ) as $gwc_vt_event ) {
+	$gwc_vt_next = wp_next_scheduled( $gwc_vt_event );
 
-	if ( $gwcvt_next ) {
-		wp_unschedule_event( $gwcvt_next, $gwcvt_event );
+	if ( $gwc_vt_next ) {
+		wp_unschedule_event( $gwc_vt_next, $gwc_vt_event );
 	}
 }
 
-foreach ( array( $gwcvt_soon, $gwcvt_distant, $gwcvt_gone, $gwcvt_off, $gwcvt_short ) as $gwcvt_shift_id ) {
-	foreach ( gwcvt_shift_signup_ids( $gwcvt_shift_id, array( 'publish', GWCVT_SIGNUP_WAITLIST, GWCVT_SIGNUP_WITHDRAWN ) ) as $gwcvt_id ) {
-		wp_delete_post( (int) $gwcvt_id, true );
+foreach ( array( $gwc_vt_soon, $gwc_vt_distant, $gwc_vt_gone, $gwc_vt_off, $gwc_vt_short ) as $gwc_vt_shift_id ) {
+	foreach ( gwc_vt_shift_signup_ids( $gwc_vt_shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ) ) as $gwc_vt_id ) {
+		wp_delete_post( (int) $gwc_vt_id, true );
 	}
 
-	delete_option( 'gwcvt_signup_lock_' . $gwcvt_shift_id );
+	delete_option( 'gwc_vt_signup_lock_' . $gwc_vt_shift_id );
 }
 
-foreach ( array_unique( array_filter( $GLOBALS['gwcvt_made'] ) ) as $gwcvt_id ) {
-	wp_delete_post( (int) $gwcvt_id, true );
+foreach ( array_unique( array_filter( $GLOBALS['gwc_vt_made'] ) ) as $gwc_vt_id ) {
+	wp_delete_post( (int) $gwc_vt_id, true );
 }
 
-if ( false === $GLOBALS['gwcvt_settings_before'] ) {
-	delete_option( GWCVT_SETTINGS_OPTION );
+if ( false === $GLOBALS['gwc_vt_settings_before'] ) {
+	delete_option( GWC_VT_SETTINGS_OPTION );
 } else {
-	update_option( GWCVT_SETTINGS_OPTION, $GLOBALS['gwcvt_settings_before'] );
+	update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_settings_before'] );
 }
 
-echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? "ALL PASS\n" : $GLOBALS['gwcvt_failures'] . " CHECK(S) FAILED\n" );
+echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
-if ( $GLOBALS['gwcvt_failures'] > 0 ) {
+if ( $GLOBALS['gwc_vt_failures'] > 0 ) {
 	exit( 1 );
 }

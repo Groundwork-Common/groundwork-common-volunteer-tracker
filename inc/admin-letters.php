@@ -7,21 +7,21 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'admin_menu', 'gwcvt_register_letters_menu', 11 );
-add_action( 'admin_post_gwcvt_letter_print', 'gwcvt_handle_letter_print' );
-add_action( 'admin_post_gwcvt_letter_send', 'gwcvt_handle_letter_send' );
+add_action( 'admin_menu', 'gwc_vt_register_letters_menu', 11 );
+add_action( 'admin_post_gwc_vt_letter_print', 'gwc_vt_handle_letter_print' );
+add_action( 'admin_post_gwc_vt_letter_send', 'gwc_vt_handle_letter_send' );
 
 /**
  * Hang the Letters screen off the Volunteer Hours menu.
  */
-function gwcvt_register_letters_menu(): void {
+function gwc_vt_register_letters_menu(): void {
 	add_submenu_page(
-		GWCVT_MENU_SLUG,
+		GWC_VT_MENU_SLUG,
 		__( 'Verification Letters', 'groundwork-common-volunteer-tracker' ),
 		__( 'Letters', 'groundwork-common-volunteer-tracker' ),
-		GWCVT_CAP_OPEN_LETTERS,
-		GWCVT_LETTERS_PAGE,
-		'gwcvt_render_letters_screen'
+		GWC_VT_CAP_OPEN_LETTERS,
+		GWC_VT_LETTERS_PAGE,
+		'gwc_vt_render_letters_screen'
 	);
 }
 
@@ -31,18 +31,18 @@ function gwcvt_register_letters_menu(): void {
  * @param array $args Extra query arguments.
  * @return string
  */
-function gwcvt_letters_url( array $args = array() ): string {
+function gwc_vt_letters_url( array $args = array() ): string {
 	return add_query_arg(
-		array_merge( array( 'page' => GWCVT_LETTERS_PAGE ), $args ),
-		admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE )
+		array_merge( array( 'page' => GWC_VT_LETTERS_PAGE ), $args ),
+		admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE )
 	);
 }
 
 /**
  * The screen.
  */
-function gwcvt_render_letters_screen(): void {
-	if ( ! current_user_can( GWCVT_CAP_OPEN_LETTERS ) ) {
+function gwc_vt_render_letters_screen(): void {
+	if ( ! current_user_can( GWC_VT_CAP_OPEN_LETTERS ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
@@ -52,17 +52,17 @@ function gwcvt_render_letters_screen(): void {
 
 	/* Producing one is the higher-trust half and stays where it was. Somebody who
 	 * can only verify gets the reference checker and the log. */
-	$can_issue = current_user_can( gwcvt_cap( 'issue' ) );
+	$can_issue = current_user_can( gwc_vt_cap( 'issue' ) );
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from these.
 	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$from = isset( $_GET['from'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
+	$from = isset( $_GET['from'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$to = isset( $_GET['to'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
+	$to = isset( $_GET['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
 	$letter = $volunteer_id > 0
-		? gwcvt_build_letter(
+		? gwc_vt_build_letter(
 			$volunteer_id,
 			array(
 				'from' => $from,
@@ -74,7 +74,7 @@ function gwcvt_render_letters_screen(): void {
 	<div class="wrap gwcvt-wrap">
 		<h1><?php esc_html_e( 'Verification Letters', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
-		<?php gwcvt_letters_notice(); ?>
+		<?php gwc_vt_letters_notice(); ?>
 
 		<div class="gwcvt-letters-layout">
 			<div class="gwcvt-letters-main">
@@ -87,8 +87,8 @@ function gwcvt_render_letters_screen(): void {
 				<h2 class="title"><?php esc_html_e( 'Produce a letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 				<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="gwcvt-letter-form">
-					<input type="hidden" name="post_type" value="<?php echo esc_attr( GWCVT_ENTRY_TYPE ); ?>" />
-					<input type="hidden" name="page" value="<?php echo esc_attr( GWCVT_LETTERS_PAGE ); ?>" />
+					<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
+					<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_LETTERS_PAGE ); ?>" />
 
 					<div class="gwcvt-field">
 						<label for="gwcvt-letter-volunteer">
@@ -130,13 +130,13 @@ function gwcvt_render_letters_screen(): void {
 					<p><button type="submit" class="button"><?php esc_html_e( 'Preview', 'groundwork-common-volunteer-tracker' ); ?></button></p>
 				</form>
 
-				<?php gwcvt_render_letter_preview( $letter, $volunteer_id, $from, $to ); ?>
+				<?php gwc_vt_render_letter_preview( $letter, $volunteer_id, $from, $to ); ?>
 			<?php endif; ?>
 			</div>
 
 			<div class="gwcvt-letters-aside">
-				<?php gwcvt_render_reference_checker(); ?>
-				<?php gwcvt_render_letter_log(); ?>
+				<?php gwc_vt_render_reference_checker(); ?>
+				<?php gwc_vt_render_letter_log(); ?>
 			</div>
 		</div>
 	</div>
@@ -146,13 +146,13 @@ function gwcvt_render_letters_screen(): void {
 /**
  * What the chosen volunteer's letter would say, and the two ways to issue it.
  *
- * @param GWCVT_Letter|null $letter       The letter, or null.
- * @param int               $volunteer_id Volunteer post ID.
- * @param string            $from         Y-m-d or ''.
- * @param string            $to           Y-m-d or ''.
+ * @param GWC_VT_Letter|null $letter       The letter, or null.
+ * @param int                $volunteer_id Volunteer post ID.
+ * @param string             $from         Y-m-d or ''.
+ * @param string             $to           Y-m-d or ''.
  */
-function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, string $to ): void {
-	if ( ! $letter instanceof GWCVT_Letter ) {
+function gwc_vt_render_letter_preview( $letter, int $volunteer_id, string $from, string $to ): void {
+	if ( ! $letter instanceof GWC_VT_Letter ) {
 		if ( $volunteer_id > 0 ) {
 			printf(
 				'<div class="notice notice-error inline"><p>%s</p></div>',
@@ -162,7 +162,7 @@ function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, 
 		return;
 	}
 
-	$email = (string) get_post_meta( $letter->volunteer_id, GWCVT_VOLUNTEER_EMAIL, true );
+	$email = (string) get_post_meta( $letter->volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
 	?>
 	<hr />
 	<h2 class="title"><?php echo esc_html( $letter->volunteer_name ); ?></h2>
@@ -178,7 +178,7 @@ function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, 
 		<tbody>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Verified hours', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<td><strong><?php echo esc_html( gwcvt_format_hours( $letter->verified_minutes ) ); ?></strong></td>
+				<td><strong><?php echo esc_html( gwc_vt_format_hours( $letter->verified_minutes ) ); ?></strong></td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Verified shifts', 'groundwork-common-volunteer-tracker' ); ?></th>
@@ -186,7 +186,7 @@ function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, 
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Period', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<td><?php echo esc_html( gwcvt_letter_period( $letter ) ); ?></td>
+				<td><?php echo esc_html( gwc_vt_letter_period( $letter ) ); ?></td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Reference', 'groundwork-common-volunteer-tracker' ); ?></th>
@@ -201,14 +201,14 @@ function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, 
 		</div>
 	<?php endif; ?>
 
-	<?php gwcvt_render_letterhead_warning(); ?>
+	<?php gwc_vt_render_letterhead_warning(); ?>
 
 	<p class="gwcvt-letter-actions">
 		<a
 			class="button button-primary"
 			target="_blank"
 			rel="noopener"
-			href="<?php echo esc_url( gwcvt_letter_action_url( 'gwcvt_letter_print', $volunteer_id, $from, $to ) ); ?>"
+			href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_print', $volunteer_id, $from, $to ) ); ?>"
 		>
 			<?php esc_html_e( 'Open the letter to print', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
@@ -216,7 +216,7 @@ function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, 
 		<?php if ( '' !== $email && is_email( $email ) ) : ?>
 			<a
 				class="button"
-				href="<?php echo esc_url( gwcvt_letter_action_url( 'gwcvt_letter_send', $volunteer_id, $from, $to ) ); ?>"
+				href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_send', $volunteer_id, $from, $to ) ); ?>"
 				onclick="return confirm( '<?php echo esc_js( sprintf( /* translators: %s: an email address. */ __( 'Email this letter to %s?', 'groundwork-common-volunteer-tracker' ), $email ) ); ?>' );"
 			>
 				<?php
@@ -260,7 +260,7 @@ function gwcvt_render_letter_preview( $letter, int $volunteer_id, string $from, 
  * @param string $to           Y-m-d or ''.
  * @return string
  */
-function gwcvt_letter_action_url( string $action, int $volunteer_id, string $from, string $to ): string {
+function gwc_vt_letter_action_url( string $action, int $volunteer_id, string $from, string $to ): string {
 	return wp_nonce_url(
 		add_query_arg(
 			array(
@@ -278,20 +278,20 @@ function gwcvt_letter_action_url( string $action, int $volunteer_id, string $fro
 /**
  * The shared front half of both issue handlers.
  *
- * @return array{letter:GWCVT_Letter, volunteer_id:int, from:string, to:string}
+ * @return array{letter:GWC_VT_Letter, volunteer_id:int, from:string, to:string}
  */
-function gwcvt_letter_request(): array {
+function gwc_vt_letter_request(): array {
 	$action       = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
 	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
 
-	gwcvt_require_cap( 'issue' );
+	gwc_vt_require_cap( 'issue' );
 
 	check_admin_referer( $action . '_' . $volunteer_id );
 
-	$from = isset( $_GET['from'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
-	$to   = isset( $_GET['to'] ) ? gwcvt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
+	$from = isset( $_GET['from'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
+	$to   = isset( $_GET['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
-	$letter = gwcvt_build_letter(
+	$letter = gwc_vt_build_letter(
 		$volunteer_id,
 		array(
 			'from' => $from,
@@ -299,7 +299,7 @@ function gwcvt_letter_request(): array {
 		)
 	);
 
-	if ( ! $letter instanceof GWCVT_Letter ) {
+	if ( ! $letter instanceof GWC_VT_Letter ) {
 		wp_die(
 			esc_html__( 'That volunteer does not exist.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Not found', 'groundwork-common-volunteer-tracker' ),
@@ -335,26 +335,26 @@ function gwcvt_letter_request(): array {
  *
  * @return string[] Sentences, each naming one fallback.
  */
-function gwcvt_letterhead_gaps(): array {
+function gwc_vt_letterhead_gaps(): array {
 	$gaps = array();
 
-	if ( '' === trim( (string) gwcvt_setting( 'org_name' ) ) ) {
+	if ( '' === trim( (string) gwc_vt_setting( 'org_name' ) ) ) {
 		$gaps[] = sprintf(
 			/* translators: %s: the site's title. */
 			__( 'The letter will be headed “%s”, which is this website\'s title rather than an organization name anybody chose.', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name()
+			gwc_vt_org_name()
 		);
 	}
 
-	if ( '' === trim( (string) gwcvt_setting( 'org_contact' ) ) ) {
+	if ( '' === trim( (string) gwc_vt_setting( 'org_contact' ) ) ) {
 		$gaps[] = sprintf(
 			/* translators: %s: an email address. */
 			__( 'Questions about it will be directed to %s, this site\'s administrator address. That is the contact somebody uses to check a reference code, so it should be one that is answered.', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_contact()
+			gwc_vt_org_contact()
 		);
 	}
 
-	if ( '' === trim( (string) gwcvt_setting( 'signatory_name' ) ) ) {
+	if ( '' === trim( (string) gwc_vt_setting( 'signatory_name' ) ) ) {
 		$gaps[] = __( 'Nobody is named under the signature line, so it prints the word “Signature”. That is deliberate — it looks unfinished because it is — but it will look that way to whoever receives it.', 'groundwork-common-volunteer-tracker' );
 	}
 
@@ -364,8 +364,8 @@ function gwcvt_letterhead_gaps(): array {
 /**
  * Say what this letter would carry that nobody chose.
  */
-function gwcvt_render_letterhead_warning(): void {
-	$gaps = gwcvt_letterhead_gaps();
+function gwc_vt_render_letterhead_warning(): void {
+	$gaps = gwc_vt_letterhead_gaps();
 
 	if ( ! $gaps ) {
 		return;
@@ -379,7 +379,7 @@ function gwcvt_render_letterhead_warning(): void {
 		<?php endforeach; ?>
 
 		<p>
-			<a href="<?php echo esc_url( gwcvt_settings_url( 'letter' ) ); ?>">
+			<a href="<?php echo esc_url( gwc_vt_settings_url( 'letter' ) ); ?>">
 				<?php esc_html_e( 'Set it up on the Letter tab', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		</p>
@@ -403,11 +403,11 @@ function gwcvt_render_letterhead_warning(): void {
 /**
  * Render a letter for printing.
  */
-function gwcvt_handle_letter_print(): void {
-	$request = gwcvt_letter_request();
+function gwc_vt_handle_letter_print(): void {
+	$request = gwc_vt_letter_request();
 	$letter  = $request['letter'];
 
-	gwcvt_log_letter( $letter, 'print' );
+	gwc_vt_log_letter( $letter, 'print' );
 
 	/* This is the response in this plugin with the most personal data in it.
 	 * Nothing about it should be cached, stored by an intermediary, or indexed. */
@@ -417,48 +417,48 @@ function gwcvt_handle_letter_print(): void {
 	header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
 	header( 'Referrer-Policy: no-referrer', true );
 
-	echo gwcvt_render_letter( $letter, 'print' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
+	echo gwc_vt_render_letter( $letter, 'print' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
 	exit;
 }
 
 /**
  * Email a letter to the volunteer.
  */
-function gwcvt_handle_letter_send(): void {
-	$request = gwcvt_letter_request();
+function gwc_vt_handle_letter_send(): void {
+	$request = gwc_vt_letter_request();
 	$letter  = $request['letter'];
 
-	$recipient = (string) get_post_meta( $letter->volunteer_id, GWCVT_VOLUNTEER_EMAIL, true );
+	$recipient = (string) get_post_meta( $letter->volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
 
 	if ( '' === $recipient || ! is_email( $recipient ) ) {
-		gwcvt_letters_redirect( 'no-email', $request );
+		gwc_vt_letters_redirect( 'no-email', $request );
 	}
 
-	$sent = gwcvt_send_email(
+	$sent = gwc_vt_send_email(
 		$recipient,
-		gwcvt_letter_subject( $letter ),
-		gwcvt_render_letter( $letter, 'email' )
+		gwc_vt_letter_subject( $letter ),
+		gwc_vt_render_letter( $letter, 'email' )
 	);
 
-	gwcvt_log_letter( $letter, 'email', $recipient, $sent );
+	gwc_vt_log_letter( $letter, 'email', $recipient, $sent );
 
-	gwcvt_letters_redirect( $sent ? 'sent' : 'send-failed', $request );
+	gwc_vt_letters_redirect( $sent ? 'sent' : 'send-failed', $request );
 }
 
 /**
  * Back to the Letters screen with a result.
  *
  * @param string $result  What happened.
- * @param array  $request From gwcvt_letter_request().
+ * @param array  $request From gwc_vt_letter_request().
  */
-function gwcvt_letters_redirect( string $result, array $request ): void {
+function gwc_vt_letters_redirect( string $result, array $request ): void {
 	wp_safe_redirect(
-		gwcvt_letters_url(
+		gwc_vt_letters_url(
 			array(
-				'volunteer'    => $request['volunteer_id'],
-				'from'         => $request['from'],
-				'to'           => $request['to'],
-				'gwcvt_letter' => $result,
+				'volunteer'     => $request['volunteer_id'],
+				'from'          => $request['from'],
+				'to'            => $request['to'],
+				'gwc_vt_letter' => $result,
 			)
 		)
 	);
@@ -468,9 +468,9 @@ function gwcvt_letters_redirect( string $result, array $request ): void {
 /**
  * Say what happened.
  */
-function gwcvt_letters_notice(): void {
+function gwc_vt_letters_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks which sentence to print after a redirect.
-	$result = isset( $_GET['gwcvt_letter'] ) ? sanitize_key( wp_unslash( $_GET['gwcvt_letter'] ) ) : '';
+	$result = isset( $_GET['gwc_vt_letter'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_letter'] ) ) : '';
 
 	$messages = array(
 		'sent'        => array( 'success', __( 'The letter was emailed and recorded in the log.', 'groundwork-common-volunteer-tracker' ) ),
@@ -495,7 +495,7 @@ function gwcvt_letters_notice(): void {
  * front desk can answer in ten seconds.
  *
  * Three answers, and the wording of each is deliberate — see the note on
- * gwcvt_verify_reference(). In particular a mismatch is reported as "the
+ * gwc_vt_verify_reference(). In particular a mismatch is reported as "the
  * records have changed", never as "invalid" or "forged": hours get corrected,
  * an entry gets verified after the letter went out, a duplicate is removed. All
  * ordinary, none anybody's fault.
@@ -504,7 +504,7 @@ function gwcvt_letters_notice(): void {
 /**
  * The reference checker box.
  */
-function gwcvt_render_reference_checker(): void {
+function gwc_vt_render_reference_checker(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup; nothing is written and no data is disclosed that the viewer cannot already see.
 	$code = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
 	?>
@@ -516,8 +516,8 @@ function gwcvt_render_reference_checker(): void {
 		</p>
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
-			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWCVT_ENTRY_TYPE ); ?>" />
-			<input type="hidden" name="page" value="<?php echo esc_attr( GWCVT_LETTERS_PAGE ); ?>" />
+			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
+			<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_LETTERS_PAGE ); ?>" />
 
 			<p>
 				<label class="screen-reader-text" for="gwcvt-reference"><?php esc_html_e( 'Reference code', 'groundwork-common-volunteer-tracker' ); ?></label>
@@ -532,7 +532,7 @@ function gwcvt_render_reference_checker(): void {
 			return;
 		}
 
-		$result = gwcvt_verify_reference( $code );
+		$result = gwc_vt_verify_reference( $code );
 
 		if ( 'unknown' === $result['status'] ) {
 			printf(
@@ -555,7 +555,7 @@ function gwcvt_render_reference_checker(): void {
 						/* translators: 1: a volunteer's name, 2: a duration, 3: a number of shifts, 4: a date. */
 						__( '%1$s — %2$s verified across %3$s. Issued %4$s.', 'groundwork-common-volunteer-tracker' ),
 						$name,
-						gwcvt_format_hours( $record['minutes'] ),
+						gwc_vt_format_hours( $record['minutes'] ),
 						sprintf(
 							/* translators: %d: number of shifts. */
 							_n( '%d shift', '%d shifts', $record['entries'], 'groundwork-common-volunteer-tracker' ),
@@ -574,15 +574,15 @@ function gwcvt_render_reference_checker(): void {
 						/* translators: 1: a volunteer's name, 2: a duration, 3: a date. */
 						__( 'The letter said: %1$s, %2$s verified. Issued %3$s.', 'groundwork-common-volunteer-tracker' ),
 						$name,
-						gwcvt_format_hours( $record['minutes'] ),
+						gwc_vt_format_hours( $record['minutes'] ),
 						$record['issued_at']
 					)
 				),
-				esc_html( gwcvt_reference_difference_note( $result, $record ) )
+				esc_html( gwc_vt_reference_difference_note( $result, $record ) )
 			);
 		}
 
-		gwcvt_render_reference_comparison( $result );
+		gwc_vt_render_reference_comparison( $result );
 		?>
 	</div>
 	<?php
@@ -602,11 +602,11 @@ function gwcvt_render_reference_checker(): void {
  * why the digest covers every field the letter prints. So the screen has to
  * name that case rather than show the number twice and leave it hanging.
  *
- * @param array $result From gwcvt_verify_reference().
+ * @param array $result From gwc_vt_verify_reference().
  * @param array $record The stored log entry.
  * @return string
  */
-function gwcvt_reference_difference_note( array $result, array $record ): string {
+function gwc_vt_reference_difference_note( array $result, array $record ): string {
 	if ( ! isset( $result['current']['minutes'] ) ) {
 		return __( 'That volunteer’s record no longer exists, so there is nothing left to compare against.', 'groundwork-common-volunteer-tracker' );
 	}
@@ -620,7 +620,7 @@ function gwcvt_reference_difference_note( array $result, array $record ): string
 	return sprintf(
 		/* translators: %s: a duration. */
 		__( 'The records now say: %s verified. This is ordinary — hours get corrected and shifts get verified after a letter goes out. Compare the letter below against the copy you were sent.', 'groundwork-common-volunteer-tracker' ),
-		gwcvt_format_hours( $now )
+		gwc_vt_format_hours( $now )
 	);
 }
 
@@ -636,7 +636,7 @@ function gwcvt_reference_difference_note( array $result, array $record ): string
  * compare, and all of them change what the document says.
  *
  * The reference digest now covers every one of those (see
- * gwcvt_letter_fingerprint), so the plugin can say THAT something differs. It
+ * gwc_vt_letter_fingerprint), so the plugin can say THAT something differs. It
  * cannot say WHAT. Rendering the current letter in full is what lets a person
  * put the two side by side and see it.
  *
@@ -644,16 +644,16 @@ function gwcvt_reference_difference_note( array $result, array $record ): string
  * every time it is opened, and checking a reference is not issuing a letter.
  * The audit log would fill up with letters nobody sent.
  *
- * @param array $result From gwcvt_verify_reference().
+ * @param array $result From gwc_vt_verify_reference().
  */
-function gwcvt_render_reference_comparison( array $result ): void {
+function gwc_vt_render_reference_comparison( array $result ): void {
 	$letter = $result['rebuilt'] ?? null;
 
-	if ( ! $letter instanceof GWCVT_Letter ) {
+	if ( ! $letter instanceof GWC_VT_Letter ) {
 		return;
 	}
 
-	wp_enqueue_style( 'gwcvt-letter' );
+	wp_enqueue_style( 'gwc-vt-letter' );
 	?>
 	<details class="gwcvt-comparison" <?php echo 'changed' === $result['status'] ? 'open' : ''; ?>>
 		<summary>
@@ -668,7 +668,7 @@ function gwcvt_render_reference_comparison( array $result ): void {
 
 		<div class="gwcvt-comparison__paper">
 			<?php
-			echo gwcvt_letter_body( $letter, 'print' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in inc/render.php.
+			echo gwc_vt_letter_body( $letter, 'print' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in inc/render.php.
 			?>
 		</div>
 
@@ -682,8 +682,8 @@ function gwcvt_render_reference_comparison( array $result ): void {
 /**
  * The recent-issuance log.
  */
-function gwcvt_render_letter_log(): void {
-	$records = gwcvt_recent_letters( 15 );
+function gwc_vt_render_letter_log(): void {
+	$records = gwc_vt_recent_letters( 15 );
 	?>
 	<div class="gwcvt-box">
 		<h2><?php esc_html_e( 'Recently issued', 'groundwork-common-volunteer-tracker' ); ?></h2>

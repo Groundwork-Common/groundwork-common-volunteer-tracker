@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'shutdown', 'gwcvt_send_queued_confirmations' );
+add_action( 'shutdown', 'gwc_vt_send_queued_confirmations' );
 
 /* ── The first mail this plugin sends by itself ──────────────────────────────
  * Until now every message left this site because a member of staff pressed a
@@ -21,7 +21,7 @@ add_action( 'shutdown', 'gwcvt_send_queued_confirmations' );
  * and no way to back out except telephoning during office hours. That is not a
  * lighter-weight version of the feature; it is a broken one.
  *
- * Everything goes through gwcvt_send_email(), so the GWCVT_MAIL_MODE staging
+ * Everything goes through gwc_vt_send_email(), so the GWC_VT_MAIL_MODE staging
  * guard covers it for free — which matters more here than anywhere else in the
  * plugin, because this is the message a restored database copy would send to
  * real volunteers about shifts that are not happening.
@@ -52,12 +52,12 @@ add_action( 'shutdown', 'gwcvt_send_queued_confirmations' );
  * @param int    $signup_id Signup post ID.
  * @param array  $context   Anything the message needs beyond the signup.
  */
-function gwcvt_queue_signup_mail( string $kind, int $signup_id, array $context = array() ): void {
-	if ( ! isset( $GLOBALS['gwcvt_pending_mail'] ) ) {
-		$GLOBALS['gwcvt_pending_mail'] = array();
+function gwc_vt_queue_signup_mail( string $kind, int $signup_id, array $context = array() ): void {
+	if ( ! isset( $GLOBALS['gwc_vt_pending_mail'] ) ) {
+		$GLOBALS['gwc_vt_pending_mail'] = array();
 	}
 
-	$GLOBALS['gwcvt_pending_mail'][] = array(
+	$GLOBALS['gwc_vt_pending_mail'][] = array(
 		'kind'    => $kind,
 		'signup'  => $signup_id,
 		'context' => $context,
@@ -69,17 +69,17 @@ function gwcvt_queue_signup_mail( string $kind, int $signup_id, array $context =
  *
  * @param int $signup_id Signup post ID.
  */
-function gwcvt_queue_signup_confirmation( int $signup_id ): void {
-	gwcvt_queue_signup_mail( 'confirmation', $signup_id );
+function gwc_vt_queue_signup_confirmation( int $signup_id ): void {
+	gwc_vt_queue_signup_mail( 'confirmation', $signup_id );
 }
 
 /**
  * Send whatever was queued during this request.
  */
-function gwcvt_send_queued_confirmations(): void {
-	$queued = (array) ( $GLOBALS['gwcvt_pending_mail'] ?? array() );
+function gwc_vt_send_queued_confirmations(): void {
+	$queued = (array) ( $GLOBALS['gwc_vt_pending_mail'] ?? array() );
 
-	$GLOBALS['gwcvt_pending_mail'] = array();
+	$GLOBALS['gwc_vt_pending_mail'] = array();
 
 	foreach ( $queued as $item ) {
 		$signup_id = (int) ( $item['signup'] ?? 0 );
@@ -87,26 +87,26 @@ function gwcvt_send_queued_confirmations(): void {
 
 		switch ( (string) ( $item['kind'] ?? '' ) ) {
 			case 'confirmation':
-				gwcvt_send_signup_confirmation( $signup_id );
+				gwc_vt_send_signup_confirmation( $signup_id );
 				break;
 
 			case 'event-confirmation':
-				gwcvt_send_event_confirmation(
+				gwc_vt_send_event_confirmation(
 					(int) ( $context['event'] ?? 0 ),
 					array_map( 'intval', (array) ( $context['signups'] ?? array() ) )
 				);
 				break;
 
 			case 'reminder':
-				gwcvt_send_shift_reminder( $signup_id );
+				gwc_vt_send_shift_reminder( $signup_id );
 				break;
 
 			case 'cancelled':
-				gwcvt_send_shift_cancelled_notice( $signup_id, (string) ( $context['reason'] ?? '' ) );
+				gwc_vt_send_shift_cancelled_notice( $signup_id, (string) ( $context['reason'] ?? '' ) );
 				break;
 
 			case 'changed':
-				gwcvt_send_shift_changed_notice( $signup_id, (array) ( $context['was'] ?? array() ) );
+				gwc_vt_send_shift_changed_notice( $signup_id, (array) ( $context['was'] ?? array() ) );
 				break;
 		}
 	}
@@ -118,8 +118,8 @@ function gwcvt_send_queued_confirmations(): void {
  * @param int $signup_id Signup post ID.
  * @return bool
  */
-function gwcvt_send_signup_confirmation( int $signup_id ): bool {
-	$email = gwcvt_signup_email( $signup_id );
+function gwc_vt_send_signup_confirmation( int $signup_id ): bool {
+	$email = gwc_vt_signup_email( $signup_id );
 
 	if ( '' === $email || ! is_email( $email ) ) {
 		return false;
@@ -127,27 +127,27 @@ function gwcvt_send_signup_confirmation( int $signup_id ): bool {
 
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
-	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return false;
 	}
 
-	$waiting = GWCVT_SIGNUP_WAITLIST === get_post_status( $signup_id );
+	$waiting = GWC_VT_SIGNUP_WAITLIST === get_post_status( $signup_id );
 
 	$subject = $waiting
 		? sprintf(
 			/* translators: 1: the organisation's name, 2: a date. */
 			__( '%1$s: you are on the waiting list for %2$s', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name(),
-			gwcvt_shift_date_label( $shift_id )
+			gwc_vt_org_name(),
+			gwc_vt_shift_date_label( $shift_id )
 		)
 		: sprintf(
 			/* translators: 1: the organisation's name, 2: a date. */
 			__( '%1$s: you are signed up for %2$s', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name(),
-			gwcvt_shift_date_label( $shift_id )
+			gwc_vt_org_name(),
+			gwc_vt_shift_date_label( $shift_id )
 		);
 
-	return gwcvt_send_email( $email, $subject, gwcvt_signup_confirmation_body( $signup_id, $shift_id, $waiting ) );
+	return gwc_vt_send_email( $email, $subject, gwc_vt_signup_confirmation_body( $signup_id, $shift_id, $waiting ) );
 }
 
 /**
@@ -162,7 +162,7 @@ function gwcvt_send_signup_confirmation( int $signup_id ): bool {
  * @param bool $waiting   Whether they are on the waiting list rather than the roster.
  * @return string
  */
-function gwcvt_signup_confirmation_body( int $signup_id, int $shift_id, bool $waiting ): string {
+function gwc_vt_signup_confirmation_body( int $signup_id, int $shift_id, bool $waiting ): string {
 	$lines = array();
 
 	$lines[] = sprintf(
@@ -172,19 +172,19 @@ function gwcvt_signup_confirmation_body( int $signup_id, int $shift_id, bool $wa
 				? sprintf(
 					/* translators: %s: the organisation's name. */
 					__( 'Thank you for offering to help %s. That shift is full at the moment, so you are on the waiting list — we will be in touch if a place comes free.', 'groundwork-common-volunteer-tracker' ),
-					gwcvt_org_name()
+					gwc_vt_org_name()
 				)
 				: sprintf(
 					/* translators: %s: the organisation's name. */
 					__( 'Thank you for signing up to volunteer with %s. Here are the details.', 'groundwork-common-volunteer-tracker' ),
-					gwcvt_org_name()
+					gwc_vt_org_name()
 				)
 		)
 	);
 
-	$lines[] = gwcvt_shift_details_table( $shift_id );
+	$lines[] = gwc_vt_shift_details_table( $shift_id );
 
-	$notes = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_NOTES, true ) );
+	$notes = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) );
 
 	if ( '' !== $notes ) {
 		$lines[] = sprintf( '<p>%s</p>', nl2br( esc_html( $notes ) ) );
@@ -197,7 +197,7 @@ function gwcvt_signup_confirmation_body( int $signup_id, int $shift_id, bool $wa
 	 * Both the link and the sentence about it are conditional together: a site
 	 * with no public page pinned has nowhere for this to go, and an instruction
 	 * to use a link that is not there reads as a broken email. */
-	$manage = gwcvt_signup_manage_url( $signup_id );
+	$manage = gwc_vt_signup_manage_url( $signup_id );
 
 	if ( '' !== $manage ) {
 		$lines[] = sprintf(
@@ -221,8 +221,8 @@ function gwcvt_signup_confirmation_body( int $signup_id, int $shift_id, bool $wa
 			sprintf(
 				/* translators: 1: the organisation's name, 2: its contact details. */
 				__( 'Sent by %1$s (%2$s). Signing up records your name and email address so we know who is coming; it does not create an account.', 'groundwork-common-volunteer-tracker' ),
-				gwcvt_org_name(),
-				gwcvt_org_contact()
+				gwc_vt_org_name(),
+				gwc_vt_org_contact()
 			)
 		)
 	);
@@ -238,8 +238,8 @@ function gwcvt_signup_confirmation_body( int $signup_id, int $shift_id, bool $wa
  * @param int $signup_id Signup post ID.
  * @return bool
  */
-function gwcvt_send_shift_reminder( int $signup_id ): bool {
-	$email = gwcvt_signup_email( $signup_id );
+function gwc_vt_send_shift_reminder( int $signup_id ): bool {
+	$email = gwc_vt_signup_email( $signup_id );
 
 	if ( '' === $email || ! is_email( $email ) ) {
 		return false;
@@ -247,7 +247,7 @@ function gwcvt_send_shift_reminder( int $signup_id ): bool {
 
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
-	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return false;
 	}
 
@@ -258,15 +258,15 @@ function gwcvt_send_shift_reminder( int $signup_id ): bool {
 				sprintf(
 					/* translators: 1: a date, 2: the organisation's name. */
 					__( 'A reminder that you are down to volunteer on %1$s with %2$s.', 'groundwork-common-volunteer-tracker' ),
-					gwcvt_shift_date_label( $shift_id ),
-					gwcvt_org_name()
+					gwc_vt_shift_date_label( $shift_id ),
+					gwc_vt_org_name()
 				)
 			)
 		),
-		gwcvt_shift_details_table( $shift_id ),
+		gwc_vt_shift_details_table( $shift_id ),
 	);
 
-	$notes = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_NOTES, true ) );
+	$notes = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) );
 
 	if ( '' !== $notes ) {
 		$lines[] = sprintf( '<p>%s</p>', nl2br( esc_html( $notes ) ) );
@@ -276,7 +276,7 @@ function gwcvt_send_shift_reminder( int $signup_id ): bool {
 	 * and this is the one that gets used. Somebody who realises two days out
 	 * that they cannot make it is looking at this message, not hunting for one
 	 * they got three weeks ago. */
-	$manage = gwcvt_signup_manage_url( $signup_id );
+	$manage = gwc_vt_signup_manage_url( $signup_id );
 
 	if ( '' !== $manage ) {
 		$lines[] = sprintf(
@@ -291,15 +291,15 @@ function gwcvt_send_shift_reminder( int $signup_id ): bool {
 		);
 	}
 
-	$lines[] = gwcvt_email_footer();
+	$lines[] = gwc_vt_email_footer();
 
-	return gwcvt_send_email(
+	return gwc_vt_send_email(
 		$email,
 		sprintf(
 			/* translators: 1: the organisation's name, 2: a date. */
 			__( '%1$s: a reminder about %2$s', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name(),
-			gwcvt_shift_date_label( $shift_id )
+			gwc_vt_org_name(),
+			gwc_vt_shift_date_label( $shift_id )
 		),
 		implode( "\n", $lines )
 	);
@@ -314,8 +314,8 @@ function gwcvt_send_shift_reminder( int $signup_id ): bool {
  * @param string $reason    Why, as the coordinator typed it.
  * @return bool
  */
-function gwcvt_send_shift_cancelled_notice( int $signup_id, string $reason = '' ): bool {
-	$email = gwcvt_signup_email( $signup_id );
+function gwc_vt_send_shift_cancelled_notice( int $signup_id, string $reason = '' ): bool {
+	$email = gwc_vt_signup_email( $signup_id );
 
 	if ( '' === $email || ! is_email( $email ) ) {
 		return false;
@@ -323,7 +323,7 @@ function gwcvt_send_shift_cancelled_notice( int $signup_id, string $reason = '' 
 
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
-	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return false;
 	}
 
@@ -334,8 +334,8 @@ function gwcvt_send_shift_cancelled_notice( int $signup_id, string $reason = '' 
 				sprintf(
 					/* translators: 1: a date, 2: the organisation's name. */
 					__( 'The shift on %1$s with %2$s has been cancelled. Please do not come.', 'groundwork-common-volunteer-tracker' ),
-					gwcvt_shift_date_label( $shift_id ),
-					gwcvt_org_name()
+					gwc_vt_shift_date_label( $shift_id ),
+					gwc_vt_org_name()
 				)
 			)
 		),
@@ -345,22 +345,22 @@ function gwcvt_send_shift_cancelled_notice( int $signup_id, string $reason = '' 
 		$lines[] = sprintf( '<p>%s</p>', esc_html( $reason ) );
 	}
 
-	$lines[] = gwcvt_shift_details_table( $shift_id );
+	$lines[] = gwc_vt_shift_details_table( $shift_id );
 
 	$lines[] = sprintf(
 		'<p>%s</p>',
 		esc_html__( 'We are sorry for the short notice, and we hope to see you another time. There is nothing you need to do.', 'groundwork-common-volunteer-tracker' )
 	);
 
-	$lines[] = gwcvt_email_footer();
+	$lines[] = gwc_vt_email_footer();
 
-	return gwcvt_send_email(
+	return gwc_vt_send_email(
 		$email,
 		sprintf(
 			/* translators: 1: the organisation's name, 2: a date. */
 			__( '%1$s: the shift on %2$s is cancelled', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name(),
-			gwcvt_shift_date_label( $shift_id )
+			gwc_vt_org_name(),
+			gwc_vt_shift_date_label( $shift_id )
 		),
 		implode( "\n", $lines )
 	);
@@ -378,8 +378,8 @@ function gwcvt_send_shift_cancelled_notice( int $signup_id, string $reason = '' 
  * @param array $was       What the shift looked like before.
  * @return bool
  */
-function gwcvt_send_shift_changed_notice( int $signup_id, array $was = array() ): bool {
-	$email = gwcvt_signup_email( $signup_id );
+function gwc_vt_send_shift_changed_notice( int $signup_id, array $was = array() ): bool {
+	$email = gwc_vt_signup_email( $signup_id );
 
 	if ( '' === $email || ! is_email( $email ) ) {
 		return false;
@@ -387,7 +387,7 @@ function gwcvt_send_shift_changed_notice( int $signup_id, array $was = array() )
 
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
-	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return false;
 	}
 
@@ -398,11 +398,11 @@ function gwcvt_send_shift_changed_notice( int $signup_id, array $was = array() )
 				sprintf(
 					/* translators: %s: the organisation's name. */
 					__( 'A shift you signed up for with %s has changed. Here are the new details.', 'groundwork-common-volunteer-tracker' ),
-					gwcvt_org_name()
+					gwc_vt_org_name()
 				)
 			)
 		),
-		gwcvt_shift_details_table( $shift_id ),
+		gwc_vt_shift_details_table( $shift_id ),
 	);
 
 	$before = trim( (string) ( $was['label'] ?? '' ) );
@@ -420,7 +420,7 @@ function gwcvt_send_shift_changed_notice( int $signup_id, array $was = array() )
 		);
 	}
 
-	$manage = gwcvt_signup_manage_url( $signup_id );
+	$manage = gwc_vt_signup_manage_url( $signup_id );
 
 	if ( '' !== $manage ) {
 		$lines[] = sprintf(
@@ -430,15 +430,15 @@ function gwcvt_send_shift_changed_notice( int $signup_id, array $was = array() )
 		);
 	}
 
-	$lines[] = gwcvt_email_footer();
+	$lines[] = gwc_vt_email_footer();
 
-	return gwcvt_send_email(
+	return gwc_vt_send_email(
 		$email,
 		sprintf(
 			/* translators: 1: the organisation's name, 2: a date. */
 			__( '%1$s: the shift on %2$s has changed', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name(),
-			gwcvt_shift_date_label( $shift_id )
+			gwc_vt_org_name(),
+			gwc_vt_shift_date_label( $shift_id )
 		),
 		implode( "\n", $lines )
 	);
@@ -455,14 +455,14 @@ function gwcvt_send_shift_changed_notice( int $signup_id, array $was = array() )
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_details_table( int $shift_id ): string {
+function gwc_vt_shift_details_table( int $shift_id ): string {
 	$rows = array(
-		__( 'What', 'groundwork-common-volunteer-tracker' )  => (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ),
-		__( 'When', 'groundwork-common-volunteer-tracker' )  => trim( gwcvt_shift_date_label( $shift_id ) . ', ' . gwcvt_shift_time_label( $shift_id ), ', ' ),
-		__( 'Where', 'groundwork-common-volunteer-tracker' ) => (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ),
+		__( 'What', 'groundwork-common-volunteer-tracker' )  => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ),
+		__( 'When', 'groundwork-common-volunteer-tracker' )  => trim( gwc_vt_shift_date_label( $shift_id ) . ', ' . gwc_vt_shift_time_label( $shift_id ), ', ' ),
+		__( 'Where', 'groundwork-common-volunteer-tracker' ) => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
 	);
 
-	$supervisor = (string) get_post_meta( $shift_id, GWCVT_SHIFT_SUPERVISOR, true );
+	$supervisor = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_SUPERVISOR, true );
 
 	if ( '' !== $supervisor ) {
 		$rows[ __( 'Ask for', 'groundwork-common-volunteer-tracker' ) ] = $supervisor;
@@ -490,15 +490,15 @@ function gwcvt_shift_details_table( int $shift_id ): string {
  *
  * @return string
  */
-function gwcvt_email_footer(): string {
+function gwc_vt_email_footer(): string {
 	return sprintf(
 		'<p><small>%s</small></p>',
 		esc_html(
 			sprintf(
 				/* translators: 1: the organisation's name, 2: its contact details. */
 				__( 'Sent by %1$s (%2$s).', 'groundwork-common-volunteer-tracker' ),
-				gwcvt_org_name(),
-				gwcvt_org_contact()
+				gwc_vt_org_name(),
+				gwc_vt_org_contact()
 			)
 		)
 	);
@@ -510,12 +510,12 @@ function gwcvt_email_footer(): string {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_one_line( int $shift_id ): string {
+function gwc_vt_shift_one_line( int $shift_id ): string {
 	$parts = array_filter(
 		array(
-			gwcvt_shift_date_label( $shift_id ),
-			gwcvt_shift_time_label( $shift_id ),
-			(string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ),
+			gwc_vt_shift_date_label( $shift_id ),
+			gwc_vt_shift_time_label( $shift_id ),
+			(string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
 		),
 		'strlen'
 	);
@@ -533,8 +533,8 @@ function gwcvt_shift_one_line( int $shift_id ): string {
  * @param int $signup_id Signup post ID.
  * @return string
  */
-function gwcvt_signup_manage_url( int $signup_id ): string {
-	$page = (int) gwcvt_setting( 'schedule_page' );
+function gwc_vt_signup_manage_url( int $signup_id ): string {
+	$page = (int) gwc_vt_setting( 'schedule_page' );
 
 	/* Empty rather than the home page, and every caller checks. A site can have
 	 * shifts and reminders switched on without ever pinning a public page — the
@@ -548,8 +548,8 @@ function gwcvt_signup_manage_url( int $signup_id ): string {
 
 	return add_query_arg(
 		array(
-			'gwcvt_signup' => $signup_id,
-			'gwcvt_k'      => gwcvt_signup_token( $signup_id ),
+			'gwc_vt_signup' => $signup_id,
+			'gwc_vt_k'      => gwc_vt_signup_token( $signup_id ),
 		),
 		(string) get_permalink( $page )
 	);
@@ -573,12 +573,12 @@ function gwcvt_signup_manage_url( int $signup_id ): string {
  * @param int   $event_id   Event post ID.
  * @param int[] $signup_ids The signups this submission made.
  */
-function gwcvt_queue_event_confirmation( int $event_id, array $signup_ids ): void {
+function gwc_vt_queue_event_confirmation( int $event_id, array $signup_ids ): void {
 	if ( ! $signup_ids ) {
 		return;
 	}
 
-	gwcvt_queue_signup_mail(
+	gwc_vt_queue_signup_mail(
 		'event-confirmation',
 		(int) $signup_ids[0],
 		array(
@@ -595,14 +595,14 @@ function gwcvt_queue_event_confirmation( int $event_id, array $signup_ids ): voi
  * @param int[] $signup_ids Signups from one submission.
  * @return bool
  */
-function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool {
+function gwc_vt_send_event_confirmation( int $event_id, array $signup_ids ): bool {
 	$signup_ids = array_values( array_filter( array_map( 'intval', $signup_ids ) ) );
 
-	if ( ! $signup_ids || GWCVT_EVENT_TYPE !== get_post_type( $event_id ) ) {
+	if ( ! $signup_ids || GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) ) {
 		return false;
 	}
 
-	$email = gwcvt_signup_email( $signup_ids[0] );
+	$email = gwc_vt_signup_email( $signup_ids[0] );
 
 	if ( '' === $email || ! is_email( $email ) ) {
 		return false;
@@ -613,14 +613,14 @@ function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool
 	usort(
 		$signup_ids,
 		static function ( int $a, int $b ) {
-			return gwcvt_compare_slots(
+			return gwc_vt_compare_slots(
 				(int) get_post_field( 'post_parent', $a ),
 				(int) get_post_field( 'post_parent', $b )
 			);
 		}
 	);
 
-	$where = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) );
+	$where = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_LOCATION, true ) );
 
 	$lines = array(
 		sprintf(
@@ -629,9 +629,9 @@ function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool
 				sprintf(
 					/* translators: 1: the event's name, 2: a date, 3: the organisation's name. */
 					__( 'Thank you for signing up for %1$s on %2$s with %3$s. Here is what you put your name down for.', 'groundwork-common-volunteer-tracker' ),
-					gwcvt_event_name( $event_id ),
-					gwcvt_event_date_label( $event_id ),
-					gwcvt_org_name()
+					gwc_vt_event_name( $event_id ),
+					gwc_vt_event_date_label( $event_id ),
+					gwc_vt_org_name()
 				)
 			)
 		),
@@ -642,7 +642,7 @@ function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool
 	}
 
 	foreach ( $signup_ids as $signup_id ) {
-		$lines[] = gwcvt_event_slot_block( (int) $signup_id );
+		$lines[] = gwc_vt_event_slot_block( (int) $signup_id );
 	}
 
 	$lines[] = sprintf(
@@ -650,7 +650,7 @@ function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool
 		esc_html__( 'Each one has its own link. Cancelling one takes you off that one only and leaves the rest as they are.', 'groundwork-common-volunteer-tracker' )
 	);
 
-	$supervisor = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_SUPERVISOR, true ) );
+	$supervisor = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_SUPERVISOR, true ) );
 
 	if ( '' !== $supervisor ) {
 		$lines[] = sprintf(
@@ -665,15 +665,15 @@ function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool
 		);
 	}
 
-	$lines[] = gwcvt_email_footer();
+	$lines[] = gwc_vt_email_footer();
 
-	return gwcvt_send_email(
+	return gwc_vt_send_email(
 		$email,
 		sprintf(
 			/* translators: 1: the organisation's name, 2: the event's name. */
 			__( '%1$s: you are signed up for %2$s', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name(),
-			gwcvt_event_name( $event_id )
+			gwc_vt_org_name(),
+			gwc_vt_event_name( $event_id )
 		),
 		implode( "\n", $lines )
 	);
@@ -685,17 +685,17 @@ function gwcvt_send_event_confirmation( int $event_id, array $signup_ids ): bool
  * @param int $signup_id Signup post ID.
  * @return string
  */
-function gwcvt_event_slot_block( int $signup_id ): string {
+function gwc_vt_event_slot_block( int $signup_id ): string {
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
-	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return '';
 	}
 
-	$role    = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) );
-	$notes   = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_NOTES, true ) );
-	$waiting = GWCVT_SIGNUP_WAITLIST === get_post_status( $signup_id );
-	$manage  = gwcvt_signup_manage_url( $signup_id );
+	$role    = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) );
+	$notes   = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) );
+	$waiting = GWC_VT_SIGNUP_WAITLIST === get_post_status( $signup_id );
+	$manage  = gwc_vt_signup_manage_url( $signup_id );
 
 	$block = array( '<hr />' );
 
@@ -707,8 +707,8 @@ function gwcvt_event_slot_block( int $signup_id ): string {
 
 	$block[] = sprintf(
 		'%s, %s</p>',
-		esc_html( gwcvt_shift_date_label( $shift_id ) ),
-		esc_html( gwcvt_shift_time_label( $shift_id ) )
+		esc_html( gwc_vt_shift_date_label( $shift_id ) ),
+		esc_html( gwc_vt_shift_time_label( $shift_id ) )
 	);
 
 	if ( $waiting ) {
@@ -750,20 +750,20 @@ function gwcvt_event_slot_block( int $signup_id ): string {
  * @param int[] $signup_ids The signups being reminded about, in time order.
  * @return bool
  */
-function gwcvt_send_event_reminder( int $event_id, array $signup_ids ): bool {
+function gwc_vt_send_event_reminder( int $event_id, array $signup_ids ): bool {
 	$signup_ids = array_values( array_filter( array_map( 'intval', $signup_ids ) ) );
 
-	if ( ! $signup_ids || GWCVT_EVENT_TYPE !== get_post_type( $event_id ) ) {
+	if ( ! $signup_ids || GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) ) {
 		return false;
 	}
 
-	$email = gwcvt_signup_email( $signup_ids[0] );
+	$email = gwc_vt_signup_email( $signup_ids[0] );
 
 	if ( '' === $email || ! is_email( $email ) ) {
 		return false;
 	}
 
-	$where = trim( (string) get_post_meta( $event_id, GWCVT_EVENT_LOCATION, true ) );
+	$where = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_LOCATION, true ) );
 
 	$lines = array(
 		sprintf(
@@ -772,9 +772,9 @@ function gwcvt_send_event_reminder( int $event_id, array $signup_ids ): bool {
 				sprintf(
 					/* translators: 1: the organisation's name, 2: a date, 3: the event's name. */
 					__( 'A reminder that you are down to volunteer with %1$s on %2$s — %3$s. Here is your day.', 'groundwork-common-volunteer-tracker' ),
-					gwcvt_org_name(),
-					gwcvt_event_date_label( $event_id ),
-					gwcvt_event_name( $event_id )
+					gwc_vt_org_name(),
+					gwc_vt_event_date_label( $event_id ),
+					gwc_vt_event_name( $event_id )
 				)
 			)
 		),
@@ -785,7 +785,7 @@ function gwcvt_send_event_reminder( int $event_id, array $signup_ids ): bool {
 	}
 
 	foreach ( $signup_ids as $signup_id ) {
-		$lines[] = gwcvt_event_slot_block( (int) $signup_id );
+		$lines[] = gwc_vt_event_slot_block( (int) $signup_id );
 	}
 
 	$lines[] = sprintf(
@@ -793,15 +793,15 @@ function gwcvt_send_event_reminder( int $event_id, array $signup_ids ): bool {
 		esc_html__( 'If you cannot make one of them, please use its own link to let us know — it takes you off that one only, and there is still time for us to ask somebody else.', 'groundwork-common-volunteer-tracker' )
 	);
 
-	$lines[] = gwcvt_email_footer();
+	$lines[] = gwc_vt_email_footer();
 
-	return gwcvt_send_email(
+	return gwc_vt_send_email(
 		$email,
 		sprintf(
 			/* translators: 1: the organisation's name, 2: the event's name. */
 			__( '%1$s: a reminder about %2$s', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name(),
-			gwcvt_event_name( $event_id )
+			gwc_vt_org_name(),
+			gwc_vt_event_name( $event_id )
 		),
 		implode( "\n", $lines )
 	);

@@ -15,9 +15,9 @@ defined( 'ABSPATH' ) || exit;
  * So the record holds what a person would write on a noticeboard, and every
  * question that needs a real moment in time — has it ended, is it within the
  * reminder window, what goes in the calendar file — asks for one here, through
- * gwcvt_timezone(). One conversion, one place.
+ * gwc_vt_timezone(). One conversion, one place.
  *
- * gwcvt_shift_instant_at() takes its zone as an argument rather than reaching
+ * gwc_vt_shift_instant_at() takes its zone as an argument rather than reaching
  * for the site's, so that the conversion itself can be tested against a zone
  * that actually observes daylight saving.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * @param string $raw What was posted.
  * @return string
  */
-function gwcvt_sanitize_time( string $raw ): string {
+function gwc_vt_sanitize_time( string $raw ): string {
 	$value = trim( $raw );
 
 	if ( ! preg_match( '/^([01]\d|2[0-3]):([0-5]\d)$/', $value ) ) {
@@ -46,8 +46,8 @@ function gwcvt_sanitize_time( string $raw ): string {
  * @param DateTimeZone $timezone Where the organisation is.
  * @return DateTimeImmutable|null
  */
-function gwcvt_shift_instant_at( string $date, string $time, DateTimeZone $timezone ): ?DateTimeImmutable {
-	if ( '' === $time || null === gwcvt_recurrence_date( $date ) ) {
+function gwc_vt_shift_instant_at( string $date, string $time, DateTimeZone $timezone ): ?DateTimeImmutable {
+	if ( '' === $time || null === gwc_vt_recurrence_date( $date ) ) {
 		return null;
 	}
 
@@ -62,11 +62,11 @@ function gwcvt_shift_instant_at( string $date, string $time, DateTimeZone $timez
  * @param int $shift_id Shift post ID.
  * @return DateTimeImmutable|null
  */
-function gwcvt_shift_starts( int $shift_id ): ?DateTimeImmutable {
-	return gwcvt_shift_instant_at(
-		(string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true ),
-		(string) get_post_meta( $shift_id, GWCVT_SHIFT_START, true ),
-		gwcvt_timezone()
+function gwc_vt_shift_starts( int $shift_id ): ?DateTimeImmutable {
+	return gwc_vt_shift_instant_at(
+		(string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
+		(string) get_post_meta( $shift_id, GWC_VT_SHIFT_START, true ),
+		gwc_vt_timezone()
 	);
 }
 
@@ -76,11 +76,11 @@ function gwcvt_shift_starts( int $shift_id ): ?DateTimeImmutable {
  * @param int $shift_id Shift post ID.
  * @return DateTimeImmutable|null
  */
-function gwcvt_shift_ends( int $shift_id ): ?DateTimeImmutable {
-	$date = (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+function gwc_vt_shift_ends( int $shift_id ): ?DateTimeImmutable {
+	$date = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true );
 
-	if ( get_post_meta( $shift_id, GWCVT_SHIFT_OVERNIGHT, true ) ) {
-		$next = gwcvt_recurrence_date( $date );
+	if ( get_post_meta( $shift_id, GWC_VT_SHIFT_OVERNIGHT, true ) ) {
+		$next = gwc_vt_recurrence_date( $date );
 
 		if ( null === $next ) {
 			return null;
@@ -89,10 +89,10 @@ function gwcvt_shift_ends( int $shift_id ): ?DateTimeImmutable {
 		$date = $next->modify( '+1 day' )->format( 'Y-m-d' );
 	}
 
-	return gwcvt_shift_instant_at(
+	return gwc_vt_shift_instant_at(
 		$date,
-		(string) get_post_meta( $shift_id, GWCVT_SHIFT_END, true ),
-		gwcvt_timezone()
+		(string) get_post_meta( $shift_id, GWC_VT_SHIFT_END, true ),
+		gwc_vt_timezone()
 	);
 }
 
@@ -109,9 +109,9 @@ function gwcvt_shift_ends( int $shift_id ): ?DateTimeImmutable {
  * @param bool   $next_day  Whether the end time is on the following day.
  * @return int Zero when the times cannot be read or do not describe a duration.
  */
-function gwcvt_shift_duration( string $start, string $end, bool $next_day = false ): int {
-	$start = gwcvt_sanitize_time( $start );
-	$end   = gwcvt_sanitize_time( $end );
+function gwc_vt_shift_duration( string $start, string $end, bool $next_day = false ): int {
+	$start = gwc_vt_sanitize_time( $start );
+	$end   = gwc_vt_sanitize_time( $end );
 
 	if ( '' === $start || '' === $end ) {
 		return 0;
@@ -129,7 +129,7 @@ function gwcvt_shift_duration( string $start, string $end, bool $next_day = fals
 	/* A shift that ends before it starts is a typo, not a twenty-three hour
 	 * overnight — the overnight case is the explicit flag above. Nothing is
 	 * guessed; the screen refuses it and says why. */
-	if ( $minutes < 1 || $minutes > GWCVT_MAX_ENTRY_MINUTES ) {
+	if ( $minutes < 1 || $minutes > GWC_VT_MAX_ENTRY_MINUTES ) {
 		return 0;
 	}
 
@@ -142,11 +142,11 @@ function gwcvt_shift_duration( string $start, string $end, bool $next_day = fals
  * @param int $shift_id Shift post ID.
  * @return int
  */
-function gwcvt_shift_minutes( int $shift_id ): int {
-	return gwcvt_shift_duration(
-		(string) get_post_meta( $shift_id, GWCVT_SHIFT_START, true ),
-		(string) get_post_meta( $shift_id, GWCVT_SHIFT_END, true ),
-		(bool) get_post_meta( $shift_id, GWCVT_SHIFT_OVERNIGHT, true )
+function gwc_vt_shift_minutes( int $shift_id ): int {
+	return gwc_vt_shift_duration(
+		(string) get_post_meta( $shift_id, GWC_VT_SHIFT_START, true ),
+		(string) get_post_meta( $shift_id, GWC_VT_SHIFT_END, true ),
+		(bool) get_post_meta( $shift_id, GWC_VT_SHIFT_OVERNIGHT, true )
 	);
 }
 
@@ -166,8 +166,8 @@ function gwcvt_shift_minutes( int $shift_id ): int {
  * @param int $shift_id Shift post ID.
  * @return bool
  */
-function gwcvt_shift_is_cancelled( int $shift_id ): bool {
-	return GWCVT_SHIFT_CANCELLED === get_post_status( $shift_id );
+function gwc_vt_shift_is_cancelled( int $shift_id ): bool {
+	return GWC_VT_SHIFT_CANCELLED === get_post_status( $shift_id );
 }
 
 /**
@@ -176,22 +176,22 @@ function gwcvt_shift_is_cancelled( int $shift_id ): bool {
  * @param int $shift_id Shift post ID.
  * @return bool
  */
-function gwcvt_shift_is_reconciled( int $shift_id ): bool {
-	return '' !== (string) get_post_meta( $shift_id, GWCVT_SHIFT_RECONCILED, true );
+function gwc_vt_shift_is_reconciled( int $shift_id ): bool {
+	return '' !== (string) get_post_meta( $shift_id, GWC_VT_SHIFT_RECONCILED, true );
 }
 
 /**
  * Has the shift finished?
  *
  * The gate on reconciling. An entry dated in the future is silently clamped to
- * today by gwcvt_save_entry(), so writing hours for a shift that has not ended
+ * today by gwc_vt_save_entry(), so writing hours for a shift that has not ended
  * would record the wrong date on a document a court reads.
  *
  * @param int $shift_id Shift post ID.
  * @return bool
  */
-function gwcvt_shift_has_ended( int $shift_id ): bool {
-	$ends = gwcvt_shift_ends( $shift_id );
+function gwc_vt_shift_has_ended( int $shift_id ): bool {
+	$ends = gwc_vt_shift_ends( $shift_id );
 
 	if ( null === $ends ) {
 		return false;
@@ -204,23 +204,23 @@ function gwcvt_shift_has_ended( int $shift_id ): bool {
  * Is this shift accepting signups?
  *
  * Being full is deliberately not part of this. A full shift still accepts
- * people, onto the waiting list — see gwcvt_signup_settle().
+ * people, onto the waiting list — see gwc_vt_signup_settle().
  *
  * @param int $shift_id Shift post ID.
  * @return bool
  */
-function gwcvt_shift_is_open( int $shift_id ): bool {
+function gwc_vt_shift_is_open( int $shift_id ): bool {
 	if ( 'publish' !== get_post_status( $shift_id ) ) {
 		return false;
 	}
 
-	$starts = gwcvt_shift_starts( $shift_id );
+	$starts = gwc_vt_shift_starts( $shift_id );
 
 	if ( null === $starts ) {
 		return false;
 	}
 
-	$cutoff = max( 0, (int) gwcvt_setting( 'signup_cutoff_hours' ) ) * HOUR_IN_SECONDS;
+	$cutoff = max( 0, (int) gwc_vt_setting( 'signup_cutoff_hours' ) ) * HOUR_IN_SECONDS;
 
 	return ( $starts->getTimestamp() - $cutoff ) > time();
 }
@@ -237,13 +237,13 @@ function gwcvt_shift_is_open( int $shift_id ): bool {
  * @param array $was      What it looked like before the save.
  * @return bool
  */
-function gwcvt_shift_moved( int $shift_id, array $was ): bool {
+function gwc_vt_shift_moved( int $shift_id, array $was ): bool {
 	$now = array(
-		'date'     => (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true ),
-		'start'    => (string) get_post_meta( $shift_id, GWCVT_SHIFT_START, true ),
-		'end'      => (string) get_post_meta( $shift_id, GWCVT_SHIFT_END, true ),
-		'next_day' => (string) get_post_meta( $shift_id, GWCVT_SHIFT_OVERNIGHT, true ),
-		'location' => (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ),
+		'date'     => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
+		'start'    => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_START, true ),
+		'end'      => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_END, true ),
+		'next_day' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_OVERNIGHT, true ),
+		'location' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
 	);
 
 	foreach ( $now as $key => $value ) {
@@ -264,14 +264,14 @@ function gwcvt_shift_moved( int $shift_id, array $was ): bool {
  * @param string[] $statuses Which statuses to include.
  * @return int[] Signup post IDs, oldest first.
  */
-function gwcvt_shift_signup_ids( int $shift_id, array $statuses = array( 'publish' ) ): array {
+function gwc_vt_shift_signup_ids( int $shift_id, array $statuses = array( 'publish' ) ): array {
 	if ( $shift_id < 1 ) {
 		return array();
 	}
 
 	$ids = get_posts(
 		array(
-			'post_type'        => GWCVT_SIGNUP_TYPE,
+			'post_type'        => GWC_VT_SIGNUP_TYPE,
 			'post_parent'      => $shift_id,
 			'post_status'      => $statuses,
 			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the roster of one shift. 500 is far above any shift a person could staff, and is a bound rather than a page; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
@@ -302,8 +302,8 @@ function gwcvt_shift_signup_ids( int $shift_id, array $statuses = array( 'publis
  * @param int $shift_id Shift post ID.
  * @return int
  */
-function gwcvt_shift_filled( int $shift_id ): int {
-	return count( gwcvt_shift_signup_ids( $shift_id ) );
+function gwc_vt_shift_filled( int $shift_id ): int {
+	return count( gwc_vt_shift_signup_ids( $shift_id ) );
 }
 
 /**
@@ -316,14 +316,14 @@ function gwcvt_shift_filled( int $shift_id ): int {
  * @param int $shift_id Shift post ID.
  * @return int|null
  */
-function gwcvt_shift_spots_left( int $shift_id ): ?int {
-	$max = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
+function gwc_vt_shift_spots_left( int $shift_id ): ?int {
+	$max = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true );
 
 	if ( $max < 1 ) {
 		return null;
 	}
 
-	return max( 0, $max - gwcvt_shift_filled( $shift_id ) );
+	return max( 0, $max - gwc_vt_shift_filled( $shift_id ) );
 }
 
 /**
@@ -332,14 +332,14 @@ function gwcvt_shift_spots_left( int $shift_id ): ?int {
  * @param int $shift_id Shift post ID.
  * @return bool
  */
-function gwcvt_shift_is_understaffed( int $shift_id ): bool {
-	$min = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MIN, true );
+function gwc_vt_shift_is_understaffed( int $shift_id ): bool {
+	$min = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true );
 
 	if ( $min < 1 ) {
 		return false;
 	}
 
-	return gwcvt_shift_filled( $shift_id ) < $min;
+	return gwc_vt_shift_filled( $shift_id ) < $min;
 }
 
 /* ── Finding shifts ──────────────────────────────────────────────────────── */
@@ -357,7 +357,7 @@ function gwcvt_shift_is_understaffed( int $shift_id ): bool {
  * function returns them alongside standalone shifts unless a caller says
  * otherwise. That default is load-bearing.
  *
- * gwcvt_understaffed_shift_ids() and gwcvt_unreconciled_shift_ids() both run
+ * gwc_vt_understaffed_shift_ids() and gwc_vt_unreconciled_shift_ids() both run
  * through here. Filter parented shifts out by default and the reconciliation nag
  * silently stops covering events — and the failure mode is hours nobody typed
  * up, on the number a letter is built from. Nothing on any screen would say so.
@@ -365,7 +365,7 @@ function gwcvt_shift_is_understaffed( int $shift_id ): bool {
  * Exactly two callers opt IN to `parent => 0`, and both want a flat list of
  * standalone shifts because they show events separately:
  *
- *   - gwcvt_public_shift_ids(), or every festival slot appears loose on the
+ *   - gwc_vt_public_shift_ids(), or every festival slot appears loose on the
  *     generic signup page with no idea what it belongs to;
  *   - the schedule screen's flat view, which groups events into one row.
  *
@@ -374,8 +374,8 @@ function gwcvt_shift_is_understaffed( int $shift_id ): bool {
  * @param array $args from, to (Y-m-d), statuses, limit, parent.
  * @return int[] Shift post IDs.
  */
-function gwcvt_shifts_between( array $args = array() ): array {
-	$from     = (string) ( $args['from'] ?? gwcvt_today() );
+function gwc_vt_shifts_between( array $args = array() ): array {
+	$from     = (string) ( $args['from'] ?? gwc_vt_today() );
 	$to       = (string) ( $args['to'] ?? '' );
 	$statuses = (array) ( $args['statuses'] ?? array( 'publish' ) );
 	$limit    = (int) ( $args['limit'] ?? 200 );
@@ -386,7 +386,7 @@ function gwcvt_shifts_between( array $args = array() ): array {
 	$parent = array_key_exists( 'parent', $args ) ? (int) $args['parent'] : null;
 
 	$range = array(
-		'key'     => GWCVT_SHIFT_DATE,
+		'key'     => GWC_VT_SHIFT_DATE,
 		'value'   => $from,
 		'compare' => '>=',
 		'type'    => 'CHAR',
@@ -394,7 +394,7 @@ function gwcvt_shifts_between( array $args = array() ): array {
 
 	if ( '' !== $to ) {
 		$range = array(
-			'key'     => GWCVT_SHIFT_DATE,
+			'key'     => GWC_VT_SHIFT_DATE,
 			'value'   => array( $from, $to ),
 			'compare' => 'BETWEEN',
 			'type'    => 'CHAR',
@@ -402,17 +402,17 @@ function gwcvt_shifts_between( array $args = array() ): array {
 	}
 
 	$query = array(
-		'post_type'      => GWCVT_SHIFT_TYPE,
+		'post_type'      => GWC_VT_SHIFT_TYPE,
 		'post_status'    => $statuses,
 		'posts_per_page' => $limit,
 		'fields'         => 'ids',
 		'no_found_rows'  => true,
 		'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the only way to order by the shift's own date; the table is one row per shift.
-			'gwcvt_shift_date' => $range,
+			'gwc_vt_shift_date' => $range,
 		),
 		'orderby'        => array(
-			'gwcvt_shift_date' => 'ASC',
-			'ID'               => 'ASC',
+			'gwc_vt_shift_date' => 'ASC',
+			'ID'                => 'ASC',
 		),
 	);
 
@@ -442,11 +442,11 @@ function gwcvt_shifts_between( array $args = array() ): array {
  * @param int $limit How many to return.
  * @return int[]
  */
-function gwcvt_unreconciled_shift_ids( int $limit = 50 ): array {
-	$candidates = gwcvt_shifts_between(
+function gwc_vt_unreconciled_shift_ids( int $limit = 50 ): array {
+	$candidates = gwc_vt_shifts_between(
 		array(
 			'from'  => gmdate( 'Y-m-d', time() - ( 180 * DAY_IN_SECONDS ) ),
-			'to'    => gwcvt_today(),
+			'to'    => gwc_vt_today(),
 			'limit' => max( $limit * 4, 100 ),
 		)
 	);
@@ -458,14 +458,14 @@ function gwcvt_unreconciled_shift_ids( int $limit = 50 ): array {
 			break;
 		}
 
-		if ( gwcvt_shift_is_reconciled( $shift_id ) || ! gwcvt_shift_has_ended( $shift_id ) ) {
+		if ( gwc_vt_shift_is_reconciled( $shift_id ) || ! gwc_vt_shift_has_ended( $shift_id ) ) {
 			continue;
 		}
 
 		/* A shift nobody signed up for and nobody walked into is not a chore
 		 * somebody forgot; it is a Saturday that did not happen. Left out of the
 		 * nag, and still reconcilable by hand from the schedule. */
-		if ( 0 === gwcvt_shift_filled( $shift_id ) ) {
+		if ( 0 === gwc_vt_shift_filled( $shift_id ) ) {
 			continue;
 		}
 
@@ -485,10 +485,10 @@ function gwcvt_unreconciled_shift_ids( int $limit = 50 ): array {
  * @param int $days How far ahead to look.
  * @return int[]
  */
-function gwcvt_understaffed_shift_ids( int $days = 7 ): array {
-	$candidates = gwcvt_shifts_between(
+function gwc_vt_understaffed_shift_ids( int $days = 7 ): array {
+	$candidates = gwc_vt_shifts_between(
 		array(
-			'from'  => gwcvt_today(),
+			'from'  => gwc_vt_today(),
 			'to'    => gmdate( 'Y-m-d', time() + ( max( 1, $days ) * DAY_IN_SECONDS ) ),
 			'limit' => 100,
 		)
@@ -497,13 +497,13 @@ function gwcvt_understaffed_shift_ids( int $days = 7 ): array {
 	$short = array();
 
 	foreach ( $candidates as $shift_id ) {
-		$starts = gwcvt_shift_starts( $shift_id );
+		$starts = gwc_vt_shift_starts( $shift_id );
 
 		if ( null === $starts || $starts->getTimestamp() <= time() ) {
 			continue;
 		}
 
-		if ( gwcvt_shift_is_understaffed( $shift_id ) ) {
+		if ( gwc_vt_shift_is_understaffed( $shift_id ) ) {
 			$short[] = $shift_id;
 		}
 	}
@@ -525,12 +525,12 @@ function gwcvt_understaffed_shift_ids( int $days = 7 ): array {
  * @param array $args Extra query arguments.
  * @return string
  */
-function gwcvt_schedule_url( array $args = array() ): string {
+function gwc_vt_schedule_url( array $args = array() ): string {
 	return add_query_arg(
 		array_merge(
 			array(
-				'post_type' => GWCVT_ENTRY_TYPE,
-				'page'      => GWCVT_SCHEDULE_PAGE,
+				'post_type' => GWC_VT_ENTRY_TYPE,
+				'page'      => GWC_VT_SCHEDULE_PAGE,
 			),
 			$args
 		),
@@ -544,12 +544,12 @@ function gwcvt_schedule_url( array $args = array() ): string {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_log_url( int $shift_id ): string {
+function gwc_vt_shift_log_url( int $shift_id ): string {
 	return add_query_arg(
 		array(
-			'post_type'   => GWCVT_ENTRY_TYPE,
-			'page'        => GWCVT_QUICK_ADD_PAGE,
-			'gwcvt_shift' => $shift_id,
+			'post_type'    => GWC_VT_ENTRY_TYPE,
+			'page'         => GWC_VT_QUICK_ADD_PAGE,
+			'gwc_vt_shift' => $shift_id,
 		),
 		admin_url( 'edit.php' )
 	);
@@ -563,11 +563,11 @@ function gwcvt_shift_log_url( int $shift_id ): string {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_date_label( int $shift_id ): string {
-	$starts = gwcvt_shift_starts( $shift_id );
+function gwc_vt_shift_date_label( int $shift_id ): string {
+	$starts = gwc_vt_shift_starts( $shift_id );
 
 	if ( null === $starts ) {
-		return (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+		return (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true );
 	}
 
 	$format = (string) get_option( 'date_format' );
@@ -581,9 +581,9 @@ function gwcvt_shift_date_label( int $shift_id ): string {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_time_label( int $shift_id ): string {
-	$starts = gwcvt_shift_starts( $shift_id );
-	$ends   = gwcvt_shift_ends( $shift_id );
+function gwc_vt_shift_time_label( int $shift_id ): string {
+	$starts = gwc_vt_shift_starts( $shift_id );
+	$ends   = gwc_vt_shift_ends( $shift_id );
 
 	if ( null === $starts || null === $ends ) {
 		return '';
@@ -606,9 +606,9 @@ function gwcvt_shift_time_label( int $shift_id ): string {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_fill_label( int $shift_id ): string {
-	$filled = gwcvt_shift_filled( $shift_id );
-	$max    = (int) get_post_meta( $shift_id, GWCVT_SHIFT_MAX, true );
+function gwc_vt_shift_fill_label( int $shift_id ): string {
+	$filled = gwc_vt_shift_filled( $shift_id );
+	$max    = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true );
 
 	if ( $max > 0 ) {
 		return sprintf(

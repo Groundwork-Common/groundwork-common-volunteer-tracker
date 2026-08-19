@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name:       Groundwork Common Volunteer Tracker
- * Plugin URI:        https://groundworkcommon.com
+ * Plugin URI:        https://www.groundworkcommon.com/
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           0.15.0
- * Requires at least: 6.3
+ * Version:           1.0.0
+ * Requires at least: 7.0
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
- * Author URI:        https://groundworkcommon.com
+ * Author URI:        https://www.groundworkcommon.com/
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       groundwork-common-volunteer-tracker
@@ -53,9 +53,9 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VERSION = '0.15.0';
+const GWC_VT_VERSION = '1.0.0';
 
-/* Deliberately not derived from GWCVT_VERSION, and VersionTest asserts they can
+/* Deliberately not derived from GWC_VT_VERSION, and VersionTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
  * definition changes, which is rarely, and coupling it to the release number
  * would mean either a pointless migration on every patch or a version number
@@ -65,24 +65,36 @@ const GWCVT_VERSION = '0.15.0';
  * built, so this is a number with no migration runner behind it — see "Still to
  * come" in README.md, where whether that feature is still wanted is an open
  * question rather than a backlog item. */
-const GWCVT_SCHEMA_VERSION = 1;
+const GWC_VT_SCHEMA_VERSION = 1;
 
 /*
  * Where "Support this work" points. Every reference is guarded, so setting this
  * to '' removes the link and the paragraph asking for one together — a support
  * ask with nowhere to go is worse than none.
  */
-const GWCVT_SPONSOR_URL = 'https://www.groundworkcommon.com/support/';
+const GWC_VT_SPONSOR_URL = 'https://www.groundworkcommon.com/support/';
+
+/* Where "Report a problem" points, from the colophon and from every help tab.
+ *
+ * The support forum rather than the issue tracker, and not only because the
+ * repository is private. A plugin hosted in the directory gets a forum whether
+ * it wants one or not; it is linked from the plugin's own page, it is where
+ * somebody who has never seen this repository will look first, and an answer
+ * left there is read by the next person with the same problem. An issue tracker
+ * is where the work is planned, which is a different audience — and pointing
+ * installers at one they cannot open an account against is how a "Report a
+ * problem" link quietly becomes a 404 nobody on this side ever clicks. */
+const GWC_VT_SUPPORT_URL = 'https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker/';
 
 /* The company site. Named once because the colophon links it from three
  * places — the wordmark, the company name in the opening line, and the
  * "See what we do" link — and two of those agreeing while the third drifts
  * is the kind of thing nobody notices for a year. */
-const GWCVT_GWC_URL = 'https://www.groundworkcommon.com/';
+const GWC_VT_GWC_URL = 'https://www.groundworkcommon.com/';
 
-define( 'GWCVT_FILE', __FILE__ );
-define( 'GWCVT_DIR', plugin_dir_path( __FILE__ ) );
-define( 'GWCVT_URL', plugin_dir_url( __FILE__ ) );
+define( 'GWC_VT_FILE', __FILE__ );
+define( 'GWC_VT_DIR', plugin_dir_path( __FILE__ ) );
+define( 'GWC_VT_URL', plugin_dir_url( __FILE__ ) );
 
 /* ── Guarded requires ────────────────────────────────────────────────────────
  * Each guard names a function the file declares. This costs one function_exists
@@ -105,14 +117,14 @@ define( 'GWCVT_URL', plugin_dir_url( __FILE__ ) );
  * where a function exists on the screen you tested and is fatally undefined
  * under `wp eval`. That trade is not close.
  * ─────────────────────────────────────────────────────────────────────────── */
-if ( ! function_exists( 'gwcvt_verification_labels' ) ) {
-	require GWCVT_DIR . 'inc/i18n.php';
+if ( ! function_exists( 'gwc_vt_verification_labels' ) ) {
+	require GWC_VT_DIR . 'inc/i18n.php';
 }
-if ( ! function_exists( 'gwcvt_setting' ) ) {
-	require GWCVT_DIR . 'inc/settings.php';
+if ( ! function_exists( 'gwc_vt_setting' ) ) {
+	require GWC_VT_DIR . 'inc/settings.php';
 }
-if ( ! function_exists( 'gwcvt_cap' ) ) {
-	require GWCVT_DIR . 'inc/access.php';
+if ( ! function_exists( 'gwc_vt_cap' ) ) {
+	require GWC_VT_DIR . 'inc/access.php';
 }
 
 /* The value objects, guarded on the class rather than a function. They depend
@@ -125,33 +137,33 @@ if ( ! function_exists( 'gwcvt_cap' ) ) {
  * hydrating and dehydrating on every read for no safety the defaults-merge does
  * not already provide. Totals and the letter model are computed, flow through
  * four call sites each, and are the two structures whose correctness is the
- * product. See the box comment in inc/class-gwcvt-totals.php. */
-if ( ! class_exists( 'GWCVT_Totals' ) ) {
-	require GWCVT_DIR . 'inc/class-gwcvt-totals.php';
+ * product. See the box comment in inc/class-gwc-vt-totals.php. */
+if ( ! class_exists( 'GWC_VT_Totals' ) ) {
+	require GWC_VT_DIR . 'inc/class-gwc-vt-totals.php';
 }
-if ( ! class_exists( 'GWCVT_Letter_Entry' ) ) {
-	require GWCVT_DIR . 'inc/class-gwcvt-letter-entry.php';
+if ( ! class_exists( 'GWC_VT_Letter_Entry' ) ) {
+	require GWC_VT_DIR . 'inc/class-gwc-vt-letter-entry.php';
 }
-if ( ! class_exists( 'GWCVT_Letter' ) ) {
-	require GWCVT_DIR . 'inc/class-gwcvt-letter.php';
+if ( ! class_exists( 'GWC_VT_Letter' ) ) {
+	require GWC_VT_DIR . 'inc/class-gwc-vt-letter.php';
 }
 
 /* The post types, then the query layer that reads them. cpt.php declares the
  * meta key constants entries.php totals with, so it cannot move after it. */
-if ( ! function_exists( 'gwcvt_register_post_type' ) ) {
-	require GWCVT_DIR . 'inc/cpt.php';
+if ( ! function_exists( 'gwc_vt_register_post_type' ) ) {
+	require GWC_VT_DIR . 'inc/cpt.php';
 }
-if ( ! function_exists( 'gwcvt_register_volunteer_type' ) ) {
-	require GWCVT_DIR . 'inc/volunteer-cpt.php';
+if ( ! function_exists( 'gwc_vt_register_volunteer_type' ) ) {
+	require GWC_VT_DIR . 'inc/volunteer-cpt.php';
 }
-if ( ! function_exists( 'gwcvt_entry_ids_for_volunteer' ) ) {
-	require GWCVT_DIR . 'inc/entries.php';
+if ( ! function_exists( 'gwc_vt_entry_ids_for_volunteer' ) ) {
+	require GWC_VT_DIR . 'inc/entries.php';
 }
 
 /* What a mandated volunteer still has to complete. After entries.php, because
  * progress is measured against the cached rollup that file maintains. */
-if ( ! function_exists( 'gwcvt_requirement_progress' ) ) {
-	require GWCVT_DIR . 'inc/required.php';
+if ( ! function_exists( 'gwc_vt_requirement_progress' ) ) {
+	require GWC_VT_DIR . 'inc/required.php';
 }
 
 /* The schedule. recurrence.php is pure calendar arithmetic and depends on
@@ -164,142 +176,142 @@ if ( ! function_exists( 'gwcvt_requirement_progress' ) ) {
  * whether the SCREENS appear, not whether the functions exist: a site that turns
  * scheduling off still has shifts in the database, and the privacy exporter, the
  * retention sweep and WP-CLI all have to be able to read them. */
-if ( ! function_exists( 'gwcvt_recurrence_dates' ) ) {
-	require GWCVT_DIR . 'inc/recurrence.php';
+if ( ! function_exists( 'gwc_vt_recurrence_dates' ) ) {
+	require GWC_VT_DIR . 'inc/recurrence.php';
 }
-if ( ! function_exists( 'gwcvt_register_shift_type' ) ) {
-	require GWCVT_DIR . 'inc/shift-cpt.php';
+if ( ! function_exists( 'gwc_vt_register_shift_type' ) ) {
+	require GWC_VT_DIR . 'inc/shift-cpt.php';
 }
 /* The event type, beside the shift type it contains. Its meta key constants are
  * read by events.php below, so it cannot move after it — the same ordering rule
  * as shift-cpt.php and shifts.php. */
-if ( ! function_exists( 'gwcvt_register_event_type' ) ) {
-	require GWCVT_DIR . 'inc/event-cpt.php';
+if ( ! function_exists( 'gwc_vt_register_event_type' ) ) {
+	require GWC_VT_DIR . 'inc/event-cpt.php';
 }
-if ( ! function_exists( 'gwcvt_register_signup_type' ) ) {
-	require GWCVT_DIR . 'inc/signup-cpt.php';
+if ( ! function_exists( 'gwc_vt_register_signup_type' ) ) {
+	require GWC_VT_DIR . 'inc/signup-cpt.php';
 }
-if ( ! function_exists( 'gwcvt_shift_duration' ) ) {
-	require GWCVT_DIR . 'inc/shifts.php';
+if ( ! function_exists( 'gwc_vt_shift_duration' ) ) {
+	require GWC_VT_DIR . 'inc/shifts.php';
 }
 /* Reading events. After shifts.php, because every question about an event is a
  * question about its slots and this file answers them by calling that one. */
-if ( ! function_exists( 'gwcvt_event_slot_ids' ) ) {
-	require GWCVT_DIR . 'inc/events.php';
+if ( ! function_exists( 'gwc_vt_event_slot_ids' ) ) {
+	require GWC_VT_DIR . 'inc/events.php';
 }
-if ( ! function_exists( 'gwcvt_add_signup' ) ) {
-	require GWCVT_DIR . 'inc/signups.php';
+if ( ! function_exists( 'gwc_vt_add_signup' ) ) {
+	require GWC_VT_DIR . 'inc/signups.php';
 }
 
 /* The public signup surface, in the same order as the hours form's below:
- * handler first, because it declares gwcvt_signups_open() and
- * gwcvt_public_shift_ids(), which the form and the calendar file both call.
+ * handler first, because it declares gwc_vt_signups_open() and
+ * gwc_vt_public_shift_ids(), which the form and the calendar file both call.
  * schedule-emails.php is last of the three — the handler queues a confirmation
  * through it, but only at request time. */
-if ( ! function_exists( 'gwcvt_signup_dispatch' ) ) {
-	require GWCVT_DIR . 'inc/signup-handler.php';
+if ( ! function_exists( 'gwc_vt_signup_dispatch' ) ) {
+	require GWC_VT_DIR . 'inc/signup-handler.php';
 }
-if ( ! function_exists( 'gwcvt_render_shift_list' ) ) {
-	require GWCVT_DIR . 'inc/signup-form.php';
+if ( ! function_exists( 'gwc_vt_render_shift_list' ) ) {
+	require GWC_VT_DIR . 'inc/signup-form.php';
 }
 /* The event grid, beside the shift list it shares its rules with. After
- * signup-form.php, because it reuses gwcvt_render_signup_manage() to answer a
+ * signup-form.php, because it reuses gwc_vt_render_signup_manage() to answer a
  * cancellation link that happens to land on an event's page. */
-if ( ! function_exists( 'gwcvt_render_event_grid' ) ) {
-	require GWCVT_DIR . 'inc/event-form.php';
+if ( ! function_exists( 'gwc_vt_render_event_grid' ) ) {
+	require GWC_VT_DIR . 'inc/event-form.php';
 }
-if ( ! function_exists( 'gwcvt_signup_ics' ) ) {
-	require GWCVT_DIR . 'inc/ics.php';
+if ( ! function_exists( 'gwc_vt_signup_ics' ) ) {
+	require GWC_VT_DIR . 'inc/ics.php';
 }
-if ( ! function_exists( 'gwcvt_send_signup_confirmation' ) ) {
-	require GWCVT_DIR . 'inc/schedule-emails.php';
+if ( ! function_exists( 'gwc_vt_send_signup_confirmation' ) ) {
+	require GWC_VT_DIR . 'inc/schedule-emails.php';
 }
 /* The two scheduled passes. After schedule-emails.php, which holds every message
  * they send, and after admin-schedule.php would be too late — this registers
  * cron hooks that fire on requests with no admin loaded at all. */
-if ( ! function_exists( 'gwcvt_run_reminders' ) ) {
-	require GWCVT_DIR . 'inc/schedule-cron.php';
+if ( ! function_exists( 'gwc_vt_run_reminders' ) ) {
+	require GWC_VT_DIR . 'inc/schedule-cron.php';
 }
 
 /* What the dashboard reads. After the schedule and the requirements, because it
  * counts both; not in the admin bundle, because the year figures are cleared
  * from entry hooks that fire under WP-CLI and cron as well. */
-if ( ! function_exists( 'gwcvt_dashboard_items' ) ) {
-	require GWCVT_DIR . 'inc/dashboard.php';
+if ( ! function_exists( 'gwc_vt_dashboard_items' ) ) {
+	require GWC_VT_DIR . 'inc/dashboard.php';
 }
-if ( ! function_exists( 'gwcvt_verify_entry' ) ) {
-	require GWCVT_DIR . 'inc/verify.php';
+if ( ! function_exists( 'gwc_vt_verify_entry' ) ) {
+	require GWC_VT_DIR . 'inc/verify.php';
 }
-if ( ! function_exists( 'gwcvt_register_letter_type' ) ) {
-	require GWCVT_DIR . 'inc/letter-cpt.php';
+if ( ! function_exists( 'gwc_vt_register_letter_type' ) ) {
+	require GWC_VT_DIR . 'inc/letter-cpt.php';
 }
 
 /* The letter. letter.php assembles the model and mints the reference,
  * render.php turns one into a document, emails.php sends it. None of them
  * knows about the admin screen that calls them. */
-if ( ! function_exists( 'gwcvt_build_letter' ) ) {
-	require GWCVT_DIR . 'inc/letter.php';
+if ( ! function_exists( 'gwc_vt_build_letter' ) ) {
+	require GWC_VT_DIR . 'inc/letter.php';
 }
-if ( ! function_exists( 'gwcvt_render_letter' ) ) {
-	require GWCVT_DIR . 'inc/render.php';
+if ( ! function_exists( 'gwc_vt_render_letter' ) ) {
+	require GWC_VT_DIR . 'inc/render.php';
 }
-if ( ! function_exists( 'gwcvt_send_email' ) ) {
-	require GWCVT_DIR . 'inc/emails.php';
+if ( ! function_exists( 'gwc_vt_send_email' ) ) {
+	require GWC_VT_DIR . 'inc/emails.php';
 }
-if ( ! function_exists( 'gwcvt_retention_due' ) ) {
-	require GWCVT_DIR . 'inc/privacy.php';
+if ( ! function_exists( 'gwc_vt_retention_due' ) ) {
+	require GWC_VT_DIR . 'inc/privacy.php';
 }
-if ( ! function_exists( 'gwcvt_register_rest_routes' ) ) {
-	require GWCVT_DIR . 'inc/rest.php';
+if ( ! function_exists( 'gwc_vt_register_rest_routes' ) ) {
+	require GWC_VT_DIR . 'inc/rest.php';
 }
 /* The public form. form.php renders it, self-log.php accepts it, block.php
- * places it. self-log.php declares gwcvt_self_log_enabled(), which form.php
+ * places it. self-log.php declares gwc_vt_self_log_enabled(), which form.php
  * calls, so it cannot move after it. */
-if ( ! function_exists( 'gwcvt_dispatch' ) ) {
-	require GWCVT_DIR . 'inc/self-log.php';
+if ( ! function_exists( 'gwc_vt_dispatch' ) ) {
+	require GWC_VT_DIR . 'inc/self-log.php';
 }
-if ( ! function_exists( 'gwcvt_render_self_log_form' ) ) {
-	require GWCVT_DIR . 'inc/form.php';
+if ( ! function_exists( 'gwc_vt_render_self_log_form' ) ) {
+	require GWC_VT_DIR . 'inc/form.php';
 }
-if ( ! function_exists( 'gwcvt_render_entry_meta_box' ) ) {
-	require GWCVT_DIR . 'inc/meta-box.php';
+if ( ! function_exists( 'gwc_vt_render_entry_meta_box' ) ) {
+	require GWC_VT_DIR . 'inc/meta-box.php';
 }
-if ( ! function_exists( 'gwcvt_register_front_assets' ) ) {
-	require GWCVT_DIR . 'inc/enqueue.php';
+if ( ! function_exists( 'gwc_vt_register_front_assets' ) ) {
+	require GWC_VT_DIR . 'inc/enqueue.php';
 }
-if ( ! function_exists( 'gwcvt_register_block' ) ) {
-	require GWCVT_DIR . 'inc/block.php';
+if ( ! function_exists( 'gwc_vt_register_block' ) ) {
+	require GWC_VT_DIR . 'inc/block.php';
 }
 
 /* The settings screen. Last, as in both sibling plugins, because it describes
  * the others.
  *
- * enqueue.php above calls gwcvt_is_plugin_screen(), which this file declares —
+ * enqueue.php above calls gwc_vt_is_plugin_screen(), which this file declares —
  * which looks like the wrong order and is not. Every one of these files only
  * REGISTERS hooks at include time; the call happens on admin_enqueue_scripts,
  * by which point the whole plugin is loaded. Moving this earlier to make the
  * reading order match the call order would put the admin screen ahead of the
  * post types it hangs its menu off, which is a dependency that IS load-time. */
-if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
-	require GWCVT_DIR . 'inc/admin-screen.php';
+if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
+	require GWC_VT_DIR . 'inc/admin-screen.php';
 
 	// Verification where staff look for it: the hours list, and the entry itself.
-	require GWCVT_DIR . 'inc/admin-verify.php';
+	require GWC_VT_DIR . 'inc/admin-verify.php';
 
 	// The settings tabs' forms, and the one handler that saves them.
-	require GWCVT_DIR . 'inc/admin-settings.php';
+	require GWC_VT_DIR . 'inc/admin-settings.php';
 
 	// Producing, sending and checking letters.
-	require GWCVT_DIR . 'inc/admin-letters.php';
+	require GWC_VT_DIR . 'inc/admin-letters.php';
 
 	// A volunteer's own history: their shifts, and the letters issued for them.
-	require GWCVT_DIR . 'inc/admin-volunteer.php';
+	require GWC_VT_DIR . 'inc/admin-volunteer.php';
 
 	// Turning a public submission into a shift on somebody's record.
-	require GWCVT_DIR . 'inc/admin-triage.php';
+	require GWC_VT_DIR . 'inc/admin-triage.php';
 
 	// Typing up a sign-in sheet in one pass.
-	require GWCVT_DIR . 'inc/admin-quick-add.php';
+	require GWC_VT_DIR . 'inc/admin-quick-add.php';
 
 	/* Planning shifts, and who is coming to them. admin-schedule.php owns the
 	 * menu and routes between the screen's views; admin-shift.php renders one
@@ -309,19 +321,19 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 	 * and the handlers that write an event's grid, admin-event-roster.php is who
 	 * is coming and the sheet that goes on the clipboard. They load after
 	 * admin-shift.php because the roster's promote action falls back to
-	 * gwcvt_shift_redirect() for a standalone shift. */
-	require GWCVT_DIR . 'inc/admin-schedule.php';
-	require GWCVT_DIR . 'inc/admin-shift.php';
-	require GWCVT_DIR . 'inc/admin-event.php';
-	require GWCVT_DIR . 'inc/admin-event-actions.php';
-	require GWCVT_DIR . 'inc/admin-event-roster.php';
+	 * gwc_vt_shift_redirect() for a standalone shift. */
+	require GWC_VT_DIR . 'inc/admin-schedule.php';
+	require GWC_VT_DIR . 'inc/admin-shift.php';
+	require GWC_VT_DIR . 'inc/admin-event.php';
+	require GWC_VT_DIR . 'inc/admin-event-actions.php';
+	require GWC_VT_DIR . 'inc/admin-event-roster.php';
 
 	// The screen somebody lands on.
-	require GWCVT_DIR . 'inc/admin-dashboard.php';
+	require GWC_VT_DIR . 'inc/admin-dashboard.php';
 
 	/* Contextual help. Last, because it describes what all of the above do —
 	 * which now includes the schedule and its rosters. */
-	require GWCVT_DIR . 'inc/admin-help.php';
+	require GWC_VT_DIR . 'inc/admin-help.php';
 }
 
 /* ── Activation ──────────────────────────────────────────────────────────────
@@ -342,15 +354,15 @@ if ( ! function_exists( 'gwcvt_colophon_snoozed' ) ) {
 register_activation_hook(
 	__FILE__,
 	static function (): void {
-		update_option( 'gwcvt_needs_rewrite_flush', 1, false );
+		update_option( 'gwc_vt_needs_rewrite_flush', 1, false );
 	}
 );
 
 add_action(
 	'init',
 	static function (): void {
-		if ( get_option( 'gwcvt_needs_rewrite_flush' ) ) {
-			delete_option( 'gwcvt_needs_rewrite_flush' );
+		if ( get_option( 'gwc_vt_needs_rewrite_flush' ) ) {
+			delete_option( 'gwc_vt_needs_rewrite_flush' );
 			flush_rewrite_rules( false );
 		}
 	},
@@ -372,7 +384,7 @@ register_deactivation_hook(
 		 * pointing at a function that no longer exists — harmless in WordPress,
 		 * which skips unknown hooks, and a permanent entry in every cron listing
 		 * a site owner ever looks at. */
-		foreach ( array( 'gwcvt_daily_retention', 'gwcvt_shift_reminders', 'gwcvt_coordinator_digest' ) as $event ) {
+		foreach ( array( 'gwc_vt_daily_retention', 'gwc_vt_shift_reminders', 'gwc_vt_coordinator_digest' ) as $event ) {
 			$next = wp_next_scheduled( $event );
 			if ( $next ) {
 				wp_unschedule_event( $next, $event );

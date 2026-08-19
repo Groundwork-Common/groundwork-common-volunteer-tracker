@@ -16,8 +16,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * What it needs instead is two capabilities on the accounts that already exist:
  *
- *   gwcvt_verify_hours    attest that a shift happened
- *   gwcvt_issue_letters   put the organisation's name on a document
+ *   gwc_vt_verify_hours    attest that a shift happened
+ *   gwc_vt_issue_letters   put the organisation's name on a document
  *
  * They are deliberately separate. At a small nonprofit the coordinator who
  * knows Jane swept the warehouse on Saturday and the director who signs a
@@ -32,8 +32,8 @@ defined( 'ABSPATH' ) || exit;
  * sensible. Only the two genuinely new decisions get new capabilities.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_CAP_VERIFY = 'gwcvt_verify_hours';
-const GWCVT_CAP_ISSUE  = 'gwcvt_issue_letters';
+const GWC_VT_CAP_VERIFY = 'gwc_vt_verify_hours';
+const GWC_VT_CAP_ISSUE  = 'gwc_vt_issue_letters';
 
 /* The roles that get both capabilities when the plugin cannot ask. Editor is
  * included because at the scale this plugin is built for — a food bank with one
@@ -41,15 +41,15 @@ const GWCVT_CAP_ISSUE  = 'gwcvt_issue_letters';
  * coordinator, and a plugin that granted nothing to anybody but the site owner
  * would be configured by handing out administrator accounts, which is worse
  * than anything this list could get wrong. */
-const GWCVT_DEFAULT_CAP_ROLES = array( 'administrator', 'editor' );
+const GWC_VT_DEFAULT_CAP_ROLES = array( 'administrator', 'editor' );
 
-add_action( 'init', 'gwcvt_grant_capabilities', 5 );
-add_filter( 'map_meta_cap', 'gwcvt_map_open_letters', 10, 3 );
+add_action( 'init', 'gwc_vt_grant_capabilities', 5 );
+add_filter( 'map_meta_cap', 'gwc_vt_map_open_letters', 10, 3 );
 
 /* ── Reaching the Letters screen ─────────────────────────────────────────────
  * The screen does two things, and they are not the same size. Producing a letter
  * puts the organisation's name on a document a court reads, and stays behind
- * gwcvt_issue_letters. Checking a reference somebody has phoned in about is a
+ * gwc_vt_issue_letters. Checking a reference somebody has phoned in about is a
  * ten-second lookup that answers "does this still match our records" and
  * discloses nothing the caller is not holding already.
  *
@@ -63,7 +63,7 @@ add_filter( 'map_meta_cap', 'gwcvt_map_open_letters', 10, 3 );
  * with two halves rather than two screens that would drift.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_CAP_OPEN_LETTERS = 'gwcvt_open_letters';
+const GWC_VT_CAP_OPEN_LETTERS = 'gwc_vt_open_letters';
 
 /**
  * Map the Letters screen's meta capability.
@@ -73,14 +73,14 @@ const GWCVT_CAP_OPEN_LETTERS = 'gwcvt_open_letters';
  * @param int      $user_id Who is being checked.
  * @return string[]
  */
-function gwcvt_map_open_letters( $caps, $cap, $user_id ): array {
-	if ( GWCVT_CAP_OPEN_LETTERS !== $cap ) {
+function gwc_vt_map_open_letters( $caps, $cap, $user_id ): array {
+	if ( GWC_VT_CAP_OPEN_LETTERS !== $cap ) {
 		return (array) $caps;
 	}
 
 	/* Both are primitive capabilities, so neither re-enters this filter. */
-	$allowed = user_can( (int) $user_id, gwcvt_cap( 'issue' ) )
-		|| user_can( (int) $user_id, gwcvt_cap( 'verify' ) );
+	$allowed = user_can( (int) $user_id, gwc_vt_cap( 'issue' ) )
+		|| user_can( (int) $user_id, gwc_vt_cap( 'verify' ) );
 
 	return array( $allowed ? 'exist' : 'do_not_allow' );
 }
@@ -96,10 +96,10 @@ function gwcvt_map_open_letters( $caps, $cap, $user_id ): array {
  * @param string $which One of 'verify', 'issue', 'manage'.
  * @return string A capability name.
  */
-function gwcvt_cap( string $which ): string {
+function gwc_vt_cap( string $which ): string {
 	$caps = array(
-		'verify' => GWCVT_CAP_VERIFY,
-		'issue'  => GWCVT_CAP_ISSUE,
+		'verify' => GWC_VT_CAP_VERIFY,
+		'issue'  => GWC_VT_CAP_ISSUE,
 		'manage' => 'manage_options',
 	);
 
@@ -108,7 +108,7 @@ function gwcvt_cap( string $which ): string {
 	 *
 	 * @param array<string, string> $caps Keyed by 'verify', 'issue', 'manage'.
 	 */
-	$caps = (array) apply_filters( 'gwcvt_capabilities', $caps );
+	$caps = (array) apply_filters( 'gwc_vt_capabilities', $caps );
 
 	/* Falling back to manage_options rather than to the requested key means a
 	 * filter that drops a key fails closed. A missing capability name would
@@ -149,13 +149,13 @@ function gwcvt_cap( string $which ): string {
  * silently cannot verify hours after a migration, with nothing in the interface
  * to explain why.
  */
-function gwcvt_grant_capabilities(): void {
+function gwc_vt_grant_capabilities(): void {
 	/**
 	 * The roles granted the plugin's capabilities when they are first seen.
 	 *
 	 * @param string[] $roles Role slugs.
 	 */
-	$roles = (array) apply_filters( 'gwcvt_default_cap_roles', GWCVT_DEFAULT_CAP_ROLES );
+	$roles = (array) apply_filters( 'gwc_vt_default_cap_roles', GWC_VT_DEFAULT_CAP_ROLES );
 
 	foreach ( $roles as $role_name ) {
 		$role = get_role( (string) $role_name );
@@ -163,7 +163,7 @@ function gwcvt_grant_capabilities(): void {
 			continue;
 		}
 
-		foreach ( array( GWCVT_CAP_VERIFY, GWCVT_CAP_ISSUE ) as $cap ) {
+		foreach ( array( GWC_VT_CAP_VERIFY, GWC_VT_CAP_ISSUE ) as $cap ) {
 			/* has_cap() is checked rather than blindly re-adding, because
 			 * add_cap() writes the whole role back to the options table every
 			 * time it is called. Doing that twice per request on every page load
@@ -193,12 +193,12 @@ function gwcvt_grant_capabilities(): void {
  * @param int $entry_id Hour entry post ID.
  * @return bool
  */
-function gwcvt_user_can_verify( int $user_id, int $entry_id ): bool {
+function gwc_vt_user_can_verify( int $user_id, int $entry_id ): bool {
 	if ( $user_id < 1 || $entry_id < 1 ) {
 		return false;
 	}
 
-	if ( ! user_can( $user_id, gwcvt_cap( 'verify' ) ) ) {
+	if ( ! user_can( $user_id, gwc_vt_cap( 'verify' ) ) ) {
 		return false;
 	}
 
@@ -211,8 +211,8 @@ function gwcvt_user_can_verify( int $user_id, int $entry_id ): bool {
  * @param int $user_id User ID.
  * @return bool
  */
-function gwcvt_user_can_issue( int $user_id ): bool {
-	return $user_id > 0 && user_can( $user_id, gwcvt_cap( 'issue' ) );
+function gwc_vt_user_can_issue( int $user_id ): bool {
+	return $user_id > 0 && user_can( $user_id, gwc_vt_cap( 'issue' ) );
 }
 
 /**
@@ -226,8 +226,8 @@ function gwcvt_user_can_issue( int $user_id ): bool {
  *
  * @param string $which One of 'verify', 'issue', 'manage'.
  */
-function gwcvt_require_cap( string $which ): void {
-	if ( current_user_can( gwcvt_cap( $which ) ) ) {
+function gwc_vt_require_cap( string $which ): void {
+	if ( current_user_can( gwc_vt_cap( $which ) ) ) {
 		return;
 	}
 

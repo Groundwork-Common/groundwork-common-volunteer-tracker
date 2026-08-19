@@ -5,7 +5,7 @@
  * Currently the colophon, the footer line, and the screen test both of them
  * scope themselves with. The tab shell, the Fields editor and the Letters
  * screen land on top of this file in the milestones that need them;
- * gwcvt_render_colophon() is called by that shell when it arrives.
+ * gwc_vt_render_colophon() is called by that shell when it arrives.
  *
  * @package VolunteerTracker
  */
@@ -16,22 +16,22 @@ defined( 'ABSPATH' ) || exit;
  * here because the footer filter, the tab shell and the help tabs all have to
  * agree about what "our screen" means, and three copies of a string is three
  * chances for two of them to agree while the third drifts. */
-const GWCVT_MENU_SLUG      = 'edit.php?post_type=gwcvt_entry';
-const GWCVT_SETTINGS_PAGE  = 'gwcvt-settings';
-const GWCVT_LETTERS_PAGE   = 'gwcvt-letters';
-const GWCVT_QUICK_ADD_PAGE = 'gwcvt-log-a-day';
-const GWCVT_SCHEDULE_PAGE  = 'gwcvt-schedule';
-const GWCVT_DASHBOARD_PAGE = 'gwcvt-dashboard';
+const GWC_VT_MENU_SLUG      = 'edit.php?post_type=gwc_vt_entry';
+const GWC_VT_SETTINGS_PAGE  = 'gwc-vt-settings';
+const GWC_VT_LETTERS_PAGE   = 'gwc-vt-letters';
+const GWC_VT_QUICK_ADD_PAGE = 'gwc-vt-log-a-day';
+const GWC_VT_SCHEDULE_PAGE  = 'gwc-vt-schedule';
+const GWC_VT_DASHBOARD_PAGE = 'gwc-vt-dashboard';
 
-add_filter( 'admin_footer_text', 'gwcvt_admin_footer_text' );
-add_action( 'admin_init', 'gwcvt_handle_colophon_toggle' );
-add_action( 'admin_menu', 'gwcvt_register_menu' );
+add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
+add_action( 'admin_init', 'gwc_vt_handle_colophon_toggle' );
+add_action( 'admin_menu', 'gwc_vt_register_menu' );
 
 /* Priority 99: after every screen has registered itself, including any a site
  * has added of its own. Ordering cannot be done at registration time because
  * the two screens WordPress adds for the post type — All hours and Log hours —
  * are not added by this plugin at all. */
-add_action( 'admin_menu', 'gwcvt_order_menu', 99 );
+add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
 
 /* ── Why the menu is reordered rather than registered in order ───────────────
  * Left alone, this menu came out as: All hours, Log hours, Volunteers,
@@ -65,7 +65,7 @@ add_action( 'admin_menu', 'gwcvt_order_menu', 99 );
  *
  * @return string[]
  */
-function gwcvt_menu_order(): array {
+function gwc_vt_menu_order(): array {
 	/* ── The order is a volunteer's life, not a screen's importance ───────────
 	 * What is coming, then who is coming, then what they did, then writing it
 	 * up, then what gets produced for them. It reads forwards.
@@ -79,23 +79,23 @@ function gwcvt_menu_order(): array {
 	$order = array(
 		/* Where you land. Not part of the sequence below so much as the place
 		 * you start it from. */
-		GWCVT_DASHBOARD_PAGE,
+		GWC_VT_DASHBOARD_PAGE,
 
 		// What is coming.
-		GWCVT_SCHEDULE_PAGE,
+		GWC_VT_SCHEDULE_PAGE,
 
 		// Who is coming, and what each of them still has to do.
-		'edit.php?post_type=' . GWCVT_VOLUNTEER_TYPE,
+		'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE,
 
 		// What they did, and the queue of what nobody has attested to yet.
-		'edit.php?post_type=' . GWCVT_ENTRY_TYPE,
+		'edit.php?post_type=' . GWC_VT_ENTRY_TYPE,
 
 		// Writing it up: the common way, then the single-entry way.
-		GWCVT_QUICK_ADD_PAGE,
-		'post-new.php?post_type=' . GWCVT_ENTRY_TYPE,
+		GWC_VT_QUICK_ADD_PAGE,
+		'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE,
 
 		// What gets produced for them.
-		GWCVT_LETTERS_PAGE,
+		GWC_VT_LETTERS_PAGE,
 	);
 
 	/**
@@ -112,14 +112,14 @@ function gwcvt_menu_order(): array {
 	 *
 	 * @param string[] $order Submenu slugs, in the order they should appear.
 	 */
-	return (array) apply_filters( 'gwcvt_menu_order', $order );
+	return (array) apply_filters( 'gwc_vt_menu_order', $order );
 }
 
 /**
  * Put the submenu in that order.
  */
-function gwcvt_order_menu(): void {
-	$parent = GWCVT_MENU_SLUG;
+function gwc_vt_order_menu(): void {
+	$parent = GWC_VT_MENU_SLUG;
 
 	if ( empty( $GLOBALS['submenu'][ $parent ] ) || ! is_array( $GLOBALS['submenu'][ $parent ] ) ) {
 		return;
@@ -134,7 +134,7 @@ function gwcvt_order_menu(): void {
 
 	$ordered = array();
 
-	foreach ( gwcvt_menu_order() as $slug ) {
+	foreach ( gwc_vt_menu_order() as $slug ) {
 		if ( isset( $by_slug[ $slug ] ) ) {
 			$ordered[] = $by_slug[ $slug ];
 			unset( $by_slug[ $slug ] );
@@ -145,8 +145,8 @@ function gwcvt_order_menu(): void {
 	 * has never heard of keeps its place rather than vanishing. Settings is
 	 * pulled out of that remainder so it stays at the bottom however many
 	 * screens a site adds. */
-	$settings = $by_slug[ GWCVT_SETTINGS_PAGE ] ?? null;
-	unset( $by_slug[ GWCVT_SETTINGS_PAGE ] );
+	$settings = $by_slug[ GWC_VT_SETTINGS_PAGE ] ?? null;
+	unset( $by_slug[ GWC_VT_SETTINGS_PAGE ] );
 
 	foreach ( $by_slug as $item ) {
 		$ordered[] = $item;
@@ -169,18 +169,18 @@ function gwcvt_order_menu(): void {
  * type already owns a menu; a second top-level entry for the same plugin is the
  * thing that makes an admin sidebar unreadable one plugin at a time.
  */
-function gwcvt_register_menu(): void {
+function gwc_vt_register_menu(): void {
 	$hook = add_submenu_page(
-		GWCVT_MENU_SLUG,
+		GWC_VT_MENU_SLUG,
 		__( 'Volunteer Tracker Settings', 'groundwork-common-volunteer-tracker' ),
 		__( 'Settings', 'groundwork-common-volunteer-tracker' ),
-		gwcvt_cap( 'manage' ),
-		GWCVT_SETTINGS_PAGE,
-		'gwcvt_render_settings_screen'
+		gwc_vt_cap( 'manage' ),
+		GWC_VT_SETTINGS_PAGE,
+		'gwc_vt_render_settings_screen'
 	);
 
 	if ( $hook ) {
-		add_action( 'load-' . $hook, 'gwcvt_settings_screen_loaded' );
+		add_action( 'load-' . $hook, 'gwc_vt_settings_screen_loaded' );
 	}
 }
 
@@ -192,11 +192,11 @@ function gwcvt_register_menu(): void {
  * outputting, and doing it from the renderer is the mistake that makes them
  * silently not appear.
  */
-function gwcvt_settings_screen_loaded(): void {
+function gwc_vt_settings_screen_loaded(): void {
 	/**
 	 * Fires when the Volunteer Tracker settings screen loads.
 	 */
-	do_action( 'gwcvt_settings_screen_loaded' );
+	do_action( 'gwc_vt_settings_screen_loaded' );
 }
 
 /**
@@ -204,7 +204,7 @@ function gwcvt_settings_screen_loaded(): void {
  *
  * @return array<string, string>
  */
-function gwcvt_admin_tabs(): array {
+function gwc_vt_admin_tabs(): array {
 	$tabs = array(
 		'letter'  => __( 'Letter', 'groundwork-common-volunteer-tracker' ),
 		'logging' => __( 'Logging', 'groundwork-common-volunteer-tracker' ),
@@ -217,7 +217,7 @@ function gwcvt_admin_tabs(): array {
 	 *
 	 * @param array<string, string> $tabs Slug => label.
 	 */
-	return (array) apply_filters( 'gwcvt_admin_tabs', $tabs );
+	return (array) apply_filters( 'gwc_vt_admin_tabs', $tabs );
 }
 
 /**
@@ -225,8 +225,8 @@ function gwcvt_admin_tabs(): array {
  *
  * @return string
  */
-function gwcvt_current_tab(): string {
-	$tabs = gwcvt_admin_tabs();
+function gwc_vt_current_tab(): string {
+	$tabs = gwc_vt_admin_tabs();
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from this value.
 	$wanted = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
@@ -237,22 +237,22 @@ function gwcvt_current_tab(): string {
 /**
  * The settings screen.
  */
-function gwcvt_render_settings_screen(): void {
-	gwcvt_require_cap( 'manage' );
+function gwc_vt_render_settings_screen(): void {
+	gwc_vt_require_cap( 'manage' );
 
-	$tabs    = gwcvt_admin_tabs();
-	$current = gwcvt_current_tab();
+	$tabs    = gwc_vt_admin_tabs();
+	$current = gwc_vt_current_tab();
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1><?php esc_html_e( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
-		<?php gwcvt_render_colophon(); ?>
+		<?php gwc_vt_render_colophon(); ?>
 
 		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Settings sections', 'groundwork-common-volunteer-tracker' ); ?>">
 			<?php foreach ( $tabs as $slug => $label ) : ?>
 				<a
 					class="nav-tab <?php echo $slug === $current ? 'nav-tab-active' : ''; ?>"
-					href="<?php echo esc_url( gwcvt_settings_url( $slug ) ); ?>"
+					href="<?php echo esc_url( gwc_vt_settings_url( $slug ) ); ?>"
 					<?php echo $slug === $current ? 'aria-current="page"' : ''; ?>
 				>
 					<?php echo esc_html( $label ); ?>
@@ -273,9 +273,9 @@ function gwcvt_render_settings_screen(): void {
 			 *
 			 * @param string $current The tab being viewed.
 			 */
-			do_action( 'gwcvt_render_tab_' . $current );
+			do_action( 'gwc_vt_render_tab_' . $current );
 
-			if ( ! has_action( 'gwcvt_render_tab_' . $current ) ) :
+			if ( ! has_action( 'gwc_vt_render_tab_' . $current ) ) :
 				?>
 				<div class="notice notice-info inline">
 					<p>
@@ -302,36 +302,36 @@ function gwcvt_render_settings_screen(): void {
  * @param string $tab Tab slug.
  * @return string
  */
-function gwcvt_settings_url( string $tab = '' ): string {
-	$args = array( 'page' => GWCVT_SETTINGS_PAGE );
+function gwc_vt_settings_url( string $tab = '' ): string {
+	$args = array( 'page' => GWC_VT_SETTINGS_PAGE );
 
 	if ( '' !== $tab ) {
 		$args['tab'] = $tab;
 	}
 
-	return add_query_arg( $args, admin_url( 'edit.php?post_type=' . GWCVT_ENTRY_TYPE ) );
+	return add_query_arg( $args, admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ) );
 }
 
 /**
  * Is the screen being rendered one of this plugin's?
  *
- * Matched on the `gwcvt` prefix rather than against a list of screen IDs. The
+ * Matched on the `gwc_vt` prefix rather than against a list of screen IDs. The
  * sibling plugins name their screens explicitly and that is the more careful
  * habit in general — but here every post type this plugin registers is
- * `gwcvt_*` and every admin page is `gwcvt-*`, so the prefix IS the list, and a
+ * `gwc_vt_*` and every admin page is `gwcvt-*`, so the prefix IS the list, and a
  * list would be a second copy of it that a later post type could be added
  * without. Nothing outside this plugin has a screen ID containing this string.
  *
  * @return bool
  */
-function gwcvt_is_plugin_screen(): bool {
+function gwc_vt_is_plugin_screen(): bool {
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen ) {
 		return false;
 	}
 
-	return 0 === strpos( (string) $screen->post_type, 'gwcvt_' )
-		|| false !== strpos( (string) $screen->id, 'gwcvt' );
+	return 0 === strpos( (string) $screen->post_type, 'gwc_vt_' )
+		|| false !== strpos( (string) $screen->id, 'gwc_vt' );
 }
 
 /**
@@ -350,8 +350,8 @@ function gwcvt_is_plugin_screen(): bool {
  * @param string $text The existing footer text.
  * @return string
  */
-function gwcvt_admin_footer_text( $text ) {
-	if ( ! gwcvt_is_plugin_screen() ) {
+function gwc_vt_admin_footer_text( $text ) {
+	if ( ! gwc_vt_is_plugin_screen() ) {
 		return $text;
 	}
 
@@ -360,7 +360,7 @@ function gwcvt_admin_footer_text( $text ) {
 		esc_html__( 'Built by %s — technology leadership and support for nonprofits.', 'groundwork-common-volunteer-tracker' ),
 		sprintf(
 			'<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
-			esc_url( GWCVT_GWC_URL ),
+			esc_url( GWC_VT_GWC_URL ),
 			esc_html__( 'Groundwork Common', 'groundwork-common-volunteer-tracker' )
 		)
 	);
@@ -382,8 +382,8 @@ function gwcvt_admin_footer_text( $text ) {
  * event to come round and clear a flag.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_COLOPHON_META   = 'gwcvt_colophon_collapsed_at';
-const GWCVT_COLOPHON_SNOOZE = 30 * DAY_IN_SECONDS;
+const GWC_VT_COLOPHON_META   = 'gwc_vt_colophon_collapsed_at';
+const GWC_VT_COLOPHON_SNOOZE = 30 * DAY_IN_SECONDS;
 
 /**
  * Is a collapse from $collapsed_at still in force at $now?
@@ -395,7 +395,7 @@ const GWCVT_COLOPHON_SNOOZE = 30 * DAY_IN_SECONDS;
  * @param int $now          Unix time now.
  * @return bool
  */
-function gwcvt_colophon_snoozed( int $collapsed_at, int $now ): bool {
+function gwc_vt_colophon_snoozed( int $collapsed_at, int $now ): bool {
 	if ( $collapsed_at <= 0 ) {
 		return false;
 	}
@@ -408,7 +408,7 @@ function gwcvt_colophon_snoozed( int $collapsed_at, int $now ): bool {
 		return false;
 	}
 
-	return ( $now - $collapsed_at ) < GWCVT_COLOPHON_SNOOZE;
+	return ( $now - $collapsed_at ) < GWC_VT_COLOPHON_SNOOZE;
 }
 
 /**
@@ -416,9 +416,9 @@ function gwcvt_colophon_snoozed( int $collapsed_at, int $now ): bool {
  *
  * @return bool
  */
-function gwcvt_colophon_is_collapsed(): bool {
-	$at = (int) get_user_meta( get_current_user_id(), GWCVT_COLOPHON_META, true );
-	return gwcvt_colophon_snoozed( $at, time() );
+function gwc_vt_colophon_is_collapsed(): bool {
+	$at = (int) get_user_meta( get_current_user_id(), GWC_VT_COLOPHON_META, true );
+	return gwc_vt_colophon_snoozed( $at, time() );
 }
 
 /**
@@ -429,29 +429,29 @@ function gwcvt_colophon_is_collapsed(): bool {
  * and the alternative would add an endpoint, a nonce to ship to the browser and
  * a script, all to avoid a reload nobody will notice.
  */
-function gwcvt_handle_colophon_toggle(): void {
-	if ( ! isset( $_GET['gwcvt_colophon'] ) ) {
+function gwc_vt_handle_colophon_toggle(): void {
+	if ( ! isset( $_GET['gwc_vt_colophon'] ) ) {
 		return;
 	}
 
-	if ( ! current_user_can( gwcvt_cap( 'manage' ) ) ) {
+	if ( ! current_user_can( gwc_vt_cap( 'manage' ) ) ) {
 		return;
 	}
 
-	check_admin_referer( 'gwcvt_colophon' );
+	check_admin_referer( 'gwc_vt_colophon' );
 
-	$wanted = sanitize_key( wp_unslash( $_GET['gwcvt_colophon'] ) );
+	$wanted = sanitize_key( wp_unslash( $_GET['gwc_vt_colophon'] ) );
 
 	if ( 'collapse' === $wanted ) {
-		update_user_meta( get_current_user_id(), GWCVT_COLOPHON_META, time() );
+		update_user_meta( get_current_user_id(), GWC_VT_COLOPHON_META, time() );
 	} else {
-		delete_user_meta( get_current_user_id(), GWCVT_COLOPHON_META );
+		delete_user_meta( get_current_user_id(), GWC_VT_COLOPHON_META );
 	}
 
 	/* Back to the same tab, minus the toggle. Without stripping the arguments a
 	 * refresh would re-fire the toggle, and the nonce in the URL would outlive
 	 * its usefulness in the address bar. */
-	wp_safe_redirect( remove_query_arg( array( 'gwcvt_colophon', '_wpnonce' ) ) );
+	wp_safe_redirect( remove_query_arg( array( 'gwc_vt_colophon', '_wpnonce' ) ) );
 	exit;
 }
 
@@ -461,8 +461,8 @@ function gwcvt_handle_colophon_toggle(): void {
  * @param string $action 'collapse' or 'expand'.
  * @return string
  */
-function gwcvt_colophon_toggle_url( string $action ): string {
-	return wp_nonce_url( add_query_arg( 'gwcvt_colophon', $action ), 'gwcvt_colophon' );
+function gwc_vt_colophon_toggle_url( string $action ): string {
+	return wp_nonce_url( add_query_arg( 'gwc_vt_colophon', $action ), 'gwc_vt_colophon' );
 }
 
 /**
@@ -488,13 +488,13 @@ function gwcvt_colophon_toggle_url( string $action ): string {
  * maintained, and it describes the exchange accurately: the money buys
  * continued work, not goodwill.
  */
-function gwcvt_render_colophon(): void {
+function gwc_vt_render_colophon(): void {
 	?>
-	<?php if ( gwcvt_colophon_is_collapsed() ) : ?>
+	<?php if ( gwc_vt_colophon_is_collapsed() ) : ?>
 		<div class="gwcvt-colophon gwcvt-colophon--collapsed">
 			<span class="gwcvt-colophon__logo" aria-hidden="true"></span>
 			<span class="screen-reader-text"><?php esc_html_e( 'Groundwork Common', 'groundwork-common-volunteer-tracker' ); ?></span>
-			<a class="gwcvt-colophon__toggle" href="<?php echo esc_url( gwcvt_colophon_toggle_url( 'expand' ) ); ?>">
+			<a class="gwcvt-colophon__toggle" href="<?php echo esc_url( gwc_vt_colophon_toggle_url( 'expand' ) ); ?>">
 				<?php esc_html_e( 'Show', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		</div>
@@ -502,7 +502,7 @@ function gwcvt_render_colophon(): void {
 	<?php endif; ?>
 
 	<div class="gwcvt-colophon">
-		<a class="gwcvt-colophon__toggle" href="<?php echo esc_url( gwcvt_colophon_toggle_url( 'collapse' ) ); ?>">
+		<a class="gwcvt-colophon__toggle" href="<?php echo esc_url( gwc_vt_colophon_toggle_url( 'collapse' ) ); ?>">
 			<?php esc_html_e( 'Hide for 30 days', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
 
@@ -522,7 +522,7 @@ function gwcvt_render_colophon(): void {
 				 * not by ink — "-light" is the one for light backgrounds.
 				 */
 				?>
-				<a href="<?php echo esc_url( GWCVT_GWC_URL ); ?>" target="_blank" rel="noopener noreferrer">
+				<a href="<?php echo esc_url( GWC_VT_GWC_URL ); ?>" target="_blank" rel="noopener noreferrer">
 					<span class="screen-reader-text"><?php esc_html_e( 'Groundwork Common', 'groundwork-common-volunteer-tracker' ); ?></span>
 					<span class="gwcvt-colophon__logo" aria-hidden="true"></span>
 				</a>
@@ -534,9 +534,9 @@ function gwcvt_render_colophon(): void {
 				 * translatable string, so a translator is never handed markup
 				 * they can break and no HTML has to survive a round trip through
 				 * translate.wordpress.org. */
-				$gwcvt_gwc_link = sprintf(
+				$gwc_vt_gwc_link = sprintf(
 					'<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
-					esc_url( GWCVT_GWC_URL ),
+					esc_url( GWC_VT_GWC_URL ),
 					esc_html__( 'Groundwork Common', 'groundwork-common-volunteer-tracker' )
 				);
 
@@ -544,7 +544,7 @@ function gwcvt_render_colophon(): void {
 					/* translators: %s: Groundwork Common, linked to the company site. */
 					esc_html__( '%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it.', 'groundwork-common-volunteer-tracker' ),
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled directly above from esc_url() and esc_html__().
-					$gwcvt_gwc_link
+					$gwc_vt_gwc_link
 				);
 				?>
 			</p>
@@ -555,7 +555,7 @@ function gwcvt_render_colophon(): void {
 
 			<?php /* Directly under the referral ask, which is what it answers. */ ?>
 			<p>
-				<a class="button" href="<?php echo esc_url( GWCVT_GWC_URL ); ?>" target="_blank" rel="noopener noreferrer">
+				<a class="button" href="<?php echo esc_url( GWC_VT_GWC_URL ); ?>" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Learn about Groundwork Common', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
 			</p>
@@ -563,20 +563,20 @@ function gwcvt_render_colophon(): void {
 
 		<?php /* Second column: the two things a reader can act on. */ ?>
 		<div class="gwcvt-colophon__aside">
-			<?php if ( '' !== GWCVT_SPONSOR_URL ) : ?>
+			<?php if ( '' !== GWC_VT_SPONSOR_URL ) : ?>
 				<p>
 					<?php esc_html_e( 'You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 
 				<p>
-					<a class="button button-primary" href="<?php echo esc_url( GWCVT_SPONSOR_URL ); ?>" target="_blank" rel="noopener noreferrer">
+					<a class="button button-primary" href="<?php echo esc_url( GWC_VT_SPONSOR_URL ); ?>" target="_blank" rel="noopener noreferrer">
 						<?php esc_html_e( 'Support our work', 'groundwork-common-volunteer-tracker' ); ?>
 					</a>
 				</p>
 			<?php endif; ?>
 
 			<p>
-				<a href="https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker/issues" target="_blank" rel="noopener noreferrer">
+				<a href="<?php echo esc_url( GWC_VT_SUPPORT_URL ); ?>" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Report a problem', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
 			</p>

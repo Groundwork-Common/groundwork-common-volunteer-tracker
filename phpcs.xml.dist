@@ -87,8 +87,8 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="gwcvt"/>
-				<element value="GWCVT"/>
+				<element value="gwc_vt"/>
+				<element value="GWC_VT"/>
 			</property>
 		</properties>
 	</rule>

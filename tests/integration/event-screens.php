@@ -23,8 +23,8 @@
  */
 
 /* $GLOBALS explicitly — see the note in tests/integration/events.php. */
-$GLOBALS['gwcvt_failures'] = 0;
-$GLOBALS['gwcvt_noise']    = array();
+$GLOBALS['gwc_vt_failures'] = 0;
+$GLOBALS['gwc_vt_noise']    = array();
 
 /**
  * Assert, tersely.
@@ -33,9 +33,9 @@ $GLOBALS['gwcvt_noise']    = array();
  * @param bool   $ok    Whether it passed.
  * @param string $got   Optional. What was actually seen.
  */
-function gwcvt_sc_check( string $label, bool $ok, string $got = '' ): void {
+function gwc_vt_sc_check( string $label, bool $ok, string $got = '' ): void {
 	if ( ! $ok ) {
-		++$GLOBALS['gwcvt_failures'];
+		++$GLOBALS['gwc_vt_failures'];
 	}
 
 	echo ( $ok ? 'PASS  ' : 'FAIL  ' ), $label, ( '' !== $got ? '  [' . $got . ']' : '' ), "\n";
@@ -50,8 +50,8 @@ function gwcvt_sc_check( string $label, bool $ok, string $got = '' ): void {
  * @param int    $line Line.
  * @return bool
  */
-function gwcvt_sc_note( $no, $str, $file = '', $line = 0 ) {
-	$GLOBALS['gwcvt_noise'][] = $str . ' @ ' . basename( (string) $file ) . ':' . (int) $line;
+function gwc_vt_sc_note( $no, $str, $file = '', $line = 0 ) {
+	$GLOBALS['gwc_vt_noise'][] = $str . ' @ ' . basename( (string) $file ) . ':' . (int) $line;
 
 	return true;
 }
@@ -63,21 +63,21 @@ function gwcvt_sc_note( $no, $str, $file = '', $line = 0 ) {
  * @param callable $draw  The renderer.
  * @return string The markup.
  */
-function gwcvt_sc_render( string $label, callable $draw ): string {
-	$before = count( $GLOBALS['gwcvt_noise'] );
+function gwc_vt_sc_render( string $label, callable $draw ): string {
+	$before = count( $GLOBALS['gwc_vt_noise'] );
 
 	ob_start();
 
 	try {
 		$draw();
 	} catch ( Throwable $e ) {
-		$GLOBALS['gwcvt_noise'][] = 'threw: ' . $e->getMessage();
+		$GLOBALS['gwc_vt_noise'][] = 'threw: ' . $e->getMessage();
 	}
 
 	$html  = (string) ob_get_clean();
-	$noise = array_slice( $GLOBALS['gwcvt_noise'], $before );
+	$noise = array_slice( $GLOBALS['gwc_vt_noise'], $before );
 
-	gwcvt_sc_check(
+	gwc_vt_sc_check(
 		$label . ' renders without complaint',
 		! $noise && '' !== $html,
 		$noise ? implode( ' | ', array_slice( $noise, 0, 2 ) ) : strlen( $html ) . ' bytes'
@@ -86,7 +86,7 @@ function gwcvt_sc_render( string $label, callable $draw ): string {
 	return $html;
 }
 
-set_error_handler( 'gwcvt_sc_note', E_ALL );
+set_error_handler( 'gwc_vt_sc_note', E_ALL );
 
 
 /* ── The site's own settings are borrowed, never replaced ────────────────────
@@ -105,193 +105,193 @@ set_error_handler( 'gwcvt_sc_note', E_ALL );
  * entire configuration on every run, invisible while the site was empty.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-$GLOBALS['gwcvt_settings_before'] = get_option( GWCVT_SETTINGS_OPTION );
+$GLOBALS['gwc_vt_settings_before'] = get_option( GWC_VT_SETTINGS_OPTION );
 
 /**
  * Put the site's settings back exactly as they were found.
  */
-function gwcvt_restore_settings(): void {
-	if ( ! array_key_exists( 'gwcvt_settings_before', $GLOBALS ) ) {
+function gwc_vt_restore_settings(): void {
+	if ( ! array_key_exists( 'gwc_vt_settings_before', $GLOBALS ) ) {
 		return;
 	}
 
-	if ( false === $GLOBALS['gwcvt_settings_before'] ) {
-		delete_option( GWCVT_SETTINGS_OPTION );
+	if ( false === $GLOBALS['gwc_vt_settings_before'] ) {
+		delete_option( GWC_VT_SETTINGS_OPTION );
 	} else {
-		update_option( GWCVT_SETTINGS_OPTION, $GLOBALS['gwcvt_settings_before'] );
+		update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_settings_before'] );
 	}
 
-	unset( $GLOBALS['gwcvt_settings_before'] );
+	unset( $GLOBALS['gwc_vt_settings_before'] );
 
-	if ( function_exists( 'gwcvt_settings_cache' ) ) {
-		gwcvt_settings_cache( null, true );
+	if ( function_exists( 'gwc_vt_settings_cache' ) ) {
+		gwc_vt_settings_cache( null, true );
 	}
 }
 
-register_shutdown_function( 'gwcvt_restore_settings' );
+register_shutdown_function( 'gwc_vt_restore_settings' );
 
 /**
  * Switch on what this script needs, keeping everything else.
  *
  * @param array $overrides Settings to lay over the site's own.
  */
-function gwcvt_borrow_settings( array $overrides ): void {
+function gwc_vt_borrow_settings( array $overrides ): void {
 	update_option(
-		GWCVT_SETTINGS_OPTION,
-		array_merge( (array) get_option( GWCVT_SETTINGS_OPTION, array() ), $overrides )
+		GWC_VT_SETTINGS_OPTION,
+		array_merge( (array) get_option( GWC_VT_SETTINGS_OPTION, array() ), $overrides )
 	);
 
-	gwcvt_settings_cache( null, true );
+	gwc_vt_settings_cache( null, true );
 }
 
-gwcvt_borrow_settings( array( 'shifts_enabled' => true, 'signup_enabled' => true, 'schedule_page' => 1 ) );
+gwc_vt_borrow_settings( array( 'shifts_enabled' => true, 'signup_enabled' => true, 'schedule_page' => 1 ) );
 
-$gwcvt_admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
-wp_set_current_user( $gwcvt_admins ? (int) $gwcvt_admins[0]->ID : 1 );
+$gwc_vt_admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
+wp_set_current_user( $gwc_vt_admins ? (int) $gwc_vt_admins[0]->ID : 1 );
 
 /* ── A festival with somebody on it ──────────────────────────────────────── */
 
-$gwcvt_when = gmdate( 'Y-m-d', time() + ( 5 * DAY_IN_SECONDS ) );
+$gwc_vt_when = gmdate( 'Y-m-d', time() + ( 5 * DAY_IN_SECONDS ) );
 
-$gwcvt_event = wp_insert_post( array( 'post_type' => GWCVT_EVENT_TYPE, 'post_status' => 'publish', 'post_title' => 'Fall Festival' ) );
+$gwc_vt_event = wp_insert_post( array( 'post_type' => GWC_VT_EVENT_TYPE, 'post_status' => 'publish', 'post_title' => 'Fall Festival' ) );
 
-update_post_meta( $gwcvt_event, GWCVT_EVENT_LOCATION, 'Riverside Park' );
-update_post_meta( $gwcvt_event, GWCVT_EVENT_DESCRIPTION, "Our biggest day of the year.\n\nBring water." );
+update_post_meta( $gwc_vt_event, GWC_VT_EVENT_LOCATION, 'Riverside Park' );
+update_post_meta( $gwc_vt_event, GWC_VT_EVENT_DESCRIPTION, "Our biggest day of the year.\n\nBring water." );
 
-gwcvt_save_event_grid(
-	$gwcvt_event,
+gwc_vt_save_event_grid(
+	$gwc_vt_event,
 	array(
 		array(
 			'name'  => 'Greeter',
 			'notes' => 'Closed shoes, please.',
 			'slots' => array(
-				array( 'id' => 0, 'date' => $gwcvt_when, 'start' => '09:00', 'end' => '12:00', 'min' => 2, 'max' => 3 ),
-				array( 'id' => 0, 'date' => $gwcvt_when, 'start' => '13:00', 'end' => '15:00', 'min' => 2, 'max' => 3 ),
+				array( 'id' => 0, 'date' => $gwc_vt_when, 'start' => '09:00', 'end' => '12:00', 'min' => 2, 'max' => 3 ),
+				array( 'id' => 0, 'date' => $gwc_vt_when, 'start' => '13:00', 'end' => '15:00', 'min' => 2, 'max' => 3 ),
 			),
 		),
 		array(
 			'name'  => 'Kitchen',
 			'slots' => array(
-				array( 'id' => 0, 'date' => $gwcvt_when, 'start' => '10:00', 'end' => '14:00', 'min' => 2, 'max' => 4 ),
+				array( 'id' => 0, 'date' => $gwc_vt_when, 'start' => '10:00', 'end' => '14:00', 'min' => 2, 'max' => 4 ),
 			),
 		),
 	),
 	array( 'status' => 'publish', 'notify' => false, 'reason' => '', 'location' => 'Riverside Park', 'super' => 'Marcus Webb' )
 );
 
-gwcvt_event_refresh_dates( $gwcvt_event );
+gwc_vt_event_refresh_dates( $gwc_vt_event );
 
-$gwcvt_slots     = gwcvt_event_slot_ids( $gwcvt_event );
-$gwcvt_volunteer = wp_insert_post( array( 'post_type' => GWCVT_VOLUNTEER_TYPE, 'post_status' => 'publish', 'post_title' => 'Dana Whitfield' ) );
+$gwc_vt_slots     = gwc_vt_event_slot_ids( $gwc_vt_event );
+$gwc_vt_volunteer = wp_insert_post( array( 'post_type' => GWC_VT_VOLUNTEER_TYPE, 'post_status' => 'publish', 'post_title' => 'Dana Whitfield' ) );
 
 /* Two overlapping slots, so the roster has a clash to draw. */
-gwcvt_add_signup( (int) $gwcvt_slots[0], array( 'volunteer_id' => $gwcvt_volunteer, 'source' => 'staff' ) );
-gwcvt_add_signup( (int) $gwcvt_slots[1], array( 'volunteer_id' => $gwcvt_volunteer, 'source' => 'staff' ) );
+gwc_vt_add_signup( (int) $gwc_vt_slots[0], array( 'volunteer_id' => $gwc_vt_volunteer, 'source' => 'staff' ) );
+gwc_vt_add_signup( (int) $gwc_vt_slots[1], array( 'volunteer_id' => $gwc_vt_volunteer, 'source' => 'staff' ) );
 
 /* ── The screens ─────────────────────────────────────────────────────────── */
 
-gwcvt_sc_render( 'the events list', function () {
-	gwcvt_render_events_list();
+gwc_vt_sc_render( 'the events list', function () {
+	gwc_vt_render_events_list();
 } );
 
-gwcvt_sc_render( 'the flat schedule', function () {
-	gwcvt_render_schedule_list();
+gwc_vt_sc_render( 'the flat schedule', function () {
+	gwc_vt_render_schedule_list();
 } );
 
-$gwcvt_editor = gwcvt_sc_render( 'the event editor', function () use ( $gwcvt_event ) {
-	gwcvt_render_event_editor( $gwcvt_event );
+$gwc_vt_editor = gwc_vt_sc_render( 'the event editor', function () use ( $gwc_vt_event ) {
+	gwc_vt_render_event_editor( $gwc_vt_event );
 } );
 
-gwcvt_sc_render( 'a blank event editor', function () {
-	gwcvt_render_event_editor( 0 );
+gwc_vt_sc_render( 'a blank event editor', function () {
+	gwc_vt_render_event_editor( 0 );
 } );
 
-$gwcvt_roster = gwcvt_sc_render( 'the roster', function () use ( $gwcvt_event ) {
-	gwcvt_render_event_roster( $gwcvt_event );
+$gwc_vt_roster = gwc_vt_sc_render( 'the roster', function () use ( $gwc_vt_event ) {
+	gwc_vt_render_event_roster( $gwc_vt_event );
 } );
 
-gwcvt_sc_render( 'the printed roster', function () use ( $gwcvt_event ) {
-	gwcvt_render_event_roster_document( $gwcvt_event );
+gwc_vt_sc_render( 'the printed roster', function () use ( $gwc_vt_event ) {
+	gwc_vt_render_event_roster_document( $gwc_vt_event );
 } );
 
-$gwcvt_grid = gwcvt_sc_render( 'the public grid', function () use ( $gwcvt_event ) {
-	echo gwcvt_render_event_grid( $gwcvt_event );
+$gwc_vt_grid = gwc_vt_sc_render( 'the public grid', function () use ( $gwc_vt_event ) {
+	echo gwc_vt_render_event_grid( $gwc_vt_event );
 } );
 
 /* The two screens that stop to ask. */
-$gwcvt_ask_slot = gwcvt_sc_render( 'the call-off confirmation', function () use ( $gwcvt_slots ) {
-	gwcvt_render_call_off_slot( (int) $gwcvt_slots[0] );
+$gwc_vt_ask_slot = gwc_vt_sc_render( 'the call-off confirmation', function () use ( $gwc_vt_slots ) {
+	gwc_vt_render_call_off_slot( (int) $gwc_vt_slots[0] );
 } );
 
-$gwcvt_ask_role = gwcvt_sc_render( 'the drop-role confirmation', function () use ( $gwcvt_event ) {
-	gwcvt_render_drop_role( $gwcvt_event, 'Greeter' );
+$gwc_vt_ask_role = gwc_vt_sc_render( 'the drop-role confirmation', function () use ( $gwc_vt_event ) {
+	gwc_vt_render_drop_role( $gwc_vt_event, 'Greeter' );
 } );
 
-gwcvt_sc_check( 'calling off asks for a reason', false !== strpos( $gwcvt_ask_slot, 'gwcvt_reason' ) );
-gwcvt_sc_check( 'and offers a way out', false !== strpos( $gwcvt_ask_slot, 'Leave it alone' ) );
-gwcvt_sc_check( 'and says the time is kept rather than deleted', false !== strpos( $gwcvt_ask_slot, 'rather than being deleted' ) );
-gwcvt_sc_check( 'dropping a role lists what is kept and what goes', false !== strpos( $gwcvt_ask_role, 'Called off, and kept' ) );
+gwc_vt_sc_check( 'calling off asks for a reason', false !== strpos( $gwc_vt_ask_slot, 'gwc_vt_reason' ) );
+gwc_vt_sc_check( 'and offers a way out', false !== strpos( $gwc_vt_ask_slot, 'Leave it alone' ) );
+gwc_vt_sc_check( 'and says the time is kept rather than deleted', false !== strpos( $gwc_vt_ask_slot, 'rather than being deleted' ) );
+gwc_vt_sc_check( 'dropping a role lists what is kept and what goes', false !== strpos( $gwc_vt_ask_role, 'Called off, and kept' ) );
 
 /* ── What the screens have to contain, and what they must not ────────────── */
 
-gwcvt_sc_check(
+gwc_vt_sc_check(
 	'the editor names the role once per role',
-	1 === substr_count( $gwcvt_editor, 'value="Greeter"' ),
-	(string) substr_count( $gwcvt_editor, 'value="Greeter"' )
+	1 === substr_count( $gwc_vt_editor, 'value="Greeter"' ),
+	(string) substr_count( $gwc_vt_editor, 'value="Greeter"' )
 );
 
 /* Lifecycle is an action per row, not a field on the form. An occupied time
  * offers to be called off — a screen that asks first, because it needs a reason
  * and decides whether people get an email. An empty one offers a plain delete. */
-gwcvt_sc_check(
+gwc_vt_sc_check(
 	'an occupied time offers to be called off',
-	false !== strpos( $gwcvt_editor, 'Call it off' )
+	false !== strpos( $gwc_vt_editor, 'Call it off' )
 );
 
-gwcvt_sc_check(
+gwc_vt_sc_check(
 	'an empty time offers a plain delete',
-	false !== strpos( $gwcvt_editor, 'gwcvt_delete_slot' )
+	false !== strpos( $gwc_vt_editor, 'gwc_vt_delete_slot' )
 );
 
-gwcvt_sc_check(
+gwc_vt_sc_check(
 	'the form itself carries no lifecycle fields',
-	false === strpos( $gwcvt_editor, '[remove]' ) && false === strpos( $gwcvt_editor, '[restore]' )
+	false === strpos( $gwc_vt_editor, '[remove]' ) && false === strpos( $gwc_vt_editor, '[restore]' )
 );
 
-gwcvt_sc_check(
+gwc_vt_sc_check(
 	'every grid field carries an explicit index',
-	false === strpos( $gwcvt_editor, 'gwcvt_roles[]' )
+	false === strpos( $gwc_vt_editor, 'gwc_vt_roles[]' )
 );
 
-gwcvt_sc_check( 'the roster names the volunteer', false !== strpos( $gwcvt_roster, 'Dana Whitfield' ) );
-gwcvt_sc_check( 'the roster flags the double-booking', false !== strpos( $gwcvt_roster, 'overlap' ) );
+gwc_vt_sc_check( 'the roster names the volunteer', false !== strpos( $gwc_vt_roster, 'Dana Whitfield' ) );
+gwc_vt_sc_check( 'the roster flags the double-booking', false !== strpos( $gwc_vt_roster, 'overlap' ) );
 
-gwcvt_sc_check(
+gwc_vt_sc_check(
 	'the public grid ticks by shift ID',
-	false !== strpos( $gwcvt_grid, 'gwcvt_slots[' . $gwcvt_slots[0] . ']' )
+	false !== strpos( $gwc_vt_grid, 'gwc_vt_slots[' . $gwc_vt_slots[0] . ']' )
 );
 
-gwcvt_sc_check( 'the public grid groups by role', false !== strpos( $gwcvt_grid, '<legend>Greeter' ) );
-gwcvt_sc_check( 'the public grid shows a count', false !== strpos( $gwcvt_grid, 'place' ) );
+gwc_vt_sc_check( 'the public grid groups by role', false !== strpos( $gwc_vt_grid, '<legend>Greeter' ) );
+gwc_vt_sc_check( 'the public grid shows a count', false !== strpos( $gwc_vt_grid, 'place' ) );
 
 /* The one that matters most. Somebody is on two of these slots. */
-gwcvt_sc_check( 'THE PUBLIC GRID NAMES NOBODY', false === strpos( $gwcvt_grid, 'Dana' ) );
+gwc_vt_sc_check( 'THE PUBLIC GRID NAMES NOBODY', false === strpos( $gwc_vt_grid, 'Dana' ) );
 
 /* ── Teardown ────────────────────────────────────────────────────────────── */
 
 restore_error_handler();
 
-foreach ( $gwcvt_slots as $gwcvt_slot ) {
-	foreach ( gwcvt_shift_signup_ids( (int) $gwcvt_slot, array( 'publish', GWCVT_SIGNUP_WAITLIST, GWCVT_SIGNUP_WITHDRAWN ) ) as $gwcvt_signup ) {
-		wp_delete_post( (int) $gwcvt_signup, true );
+foreach ( $gwc_vt_slots as $gwc_vt_slot ) {
+	foreach ( gwc_vt_shift_signup_ids( (int) $gwc_vt_slot, array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ) ) as $gwc_vt_signup ) {
+		wp_delete_post( (int) $gwc_vt_signup, true );
 	}
 
-	wp_delete_post( (int) $gwcvt_slot, true );
+	wp_delete_post( (int) $gwc_vt_slot, true );
 }
 
-wp_delete_post( (int) $gwcvt_volunteer, true );
-wp_delete_post( (int) $gwcvt_event, true );
+wp_delete_post( (int) $gwc_vt_volunteer, true );
+wp_delete_post( (int) $gwc_vt_event, true );
 
 /* Settings are put back by the shutdown handler registered above. */
 
-echo "\n", ( 0 === $GLOBALS['gwcvt_failures'] ? 'ALL PASS' : $GLOBALS['gwcvt_failures'] . ' FAILED' ), "\n";
+echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";

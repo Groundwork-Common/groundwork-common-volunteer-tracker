@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 final class ShiftTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/* ── Reading a time of day ───────────────────────────────────────────── */
@@ -22,7 +22,7 @@ final class ShiftTest extends TestCase {
 	 */
 	#[DataProvider( 'times' )]
 	public function test_it_only_stores_a_time_it_can_read_back( string $raw, string $expected ): void {
-		$this->assertSame( $expected, gwcvt_sanitize_time( $raw ) );
+		$this->assertSame( $expected, gwc_vt_sanitize_time( $raw ) );
 	}
 
 	public static function times(): array {
@@ -50,7 +50,7 @@ final class ShiftTest extends TestCase {
 	 */
 	#[DataProvider( 'durations' )]
 	public function test_it_measures_a_shift_in_minutes( string $start, string $end, bool $next_day, int $expected ): void {
-		$this->assertSame( $expected, gwcvt_shift_duration( $start, $end, $next_day ) );
+		$this->assertSame( $expected, gwc_vt_shift_duration( $start, $end, $next_day ) );
 	}
 
 	public static function durations(): array {
@@ -78,7 +78,7 @@ final class ShiftTest extends TestCase {
 	 * entry's minutes the moment somebody reconciles the roster.
 	 */
 	public function test_the_longest_shift_is_the_longest_entry(): void {
-		$this->assertSame( GWCVT_MAX_ENTRY_MINUTES, gwcvt_shift_duration( '00:00', '00:00', true ) );
+		$this->assertSame( GWC_VT_MAX_ENTRY_MINUTES, gwc_vt_shift_duration( '00:00', '00:00', true ) );
 	}
 
 	/* ── Wall time, and the instant derived from it ──────────────────────────
@@ -95,8 +95,8 @@ final class ShiftTest extends TestCase {
 	public function test_the_same_wall_time_survives_a_daylight_saving_change(): void {
 		$zone = new DateTimeZone( 'America/New_York' );
 
-		$before = gwcvt_shift_instant_at( '2026-03-07', '09:00', $zone );
-		$after  = gwcvt_shift_instant_at( '2026-03-14', '09:00', $zone );
+		$before = gwc_vt_shift_instant_at( '2026-03-07', '09:00', $zone );
+		$after  = gwc_vt_shift_instant_at( '2026-03-14', '09:00', $zone );
 
 		$this->assertNotNull( $before );
 		$this->assertNotNull( $after );
@@ -123,8 +123,8 @@ final class ShiftTest extends TestCase {
 	 * conversion can be tested against a zone that actually observes the change.
 	 */
 	public function test_the_instant_reflects_the_zone_it_was_given(): void {
-		$utc      = gwcvt_shift_instant_at( '2026-06-01', '09:00', new DateTimeZone( 'UTC' ) );
-		$new_york = gwcvt_shift_instant_at( '2026-06-01', '09:00', new DateTimeZone( 'America/New_York' ) );
+		$utc      = gwc_vt_shift_instant_at( '2026-06-01', '09:00', new DateTimeZone( 'UTC' ) );
+		$new_york = gwc_vt_shift_instant_at( '2026-06-01', '09:00', new DateTimeZone( 'America/New_York' ) );
 
 		$this->assertNotNull( $utc );
 		$this->assertNotNull( $new_york );
@@ -137,7 +137,7 @@ final class ShiftTest extends TestCase {
 	 */
 	#[DataProvider( 'unreadable_instants' )]
 	public function test_it_refuses_an_instant_it_cannot_build( string $date, string $time ): void {
-		$this->assertNull( gwcvt_shift_instant_at( $date, $time, new DateTimeZone( 'UTC' ) ) );
+		$this->assertNull( gwc_vt_shift_instant_at( $date, $time, new DateTimeZone( 'UTC' ) ) );
 	}
 
 	public static function unreadable_instants(): array {
@@ -155,7 +155,7 @@ final class ShiftTest extends TestCase {
 	 * minute depending on when the page was rendered.
 	 */
 	public function test_the_instant_starts_on_the_minute(): void {
-		$instant = gwcvt_shift_instant_at( '2026-03-07', '09:00', new DateTimeZone( 'UTC' ) );
+		$instant = gwc_vt_shift_instant_at( '2026-03-07', '09:00', new DateTimeZone( 'UTC' ) );
 
 		$this->assertNotNull( $instant );
 		$this->assertSame( '2026-03-07 09:00:00', $instant->format( 'Y-m-d H:i:s' ) );

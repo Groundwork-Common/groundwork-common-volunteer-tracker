@@ -7,15 +7,15 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_REMINDER_EVENT = 'gwcvt_shift_reminders';
-const GWCVT_DIGEST_EVENT   = 'gwcvt_coordinator_digest';
+const GWC_VT_REMINDER_EVENT = 'gwc_vt_shift_reminders';
+const GWC_VT_DIGEST_EVENT   = 'gwc_vt_coordinator_digest';
 
 /** No single reminder pass may send more than this. */
-const GWCVT_REMINDER_BATCH = 200;
+const GWC_VT_REMINDER_BATCH = 200;
 
-add_action( 'init', 'gwcvt_schedule_shift_events' );
-add_action( GWCVT_REMINDER_EVENT, 'gwcvt_run_reminders' );
-add_action( GWCVT_DIGEST_EVENT, 'gwcvt_run_digest' );
+add_action( 'init', 'gwc_vt_schedule_shift_events' );
+add_action( GWC_VT_REMINDER_EVENT, 'gwc_vt_run_reminders' );
+add_action( GWC_VT_DIGEST_EVENT, 'gwc_vt_run_digest' );
 
 /* ── Scheduled only while the feature is on ──────────────────────────────────
  * The retention sweep next door is scheduled unconditionally and no-ops when the
@@ -36,12 +36,12 @@ add_action( GWCVT_DIGEST_EVENT, 'gwcvt_run_digest' );
 /**
  * Keep the two events in step with the setting.
  */
-function gwcvt_schedule_shift_events(): void {
-	$wanted = (bool) gwcvt_setting( 'shifts_enabled' );
+function gwc_vt_schedule_shift_events(): void {
+	$wanted = (bool) gwc_vt_setting( 'shifts_enabled' );
 
 	foreach ( array(
-		GWCVT_REMINDER_EVENT => 'hourly',
-		GWCVT_DIGEST_EVENT   => 'daily',
+		GWC_VT_REMINDER_EVENT => 'hourly',
+		GWC_VT_DIGEST_EVENT   => 'daily',
 	) as $event => $recurrence ) {
 		$next = wp_next_scheduled( $event );
 
@@ -74,12 +74,12 @@ function gwcvt_schedule_shift_events(): void {
  *
  * @return int How many went out.
  */
-function gwcvt_run_reminders(): int {
-	if ( ! gwcvt_setting( 'shifts_enabled' ) || ! gwcvt_setting( 'reminder_enabled' ) ) {
+function gwc_vt_run_reminders(): int {
+	if ( ! gwc_vt_setting( 'shifts_enabled' ) || ! gwc_vt_setting( 'reminder_enabled' ) ) {
 		return 0;
 	}
 
-	$lead = max( 1, (int) gwcvt_setting( 'reminder_lead_hours' ) ) * HOUR_IN_SECONDS;
+	$lead = max( 1, (int) gwc_vt_setting( 'reminder_lead_hours' ) ) * HOUR_IN_SECONDS;
 	$now  = time();
 	$sent = 0;
 	$due  = array();
@@ -89,7 +89,7 @@ function gwcvt_run_reminders(): int {
 	 * wider than the lead time by a day at each end — a shift's date is a
 	 * calendar day and its start is a wall clock, so the day a shift falls on
 	 * says only roughly when it begins. */
-	$shifts = gwcvt_shifts_between(
+	$shifts = gwc_vt_shifts_between(
 		array(
 			'from'  => gmdate( 'Y-m-d', $now - DAY_IN_SECONDS ),
 			'to'    => gmdate( 'Y-m-d', $now + $lead + DAY_IN_SECONDS ),
@@ -98,7 +98,7 @@ function gwcvt_run_reminders(): int {
 	);
 
 	foreach ( $shifts as $shift_id ) {
-		$starts = gwcvt_shift_starts( $shift_id );
+		$starts = gwc_vt_shift_starts( $shift_id );
 
 		if ( null === $starts ) {
 			continue;
@@ -115,8 +115,8 @@ function gwcvt_run_reminders(): int {
 
 		/* The roster only. Somebody on the waiting list has no place, and telling
 		 * them to turn up on Saturday would be telling them something untrue. */
-		foreach ( gwcvt_shift_signup_ids( $shift_id ) as $signup_id ) {
-			if ( '' !== (string) get_post_meta( $signup_id, GWCVT_SIGNUP_REMINDED, true ) ) {
+		foreach ( gwc_vt_shift_signup_ids( $shift_id ) as $signup_id ) {
+			if ( '' !== (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_REMINDED, true ) ) {
 				continue;
 			}
 
@@ -124,8 +124,8 @@ function gwcvt_run_reminders(): int {
 		}
 	}
 
-	foreach ( gwcvt_group_due_reminders( $due ) as $group ) {
-		if ( $sent >= GWCVT_REMINDER_BATCH ) {
+	foreach ( gwc_vt_group_due_reminders( $due ) as $group ) {
+		if ( $sent >= GWC_VT_REMINDER_BATCH ) {
 			break;
 		}
 
@@ -135,13 +135,13 @@ function gwcvt_run_reminders(): int {
 		 * report an error here — and the failure worth avoiding is an hourly pass
 		 * that reminds the same person every hour forever. */
 		foreach ( $group['signups'] as $signup_id ) {
-			update_post_meta( $signup_id, GWCVT_SIGNUP_REMINDED, current_time( 'mysql', true ) );
+			update_post_meta( $signup_id, GWC_VT_SIGNUP_REMINDED, current_time( 'mysql', true ) );
 		}
 
 		if ( $group['event'] > 0 && count( $group['signups'] ) > 1 ) {
-			gwcvt_send_event_reminder( $group['event'], $group['signups'] );
+			gwc_vt_send_event_reminder( $group['event'], $group['signups'] );
 		} else {
-			gwcvt_send_shift_reminder( (int) $group['signups'][0] );
+			gwc_vt_send_shift_reminder( (int) $group['signups'][0] );
 		}
 
 		++$sent;
@@ -177,13 +177,13 @@ function gwcvt_run_reminders(): int {
  * @param int[] $signup_ids Signups owed a reminder.
  * @return array<int, array{event: int, signups: int[]}>
  */
-function gwcvt_group_due_reminders( array $signup_ids ): array {
+function gwc_vt_group_due_reminders( array $signup_ids ): array {
 	$groups = array();
 
 	foreach ( $signup_ids as $signup_id ) {
 		$signup_id = (int) $signup_id;
 		$shift_id  = (int) get_post_field( 'post_parent', $signup_id );
-		$event_id  = gwcvt_event_for_shift( $shift_id );
+		$event_id  = gwc_vt_event_for_shift( $shift_id );
 
 		/* A standalone shift is its own group, keyed by the signup, so nothing
 		 * about the existing single-shift path changes. */
@@ -195,7 +195,7 @@ function gwcvt_group_due_reminders( array $signup_ids ): array {
 			continue;
 		}
 
-		$person = gwcvt_signup_person_key( $signup_id );
+		$person = gwc_vt_signup_person_key( $signup_id );
 
 		/* No handle to group by — no volunteer record and no address on file. It
 		 * gets its own message rather than being lumped in with every other
@@ -216,7 +216,7 @@ function gwcvt_group_due_reminders( array $signup_ids ): array {
 		usort(
 			$groups[ $key ]['signups'],
 			static function ( int $a, int $b ) {
-				return gwcvt_compare_slots(
+				return gwc_vt_compare_slots(
 					(int) get_post_field( 'post_parent', $a ),
 					(int) get_post_field( 'post_parent', $b )
 				);
@@ -239,19 +239,19 @@ function gwcvt_group_due_reminders( array $signup_ids ): array {
  *
  * @return bool Whether a message went out.
  */
-function gwcvt_run_digest(): bool {
-	if ( ! gwcvt_setting( 'shifts_enabled' ) || ! gwcvt_setting( 'digest_enabled' ) ) {
+function gwc_vt_run_digest(): bool {
+	if ( ! gwc_vt_setting( 'shifts_enabled' ) || ! gwc_vt_setting( 'digest_enabled' ) ) {
 		return false;
 	}
 
-	$short   = gwcvt_understaffed_shift_ids( 7 );
-	$waiting = gwcvt_unreconciled_shift_ids( 20 );
+	$short   = gwc_vt_understaffed_shift_ids( 7 );
+	$waiting = gwc_vt_unreconciled_shift_ids( 20 );
 
 	if ( ! $short && ! $waiting ) {
 		return false;
 	}
 
-	$to = trim( (string) gwcvt_setting( 'digest_recipient' ) );
+	$to = trim( (string) gwc_vt_setting( 'digest_recipient' ) );
 
 	if ( '' === $to ) {
 		$to = (string) get_option( 'admin_email' );
@@ -261,14 +261,14 @@ function gwcvt_run_digest(): bool {
 		return false;
 	}
 
-	return gwcvt_send_email(
+	return gwc_vt_send_email(
 		$to,
 		sprintf(
 			/* translators: %s: the organisation's name. */
 			__( '%s: volunteer shifts needing attention', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_org_name()
+			gwc_vt_org_name()
 		),
-		gwcvt_digest_body( $short, $waiting )
+		gwc_vt_digest_body( $short, $waiting )
 	);
 }
 
@@ -279,7 +279,7 @@ function gwcvt_run_digest(): bool {
  * @param int[] $waiting Shifts whose hours have not been logged.
  * @return string
  */
-function gwcvt_digest_body( array $short, array $waiting ): string {
+function gwc_vt_digest_body( array $short, array $waiting ): string {
 	$lines = array();
 
 	if ( $short ) {
@@ -289,9 +289,9 @@ function gwcvt_digest_body( array $short, array $waiting ): string {
 		foreach ( $short as $shift_id ) {
 			$lines[] = sprintf(
 				'<li><a href="%1$s">%2$s</a> — %3$s</li>',
-				esc_url( gwcvt_schedule_url( array( 'shift' => $shift_id ) ) ),
-				esc_html( gwcvt_shift_one_line( (int) $shift_id ) ),
-				esc_html( gwcvt_shift_fill_label( (int) $shift_id ) )
+				esc_url( gwc_vt_schedule_url( array( 'shift' => $shift_id ) ) ),
+				esc_html( gwc_vt_shift_one_line( (int) $shift_id ) ),
+				esc_html( gwc_vt_shift_fill_label( (int) $shift_id ) )
 			);
 		}
 
@@ -314,9 +314,9 @@ function gwcvt_digest_body( array $short, array $waiting ): string {
 		foreach ( $waiting as $shift_id ) {
 			$lines[] = sprintf(
 				'<li><a href="%1$s">%2$s</a> — %3$s</li>',
-				esc_url( gwcvt_shift_log_url( (int) $shift_id ) ),
-				esc_html( gwcvt_shift_one_line( (int) $shift_id ) ),
-				esc_html( gwcvt_shift_fill_label( (int) $shift_id ) )
+				esc_url( gwc_vt_shift_log_url( (int) $shift_id ) ),
+				esc_html( gwc_vt_shift_one_line( (int) $shift_id ) ),
+				esc_html( gwc_vt_shift_fill_label( (int) $shift_id ) )
 			);
 		}
 

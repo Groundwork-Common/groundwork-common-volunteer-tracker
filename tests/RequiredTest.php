@@ -11,13 +11,13 @@ use PHPUnit\Framework\TestCase;
 final class RequiredTest extends TestCase {
 
 	protected function setUp(): void {
-		gwcvt_test_reset();
+		gwc_vt_test_reset();
 	}
 
 	/**
 	 * A volunteer with a requirement and a cached rollup.
 	 *
-	 * The rollup rather than real entries, because gwcvt_volunteer_totals()
+	 * The rollup rather than real entries, because gwc_vt_volunteer_totals()
 	 * reads the cache and there is no get_posts() in this bootstrap — the
 	 * arithmetic is what is under test here, and tests/integration/required.php
 	 * covers it against a real database.
@@ -28,33 +28,33 @@ final class RequiredTest extends TestCase {
 	 * @param string $deadline       Y-m-d, or ''.
 	 */
 	private function volunteer( int $required_hours, int $verified, int $pending = 0, string $deadline = '' ): void {
-		gwcvt_test_add_post( 7, GWCVT_VOLUNTEER_TYPE, 'publish', 'Jane Quimby' );
+		gwc_vt_test_add_post( 7, GWC_VT_VOLUNTEER_TYPE, 'publish', 'Jane Quimby' );
 
 		if ( $required_hours > 0 ) {
-			update_post_meta( 7, GWCVT_VOLUNTEER_REQUIRED, $required_hours * 60 );
+			update_post_meta( 7, GWC_VT_VOLUNTEER_REQUIRED, $required_hours * 60 );
 		}
 
 		if ( '' !== $deadline ) {
-			update_post_meta( 7, GWCVT_VOLUNTEER_REQUIRED_BY, $deadline );
+			update_post_meta( 7, GWC_VT_VOLUNTEER_REQUIRED_BY, $deadline );
 		}
 
-		$totals                   = new GWCVT_Totals();
+		$totals                   = new GWC_VT_Totals();
 		$totals->verified_minutes = $verified;
 		$totals->pending_minutes  = $pending;
 		$totals->entries          = 1;
 		$totals->computed_at      = time();
 
-		update_post_meta( 7, GWCVT_VOLUNTEER_TOTALS, $totals->to_array() );
+		update_post_meta( 7, GWC_VT_VOLUNTEER_TOTALS, $totals->to_array() );
 	}
 
 	/* ── Most volunteers have none of this ───────────────────────────────── */
 
 	public function test_a_volunteer_has_no_requirement_by_default(): void {
-		gwcvt_test_add_post( 7, GWCVT_VOLUNTEER_TYPE );
+		gwc_vt_test_add_post( 7, GWC_VT_VOLUNTEER_TYPE );
 
-		$this->assertFalse( gwcvt_has_requirement( 7 ) );
-		$this->assertSame( 0, gwcvt_required_minutes( 7 ) );
-		$this->assertSame( '', gwcvt_requirement_label( 7 ) );
+		$this->assertFalse( gwc_vt_has_requirement( 7 ) );
+		$this->assertSame( 0, gwc_vt_required_minutes( 7 ) );
+		$this->assertSame( '', gwc_vt_requirement_label( 7 ) );
 	}
 
 	/* ── Verified hours count, and only those ────────────────────────────────
@@ -65,7 +65,7 @@ final class RequiredTest extends TestCase {
 	public function test_only_verified_hours_count_towards_it(): void {
 		$this->volunteer( 40, 20 * 60, 15 * 60 );
 
-		$progress = gwcvt_requirement_progress( 7 );
+		$progress = gwc_vt_requirement_progress( 7 );
 
 		$this->assertSame( 20 * 60, $progress['verified'] );
 		$this->assertSame( 20 * 60, $progress['remaining'] );
@@ -80,7 +80,7 @@ final class RequiredTest extends TestCase {
 	public function test_unverified_hours_are_reported_separately(): void {
 		$this->volunteer( 40, 36 * 60, 6 * 60 );
 
-		$progress = gwcvt_requirement_progress( 7 );
+		$progress = gwc_vt_requirement_progress( 7 );
 
 		$this->assertSame( 6 * 60, $progress['pending'] );
 		$this->assertSame( 4 * 60, $progress['remaining'] );
@@ -90,13 +90,13 @@ final class RequiredTest extends TestCase {
 	public function test_a_requirement_is_met_exactly_on_the_number(): void {
 		$this->volunteer( 40, 40 * 60 );
 
-		$this->assertTrue( gwcvt_requirement_progress( 7 )['met'] );
+		$this->assertTrue( gwc_vt_requirement_progress( 7 )['met'] );
 	}
 
 	public function test_doing_more_than_required_still_reads_as_met(): void {
 		$this->volunteer( 40, 55 * 60 );
 
-		$progress = gwcvt_requirement_progress( 7 );
+		$progress = gwc_vt_requirement_progress( 7 );
 
 		$this->assertTrue( $progress['met'] );
 		$this->assertSame( 0, $progress['remaining'], 'remaining must never go negative' );
@@ -106,7 +106,7 @@ final class RequiredTest extends TestCase {
 	public function test_progress_is_a_whole_percentage(): void {
 		$this->volunteer( 40, 10 * 60 );
 
-		$this->assertSame( 25, gwcvt_requirement_progress( 7 )['percent'] );
+		$this->assertSame( 25, gwc_vt_requirement_progress( 7 )['percent'] );
 	}
 
 	/* ── The deadline is a fact, never a prediction ──────────────────────── */
@@ -114,7 +114,7 @@ final class RequiredTest extends TestCase {
 	public function test_a_deadline_in_the_future_is_not_overdue(): void {
 		$this->volunteer( 40, 10 * 60, 0, gmdate( 'Y-m-d', time() + ( 10 * DAY_IN_SECONDS ) ) );
 
-		$progress = gwcvt_requirement_progress( 7 );
+		$progress = gwc_vt_requirement_progress( 7 );
 
 		$this->assertFalse( $progress['overdue'] );
 		$this->assertSame( 10, $progress['days_left'] );
@@ -123,7 +123,7 @@ final class RequiredTest extends TestCase {
 	public function test_a_deadline_that_has_passed_unmet_is_overdue(): void {
 		$this->volunteer( 40, 10 * 60, 0, gmdate( 'Y-m-d', time() - ( 3 * DAY_IN_SECONDS ) ) );
 
-		$progress = gwcvt_requirement_progress( 7 );
+		$progress = gwc_vt_requirement_progress( 7 );
 
 		$this->assertTrue( $progress['overdue'] );
 		$this->assertSame( -3, $progress['days_left'] );
@@ -137,15 +137,15 @@ final class RequiredTest extends TestCase {
 	public function test_a_met_requirement_is_never_overdue(): void {
 		$this->volunteer( 40, 40 * 60, 0, gmdate( 'Y-m-d', time() - ( 30 * DAY_IN_SECONDS ) ) );
 
-		$this->assertFalse( gwcvt_requirement_progress( 7 )['overdue'] );
-		$this->assertSame( '', gwcvt_requirement_deadline_label( 7 ) );
+		$this->assertFalse( gwc_vt_requirement_progress( 7 )['overdue'] );
+		$this->assertSame( '', gwc_vt_requirement_deadline_label( 7 ) );
 	}
 
 	public function test_no_deadline_means_no_countdown(): void {
 		$this->volunteer( 40, 10 * 60 );
 
-		$this->assertNull( gwcvt_requirement_progress( 7 )['days_left'] );
-		$this->assertSame( '', gwcvt_requirement_deadline_label( 7 ) );
+		$this->assertNull( gwc_vt_requirement_progress( 7 )['days_left'] );
+		$this->assertSame( '', gwc_vt_requirement_deadline_label( 7 ) );
 	}
 
 	/* ── Reading what somebody typed ─────────────────────────────────────── */
@@ -156,7 +156,7 @@ final class RequiredTest extends TestCase {
 	 */
 	#[DataProvider( 'requirements' )]
 	public function test_it_reads_a_requirement_the_way_people_state_one( string $raw, int $expected ): void {
-		$this->assertSame( $expected, gwcvt_parse_required( $raw ) );
+		$this->assertSame( $expected, gwc_vt_parse_required( $raw ) );
 	}
 
 	public static function requirements(): array {
@@ -197,7 +197,7 @@ final class RequiredTest extends TestCase {
 	 * reach a document.
 	 */
 	public function test_the_letter_model_carries_nothing_about_a_requirement(): void {
-		foreach ( array( 'GWCVT_Letter', 'GWCVT_Letter_Entry' ) as $class ) {
+		foreach ( array( 'GWC_VT_Letter', 'GWC_VT_Letter_Entry' ) as $class ) {
 			$reflection = new ReflectionClass( $class );
 
 			foreach ( $reflection->getProperties() as $property ) {
@@ -218,16 +218,16 @@ final class RequiredTest extends TestCase {
 	 */
 	public function test_no_letter_code_reads_the_requirement(): void {
 		foreach ( array( 'inc/letter.php', 'inc/render.php', 'inc/emails.php' ) as $file ) {
-			$source = (string) file_get_contents( GWCVT_DIR . $file );
+			$source = (string) file_get_contents( GWC_VT_DIR . $file );
 
 			$this->assertStringNotContainsString(
-				'GWCVT_VOLUNTEER_REQUIRED',
+				'GWC_VT_VOLUNTEER_REQUIRED',
 				$source,
 				$file . ' must not read what somebody was required to do'
 			);
 
 			$this->assertStringNotContainsString(
-				'gwcvt_requirement_progress',
+				'gwc_vt_requirement_progress',
 				$source,
 				$file . ' must not read what somebody was required to do'
 			);

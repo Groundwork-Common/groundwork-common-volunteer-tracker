@@ -7,9 +7,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_REST_NAMESPACE = 'gwcvt/v1';
+const GWC_VT_REST_NAMESPACE = 'gwc-vt/v1';
 
-add_action( 'rest_api_init', 'gwcvt_register_rest_routes' );
+add_action( 'rest_api_init', 'gwc_vt_register_rest_routes' );
 
 /* ── Why there is a route here at all ────────────────────────────────────────
  * The sibling plugins in this family register none, and their stated reason is
@@ -35,20 +35,20 @@ add_action( 'rest_api_init', 'gwcvt_register_rest_routes' );
 /**
  * Register the volunteer lookup.
  */
-function gwcvt_register_rest_routes(): void {
+function gwc_vt_register_rest_routes(): void {
 	register_rest_route(
-		GWCVT_REST_NAMESPACE,
+		GWC_VT_REST_NAMESPACE,
 		'/volunteers',
 		array(
 			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => 'gwcvt_rest_find_volunteers',
-			'permission_callback' => 'gwcvt_rest_can_search_volunteers',
+			'callback'            => 'gwc_vt_rest_find_volunteers',
+			'permission_callback' => 'gwc_vt_rest_can_search_volunteers',
 			'args'                => array(
 				'search' => array(
 					'type'              => 'string',
 					'required'          => true,
 					'sanitize_callback' => 'sanitize_text_field',
-					'validate_callback' => 'gwcvt_rest_validate_search',
+					'validate_callback' => 'gwc_vt_rest_validate_search',
 					'description'       => __( 'Part of a volunteer’s name.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
@@ -65,7 +65,7 @@ function gwcvt_register_rest_routes(): void {
  *
  * @return bool
  */
-function gwcvt_rest_can_search_volunteers(): bool {
+function gwc_vt_rest_can_search_volunteers(): bool {
 	return current_user_can( 'edit_posts' );
 }
 
@@ -78,10 +78,10 @@ function gwcvt_rest_can_search_volunteers(): bool {
  * @param mixed $value The submitted term.
  * @return true|WP_Error
  */
-function gwcvt_rest_validate_search( $value ) {
+function gwc_vt_rest_validate_search( $value ) {
 	if ( mb_strlen( trim( (string) $value ) ) < 2 ) {
 		return new WP_Error(
-			'gwcvt_search_too_short',
+			'gwc_vt_search_too_short',
 			__( 'Type at least two characters.', 'groundwork-common-volunteer-tracker' ),
 			array( 'status' => 400 )
 		);
@@ -102,12 +102,12 @@ function gwcvt_rest_validate_search( $value ) {
  * @param WP_REST_Request $request The request.
  * @return WP_REST_Response
  */
-function gwcvt_rest_find_volunteers( $request ) {
+function gwc_vt_rest_find_volunteers( $request ) {
 	$search = trim( (string) $request->get_param( 'search' ) );
 
 	$ids = get_posts(
 		array(
-			'post_type'              => GWCVT_VOLUNTEER_TYPE,
+			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 20,

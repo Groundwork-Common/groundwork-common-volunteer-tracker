@@ -7,14 +7,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$gwcvt_list = gwcvt_render_shift_list();
+$gwc_vt_list = gwc_vt_render_shift_list();
 
-if ( '' === $gwcvt_list ) {
+if ( '' === $gwc_vt_list ) {
 	return;
 }
 
 printf(
 	'<div %1$s>%2$s</div>',
 	wp_kses_data( get_block_wrapper_attributes() ),
-	$gwcvt_list // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in gwcvt_render_shift_list().
+	$gwc_vt_list // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- assembled and escaped in gwc_vt_render_shift_list().
 );

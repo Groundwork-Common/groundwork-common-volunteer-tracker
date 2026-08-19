@@ -72,7 +72,7 @@
 			 * element only in the sense that it binds once per call, so the
 			 * event it listens for is dispatched rather than the setup repeated
 			 * across the whole page. */
-			document.dispatchEvent( new CustomEvent( 'gwcvt:pickers-added' ) );
+			document.dispatchEvent( new CustomEvent( 'gwc-vt:pickers-added' ) );
 		} );
 	} );
 }() );

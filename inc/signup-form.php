@@ -33,27 +33,27 @@ defined( 'ABSPATH' ) || exit;
  *                has the block on it renders nothing rather than something
  *                broken.
  */
-function gwcvt_render_shift_list(): string {
-	if ( ! gwcvt_signups_open() ) {
+function gwc_vt_render_shift_list(): string {
+	if ( ! gwc_vt_signups_open() ) {
 		return '';
 	}
 
-	$manage = gwcvt_render_signup_manage();
+	$manage = gwc_vt_render_signup_manage();
 
 	if ( '' !== $manage ) {
 		return $manage;
 	}
 
-	$result   = (string) ( $GLOBALS['gwcvt_signup_result'] ?? '' );
-	$shifts   = gwcvt_public_shift_ids();
-	$code     = (string) gwcvt_setting( 'signup_code' );
+	$result   = (string) ( $GLOBALS['gwc_vt_signup_result'] ?? '' );
+	$shifts   = gwc_vt_public_shift_ids();
+	$code     = (string) gwc_vt_setting( 'signup_code' );
 	$selected = 0;
 
 	ob_start();
 	?>
 	<div class="gwcvt-shifts">
 		<?php if ( '' !== $result ) : ?>
-			<p class="gwcvt-shifts__message" role="status"><?php echo esc_html( gwcvt_signup_message( $result ) ); ?></p>
+			<p class="gwcvt-shifts__message" role="status"><?php echo esc_html( gwc_vt_signup_message( $result ) ); ?></p>
 		<?php endif; ?>
 
 		<?php if ( ! $shifts ) : ?>
@@ -67,25 +67,25 @@ function gwcvt_render_shift_list(): string {
 		?>
 
 		<form method="post" class="gwcvt-shifts__form">
-			<?php wp_nonce_field( 'gwcvt_signup', 'gwcvt_signup_nonce' ); ?>
-			<input type="hidden" name="gwcvt_t" value="<?php echo esc_attr( gwcvt_form_stamp() ); ?>" />
+			<?php wp_nonce_field( 'gwc_vt_signup', 'gwc_vt_signup_nonce' ); ?>
+			<input type="hidden" name="gwc_vt_t" value="<?php echo esc_attr( gwc_vt_form_stamp() ); ?>" />
 
 			<fieldset class="gwcvt-shifts__list">
 				<legend><?php esc_html_e( 'Choose a shift', 'groundwork-common-volunteer-tracker' ); ?></legend>
 
 				<?php foreach ( $shifts as $shift_id ) : ?>
-					<?php gwcvt_render_shift_choice( $shift_id, $selected ); ?>
+					<?php gwc_vt_render_shift_choice( $shift_id, $selected ); ?>
 				<?php endforeach; ?>
 			</fieldset>
 
 			<div class="gwcvt-shifts__field">
 				<label for="gwcvt-signup-name"><?php esc_html_e( 'Your name', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-signup-name" name="gwcvt_name" required maxlength="100" autocomplete="name" />
+				<input type="text" id="gwcvt-signup-name" name="gwc_vt_name" required maxlength="100" autocomplete="name" />
 			</div>
 
 			<div class="gwcvt-shifts__field">
 				<label for="gwcvt-signup-email"><?php esc_html_e( 'Your email address', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="email" id="gwcvt-signup-email" name="gwcvt_email" required maxlength="200" autocomplete="email" />
+				<input type="email" id="gwcvt-signup-email" name="gwc_vt_email" required maxlength="200" autocomplete="email" />
 				<p class="gwcvt-shifts__help">
 					<?php esc_html_e( 'So we can send you the details and a link to cancel if you need to. It does not create an account.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
@@ -94,7 +94,7 @@ function gwcvt_render_shift_list(): string {
 			<?php if ( '' !== $code ) : ?>
 				<div class="gwcvt-shifts__field">
 					<label for="gwcvt-signup-code"><?php esc_html_e( 'The code you were given', 'groundwork-common-volunteer-tracker' ); ?></label>
-					<input type="text" id="gwcvt-signup-code" name="gwcvt_code" maxlength="50" autocomplete="off" />
+					<input type="text" id="gwcvt-signup-code" name="gwc_vt_code" maxlength="50" autocomplete="off" />
 				</div>
 			<?php endif; ?>
 
@@ -106,11 +106,11 @@ function gwcvt_render_shift_list(): string {
 			?>
 			<div class="gwcvt-shifts__hp" aria-hidden="true">
 				<label for="gwcvt-signup-website"><?php esc_html_e( 'Leave this field empty', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-signup-website" name="gwcvt_website" tabindex="-1" autocomplete="off" />
+				<input type="text" id="gwcvt-signup-website" name="gwc_vt_website" tabindex="-1" autocomplete="off" />
 			</div>
 
 			<p>
-				<button type="submit" name="gwcvt_signup_submit" value="1" class="gwcvt-shifts__button">
+				<button type="submit" name="gwc_vt_signup_submit" value="1" class="gwcvt-shifts__button">
 					<?php esc_html_e( 'Sign me up', 'groundwork-common-volunteer-tracker' ); ?>
 				</button>
 			</p>
@@ -127,27 +127,27 @@ function gwcvt_render_shift_list(): string {
  * @param int $shift_id Shift post ID.
  * @param int $selected Which shift is preselected, if any.
  */
-function gwcvt_render_shift_choice( int $shift_id, int $selected ): void {
-	$spots  = gwcvt_shift_spots_left( $shift_id );
+function gwc_vt_render_shift_choice( int $shift_id, int $selected ): void {
+	$spots  = gwc_vt_shift_spots_left( $shift_id );
 	$full   = null !== $spots && $spots < 1;
-	$notes  = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_NOTES, true ) );
-	$where  = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) );
-	$what   = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) );
+	$notes  = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) );
+	$where  = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) );
+	$what   = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) );
 	$row_id = 'gwcvt-shift-' . $shift_id;
 	?>
 	<div class="gwcvt-shift<?php echo $full ? ' gwcvt-shift--full' : ''; ?>">
 		<input
 			type="radio"
 			id="<?php echo esc_attr( $row_id ); ?>"
-			name="gwcvt_shift"
+			name="gwc_vt_shift"
 			value="<?php echo esc_attr( (string) $shift_id ); ?>"
 			<?php checked( $selected, $shift_id ); ?>
 			required
 		/>
 		<label for="<?php echo esc_attr( $row_id ); ?>">
 			<span class="gwcvt-shift__when">
-				<?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?>,
-				<?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?>
+				<?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?>,
+				<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
 			</span>
 
 			<?php if ( '' !== $what ) : ?>
@@ -193,41 +193,41 @@ function gwcvt_render_shift_choice( int $shift_id, int $selected ): void {
  * @return string Empty when there is no valid token on the request, which is
  *                every ordinary visit.
  */
-function gwcvt_render_signup_manage(): string {
+function gwc_vt_render_signup_manage(): string {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a capability URL; the token is what authorises it.
-	if ( ! isset( $_GET['gwcvt_signup'] ) ) {
+	if ( ! isset( $_GET['gwc_vt_signup'] ) ) {
 		return '';
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$signup_id = absint( wp_unslash( $_GET['gwcvt_signup'] ) );
+	$signup_id = absint( wp_unslash( $_GET['gwc_vt_signup'] ) );
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$token = isset( $_GET['gwcvt_k'] ) ? sanitize_text_field( wp_unslash( $_GET['gwcvt_k'] ) ) : '';
+	$token = isset( $_GET['gwc_vt_k'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_k'] ) ) : '';
 
-	$result = (string) ( $GLOBALS['gwcvt_signup_result'] ?? '' );
+	$result = (string) ( $GLOBALS['gwc_vt_signup_result'] ?? '' );
 
 	/* An answered cancellation, or a link that no longer works. Both end here
 	 * with a sentence and no further controls — and a stale token and a deleted
 	 * signup deliberately produce the same one, because telling them apart would
 	 * turn this URL into a way to ask which signup IDs are real. */
-	if ( 'cancelled' === $result || 'cancel-unknown' === $result || ! gwcvt_signup_token_valid( $signup_id, $token ) ) {
+	if ( 'cancelled' === $result || 'cancel-unknown' === $result || ! gwc_vt_signup_token_valid( $signup_id, $token ) ) {
 		return sprintf(
 			'<div class="gwcvt-shifts"><p class="gwcvt-shifts__message" role="status">%s</p></div>',
-			esc_html( gwcvt_signup_message( '' !== $result ? $result : 'cancel-unknown' ) )
+			esc_html( gwc_vt_signup_message( '' !== $result ? $result : 'cancel-unknown' ) )
 		);
 	}
 
 	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
 
-	if ( GWCVT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
 		return sprintf(
 			'<div class="gwcvt-shifts"><p class="gwcvt-shifts__message" role="status">%s</p></div>',
-			esc_html( gwcvt_signup_message( 'cancel-unknown' ) )
+			esc_html( gwc_vt_signup_message( 'cancel-unknown' ) )
 		);
 	}
 
-	$withdrawn = GWCVT_SIGNUP_WITHDRAWN === get_post_status( $signup_id );
-	$waiting   = GWCVT_SIGNUP_WAITLIST === get_post_status( $signup_id );
+	$withdrawn = GWC_VT_SIGNUP_WITHDRAWN === get_post_status( $signup_id );
+	$waiting   = GWC_VT_SIGNUP_WAITLIST === get_post_status( $signup_id );
 
 	ob_start();
 	?>
@@ -236,12 +236,12 @@ function gwcvt_render_signup_manage(): string {
 
 		<div class="gwcvt-shift gwcvt-shift--mine">
 			<span class="gwcvt-shift__when">
-				<?php echo esc_html( gwcvt_shift_date_label( $shift_id ) ); ?>,
-				<?php echo esc_html( gwcvt_shift_time_label( $shift_id ) ); ?>
+				<?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?>,
+				<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
 			</span>
-			<span class="gwcvt-shift__what"><?php echo esc_html( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) ); ?></span>
+			<span class="gwcvt-shift__what"><?php echo esc_html( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) ); ?></span>
 
-			<?php $where = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_LOCATION, true ) ); ?>
+			<?php $where = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) ); ?>
 			<?php if ( '' !== $where ) : ?>
 				<span class="gwcvt-shift__where"><?php echo esc_html( $where ); ?></span>
 			<?php endif; ?>
@@ -259,7 +259,7 @@ function gwcvt_render_signup_manage(): string {
 			<?php endif; ?>
 
 			<p>
-				<a class="gwcvt-shifts__button gwcvt-shifts__button--quiet" href="<?php echo esc_url( gwcvt_signup_ics_url( $signup_id ) ); ?>">
+				<a class="gwcvt-shifts__button gwcvt-shifts__button--quiet" href="<?php echo esc_url( gwc_vt_signup_ics_url( $signup_id ) ); ?>">
 					<?php esc_html_e( 'Add it to your calendar', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
 			</p>
@@ -273,13 +273,13 @@ function gwcvt_render_signup_manage(): string {
 			 * and the volunteer would find out by not being expected. */
 			?>
 			<form method="post" class="gwcvt-shifts__cancel">
-				<?php wp_nonce_field( 'gwcvt_cancel_signup', 'gwcvt_cancel_nonce' ); ?>
-				<input type="hidden" name="gwcvt_signup" value="<?php echo esc_attr( (string) $signup_id ); ?>" />
-				<input type="hidden" name="gwcvt_k" value="<?php echo esc_attr( $token ); ?>" />
+				<?php wp_nonce_field( 'gwc_vt_cancel_signup', 'gwc_vt_cancel_nonce' ); ?>
+				<input type="hidden" name="gwc_vt_signup" value="<?php echo esc_attr( (string) $signup_id ); ?>" />
+				<input type="hidden" name="gwc_vt_k" value="<?php echo esc_attr( $token ); ?>" />
 
 				<p><?php esc_html_e( 'Cannot make it any more?', 'groundwork-common-volunteer-tracker' ); ?></p>
 
-				<?php if ( gwcvt_event_for_shift( $shift_id ) > 0 ) : ?>
+				<?php if ( gwc_vt_event_for_shift( $shift_id ) > 0 ) : ?>
 					<?php
 					/* Said before the button, not after it. A token authorises one
 					 * slot and no more — widening it to everything this address
@@ -293,7 +293,7 @@ function gwcvt_render_signup_manage(): string {
 					</p>
 				<?php endif; ?>
 
-				<button type="submit" name="gwcvt_cancel_submit" value="1" class="gwcvt-shifts__button gwcvt-shifts__button--quiet">
+				<button type="submit" name="gwc_vt_cancel_submit" value="1" class="gwcvt-shifts__button gwcvt-shifts__button--quiet">
 					<?php esc_html_e( 'Cancel my place', 'groundwork-common-volunteer-tracker' ); ?>
 				</button>
 			</form>
@@ -304,7 +304,7 @@ function gwcvt_render_signup_manage(): string {
 		 * picked the wrong time had nowhere to go. Both destinations are already
 		 * public, so this discloses nothing — it just saves them hunting for the
 		 * page they came from. */
-		$back = gwcvt_signup_return_url( $signup_id );
+		$back = gwc_vt_signup_return_url( $signup_id );
 
 		if ( '' !== $back ) :
 			?>
@@ -326,19 +326,19 @@ function gwcvt_render_signup_manage(): string {
  * @param int $signup_id Signup post ID.
  * @return string
  */
-function gwcvt_signup_ics_url( int $signup_id ): string {
-	$page = (int) gwcvt_setting( 'schedule_page' );
+function gwc_vt_signup_ics_url( int $signup_id ): string {
+	$page = (int) gwc_vt_setting( 'schedule_page' );
 
 	/* Empty rather than the home page — see the note on
-	 * gwcvt_signup_manage_url(), which this mirrors. */
+	 * gwc_vt_signup_manage_url(), which this mirrors. */
 	if ( $page < 1 ) {
 		return '';
 	}
 
 	return add_query_arg(
 		array(
-			'gwcvt_ics' => $signup_id,
-			'gwcvt_k'   => gwcvt_signup_token( $signup_id ),
+			'gwc_vt_ics' => $signup_id,
+			'gwc_vt_k'   => gwc_vt_signup_token( $signup_id ),
 		),
 		(string) get_permalink( $page )
 	);

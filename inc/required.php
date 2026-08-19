@@ -26,8 +26,8 @@ defined( 'ABSPATH' ) || exit;
  * @param int $volunteer_id Volunteer post ID.
  * @return int
  */
-function gwcvt_required_minutes( int $volunteer_id ): int {
-	return max( 0, (int) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED, true ) );
+function gwc_vt_required_minutes( int $volunteer_id ): int {
+	return max( 0, (int) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED, true ) );
 }
 
 /**
@@ -39,8 +39,8 @@ function gwcvt_required_minutes( int $volunteer_id ): int {
  * @param int $volunteer_id Volunteer post ID.
  * @return bool
  */
-function gwcvt_has_requirement( int $volunteer_id ): bool {
-	return gwcvt_required_minutes( $volunteer_id ) > 0;
+function gwc_vt_has_requirement( int $volunteer_id ): bool {
+	return gwc_vt_required_minutes( $volunteer_id ) > 0;
 }
 
 /**
@@ -52,19 +52,19 @@ function gwcvt_has_requirement( int $volunteer_id ): bool {
  *     met:bool, deadline:string, days_left:?int, overdue:bool
  * }
  */
-function gwcvt_requirement_progress( int $volunteer_id ): array {
-	$required = gwcvt_required_minutes( $volunteer_id );
-	$totals   = gwcvt_volunteer_totals( $volunteer_id );
+function gwc_vt_requirement_progress( int $volunteer_id ): array {
+	$required = gwc_vt_required_minutes( $volunteer_id );
+	$totals   = gwc_vt_volunteer_totals( $volunteer_id );
 
 	$verified  = (int) $totals->verified_minutes;
 	$remaining = max( 0, $required - $verified );
 
-	$deadline  = (string) get_post_meta( $volunteer_id, GWCVT_VOLUNTEER_REQUIRED_BY, true );
+	$deadline  = (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_BY, true );
 	$days_left = null;
 	$met       = $required > 0 && $verified >= $required;
 
 	if ( '' !== $deadline ) {
-		$days_left = gwcvt_days_until( $deadline );
+		$days_left = gwc_vt_days_until( $deadline );
 	}
 
 	return array(
@@ -95,9 +95,9 @@ function gwcvt_requirement_progress( int $volunteer_id ): array {
  * @param string $date Y-m-d.
  * @return int|null Null when the date cannot be read.
  */
-function gwcvt_days_until( string $date ): ?int {
-	$then = gwcvt_recurrence_date( $date );
-	$now  = gwcvt_recurrence_date( gwcvt_today() );
+function gwc_vt_days_until( string $date ): ?int {
+	$then = gwc_vt_recurrence_date( $date );
+	$now  = gwc_vt_recurrence_date( gwc_vt_today() );
 
 	if ( null === $then || null === $now ) {
 		return null;
@@ -112,26 +112,26 @@ function gwcvt_days_until( string $date ): ?int {
  * @param int $volunteer_id Volunteer post ID.
  * @return string Empty when nothing is required of them.
  */
-function gwcvt_requirement_label( int $volunteer_id ): string {
-	if ( ! gwcvt_has_requirement( $volunteer_id ) ) {
+function gwc_vt_requirement_label( int $volunteer_id ): string {
+	if ( ! gwc_vt_has_requirement( $volunteer_id ) ) {
 		return '';
 	}
 
-	$progress = gwcvt_requirement_progress( $volunteer_id );
+	$progress = gwc_vt_requirement_progress( $volunteer_id );
 
 	if ( $progress['met'] ) {
 		return sprintf(
 			/* translators: %s: a number of hours, already formatted. */
 			__( 'Completed — %s verified', 'groundwork-common-volunteer-tracker' ),
-			gwcvt_format_hours( $progress['verified'] )
+			gwc_vt_format_hours( $progress['verified'] )
 		);
 	}
 
 	return sprintf(
 		/* translators: 1: hours verified so far, 2: hours required. Both already formatted, so the sentence must not add a unit of its own. */
 		__( '%1$s of %2$s', 'groundwork-common-volunteer-tracker' ),
-		gwcvt_format_hours( $progress['verified'] ),
-		gwcvt_format_hours( $progress['required'] )
+		gwc_vt_format_hours( $progress['verified'] ),
+		gwc_vt_format_hours( $progress['required'] )
 	);
 }
 
@@ -141,8 +141,8 @@ function gwcvt_requirement_label( int $volunteer_id ): string {
  * @param int $volunteer_id Volunteer post ID.
  * @return string
  */
-function gwcvt_requirement_deadline_label( int $volunteer_id ): string {
-	$progress = gwcvt_requirement_progress( $volunteer_id );
+function gwc_vt_requirement_deadline_label( int $volunteer_id ): string {
+	$progress = gwc_vt_requirement_progress( $volunteer_id );
 
 	if ( '' === $progress['deadline'] || null === $progress['days_left'] ) {
 		return '';
@@ -183,14 +183,14 @@ function gwcvt_requirement_deadline_label( int $volunteer_id ): string {
  * @param string $raw What was typed.
  * @return int Minutes; zero for anything unreadable or empty.
  */
-function gwcvt_parse_required( string $raw ): int {
+function gwc_vt_parse_required( string $raw ): int {
 	$value = trim( $raw );
 
 	if ( '' === $value ) {
 		return 0;
 	}
 
-	/* gwcvt_parse_hours() refuses anything over a day, which is right for a
+	/* gwc_vt_parse_hours() refuses anything over a day, which is right for a
 	 * shift and wrong here. Hours are the only unit anybody states a
 	 * requirement in, so this reads a plain number of them and nothing else —
 	 * "80h 30m" is not how a court order is written. */

@@ -7,8 +7,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'init', 'gwcvt_register_block' );
-add_action( 'enqueue_block_editor_assets', 'gwcvt_localize_block_editor' );
+add_action( 'init', 'gwc_vt_register_block' );
+add_action( 'enqueue_block_editor_assets', 'gwc_vt_localize_block_editor' );
 
 /* ── A shortcode as well, permanently ────────────────────────────────────────
  * Not a deprecation path and not a fallback — a supported way to place the form
@@ -21,11 +21,11 @@ add_action( 'enqueue_block_editor_assets', 'gwcvt_localize_block_editor' );
 /**
  * Register the block and the shortcode.
  */
-function gwcvt_register_block(): void {
+function gwc_vt_register_block(): void {
 	if ( function_exists( 'register_block_type_from_metadata' ) ) {
-		register_block_type_from_metadata( GWCVT_DIR . 'blocks/hours-form' );
-		register_block_type_from_metadata( GWCVT_DIR . 'blocks/shift-list' );
-		register_block_type_from_metadata( GWCVT_DIR . 'blocks/event-grid' );
+		register_block_type_from_metadata( GWC_VT_DIR . 'blocks/hours-form' );
+		register_block_type_from_metadata( GWC_VT_DIR . 'blocks/shift-list' );
+		register_block_type_from_metadata( GWC_VT_DIR . 'blocks/event-grid' );
 
 		/* ── The editor scripts' translations ────────────────────────────────
 		 * Registered here, immediately after the handles exist, rather than in
@@ -44,14 +44,14 @@ function gwcvt_register_block(): void {
 			wp_set_script_translations(
 				'groundwork-common-volunteer-tracker-' . $block . '-editor-script',
 				'groundwork-common-volunteer-tracker',
-				GWCVT_DIR . 'languages'
+				GWC_VT_DIR . 'languages'
 			);
 		}
 	}
 
-	add_shortcode( 'volunteer_hours_form', 'gwcvt_form_shortcode' );
-	add_shortcode( 'volunteer_shifts', 'gwcvt_shifts_shortcode' );
-	add_shortcode( 'volunteer_event', 'gwcvt_event_shortcode' );
+	add_shortcode( 'gwc_vt_hours_form', 'gwc_vt_form_shortcode' );
+	add_shortcode( 'gwc_vt_shift_list', 'gwc_vt_shifts_shortcode' );
+	add_shortcode( 'gwc_vt_event_grid', 'gwc_vt_event_shortcode' );
 }
 
 /**
@@ -66,13 +66,13 @@ function gwcvt_register_block(): void {
  * @param array $atts id.
  * @return string
  */
-function gwcvt_event_shortcode( $atts = array() ): string {
-	$atts = shortcode_atts( array( 'id' => 0 ), (array) $atts, 'volunteer_event' );
+function gwc_vt_event_shortcode( $atts = array() ): string {
+	$atts = shortcode_atts( array( 'id' => 0 ), (array) $atts, 'gwc_vt_event_grid' );
 
-	$grid = gwcvt_render_event_grid( (int) $atts['id'] );
+	$grid = gwc_vt_render_event_grid( (int) $atts['id'] );
 
 	if ( '' !== $grid ) {
-		wp_enqueue_style( 'gwcvt-schedule' );
+		wp_enqueue_style( 'gwc-vt-schedule' );
 	}
 
 	return $grid;
@@ -84,11 +84,11 @@ function gwcvt_event_shortcode( $atts = array() ): string {
  * @param array $atts Ignored; the list has no per-instance options.
  * @return string
  */
-function gwcvt_shifts_shortcode( $atts = array() ): string {
-	$list = gwcvt_render_shift_list();
+function gwc_vt_shifts_shortcode( $atts = array() ): string {
+	$list = gwc_vt_render_shift_list();
 
 	if ( '' !== $list ) {
-		wp_enqueue_style( 'gwcvt-schedule' );
+		wp_enqueue_style( 'gwc-vt-schedule' );
 	}
 
 	return $list;
@@ -100,15 +100,15 @@ function gwcvt_shifts_shortcode( $atts = array() ): string {
  * @param array $atts Ignored; the form has no per-instance options.
  * @return string
  */
-function gwcvt_form_shortcode( $atts = array() ): string {
+function gwc_vt_form_shortcode( $atts = array() ): string {
 	/* The block gets its stylesheet from block.json's "style" handle; a
 	 * shortcode has no such wiring and has to ask. Enqueued only when the form
 	 * actually renders, so a page with the shortcode on it but the feature
 	 * switched off loads nothing. */
-	$form = gwcvt_render_self_log_form();
+	$form = gwc_vt_render_self_log_form();
 
 	if ( '' !== $form ) {
-		wp_enqueue_style( 'gwcvt-form' );
+		wp_enqueue_style( 'gwc-vt-form' );
 	}
 
 	return $form;
@@ -122,28 +122,28 @@ function gwcvt_form_shortcode( $atts = array() ): string {
  * anybody who can edit a post; a handful of booleans localised onto the editor
  * script does not.
  */
-function gwcvt_localize_block_editor(): void {
+function gwc_vt_localize_block_editor(): void {
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 
 	$current = $screen && 'page' === $screen->post_type ? (int) get_the_ID() : 0;
 
 	wp_localize_script(
 		'groundwork-common-volunteer-tracker-hours-form-editor-script',
-		'GWCVT_EDITOR',
+		'GWC_VT_EDITOR',
 		array(
-			'selfLogEnabled' => (bool) gwcvt_setting( 'self_log_enabled' ),
-			'pinnedPage'     => (int) gwcvt_setting( 'self_log_page' ),
+			'selfLogEnabled' => (bool) gwc_vt_setting( 'self_log_enabled' ),
+			'pinnedPage'     => (int) gwc_vt_setting( 'self_log_page' ),
 			'currentPage'    => $current,
 		)
 	);
 
 	wp_localize_script(
 		'groundwork-common-volunteer-tracker-shift-list-editor-script',
-		'GWCVT_SHIFT_EDITOR',
+		'GWC_VT_SHIFT_EDITOR',
 		array(
-			'shiftsEnabled' => (bool) gwcvt_setting( 'shifts_enabled' ),
-			'signupEnabled' => (bool) gwcvt_setting( 'signup_enabled' ),
-			'pinnedPage'    => (int) gwcvt_setting( 'schedule_page' ),
+			'shiftsEnabled' => (bool) gwc_vt_setting( 'shifts_enabled' ),
+			'signupEnabled' => (bool) gwc_vt_setting( 'signup_enabled' ),
+			'pinnedPage'    => (int) gwc_vt_setting( 'schedule_page' ),
 			'currentPage'   => $current,
 		)
 	);
@@ -154,9 +154,9 @@ function gwcvt_localize_block_editor(): void {
 	 * an organisation's calendar to anybody who asked. */
 	$events = array();
 
-	foreach ( gwcvt_events_between(
+	foreach ( gwc_vt_events_between(
 		array(
-			'from'  => gwcvt_today(),
+			'from'  => gwc_vt_today(),
 			'limit' => 50,
 		)
 	) as $event_id ) {
@@ -165,18 +165,18 @@ function gwcvt_localize_block_editor(): void {
 			'label' => sprintf(
 				/* translators: 1: an event's name, 2: when it is. */
 				_x( '%1$s — %2$s', 'an event, in the block editor picker', 'groundwork-common-volunteer-tracker' ),
-				gwcvt_event_name( (int) $event_id ),
-				gwcvt_event_date_label( (int) $event_id )
+				gwc_vt_event_name( (int) $event_id ),
+				gwc_vt_event_date_label( (int) $event_id )
 			),
 		);
 	}
 
 	wp_localize_script(
 		'groundwork-common-volunteer-tracker-event-grid-editor-script',
-		'GWCVT_EVENT_EDITOR',
+		'GWC_VT_EVENT_EDITOR',
 		array(
-			'shiftsEnabled' => (bool) gwcvt_setting( 'shifts_enabled' ),
-			'signupEnabled' => (bool) gwcvt_setting( 'signup_enabled' ),
+			'shiftsEnabled' => (bool) gwc_vt_setting( 'shifts_enabled' ),
+			'signupEnabled' => (bool) gwc_vt_setting( 'signup_enabled' ),
 			'events'        => $events,
 		)
 	);

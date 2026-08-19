@@ -7,37 +7,37 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const GWCVT_SHIFT_TYPE = 'gwcvt_shift';
+const GWC_VT_SHIFT_TYPE = 'gwc_vt_shift';
 
 /* Cancelled, as a status rather than a meta flag, because it is the shift's
  * lifecycle and post_status is where this plugin keeps lifecycle — the same
  * split that puts 'pending' on an untriaged entry and the attestation in meta.
  * A cancelled shift is kept rather than trashed: people signed up for it, and
  * "this was cancelled" is an answer the coordinator owes them. */
-const GWCVT_SHIFT_CANCELLED = 'gwcvt_cancelled';
+const GWC_VT_SHIFT_CANCELLED = 'gwc_vt_cancelled';
 
 /* Shift meta. Constants for the same reason the entry's are: the schedule
  * screen, the roster, the reminder pass and the reconciler all read these, and
  * a typo in a meta key reads as an empty value rather than as an error. */
-const GWCVT_SHIFT_DATE       = '_gwcvt_shift_date';
-const GWCVT_SHIFT_START      = '_gwcvt_shift_start';
-const GWCVT_SHIFT_END        = '_gwcvt_shift_end';
-const GWCVT_SHIFT_OVERNIGHT  = '_gwcvt_shift_ends_next_day';
-const GWCVT_SHIFT_ACTIVITY   = '_gwcvt_shift_activity';
-const GWCVT_SHIFT_SUPERVISOR = '_gwcvt_shift_supervisor';
-const GWCVT_SHIFT_LOCATION   = '_gwcvt_shift_location';
-const GWCVT_SHIFT_NOTES      = '_gwcvt_shift_notes';
-const GWCVT_SHIFT_MIN        = '_gwcvt_shift_min';
-const GWCVT_SHIFT_MAX        = '_gwcvt_shift_max';
-const GWCVT_SHIFT_SERIES     = '_gwcvt_shift_series';
-const GWCVT_SHIFT_REASON     = '_gwcvt_shift_cancelled_reason';
+const GWC_VT_SHIFT_DATE       = '_gwc_vt_shift_date';
+const GWC_VT_SHIFT_START      = '_gwc_vt_shift_start';
+const GWC_VT_SHIFT_END        = '_gwc_vt_shift_end';
+const GWC_VT_SHIFT_OVERNIGHT  = '_gwc_vt_shift_ends_next_day';
+const GWC_VT_SHIFT_ACTIVITY   = '_gwc_vt_shift_activity';
+const GWC_VT_SHIFT_SUPERVISOR = '_gwc_vt_shift_supervisor';
+const GWC_VT_SHIFT_LOCATION   = '_gwc_vt_shift_location';
+const GWC_VT_SHIFT_NOTES      = '_gwc_vt_shift_notes';
+const GWC_VT_SHIFT_MIN        = '_gwc_vt_shift_min';
+const GWC_VT_SHIFT_MAX        = '_gwc_vt_shift_max';
+const GWC_VT_SHIFT_SERIES     = '_gwc_vt_shift_series';
+const GWC_VT_SHIFT_REASON     = '_gwc_vt_shift_cancelled_reason';
 
 /* GMT timestamp of when the roster was turned into hour entries. Absent means
- * not yet — the same shape as GWCVT_ENTRY_VERIFIED_AT, and for the same reason:
+ * not yet — the same shape as GWC_VT_ENTRY_VERIFIED_AT, and for the same reason:
  * there is no 'false' to store and no third state to drift. */
-const GWCVT_SHIFT_RECONCILED = '_gwcvt_shift_reconciled_at';
+const GWC_VT_SHIFT_RECONCILED = '_gwc_vt_shift_reconciled_at';
 
-add_action( 'init', 'gwcvt_register_shift_type' );
+add_action( 'init', 'gwc_vt_register_shift_type' );
 
 /**
  * Register the shift type and its cancelled status.
@@ -57,7 +57,7 @@ add_action( 'init', 'gwcvt_register_shift_type' );
  * by a person who was there. See inc/admin-quick-add.php.
  *
  * ── Why there is no admin UI ─────────────────────────────────────────────────
- * show_ui is false, following gwcvt_letter rather than gwcvt_entry. The default
+ * show_ui is false, following gwc_vt_letter rather than gwc_vt_entry. The default
  * post list cannot show what a coordinator needs to know about a shift — the
  * question is never "list the posts", it is "which of these is underfilled and
  * soon", which is a sorted, computed view. inc/admin-schedule.php is that view.
@@ -66,9 +66,9 @@ add_action( 'init', 'gwcvt_register_shift_type' );
  * no archive, no REST. A shift carries a location and a supervisor's name, and
  * its children carry the names and addresses of people who signed up.
  */
-function gwcvt_register_shift_type(): void {
+function gwc_vt_register_shift_type(): void {
 	register_post_status(
-		GWCVT_SHIFT_CANCELLED,
+		GWC_VT_SHIFT_CANCELLED,
 		array(
 			'label'                     => _x( 'Cancelled', 'shift status', 'groundwork-common-volunteer-tracker' ),
 			'public'                    => false,
@@ -106,7 +106,7 @@ function gwcvt_register_shift_type(): void {
 
 		/* Nothing, and the literal false rather than array() — register_post_type()
 		 * reads an empty array as "unspecified" and falls through to title and
-		 * editor. The title is derived on save by gwcvt_retitle_shift(). */
+		 * editor. The title is derived on save by gwc_vt_retitle_shift(). */
 		'supports'            => false,
 		'capability_type'     => 'post',
 		'map_meta_cap'        => true,
@@ -118,7 +118,7 @@ function gwcvt_register_shift_type(): void {
 	 *
 	 * @param array $args register_post_type() arguments.
 	 */
-	register_post_type( GWCVT_SHIFT_TYPE, apply_filters( 'gwcvt_shift_post_type_args', $args ) );
+	register_post_type( GWC_VT_SHIFT_TYPE, apply_filters( 'gwc_vt_shift_post_type_args', $args ) );
 }
 
 /**
@@ -133,9 +133,9 @@ function gwcvt_register_shift_type(): void {
  * @param int $shift_id Shift post ID.
  * @return string
  */
-function gwcvt_shift_title( int $shift_id ): string {
-	$activity = trim( (string) get_post_meta( $shift_id, GWCVT_SHIFT_ACTIVITY, true ) );
-	$date     = (string) get_post_meta( $shift_id, GWCVT_SHIFT_DATE, true );
+function gwc_vt_shift_title( int $shift_id ): string {
+	$activity = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) );
+	$date     = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true );
 
 	if ( '' === $activity ) {
 		$activity = __( 'Volunteer shift', 'groundwork-common-volunteer-tracker' );
@@ -149,8 +149,8 @@ function gwcvt_shift_title( int $shift_id ): string {
 		/* translators: 1: what the shift is, 2: a date, 3: a time range. */
 		__( '%1$s — %2$s, %3$s', 'groundwork-common-volunteer-tracker' ),
 		$activity,
-		gwcvt_shift_date_label( $shift_id ),
-		gwcvt_shift_time_label( $shift_id )
+		gwc_vt_shift_date_label( $shift_id ),
+		gwc_vt_shift_time_label( $shift_id )
 	);
 }
 
@@ -159,11 +159,11 @@ function gwcvt_shift_title( int $shift_id ): string {
  *
  * @param int $shift_id Shift post ID.
  */
-function gwcvt_retitle_shift( int $shift_id ): void {
+function gwc_vt_retitle_shift( int $shift_id ): void {
 	wp_update_post(
 		array(
 			'ID'         => $shift_id,
-			'post_title' => gwcvt_shift_title( $shift_id ),
+			'post_title' => gwc_vt_shift_title( $shift_id ),
 		)
 	);
 }

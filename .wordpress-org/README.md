@@ -33,9 +33,18 @@ The captions currently expected, in order:
 3. Entering a shift, with the volunteer picker and the verify button.
 4. A verification letter, ready to print.
 5. Checking a reference code somebody has phoned in about.
-6. The schedule, with an event and the ordinary shifts around it.
+6. The schedule: what is coming up, how full each shift is, and a repeat that has been called off.
 7. Building an event: one occasion, its roles, and the times under each.
 8. The roster for an event, split by role and time, ready for the clipboard.
+
+Caption 6 was rewritten for 1.0.0 rather than the screenshot re-shot, and this
+is worth knowing before somebody "fixes" it back. It used to promise "an event
+and the ordinary shifts around it", and there is no event in the frame: the
+seed's event falls on 4 August, the **Coming up** tab lists from today forward,
+and so what `screenshot-6.png` actually shows is ordinary shifts plus a repeat
+that has been called off. The caption now describes that. If the event view
+deserves a shot of its own, take it from the **Events** tab as a new file —
+do not re-point caption 6 at it without opening `screenshot-6.png` first.
 
 The eight screenshots exist as of 0.15.0, shot against `tests/seed.php` at
 1280px on a 2× display, so each file is 2560×1800. They are capped at that
@@ -94,7 +103,7 @@ Then, at 1280px wide, with the browser chrome out of frame:
 | `screenshot-3.png` | Volunteer Hours → Log hours | The shift form with the volunteer picker open on "Mar", showing Marcus Delacroix. |
 | `screenshot-4.png` | The print view for Marcus Delacroix | The letter itself: letterhead, the itemized table, the signature block and the disclaimer. Scroll so the disclaimer is visible — it is the point. |
 | `screenshot-5.png` | Volunteer Hours → Letters, with a reference pasted in | The checker answering "This letter matches our current records." |
-| `screenshot-6.png` | Volunteer Hours → Schedule | The list with an event's summary row among ordinary shifts, so the difference reads. |
+| `screenshot-6.png` | Volunteer Hours → Schedule, **Coming up** | Several shifts with their fill counts, including one full with somebody waiting, and a cancelled repeat struck through. |
 | `screenshot-7.png` | An event, in the editor | The role-major grid: a role named once with its times under it, and the "Where volunteers see this" row filled in. |
 | `screenshot-8.png` | An event → Roster | Grouped role then time, with a "Log the hours" link on a time that has passed. |
 

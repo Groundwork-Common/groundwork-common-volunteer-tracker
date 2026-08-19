@@ -7,11 +7,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'add_meta_boxes', 'gwcvt_add_volunteer_history_boxes' );
+add_action( 'add_meta_boxes', 'gwc_vt_add_volunteer_history_boxes' );
 
-add_action( 'restrict_manage_posts', 'gwcvt_volunteer_filter_dropdown' );
-add_action( 'pre_get_posts', 'gwcvt_apply_volunteer_filter' );
-add_filter( 'manage_edit-' . GWCVT_VOLUNTEER_TYPE . '_sortable_columns', 'gwcvt_volunteer_sortable_columns' );
+add_action( 'restrict_manage_posts', 'gwc_vt_volunteer_filter_dropdown' );
+add_action( 'pre_get_posts', 'gwc_vt_apply_volunteer_filter' );
+add_filter( 'manage_edit-' . GWC_VT_VOLUNTEER_TYPE . '_sortable_columns', 'gwc_vt_volunteer_sortable_columns' );
 
 /* ── Finding one person on the volunteer list ────────────────────────────────
  * The hours list has had a filter since verification shipped. The volunteer list
@@ -19,19 +19,19 @@ add_filter( 'manage_edit-' . GWCVT_VOLUNTEER_TYPE . '_sortable_columns', 'gwcvt_
  *
  * Which mattered because the dashboard sends people here. Its worklist says "3
  * people are past their deadline — See who", and the link was a bare
- * edit.php?post_type=gwcvt_volunteer: every volunteer the site has ever had, in
+ * edit.php?post_type=gwc_vt_volunteer: every volunteer the site has ever had, in
  * no particular order, with the Required column to be read down page by page.
  * The screen naming a number was the one screen that could not show you which
  * three.
  *
  * Overdue is not a meta comparison — it is "past the deadline AND still short",
  * and the second half is computed from verified hours. So that option filters by
- * ID using gwcvt_overdue_requirement_ids(), which is the same function the
+ * ID using gwc_vt_overdue_requirement_ids(), which is the same function the
  * dashboard counted with. One definition, so the count and the list cannot
  * disagree.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWCVT_VOLUNTEER_FILTER = 'gwcvt_requirement';
+const GWC_VT_VOLUNTEER_FILTER = 'gwc_vt_requirement';
 
 /**
  * The states worth filtering the volunteer list by.
@@ -41,7 +41,7 @@ const GWCVT_VOLUNTEER_FILTER = 'gwcvt_requirement';
  *
  * @return array<string, string>
  */
-function gwcvt_volunteer_filter_options(): array {
+function gwc_vt_volunteer_filter_options(): array {
 	return array(
 		''        => __( 'Any volunteer', 'groundwork-common-volunteer-tracker' ),
 		'has'     => __( 'Has hours to complete', 'groundwork-common-volunteer-tracker' ),
@@ -53,21 +53,21 @@ function gwcvt_volunteer_filter_options(): array {
 /**
  * The filter, above the volunteer list.
  */
-function gwcvt_volunteer_filter_dropdown(): void {
+function gwc_vt_volunteer_filter_dropdown(): void {
 	$screen = get_current_screen();
 
-	if ( ! $screen instanceof WP_Screen || 'edit-' . GWCVT_VOLUNTEER_TYPE !== $screen->id ) {
+	if ( ! $screen instanceof WP_Screen || 'edit-' . GWC_VT_VOLUNTEER_TYPE !== $screen->id ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only and core does not nonce these.
-	$current = isset( $_GET[ GWCVT_VOLUNTEER_FILTER ] ) ? sanitize_key( wp_unslash( $_GET[ GWCVT_VOLUNTEER_FILTER ] ) ) : '';
+	$current = isset( $_GET[ GWC_VT_VOLUNTEER_FILTER ] ) ? sanitize_key( wp_unslash( $_GET[ GWC_VT_VOLUNTEER_FILTER ] ) ) : '';
 	?>
-	<label class="screen-reader-text" for="<?php echo esc_attr( GWCVT_VOLUNTEER_FILTER ); ?>">
+	<label class="screen-reader-text" for="<?php echo esc_attr( GWC_VT_VOLUNTEER_FILTER ); ?>">
 		<?php esc_html_e( 'Filter by what they have to complete', 'groundwork-common-volunteer-tracker' ); ?>
 	</label>
-	<select name="<?php echo esc_attr( GWCVT_VOLUNTEER_FILTER ); ?>" id="<?php echo esc_attr( GWCVT_VOLUNTEER_FILTER ); ?>">
-		<?php foreach ( gwcvt_volunteer_filter_options() as $value => $label ) : ?>
+	<select name="<?php echo esc_attr( GWC_VT_VOLUNTEER_FILTER ); ?>" id="<?php echo esc_attr( GWC_VT_VOLUNTEER_FILTER ); ?>">
+		<?php foreach ( gwc_vt_volunteer_filter_options() as $value => $label ) : ?>
 			<option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( $current, $value ); ?>>
 				<?php echo esc_html( $label ); ?>
 			</option>
@@ -82,7 +82,7 @@ function gwcvt_volunteer_filter_dropdown(): void {
  * Pure, and separate from the hook below, so the two rules that matter — that an
  * empty overdue set shows nobody rather than everybody, and that sorting by
  * deadline does not drop the volunteers who have none — can be asserted without
- * a request. Same split as gwcvt_dashboard_items().
+ * a request. Same split as gwc_vt_dashboard_items().
  *
  * @param string $state   One of '', 'has', 'overdue', 'none'.
  * @param string $orderby The requested orderby.
@@ -90,7 +90,7 @@ function gwcvt_volunteer_filter_dropdown(): void {
  * @param int[]  $overdue The overdue volunteer IDs, when $state is 'overdue'.
  * @return array<string, mixed> Query vars to set.
  */
-function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string $order = 'ASC', array $overdue = array() ): array {
+function gwc_vt_volunteer_query_vars( string $state, string $orderby = '', string $order = 'ASC', array $overdue = array() ): array {
 	$vars = array();
 
 	if ( 'overdue' === $state ) {
@@ -102,7 +102,7 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
 		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering an admin list table by a meta value is what meta_query is for; the key is indexed and this runs on one screen a coordinator opens deliberately.
 		$vars['meta_query'] = array(
 			array(
-				'key'     => GWCVT_VOLUNTEER_REQUIRED,
+				'key'     => GWC_VT_VOLUNTEER_REQUIRED,
 				'value'   => 0,
 				'compare' => '>',
 				'type'    => 'NUMERIC',
@@ -113,11 +113,11 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
 		$vars['meta_query'] = array(
 			'relation' => 'OR',
 			array(
-				'key'     => GWCVT_VOLUNTEER_REQUIRED,
+				'key'     => GWC_VT_VOLUNTEER_REQUIRED,
 				'compare' => 'NOT EXISTS',
 			),
 			array(
-				'key'     => GWCVT_VOLUNTEER_REQUIRED,
+				'key'     => GWC_VT_VOLUNTEER_REQUIRED,
 				'value'   => 0,
 				'compare' => '<=',
 				'type'    => 'NUMERIC',
@@ -125,7 +125,7 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
 		);
 	}
 
-	if ( 'gwcvt_required' !== $orderby ) {
+	if ( 'gwc_vt_required' !== $orderby ) {
 		return $vars;
 	}
 
@@ -141,19 +141,19 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
 	 * array holding both, and the filter states that use meta_query are exactly
 	 * the ones this sort makes redundant. */
 	$vars['orderby'] = array(
-		'gwcvt_deadline' => $order,
-		'title'          => 'ASC',
+		'gwc_vt_deadline' => $order,
+		'title'           => 'ASC',
 	);
 	// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the EXISTS-or-NOT-EXISTS pair described directly above. Dropping it to satisfy the sniff would silently hide every volunteer without a deadline, which is the bug the comment exists to prevent.
 	$vars['meta_query'] = array(
-		'relation'       => 'OR',
-		'gwcvt_deadline' => array(
-			'key'     => GWCVT_VOLUNTEER_REQUIRED_BY,
+		'relation'        => 'OR',
+		'gwc_vt_deadline' => array(
+			'key'     => GWC_VT_VOLUNTEER_REQUIRED_BY,
 			'compare' => 'EXISTS',
 			'type'    => 'CHAR',
 		),
 		array(
-			'key'     => GWCVT_VOLUNTEER_REQUIRED_BY,
+			'key'     => GWC_VT_VOLUNTEER_REQUIRED_BY,
 			'compare' => 'NOT EXISTS',
 		),
 	);
@@ -166,24 +166,24 @@ function gwcvt_volunteer_query_vars( string $state, string $orderby = '', string
  *
  * @param WP_Query $query The query about to run.
  */
-function gwcvt_apply_volunteer_filter( $query ): void {
+function gwc_vt_apply_volunteer_filter( $query ): void {
 	if ( ! is_admin() || ! $query instanceof WP_Query || ! $query->is_main_query() ) {
 		return;
 	}
 
-	if ( GWCVT_VOLUNTEER_TYPE !== $query->get( 'post_type' ) ) {
+	if ( GWC_VT_VOLUNTEER_TYPE !== $query->get( 'post_type' ) ) {
 		return;
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only and core does not nonce these.
-	$state = isset( $_GET[ GWCVT_VOLUNTEER_FILTER ] ) ? sanitize_key( wp_unslash( $_GET[ GWCVT_VOLUNTEER_FILTER ] ) ) : '';
+	$state = isset( $_GET[ GWC_VT_VOLUNTEER_FILTER ] ) ? sanitize_key( wp_unslash( $_GET[ GWC_VT_VOLUNTEER_FILTER ] ) ) : '';
 
-	$vars = gwcvt_volunteer_query_vars(
+	$vars = gwc_vt_volunteer_query_vars(
 		$state,
 		(string) $query->get( 'orderby' ),
 		// phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- WP_Query::get() returns '' for an unset key, not null, so ?? would keep the empty string.
 		(string) ( $query->get( 'order' ) ?: 'ASC' ),
-		'overdue' === $state ? gwcvt_overdue_requirement_ids() : array()
+		'overdue' === $state ? gwc_vt_overdue_requirement_ids() : array()
 	);
 
 	foreach ( $vars as $key => $value ) {
@@ -203,10 +203,10 @@ function gwcvt_apply_volunteer_filter( $query ): void {
  * @param array $columns Sortable columns.
  * @return array
  */
-function gwcvt_volunteer_sortable_columns( $columns ): array {
+function gwc_vt_volunteer_sortable_columns( $columns ): array {
 	$columns = (array) $columns;
 
-	$columns['gwcvt_required'] = 'gwcvt_required';
+	$columns['gwc_vt_required'] = 'gwc_vt_required';
 
 	return $columns;
 }
@@ -229,17 +229,17 @@ function gwcvt_volunteer_sortable_columns( $columns ): array {
 /**
  * Register both history panels.
  */
-function gwcvt_add_volunteer_history_boxes(): void {
+function gwc_vt_add_volunteer_history_boxes(): void {
 	add_meta_box(
-		'gwcvt-volunteer-hours',
+		'gwc-vt-volunteer-hours',
 		__( 'Hours logged', 'groundwork-common-volunteer-tracker' ),
-		'gwcvt_render_volunteer_hours_box',
-		GWCVT_VOLUNTEER_TYPE,
+		'gwc_vt_render_volunteer_hours_box',
+		GWC_VT_VOLUNTEER_TYPE,
 		'normal',
 		'default'
 	);
 
-	if ( ! current_user_can( gwcvt_cap( 'issue' ) ) ) {
+	if ( ! current_user_can( gwc_vt_cap( 'issue' ) ) ) {
 		/* The letter log names documents sent to courts and schools. Somebody
 		 * who may edit a volunteer record but not issue letters has no reason to
 		 * see which ones went out. */
@@ -247,10 +247,10 @@ function gwcvt_add_volunteer_history_boxes(): void {
 	}
 
 	add_meta_box(
-		'gwcvt-volunteer-letters',
+		'gwc-vt-volunteer-letters',
 		__( 'Letters issued', 'groundwork-common-volunteer-tracker' ),
-		'gwcvt_render_volunteer_letters_box',
-		GWCVT_VOLUNTEER_TYPE,
+		'gwc_vt_render_volunteer_letters_box',
+		GWC_VT_VOLUNTEER_TYPE,
 		'normal',
 		'default'
 	);
@@ -261,7 +261,7 @@ function gwcvt_add_volunteer_history_boxes(): void {
  *
  * @param WP_Post $post The volunteer.
  */
-function gwcvt_render_volunteer_hours_box( $post ): void {
+function gwc_vt_render_volunteer_hours_box( $post ): void {
 	$volunteer_id = (int) $post->ID;
 
 	if ( 'auto-draft' === get_post_status( $volunteer_id ) ) {
@@ -275,7 +275,7 @@ function gwcvt_render_volunteer_hours_box( $post ): void {
 	/* Drafts and pending included, unlike the letter. This screen is where staff
 	 * triage, so a self-logged shift somebody has attached but not yet verified
 	 * has to be visible here even though it would never reach a document. */
-	$entry_ids = gwcvt_entry_ids_for_volunteer(
+	$entry_ids = gwc_vt_entry_ids_for_volunteer(
 		$volunteer_id,
 		array( 'statuses' => array( 'publish', 'pending', 'draft' ) )
 	);
@@ -296,17 +296,17 @@ function gwcvt_render_volunteer_hours_box( $post ): void {
 
 		$rows[] = array(
 			'id'       => $entry_id,
-			'date'     => (string) get_post_meta( $entry_id, GWCVT_ENTRY_DATE, true ),
-			'minutes'  => (int) get_post_meta( $entry_id, GWCVT_ENTRY_MINUTES, true ),
-			'activity' => (string) get_post_meta( $entry_id, GWCVT_ENTRY_ACTIVITY, true ),
+			'date'     => (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true ),
+			'minutes'  => (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true ),
+			'activity' => (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true ),
 			'status'   => (string) get_post_status( $entry_id ),
-			'verified' => gwcvt_entry_is_verified( $entry_id ),
+			'verified' => gwc_vt_entry_is_verified( $entry_id ),
 		);
 	}
 
 	usort( $rows, static fn( array $a, array $b ): int => strcmp( $b['date'], $a['date'] ) );
 
-	$totals = gwcvt_volunteer_totals( $volunteer_id );
+	$totals = gwc_vt_volunteer_totals( $volunteer_id );
 	?>
 	<table class="widefat striped gwcvt-history">
 		<thead>
@@ -322,18 +322,18 @@ function gwcvt_render_volunteer_hours_box( $post ): void {
 			<?php foreach ( $rows as $row ) : ?>
 				<tr>
 					<td><?php echo esc_html( '' !== $row['date'] ? $row['date'] : '—' ); ?></td>
-					<td><?php echo esc_html( gwcvt_format_hours( $row['minutes'] ) ); ?></td>
+					<td><?php echo esc_html( gwc_vt_format_hours( $row['minutes'] ) ); ?></td>
 					<td><?php echo esc_html( $row['activity'] ); ?></td>
 					<td>
 						<?php if ( $row['verified'] ) : ?>
-							<span class="gwcvt-badge gwcvt-badge--verified"><?php echo esc_html( gwcvt_verification_label( 'verified' ) ); ?></span>
+							<span class="gwcvt-badge gwcvt-badge--verified"><?php echo esc_html( gwc_vt_verification_label( 'verified' ) ); ?></span>
 						<?php else : ?>
 							<span class="gwcvt-badge gwcvt-badge--waiting">
 								<?php
 								echo esc_html(
 									'pending' === $row['status']
-										? gwcvt_verification_label( 'pending' )
-										: gwcvt_verification_label( 'unverified' )
+										? gwc_vt_verification_label( 'pending' )
+										: gwc_vt_verification_label( 'unverified' )
 								);
 								?>
 							</span>
@@ -354,8 +354,8 @@ function gwcvt_render_volunteer_hours_box( $post ): void {
 		printf(
 			/* translators: 1: verified hours, 2: unverified hours, 3: number of shifts. */
 			esc_html__( '%1$s verified, %2$s awaiting verification, across %3$s.', 'groundwork-common-volunteer-tracker' ),
-			'<strong>' . esc_html( gwcvt_format_hours( $totals->verified_minutes ) ) . '</strong>',
-			'<strong>' . esc_html( gwcvt_format_hours( $totals->pending_minutes ) ) . '</strong>',
+			'<strong>' . esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ) . '</strong>',
+			'<strong>' . esc_html( gwc_vt_format_hours( $totals->pending_minutes ) ) . '</strong>',
 			'<strong>' . esc_html(
 				sprintf(
 					/* translators: %d: number of shifts. */
@@ -367,9 +367,9 @@ function gwcvt_render_volunteer_hours_box( $post ): void {
 		?>
 	</p>
 
-	<?php if ( current_user_can( gwcvt_cap( 'issue' ) ) && $totals->verified_minutes > 0 ) : ?>
+	<?php if ( current_user_can( gwc_vt_cap( 'issue' ) ) && $totals->verified_minutes > 0 ) : ?>
 		<p>
-			<a class="button" href="<?php echo esc_url( gwcvt_letters_url( array( 'volunteer' => $volunteer_id ) ) ); ?>">
+			<a class="button" href="<?php echo esc_url( gwc_vt_letters_url( array( 'volunteer' => $volunteer_id ) ) ); ?>">
 				<?php esc_html_e( 'Produce a letter for this volunteer', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		</p>
@@ -382,14 +382,14 @@ function gwcvt_render_volunteer_hours_box( $post ): void {
  *
  * @param WP_Post $post The volunteer.
  */
-function gwcvt_render_volunteer_letters_box( $post ): void {
+function gwc_vt_render_volunteer_letters_box( $post ): void {
 	$volunteer_id = (int) $post->ID;
 
 	if ( 'auto-draft' === get_post_status( $volunteer_id ) ) {
 		return;
 	}
 
-	$records = gwcvt_letters_for_volunteer( $volunteer_id );
+	$records = gwc_vt_letters_for_volunteer( $volunteer_id );
 
 	if ( ! $records ) {
 		printf(
@@ -417,7 +417,7 @@ function gwcvt_render_volunteer_letters_box( $post ): void {
 				<tr>
 					<td><?php echo esc_html( $record['issued_at'] ); ?></td>
 					<td><code><?php echo esc_html( $record['reference'] ); ?></code></td>
-					<td><?php echo esc_html( gwcvt_format_hours( $record['minutes'] ) ); ?></td>
+					<td><?php echo esc_html( gwc_vt_format_hours( $record['minutes'] ) ); ?></td>
 					<td>
 						<?php
 						if ( 'email' === $record['medium'] ) {
@@ -438,7 +438,7 @@ function gwcvt_render_volunteer_letters_box( $post ): void {
 						 * the box. The common reason for looking at this table is
 						 * that somebody has phoned about one of these. */
 						?>
-						<a href="<?php echo esc_url( gwcvt_letters_url( array( 'reference' => $record['reference'] ) ) ); ?>">
+						<a href="<?php echo esc_url( gwc_vt_letters_url( array( 'reference' => $record['reference'] ) ) ); ?>">
 							<?php esc_html_e( 'Check it', 'groundwork-common-volunteer-tracker' ); ?>
 						</a>
 					</td>

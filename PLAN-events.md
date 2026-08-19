@@ -8,14 +8,14 @@ An event is a **container over shifts**. It is not a new kind of slot, and there
 no third post type between the event and the person.
 
 The reason is arithmetic. A SignUp Genius slot is *(a role) × (a time window) ×
-(how many people)*. A `gwcvt_shift` is already *(an activity) × (a date and a time
+(how many people)*. A `gwc_vt_shift` is already *(an activity) × (a date and a time
 window) × (a minimum and a maximum)*. They are the same record. What a coordinator
 calls "Greeter, 9–12, we need 3" this plugin already stores.
 
 So:
 
 ```
-gwcvt_event  ──post_parent──▶  gwcvt_shift  ──post_parent──▶  gwcvt_signup
+gwc_vt_event  ──post_parent──▶  gwc_vt_shift  ──post_parent──▶  gwc_vt_signup
 "Fall Festival,               "Greeter, 12 Oct,              "someone, one slot"
  12 October"                   09:00–12:00, max 3"
 ```
@@ -36,26 +36,26 @@ shift and an event signup *is* a signup:
 - The privacy exporter, the eraser, and the orphan-signup retention sweep.
 - Cancelled-shift and moved-shift notices.
 
-A parallel `gwcvt_event_slot` type would need all of that written twice. The one
+A parallel `gwc_vt_event_slot` type would need all of that written twice. The one
 that would hurt is reconciliation: two ways for hours to arrive at a letter is two
 places for hours to arrive at a letter wrongly, and the second one would be the new
 one nobody has been staring at for four releases.
 
 ### What it costs
 
-`gwcvt_shifts_between()` currently returns every shift regardless of parent, and
+`gwc_vt_shifts_between()` currently returns every shift regardless of parent, and
 every caller assumes a flat list. Three of those callers want different answers now,
 and getting the default wrong is the first trap below.
 
 ## Data model
 
-### `gwcvt_event`, a new CPT
+### `gwc_vt_event`, a new CPT
 
-Registered exactly like `gwcvt_shift`: `public => false`, `show_ui => false`,
+Registered exactly like `gwc_vt_shift`: `public => false`, `show_ui => false`,
 `show_in_rest => false` (hard rule 2 — an event carries a location and a
 description, and its children carry names), `has_archive => false`,
 `supports => false`, `capability_type => 'post'`, filtered through
-`gwcvt_event_post_type_args`.
+`gwc_vt_event_post_type_args`.
 
 Title is typed here rather than derived. Unlike a shift, an event has a name a human
 chose — "Fall Festival", "Thanksgiving Meal Service" — and that name is the thing
@@ -65,14 +65,14 @@ Meta:
 
 | Key | Holds |
 | --- | --- |
-| `_gwcvt_event_date` | First day, `Y-m-d`. Derived from the earliest slot on save; stored so the event can be ordered by meta the way shifts are. |
-| `_gwcvt_event_end_date` | Last day, `Y-m-d`. Same derivation. Equal to the first for a one-day event. |
-| `_gwcvt_event_location` | Where. Slots may override; most will not. |
-| `_gwcvt_event_description` | What it is, sanitised to plain text. Shown to the public above the grid. |
-| `_gwcvt_event_supervisor` | Default supervisor, inherited by slots that do not set one. |
-| `_gwcvt_event_page` | Optional page ID the grid is pinned to. See "Public surface". |
+| `_gwc_vt_event_date` | First day, `Y-m-d`. Derived from the earliest slot on save; stored so the event can be ordered by meta the way shifts are. |
+| `_gwc_vt_event_end_date` | Last day, `Y-m-d`. Same derivation. Equal to the first for a one-day event. |
+| `_gwc_vt_event_location` | Where. Slots may override; most will not. |
+| `_gwc_vt_event_description` | What it is, sanitised to plain text. Shown to the public above the grid. |
+| `_gwc_vt_event_supervisor` | Default supervisor, inherited by slots that do not set one. |
+| `_gwc_vt_event_page` | Optional page ID the grid is pinned to. See "Public surface". |
 
-A cancelled status, `gwcvt_event_cancelled`, mirroring `gwcvt_shift_cancelled` and
+A cancelled status, `gwc_vt_event_cancelled`, mirroring `gwc_vt_shift_cancelled` and
 for the same reason: people signed up, and "this was called off" is an answer the
 organisation owes them.
 
@@ -85,20 +85,20 @@ disagree with the first the moment somebody moves one slot.
 Shift's `post_parent` is currently unused. Using it for the event mirrors
 signup → shift exactly, needs no join, and needs no new key.
 
-It does **not** collide with `GWCVT_SHIFT_SERIES`, and that is worth being explicit
+It does **not** collide with `GWC_VT_SHIFT_SERIES`, and that is worth being explicit
 about because both are groupings. A series is "this shift, repeated" — the same role
 at the same time on twenty Saturdays. An event is "these different roles, one
 occasion." They are orthogonal, they compose, and forcing them through one field
 would make a recurring festival impossible to represent.
 
 `wp_delete_post()`'s child-reparenting only fires for hierarchical types and only
-across the same post type, so a non-hierarchical `gwcvt_event` will not have its
+across the same post type, so a non-hierarchical `gwc_vt_event` will not have its
 slots silently reparented. Deleting an event with slots is refused anyway — see
 below.
 
 ### Roles are the activity string, and stay free text
 
-`GWCVT_SHIFT_ACTIVITY` is the role. No taxonomy in v1.
+`GWC_VT_SHIFT_ACTIVITY` is the role. No taxonomy in v1.
 
 The obvious objection is that free text diverges: "Greeter" and "greeter" become two
 columns in the grid. The fix is not a taxonomy, it is the editor's shape — the grid
@@ -108,11 +108,11 @@ once per role, so it cannot diverge within an event.
 
 Cross-event consistency is worth less than it looks and costs a migration, a
 governance question and a UI. A `<datalist>` of activities already exists
-(`gwcvt_activity_vocabulary()`, used by the quick-add screen) and gets most of it.
+(`gwc_vt_activity_vocabulary()`, used by the quick-add screen) and gets most of it.
 
 ### "What to know" is role-level too
 
-`GWCVT_SHIFT_NOTES` already exists on every shift, is already labelled *"What to
+`GWC_VT_SHIFT_NOTES` already exists on every shift, is already labelled *"What to
 know"* in the single-shift editor, and already reaches four places: the public list,
 the calendar file's `DESCRIPTION`, the confirmation and the reminder. It is the
 what-to-bring channel, not decoration.
@@ -132,7 +132,7 @@ chain where one inherited field appends while the supervisor and the location re
 is a rule nobody will remember.
 
 **One consequence that must be said out loud in the editor.** The activity flows
-shift → reconcile screen → `GWCVT_ENTRY_ACTIVITY` → the letter, and it is inside the
+shift → reconcile screen → `GWC_VT_ENTRY_ACTIVITY` → the letter, and it is inside the
 reference digest. A role called "Trash Duty" is a line in a document a judge reads.
 The editor's help text should say that role names are printed on verification
 letters, so they get named as work rather than as jokes.
@@ -167,7 +167,7 @@ Each row is one shift. Save creates missing shifts, updates changed ones, and �
 important part — **cancels rather than deletes any slot that has people on it.** The
 existing rule ("a shift with people on it is cancelled, never deleted") is not
 suspended because the removal came from a grid instead of a button. An empty slot is
-deleted; a slot with a roster is set to `gwcvt_shift_cancelled` and stays visible,
+deleted; a slot with a roster is set to `gwc_vt_shift_cancelled` and stays visible,
 struck through, with its reason. The screen says which happened before it happens.
 
 No JavaScript requirement. Add-a-role and add-a-time can be plain submits that
@@ -183,7 +183,7 @@ event, the same roles and times against a new date, nobody signed up.
 
 Add a fourth view: **Events**, listing events forward from today with a fill summary
 ("14 of 22 places filled, 3 roles short"). An event row expands to its slots, which
-render with the existing `gwcvt_render_schedule_row()`.
+render with the existing `gwc_vt_render_schedule_row()`.
 
 The existing flat schedule list should **group** event slots under their event rather
 than hide them — a coordinator scanning next Saturday needs to see that the festival
@@ -192,9 +192,9 @@ omission.
 
 ### Putting somebody on by hand
 
-This already exists for shifts and needs one change for events. `gwcvt_render_shift_roster()`
+This already exists for shifts and needs one change for events. `gwc_vt_render_shift_roster()`
 carries a **"Put somebody on this shift"** form — the REST-backed volunteer picker,
-then Add them — and `gwcvt_handle_roster_add()` calls `gwcvt_add_signup()` with
+then Add them — and `gwc_vt_handle_roster_add()` calls `gwc_vt_add_signup()` with
 `source => 'staff'`. It refuses a `volunteer_id` of 0, and the help text says why:
 *"Most signups at this size are a phone call. Somebody who is not on file yet needs a
 volunteer record first."*
@@ -257,7 +257,7 @@ a new dress: type somebody's address, tick Kitchen 08:00–14:00, and "that clas
 something you are already down for" reports that they hold something overlapping those
 hours.
 
-`gwcvt_find_signup()` is permitted its email-scoped lookup for one stated reason —
+`gwc_vt_find_signup()` is permitted its email-scoped lookup for one stated reason —
 *"its answer changes nothing the visitor can see."* A cross-submission clash warning
 breaks that clause, which is the clause the whole lookup rests on.
 
@@ -285,7 +285,7 @@ and there is no setting that changes it.
 This is the single most dangerous part of the feature, and it is worth being precise
 about why, because the imprecise version of the rule is easy to argue away.
 
-`gwcvt_add_signup()` is idempotent — a second signup for the same slot by the same
+`gwc_vt_add_signup()` is idempotent — a second signup for the same slot by the same
 address refreshes the first rather than making another — and the form never checks
 whether that address belongs to anybody. So a stranger can type somebody else's
 address and tick three boxes. Three new signups, two new and one refresh, or three
@@ -334,7 +334,7 @@ Two options, and I would ship the first:
    on `publicly_queryable`, which is a lever this plugin has never pulled and which
    would need its own argument.
 
-Either way `gwcvt_signup_dispatch()`'s `is_page()` gate has to widen to "the schedule
+Either way `gwc_vt_signup_dispatch()`'s `is_page()` gate has to widen to "the schedule
 page **or** a page carrying an event grid", and it must stay a gate — a handler that
 runs where the form is not rendered accepts posts to a feature the site has not put
 anywhere.
@@ -343,7 +343,7 @@ anywhere.
 
 ### One confirmation per submission, not one per slot
 
-Four slots must not be four emails. `gwcvt_queue_signup_confirmation()` already defers
+Four slots must not be four emails. `gwc_vt_queue_signup_confirmation()` already defers
 to `shutdown`; the queue groups by *(claimed email, event)* and sends one message
 listing every slot from that submission.
 
@@ -373,7 +373,7 @@ them off that slot and leaves the rest, for the same reason the manage panel say
 
 **This reverses an earlier deferral in this plan, and the reason is worth keeping.**
 The objection was that grouping breaks the one-to-one between a send and
-`_gwcvt_signup_reminded_at`, which is what makes the hourly pass safe unattended.
+`_gwc_vt_signup_reminded_at`, which is what makes the hourly pass safe unattended.
 That objection was aimed at the wrong invariant. The one that matters is not
 *one flag per email* — it is:
 
@@ -398,9 +398,9 @@ job that reminds the same person every hour forever — is still worse.
 Nothing new to build, and that is the payoff for refusing a third type:
 
 - An event holds a name, a description, a location and dates. No personal data.
-- Every signup is still a `gwcvt_signup`, so `gwcvt_signups_by_claim_email()`,
-  `gwcvt_signup_ids_for_volunteer()`, `gwcvt_clear_signup_claims()` and
-  `gwcvt_sweep_orphan_signups()` reach event signups with no change — the sweep
+- Every signup is still a `gwc_vt_signup`, so `gwc_vt_signups_by_claim_email()`,
+  `gwc_vt_signup_ids_for_volunteer()`, `gwc_vt_clear_signup_claims()` and
+  `gwc_vt_sweep_orphan_signups()` reach event signups with no change — the sweep
   queries by post type and status and never looks at the parent.
 - The exporter's per-signup item names its shift; it will name an event slot the same
   way. Worth having it say which event, so an export reads as an occasion rather
@@ -472,38 +472,38 @@ means somebody reconciles manually, which is what happens today.
 
 ## Traps
 
-1. **`gwcvt_shifts_between()` must keep returning event slots by default.** The
+1. **`gwc_vt_shifts_between()` must keep returning event slots by default.** The
    understaffed query and the unreconciled query both run through it. Filter parented
    shifts out there and the reconciliation nag silently stops covering events — and
    the failure mode is hours nobody typed up, on the record a letter is built from.
    Add an optional `parent` argument, default "everything", and opt *in* to
    `parent => 0` from the two places that want a flat standalone list
-   (`gwcvt_public_shift_ids()` and the schedule's flat view). Never opt out by default.
-2. **`gwcvt_public_shift_ids()` must exclude parented shifts**, or every festival slot
+   (`gwc_vt_public_shift_ids()` and the schedule's flat view). Never opt out by default.
+2. **`gwc_vt_public_shift_ids()` must exclude parented shifts**, or every festival slot
    appears loose on the generic signup page with no idea what it belongs to. It has a
-   filter (`gwcvt_schedule_visible_shifts`) but the default should be right.
+   filter (`gwc_vt_schedule_visible_shifts`) but the default should be right.
 3. **Checkbox arrays need explicit indexes**, or the same failure the "came"
    checkboxes already hit: an unticked box posts nothing, so a positional array
-   arrives with its indexes closed up. Post `gwcvt_slots[<shift_id>]` keyed by ID, not
-   `gwcvt_slots[]`.
+   arrives with its indexes closed up. Post `gwc_vt_slots[<shift_id>]` keyed by ID, not
+   `gwc_vt_slots[]`.
 4. **Every field wrapper in the grid editor is a `<div>`.** The grid is a table and a
    list; a `<p>` wrapper makes the parser close the paragraph and produces
    valid-looking HTML that no script can find.
 5. **Role labels and grid headers are functions with a static memo, never `const`.**
-6. **`gwcvt_shift_moved()` should not fire on regrouping.** Moving a slot from one role
+6. **`gwc_vt_shift_moved()` should not fire on regrouping.** Moving a slot from one role
    to another, or an event's description changing, must not mail the roster. Only the
    existing list — date, times, overnight, location — counts as a move.
 7. **Deleting an event with slots that have rosters is refused**, the same way deleting
    a shift with people on it is. Cancel the event, which cancels its slots and offers
    to tell everyone.
-8. **`show_in_rest => false` on `gwcvt_event`.** An event's children carry names.
+8. **`show_in_rest => false` on `gwc_vt_event`.** An event's children carry names.
 
 ## New ledger entries
 
 For README's **Things that are deliberate** — the rule is that new invariants go there:
 
 - An event is a container over shifts, never a new kind of slot. Every slot is a
-  `gwcvt_shift` and every signup is a `gwcvt_signup`, so reminders, waiting lists,
+  `gwc_vt_shift` and every signup is a `gwc_vt_signup`, so reminders, waiting lists,
   cancellation tokens, calendar files, the privacy exporter, the retention sweep and
   reconciliation into hours all work unchanged. A parallel slot type would mean a
   second path by which hours reach a court letter, and it would be the path nobody
@@ -546,7 +546,7 @@ For README's **Things that are deliberate** — the rule is that new invariants 
 - **An overlap is warned about inside one submission and only flagged across them**,
   and the reason is not squeamishness about refusing people — it is that the
   cross-submission check requires asking what an email address already holds and then
-  varying the page by the answer, which is the one thing `gwcvt_find_signup()`'s
+  varying the page by the answer, which is the one thing `gwc_vt_find_signup()`'s
   licence forbids. Within a submission nothing is looked up, so the warning is free.
   A double-booking is unlike being over capacity: it is a misclick rather than a want,
   and it leaves a slot reading as filled that nobody will turn up to.
@@ -571,12 +571,12 @@ Every one needs a row in the README table (hard rule 6):
 
 | Hook | Kind | What |
 | --- | --- | --- |
-| `gwcvt_event_post_type_args` | filter | `register_post_type()` arguments for events. |
-| `gwcvt_event_created` | action | After an event and its grid are first saved. |
-| `gwcvt_event_cancelled` | action | After an event is called off, carrying the reason and its slots. |
-| `gwcvt_event_slots_saved` | action | After a grid save, carrying slots made, updated and cancelled. |
-| `gwcvt_event_visible_slots` | filter | The slots shown on an event's public grid. |
-| `gwcvt_event_signup_limit` | filter | How many slots one submission may take. |
+| `gwc_vt_event_post_type_args` | filter | `register_post_type()` arguments for events. |
+| `gwc_vt_event_created` | action | After an event and its grid are first saved. |
+| `gwc_vt_event_cancelled` | action | After an event is called off, carrying the reason and its slots. |
+| `gwc_vt_event_slots_saved` | action | After a grid save, carrying slots made, updated and cancelled. |
+| `gwc_vt_event_visible_slots` | filter | The slots shown on an event's public grid. |
+| `gwc_vt_event_signup_limit` | filter | How many slots one submission may take. |
 
 ## Tests
 
@@ -608,16 +608,16 @@ Each step ends somewhere shippable.
 1. `inc/event-cpt.php` — the type, the cancelled status, the meta constants, the
    derived-date helpers. Required after `shift-cpt.php`, before `shifts.php`.
 2. `inc/events.php` — reading an event: its slots, its fill, its dates, its state.
-   Plus the `parent` argument on `gwcvt_shifts_between()` and the two opt-ins.
+   Plus the `parent` argument on `gwc_vt_shifts_between()` and the two opt-ins.
 3. `inc/admin-event.php` — the editor and the grid save. Coordinator-usable with no
    public surface at all, which is a legitimate way to run it.
 4. Events view on the schedule screen, and grouping in the flat list.
 5. `inc/event-form.php` — the public grid, and the multi-slot path through
-   `gwcvt_signup_dispatch()`. Nothing here without step 6 in the same release.
+   `gwc_vt_signup_dispatch()`. Nothing here without step 6 in the same release.
 6. Grouped confirmation email.
 7. Copy-an-event.
 
-Version bumps in all four places together — header, `GWCVT_VERSION`, `readme.txt`
+Version bumps in all four places together — header, `GWC_VT_VERSION`, `readme.txt`
 stable tag, changelog — or `VersionTest` and the deploy gate fail. New files must
 pass `php -l` under 7.4: typed properties and arrow functions are fine, union types,
 constructor promotion, `match`, enums and `?->` are not.
