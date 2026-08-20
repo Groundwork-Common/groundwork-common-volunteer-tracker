@@ -9,7 +9,7 @@ Stable tag: 1.0.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept.
+Log volunteer hours, have staff attest to them, and produce a verification letter for a court or a school.
 
 == Description ==
 
