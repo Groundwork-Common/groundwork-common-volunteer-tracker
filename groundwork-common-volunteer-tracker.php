@@ -4,7 +4,7 @@
  * Plugin URI:        https://www.groundworkcommon.com/
  * Description:       Log volunteer hours, have staff attest to them, and produce a verification letter a court or a school will accept from the person who earned it. Built for the nonprofits who host mandated service and currently do this on paper.
  * Version:           1.0.0
- * Requires at least: 7.0
+ * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
  * Author URI:        https://www.groundworkcommon.com/
