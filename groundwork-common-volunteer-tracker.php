@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Groundwork Common Volunteer Tracker
- * Plugin URI:        https://www.groundworkcommon.com/
+ * Plugin URI:        https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker
  * Description:       Plan volunteer shifts, take the signups and log the hours they produce, have staff attest to them, and produce a verification letter for a court or a school. Built for the nonprofits who host mandated service and currently do this on paper.
  * Version:           1.0.0
  * Requires at least: 6.3
