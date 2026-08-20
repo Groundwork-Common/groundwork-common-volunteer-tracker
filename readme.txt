@@ -1,7 +1,7 @@
 === Groundwork Common Volunteer Tracker ===
 Contributors: groundworkcommon
 Donate link: https://www.groundworkcommon.com/support/
-Tags: volunteer, volunteer hours, community service, nonprofit, timesheet
+Tags: volunteer, volunteer hours, volunteer scheduling, community service, nonprofit
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
@@ -9,15 +9,15 @@ Stable tag: 1.0.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Log volunteer hours, have staff attest to them, and produce a verification letter for a court or a school.
+Plan volunteer shifts, take signups, log the hours, and produce a verification letter for a court or a school.
 
 == Description ==
 
-Plenty of nonprofits host people working off court-ordered or school-required community service alongside their regular volunteers. At the end of it, that person needs a letter — on the organization's letterhead, saying how many hours they worked and when.
+Nonprofits that host mandated community service run two jobs that are really one: getting people onto Saturday's shift, and proving afterwards what they did. This plugin does both — the schedule, the signups and the roster on one side, the attested hours and the verification letter on the other.
 
-Right now that is a paper form in a drawer, or a Word template somebody edits by hand, or a staff member reconstructing six weeks of Saturdays from memory two days before a court date.
+Somebody working off court-ordered or school-required service needs a letter at the end of it, on the organization's letterhead, saying how many hours they worked and when. Right now that is a paper form in a drawer, or a Word template somebody edits by hand, or a staff member reconstructing six weeks of Saturdays from memory two days before a court date.
 
-This plugin keeps the hours, lets staff attest to them, and prints the letter.
+The two halves meet when the shift is over: the roster becomes the hours, everybody who signed up already ticked and the scheduled times filled in. Untick the no-shows, add the walk-ins, save once. Nobody types Saturday twice.
 
 = What it does =
 
