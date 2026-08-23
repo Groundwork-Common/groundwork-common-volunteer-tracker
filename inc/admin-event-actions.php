@@ -146,7 +146,7 @@ function gwc_vt_render_call_off_slot( int $shift_id ): void {
 					<tr>
 						<th scope="row"><label for="gwcvt-call-off-reason"><?php esc_html_e( 'Why', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
-							<input type="text" id="gwcvt-call-off-reason" name="gwc_vt_reason" class="regular-text" maxlength="300" />
+							<input type="text" id="gwcvt-call-off-reason" name="gwc_vt_reason" class="regular-text" maxlength="<?php echo esc_attr( (string) GWC_VT_SHIFT_REASON_MAX ); ?>" />
 							<p class="description"><?php esc_html_e( 'Shown on the schedule, and in the email if you send one.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
@@ -259,7 +259,7 @@ function gwc_vt_render_drop_role( int $event_id, string $role ): void {
 				<tbody>
 					<tr>
 						<th scope="row"><label for="gwcvt-drop-reason"><?php esc_html_e( 'Why', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td><input type="text" id="gwcvt-drop-reason" name="gwc_vt_reason" class="regular-text" maxlength="300" /></td>
+						<td><input type="text" id="gwcvt-drop-reason" name="gwc_vt_reason" class="regular-text" maxlength="<?php echo esc_attr( (string) GWC_VT_SHIFT_REASON_MAX ); ?>" /></td>
 					</tr>
 					<?php if ( $busy ) : ?>
 						<tr>
@@ -304,7 +304,7 @@ function gwc_vt_handle_call_off_slot(): void {
 
 	$posted = wp_unslash( $_POST );
 
-	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_reason'] ?? '' ) ), 0, 300 );
+	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_reason'] ?? '' ) ), 0, GWC_VT_SHIFT_REASON_MAX );
 	$notify = ! empty( $posted['gwc_vt_notify'] );
 
 	$told = gwc_vt_call_off_slot( $shift_id, $reason, $notify );
@@ -402,7 +402,7 @@ function gwc_vt_handle_drop_role(): void {
 	$posted = wp_unslash( $_POST );
 
 	$role   = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_role'] ?? '' ) ), 0, 200 );
-	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_reason'] ?? '' ) ), 0, 300 );
+	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_reason'] ?? '' ) ), 0, GWC_VT_SHIFT_REASON_MAX );
 	$notify = ! empty( $posted['gwc_vt_notify'] );
 
 	$roles = gwc_vt_event_roles( $event_id, array( 'publish', 'draft' ) );
@@ -463,8 +463,17 @@ function gwc_vt_handle_drop_role(): void {
 /**
  * Call one time off, and tell whoever was on it.
  *
- * The one place a time is cancelled, so the roster, the reason and the mail
- * cannot drift apart between the single-time path and the whole-role one.
+ * The one place a shift is cancelled, so the roster, the reason and the mail
+ * cannot drift apart between the single-time path, the whole-role one, the
+ * whole-event one and the standalone shift screen.
+ *
+ * It said that of itself while two other paths repeated its body, and they had
+ * already drifted in two ways. The reason was capped at 200 characters from the
+ * shift screen and 300 from both event screens — the same meta key on the same
+ * post type with two truth values depending on which button called it off. And
+ * the guard below existed only here: the shift screen's handler is reachable on
+ * its own, and gwc_vt_shift_signup_ids() still returns the roster of a cancelled
+ * shift, so a second POST re-mailed everybody and overwrote the stored reason.
  *
  * @param int    $shift_id Shift post ID.
  * @param string $reason   Why, as the coordinator typed it.
@@ -496,7 +505,17 @@ function gwc_vt_call_off_slot( int $shift_id, string $reason, bool $notify ): in
 		}
 	}
 
-	/** This action is documented in inc/admin-shift.php */
+	/**
+	 * Fires after a shift has been called off.
+	 *
+	 * The hook the cancellation notice hangs off when notices land. It carries
+	 * the roster rather than making the listener query for it, because by the
+	 * time anything else runs the signups may have been settled.
+	 *
+	 * @param int    $shift_id The cancelled shift.
+	 * @param string $reason   Why, as typed by the coordinator.
+	 * @param int[]  $roster   Signup IDs that were on it.
+	 */
 	do_action( 'gwc_vt_shift_cancelled', $shift_id, $reason, $roster );
 
 	return $told;

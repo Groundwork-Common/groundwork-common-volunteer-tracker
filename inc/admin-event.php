@@ -549,11 +549,11 @@ function gwc_vt_render_event_slot_row( int $role_index, int $slot_index, int $sh
 		</td>
 		<td>
 			<label class="screen-reader-text" for="<?php echo esc_attr( $id ); ?>-min"><?php esc_html_e( 'How many you need', 'groundwork-common-volunteer-tracker' ); ?></label>
-			<input type="number" id="<?php echo esc_attr( $id ); ?>-min" name="<?php echo esc_attr( $field ); ?>[min]" min="0" max="500" style="width:5em" value="<?php echo esc_attr( $min ); ?>" />
+			<input type="number" id="<?php echo esc_attr( $id ); ?>-min" name="<?php echo esc_attr( $field ); ?>[min]" min="0" max="<?php echo esc_attr( (string) GWC_VT_SHIFT_CAPACITY_MAX ); ?>" style="width:5em" value="<?php echo esc_attr( $min ); ?>" />
 		</td>
 		<td>
 			<label class="screen-reader-text" for="<?php echo esc_attr( $id ); ?>-max"><?php esc_html_e( 'How many it takes', 'groundwork-common-volunteer-tracker' ); ?></label>
-			<input type="number" id="<?php echo esc_attr( $id ); ?>-max" name="<?php echo esc_attr( $field ); ?>[max]" min="0" max="500" style="width:5em" value="<?php echo esc_attr( $max ); ?>" />
+			<input type="number" id="<?php echo esc_attr( $id ); ?>-max" name="<?php echo esc_attr( $field ); ?>[max]" min="0" max="<?php echo esc_attr( (string) GWC_VT_SHIFT_CAPACITY_MAX ); ?>" style="width:5em" value="<?php echo esc_attr( $max ); ?>" />
 		</td>
 		<td data-gwcvt-fill>
 			<?php
@@ -710,7 +710,7 @@ function gwc_vt_render_event_danger_zone( int $event_id ): void {
 			<?php wp_nonce_field( 'gwc_vt_cancel_event_' . $event_id ); ?>
 
 			<label for="gwcvt-event-cancel-reason"><?php esc_html_e( 'Call the whole thing off, because', 'groundwork-common-volunteer-tracker' ); ?></label>
-			<input type="text" id="gwcvt-event-cancel-reason" name="gwc_vt_reason" class="regular-text" maxlength="300" />
+			<input type="text" id="gwcvt-event-cancel-reason" name="gwc_vt_reason" class="regular-text" maxlength="<?php echo esc_attr( (string) GWC_VT_SHIFT_REASON_MAX ); ?>" />
 
 			<p>
 				<label>
@@ -958,13 +958,13 @@ function gwc_vt_save_event_grid( int $event_id, array $roles, array $context ): 
 				GWC_VT_SHIFT_DATE       => $date,
 				GWC_VT_SHIFT_START      => $start,
 				GWC_VT_SHIFT_END        => $end,
-				GWC_VT_SHIFT_OVERNIGHT  => $overnight ? 1 : 0,
+				GWC_VT_SHIFT_OVERNIGHT  => gwc_vt_shift_meta_value( GWC_VT_SHIFT_OVERNIGHT, $overnight ),
 				GWC_VT_SHIFT_ACTIVITY   => $name,
 				GWC_VT_SHIFT_SUPERVISOR => $supervisor,
 				GWC_VT_SHIFT_LOCATION   => $location,
 				GWC_VT_SHIFT_NOTES      => $notes,
-				GWC_VT_SHIFT_MIN        => min( 500, absint( $slot['min'] ?? 0 ) ),
-				GWC_VT_SHIFT_MAX        => min( 500, absint( $slot['max'] ?? 0 ) ),
+				GWC_VT_SHIFT_MIN        => gwc_vt_shift_meta_value( GWC_VT_SHIFT_MIN, $slot['min'] ?? 0 ),
+				GWC_VT_SHIFT_MAX        => gwc_vt_shift_meta_value( GWC_VT_SHIFT_MAX, $slot['max'] ?? 0 ),
 			);
 
 			if ( $shift_id < 1 ) {
@@ -998,13 +998,7 @@ function gwc_vt_save_event_grid( int $event_id, array $roles, array $context ): 
 			/* An existing time. Its status follows the event's, except that a
 			 * cancelled time stays cancelled — bringing one back is a decision,
 			 * not something that happens because somebody widened a maximum. */
-			$was = array(
-				'date'     => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
-				'start'    => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_START, true ),
-				'end'      => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_END, true ),
-				'next_day' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_OVERNIGHT, true ),
-				'location' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
-			);
+			$was = gwc_vt_shift_snapshot( $shift_id );
 
 			foreach ( $fields as $key => $value ) {
 				update_post_meta( $shift_id, $key, $value );
@@ -1085,31 +1079,17 @@ function gwc_vt_handle_cancel_event(): void {
 
 	$posted = wp_unslash( $_POST );
 
-	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_reason'] ?? '' ) ), 0, 300 );
+	$reason = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_reason'] ?? '' ) ), 0, GWC_VT_SHIFT_REASON_MAX );
 	$notify = ! empty( $posted['gwc_vt_notify'] );
 	$told   = 0;
 
+	/* gwc_vt_call_off_slot() rather than the same body written out again — see
+	 * its docblock in inc/admin-event-actions.php. This loop avoided the
+	 * double-send its sibling on the shift screen had, but only by accident:
+	 * gwc_vt_event_slot_ids() filters cancelled slots out by status, so the
+	 * guard was never reached rather than never needed. */
 	foreach ( gwc_vt_event_slot_ids( $event_id, array( 'publish', 'draft' ) ) as $shift_id ) {
-		$roster = gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) );
-
-		wp_update_post(
-			array(
-				'ID'          => $shift_id,
-				'post_status' => GWC_VT_SHIFT_CANCELLED,
-			)
-		);
-
-		update_post_meta( $shift_id, GWC_VT_SHIFT_REASON, $reason );
-
-		if ( $notify ) {
-			foreach ( $roster as $signup_id ) {
-				gwc_vt_queue_signup_mail( 'cancelled', (int) $signup_id, array( 'reason' => $reason ) );
-				++$told;
-			}
-		}
-
-		/** This action is documented in inc/admin-shift.php */
-		do_action( 'gwc_vt_shift_cancelled', $shift_id, $reason, $roster );
+		$told += gwc_vt_call_off_slot( (int) $shift_id, $reason, $notify );
 	}
 
 	wp_update_post(
@@ -1242,8 +1222,17 @@ function gwc_vt_handle_copy_event(): void {
 
 		update_post_meta( $new_id, GWC_VT_SHIFT_DATE, $date->modify( ( $offset >= 0 ? '+' : '' ) . $offset . ' days' )->format( 'Y-m-d' ) );
 
-		foreach ( array( GWC_VT_SHIFT_START, GWC_VT_SHIFT_END, GWC_VT_SHIFT_OVERNIGHT, GWC_VT_SHIFT_ACTIVITY, GWC_VT_SHIFT_SUPERVISOR, GWC_VT_SHIFT_LOCATION, GWC_VT_SHIFT_NOTES, GWC_VT_SHIFT_MIN, GWC_VT_SHIFT_MAX ) as $key ) {
-			update_post_meta( $new_id, $key, (string) get_post_meta( $shift_id, $key, true ) );
+		/* The shared field set and the shared normaliser, so a copied slot is
+		 * stored in the same shape a saved one is. This loop was a bare key list
+		 * casting everything to (string), which gave a copied event's capacities
+		 * "4" where every other write path stores 4. GWC_VT_SHIFT_DATE is above
+		 * rather than in the loop because a copy is offset onto new dates. */
+		foreach ( gwc_vt_shift_meta_keys() as $key ) {
+			if ( GWC_VT_SHIFT_DATE === $key ) {
+				continue;
+			}
+
+			update_post_meta( $new_id, $key, gwc_vt_shift_meta_value( $key, get_post_meta( $shift_id, $key, true ) ) );
 		}
 
 		gwc_vt_retitle_shift( $new_id );

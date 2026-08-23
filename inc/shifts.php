@@ -225,29 +225,100 @@ function gwc_vt_shift_is_open( int $shift_id ): bool {
 	return ( $starts->getTimestamp() - $cutoff ) > time();
 }
 
+/* ── What a shift is made of ─────────────────────────────────────────────────
+ * The writable attributes were enumerated in three places — the shift screen's
+ * save, the event grid's save, and the bare key list the copy path looped. Add
+ * one attribute and it had to be added to all three or it went silently missing
+ * from standalone shifts, event slots or copies, with nothing failing loudly.
+ *
+ * That is not hypothetical: the copy path wrote every value with (string), so a
+ * copied event's slots carried "4" where a saved one carried 4 — one field, two
+ * shapes in the database, and anything doing a strict comparison or a NUMERIC
+ * meta_query saw both.
+ *
+ * The split here is deliberate. These two own the SHAPE a value is stored in.
+ * The per-field length caps on the text attributes stay in the save handlers,
+ * because those sanitise what somebody typed into a particular form and are
+ * about input, not storage.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 /**
- * Did anything change that a volunteer would need to know about?
+ * Every meta key a shift's attributes are written to.
+ *
+ * Not GWC_VT_SHIFT_SERIES, GWC_VT_SHIFT_REASON or GWC_VT_SHIFT_RECONCILED:
+ * those record what happened to a shift rather than what it is, and copying one
+ * to a new shift would be a lie about the copy.
+ *
+ * @return string[]
+ */
+function gwc_vt_shift_meta_keys(): array {
+	return array(
+		GWC_VT_SHIFT_DATE,
+		GWC_VT_SHIFT_START,
+		GWC_VT_SHIFT_END,
+		GWC_VT_SHIFT_OVERNIGHT,
+		GWC_VT_SHIFT_ACTIVITY,
+		GWC_VT_SHIFT_SUPERVISOR,
+		GWC_VT_SHIFT_LOCATION,
+		GWC_VT_SHIFT_NOTES,
+		GWC_VT_SHIFT_MIN,
+		GWC_VT_SHIFT_MAX,
+	);
+}
+
+/**
+ * One shift attribute, in the shape it is stored in.
+ *
+ * @param string $key   One of gwc_vt_shift_meta_keys().
+ * @param mixed  $value The value to store.
+ * @return mixed
+ */
+function gwc_vt_shift_meta_value( string $key, $value ) {
+	if ( GWC_VT_SHIFT_MIN === $key || GWC_VT_SHIFT_MAX === $key ) {
+		return min( GWC_VT_SHIFT_CAPACITY_MAX, absint( $value ) );
+	}
+
+	if ( GWC_VT_SHIFT_OVERNIGHT === $key ) {
+		return empty( $value ) ? 0 : 1;
+	}
+
+	return (string) $value;
+}
+
+/**
+ * The attributes whose changing means a volunteer has to be told.
  *
  * The activity, the notes, the supervisor and the capacity are all deliberately
- * absent from this list. They can change without affecting whether somebody can
- * come, and mailing thirty people because a coordinator fixed a spelling is how
- * an organization teaches its volunteers to ignore its email.
+ * absent. They can change without affecting whether somebody can come, and
+ * mailing thirty people because a coordinator fixed a spelling is how an
+ * organization teaches its volunteers to ignore its email.
+ *
+ * A named list rather than whatever keys the comparison array happened to hold:
+ * the loop below used to take its key set from its own literal, so adding a key
+ * there for any other reason would have silently widened what counts as a move.
+ *
+ * @return string[] Snapshot keys, mapped to the meta key each reads.
+ */
+function gwc_vt_shift_movement_keys(): array {
+	return array(
+		'date'     => GWC_VT_SHIFT_DATE,
+		'start'    => GWC_VT_SHIFT_START,
+		'end'      => GWC_VT_SHIFT_END,
+		'next_day' => GWC_VT_SHIFT_OVERNIGHT,
+		'location' => GWC_VT_SHIFT_LOCATION,
+	);
+}
+
+/**
+ * Did anything change that a volunteer would need to know about?
  *
  * @param int   $shift_id Shift post ID.
  * @param array $was      What it looked like before the save.
  * @return bool
  */
 function gwc_vt_shift_moved( int $shift_id, array $was ): bool {
-	$now = array(
-		'date'     => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
-		'start'    => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_START, true ),
-		'end'      => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_END, true ),
-		'next_day' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_OVERNIGHT, true ),
-		'location' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
-	);
-
-	foreach ( $now as $key => $value ) {
-		if ( (string) ( $was[ $key ] ?? '' ) !== $value ) {
+	foreach ( gwc_vt_shift_movement_keys() as $key => $meta_key ) {
+		if ( (string) ( $was[ $key ] ?? '' ) !== (string) get_post_meta( $shift_id, $meta_key, true ) ) {
 			return true;
 		}
 	}

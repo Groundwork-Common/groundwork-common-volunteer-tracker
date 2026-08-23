@@ -524,6 +524,39 @@ function gwc_vt_shift_one_line( int $shift_id ): string {
 }
 
 /**
+ * What a shift looks like now, for quoting back once it has changed.
+ *
+ * Read before anything is written and handed to gwc_vt_queue_signup_mail() as
+ * 'was'. Two things read it: gwc_vt_shift_moved(), which decides whether
+ * anybody is told at all, and gwc_vt_send_shift_changed_notice(), which prints
+ * the 'label' as the "It was previously: ..." sentence.
+ *
+ * One function because it was two. The shift screen built these six keys and
+ * the event grid built the same five and stopped, with no 'label' — and the
+ * notice reads that key through a `?? ''` and an emptiness check, so the event
+ * grid's copy failed silently: no notice, no warning, just a shorter email that
+ * never said what had changed. What changed is usually what decides whether
+ * somebody can still come.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return array
+ */
+function gwc_vt_shift_snapshot( int $shift_id ): array {
+	$snapshot = array();
+
+	foreach ( gwc_vt_shift_movement_keys() as $key => $meta_key ) {
+		$snapshot[ $key ] = (string) get_post_meta( $shift_id, $meta_key, true );
+	}
+
+	/* Derived from the five above rather than a sixth field, which is why
+	 * gwc_vt_shift_moved() compares the movement keys by name and not whatever
+	 * this array happens to contain. */
+	$snapshot['label'] = gwc_vt_shift_one_line( $shift_id );
+
+	return $snapshot;
+}
+
+/**
  * The page somebody manages one signup from.
  *
  * A capability URL: it authorizes exactly one thing about exactly one signup,

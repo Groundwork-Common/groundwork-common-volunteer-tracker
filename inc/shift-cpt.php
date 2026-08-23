@@ -30,6 +30,21 @@ const GWC_VT_SHIFT_NOTES      = '_gwc_vt_shift_notes';
 const GWC_VT_SHIFT_MIN        = '_gwc_vt_shift_min';
 const GWC_VT_SHIFT_MAX        = '_gwc_vt_shift_max';
 const GWC_VT_SHIFT_SERIES     = '_gwc_vt_shift_series';
+
+/* The ceiling on a shift's minimum and maximum. A name rather than the literal
+ * 500 it used to be in four places: the two save handlers clamped with
+ * min( 500, ... ) and the three form inputs carried max="500", with nothing
+ * tying them together. Raising one and not the others silently gives the form
+ * and the handler different answers. */
+const GWC_VT_SHIFT_CAPACITY_MAX = 500;
+
+/* How much of a cancellation reason is kept. Settled at 300 because the shift
+ * screen was the odd one out at 200 while both event screens took 300 — the
+ * same meta key on the same post type, holding two different truths depending
+ * on which button called the shift off. Shortening a coordinator's explanation
+ * is the wrong direction, so the longer one won. Every form's maxlength and
+ * every handler's cap now read this. */
+const GWC_VT_SHIFT_REASON_MAX = 300;
 const GWC_VT_SHIFT_REASON     = '_gwc_vt_shift_cancelled_reason';
 
 /* GMT timestamp of when the roster was turned into hour entries. Absent means
