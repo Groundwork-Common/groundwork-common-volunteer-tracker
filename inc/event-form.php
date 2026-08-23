@@ -318,9 +318,10 @@ function gwc_vt_signup_return_url( int $signup_id ): string {
 
 /* ── Finding the page an event is on ─────────────────────────────────────────
  * An event has no URL of its own — the post type is public => false, and the
- * grid is placed on an ordinary page by the block or the shortcode. So the only
- * way to answer "where do volunteers see this" is to go looking for the
- * placement, which is what this does.
+ * grid is placed on an ordinary page — or post, or any other public post type
+ * with an editor — by the block or the shortcode. So the only way to answer
+ * "where do volunteers see this" is to go looking for the placement, which is
+ * what this does.
  *
  * Two markers, because there are two ways to place one and they look nothing
  * alike in post_content:
@@ -339,6 +340,43 @@ function gwc_vt_signup_return_url( int $signup_id ): string {
  * event, discover no page shows it, make the page — left the answer wrong for
  * up to an hour, which is exactly the hour they are testing it in.
  * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Every post type a grid can be placed in.
+ *
+ * Derived, not listed. The search used to name 'page' and nothing else, so an
+ * organization that wrote a post about an event — the story, the photos, the
+ * why — and put the signup on that same post got a grid that rendered
+ * perfectly and an event the plugin could not find: the confirmation and
+ * cancellation mail linked nowhere, and the editor said no page showed an event
+ * that was published and visible.
+ *
+ * The fix is not a second hardcoded list of two. Any public post type whose
+ * editor holds block content can carry the grid, including one a site or
+ * another plugin registered, and blocks/event-grid/render.php has never cared
+ * what it is rendering inside — it needs an eventId and nothing else.
+ *
+ * Attachments are excluded although they are public and have a post_content:
+ * the search below asks for 'publish' and an attachment's status is 'inherit',
+ * so including them would add a post type that can never match.
+ *
+ * @return string[]
+ */
+function gwc_vt_event_placement_post_types(): array {
+	$types = array();
+
+	foreach ( (array) get_post_types( array( 'public' => true ), 'names' ) as $type ) {
+		$type = (string) $type;
+
+		if ( 'attachment' === $type || ! post_type_supports( $type, 'editor' ) ) {
+			continue;
+		}
+
+		$types[] = $type;
+	}
+
+	return $types ? $types : array( 'page' );
+}
 
 /**
  * The current generation of the event-page lookup cache.
@@ -361,13 +399,13 @@ function gwc_vt_flush_event_page_cache(): void {
 }
 
 /**
- * Bump the generation when a page that could hold a grid is written.
+ * Bump the generation when anything that could hold a grid is written.
  *
  * @param int     $post_id Post ID.
  * @param WP_Post $post    The post.
  */
 function gwc_vt_maybe_flush_event_page_cache( $post_id, $post = null ): void {
-	if ( ! $post instanceof WP_Post || 'page' !== $post->post_type ) {
+	if ( ! $post instanceof WP_Post || ! in_array( $post->post_type, gwc_vt_event_placement_post_types(), true ) ) {
 		return;
 	}
 
@@ -450,7 +488,7 @@ function gwc_vt_event_page_id( int $event_id ): int {
 			$page_ids,
 			(array) get_posts(
 				array(
-					'post_type'              => 'page',
+					'post_type'              => gwc_vt_event_placement_post_types(),
 					'post_status'            => 'publish',
 					'posts_per_page'         => 100,
 					'fields'                 => 'ids',
@@ -462,7 +500,21 @@ function gwc_vt_event_page_id( int $event_id ): int {
 		);
 	}
 
-	foreach ( array_unique( array_map( 'intval', $page_ids ) ) as $page_id ) {
+	$page_ids = array_unique( array_map( 'intval', $page_ids ) );
+
+	/* Lowest ID wins when an event is placed more than once — on a page and on a
+	 * post about it, say. A rule rather than whatever the query happened to
+	 * return: the two marker searches are merged, so without this the answer
+	 * depended on which marker matched first and on the default ordering, and it
+	 * could change between requests for records nobody had touched.
+	 *
+	 * Lowest rather than newest because it is the only one of the two that never
+	 * moves. Adding a second placement later cannot change where an already-sent
+	 * confirmation email pointed, and a volunteer following a link from an old
+	 * message lands where they landed before. */
+	sort( $page_ids, SORT_NUMERIC );
+
+	foreach ( $page_ids as $page_id ) {
 		if ( gwc_vt_content_places_event( (string) get_post_field( 'post_content', $page_id ), $event_id ) ) {
 			$found = (int) $page_id;
 			break;

@@ -141,7 +141,170 @@ gwc_vt_pl_check(
 	(string) gwc_vt_event_page_id( (int) $gwc_vt_event_c )
 );
 
+/* ── A post is a placement too ────────────────────────────────────────────────
+ * The search named 'page' and nothing else, so an organization that wrote a
+ * post about an event and put the signup on that same post got a grid that
+ * rendered perfectly and an event the plugin could not find. Every link back to
+ * "the page this event is on" pointed nowhere, and the editor said no page
+ * showed an event that was published and visible.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_event_d = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_EVENT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest Riverbank Cleanup',
+	)
+);
+
+gwc_vt_pl_check(
+	'a post is one of the post types a grid can be placed in',
+	in_array( 'post', gwc_vt_event_placement_post_types(), true ),
+	implode( ',', gwc_vt_event_placement_post_types() )
+);
+
+gwc_vt_pl_check(
+	'and so is a page, which is where this started',
+	in_array( 'page', gwc_vt_event_placement_post_types(), true )
+);
+
+gwc_vt_pl_check(
+	'but not attachments, whose status is never publish',
+	! in_array( 'attachment', gwc_vt_event_placement_post_types(), true )
+);
+
+$gwc_vt_story = wp_insert_post(
+	array(
+		'post_type'    => 'post',
+		'post_status'  => 'publish',
+		'post_title'   => 'Zzytest why we clean the riverbank',
+		'post_content' => "The story, the photos, the why.\n\n<!-- wp:groundwork-common-volunteer-tracker/event-grid {\"eventId\":" . (int) $gwc_vt_event_d . '} /-->',
+	)
+);
+
+gwc_vt_pl_check(
+	'a block-placed event on a POST finds that post',
+	gwc_vt_event_page_id( (int) $gwc_vt_event_d ) === (int) $gwc_vt_story,
+	(string) gwc_vt_event_page_id( (int) $gwc_vt_event_d )
+);
+
+gwc_vt_pl_check(
+	'so the mail a volunteer gets has somewhere to send them',
+	'' !== (string) get_permalink( gwc_vt_event_page_id( (int) $gwc_vt_event_d ) ),
+	(string) get_permalink( gwc_vt_event_page_id( (int) $gwc_vt_event_d ) )
+);
+
+/* The shortcode on a post, which is the other half of the two-marker search. */
+$gwc_vt_event_e = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_EVENT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest Winter Coat Sort',
+	)
+);
+
+$gwc_vt_short_post = wp_insert_post(
+	array(
+		'post_type'    => 'post',
+		'post_status'  => 'publish',
+		'post_title'   => 'Zzytest coat sort, and how it went last year',
+		'post_content' => '[gwc_vt_event_grid id="' . (int) $gwc_vt_event_e . '"]',
+	)
+);
+
+gwc_vt_pl_check(
+	'a shortcode-placed event on a POST finds that post',
+	gwc_vt_event_page_id( (int) $gwc_vt_event_e ) === (int) $gwc_vt_short_post,
+	(string) gwc_vt_event_page_id( (int) $gwc_vt_event_e )
+);
+
+/* ── Placed twice, answered once ─────────────────────────────────────────────
+ * Lowest ID wins, and the rule is in README's "Things that are deliberate".
+ * Without it the answer depended on which of the two marker searches matched
+ * first and on the default ordering, and could change between requests for
+ * records nobody had touched.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_also_page = wp_insert_post(
+	array(
+		'post_type'    => 'page',
+		'post_status'  => 'publish',
+		'post_title'   => 'Zzytest riverbank cleanup signup',
+		'post_content' => '[gwc_vt_event_grid id="' . (int) $gwc_vt_event_d . '"]',
+	)
+);
+
+gwc_vt_flush_event_page_cache();
+
+gwc_vt_pl_check(
+	'an event placed on both a post and a page answers with the lower ID',
+	gwc_vt_event_page_id( (int) $gwc_vt_event_d ) === min( (int) $gwc_vt_story, (int) $gwc_vt_also_page ),
+	'answered ' . gwc_vt_event_page_id( (int) $gwc_vt_event_d ) . ', post ' . (int) $gwc_vt_story . ', page ' . (int) $gwc_vt_also_page
+);
+
+gwc_vt_pl_check(
+	'and answers the same thing twice running',
+	gwc_vt_event_page_id( (int) $gwc_vt_event_d ) === gwc_vt_event_page_id( (int) $gwc_vt_event_d )
+);
+
+/* ── Editing a post invalidates the answer, as editing a page always did ──── */
+
+$gwc_vt_gen_before = gwc_vt_event_page_generation();
+
+gwc_vt_maybe_flush_event_page_cache( (int) $gwc_vt_story, get_post( (int) $gwc_vt_story ) );
+
+gwc_vt_pl_check(
+	'writing a POST bumps the placement cache generation',
+	gwc_vt_event_page_generation() > $gwc_vt_gen_before,
+	$gwc_vt_gen_before . ' -> ' . gwc_vt_event_page_generation()
+);
+
+$gwc_vt_gen_before = gwc_vt_event_page_generation();
+
+gwc_vt_maybe_flush_event_page_cache( (int) $gwc_vt_also_page, get_post( (int) $gwc_vt_also_page ) );
+
+gwc_vt_pl_check(
+	'and writing a page still does',
+	gwc_vt_event_page_generation() > $gwc_vt_gen_before
+);
+
+$gwc_vt_gen_before = gwc_vt_event_page_generation();
+
+gwc_vt_maybe_flush_event_page_cache( (int) $gwc_vt_event_d, get_post( (int) $gwc_vt_event_d ) );
+
+gwc_vt_pl_check(
+	'while saving the event itself does not, since it can hold no grid',
+	gwc_vt_event_page_generation() === $gwc_vt_gen_before
+);
+
+/* ── An ID in prose is still not a placement ─────────────────────────────────
+ * A bare strpos for "12" is true of a page holding event 1, event 2, event 120,
+ * or the year 2012 in the paragraph above. Re-asserted on a post, since posts
+ * are where prose actually lives.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_prose = wp_insert_post(
+	array(
+		'post_type'    => 'post',
+		'post_status'  => 'publish',
+		'post_title'   => 'Zzytest a look back at 2012',
+		'post_content' => 'We ran event 120 in 2012, and event 1 before that. [gwc_vt_event_grid id="9999999"]',
+	)
+);
+
+gwc_vt_flush_event_page_cache();
+
+gwc_vt_pl_check(
+	'an event id that only appears in prose on a post is not a placement',
+	gwc_vt_event_page_id( 12 ) !== (int) $gwc_vt_prose,
+	(string) gwc_vt_event_page_id( 12 )
+);
+
 /* ── Teardown ────────────────────────────────────────────────────────────── */
+
+foreach ( array( $gwc_vt_story, $gwc_vt_short_post, $gwc_vt_also_page, $gwc_vt_prose, $gwc_vt_event_d, $gwc_vt_event_e ) as $gwc_vt_id ) {
+	wp_delete_post( (int) $gwc_vt_id, true );
+}
 
 foreach ( array( $gwc_vt_block_page, $gwc_vt_short_page, $gwc_vt_late_page, $gwc_vt_event_a, $gwc_vt_event_b, $gwc_vt_event_c ) as $gwc_vt_id ) {
 	wp_delete_post( (int) $gwc_vt_id, true );
