@@ -386,10 +386,20 @@ function gwc_vt_handle_event_roster_add(): void {
 	$volunteer_id = absint( $posted['gwc_vt_volunteer'] ?? 0 );
 	$shift_id     = absint( $posted['gwc_vt_shift'] ?? 0 );
 
+	/* Two refusals, said separately. They were one branch redirecting with
+	 * 'saved', which rendered "Saved." for an add that did not happen — and
+	 * "nobody was chosen" and "that time is not on this event" are different
+	 * problems with different fixes. */
+	if ( $volunteer_id < 1 ) {
+		gwc_vt_event_roster_redirect( $event_id, 'no-volunteer' );
+	}
+
 	/* The slot has to belong to this event. Without the check, a crafted form
-	 * could add somebody to any shift on the site through this nonce. */
-	if ( $volunteer_id < 1 || gwc_vt_event_for_shift( $shift_id ) !== $event_id ) {
-		gwc_vt_event_roster_redirect( $event_id, 'saved' );
+	 * could add somebody to any shift on the site through this nonce. Naming the
+	 * mismatch tells an attacker nothing they did not already know, and tells a
+	 * coordinator looking at a stale tab something useful. */
+	if ( gwc_vt_event_for_shift( $shift_id ) !== $event_id ) {
+		gwc_vt_event_roster_redirect( $event_id, 'wrong-slot' );
 	}
 
 	gwc_vt_add_signup(
