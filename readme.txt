@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, volunteer scheduling, community service, nonpr
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,6 +137,7 @@ Every message then goes to that address instead, with the site's name in the sub
 == Changelog ==
 
 = 1.1.1 =
+Everything a volunteer meets on the way to signing up: the times now say which clock they are on, and a form that comes back with a mistake keeps what you typed and says which field it was.
 
 * **Times on the public pages and in email now say which timezone they are in.** A shift read "1:00 pm" and the calendar file attached to the same message carried a UTC instant, so a volunteer whose phone was on another timezone saw two different times for one shift with nothing to say which was right. Lists say it once at the top; a list running across a daylight-saving change says it on each row instead, because such a list genuinely has two answers. The calendar file is unchanged — it was correct already.
 * **A signup that comes back with an error keeps what you typed.** Your name, your email address and the shift you picked all survive, so a mistyped address costs you one correction instead of scrolling back past the whole list and starting again. On a phone that list can be three screens long. Nothing is kept back for a code, where a site uses one — that stays blank on purpose.
@@ -182,6 +183,9 @@ The first release on WordPress.org.
 Otherwise nothing about the plugin's behavior changed between the last development build and this. Everything numbered below 1.0.0 was a development build — never published here, and not a version anybody can be upgrading from, which is why this page starts at the first release rather than at the first commit.
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+Fixes to the public signup form. Times now say which timezone they are in, on the page and in email, so they cannot be read against a calendar entry and disagree. A form refused for a mistake keeps what you typed and names the field that was wrong, instead of clearing everything.
 
 = 1.1.0 =
 Adds a switch that turns the verification letter off, for organizations that record hours but never write to a court or a school. Letters stay on unless you clear them, though you may be asked once which you want. An event signup grid can also live on a post now, not only a page.
