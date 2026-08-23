@@ -1,6 +1,7 @@
 <?php
 /**
- * The four places a version number lives, checked against each other.
+ * The five places a version number lives, checked against each other, and the
+ * translation template that has to be regenerated beside them.
  *
  * This fails the moment any one of them is bumped alone. That happens more
  * often than it sounds: the header and the constant are two lines apart and are
@@ -8,8 +9,14 @@
  * actually serves — a release where it disagrees with the header ships a
  * version nobody is offered as an update, and fixing it means another release.
  *
- * The deploy workflow checks the same four against the git tag, which is the
+ * The deploy workflow checks the same five against the git tag, which is the
  * one thing this file cannot see.
+ *
+ * The .pot is not a sixth place and hard rule 7 stays at five. Those five are
+ * DECLARATIONS, edited by hand; the template's version is derived by
+ * wp i18n make-pot from the header, so it cannot be brought into line by
+ * editing it — only by regenerating the file, which is the thing actually being
+ * asked for.
  *
  * @package VolunteerTracker
  */
@@ -109,6 +116,63 @@ final class VersionTest extends TestCase {
 		$this->assertFileExists(
 			GWC_VT_DIR . 'languages/' . $slug . '.pot',
 			'The translation template must be named after the text domain, or WordPress will not find it.'
+		);
+
+		/* ── And the slug INSIDE it, which is the half that kept going wrong ──
+		 * wp i18n make-pot derives Report-Msgid-Bugs-To and X-Domain from the
+		 * name of the DIRECTORY it is pointed at, not from the plugin header. In
+		 * a git worktree that directory is the branch, so the template ships
+		 * naming a support forum that does not exist — and it looks perfectly
+		 * well-formed while doing it.
+		 *
+		 * That was corrected by hand at three consecutive releases before
+		 * anybody wrote it down. The file name was already asserted above; the
+		 * headers were not, and the headers are the part nobody looks at.
+		 * ─────────────────────────────────────────────────────────────────── */
+
+		$pot = (string) file_get_contents( GWC_VT_DIR . 'languages/' . $slug . '.pot' );
+
+		$this->assertStringContainsString(
+			'"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/' . $slug . '\\n"',
+			$pot,
+			'The template points translators at a support forum named after the directory it was generated from, not the plugin. Regenerating from a worktree does this — put the slug back.'
+		);
+
+		$this->assertStringContainsString(
+			'"X-Domain: ' . $slug . '\\n"',
+			$pot,
+			'The template names a text domain that is not this plugin\'s, so nothing it holds would ever be loaded.'
+		);
+	}
+
+	/**
+	 * The template was regenerated for whatever version this is.
+	 *
+	 * Deliberately not one of hard rule 7's five places, and the distinction is
+	 * worth keeping: those five DECLARE the version and are edited by hand. This
+	 * is derived — wp i18n make-pot reads it out of the plugin header — so it
+	 * cannot be kept in step by editing it, only by regenerating the file.
+	 *
+	 * Which is the point. A release that bumps the version and does not
+	 * regenerate ships a template missing every string the release added, and
+	 * those strings then render in English forever on every translated site.
+	 * Nothing else notices: the file is present, well-formed and named
+	 * correctly, and only its contents are stale.
+	 *
+	 * Order matters and the failure will not say so on its own — bump the
+	 * version first, then regenerate, or this reads the old number back.
+	 */
+	public function test_the_translation_template_was_regenerated_for_this_version(): void {
+		$pot = (string) file_get_contents( GWC_VT_DIR . 'languages/groundwork-common-volunteer-tracker.pot' );
+
+		preg_match( '/"Project-Id-Version: (.+)\\\\n"/', $pot, $found );
+
+		$this->assertNotEmpty( $found, 'The translation template has no Project-Id-Version header.' );
+
+		$this->assertStringEndsWith(
+			' ' . GWC_VT_VERSION,
+			trim( $found[1] ),
+			'The translation template was generated for a different version. Bump the version first, then regenerate it — see the release steps in CLAUDE.md.'
 		);
 	}
 

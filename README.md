@@ -269,6 +269,33 @@ That is not hypothetical here. The first sweep found **40 of 148 were suppressin
 
 One sniff is overruled beyond the shared `UnusedFunctionParameter`, and it is a trap rather than a preference. `Squiz.Commenting.BlockComment.NoNewLine` wants a block comment's text to begin after the opener; this codebase heads ~400 of them on the opening line, and the sniff is auto-fixable. Letting `phpcbf` "correct" them leaves a bare `/*` above each one and a heading stripped of its ` * `, which then violates `CloserSameLine` — which is *not* auto-fixable. One run turns 144 findings into 566 and destroys the comment style. The reasoning is written out in `phpcs.xml.dist`; the sibling location finder overrules the same sniff for the same reason.
 
+## The translation template
+
+Regenerated as part of a version bump, **after** the five places move — `make-pot`
+reads the version out of the plugin header, so running it first stamps the old
+number and `VersionTest` will say so.
+
+```bash
+npx @wordpress/env run cli -- wp i18n make-pot \
+  wp-content/plugins/groundwork-common-volunteer-tracker \
+  wp-content/plugins/groundwork-common-volunteer-tracker/languages/groundwork-common-volunteer-tracker.pot \
+  --exclude=tests,vendor,node_modules,bin,.claude
+```
+
+Then look at the two headers it wrote. `make-pot` derives `Report-Msgid-Bugs-To`
+and `X-Domain` from the name of the **directory** it was pointed at rather than
+from the plugin header, so generating from a git worktree produces a template
+that names a support forum which does not exist — and it is well-formed,
+correctly named and complete while doing it, so nothing about the file looks
+wrong. It was corrected by hand at three consecutive releases before it was
+written down here.
+
+`VersionTest` asserts both headers and asserts the template's version matches
+the plugin's, so a forgotten regeneration and a worktree slug now both fail the
+build rather than shipping. The template is deliberately **not** a sixth place
+under hard rule 7: those five are declarations somebody edits, and this one is
+derived, so the fix for it is never to edit it.
+
 ## The directory's own checker
 
 `composer lint` is the coding standard, and the section above calls it "what a
