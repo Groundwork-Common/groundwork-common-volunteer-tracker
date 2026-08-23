@@ -265,9 +265,9 @@ function gwc_vt_add_schedule_help( $screen ): void {
 		'gwc-vt-help-event-page',
 		__( 'Where volunteers see an event', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'An event has no web address of its own, and publishing one does not give it one. It is seen only on a page you put it on: add the <strong>Volunteer Event</strong> block to a page and pick the event, or paste the <code>[gwc_vt_event_grid]</code> shortcode with the event’s id into one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An event has no web address of its own, and publishing one does not give it one. It is seen only where you put it: add the <strong>Volunteer Event</strong> block to a page or a post and pick the event, or paste the <code>[gwc_vt_event_grid]</code> shortcode with the event’s id into one. If you put the same event in more than one place, links back to it use whichever you published first.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The event editor tells you which page currently shows it, and says so plainly when no page does. That is the fastest way to check, because the answer is found by looking for the block rather than stored anywhere.', 'groundwork-common-volunteer-tracker' ),
-			__( 'Three things have to be true before anybody can sign up: signing up from your site is switched on, a shifts page is pinned under Settings → Shifts, and the event is published. The pinned shifts page is needed even though the event sits on a page of its own — every public signup goes through it.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Three things have to be true before anybody can sign up: signing up from your site is switched on, a shifts page is pinned under Settings → Shifts, and the event is published. The pinned shifts page is needed even though the event sits somewhere of its own — every public signup goes through it.', 'groundwork-common-volunteer-tracker' ),
 			__( 'An event’s times never appear on the general shifts page. That page lists shifts you scheduled on their own; an event is shown whole, on its own page, or not at all.', 'groundwork-common-volunteer-tracker' ),
 			__( 'What a visitor sees is each role, each time, and how many places are left. Never who else is coming — the same rule as the shift list, and for the same reason.', 'groundwork-common-volunteer-tracker' ),
 		)

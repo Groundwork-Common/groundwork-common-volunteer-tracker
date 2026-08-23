@@ -263,7 +263,7 @@ function gwc_vt_render_event_visibility( int $event_id, bool $is_new, bool $publ
 	if ( $is_new || $event_id < 1 ) {
 		?>
 		<p class="description">
-			<?php esc_html_e( 'Create the event first. Then put it on a page, and this will name it.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Create the event first. Then put it on a page or a post, and this will name it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 		<?php
 		return;
@@ -287,17 +287,17 @@ function gwc_vt_render_event_visibility( int $event_id, bool $is_new, bool $publ
 	if ( $page_id > 0 ) {
 		printf(
 			'<p style="margin:0 0 4px"><strong>%1$s</strong> <a href="%2$s" target="_blank" rel="noopener">%3$s</a></p>',
-			esc_html__( 'On this page:', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Shown on:', 'groundwork-common-volunteer-tracker' ),
 			esc_url( (string) get_permalink( $page_id ) ),
 			esc_html( (string) get_the_title( $page_id ) )
 		);
 	} else {
 		?>
 		<p style="margin:0 0 4px">
-			<strong><?php esc_html_e( 'No page shows this event yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
+			<strong><?php esc_html_e( 'Nothing on your site shows this event yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
 		</p>
 		<p class="description" style="margin:0 0 4px">
-			<?php esc_html_e( 'Add the Volunteer Event block to a page and pick this event, or paste this into one:', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Add the Volunteer Event block to a page or a post and pick this event, or paste this into one:', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 		<p style="margin:0 0 4px">
 			<code>[gwc_vt_event_grid id="<?php echo esc_html( (string) $event_id ); ?>"]</code>

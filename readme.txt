@@ -136,6 +136,10 @@ Every message then goes to that address instead, with the site's name in the sub
 
 == Changelog ==
 
+= 1.1.0 =
+
+* **An event's signup grid now works on a post, not only a page.** If you write a post about an event — the story, the photos, the why — and put the signup on that same post, the grid always rendered, but the plugin could not find it: the confirmation and cancellation emails linked nowhere, and the event editor said no page showed an event that was published and visible. Any public post type with an editor works now, including one your theme or another plugin added. If you put the same event in more than one place, links back to it use whichever you published first.
+
 = 1.0.2 =
 Ten fixes. Dates that printed as the wrong day, screens that reported success for something they had refused, and one path that could email a whole roster twice. Nothing you have already recorded changes.
 
