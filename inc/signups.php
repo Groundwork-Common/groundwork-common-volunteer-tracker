@@ -151,7 +151,7 @@ function gwc_vt_find_signup( int $shift_id, int $volunteer_id, string $email = '
 		array(
 			'post_type'      => GWC_VT_SIGNUP_TYPE,
 			'post_parent'    => $shift_id,
-			'post_status'    => array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ),
+			'post_status'    => gwc_vt_signup_statuses(),
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
 			'no_found_rows'  => true,
@@ -398,7 +398,7 @@ function gwc_vt_signups_by_claim_email( string $email ): array {
 	$ids = get_posts(
 		array(
 			'post_type'              => GWC_VT_SIGNUP_TYPE,
-			'post_status'            => array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ),
+			'post_status'            => gwc_vt_signup_statuses(),
 			'fields'                 => 'ids',
 			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- every signup on one shift, to settle the waiting list. 500 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
 			'posts_per_page'         => 500,
@@ -428,7 +428,7 @@ function gwc_vt_signup_ids_for_volunteer( int $volunteer_id ): array {
 	$ids = get_posts(
 		array(
 			'post_type'              => GWC_VT_SIGNUP_TYPE,
-			'post_status'            => array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ),
+			'post_status'            => gwc_vt_signup_statuses(),
 			'fields'                 => 'ids',
 			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- every signup on one shift, to settle the waiting list. 500 is a ceiling on work, not a page size; the query is ids-only with no_found_rows, so the cost is one indexed column and no SQL_CALC_FOUND_ROWS.
 			'posts_per_page'         => 500,

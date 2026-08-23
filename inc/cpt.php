@@ -29,6 +29,23 @@ const GWC_VT_ENTRY_SOURCE     = '_gwc_vt_source';
  * reference code ever issued for the sake of a line no reader needs. */
 const GWC_VT_ENTRY_SHIFT = '_gwc_vt_entry_shift';
 
+/* What somebody typed into the public form before anybody matched them to a
+ * volunteer. Named here rather than written out, which they were at eight call
+ * sites — three of them deletes, and one of those the anonymizer.
+ *
+ * A delete_post_meta() against a misspelled key is a silent no-op. It returns
+ * false, nothing checks, and the name stays in the database on the path whose
+ * entire job is that the name is gone. There was no constant to typo, so
+ * nothing would have caught it: not phpcs, not the suite, not the screen.
+ *
+ * The values are exactly the strings that were written out, because existing
+ * rows use them. Renaming them would orphan every self-logged entry on every
+ * installed site. The signup side of the same pair is
+ * GWC_VT_SIGNUP_CLAIM_NAME / _EMAIL in inc/signup-cpt.php, and deliberately
+ * not these — see the note there on why the two must not share a key. */
+const GWC_VT_ENTRY_CLAIM_NAME  = '_gwc_vt_claim_name';
+const GWC_VT_ENTRY_CLAIM_EMAIL = '_gwc_vt_claim_email';
+
 /* The attestation. Absent means unverified — there is no 'false' to store and
  * no third state, which is what stops "verified" and "not verified yet" from
  * drifting apart from "the record exists".
@@ -167,7 +184,7 @@ function gwc_vt_entry_title( int $entry_id ): string {
 		/* A self-logged entry nobody has attached to a volunteer yet. The name
 		 * the submitter typed is a claim rather than an identity, and the list
 		 * has to say so — otherwise triage cannot tell the two apart. */
-		$claimed = (string) get_post_meta( $entry_id, '_gwc_vt_claim_name', true );
+		$claimed = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, true );
 		$name    = '' !== $claimed
 			/* translators: %s: the name somebody typed into the public form. */
 			? sprintf( __( '%s (unmatched)', 'groundwork-common-volunteer-tracker' ), $claimed )
@@ -254,7 +271,7 @@ function gwc_vt_entry_column( $column, $post_id ): void {
 				break;
 			}
 
-			$claimed = (string) get_post_meta( $post_id, '_gwc_vt_claim_name', true );
+			$claimed = (string) get_post_meta( $post_id, GWC_VT_ENTRY_CLAIM_NAME, true );
 			printf(
 				'<strong><a class="row-title" href="%1$s"><span class="gwcvt-unmatched">%2$s</span></a></strong>',
 				esc_url( $edit_entry ),

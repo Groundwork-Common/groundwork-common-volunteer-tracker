@@ -228,10 +228,10 @@ function gwc_vt_insert_self_logged_entry( string $name, string $email, string $d
 	update_post_meta( $entry_id, GWC_VT_ENTRY_DATE, $date );
 	update_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, $hours );
 	update_post_meta( $entry_id, GWC_VT_ENTRY_SOURCE, 'self' );
-	update_post_meta( $entry_id, '_gwc_vt_claim_name', $name );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, $name );
 
 	if ( '' !== $email && is_email( $email ) ) {
-		update_post_meta( $entry_id, '_gwc_vt_claim_email', $email );
+		update_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_EMAIL, $email );
 	}
 
 	/* An allow-list, not a copy of everything posted. Only these three fields

@@ -52,8 +52,8 @@ function gwc_vt_suggest_volunteer( int $entry_id ): array {
 	}
 
 	return gwc_vt_suggest_volunteer_for(
-		(string) get_post_meta( $entry_id, '_gwc_vt_claim_email', true ),
-		(string) get_post_meta( $entry_id, '_gwc_vt_claim_name', true )
+		(string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_EMAIL, true ),
+		(string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, true )
 	);
 }
 
@@ -314,8 +314,8 @@ function gwc_vt_handle_create_volunteer_from_entry(): void {
 		);
 	}
 
-	$name  = trim( (string) get_post_meta( $entry_id, '_gwc_vt_claim_name', true ) );
-	$email = (string) get_post_meta( $entry_id, '_gwc_vt_claim_email', true );
+	$name  = trim( (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, true ) );
+	$email = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_EMAIL, true );
 
 	if ( '' === $name ) {
 		gwc_vt_triage_redirect( $entry_id, 'no-name' );
@@ -356,8 +356,7 @@ function gwc_vt_handle_create_volunteer_from_entry(): void {
 function gwc_vt_attach_entry_to_volunteer( int $entry_id, int $volunteer_id ): void {
 	update_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, (string) $volunteer_id );
 
-	delete_post_meta( $entry_id, '_gwc_vt_claim_name' );
-	delete_post_meta( $entry_id, '_gwc_vt_claim_email' );
+	gwc_vt_clear_entry_claims( $entry_id );
 
 	gwc_vt_retitle_entry( $entry_id );
 	gwc_vt_refresh_totals( $volunteer_id );

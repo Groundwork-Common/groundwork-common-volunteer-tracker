@@ -534,11 +534,7 @@ function gwc_vt_handle_event_roster_print(): void {
 		);
 	}
 
-	nocache_headers();
-	header( 'X-Robots-Tag: noindex, nofollow, noarchive' );
-	header( 'Cache-Control: private, no-store, no-cache, must-revalidate' );
-	header( 'Referrer-Policy: no-referrer' );
-	header( 'Content-Type: text/html; charset=utf-8' );
+	gwc_vt_private_document_headers();
 
 	gwc_vt_render_event_roster_document( $event_id );
 	exit;

@@ -183,6 +183,22 @@ function gwc_vt_entry_is_verified( int $entry_id ): bool {
 }
 
 /**
+ * Strip the name and address somebody typed, keeping the hours.
+ *
+ * The mirror of gwc_vt_clear_signup_claims() in inc/signups.php, and for the
+ * same reason: the three sites that cleared these keys wrote both deletes out
+ * by hand, and one of them is the anonymizer. A delete against a misspelled key
+ * is a silent no-op, so a fourth caller forgetting the second key would leave
+ * an address behind with nothing to show for it.
+ *
+ * @param int $entry_id Entry post ID.
+ */
+function gwc_vt_clear_entry_claims( int $entry_id ): void {
+	delete_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME );
+	delete_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_EMAIL );
+}
+
+/**
  * How this entry was attested to.
  *
  * An absent value reads as 'staff' rather than as unknown. That is what makes

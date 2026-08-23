@@ -19,6 +19,26 @@ const GWC_VT_SIGNUP_WAITLIST = 'gwc_vt_waitlist';
  * deleted by core's own cleanup. */
 const GWC_VT_SIGNUP_WITHDRAWN = 'gwc_vt_withdrawn';
 
+/**
+ * Every status a signup can hold that still means somebody is on file.
+ *
+ * Written out verbatim in four places before this existed, one of them the
+ * entry point for the privacy exporter and the eraser. Register a fifth status
+ * — declined, no-show and expired are all plausible — and rosters keep working
+ * while gwc_vt_signups_by_claim_email() stops returning those rows: somebody
+ * asking to be forgotten is told nothing is on file while their name sits on a
+ * roster. The box comment above that function says it exists to prevent
+ * exactly that.
+ *
+ * Not gwc_vt_shift_signup_ids(), which defaults to 'publish' only, because a
+ * roster is who is coming. This is the wider question: who is recorded.
+ *
+ * @return string[]
+ */
+function gwc_vt_signup_statuses(): array {
+	return array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN );
+}
+
 /* Signup meta.
  *
  * These keys are deliberately NOT the entry's. '_gwc_vt_signup_volunteer' rather

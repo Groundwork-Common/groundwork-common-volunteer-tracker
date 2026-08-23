@@ -244,8 +244,7 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 	 * the volunteer record would leave the name behind on every shift somebody
 	 * submitted through the public form. */
 	foreach ( gwc_vt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
-		delete_post_meta( (int) $entry_id, '_gwc_vt_claim_name' );
-		delete_post_meta( (int) $entry_id, '_gwc_vt_claim_email' );
+		gwc_vt_clear_entry_claims( (int) $entry_id );
 		gwc_vt_retitle_entry( (int) $entry_id );
 	}
 
@@ -388,7 +387,7 @@ function gwc_vt_sweep_orphan_signups( int $months ): int {
 	$candidates = get_posts(
 		array(
 			'post_type'              => GWC_VT_SIGNUP_TYPE,
-			'post_status'            => array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ),
+			'post_status'            => gwc_vt_signup_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => GWC_VT_RETENTION_BATCH,
 			'no_found_rows'          => true,
