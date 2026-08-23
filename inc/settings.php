@@ -137,6 +137,20 @@ function gwc_vt_setting_defaults(): array {
 		 * it back on finds them unchanged. */
 		'letters_enabled'           => true,
 
+		/* Set when the Logging tab is saved — the tab the switch above lives on
+		 * — including when it is saved with letters left on. "Yes, we issue
+		 * them" is an answer; never having been asked is not, and defaulting to
+		 * ON means an organization that will never write to a court gets the
+		 * whole letter surface until somebody notices the switch.
+		 *
+		 * The same shape as 'retention_decided' below, and for a weaker reason:
+		 * nothing is at stake here except a screen full of settings nobody
+		 * needs. So the prompt is an info notice rather than a warning, and it
+		 * stays quiet on any site that has already issued a letter — issuing one
+		 * IS the answer, and asking somebody to confirm a decision they have
+		 * demonstrably made is how a prompt becomes noise. */
+		'letters_decided'           => false,
+
 		/* ── The schedule ────────────────────────────────────────────────── */
 
 		/* Off. Scheduling is a second product surface — a menu item, a set of
@@ -343,6 +357,25 @@ function gwc_vt_timezone(): DateTimeZone {
  */
 function gwc_vt_letters_enabled(): bool {
 	return (bool) gwc_vt_setting( 'letters_enabled' );
+}
+
+/**
+ * Has anybody said whether this organization issues letters?
+ *
+ * Two things count as an answer: saving the Logging tab, and having already
+ * issued a letter. One function because the notice and the dashboard's setup
+ * docket both ask, and a count and the screen it links to must come from one
+ * function — the same rule the plugin's own notes give for the overdue count
+ * and the unlogged-hours nag.
+ *
+ * @return bool
+ */
+function gwc_vt_letters_decided(): bool {
+	if ( (bool) gwc_vt_setting( 'letters_decided' ) ) {
+		return true;
+	}
+
+	return function_exists( 'gwc_vt_any_letter_issued' ) && gwc_vt_any_letter_issued();
 }
 
 /**

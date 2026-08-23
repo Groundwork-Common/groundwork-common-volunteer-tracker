@@ -193,6 +193,42 @@ function gwc_vt_letter_record( int $record_id ): array {
 }
 
 /**
+ * Has this organization ever issued a letter?
+ *
+ * One indexed query for one ID, memoized for the request, and only ever asked
+ * on a site that has not answered the letters_decided question — so where it
+ * runs at all it runs once per admin page, and the moment somebody saves the
+ * Logging tab it stops running entirely.
+ *
+ * It exists so the first-run prompt can stay quiet where the question has
+ * already been answered by action rather than by a setting. An organization
+ * with letters in its log has told us it issues them.
+ *
+ * @return bool
+ */
+function gwc_vt_any_letter_issued(): bool {
+	static $answer = null;
+
+	if ( null !== $answer ) {
+		return $answer;
+	}
+
+	$answer = (bool) get_posts(
+		array(
+			'post_type'              => GWC_VT_LETTER_TYPE,
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'posts_per_page'         => 1,
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	return $answer;
+}
+
+/**
  * The most recent letters, for the log on the Letters screen.
  *
  * Unbounded storage, deliberately, unlike the post portal's ten-entry changeset
