@@ -410,12 +410,11 @@ function gwc_vt_handle_letter_print(): void {
 	gwc_vt_log_letter( $letter, 'print' );
 
 	/* This is the response in this plugin with the most personal data in it.
-	 * Nothing about it should be cached, stored by an intermediary, or indexed. */
-	nocache_headers();
-	header( 'Content-Type: text/html; charset=utf-8' );
-	header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
-	header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
-	header( 'Referrer-Policy: no-referrer', true );
+	 * Nothing about it should be cached, stored by an intermediary, or indexed.
+	 * The two roster sheets say the same thing about themselves and now share
+	 * this, rather than each carrying its own copy that only one of them kept
+	 * up to date. */
+	gwc_vt_private_document_headers();
 
 	echo gwc_vt_render_letter( $letter, 'print' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
 	exit;

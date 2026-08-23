@@ -68,8 +68,8 @@ function gwc_vt_render_entry_meta_box( $post ): void {
 	$minutes      = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
 	$activity     = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true );
 	$supervisor   = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, true );
-	$claim_name   = (string) get_post_meta( $entry_id, '_gwc_vt_claim_name', true );
-	$claim_email  = (string) get_post_meta( $entry_id, '_gwc_vt_claim_email', true );
+	$claim_name   = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, true );
+	$claim_email  = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_EMAIL, true );
 
 	/* A new entry defaults to today. The overwhelmingly common case is somebody
 	 * logging a shift that just finished, and an empty date field is a required
@@ -340,8 +340,7 @@ function gwc_vt_save_entry( $post_id, $post ): void {
 	 * matched record means two names on one entry and a privacy eraser that has
 	 * to know about both. */
 	if ( $volunteer_id > 0 ) {
-		delete_post_meta( $post_id, '_gwc_vt_claim_name' );
-		delete_post_meta( $post_id, '_gwc_vt_claim_email' );
+		gwc_vt_clear_entry_claims( $post_id );
 	}
 
 	gwc_vt_retitle_entry( $post_id );

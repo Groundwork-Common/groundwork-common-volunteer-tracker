@@ -216,6 +216,38 @@ function gwc_vt_user_can_issue( int $user_id ): bool {
 }
 
 /**
+ * The headers a response carrying somebody's personal data goes out with.
+ *
+ * Four responses need these: the shift roster sheet, the event roster sheet,
+ * the printed letter and a signup's calendar file. All four set them by hand,
+ * and they had drifted — the letter's copy gained max-age=0 and a replace
+ * argument on every header() call, and the two roster sheets did not. So the
+ * hardening reached the response whose own comment calls it "the response in
+ * this plugin with the most personal data in it" and left behind the two
+ * carrying names, email addresses and phone numbers. The calendar file had no
+ * explicit Cache-Control at all.
+ *
+ * The replace argument matters more than it looks. Without it a header() call
+ * ADDS a field beside any already sent, so a theme, a caching plugin or a
+ * security plugin that has emitted its own Cache-Control leaves two on the
+ * response and lets the intermediary choose. With it, this one wins.
+ *
+ * Here rather than in the admin bundle because inc/ics.php answers a front-end
+ * request. Nothing in this plugin is wrapped in is_admin(), so the admin files
+ * do load — but a front-end response depending on a file named admin-*.php is
+ * the kind of thing that is true until somebody makes it false.
+ *
+ * @param string $content_type The response's own Content-Type.
+ */
+function gwc_vt_private_document_headers( string $content_type = 'text/html; charset=utf-8' ): void {
+	nocache_headers();
+	header( 'Content-Type: ' . $content_type, true );
+	header( 'X-Robots-Tag: noindex, nofollow, noarchive', true );
+	header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
+	header( 'Referrer-Policy: no-referrer', true );
+}
+
+/**
  * Stop the request unless the current user holds a capability.
  *
  * Deliberately wp_die() rather than a return value. A handler that returns

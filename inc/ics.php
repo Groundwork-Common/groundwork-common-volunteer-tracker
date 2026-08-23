@@ -41,11 +41,11 @@ function gwc_vt_maybe_serve_ics(): void {
 		return;
 	}
 
-	nocache_headers();
-	header( 'X-Robots-Tag: noindex, nofollow, noarchive' );
-	header( 'Referrer-Policy: no-referrer' );
-	header( 'Content-Type: text/calendar; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename="shift.ics"' );
+	/* A calendar file for one person's signup, reachable by token. It belongs to
+	 * the same family as the roster sheets and the letter, and was the one of
+	 * the four with no explicit Cache-Control at all. */
+	gwc_vt_private_document_headers( 'text/calendar; charset=utf-8' );
+	header( 'Content-Disposition: attachment; filename="shift.ics"', true );
 
 	echo $ics; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a calendar file, escaped for its own format by gwc_vt_ics_escape(); HTML escaping here would corrupt it.
 	exit;

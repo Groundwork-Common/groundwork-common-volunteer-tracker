@@ -174,8 +174,54 @@ gwc_vt_check( 'its phone is gone', '' === get_post_meta( $gwc_vt_old['volunteer'
 /* The claimed name and email live on the ENTRY, not the volunteer. Anonymizing
  * only the volunteer record would leave the name behind on every shift somebody
  * submitted through the public form. */
+/* ── Written out, on purpose ─────────────────────────────────────────────────
+ * These two keys are constants now — GWC_VT_ENTRY_CLAIM_NAME and
+ * GWC_VT_ENTRY_CLAIM_EMAIL — and these assertions deliberately do not use them.
+ * A test that reads the same constant the code writes passes whatever the
+ * constant says, including after somebody renames its value; the literal is
+ * what pins it to the string that is already in every installed database.
+ *
+ * Which matters here more than anywhere: a delete_post_meta() against a key
+ * nothing writes is a silent no-op that returns false and is checked by nobody,
+ * and this is the path whose entire job is that the name is gone.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 gwc_vt_check( 'the claimed name on its shift is gone', '' === get_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_name', true ) );
 gwc_vt_check( 'the claimed email on its shift is gone', '' === get_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_email', true ) );
+
+gwc_vt_check( 'and the constants still name those exact keys', '_gwc_vt_claim_name' === GWC_VT_ENTRY_CLAIM_NAME && '_gwc_vt_claim_email' === GWC_VT_ENTRY_CLAIM_EMAIL, GWC_VT_ENTRY_CLAIM_NAME . ' / ' . GWC_VT_ENTRY_CLAIM_EMAIL );
+
+/* The helper the three delete sites now share, exercised on its own so a fourth
+ * caller inherits something that is known to clear both keys rather than one. */
+update_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_name', 'Zzytest Left Behind' );
+update_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_email', 'zzytest-left-behind@example.test' );
+
+gwc_vt_check( 'a claim can be put back for the next check', 'Zzytest Left Behind' === get_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_name', true ) );
+
+gwc_vt_clear_entry_claims( (int) $gwc_vt_old['entry'] );
+
+gwc_vt_check( 'gwc_vt_clear_entry_claims() clears the name', '' === get_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_name', true ) );
+gwc_vt_check( 'and the address beside it', '' === get_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_email', true ) );
+
+/* ── Who counts as being on file ─────────────────────────────────────────────
+ * The exporter and the eraser find a person's signups by claim email, over a
+ * status list that was written out verbatim in four places. Register a fifth
+ * status and add it to the roster queries but not to that list, and somebody
+ * asking to be forgotten is told nothing is on file while their name sits on a
+ * roster. One function now, asserted here so the set is visible rather than
+ * scattered.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+gwc_vt_check(
+	'a signup on file means published, waitlisted or withdrawn',
+	array( 'publish', GWC_VT_SIGNUP_WAITLIST, GWC_VT_SIGNUP_WITHDRAWN ) === gwc_vt_signup_statuses(),
+	implode( ',', gwc_vt_signup_statuses() )
+);
+
+gwc_vt_check(
+	'and a withdrawn signup is still somebody the eraser must find',
+	in_array( GWC_VT_SIGNUP_WITHDRAWN, gwc_vt_signup_statuses(), true )
+);
 
 /* The hours survive, which is the whole point of anonymizing rather than
  * deleting: the organization's grant reporting needs them and they identify
