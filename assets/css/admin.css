@@ -2,7 +2,40 @@
 
    Hand-written, no build step, no preprocessor — see README.md. Everything
    here is scoped to this plugin's own screens by class name; nothing restyles
-   a core control anywhere else in wp-admin. */
+   a core control anywhere else in wp-admin.
+
+   ─── There is no dark mode here, and prefers-color-scheme is not the way to
+   add one ─────────────────────────────────────────────────────────────────
+   wp-admin is a light interface. Every admin colour scheme core ships —
+   including midnight and modern, the two that read as "dark" — sets
+   `body { background: #f0f0f0 }` and recolours only the menu and the links.
+   No core admin stylesheet carries a prefers-color-scheme rule at all.
+
+   prefers-color-scheme reports what the *operating system* looks like, which
+   says nothing about what wp-admin looks like. This file used to have eleven
+   such blocks, and on any machine with the OS set to dark they repainted the
+   plugin's own panels to #1d2327 inside a #f0f0f0 admin, while leaving the
+   text colour to be inherited from core. That put "Produce a letter" and
+   "Check a reference" at #1d2327 on #1d2327 — a contrast ratio of 1.00, an
+   invisible heading — the dashboard worklist at 1.58, and the white
+   Groundwork Common wordmark on a near-white panel. It was wrong in the other
+   direction too: it did nothing for somebody running a dark-mode plugin on a
+   light OS, which is the case it was written for.
+
+   So: every surface this file paints states its own colour beside its own
+   background, and the pair is always a light one. A rule that sets a
+   background and leaves the foreground to inheritance is the bug above
+   waiting to happen again — under a third-party darkener that recolours the
+   body it is white on white. The pinned value is #3c434a, which is what core
+   sets on body and therefore what these surfaces were already inheriting, so
+   pinning it changes nothing about how they look today. #1d2327 would have
+   been the tidier-looking choice and is wrong: .gwcvt-shiftline__day sets
+   exactly that to stand out *against* the inherited text beside it, and
+   raising the panel default to meet it erases the distinction.
+
+   If wp-admin ever does gain a real dark mode, it will announce itself with
+   something on the document that can be selected on, and that is what to key
+   off; the dark-field wordmark is already in assets/img/ for that day. */
 
 /* ─── Meta box fields ───────────────────────────────────────────────────────
    Core's own spacing inside a meta box is built for a two-column table layout
@@ -65,6 +98,7 @@
 .gwcvt-box {
 	padding: 16px 20px;
 	background: #fff;
+	color: #3c434a;
 	border: 1px solid #c3c4c7;
 	border-radius: 4px;
 }
@@ -104,14 +138,6 @@
 	font-size: 11px;
 }
 
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-letters-main,
-	.gwcvt-box {
-		background: #1d2327;
-		border-color: #3c434a;
-	}
-}
-
 /* ─── Verification badges ───────────────────────────────────────────────────
    Color is never the only signal — each badge carries its own words, because
    "verified" and "not yet verified" is exactly the distinction somebody with a
@@ -145,18 +171,6 @@
 	color: #646970;
 }
 
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-badge--verified {
-		background: rgb( 104 222 124 / .12 );
-		color: #68de7c;
-	}
-
-	.gwcvt-badge--waiting {
-		background: rgb( 219 166 23 / .12 );
-		color: #dba617;
-	}
-}
-
 /* ─── Volunteer picker ──────────────────────────────────────────────────────
    An autocomplete rather than a select, because a select is unusable past a few
    hundred volunteers. The list is positioned rather than inline so it overlays
@@ -182,6 +196,7 @@
 	overflow-y: auto;
 	list-style: none;
 	background: #fff;
+	color: #3c434a;
 	border: 1px solid #8c8f94;
 	border-radius: 4px;
 	box-shadow: 0 2px 6px rgb( 0 0 0 / .12 );
@@ -214,13 +229,6 @@
 	color: #646970;
 }
 
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-picker__results {
-		background: #1d2327;
-		border-color: #50575e;
-	}
-}
-
 /* ─── Colophon ──────────────────────────────────────────────────────────────
    Sits between the page title and the tab bar, so it has to introduce the
    screen without competing with it. Left rule and a flat tint rather than a
@@ -242,6 +250,11 @@
 	padding: 20px 24px;
 	border-left: 4px solid #2271b1;
 	background: #f6f7f7;
+	/* #1d2327 rather than the #3c434a pinned on this plugin's own panels: the
+	   colophon is the one component the three Groundwork Common plugins share
+	   verbatim, and Post Portal and Location Finder set it here too. It only
+	   moves `p:last-child`, which asks for `inherit` to mean full-strength. */
+	color: #1d2327;
 }
 
 /* One column below roughly a tablet. The aside is an aside on a wide screen and
@@ -302,7 +315,15 @@
 }
 
 /* The wordmark. Sized by height with width following the 958 x 173 viewBox,
-   so it scales with the box rather than being pinned to a pixel width. */
+   so it scales with the box rather than being pinned to a pixel width.
+
+   Always the light-field artwork, because the panel it sits on is always a
+   light field — see the note at the top of this file. The dark-field file
+   ships beside it and is the one to reach for if that ever stops being true.
+
+   Falls back to the heading text alone if the file is ever missing — the
+   screen-reader span is real text, not a replacement trick, so nothing is lost
+   beyond the picture. */
 .gwcvt-colophon__logo {
 	display: block;
 	width: 156px;
@@ -311,15 +332,6 @@
 	background-repeat: no-repeat;
 	background-position: left center;
 	background-size: contain;
-}
-
-/* Falls back to the heading text alone if the file is ever missing — the
-   screen-reader span is real text, not a replacement trick, so nothing is lost
-   beyond the picture. */
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-colophon__logo {
-		background-image: url( '../img/gwc-logo-horizontal-dark.svg' );
-	}
 }
 
 /* The measure is capped on the paragraphs, not the panel. A 46em box floating
@@ -337,19 +349,6 @@
 .gwcvt-colophon p:last-child {
 	margin-bottom: 0;
 	color: inherit;
-}
-
-@media ( prefers-color-scheme: dark ) {
-	/* wp-admin is light by default, but plugins and extensions darken it and
-	   #f6f7f7 becomes a white slab under one. */
-	.gwcvt-colophon {
-		background: rgb( 34 113 177 / .08 );
-	}
-
-	.gwcvt-colophon p {
-		color: inherit;
-		opacity: .85;
-	}
 }
 
 /* ─── Colophon: collapsed ───────────────────────────────────────────────────
@@ -426,13 +425,16 @@
 
 /* The letter carries its own typography from letter.css. This is the desk it
    sits on — a scroll box so a long service record does not push the rest of the
-   screen out of reach. */
+   screen out of reach. The paper stays white whatever the admin around it is
+   doing: the letter is ink on white wherever it is read, and one previewed in
+   reverse video is not the document somebody on the phone is holding. */
 .gwcvt-comparison__paper {
 	max-height: 26em;
 	overflow-y: auto;
 	margin: 8px 0;
 	padding: 20px 24px;
 	background: #fff;
+	color: #3c434a;
 	border: 1px solid #c3c4c7;
 	border-radius: 4px;
 }
@@ -442,15 +444,6 @@
 	padding: 0;
 	box-shadow: none;
 	max-width: none;
-}
-
-@media ( prefers-color-scheme: dark ) {
-	/* The letter is ink on white wherever it is read, so the paper stays white
-	   even under a dark admin — a letter previewed in reverse video is not the
-	   document somebody is holding. */
-	.gwcvt-comparison__paper {
-		border-color: #3c434a;
-	}
 }
 
 /* ─── The verify badge as a control ─────────────────────────────────────────
@@ -530,6 +523,7 @@ a.gwcvt-badge--action:focus-visible {
 	margin: 0 0 8px;
 	padding: 8px 12px;
 	background: #fff;
+	color: #3c434a;
 	border: 1px solid #c3c4c7;
 	border-radius: 4px;
 }
@@ -585,17 +579,6 @@ a.gwcvt-badge--action:focus-visible {
 	box-shadow: inset 0 0 0 1px #d63638;
 }
 
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-schedule__short {
-		color: #f86368;
-	}
-
-	.gwcvt-badge--cancelled {
-		background: rgb( 214 54 56 / .12 );
-		color: #f86368;
-	}
-}
-
 /* ─── One shift ─────────────────────────────────────────────────────────────
    The form and the roster are two halves of one job — what the shift is, and
    who is coming — so they sit on one screen rather than two. */
@@ -633,13 +616,6 @@ a.gwcvt-badge--action:focus-visible {
 	color: #b32d2e;
 }
 
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-roster__remove,
-	.gwcvt-shift-delete {
-		color: #f86368;
-	}
-}
-
 /* ─── The printed roster ────────────────────────────────────────────────────
    Served as a standalone document from admin-post.php, sharing the letter's
    stylesheet. The blank In/Out columns are the point: this is the sheet that
@@ -669,14 +645,6 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	background: #f7ebc4;
 	color: #614200;
 	box-shadow: inset 0 0 0 1px #dba617;
-}
-
-@media ( prefers-color-scheme: dark ) {
-	a.gwcvt-badge--waiting.gwcvt-badge--action:hover,
-	a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
-		background: rgb( 219 166 23 / .22 );
-		color: #dba617;
-	}
 }
 
 /* ─── Logging a shift's roster ──────────────────────────────────────────────
@@ -709,12 +677,6 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 .gwcvt-required input {
 	max-width: 8em;
-}
-
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-progress--overdue {
-		border-left-color: #f86368;
-	}
 }
 
 /* ─── The dashboard ─────────────────────────────────────────────────────────
@@ -805,6 +767,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 .gwcvt-dash__panel {
 	background: #fff;
+	color: #3c434a;
 	border: 1px solid #c3c4c7;
 	border-radius: 4px;
 	overflow: hidden;
@@ -1143,46 +1106,4 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-map__links a:hover,
 .gwcvt-map__links a:focus {
 	text-decoration: underline;
-}
-
-@media ( prefers-color-scheme: dark ) {
-	.gwcvt-dash__masthead {
-		border-bottom-color: #e9edf0;
-	}
-
-	.gwcvt-dash__panel {
-		background: #1d2327;
-		border-color: #3c434a;
-	}
-
-	.gwcvt-docket__row,
-	.gwcvt-shiftline,
-	.gwcvt-shiftweek,
-	.gwcvt-map__group,
-	.gwcvt-year__rows {
-		border-color: #2c3338;
-	}
-
-	.gwcvt-shiftweek {
-		background: #22282d;
-	}
-
-	.gwcvt-shiftline__day {
-		color: #f0f0f1;
-	}
-
-	.gwcvt-shiftline--short .gwcvt-shiftline__day {
-		color: #f86368;
-	}
-
-	.gwcvt-docket__row:hover,
-	.gwcvt-docket__row:focus {
-		background: #22282d;
-	}
-
-	.gwcvt-docket__row--critical .gwcvt-docket__count { color: #f86368; }
-	.gwcvt-docket__row--waiting .gwcvt-docket__count { color: #dba617; }
-	.gwcvt-docket__row--done .gwcvt-docket__count { color: #68de87; }
-	.gwcvt-shiftline--short .gwcvt-shiftline__count { color: #f86368; }
-	.gwcvt-meter { background: #2c3338; }
 }
