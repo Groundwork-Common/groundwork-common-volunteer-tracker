@@ -384,9 +384,16 @@ function gwc_vt_render_shift_roster( int $shift_id ): void {
  * @param bool   $removable Whether to offer the remove action.
  */
 function gwc_vt_render_roster_row( int $signup_id, string $standing, bool $removable ): void {
+	/* The emptiness test is on what gwc_vt_local_date() returns, not on the raw
+	 * meta. A GWC_VT_SIGNUP_CREATED that is non-empty but unparseable — a
+	 * partially anonymized record, a hand-edited meta row, a value from an older
+	 * format — makes the helper return '' while the raw value is still truthy,
+	 * so testing the raw value rendered an empty cell where the em-dash belongs.
+	 * The event roster had the same test against the raw meta with the helper
+	 * inlined and unguarded, and printed 1 January 1970. */
 	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
 	$email        = gwc_vt_signup_email( $signup_id );
-	$created      = (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CREATED, true );
+	$signed_up    = gwc_vt_local_date( (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CREATED, true ) );
 	?>
 	<tr>
 		<td>
@@ -405,7 +412,7 @@ function gwc_vt_render_roster_row( int $signup_id, string $standing, bool $remov
 				<span aria-hidden="true">—</span>
 			<?php endif; ?>
 		</td>
-		<td><?php echo esc_html( '' !== $created ? gwc_vt_local_date( $created ) : '—' ); ?></td>
+		<td><?php echo esc_html( '' !== $signed_up ? $signed_up : '—' ); ?></td>
 		<td><?php echo esc_html( $standing ); ?></td>
 		<td class="gwcvt-roster__actions">
 			<?php if ( $removable ) : ?>
