@@ -216,8 +216,31 @@ npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-
 | `standards` | Does it satisfy the coding standard a directory reviewer runs, and does it only call what PHP 7.4 actually has? |
 | `js` | Does the event grid still renumber a cloned row? The one hand-written script with logic worth checking. |
 | `unit` | Is the logic right? PHPUnit 11 on 8.2, 8.3, 8.4. |
-| `integration` | Does it actually run? Every script in `tests/integration/` under wp-env, on **7.4 and 8.3** — the two ends where the interesting failures are. The workflow globs the directory, so a new script is picked up without being listed anywhere, including here. |
+| `integration` | Does it actually run? Every script in `tests/integration/` under wp-env, on **7.4 and 8.3** — the two ends where the interesting failures are. The workflow globs the directory, so a new script is picked up without being listed anywhere, including here. A script passes only if it **both** exits zero **and** prints `ALL PASS`; see below. |
 | `version` | Do the header, the constant, `Stable tag` and the changelog still agree? |
+
+**An integration script must exit non-zero when it fails, and the job checks
+that it said so as well.** Both, because neither is sufficient on its own.
+
+Seven of the twenty scripts — `dashboard-paging`, `entry-editing` and the five
+`event-*` ones — had no `exit( 1 )`. They printed their failure count and
+returned zero, and the job read the exit code alone, so a failure in any of them
+was a green build. Six of the seven were the events suite, the newest feature
+here. That is the same silence the glob was introduced to end, one layer down:
+the job had stopped testing *fewer scripts than it appeared to* and was still
+reporting *more passes than it had*.
+
+All twenty exit properly now. The marker check is what keeps that true for the
+twenty-first — it costs nothing and it does not depend on whoever writes that
+script remembering. Verify both belts the way this was verified: break an
+assertion on purpose. With the exit call the run exits 1 and drops `ALL PASS`;
+with the exit call removed it still exits 0, and the marker alone must fail the
+job.
+
+`exit( 1 )` is safe next to the settings-restoring shutdown handlers in
+`event-editing.php` and `event-screens.php` — PHP runs registered shutdown
+functions on `exit()`, which is what those scripts' own comments already rely on
+for the assertion-failure and fatal cases.
 
 ## Coding standards
 

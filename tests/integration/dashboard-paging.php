@@ -155,3 +155,11 @@ foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {
 delete_transient( GWC_VT_YEAR_TOTALS_KEY . '_' . md5( $gwc_vt_from . '|' . $gwc_vt_to ) );
 
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
+
+/* Exit non-zero so a failure fails the job. Printing the count and returning 0
+ * is how a red script reads green to anything that only reads the exit code —
+ * which is what the Integration job did until the marker check went in beside
+ * it. Same form as the other scripts here. */
+if ( $GLOBALS['gwc_vt_failures'] > 0 ) {
+	exit( 1 );
+}
