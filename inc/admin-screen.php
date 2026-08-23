@@ -93,10 +93,12 @@ function gwc_vt_menu_order(): array {
 		// Writing it up: the common way, then the single-entry way.
 		GWC_VT_QUICK_ADD_PAGE,
 		'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE,
-
-		// What gets produced for them.
-		GWC_VT_LETTERS_PAGE,
 	);
+
+	// What gets produced for them, when this organization produces it.
+	if ( gwc_vt_letters_enabled() ) {
+		$order[] = GWC_VT_LETTERS_PAGE;
+	}
 
 	/**
 	 * The order of the Volunteer Hours submenu, by slug.
@@ -205,12 +207,19 @@ function gwc_vt_settings_screen_loaded(): void {
  * @return array<string, string>
  */
 function gwc_vt_admin_tabs(): array {
-	$tabs = array(
-		'letter'  => __( 'Letter', 'groundwork-common-volunteer-tracker' ),
-		'logging' => __( 'Logging', 'groundwork-common-volunteer-tracker' ),
-		'shifts'  => __( 'Shifts', 'groundwork-common-volunteer-tracker' ),
-		'privacy' => __( 'Privacy', 'groundwork-common-volunteer-tracker' ),
-	);
+	$tabs = array();
+
+	/* First when it is there at all, because it is the original product and the
+	 * tab most sites open. Absent entirely when letters are off — and
+	 * gwc_vt_current_tab() falls back to array_key_first(), so a bookmark
+	 * pointing at ?tab=letter lands on Logging rather than on an empty screen. */
+	if ( gwc_vt_letters_enabled() ) {
+		$tabs['letter'] = __( 'Letter', 'groundwork-common-volunteer-tracker' );
+	}
+
+	$tabs['logging'] = __( 'Logging', 'groundwork-common-volunteer-tracker' );
+	$tabs['shifts']  = __( 'Shifts', 'groundwork-common-volunteer-tracker' );
+	$tabs['privacy'] = __( 'Privacy', 'groundwork-common-volunteer-tracker' );
 
 	/**
 	 * The settings screen's tabs, keyed by slug.

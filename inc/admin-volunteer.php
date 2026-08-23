@@ -239,10 +239,11 @@ function gwc_vt_add_volunteer_history_boxes(): void {
 		'default'
 	);
 
-	if ( ! current_user_can( gwc_vt_cap( 'issue' ) ) ) {
+	if ( ! gwc_vt_letters_enabled() || ! current_user_can( gwc_vt_cap( 'issue' ) ) ) {
 		/* The letter log names documents sent to courts and schools. Somebody
 		 * who may edit a volunteer record but not issue letters has no reason to
-		 * see which ones went out. */
+		 * see which ones went out — and neither does anybody at an organization
+		 * that does not issue them. The log itself is untouched either way. */
 		return;
 	}
 
@@ -367,7 +368,7 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 		?>
 	</p>
 
-	<?php if ( current_user_can( gwc_vt_cap( 'issue' ) ) && $totals->verified_minutes > 0 ) : ?>
+	<?php if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) && $totals->verified_minutes > 0 ) : ?>
 		<p>
 			<a class="button" href="<?php echo esc_url( gwc_vt_letters_url( array( 'volunteer' => $volunteer_id ) ) ); ?>">
 				<?php esc_html_e( 'Produce a letter for this volunteer', 'groundwork-common-volunteer-tracker' ); ?>

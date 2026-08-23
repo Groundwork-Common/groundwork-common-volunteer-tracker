@@ -82,16 +82,19 @@ function gwc_vt_add_settings_help(): void {
 		return;
 	}
 
-	gwc_vt_add_help_tab(
-		$screen,
-		'gwc-vt-help-letter',
-		__( 'The letter', 'groundwork-common-volunteer-tracker' ),
-		array(
-			__( 'Everything the letter says about your organization comes from this screen: the letterhead, who signs it, and the wording of the opening paragraph.', 'groundwork-common-volunteer-tracker' ),
-			__( 'The wording accepts placeholders — <code>{name}</code>, <code>{hours}</code>, <code>{period}</code>, <code>{org}</code> and others listed above the fields — which are filled in for each volunteer when the letter is produced.', 'groundwork-common-volunteer-tracker' ),
-			__( 'The disclaimer and the note about the reference code cannot be emptied. Saving either one blank restores the built-in wording. They are what tell a reader that <strong>your organization</strong>, not this plugin, is the authoritative record-keeper — and a letter without them has quietly started implying something nobody can stand behind.', 'groundwork-common-volunteer-tracker' ),
-		)
-	);
+	/* Only when there is a Letter tab to describe. */
+	if ( gwc_vt_letters_enabled() ) {
+		gwc_vt_add_help_tab(
+			$screen,
+			'gwc-vt-help-letter',
+			__( 'The letter', 'groundwork-common-volunteer-tracker' ),
+			array(
+				__( 'Everything the letter says about your organization comes from this screen: the letterhead, who signs it, and the wording of the opening paragraph.', 'groundwork-common-volunteer-tracker' ),
+				__( 'The wording accepts placeholders — <code>{name}</code>, <code>{hours}</code>, <code>{period}</code>, <code>{org}</code> and others listed above the fields — which are filled in for each volunteer when the letter is produced.', 'groundwork-common-volunteer-tracker' ),
+				__( 'The disclaimer and the note about the reference code cannot be emptied. Saving either one blank restores the built-in wording. They are what tell a reader that <strong>your organization</strong>, not this plugin, is the authoritative record-keeper — and a letter without them has quietly started implying something nobody can stand behind.', 'groundwork-common-volunteer-tracker' ),
+			)
+		);
+	}
 
 	gwc_vt_add_help_tab(
 		$screen,
@@ -170,7 +173,7 @@ function gwc_vt_add_screen_help( $screen ): void {
 		return;
 	}
 
-	if ( false !== strpos( (string) $screen->id, GWC_VT_LETTERS_PAGE ) ) {
+	if ( gwc_vt_letters_enabled() && false !== strpos( (string) $screen->id, GWC_VT_LETTERS_PAGE ) ) {
 		gwc_vt_add_letters_help( $screen );
 		return;
 	}

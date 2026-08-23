@@ -149,7 +149,7 @@ function gwc_vt_render_dashboard_worklist( array $items ): void {
 function gwc_vt_render_dashboard_start_here(): void {
 	$steps = array();
 
-	if ( current_user_can( gwc_vt_cap( 'manage' ) ) ) {
+	if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'manage' ) ) ) {
 		$steps[] = array(
 			'url'  => gwc_vt_settings_url( 'letter' ),
 			'what' => __( 'Tell the letter who you are', 'groundwork-common-volunteer-tracker' ),
@@ -459,7 +459,7 @@ function gwc_vt_dashboard_map(): array {
 		);
 	}
 
-	if ( current_user_can( gwc_vt_cap( 'issue' ) ) ) {
+	if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) ) {
 		$groups[] = array(
 			'title' => __( 'Letters', 'groundwork-common-volunteer-tracker' ),
 			'links' => array(

@@ -138,6 +138,7 @@ Every message then goes to that address instead, with the site's name in the sub
 
 = 1.1.0 =
 
+* **You can turn the verification letter off.** If your organization records volunteer hours but never writes to a court or a school, clear **Issue verification letters** on Settings → Logging. The Letters screen goes away, so does the Letter settings tab and its seventeen fields, and so do the letter actions on a volunteer's record and the letter links on the dashboard. Nothing is deleted: every letter already issued, the log of what went out and every letter setting stay exactly where they are, and selecting it again finds them unchanged. It is on unless you clear it, so nothing changes for anybody who updates.
 * **An event's signup grid now works on a post, not only a page.** If you write a post about an event — the story, the photos, the why — and put the signup on that same post, the grid always rendered, but the plugin could not find it: the confirmation and cancellation emails linked nowhere, and the event editor said no page showed an event that was published and visible. Any public post type with an editor works now, including one your theme or another plugin added. If you put the same event in more than one place, links back to it use whichever you published first.
 
 = 1.0.2 =
