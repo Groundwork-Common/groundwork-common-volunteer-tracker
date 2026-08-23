@@ -225,14 +225,14 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 					<tr>
 						<th scope="row"><label for="gwcvt-shift-min"><?php esc_html_e( 'We need at least', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
-							<input type="number" id="gwcvt-shift-min" name="gwc_vt_min" class="small-text" min="0" max="500" value="<?php echo esc_attr( (string) $min ); ?>" />
+							<input type="number" id="gwcvt-shift-min" name="gwc_vt_min" class="small-text" min="0" max="<?php echo esc_attr( (string) GWC_VT_SHIFT_CAPACITY_MAX ); ?>" value="<?php echo esc_attr( (string) $min ); ?>" />
 							<p class="description"><?php esc_html_e( 'A shift below this is flagged on the schedule. Zero means no minimum.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="gwcvt-shift-max"><?php esc_html_e( 'We have room for', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
-							<input type="number" id="gwcvt-shift-max" name="gwc_vt_max" class="small-text" min="0" max="500" value="<?php echo esc_attr( (string) $max ); ?>" />
+							<input type="number" id="gwcvt-shift-max" name="gwc_vt_max" class="small-text" min="0" max="<?php echo esc_attr( (string) GWC_VT_SHIFT_CAPACITY_MAX ); ?>" value="<?php echo esc_attr( (string) $max ); ?>" />
 							<p class="description"><?php esc_html_e( 'Once it is full, later signups go on a waiting list rather than being turned away — you decide what to do with them. Zero means no limit.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
@@ -466,7 +466,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 
 			<p>
 				<label for="gwcvt-cancel-reason"><?php esc_html_e( 'Why it was canceled', 'groundwork-common-volunteer-tracker' ); ?></label><br />
-				<input type="text" id="gwcvt-cancel-reason" name="gwc_vt_reason" class="regular-text" maxlength="200" />
+				<input type="text" id="gwcvt-cancel-reason" name="gwc_vt_reason" class="regular-text" maxlength="<?php echo esc_attr( (string) GWC_VT_SHIFT_REASON_MAX ); ?>" />
 			</p>
 
 			<?php if ( $rostered > 0 ) : ?>
@@ -559,13 +559,13 @@ function gwc_vt_handle_save_shift(): void {
 	$fields = array(
 		GWC_VT_SHIFT_START      => $start,
 		GWC_VT_SHIFT_END        => $end,
-		GWC_VT_SHIFT_OVERNIGHT  => $overnight ? 1 : 0,
+		GWC_VT_SHIFT_OVERNIGHT  => gwc_vt_shift_meta_value( GWC_VT_SHIFT_OVERNIGHT, $overnight ),
 		GWC_VT_SHIFT_ACTIVITY   => mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_activity'] ?? '' ) ), 0, 200 ),
 		GWC_VT_SHIFT_SUPERVISOR => mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 ),
 		GWC_VT_SHIFT_LOCATION   => mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_location'] ?? '' ) ), 0, 200 ),
 		GWC_VT_SHIFT_NOTES      => mb_substr( sanitize_textarea_field( (string) ( $posted['gwc_vt_notes'] ?? '' ) ), 0, 1000 ),
-		GWC_VT_SHIFT_MIN        => min( 500, absint( $posted['gwc_vt_min'] ?? 0 ) ),
-		GWC_VT_SHIFT_MAX        => min( 500, absint( $posted['gwc_vt_max'] ?? 0 ) ),
+		GWC_VT_SHIFT_MIN        => gwc_vt_shift_meta_value( GWC_VT_SHIFT_MIN, $posted['gwc_vt_min'] ?? 0 ),
+		GWC_VT_SHIFT_MAX        => gwc_vt_shift_meta_value( GWC_VT_SHIFT_MAX, $posted['gwc_vt_max'] ?? 0 ),
 	);
 
 	$status = empty( $posted['gwc_vt_published'] ) ? 'draft' : 'publish';
@@ -581,14 +581,7 @@ function gwc_vt_handle_save_shift(): void {
 		 * used to be. A message that says only "the details have changed" makes
 		 * the reader go and find the original to work out what — and what changed
 		 * is usually what decides whether they can still come. */
-		$was = array(
-			'date'     => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
-			'start'    => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_START, true ),
-			'end'      => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_END, true ),
-			'next_day' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_OVERNIGHT, true ),
-			'location' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
-			'label'    => gwc_vt_shift_one_line( $shift_id ),
-		);
+		$was = gwc_vt_shift_snapshot( $shift_id );
 
 		/* A cancelled shift keeps its status through an edit. Un-cancelling is not
 		 * a checkbox — it would mean telling everybody it is back on, which is a
@@ -711,44 +704,16 @@ function gwc_vt_handle_cancel_shift(): void {
 		gwc_vt_shift_redirect( 0, 'not-found' );
 	}
 
-	$reason = mb_substr( sanitize_text_field( (string) wp_unslash( $_POST['gwc_vt_reason'] ?? '' ) ), 0, 200 );
+	$reason = mb_substr( sanitize_text_field( (string) wp_unslash( $_POST['gwc_vt_reason'] ?? '' ) ), 0, GWC_VT_SHIFT_REASON_MAX );
 
-	/* Read before the status changes, because a cancelled shift's roster is
-	 * still its roster and these are the people who need telling. */
-	$roster = gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) );
-
-	$notify = ! empty( $_POST['gwc_vt_notify'] );
-
-	wp_update_post(
-		array(
-			'ID'          => $shift_id,
-			'post_status' => GWC_VT_SHIFT_CANCELLED,
-		)
-	);
-
-	update_post_meta( $shift_id, GWC_VT_SHIFT_REASON, $reason );
-
-	$told = 0;
-
-	if ( $notify ) {
-		foreach ( $roster as $signup_id ) {
-			gwc_vt_queue_signup_mail( 'cancelled', (int) $signup_id, array( 'reason' => $reason ) );
-			++$told;
-		}
-	}
-
-	/**
-	 * Fires after a shift has been called off.
-	 *
-	 * The hook the cancellation notice hangs off when notices land. It carries
-	 * the roster rather than making the listener query for it, because by the
-	 * time anything else runs the signups may have been settled.
-	 *
-	 * @param int    $shift_id The cancelled shift.
-	 * @param string $reason   Why, as typed by the coordinator.
-	 * @param int[]  $roster   Signup IDs that were on it.
-	 */
-	do_action( 'gwc_vt_shift_cancelled', $shift_id, $reason, $roster );
+	/* gwc_vt_call_off_slot() rather than the same body written out again. It
+	 * reads the roster before the status changes, writes the reason, mails
+	 * whoever is on it and fires gwc_vt_shift_cancelled — and it returns the
+	 * count this redirect wants. It also refuses a shift that is already
+	 * cancelled, which this handler did not: the form is hidden once a shift is
+	 * called off, but the handler is reachable on its own, and a second POST
+	 * re-mailed the whole roster and overwrote the reason. */
+	$told = gwc_vt_call_off_slot( $shift_id, $reason, ! empty( $_POST['gwc_vt_notify'] ) );
 
 	gwc_vt_shift_redirect( $shift_id, 'cancelled', $told > 0 ? array( 'gwc_vt_told' => $told ) : array() );
 }
