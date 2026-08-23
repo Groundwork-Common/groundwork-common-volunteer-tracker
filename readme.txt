@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, volunteer scheduling, community service, nonpr
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,6 +137,7 @@ Every message then goes to that address instead, with the site's name in the sub
 == Changelog ==
 
 = 1.1.0 =
+Two things you can decide for yourself: whether this site issues verification letters at all, and where an event's signup grid lives.
 
 * **You can turn the verification letter off.** If your organization records volunteer hours but never writes to a court or a school, clear **Issue verification letters** on Settings → Logging. The Letters screen goes away, so does the Letter settings tab and its seventeen fields, and so do the letter actions on a volunteer's record and the letter links on the dashboard. Nothing is deleted: every letter already issued, the log of what went out and every letter setting stay exactly where they are, and selecting it again finds them unchanged. It is on unless you clear it, so nothing changes for anybody who updates.
 * **An event's signup grid now works on a post, not only a page.** If you write a post about an event — the story, the photos, the why — and put the signup on that same post, the grid always rendered, but the plugin could not find it: the confirmation and cancellation emails linked nowhere, and the event editor said no page showed an event that was published and visible. Any public post type with an editor works now, including one your theme or another plugin added. If you put the same event in more than one place, links back to it use whichever you published first.
@@ -173,6 +174,9 @@ The first release on WordPress.org.
 Otherwise nothing about the plugin's behavior changed between the last development build and this. Everything numbered below 1.0.0 was a development build — never published here, and not a version anybody can be upgrading from, which is why this page starts at the first release rather than at the first commit.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds a switch that turns the verification letter off, for organizations that record hours but never write to a court or a school. It is on unless you clear it, so nothing changes when you update. An event signup grid can also live on a post now, not only a page.
 
 = 1.0.2 =
 West of UTC, event dates displayed one day early on the public grid and in both emails, so volunteers were told the wrong day. Also stops a canceled shift emailing its roster twice, and screens reporting success for what they refused. Nothing recorded changes.
