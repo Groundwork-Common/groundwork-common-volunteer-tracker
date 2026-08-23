@@ -180,9 +180,17 @@ jobs:
             *) echo "::error::Expected PHP ${{ matrix.php }}, got $actual"; exit 1 ;;
           esac
 
-      # Each script echoes PASS/FAIL per check and exits non-zero on any
-      # failure. The exit code is what fails the job; the output is what tells
-      # somebody which check went.
+      # Each script echoes PASS/FAIL per check, prints ALL PASS or a count, and
+      # exits non-zero on any failure. Two signals decide it and both must
+      # agree: a zero exit code AND the literal ALL PASS in the output.
+      #
+      # Both, because the exit code alone was not enough. Seven of these scripts
+      # had no exit( 1 ) at all — dashboard-paging, entry-editing, and the five
+      # event ones — so they printed their failure count and returned zero, and
+      # this job read that as a pass. Six of the seven were the events suite,
+      # the newest feature here. They all exit properly now; the marker check is
+      # what keeps that true when somebody adds the twenty-first and forgets,
+      # rather than trusting every future author to remember.
       #
       # Discovered from the filesystem rather than listed here. The list was
       # written out by hand until it had six names on it and the repository had
@@ -210,10 +218,17 @@ jobs:
 
           for script in $scripts; do
             echo "── $script ────────────────────────────────────────────"
-            if ! npx --yes @wordpress/env run cli --config=.wp-env.ci.json -- wp eval-file "$base/$script.php"; then
-              echo "::error::$script failed"
+            if ! out=$(npx --yes @wordpress/env run cli --config=.wp-env.ci.json -- wp eval-file "$base/$script.php" 2>&1); then
+              echo "$out"
+              echo "::error::$script exited non-zero"
               status=1
+              continue
             fi
+            echo "$out"
+            case "$out" in
+              *"ALL PASS"*) ;;
+              *) echo "::error::$script exited zero without printing ALL PASS"; status=1 ;;
+            esac
           done
           exit $status
 

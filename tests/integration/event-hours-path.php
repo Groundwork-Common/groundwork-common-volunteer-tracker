@@ -141,3 +141,11 @@ foreach ( array( $gwc_vt_slot, $gwc_vt_volunteer, $gwc_vt_event ) as $gwc_vt_id 
 }
 
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
+
+/* Exit non-zero so a failure fails the job. Printing the count and returning 0
+ * is how a red script reads green to anything that only reads the exit code —
+ * which is what the Integration job did until the marker check went in beside
+ * it. Same form as the other scripts here. */
+if ( $GLOBALS['gwc_vt_failures'] > 0 ) {
+	exit( 1 );
+}

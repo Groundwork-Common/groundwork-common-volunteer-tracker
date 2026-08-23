@@ -99,6 +99,14 @@ failure is legible.
 Each integration script prints `ALL PASS` or a count of failures, so a run is
 checked by grepping for the former rather than by reading the output.
 
+**A new integration script must end with the same two lines the other twenty
+do** — the `ALL PASS`-or-count summary, then `exit( 1 )` when
+`$GLOBALS['gwc_vt_failures'] > 0`. The job requires both signals and they must
+agree: a zero exit code *and* `ALL PASS` in the output. Seven scripts once had
+the summary and no `exit( 1 )`, so they announced their failures and returned
+zero, and the job passed them. `exit( 1 )` is safe beside a
+`register_shutdown_function` restore — PHP runs shutdown functions on `exit()`.
+
 The coding standard runs, and the `phpcs:ignore` annotations throughout are
 checked by it rather than decorative:
 
