@@ -10,7 +10,7 @@ design-decision ledger, and new invariants belong in it.
 
 ## The constraint the plugin is built around
 
-The letter is a **record of what the organisation observed**, not a certificate.
+The letter is a **record of what the organization observed**, not a certificate.
 This has been asked for and refused:
 
 - **No seal, no rendered signature, no "certified", no affidavit language.**
@@ -160,7 +160,7 @@ gets wp-env defaults.
 ## The beta site
 
 <https://wp.beta.poo6op.com> is a shared demo install carrying **all three**
-Groundwork Common plugins, seeded as one organisation. `bin/deploy-staging.sh`
+Groundwork Common plugins, seeded as one organization. `bin/deploy-staging.sh`
 rsyncs the working tree there — current branch and uncommitted edits included, by
 design — using `.distignore` as the manifest, then activates. `--dry-run` first if
 in doubt. README.md has the full account; four things matter before touching it:
@@ -228,7 +228,7 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   screen acts on a count, it filters by the same function that produced it.
 - **A page-content search must match every way a thing can be placed.** Searching
   for `[gwc_vt_event_grid` finds the shortcode and never the block, which
-  serialises as `wp:groundwork-common-volunteer-tracker/event-grid`. Since the
+  serializes as `wp:groundwork-common-volunteer-tracker/event-grid`. Since the
   shortcode was prefixed in 1.0.0 the two do share the tail `event-grid`, but
   neither marker contains the other, so one search still misses one placement —
   and searching the shared tail alone would match any page that writes the words.
@@ -281,7 +281,7 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
 9. **Every new block editor script needs `wp_set_script_translations()`.**
    Registration is in `inc/block.php`; a handle missing from that loop has its
    strings extracted into the POT and rendered in English forever.
-10. **Deleting the plugin removes no records, armed or not.** The tick box on the
+10. **Deleting the plugin removes no records, armed or not.** The checkbox on the
     Privacy tab arms the removal of *options only*. Uninstall never touches a
     post, its meta, or a capability — and the Privacy tab says so, because a
     policy nobody can find is one people are surprised by.

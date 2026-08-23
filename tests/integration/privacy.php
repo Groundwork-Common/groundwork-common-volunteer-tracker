@@ -72,7 +72,7 @@ function gwc_vt_make_person( string $name, string $email, string $date ): array 
  * letterhead, signatory, disclaimer wording, retention policy, and whether the
  * public form is switched on.
  *
- * On this machine that silently turned the demo organisation's form off. On a
+ * On this machine that silently turned the demo organization's form off. On a
  * real site it would erase a retention policy somebody had deliberately chosen
  * for records about court-ordered service, with nothing to say it had happened.
  *
@@ -135,7 +135,7 @@ gwc_vt_check( 'a held record is not, however old', ! gwc_vt_retention_due( $gwc_
 /* Counted before the sweep, because gwc_vt_run_retention() walks every volunteer
  * on the site and this script does not own the site. Asserting "1 purged, 1
  * held" only holds on a pristine install — it broke the moment the seeded demo
- * organisation existed, while the sweep was behaving exactly right. */
+ * organization existed, while the sweep was behaving exactly right. */
 $gwc_vt_expect_purged = 0;
 $gwc_vt_expect_held   = 0;
 
@@ -164,21 +164,21 @@ gwc_vt_run_retention();
 $gwc_vt_title = get_the_title( $gwc_vt_old['volunteer'] );
 
 gwc_vt_check(
-	'the old record was anonymised',
+	'the old record was anonymized',
 	false !== strpos( $gwc_vt_title, 'Former volunteer' ),
 	$gwc_vt_title
 );
 gwc_vt_check( 'its email is gone', '' === get_post_meta( $gwc_vt_old['volunteer'], GWC_VT_VOLUNTEER_EMAIL, true ) );
 gwc_vt_check( 'its phone is gone', '' === get_post_meta( $gwc_vt_old['volunteer'], GWC_VT_VOLUNTEER_PHONE, true ) );
 
-/* The claimed name and email live on the ENTRY, not the volunteer. Anonymising
+/* The claimed name and email live on the ENTRY, not the volunteer. Anonymizing
  * only the volunteer record would leave the name behind on every shift somebody
  * submitted through the public form. */
 gwc_vt_check( 'the claimed name on its shift is gone', '' === get_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_name', true ) );
 gwc_vt_check( 'the claimed email on its shift is gone', '' === get_post_meta( $gwc_vt_old['entry'], '_gwc_vt_claim_email', true ) );
 
-/* The hours survive, which is the whole point of anonymising rather than
- * deleting: the organisation's grant reporting needs them and they identify
+/* The hours survive, which is the whole point of anonymizing rather than
+ * deleting: the organization's grant reporting needs them and they identify
  * nobody. */
 gwc_vt_check( 'the hours survive', 210 === (int) get_post_meta( $gwc_vt_old['entry'], GWC_VT_ENTRY_MINUTES, true ) );
 gwc_vt_check( 'the verification survives', gwc_vt_entry_is_verified( $gwc_vt_old['entry'] ) );

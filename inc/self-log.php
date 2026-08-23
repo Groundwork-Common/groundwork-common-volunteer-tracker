@@ -24,17 +24,17 @@ add_action( 'template_redirect', 'gwc_vt_dispatch' );
  * Everywhere else in this plugin the person on the other end is a member of
  * staff who signed in. Here they are anonymous, and they are handing us a name,
  * an email address, and — implicitly, on a site that runs a court-ordered
- * service programme — the fact that a named person is working one off.
+ * service program — the fact that a named person is working one off.
  *
  * So this is the one surface where the plugin has to assume the worst, and the
- * defence has three parts that matter more than the others:
+ * defense has three parts that matter more than the others:
  *
  * 1. It is OFF until somebody turns it on. A plugin that started accepting
  *    personal information from strangers because it was installed would be
  *    doing something nobody asked for.
  *
  * 2. There is no lookup. The handler never asks whether the submitted email
- *    belongs to an existing volunteer, so there is no code path whose behaviour
+ *    belongs to an existing volunteer, so there is no code path whose behavior
  *    depends on that answer — which means there is no oracle to build one out
  *    of. The submitted name and address are stored as CLAIMS on a pending
  *    entry, and a human attaches them to a volunteer later. An anonymous form
@@ -47,7 +47,7 @@ add_action( 'template_redirect', 'gwc_vt_dispatch' );
  * The nonce is here too, and it is worth being honest about what it does: for a
  * logged-out visitor a WordPress nonce stops naive replay and cross-site
  * posting, and stops nothing that a determined script cannot get past by
- * fetching the page first. The rate limiter is the real defence.
+ * fetching the page first. The rate limiter is the real defense.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -209,7 +209,7 @@ function gwc_vt_insert_self_logged_entry( string $name, string $email, string $d
 			/* Pending, meaning no human has accepted this record yet. It is not
 			 * a draft — a draft reads as unfinished work by staff — and it is
 			 * certainly not published, which would put an unreviewed claim into
-			 * the organisation's own totals. */
+			 * the organization's own totals. */
 			'post_status' => 'pending',
 			'post_title'  => 'tmp',
 		)
@@ -222,7 +222,7 @@ function gwc_vt_insert_self_logged_entry( string $name, string $email, string $d
 	$entry_id = (int) $entry_id;
 
 	/* Volunteer left at 0, on purpose. See the box comment at the top: matching
-	 * here would mean a code path whose behaviour depends on whether a person
+	 * here would mean a code path whose behavior depends on whether a person
 	 * exists, which is the oracle this design removes structurally. */
 	update_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, '0' );
 	update_post_meta( $entry_id, GWC_VT_ENTRY_DATE, $date );
@@ -268,7 +268,7 @@ function gwc_vt_insert_self_logged_entry( string $name, string $email, string $d
  *
  * The floor exists because "refused instantly" and "accepted after a database
  * write" are distinguishable by a stopwatch. There is no existence oracle here
- * by construction, so this is belt and braces rather than the main defence —
+ * by construction, so this is belt and braces rather than the main defense —
  * but it costs a few milliseconds on a form submitted a handful of times a day.
  *
  * @param string $result  What to tell them.
@@ -300,7 +300,7 @@ function gwc_vt_self_log_message( string $result ): string {
 	$messages = array(
 		'accepted'   => __( 'Thank you — your hours have been sent to staff and will appear on your record once somebody has checked them.', 'groundwork-common-volunteer-tracker' ),
 		'incomplete' => __( 'Please give your name, the date, and how long you worked.', 'groundwork-common-volunteer-tracker' ),
-		'bad-code'   => __( 'That code was not recognised. Check the code you were given and try again.', 'groundwork-common-volunteer-tracker' ),
+		'bad-code'   => __( 'That code was not recognized. Check the code you were given and try again.', 'groundwork-common-volunteer-tracker' ),
 		'expired'    => __( 'This form had been open too long to submit safely. Your answers are below — please send them again.', 'groundwork-common-volunteer-tracker' ),
 	);
 

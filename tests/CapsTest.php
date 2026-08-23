@@ -21,7 +21,7 @@ final class CapsTest extends TestCase {
 		$this->assertNotSame(
 			gwc_vt_cap( 'verify' ),
 			gwc_vt_cap( 'issue' ),
-			'Confirming a shift happened and signing the organisation’s name to a letter are separate decisions.'
+			'Confirming a shift happened and signing the organization’s name to a letter are separate decisions.'
 		);
 	}
 
@@ -86,7 +86,7 @@ final class CapsTest extends TestCase {
 
 		/* add_cap() writes the whole role back to the options table. Running on
 		 * every init means this happens on every admin page load, so the guard
-		 * that stops it is not a micro-optimisation. */
+		 * that stops it is not a micro-optimization. */
 		$this->assertSame( $after_first, $admin->writes, 'The second run wrote to the role again.' );
 	}
 
@@ -95,7 +95,7 @@ final class CapsTest extends TestCase {
 
 		gwc_vt_grant_capabilities();
 
-		/* What a capability-manager plugin writes when an administrator unticks
+		/* What a capability-manager plugin writes when an administrator clears
 		 * the box: the key stays, holding false. That is a recorded decision,
 		 * and the isset() guard in gwc_vt_grant_capabilities() leaves it alone. */
 		$editor->capabilities['gwc_vt_issue_letters'] = false;
@@ -104,7 +104,7 @@ final class CapsTest extends TestCase {
 
 		$this->assertFalse(
 			$editor->has_cap( 'gwc_vt_issue_letters' ),
-			'An administrator who unticked this must not have it handed back on the next page load.'
+			'An administrator who cleared this must not have it handed back on the next page load.'
 		);
 	}
 

@@ -21,7 +21,7 @@ add_action( 'admin_post_gwc_vt_drop_role', 'gwc_vt_handle_drop_role' );
  * deferred — an immediate action does not predict the future, it reports what it
  * did. And because the whole screen re-rendered on save, a time that had just
  * been cancelled came back looking like a time that had not: same editable
- * fields, same checkbox, one word changed in one column. A coordinator ticked
+ * fields, same checkbox, one word changed in one column. A coordinator selected
  * it, saved, saw no difference and concluded it was broken. It was not.
  *
  * inc/admin-shift.php already had the right shape and this file follows it: one
@@ -348,7 +348,7 @@ function gwc_vt_handle_restore_slot(): void {
 	);
 
 	/* The reason is left in place. That it was once called off is the
-	 * organisation's own record, and somebody who was told may still be acting
+	 * organization's own record, and somebody who was told may still be acting
 	 * on what they were told. */
 	gwc_vt_event_refresh_dates( $event_id );
 

@@ -12,12 +12,12 @@ const GWC_VT_EVENT_TYPE = 'gwc_vt_event';
 /* Called off, as a status rather than a meta flag, for the same reason a shift's
  * is: post_status is where this plugin keeps lifecycle. A cancelled event is
  * kept rather than trashed — people signed up for it, and "this was called off"
- * is an answer the organisation owes them.
+ * is an answer the organization owes them.
  *
  * ── The name is short because wp_posts.post_status is varchar(20) ────────────
  * This was 'gwc_vt_event_cancelled' first, which is twenty-one characters. The
  * column takes twenty. WordPress does not error, does not truncate and does not
- * warn: wp_insert_post() sanitises a status it cannot store and the row keeps
+ * warn: wp_insert_post() sanitizes a status it cannot store and the row keeps
  * the one it already had.
  *
  * So "Call it off" reported success, the event stayed published, and it went on
@@ -79,14 +79,14 @@ function gwc_vt_register_event_type(): void {
 	register_post_status(
 		GWC_VT_EVENT_CANCELLED,
 		array(
-			'label'                     => _x( 'Cancelled', 'event status', 'groundwork-common-volunteer-tracker' ),
+			'label'                     => _x( 'Canceled', 'event status', 'groundwork-common-volunteer-tracker' ),
 			'public'                    => false,
 			'internal'                  => false,
 			'exclude_from_search'       => true,
 			'show_in_admin_all_list'    => true,
 			'show_in_admin_status_list' => true,
-			/* translators: %s: number of cancelled events. */
-			'label_count'               => _n_noop( 'Cancelled <span class="count">(%s)</span>', 'Cancelled <span class="count">(%s)</span>', 'groundwork-common-volunteer-tracker' ),
+			/* translators: %s: number of canceled events. */
+			'label_count'               => _n_noop( 'Canceled <span class="count">(%s)</span>', 'Canceled <span class="count">(%s)</span>', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
@@ -117,7 +117,7 @@ function gwc_vt_register_event_type(): void {
 		 * the one place in this plugin where a typed title is right. A shift's
 		 * title is derived because everything in it is already in meta; an event
 		 * has a name a human chose — "Fall Festival" — and that name is what a
-		 * volunteer recognises on a page and in an email. */
+		 * volunteer recognizes on a page and in an email. */
 		'supports'            => array( 'title' ),
 		'capability_type'     => 'post',
 		'map_meta_cap'        => true,

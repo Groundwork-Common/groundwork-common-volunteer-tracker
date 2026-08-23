@@ -23,13 +23,13 @@ const GWC_VT_VOLUNTEER_HOLD   = '_gwc_vt_retention_hold';
  * other duration here.
  *
  * ── And the reason it never reaches the letter ───────────────────────────────
- * Everything else this plugin records is something the ORGANISATION observed:
+ * Everything else this plugin records is something the ORGANIZATION observed:
  * Jane worked three and a half hours, Marcus attested to it. This is not. It is
  * a fact about somebody else's document — a court order, a school's
- * requirement — which the organisation may have seen only as a photograph and
+ * requirement — which the organization may have seen only as a photograph and
  * may be reading wrong.
  *
- * Printing "120 ordered, 94 completed, 26 remaining" would be the organisation
+ * Printing "120 ordered, 94 completed, 26 remaining" would be the organization
  * certifying the terms of an order back to the court that issued it. The court
  * knows what it ordered. And if the terms were modified on appeal while the
  * copy in the filing cabinet was not, the letter is now confidently wrong about
@@ -44,7 +44,7 @@ const GWC_VT_VOLUNTEER_REQUIRED_BY = '_gwc_vt_required_by';
 
 /* Who requires it. Free text and deliberately not a court-shaped field: schools
  * set service requirements, so do scouting groups, professional licences and
- * some employers' volunteering schemes. A field labelled "court" would be wrong
+ * some employers' volunteering schemes. A field labeled "court" would be wrong
  * for most of the people it ends up describing, and would quietly assert
  * something about the rest. */
 const GWC_VT_VOLUNTEER_REQUIRED_FOR = '_gwc_vt_required_for';

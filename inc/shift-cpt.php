@@ -50,7 +50,7 @@ add_action( 'init', 'gwc_vt_register_shift_type' );
  * 4 March, and Marcus attested to it. A shift is a plan: Saturday nine to twelve,
  * food sorting, we need six people. The plan is not evidence of anything. If a
  * signup could become an hour by sitting on the calendar until the date passed,
- * then somebody who never showed up would accrue hours towards a document a
+ * then somebody who never showed up would accrue hours toward a document a
  * probation officer reads, and nobody would find out until they read it.
  *
  * So they are separate types, and turning a roster into hours is an explicit act
@@ -70,14 +70,14 @@ function gwc_vt_register_shift_type(): void {
 	register_post_status(
 		GWC_VT_SHIFT_CANCELLED,
 		array(
-			'label'                     => _x( 'Cancelled', 'shift status', 'groundwork-common-volunteer-tracker' ),
+			'label'                     => _x( 'Canceled', 'shift status', 'groundwork-common-volunteer-tracker' ),
 			'public'                    => false,
 			'internal'                  => false,
 			'exclude_from_search'       => true,
 			'show_in_admin_all_list'    => true,
 			'show_in_admin_status_list' => true,
-			/* translators: %s: number of cancelled shifts. */
-			'label_count'               => _n_noop( 'Cancelled <span class="count">(%s)</span>', 'Cancelled <span class="count">(%s)</span>', 'groundwork-common-volunteer-tracker' ),
+			/* translators: %s: number of canceled shifts. */
+			'label_count'               => _n_noop( 'Canceled <span class="count">(%s)</span>', 'Canceled <span class="count">(%s)</span>', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
@@ -128,7 +128,7 @@ function gwc_vt_register_shift_type(): void {
  * is already recorded in meta and a title field would be a box whose contents
  * are overwritten the moment somebody presses Save. It exists so that admin
  * search, the trash, and anything reading the post list finds something a human
- * recognises.
+ * recognizes.
  *
  * @param int $shift_id Shift post ID.
  * @return string

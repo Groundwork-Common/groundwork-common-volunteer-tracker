@@ -16,7 +16,7 @@ add_action( 'deleted_post', 'gwc_vt_maybe_flush_event_page_cache', 10, 2 );
  * Everything in the box comment at the top of inc/signup-form.php applies here
  * unchanged, and this is where it is most tempting to break. The products this
  * grid resembles publish their rosters by design — that is half of what they are
- * for. On a site running a court-ordered service programme, the roster for
+ * for. On a site running a court-ordered service program, the roster for
  * Saturday is a list of people working one off.
  *
  * A place count says nothing about anybody. A first name says everything about
@@ -29,7 +29,7 @@ add_action( 'deleted_post', 'gwc_vt_maybe_flush_event_page_cache', 10, 2 );
  * saying the wrong thing would be a disclosure.
  *
  * Field names carry the shift ID: gwc_vt_slots[9001]. Never a positional array —
- * an unticked checkbox posts nothing at all, so a positional one arrives with
+ * a cleared checkbox posts nothing at all, so a positional one arrives with
  * its indexes closed up.
  * ─────────────────────────────────────────────────────────────────────────── */
 
@@ -178,10 +178,10 @@ function gwc_vt_render_event_grid( int $event_id ): string {
 }
 
 /**
- * One slot, as something a visitor can tick.
+ * One slot, as something a visitor can select.
  *
  * @param int   $shift_id Shift post ID.
- * @param int[] $picked   Slots the visitor had already ticked, for a re-render.
+ * @param int[] $picked   Slots the visitor had already selected, for a re-render.
  * @param int[] $clash    The two slots that clash, if any.
  */
 function gwc_vt_render_event_slot_choice( int $shift_id, array $picked, array $clash = array() ): void {
@@ -290,7 +290,7 @@ function gwc_vt_event_visible_roles( int $event_id ): array {
  *
  * ── Why an event's page has to be searched for ───────────────────────────────
  * An event is not publicly queryable and has no permalink, on purpose: a
- * permalink would publish a location and the shape of an organisation's calendar
+ * permalink would publish a location and the shape of an organization's calendar
  * to anybody who asked. So the grid lives wherever the site put the block, and
  * finding that page means asking which page contains it.
  *
@@ -402,7 +402,7 @@ function gwc_vt_content_places_event( string $content, int $event_id ): bool {
 		}
 	}
 
-	// The block's serialised attribute.
+	// The block's serialized attribute.
 	if ( preg_match_all( '/"eventId"\s*:\s*(\d+)/', $content, $ids ) ) {
 		foreach ( $ids[1] as $id ) {
 			if ( (int) $id === $event_id ) {
@@ -436,7 +436,7 @@ function gwc_vt_event_page_id( int $event_id ): int {
 
 	/* Two searches rather than one, and the reason survived the 1.0.0 rename of
 	 * the shortcode even though its shape changed. The shortcode is written
-	 * "[gwc_vt_event_grid"; the block serialises as
+	 * "[gwc_vt_event_grid"; the block serializes as
 	 * "volunteer-tracker/event-grid". Since the rename the two do share a tail —
 	 * "event-grid" — but neither marker is a substring of the other, so a search
 	 * on either one alone still returns nothing for pages using the other

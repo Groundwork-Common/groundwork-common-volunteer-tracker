@@ -94,7 +94,7 @@ $gwc_vt_editor->add_cap( 'gwc_vt_issue_letters', false );
 gwc_vt_grant_capabilities();
 
 gwc_vt_check(
-	'a capability unticked in a role manager stays unticked',
+	'a capability cleared in a role manager stays cleared',
 	! get_role( 'editor' )->has_cap( 'gwc_vt_issue_letters' )
 );
 

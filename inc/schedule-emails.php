@@ -135,13 +135,13 @@ function gwc_vt_send_signup_confirmation( int $signup_id ): bool {
 
 	$subject = $waiting
 		? sprintf(
-			/* translators: 1: the organisation's name, 2: a date. */
+			/* translators: 1: the organization's name, 2: a date. */
 			__( '%1$s: you are on the waiting list for %2$s', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_shift_date_label( $shift_id )
 		)
 		: sprintf(
-			/* translators: 1: the organisation's name, 2: a date. */
+			/* translators: 1: the organization's name, 2: a date. */
 			__( '%1$s: you are signed up for %2$s', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_shift_date_label( $shift_id )
@@ -170,12 +170,12 @@ function gwc_vt_signup_confirmation_body( int $signup_id, int $shift_id, bool $w
 		esc_html(
 			$waiting
 				? sprintf(
-					/* translators: %s: the organisation's name. */
+					/* translators: %s: the organization's name. */
 					__( 'Thank you for offering to help %s. That shift is full at the moment, so you are on the waiting list — we will be in touch if a place comes free.', 'groundwork-common-volunteer-tracker' ),
 					gwc_vt_org_name()
 				)
 				: sprintf(
-					/* translators: %s: the organisation's name. */
+					/* translators: %s: the organization's name. */
 					__( 'Thank you for signing up to volunteer with %s. Here are the details.', 'groundwork-common-volunteer-tracker' ),
 					gwc_vt_org_name()
 				)
@@ -219,7 +219,7 @@ function gwc_vt_signup_confirmation_body( int $signup_id, int $shift_id, bool $w
 		'<p><small>%s</small></p>',
 		esc_html(
 			sprintf(
-				/* translators: 1: the organisation's name, 2: its contact details. */
+				/* translators: 1: the organization's name, 2: its contact details. */
 				__( 'Sent by %1$s (%2$s). Signing up records your name and email address so we know who is coming; it does not create an account.', 'groundwork-common-volunteer-tracker' ),
 				gwc_vt_org_name(),
 				gwc_vt_org_contact()
@@ -256,7 +256,7 @@ function gwc_vt_send_shift_reminder( int $signup_id ): bool {
 			'<p>%s</p>',
 			esc_html(
 				sprintf(
-					/* translators: 1: a date, 2: the organisation's name. */
+					/* translators: 1: a date, 2: the organization's name. */
 					__( 'A reminder that you are down to volunteer on %1$s with %2$s.', 'groundwork-common-volunteer-tracker' ),
 					gwc_vt_shift_date_label( $shift_id ),
 					gwc_vt_org_name()
@@ -273,7 +273,7 @@ function gwc_vt_send_shift_reminder( int $signup_id ): bool {
 	}
 
 	/* The cancellation link goes in the reminder as well as the confirmation,
-	 * and this is the one that gets used. Somebody who realises two days out
+	 * and this is the one that gets used. Somebody who realizes two days out
 	 * that they cannot make it is looking at this message, not hunting for one
 	 * they got three weeks ago. */
 	$manage = gwc_vt_signup_manage_url( $signup_id );
@@ -296,7 +296,7 @@ function gwc_vt_send_shift_reminder( int $signup_id ): bool {
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organisation's name, 2: a date. */
+			/* translators: 1: the organization's name, 2: a date. */
 			__( '%1$s: a reminder about %2$s', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_shift_date_label( $shift_id )
@@ -332,8 +332,8 @@ function gwc_vt_send_shift_cancelled_notice( int $signup_id, string $reason = ''
 			'<p><strong>%s</strong></p>',
 			esc_html(
 				sprintf(
-					/* translators: 1: a date, 2: the organisation's name. */
-					__( 'The shift on %1$s with %2$s has been cancelled. Please do not come.', 'groundwork-common-volunteer-tracker' ),
+					/* translators: 1: a date, 2: the organization's name. */
+					__( 'The shift on %1$s with %2$s has been canceled. Please do not come.', 'groundwork-common-volunteer-tracker' ),
 					gwc_vt_shift_date_label( $shift_id ),
 					gwc_vt_org_name()
 				)
@@ -357,8 +357,8 @@ function gwc_vt_send_shift_cancelled_notice( int $signup_id, string $reason = ''
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organisation's name, 2: a date. */
-			__( '%1$s: the shift on %2$s is cancelled', 'groundwork-common-volunteer-tracker' ),
+			/* translators: 1: the organization's name, 2: a date. */
+			__( '%1$s: the shift on %2$s is canceled', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_shift_date_label( $shift_id )
 		),
@@ -396,7 +396,7 @@ function gwc_vt_send_shift_changed_notice( int $signup_id, array $was = array() 
 			'<p><strong>%s</strong></p>',
 			esc_html(
 				sprintf(
-					/* translators: %s: the organisation's name. */
+					/* translators: %s: the organization's name. */
 					__( 'A shift you signed up for with %s has changed. Here are the new details.', 'groundwork-common-volunteer-tracker' ),
 					gwc_vt_org_name()
 				)
@@ -435,7 +435,7 @@ function gwc_vt_send_shift_changed_notice( int $signup_id, array $was = array() 
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organisation's name, 2: a date. */
+			/* translators: 1: the organization's name, 2: a date. */
 			__( '%1$s: the shift on %2$s has changed', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_shift_date_label( $shift_id )
@@ -495,7 +495,7 @@ function gwc_vt_email_footer(): string {
 		'<p><small>%s</small></p>',
 		esc_html(
 			sprintf(
-				/* translators: 1: the organisation's name, 2: its contact details. */
+				/* translators: 1: the organization's name, 2: its contact details. */
 				__( 'Sent by %1$s (%2$s).', 'groundwork-common-volunteer-tracker' ),
 				gwc_vt_org_name(),
 				gwc_vt_org_contact()
@@ -526,7 +526,7 @@ function gwc_vt_shift_one_line( int $shift_id ): string {
 /**
  * The page somebody manages one signup from.
  *
- * A capability URL: it authorises exactly one thing about exactly one signup,
+ * A capability URL: it authorizes exactly one thing about exactly one signup,
  * and it is no more sensitive than the mailbox it arrives in. See the note on
  * the token in inc/signups.php.
  *
@@ -556,9 +556,9 @@ function gwc_vt_signup_manage_url( int $signup_id ): string {
 }
 
 /* ── One event, one message ──────────────────────────────────────────────────
- * Four slots must not be four emails. Somebody who ticks a morning and an
+ * Four slots must not be four emails. Somebody who selects a morning and an
  * afternoon and a set-up is doing one thing, and a mailbox with four near
- * identical messages in it is how an organisation teaches its volunteers to
+ * identical messages in it is how an organization teaches its volunteers to
  * filter its address.
  *
  * Each slot carries ITS OWN cancel link and its own calendar link, and that is
@@ -608,7 +608,7 @@ function gwc_vt_send_event_confirmation( int $event_id, array $signup_ids ): boo
 		return false;
 	}
 
-	/* Ordered by when they happen rather than by which box was ticked first. The
+	/* Ordered by when they happen rather than by which checkbox was selected first. The
 	 * message is a plan for a day, and a day runs in one direction. */
 	usort(
 		$signup_ids,
@@ -627,7 +627,7 @@ function gwc_vt_send_event_confirmation( int $event_id, array $signup_ids ): boo
 			'<p>%s</p>',
 			esc_html(
 				sprintf(
-					/* translators: 1: the event's name, 2: a date, 3: the organisation's name. */
+					/* translators: 1: the event's name, 2: a date, 3: the organization's name. */
 					__( 'Thank you for signing up for %1$s on %2$s with %3$s. Here is what you put your name down for.', 'groundwork-common-volunteer-tracker' ),
 					gwc_vt_event_name( $event_id ),
 					gwc_vt_event_date_label( $event_id ),
@@ -647,7 +647,7 @@ function gwc_vt_send_event_confirmation( int $event_id, array $signup_ids ): boo
 
 	$lines[] = sprintf(
 		'<p>%s</p>',
-		esc_html__( 'Each one has its own link. Cancelling one takes you off that one only and leaves the rest as they are.', 'groundwork-common-volunteer-tracker' )
+		esc_html__( 'Each one has its own link. Canceling one takes you off that one only and leaves the rest as they are.', 'groundwork-common-volunteer-tracker' )
 	);
 
 	$supervisor = trim( (string) get_post_meta( $event_id, GWC_VT_EVENT_SUPERVISOR, true ) );
@@ -670,7 +670,7 @@ function gwc_vt_send_event_confirmation( int $event_id, array $signup_ids ): boo
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organisation's name, 2: the event's name. */
+			/* translators: 1: the organization's name, 2: the event's name. */
 			__( '%1$s: you are signed up for %2$s', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_event_name( $event_id )
@@ -770,7 +770,7 @@ function gwc_vt_send_event_reminder( int $event_id, array $signup_ids ): bool {
 			'<p>%s</p>',
 			esc_html(
 				sprintf(
-					/* translators: 1: the organisation's name, 2: a date, 3: the event's name. */
+					/* translators: 1: the organization's name, 2: a date, 3: the event's name. */
 					__( 'A reminder that you are down to volunteer with %1$s on %2$s — %3$s. Here is your day.', 'groundwork-common-volunteer-tracker' ),
 					gwc_vt_org_name(),
 					gwc_vt_event_date_label( $event_id ),
@@ -798,7 +798,7 @@ function gwc_vt_send_event_reminder( int $event_id, array $signup_ids ): bool {
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organisation's name, 2: the event's name. */
+			/* translators: 1: the organization's name, 2: the event's name. */
 			__( '%1$s: a reminder about %2$s', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_event_name( $event_id )

@@ -58,7 +58,7 @@ final class RequiredTest extends TestCase {
 	}
 
 	/* ── Verified hours count, and only those ────────────────────────────────
-	 * Counting unverified hours towards a requirement would tell somebody they
+	 * Counting unverified hours toward a requirement would tell somebody they
 	 * were finished on the strength of a row nobody had looked at.
 	 * ─────────────────────────────────────────────────────────────────────── */
 
@@ -185,7 +185,7 @@ final class RequiredTest extends TestCase {
 	/* ── It never reaches the letter ─────────────────────────────────────────
 	 * The assertion this whole feature is arranged around. How many hours a
 	 * court ordered is a fact about the court's document, not about anything
-	 * the organisation observed — and an organisation certifying the terms of
+	 * the organization observed — and an organization certifying the terms of
 	 * an order back to the court that issued it is the seal problem wearing a
 	 * different hat.
 	 * ─────────────────────────────────────────────────────────────────────── */

@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
  * The printed letter and the emailed letter are the same document. That is not
  * a tidiness preference — the whole credibility argument rests on it. Two
  * templates drift, and the day they have drifted is the day a court receives a
- * letter that differs from the copy the organisation has on file.
+ * letter that differs from the copy the organization has on file.
  *
  * So there is one function that produces the markup, and the only difference
  * between the media is how the styling gets attached:
@@ -102,7 +102,7 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' )
 }
 
 /* ── The structural wording ──────────────────────────────────────────────────
- * The prose an organisation is most likely to want to change — the opening
+ * The prose an organization is most likely to want to change — the opening
  * paragraph, the disclaimer, the reference note — is a setting, editable on the
  * Letter tab. The strings below are the document's furniture: headings, column
  * headers, row labels. They are translatable, and they are filterable here for
@@ -174,7 +174,7 @@ function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium ): string {
 		<header class="gwcvt-letterhead">
 			<?php if ( '' !== $logo ) : ?>
 				<?php
-				/* alt="" on purpose. The organisation's name is printed as text
+				/* alt="" on purpose. The organization's name is printed as text
 				 * directly beneath, so alt text here would have a screen reader
 				 * announce it twice. The image is decoration; the name is the
 				 * information.
@@ -277,7 +277,7 @@ function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium ): string {
 		 * to be one: a human signing this IS the attestation, and the plugin's
 		 * job is to leave room for one rather than simulate it.
 		 *
-		 * If no signatory is configured the line still prints, unlabelled. That
+		 * If no signatory is configured the line still prints, unlabeled. That
 		 * looks visibly unfinished, which is the correct prompt to go and fill
 		 * it in before sending one to a court.
 		 * ─────────────────────────────────────────────────────────────────── */
@@ -446,7 +446,7 @@ function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
  */
 function gwc_vt_letter_title( GWC_VT_Letter $letter ): string {
 	return sprintf(
-		/* translators: 1: a volunteer's name, 2: the organisation's name. */
+		/* translators: 1: a volunteer's name, 2: the organization's name. */
 		__( 'Volunteer service verification — %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
 		$letter->volunteer_name,
 		gwc_vt_org_name()
@@ -454,7 +454,7 @@ function gwc_vt_letter_title( GWC_VT_Letter $letter ): string {
 }
 
 /**
- * The organisation's logo, if one is set and still exists.
+ * The organization's logo, if one is set and still exists.
  *
  * A sized version rather than the original: the letterhead caps the height in
  * CSS either way, but a four-megabyte original inside an emailed letter is rude
@@ -477,7 +477,7 @@ function gwc_vt_letter_logo_url(): string {
 }
 
 /**
- * How to reach the organisation about this letter.
+ * How to reach the organization about this letter.
  *
  * @return string
  */

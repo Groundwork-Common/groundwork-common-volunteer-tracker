@@ -183,7 +183,7 @@ gwc_vt_check(
  * a site-wide figure and this script does not own the site — a demo fixture or
  * a record somebody left behind would break an absolute assertion while the
  * plugin was working perfectly. That happened: these read `1` and `0` until the
- * seeded demo organisation existed. */
+ * seeded demo organization existed. */
 gwc_vt_forget_unverified_count();
 $gwc_vt_baseline = gwc_vt_unverified_count();
 

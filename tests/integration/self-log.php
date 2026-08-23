@@ -22,7 +22,7 @@ $GLOBALS['gwc_vt_made']     = array();
  * The first version swept up every pending entry on the site at cleanup,
  * because gwc_vt_submit() posts through the handler and does not hand an ID
  * back. That deleted records this script never created — it quietly destroyed
- * the seeded demo organisation's two self-logged submissions every time it ran,
+ * the seeded demo organization's two self-logged submissions every time it ran,
  * and on a site with real pending entries it would have destroyed those.
  *
  * gwc_vt_self_log_received fires with the ID of each entry the handler stores,
@@ -113,7 +113,7 @@ function gwc_vt_pending_count(): int {
  * letterhead, signatory, disclaimer wording, retention policy, and whether the
  * public form is switched on.
  *
- * On this machine that silently turned the demo organisation's form off. On a
+ * On this machine that silently turned the demo organization's form off. On a
  * real site it would erase a retention policy somebody had deliberately chosen
  * for records about court-ordered service, with nothing to say it had happened.
  *

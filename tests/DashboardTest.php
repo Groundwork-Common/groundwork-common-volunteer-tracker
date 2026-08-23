@@ -170,7 +170,7 @@ final class DashboardTest extends TestCase {
 	}
 
 	/**
-	 * The two that cannot wait are the two that carry the loud stripe. Colour
+	 * The two that cannot wait are the two that carry the loud stripe. Color
 	 * is reinforcement — every line says its own count and its own sentence —
 	 * but the reinforcement should still be pointing at the right lines.
 	 */

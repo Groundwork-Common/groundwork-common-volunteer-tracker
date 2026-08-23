@@ -62,7 +62,7 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 				<a class="button" href="<?php echo esc_url( gwc_vt_event_print_url( $event_id ) ); ?>" target="_blank" rel="noopener noreferrer">
 					<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
-				<span class="description"><?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use "Log the hours" beside each time — everybody who signed up is already listed and ticked.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<span class="description"><?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use "Log the hours" beside each time — everybody who signed up is already listed and selected.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php endif; ?>
 		</p>
 

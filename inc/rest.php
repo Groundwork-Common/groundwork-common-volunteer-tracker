@@ -23,7 +23,7 @@ add_action( 'rest_api_init', 'gwc_vt_register_rest_routes' );
  * It is not an argument against a purpose-built route. For the one lookup this
  * plugin needs, REST has strictly better guard rails than admin-ajax:
  * permission_callback is mandatory and WordPress complains when it is missing,
- * and 'args' gives declarative validation and sanitising. The admin-ajax
+ * and 'args' gives declarative validation and sanitizing. The admin-ajax
  * equivalent is a hand-written check_ajax_referer plus a hand-written
  * current_user_can, and the failure mode of forgetting either is an endpoint
  * that answers anybody.

@@ -63,7 +63,7 @@ function gwc_vt_setting_defaults(): array {
 		'letter_reference_note'     => '',
 
 		/* Prefixed onto every reference code. Empty gives a bare code, which is
-		 * fine; orgs issuing letters for more than one programme tend to want
+		 * fine; orgs issuing letters for more than one program tend to want
 		 * one. */
 		'reference_prefix'          => '',
 
@@ -122,7 +122,7 @@ function gwc_vt_setting_defaults(): array {
 		/* Off. Scheduling is a second product surface — a menu item, a set of
 		 * screens, and eventually mail leaving the site — and none of that should
 		 * appear because somebody updated a plugin they installed to log hours. An
-		 * organisation that takes signups on the phone and a clipboard is not
+		 * organization that takes signups on the phone and a clipboard is not
 		 * doing it wrong, and this stays out of their way until they say so. */
 		'shifts_enabled'            => false,
 
@@ -140,7 +140,7 @@ function gwc_vt_setting_defaults(): array {
 		/* ── Signing up from the front end ────────────────────────────────────
 		 * A second switch rather than a mode of the first, because "we plan
 		 * shifts internally" and "strangers can put their name on one" are
-		 * different decisions with different consequences, and an organisation
+		 * different decisions with different consequences, and an organization
 		 * that wants the first should not have to accept the second to get it.
 		 *
 		 * Off, for the same reason self_log_enabled is off: with this on, the
@@ -261,7 +261,7 @@ function gwc_vt_setting( string $key ) {
 }
 
 /**
- * The organisation's name as the letter should print it.
+ * The organization's name as the letter should print it.
  *
  * @return string
  */
@@ -303,7 +303,7 @@ function gwc_vt_reference_note(): string {
  * Wrapped so that every date decision in the plugin goes through one place. An
  * hour entry is a calendar date with no instant attached — a shift on 4 March
  * is on 4 March whatever the server thinks the time is — so "today" has to mean
- * today where the organisation is, not today in UTC.
+ * today where the organization is, not today in UTC.
  *
  * @return DateTimeZone
  */
@@ -405,7 +405,7 @@ function gwc_vt_parse_hours( string $raw, bool $round = true ): ?int {
 /**
  * Round to the configured increment, to the nearest rather than up.
  *
- * Nearest, because rounding up is the organisation systematically crediting
+ * Nearest, because rounding up is the organization systematically crediting
  * hours nobody worked, and on this document that is the one direction of error
  * that matters.
  *

@@ -3,7 +3,7 @@
    Same restraint as form.css beside it: this renders inside somebody else's
    theme, on a page they styled, and a list that arrives with strong opinions
    about typography looks like an advert for the plugin. Everything inherits —
-   font, colour, headings. What is styled here is layout, the tap targets, and
+   font, color, headings. What is styled here is layout, the tap targets, and
    the two things a theme reliably gets wrong for markup it did not expect. */
 
 .gwcvt-shifts {
@@ -24,7 +24,7 @@
 /* ─── One shift ─────────────────────────────────────────────────────────────
    The radio and its label are a single tap target, because the label carries
    four lines of detail and a visitor on a phone should be able to hit any of
-   them. currentColor for the rule rather than a colour of our own: a grey that
+   them. currentColor for the rule rather than a color of our own: a grey that
    reads as a quiet border on a light theme is invisible on a dark one. */
 .gwcvt-shift {
 	display: flex;
@@ -122,7 +122,7 @@
 }
 
 /* ─── Messages ─────────────────────────────────────────────────────────────
-   currentColor and a left rule rather than a colour of our own, exactly as in
+   currentColor and a left rule rather than a color of our own, exactly as in
    form.css: green-on-white from a plugin lands badly on a dark theme, and the
    message is carried by the words in any case. */
 .gwcvt-shifts__message {
@@ -147,7 +147,7 @@
 }
 
 /* Buttons inherit the theme's own where it styles bare <button>, and get enough
-   of their own that they are still recognisably buttons where it does not. */
+   of their own that they are still recognizably buttons where it does not. */
 .gwcvt-shifts__button {
 	display: inline-block;
 	padding: .6em 1.2em;

@@ -324,7 +324,7 @@ function gwc_vt_render_dashboard_shiftline( int $shift_id ): void {
 				$min = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true );
 
 				/* The number is not enough on its own: "3 of 8" does not say
-				 * whether three is a problem. Colour does not say it either, for
+				 * whether three is a problem. Color does not say it either, for
 				 * anybody who cannot see it. */
 				if ( $short && $min > 0 ) {
 					printf(

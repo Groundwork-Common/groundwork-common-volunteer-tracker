@@ -9,9 +9,9 @@ defined( 'ABSPATH' ) || exit;
 
 /* ── Verified hours count, and only those ────────────────────────────────────
  * A requirement is met by hours a member of staff has attested to, because
- * those are the only ones the organisation is prepared to stand behind — they
+ * those are the only ones the organization is prepared to stand behind — they
  * are also the only ones a letter states a total for. Counting unverified hours
- * towards it would tell a volunteer they were finished on the strength of a row
+ * toward it would tell a volunteer they were finished on the strength of a row
  * nobody had looked at.
  *
  * Hours waiting to be verified are reported alongside rather than folded in, so
@@ -34,7 +34,7 @@ function gwc_vt_required_minutes( int $volunteer_id ): int {
  * Does this volunteer have a requirement recorded at all?
  *
  * Most do not. Everything this file draws is hidden when this is false, so an
- * organisation that never hosts mandated service never sees any of it.
+ * organization that never hosts mandated service never sees any of it.
  *
  * @param int $volunteer_id Volunteer post ID.
  * @return bool

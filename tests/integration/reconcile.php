@@ -113,7 +113,7 @@ function gwc_vt_track_signup( int $shift_id, array $args ): int {
 
 /* ── Running the real handler ────────────────────────────────────────────────
  * The handler is what a browser posts to, and it is where the row-index
- * arithmetic lives — the part that has to keep an unticked checkbox from being
+ * arithmetic lives — the part that has to keep a cleared checkbox from being
  * read as the next row's answer. Testing the model functions it calls would
  * leave exactly that uncovered, so this drives the handler itself.
  *
@@ -244,7 +244,7 @@ $gwc_vt_result = gwc_vt_run_quick_add(
 			1 => (string) $gwc_vt_s_omar,
 			2 => (string) $gwc_vt_s_priya,
 		),
-		/* Priya's box is missing, exactly as a browser omits an unticked one.
+		/* Priya's box is missing, exactly as a browser omits a cleared one.
 		 * The indexes are what keep row 3's absence from being read as row 4's. */
 		'gwc_vt_attended'   => array(
 			0 => '1',
@@ -301,7 +301,7 @@ $gwc_vt_priya_totals = gwc_vt_volunteer_totals( $gwc_vt_priya );
 gwc_vt_check( 'a no-show’s totals did not move', 0 === $gwc_vt_priya_totals->total_minutes(), (string) $gwc_vt_priya_totals->total_minutes() );
 
 /* ── Logging twice does not double anybody ───────────────────────────────────
- * The screen renders an already-logged row with no tick box and posts nobody
+ * The screen renders an already-logged row with no checkbox and posts nobody
  * for it. This asserts the handler agrees, because a coordinator who reopens
  * the screen to add a missed walk-in must not silently double everybody else.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -327,10 +327,10 @@ gwc_vt_check( 'they have an entry', 1 === count( gwc_vt_entries_for( $gwc_vt_mis
 gwc_vt_check( 'and nobody was logged twice', 1 === count( gwc_vt_entries_for( $gwc_vt_jane ) ), (string) count( gwc_vt_entries_for( $gwc_vt_jane ) ) );
 gwc_vt_check( 'so the totals did not move either', 180 === gwc_vt_volunteer_totals( $gwc_vt_jane )->pending_minutes, (string) gwc_vt_volunteer_totals( $gwc_vt_jane )->pending_minutes );
 
-/* ── Reopening does not re-tick a no-show ────────────────────────────────────
+/* ── Reopening does not re-select a no-show ────────────────────────────────────
  * The screen is what defends this, so the screen is what is asserted. Somebody
  * on the roster of a logged shift with no entry has already been recorded as
- * not having come; if reopening the page brought them back ticked with the
+ * not having come; if reopening the page brought them back selected with the
  * scheduled hours filled in, one press of Save would credit them a shift they
  * did not work — onto a record a letter is built from, with nothing to show it.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -339,14 +339,14 @@ ob_start();
 gwc_vt_render_roster_log_row( 0, $gwc_vt_s_priya, $gwc_vt_shift, true );
 $gwc_vt_reopened = (string) ob_get_clean();
 
-gwc_vt_check( 'a no-show comes back unticked when the shift was already logged', false === strpos( $gwc_vt_reopened, 'checked=' ), 'the box was pre-ticked' );
+gwc_vt_check( 'a no-show comes back cleared when the shift was already logged', false === strpos( $gwc_vt_reopened, 'checked=' ), 'the box was pre-selected' );
 gwc_vt_check( 'and says why', false !== strpos( $gwc_vt_reopened, 'Recorded as not having come' ) );
 
 ob_start();
 gwc_vt_render_roster_log_row( 0, $gwc_vt_s_priya, $gwc_vt_shift, false );
 $gwc_vt_first_pass = (string) ob_get_clean();
 
-gwc_vt_check( 'but is ticked on a shift nobody has logged yet', false !== strpos( $gwc_vt_first_pass, 'checked=' ) );
+gwc_vt_check( 'but is selected on a shift nobody has logged yet', false !== strpos( $gwc_vt_first_pass, 'checked=' ) );
 
 ob_start();
 gwc_vt_render_roster_log_row( 0, $gwc_vt_s_jane, $gwc_vt_shift, true );

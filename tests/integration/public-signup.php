@@ -181,7 +181,7 @@ gwc_vt_check( 'switched on and pinned, signups are open', gwc_vt_signups_open() 
 
 /* ── The list shows counts and never names ───────────────────────────────────
  * The single rule the public surface exists to keep. On a site running a
- * court-ordered service programme, the roster for Saturday is a list of people
+ * court-ordered service program, the roster for Saturday is a list of people
  * working one off.
  * ─────────────────────────────────────────────────────────────────────────── */
 
@@ -257,7 +257,7 @@ gwc_vt_check( 'a confirmation is sent', 1 === count( $GLOBALS['gwc_vt_mail'] ), 
 $gwc_vt_message = $GLOBALS['gwc_vt_mail'][0] ?? array();
 
 gwc_vt_check( 'to the address they gave', 'zzytest-marcus@example.test' === ( $gwc_vt_message['to'] ?? '' ), (string) ( $gwc_vt_message['to'] ?? '' ) );
-gwc_vt_check( 'naming the organisation', false !== strpos( (string) ( $gwc_vt_message['subject'] ?? '' ), 'Zzytest Riverbend Food Bank' ), (string) ( $gwc_vt_message['subject'] ?? '' ) );
+gwc_vt_check( 'naming the organization', false !== strpos( (string) ( $gwc_vt_message['subject'] ?? '' ), 'Zzytest Riverbend Food Bank' ), (string) ( $gwc_vt_message['subject'] ?? '' ) );
 gwc_vt_check( 'saying where to go', false !== strpos( (string) ( $gwc_vt_message['message'] ?? '' ), 'Zzytest main warehouse' ) );
 gwc_vt_check( 'and carrying a way out of it', false !== strpos( (string) ( $gwc_vt_message['message'] ?? '' ), 'gwc_vt_signup=' . $gwc_vt_signup ) );
 
@@ -458,7 +458,7 @@ gwc_vt_check( 'and a UTC end instant', 1 === preg_match( '/DTEND:\d{8}T\d{6}Z/',
 gwc_vt_check( 'published rather than an invitation to RSVP', false !== strpos( $gwc_vt_ics, 'METHOD:PUBLISH' ) && false === strpos( $gwc_vt_ics, 'METHOD:REQUEST' ) );
 gwc_vt_check( 'a unique identifier tied to this signup', false !== strpos( $gwc_vt_ics, 'UID:gwcvt-signup-' . $gwc_vt_signup . '@' ) );
 gwc_vt_check( 'lines end CRLF', false !== strpos( $gwc_vt_ics, "\r\n" ) );
-gwc_vt_check( 'and it names the organisation so it is recognisable in a calendar', false !== strpos( $gwc_vt_ics, 'Zzytest Riverbend Food Bank' ) );
+gwc_vt_check( 'and it names the organization so it is recognizable in a calendar', false !== strpos( $gwc_vt_ics, 'Zzytest Riverbend Food Bank' ) );
 
 /* ── Privacy ─────────────────────────────────────────────────────────────────
  * The case the old exporter could not reach: somebody who signed up through the
@@ -491,8 +491,8 @@ gwc_vt_check( 'erasing reports something removed', ! empty( $gwc_vt_erase['items
 gwc_vt_check( 'the claimed name is gone', '' === (string) get_post_meta( $gwc_vt_signup, GWC_VT_SIGNUP_CLAIM_NAME, true ) );
 gwc_vt_check( 'the claimed address is gone', '' === (string) get_post_meta( $gwc_vt_signup, GWC_VT_SIGNUP_CLAIM_EMAIL, true ) );
 
-/* The place on the shift survives: it is the organisation's record of what it
- * ran and who staffed it, and anonymised it identifies nobody. */
+/* The place on the shift survives: it is the organization's record of what it
+ * ran and who staffed it, and anonymized it identifies nobody. */
 gwc_vt_check( 'but the place on the shift survives', GWC_VT_SIGNUP_TYPE === get_post_type( $gwc_vt_signup ) );
 gwc_vt_check( 'and the erasure said so', ! empty( $gwc_vt_erase['messages'] ) );
 

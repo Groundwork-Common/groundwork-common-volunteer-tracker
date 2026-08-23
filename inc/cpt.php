@@ -24,7 +24,7 @@ const GWC_VT_ENTRY_SOURCE     = '_gwc_vt_source';
  *
  * Metadata, and deliberately nothing the letter reads. What a letter prints is
  * the date, the duration, the activity, the supervisor and the attestation —
- * the facts the organisation observed. That a plan existed beforehand is not one
+ * the facts the organization observed. That a plan existed beforehand is not one
  * of them, and adding it to the printed document would invalidate every
  * reference code ever issued for the sake of a line no reader needs. */
 const GWC_VT_ENTRY_SHIFT = '_gwc_vt_entry_shift';
@@ -35,7 +35,7 @@ const GWC_VT_ENTRY_SHIFT = '_gwc_vt_entry_shift';
  *
  * These live here with the rest of the entry's meta rather than in verify.php,
  * because the query layer has to read them to total anything and a constant
- * that moves house when its behaviour does is a constant nobody can find.
+ * that moves house when its behavior does is a constant nobody can find.
  * inc/verify.php owns the writing.
  *
  * GWC_VT_ENTRY_VERIFIED_METHOD holds 'staff' and, in this version, nothing else.
@@ -63,7 +63,7 @@ add_filter( 'post_row_actions', 'gwc_vt_entry_volunteer_row_action', 9, 2 );
  *
  * show_in_rest is false rather than absent, and it is the single most
  * consequential line in the file. Turning it on would publish volunteer names
- * and every custom field an organisation has added — case numbers, referral
+ * and every custom field an organization has added — case numbers, referral
  * agencies — at /wp-json/wp/v2/gwc_vt_entry to anybody the site lets read. There
  * IS one REST route in this plugin, in inc/rest.php, and it returns display
  * names to staff who already hold edit_posts and nothing else. The difference

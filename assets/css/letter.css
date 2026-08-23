@@ -239,7 +239,7 @@ body.gwcvt-letter-page {
 	}
 
 	/* Repeat the itemised table's header on every page it spills onto. Without
-	   this, page two of a long service record is a wall of unlabelled columns. */
+	   this, page two of a long service record is a wall of unlabeled columns. */
 	.gwcvt-entries thead {
 		display: table-header-group;
 	}
@@ -260,7 +260,7 @@ body.gwcvt-letter-page {
 
 /* The logo, capped by height so the letter stays correspondence rather than
    becoming a flyer. Width follows, so a wide wordmark and a square badge both
-   sit correctly without the organisation having to crop anything. */
+   sit correctly without the organization having to crop anything. */
 .gwcvt-org-logo {
 	display: block;
 	max-height: 56px;

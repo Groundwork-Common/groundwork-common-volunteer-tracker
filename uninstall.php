@@ -21,7 +21,7 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  * And even armed, it deletes only this plugin's OPTIONS. Never posts, never
  * post meta. The hour entries, the volunteer records and the issued-letter log
  * all survive, because a plugin's settings are the plugin's and the records are
- * the organisation's.
+ * the organization's.
  *
  * The capabilities survive too, armed or not. An orphaned custom capability is
  * one row in one option; a capability yanked out from under six staff accounts

@@ -10,7 +10,7 @@
  * Both numbers this covers are printed on the dashboard, and one of them is
  * described in inc/dashboard.php as "what goes into a Form 990 or a grant
  * report". Both used to pass a large posts_per_page and take whatever came back,
- * which silently reported a smaller organisation than the one running the site
+ * which silently reported a smaller organization than the one running the site
  * once the cap was reached.
  *
  * Run under wp-env:

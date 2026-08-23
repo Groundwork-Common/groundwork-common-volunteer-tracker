@@ -1,6 +1,6 @@
 <?php
 /**
- * Retention, anonymisation, and WordPress's own privacy tools.
+ * Retention, anonymization, and WordPress's own privacy tools.
  *
  * @package VolunteerTracker
  */
@@ -175,7 +175,7 @@ function gwc_vt_retention_due( int $volunteer_id, string $today = '' ): bool {
 /**
  * Is this record exempt from purging?
  *
- * Courts do sometimes require an organisation to keep a record for longer than
+ * Courts do sometimes require an organization to keep a record for longer than
  * its own policy, and a retention sweep that could not be overridden per person
  * would make the setting unusable for exactly the orgs this plugin is for.
  *
@@ -189,11 +189,11 @@ function gwc_vt_retention_held( int $volunteer_id ): bool {
 /* ── Purging ─────────────────────────────────────────────────────────────── */
 
 /**
- * Anonymise a volunteer, keeping their hours.
+ * Anonymize a volunteer, keeping their hours.
  *
- * The default action, and the right one for this domain. An organisation's
+ * The default action, and the right one for this domain. An organization's
  * grant reporting and its Form 990 need the hours; they do not need the name.
- * Deleting outright throws away the organisation's own service statistics to
+ * Deleting outright throws away the organization's own service statistics to
  * solve a problem that removing the identity already solves.
  *
  * @param int $volunteer_id Volunteer post ID.
@@ -205,7 +205,7 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 	}
 
 	/**
-	 * Fires before a volunteer's record is anonymised or deleted.
+	 * Fires before a volunteer's record is anonymized or deleted.
 	 *
 	 * A site that exports to another system gets its last chance here.
 	 *
@@ -229,7 +229,7 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHONE );
 
 	/* The requirement goes too, and it is the most important thing in this list.
-	 * The hours survive anonymisation because they are the organisation's own
+	 * The hours survive anonymization because they are the organization's own
 	 * service record and identify nobody once the name is gone — but "120 hours
 	 * required by 15 November for Franklin County Municipal Court" says that a
 	 * person was under a court order, names the court, and dates it. That is a
@@ -240,7 +240,7 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR );
 
 	/* The claimed name and email on any self-logged entry are personal data too,
-	 * and they sit on the ENTRY rather than the volunteer — so anonymising only
+	 * and they sit on the ENTRY rather than the volunteer — so anonymizing only
 	 * the volunteer record would leave the name behind on every shift somebody
 	 * submitted through the public form. */
 	foreach ( gwc_vt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
@@ -251,8 +251,8 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 
 	/* And the same again on their signups, which carry their own copy of a name
 	 * and an address typed into the public form. The shift and the place on it
-	 * survive — that is the organisation's record of what it ran and who staffed
-	 * it, and anonymised it identifies nobody. */
+	 * survive — that is the organization's record of what it ran and who staffed
+	 * it, and anonymized it identifies nobody. */
 	foreach ( gwc_vt_signup_ids_for_volunteer( $volunteer_id ) as $signup_id ) {
 		gwc_vt_clear_signup_claims( (int) $signup_id );
 	}
@@ -288,7 +288,7 @@ function gwc_vt_delete_volunteer( int $volunteer_id ): bool {
 	wp_delete_post( $volunteer_id, true );
 
 	/* The issued-letter log is deliberately NOT touched. A letter having been
-	 * issued is a fact about the organisation's own conduct, and the record of
+	 * issued is a fact about the organization's own conduct, and the record of
 	 * it has to outlive the record it described — "we issued a letter, for
 	 * somebody no longer on file" is exactly what a court asking about it needs
 	 * to hear. The log holds a reference, an ID and a date; it holds no name. */
@@ -372,11 +372,11 @@ function gwc_vt_run_retention(): void {
  * retention policy that says two years, on a plugin whose whole argument about
  * retention is that quietly hoarding personal data is not an acceptable default.
  *
- * The place on the shift stays. That is the organisation's own record of what it
+ * The place on the shift stays. That is the organization's own record of what it
  * ran; without a name on it, it identifies nobody.
  *
  * Only shifts already in the past are considered, and 'delete' is deliberately
- * not honoured here — there is nothing to delete, because a signup without its
+ * not honored here — there is nothing to delete, because a signup without its
  * claim is not personal data.
  *
  * @param int $months The retention period.
@@ -814,11 +814,11 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 			continue;
 		}
 
-		/* Anonymised rather than deleted, and the message says so. The hours are
-		 * the organisation's own service record — needed for grant reporting and
+		/* Anonymized rather than deleted, and the message says so. The hours are
+		 * the organization's own service record — needed for grant reporting and
 		 * a Form 990 — and they identify nobody once the name and contact
 		 * details are gone. Quietly destroying them would damage the
-		 * organisation to no benefit for the person asking. */
+		 * organization to no benefit for the person asking. */
 		$letters = gwc_vt_letters_for_volunteer( $volunteer_id );
 		$totals  = gwc_vt_compute_totals( $volunteer_id );
 
@@ -828,7 +828,7 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 
 			$messages[] = sprintf(
 				/* translators: %s: a duration, already formatted — "42.5" or "42h 30m" depending on the site's setting, so the sentence must not add a unit of its own. */
-				__( 'The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymised, they identify nobody, and the organization needs them for its own service reporting.', 'groundwork-common-volunteer-tracker' ),
+				__( 'The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymized, they identify nobody, and the organization needs them for its own service reporting.', 'groundwork-common-volunteer-tracker' ),
 				gwc_vt_format_hours( $totals->verified_minutes + $totals->pending_minutes )
 			);
 

@@ -69,7 +69,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 		<?php if ( $cancelled ) : ?>
 			<div class="notice notice-warning inline">
 				<p>
-					<strong><?php esc_html_e( 'This shift has been cancelled.', 'groundwork-common-volunteer-tracker' ); ?></strong>
+					<strong><?php esc_html_e( 'This shift has been canceled.', 'groundwork-common-volunteer-tracker' ); ?></strong>
 					<?php
 					$reason = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_REASON, true );
 
@@ -137,7 +137,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 							</label>
 
 							<p class="description">
-								<?php esc_html_e( 'An overnight shift at a shelter runs 22:00 to 06:00 with that box ticked. Without it, an end time before the start is treated as a typo and refused.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php esc_html_e( 'An overnight shift at a shelter runs 22:00 to 06:00 with that checkbox selected. Without it, an end time before the start is treated as a typo and refused.', 'groundwork-common-volunteer-tracker' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -212,7 +212,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 						<th scope="row"><label for="gwcvt-shift-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
 							<textarea id="gwcvt-shift-notes" name="gwc_vt_notes" class="large-text" rows="3" maxlength="1000"><?php echo esc_textarea( $notes ); ?></textarea>
-							<p class="description"><?php esc_html_e( 'Closed shoes, park round the back, ask for Dana at the desk. Shown to whoever signs up.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Closed shoes, park around the back, ask for Dana at the desk. Shown to whoever signs up.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 				</tbody>
@@ -243,7 +243,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 								<input type="checkbox" id="gwcvt-shift-published" name="gwc_vt_published" value="1" <?php checked( $published ); ?> <?php disabled( $cancelled ); ?> />
 								<?php esc_html_e( 'Published — people can be put on it, and it can appear publicly', 'groundwork-common-volunteer-tracker' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'Unticked, it is a draft only staff can see.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Cleared, it is a draft only staff can see.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 				</tbody>
@@ -458,7 +458,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 			<?php wp_nonce_field( 'gwc_vt_cancel_shift_' . $shift_id ); ?>
 
 			<p>
-				<label for="gwcvt-cancel-reason"><?php esc_html_e( 'Why it was cancelled', 'groundwork-common-volunteer-tracker' ); ?></label><br />
+				<label for="gwcvt-cancel-reason"><?php esc_html_e( 'Why it was canceled', 'groundwork-common-volunteer-tracker' ); ?></label><br />
 				<input type="text" id="gwcvt-cancel-reason" name="gwc_vt_reason" class="regular-text" maxlength="200" />
 			</p>
 
@@ -475,7 +475,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 						?>
 					</label>
 					<?php
-					/* Ticked, and shown with a count, because the failure this
+					/* Selected, and shown with a count, because the failure this
 					 * prevents is somebody driving across town to a locked door.
 					 * A checkbox rather than automatic, because a coordinator
 					 * should know a mass email is about to leave — and because a
@@ -487,7 +487,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 			<?php endif; ?>
 
 			<p class="description">
-				<?php esc_html_e( 'The shift stays on the schedule marked as cancelled, so it is clear it was called off rather than never planned.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'The shift stays on the schedule marked as canceled, so it is clear it was called off rather than never planned.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 
 			<?php
@@ -511,7 +511,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 			>
 				<?php esc_html_e( 'Delete this shift', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
-			<span class="description"><?php esc_html_e( 'Only offered while nobody is signed up. A shift people committed to is cancelled, not erased.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Only offered while nobody is signed up. A shift people committed to is canceled, not erased.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</p>
 	<?php endif; ?>
 	<?php
@@ -606,7 +606,7 @@ function gwc_vt_handle_save_shift(): void {
 		/* ── Telling the roster ─────────────────────────────────────────────
 		 * Only when something material moved, only when the shift is still to
 		 * come, only when somebody is on it, and only when the coordinator left
-		 * the box ticked. A mass mail must never be a side effect of correcting
+		 * the checkbox selected. A mass mail must never be a side effect of correcting
 		 * a typo in the supervisor's name. */
 		$told = 0;
 

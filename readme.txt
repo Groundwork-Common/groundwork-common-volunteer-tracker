@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, volunteer scheduling, community service, nonpr
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,7 +17,7 @@ Nonprofits that host mandated community service run two jobs that are really one
 
 Somebody working off court-ordered or school-required service needs a letter at the end of it, on the organization's letterhead, saying how many hours they worked and when. Right now that is a paper form in a drawer, or a Word template somebody edits by hand, or a staff member reconstructing six weeks of Saturdays from memory two days before a court date.
 
-The two halves meet when the shift is over: the roster becomes the hours, everybody who signed up already ticked and the scheduled times filled in. Untick the no-shows, add the walk-ins, save once. Nobody types Saturday twice.
+The two halves meet when the shift is over: the roster becomes the hours, everybody who signed up already selected and the scheduled times filled in. Clear the no-shows, add the walk-ins, save once. Nobody types Saturday twice.
 
 = What it does =
 
@@ -26,7 +26,7 @@ The two halves meet when the shift is over: the roster becomes the hours, everyb
 * Optionally lets people sign up for shifts from a page on your site, with no account. They get a confirmation, a calendar link and a way to cancel. The public list shows how many places are left, never who is coming.
 * Optionally reminds them before the shift, tells them if it moves or is called off, and sends you a daily summary of what is short of people and what still needs its hours logged.
 * Puts volunteers on a shift, keeps a waiting list once it is full, and prints the roster for the clipboard.
-* Turns that roster into hours once the shift is over — everybody who signed up, already ticked, with the scheduled hours filled in. Untick the no-shows, add the walk-ins, save once.
+* Turns that roster into hours once the shift is over — everybody who signed up, already selected, with the scheduled hours filled in. Clear the no-shows, add the walk-ins, save once.
 * Records volunteer hours as individual shifts — who, when, how long, doing what, supervised by whom. Type 3.5, 3:30, 3h 30m or 210m; whichever you use, the figure stored is rounded to an increment you choose — always to the nearest, never up, and the screen tells you when it has.
 * Runs a day as an event when one occasion has several roles at several times — a festival, a meal service, a collection drive. Volunteers pick more than one time in a single go and get one email listing all of them.
 * Lets a staff member with the right permission mark a shift verified. Who attested and when is recorded and appears on the letter.
@@ -52,7 +52,7 @@ Volunteer records here are more sensitive than most plugin data — in the manda
 
 1. Install through **Plugins → Add New**, or upload the zip under **Plugins → Add New → Upload Plugin**.
 2. Activate it. A **Volunteer Hours** menu appears.
-3. Open **Volunteer Hours → Settings → Letter** and fill in the organization name, the contact a court or school should phone about a letter, and who signs. Each of those falls back to something reasonable on its own — the site title, the administrator's email address, an unlabelled line — and together those fallbacks produce a letter headed with your website's title over your webmaster's address. The letter screen warns you before you print one, but it is quicker to fill them in now.
+3. Open **Volunteer Hours → Settings → Letter** and fill in the organization name, the contact a court or school should phone about a letter, and who signs. Each of those falls back to something reasonable on its own — the site title, the administrator's email address, an unlabeled line — and together those fallbacks produce a letter headed with your website's title over your webmaster's address. The letter screen warns you before you print one, but it is quicker to fill them in now.
 4. On the **Permissions** tab, choose which roles may verify hours and which may issue letters. They are frequently different people, which is why they are separate.
 5. On the **Privacy** tab, decide how long records are kept. The plugin will not choose for you, and it will not quietly keep them forever either.
 
@@ -72,7 +72,7 @@ That sends nothing at all. To see what would have gone out instead, use `'trap'`
 
 = Do volunteers need a WordPress login? =
 
-No. Staff enter hours from the admin. There is an optional front-end form volunteers can log their own hours through, and it is switched off until you switch it on. Anything sent through it arrives unverified and attached to nobody — a staff member matches it to a volunteer and checks it before it counts towards anything.
+No. Staff enter hours from the admin. There is an optional front-end form volunteers can log their own hours through, and it is switched off until you switch it on. Anything sent through it arrives unverified and attached to nobody — a staff member matches it to a volunteer and checks it before it counts toward anything.
 
 = Can volunteers sign up for shifts themselves? =
 
@@ -82,7 +82,7 @@ You can still put people on shifts yourself, which is how a lot of signups at th
 
 = Does the public page show who has signed up? =
 
-No, and there is no setting that makes it. Visitors see what each shift is and how many places are left. On a site running a court-ordered service programme, a roster is a list of people working one off, and publishing it is not something the plugin will help you do by accident.
+No, and there is no setting that makes it. Visitors see what each shift is and how many places are left. On a site running a court-ordered service program, a roster is a list of people working one off, and publishing it is not something the plugin will help you do by accident.
 
 = Is a scheduled shift the same as logged hours? =
 
@@ -106,7 +106,7 @@ An event's times never appear on the general shifts page. That page lists shifts
 
 Nothing is removed. Every volunteer record, logged shift, scheduled shift, signup and issued letter stays exactly where it is, and so do the permissions added to your roles. Deactivating does the same.
 
-That is deliberate — losing somebody's court-ordered service history because a plugin was toggled off is not a risk worth taking — but it does mean deleting the plugin is not a way to remove somebody's data. Use the retention policy, or WordPress's Erase Personal Data tool, before you delete anything. If you want the plugin's own settings cleaned up on deletion, there is a tick box for that on the Privacy tab; even then it deletes no records.
+That is deliberate — losing somebody's court-ordered service history because a plugin was toggled off is not a risk worth taking — but it does mean deleting the plugin is not a way to remove somebody's data. Use the retention policy, or WordPress's Erase Personal Data tool, before you delete anything. If you want the plugin's own settings cleaned up on deletion, there is a checkbox for that on the Privacy tab; even then it deletes no records.
 
 = I have a staging copy of my site. Will it email my volunteers? =
 
@@ -136,6 +136,14 @@ Every message then goes to that address instead, with the site's name in the sub
 
 == Changelog ==
 
+= 1.0.1 =
+Wording only. Nothing about what the plugin does has changed.
+
+* **Every word the plugin shows you is now American English.** It was written in British English throughout — "organisation", "colour", "programme", "behaviour", "recognise", "anonymise", "defence", "towards" — and that reached the screens, the emails, the letter and this page. Around 250 words changed across the plugin, its documentation and its translation template.
+* **A tick box is now a checkbox, and you select and clear it rather than tick and untick it.** That is what both Windows and macOS call the control and what people expect to read beside one. The instructions that used to say "Untick anybody who did not turn up" now say "Clear the checkbox for anybody who did not turn up".
+* **"Cancelled" is now "Canceled" wherever you can see it** — the shift and event status labels, the schedule, the cancellation email and its subject line. Only the display text changed. The `gwc_vt_cancelled` and `gwc_vt_ev_cancelled` post statuses, the `gwc_vt_shift_cancelled` and `gwc_vt_event_cancelled` actions, the `_gwc_vt_shift_cancelled_reason` and `_gwc_vt_event_cancelled_reason` meta keys and the `gwcvt-*--cancelled` CSS classes all keep the spelling they were registered with. A post status is written into every row that carries it, so renaming one would leave every already-cancelled shift and event holding a status this plugin no longer recognizes.
+* **The translation template was regenerated.** Every changed string is a new entry, so a translation of one of them no longer matches and falls back to the English. Nothing shipped with a translation, so nothing is lost — but a site carrying its own `.po` should re-run it against the new `.pot`.
+
 = 1.0.0 =
 The first release on WordPress.org.
 
@@ -143,9 +151,12 @@ The first release on WordPress.org.
 * **Every global name the plugin registers now carries the `gwc_vt_` prefix**, matching its sibling plugins — functions, constants, hooks, post types, meta keys, options, the settings form, the stylesheet handles and the one REST route (`gwc-vt/v1`). This is invisible on a fresh install. It is listed because the action and filter names in the developer documentation all moved with it, and because records written by a development build use the old post types and will not be seen by this version. CSS class names deliberately keep their shorter form — they are page markup, not registered names.
 * The plugin and author links now point at the canonical host rather than the bare domain that redirects to it.
 
-Otherwise nothing about the plugin's behaviour changed between the last development build and this. Everything numbered below 1.0.0 was a development build — never published here, and not a version anybody can be upgrading from, which is why this page starts at the first release rather than at the first commit.
+Otherwise nothing about the plugin's behavior changed between the last development build and this. Everything numbered below 1.0.0 was a development build — never published here, and not a version anybody can be upgrading from, which is why this page starts at the first release rather than at the first commit.
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+Wording only, and no change to what the plugin does. The screens, emails and letter now read in American English, a tick box is called a checkbox, and "Cancelled" is spelled "Canceled" wherever it is shown. If you have translated this plugin, re-run your `.po` against the new `.pot` — the changed strings no longer match.
 
 = 1.0.0 =
 The first public release. If you ran a development build, the three shortcodes were renamed to carry the plugin's prefix and the old names no longer work — update any page using one. The blocks are unaffected.

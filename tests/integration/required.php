@@ -146,7 +146,7 @@ gwc_vt_check(
 
 /* ── The letter is untouched by any of it ────────────────────────────────────
  * The assertion this feature exists to make safe. How many hours a court
- * ordered is a fact about the court's document, and an organisation certifying
+ * ordered is a fact about the court's document, and an organization certifying
  * the terms of an order back to the court that issued it is the seal problem
  * wearing a different hat.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -234,14 +234,14 @@ gwc_vt_check( 'and who requires it', false !== strpos( $gwc_vt_dump, 'Zzytest Fr
 
 gwc_vt_anonymize_volunteer( $gwc_vt_marcus );
 
-gwc_vt_check( 'anonymising clears the requirement', '' === (string) get_post_meta( $gwc_vt_marcus, GWC_VT_VOLUNTEER_REQUIRED, true ) );
+gwc_vt_check( 'anonymizing clears the requirement', '' === (string) get_post_meta( $gwc_vt_marcus, GWC_VT_VOLUNTEER_REQUIRED, true ) );
 gwc_vt_check( 'and the deadline', '' === (string) get_post_meta( $gwc_vt_marcus, GWC_VT_VOLUNTEER_REQUIRED_BY, true ) );
 
-/* The court's name is the disclosure that survives an anonymised name: it says
+/* The court's name is the disclosure that survives an anonymized name: it says
  * a real person was under a real order, and dates it. */
 gwc_vt_check( 'and who required it', '' === (string) get_post_meta( $gwc_vt_marcus, GWC_VT_VOLUNTEER_REQUIRED_FOR, true ) );
 
-/* The hours stay. They are the organisation's own service record and identify
+/* The hours stay. They are the organization's own service record and identify
  * nobody once the name and the order are gone. */
 gwc_vt_check( 'but the hours survive', 2400 === gwc_vt_compute_totals( $gwc_vt_marcus )->verified_minutes, (string) gwc_vt_compute_totals( $gwc_vt_marcus )->verified_minutes );
 gwc_vt_check( 'and the record no longer claims a requirement', ! gwc_vt_has_requirement( $gwc_vt_marcus ) );

@@ -43,7 +43,7 @@ function gwc_vt_sanitize_time( string $raw ): string {
  *
  * @param string       $date     Y-m-d.
  * @param string       $time     H:i.
- * @param DateTimeZone $timezone Where the organisation is.
+ * @param DateTimeZone $timezone Where the organization is.
  * @return DateTimeImmutable|null
  */
 function gwc_vt_shift_instant_at( string $date, string $time, DateTimeZone $timezone ): ?DateTimeImmutable {
@@ -231,7 +231,7 @@ function gwc_vt_shift_is_open( int $shift_id ): bool {
  * The activity, the notes, the supervisor and the capacity are all deliberately
  * absent from this list. They can change without affecting whether somebody can
  * come, and mailing thirty people because a coordinator fixed a spelling is how
- * an organisation teaches its volunteers to ignore its email.
+ * an organization teaches its volunteers to ignore its email.
  *
  * @param int   $shift_id Shift post ID.
  * @param array $was      What it looked like before the save.

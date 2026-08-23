@@ -37,14 +37,14 @@ const GWC_VT_EVENT_BLANK_SLOTS = 1;
  * The first draft of this rendered three spare roles of three spare times each,
  * borrowing the quick-add screen's convention of eight blank rows. That reads
  * fine as eight rows of one table — it looks like a sign-in sheet waiting to be
- * filled in. As three bordered cards of four labelled fields apiece it is a wall
+ * filled in. As three bordered cards of four labeled fields apiece it is a wall
  * of nine empty inputs in front of the one thing you came to type. The
  * convention did not survive the change in weight.
  *
  * Field names carry EXPLICIT indexes — gwc_vt_roles[0][slots][2][date] — never a
- * positional []. An unticked checkbox posts nothing at all, so a positional
+ * positional []. A cleared checkbox posts nothing at all, so a positional
  * array arrives with its indexes closed up and every row after the first gap
- * reads its neighbour's answer. That is the bug tests/integration/reconcile.php
+ * reads its neighbor's answer. That is the bug tests/integration/reconcile.php
  * exists to catch on the attendance boxes, and it is the same bug here.
  * ─────────────────────────────────────────────────────────────────────────── */
 
@@ -105,7 +105,7 @@ function gwc_vt_render_event_editor( int $event_id ): void {
 						<th scope="row"><label for="gwcvt-event-title"><?php esc_html_e( 'Name', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
 							<input type="text" id="gwcvt-event-title" name="gwc_vt_title" class="regular-text" maxlength="200" required value="<?php echo esc_attr( $title ); ?>" />
-							<p class="description"><?php esc_html_e( 'What volunteers will recognise it by. "Fall Festival", not "Event 3".', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'What volunteers will recognize it by. "Fall Festival", not "Event 3".', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -417,7 +417,7 @@ function gwc_vt_render_event_role_block( int $index, string $role, array $slot_i
 				/* Every time in this role has been called off. There is nothing
 				 * to remove — a cancelled time is kept on purpose, because
 				 * people signed up for it and "this was called off" is an answer
-				 * the organisation owes them. Said out loud rather than left as
+				 * the organization owes them. Said out loud rather than left as
 				 * an empty corner, because an absent control and a control that
 				 * has not loaded look identical. */
 				?>
@@ -441,7 +441,7 @@ function gwc_vt_render_event_role_block( int $index, string $role, array $slot_i
 
 		<div style="margin-top:10px">
 			<label for="<?php echo esc_attr( $id ); ?>-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label><br />
-			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Closed shoes, park round the back, ask for Dana at the desk.', 'groundwork-common-volunteer-tracker' ); ?>"><?php echo esc_textarea( $notes ); ?></textarea>
+			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Closed shoes, park around the back, ask for Dana at the desk.', 'groundwork-common-volunteer-tracker' ); ?>"><?php echo esc_textarea( $notes ); ?></textarea>
 			<p class="description">
 				<?php esc_html_e( 'Shown to whoever signs up, and in their confirmation, reminder and calendar entry. Applies to every time in this role.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
@@ -515,7 +515,7 @@ function gwc_vt_render_event_slot_row( int $role_index, int $slot_index, int $sh
 	 * thing that was already cancelled. The only difference was the word
 	 * "Cancelled" in the last column but one.
 	 *
-	 * So a coordinator ticked Remove, pressed Save, saw an unchanged row and
+	 * So a coordinator selected Remove, pressed Save, saw an unchanged row and
 	 * concluded it had not worked — when it had. That is worse than a feature
 	 * that fails, because the state is real and nothing on the screen agrees.
 	 *
@@ -1024,7 +1024,7 @@ function gwc_vt_save_event_grid( int $event_id, array $roles, array $context ): 
 
 			/* Only a MOVE mails anybody, and only when asked. Renaming a role,
 			 * correcting a supervisor or widening a maximum tells nobody —
-			 * mailing thirty people about a spelling fix is how an organisation
+			 * mailing thirty people about a spelling fix is how an organization
 			 * teaches its volunteers to ignore its email. */
 			if ( $context['notify'] && gwc_vt_shift_moved( $shift_id, $was ) && ! gwc_vt_shift_has_ended( $shift_id ) ) {
 				foreach ( gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) ) as $signup_id ) {

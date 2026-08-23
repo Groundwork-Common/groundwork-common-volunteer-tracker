@@ -13,7 +13,7 @@ add_action( 'template_redirect', 'gwc_vt_maybe_serve_ics' );
  * Serve a calendar file to whoever holds the link.
  *
  * A GET that reads and returns, which is the only kind of GET this feature has.
- * Authorised by the token alone — there is no session here and never will be —
+ * Authorized by the token alone — there is no session here and never will be —
  * and it answers for exactly one signup.
  */
 function gwc_vt_maybe_serve_ics(): void {
@@ -21,7 +21,7 @@ function gwc_vt_maybe_serve_ics(): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a capability URL; the token below is what authorises it, and a nonce would tie a mailed link to a session that does not exist.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a capability URL; the token below is what authorizes it, and a nonce would tie a mailed link to a session that does not exist.
 	if ( ! isset( $_GET['gwc_vt_ics'] ) ) {
 		return;
 	}
@@ -55,7 +55,7 @@ function gwc_vt_maybe_serve_ics(): void {
  * The obvious shape is a .ics attached to the confirmation email. It is not the
  * one used here, for two reasons: attaching a file through wp_mail() means
  * either writing it to disk first or reaching into PHPMailer on a hook, and mail
- * filters at a fair number of organisations strip calendar attachments outright.
+ * filters at a fair number of organizations strip calendar attachments outright.
  * A link works in every client and needs no plumbing.
  *
  * ── UTC instants, derived from stored wall time ──────────────────────────────
@@ -152,9 +152,9 @@ function gwc_vt_signup_ics( int $signup_id ): string {
 /**
  * What the event is called in somebody's calendar.
  *
- * The organisation's name is in it, because this lands in a calendar beside
+ * The organization's name is in it, because this lands in a calendar beside
  * dentist appointments and "Sorting the produce delivery" on its own is not
- * something anybody will recognise in three weeks.
+ * something anybody will recognize in three weeks.
  *
  * @param int $shift_id Shift post ID.
  * @return string
@@ -168,11 +168,11 @@ function gwc_vt_shift_summary( int $shift_id ): string {
 
 	/* _x() rather than __(), because inc/signup-cpt.php builds a signup's title
 	 * from the same two-placeholder format with an entirely different meaning —
-	 * a person and a shift, rather than a job and an organisation. One msgid for
+	 * a person and a shift, rather than a job and an organization. One msgid for
 	 * both would give a translator one entry to fill in and make it wrong in
 	 * whichever of the two places their word order did not suit. */
 	return sprintf(
-		/* translators: 1: what the shift is, 2: the organisation's name. */
+		/* translators: 1: what the shift is, 2: the organization's name. */
 		_x( '%1$s — %2$s', 'a shift, as it appears in a calendar', 'groundwork-common-volunteer-tracker' ),
 		$activity,
 		gwc_vt_org_name()

@@ -124,7 +124,7 @@ final class ScheduleNoticeTest extends TestCase {
 
 	/* ── What counts as a change ─────────────────────────────────────────────
 	 * The list is deliberately short. Mailing thirty people because somebody
-	 * fixed a spelling in the supervisor's name is how an organisation teaches
+	 * fixed a spelling in the supervisor's name is how an organization teaches
 	 * its volunteers to ignore its email.
 	 * ─────────────────────────────────────────────────────────────────────── */
 
@@ -165,7 +165,7 @@ final class ScheduleNoticeTest extends TestCase {
 			'the start time moved'    => array( GWC_VT_SHIFT_START, '10:00', true ),
 			'the end time moved'      => array( GWC_VT_SHIFT_END, '13:00', true ),
 			'it became an overnight'  => array( GWC_VT_SHIFT_OVERNIGHT, '1', true ),
-			'the place moved'         => array( GWC_VT_SHIFT_LOCATION, 'The community centre', true ),
+			'the place moved'         => array( GWC_VT_SHIFT_LOCATION, 'The community center', true ),
 
 			/* None of these change whether somebody can come. */
 			'the activity was reworded' => array( GWC_VT_SHIFT_ACTIVITY, 'Sorting the produce delivery', false ),

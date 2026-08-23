@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || exit;
 /* ── One method today, and the shape for the next one ────────────────────────
  * In this version a staff member with gwc_vt_verify_hours attests to a shift.
  * That is the same trust model as the paper forms this replaces — somebody at
- * the organisation signs to say it happened — and it is deliberately all that
+ * the organization signs to say it happened — and it is deliberately all that
  * ships first, because the alternative designs all involve emailing a link to
- * somebody outside the organisation and that is a token story, a deliverability
+ * somebody outside the organization and that is a token story, a deliverability
  * story and a rate-limiting story before it is a feature.
  *
  * The registry below exists so that adding one costs an add_filter rather than
@@ -132,7 +132,7 @@ function gwc_vt_staff_letter_line( array $context ): string {
 	if ( '' === $context['by_name'] ) {
 		/* The account has been deleted since. Saying so is better than naming
 		 * nobody and better than inventing a name — a reader checking this
-		 * letter with the organisation needs to know the record is thinner than
+		 * letter with the organization needs to know the record is thinner than
 		 * it looks. */
 		return sprintf(
 			/* translators: %s: a date. */

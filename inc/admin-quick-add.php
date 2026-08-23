@@ -36,7 +36,7 @@ add_action( 'admin_post_gwc_vt_quick_add', 'gwc_vt_handle_quick_add' );
  * With ?gwc_vt_shift=<id> this same screen opens against a scheduled shift, and
  * the paper sign-in sheet is already filled in: the date, the activity and the
  * supervisor come off the shift, and there is one row per person who signed up
- * with the hours the shift was scheduled for. The coordinator unticks whoever
+ * with the hours the shift was scheduled for. The coordinator clears whoever
  * did not turn up, trims whoever left early, adds the walk-ins, and saves once.
  *
  * That is the whole reason the schedule exists. Everything before this is a
@@ -185,7 +185,7 @@ function gwc_vt_render_quick_add_row( int $index, bool $walk_in = false ): void 
 	<tr class="gwcvt-quick-add__row">
 		<?php if ( $walk_in ) : ?>
 			<?php
-			/* No tick box: a blank row is not somebody who failed to turn up,
+			/* No checkbox: a blank row is not somebody who failed to turn up,
 					* it is nobody. Filling it in is the whole signal. */
 			?>
 			<td class="gwcvt-quick-add__came" aria-hidden="true"></td>
@@ -366,7 +366,7 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 			</p>
 
 			<p class="description">
-				<?php esc_html_e( 'Untick anybody who did not turn up — nothing is recorded for them. The blank rows at the bottom are for people who came without signing up. Hours accept 3.5, 3:30, 3h 30m or 210m.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Clear the checkbox for anybody who did not turn up — nothing is recorded for them. The blank rows at the bottom are for people who came without signing up. Hours accept 3.5, 3:30, 3h 30m or 210m.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 
 			<?php submit_button( __( 'Log these hours', 'groundwork-common-volunteer-tracker' ) ); ?>
@@ -378,18 +378,18 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 /**
  * One person from the roster.
  *
- * ── Ticked the first time, and never again ───────────────────────────────────
- * On a shift nobody has logged yet, everybody starts ticked: most people who
+ * ── Selected the first time, and never again ───────────────────────────────────
+ * On a shift nobody has logged yet, everybody starts selected: most people who
  * sign up turn up, and the coordinator should be marking the exceptions rather
  * than confirming the rule.
  *
- * On a shift that HAS been logged, everybody without an entry starts unticked,
+ * On a shift that HAS been logged, everybody without an entry starts cleared,
  * and that difference is load-bearing. Somebody on the roster with no entry on a
  * logged shift is somebody already recorded as not having come. A coordinator
  * reopening the screen to add a walk-in they forgot would otherwise find that
- * person ticked again with the scheduled hours filled in, and one press of Save
+ * person selected again with the scheduled hours filled in, and one press of Save
  * would credit them a shift they did not work — silently, onto a record a letter
- * is built from. Re-ticking has to be a decision, not a default.
+ * is built from. Re-selecting has to be a decision, not a default.
  *
  * @param int  $index      Row index, which is how the checkbox finds its row.
  * @param int  $signup_id  Signup post ID.
@@ -455,7 +455,7 @@ function gwc_vt_render_roster_log_row( int $index, int $signup_id, int $shift_id
 					</div>
 				<?php elseif ( $absent ) : ?>
 					<p class="description">
-						<?php esc_html_e( 'Recorded as not having come. Tick the box only if that was wrong.', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Recorded as not having come. Select the checkbox only if that was wrong.', 'groundwork-common-volunteer-tracker' ); ?>
 					</p>
 				<?php endif; ?>
 			<?php else : ?>
@@ -568,15 +568,15 @@ function gwc_vt_handle_quick_add(): void {
 	 * gwc_vt_volunteer[] and gwc_vt_hours[] are positional, and every row renders
 	 * both, so their indexes line up with the rows on screen.
 	 *
-	 * A checkbox posts nothing at all when it is unticked, so gwc_vt_attended[]
+	 * A checkbox posts nothing at all when it is cleared, so gwc_vt_attended[]
 	 * would arrive with its indexes closed up and every row after the first
 	 * no-show would read somebody else's answer. Both of these therefore carry
 	 * an explicit row index, and are read by lookup rather than by position.
 	 *
 	 * gwc_vt_signup[] is what tells the two kinds of row apart: a row that has
-	 * one is somebody who signed up, and needs a tick to count; a row without
+	 * one is somebody who signed up, and needs to be selected to count; a row without
 	 * one is a walk-in, and counts if it was filled in. Without that, the walk-in
-	 * rows at the bottom — which have no tick box, because a blank row is not a
+	 * rows at the bottom — which have no checkbox, because a blank row is not a
 	 * no-show — would every one of them read as absent. */
 	$signups  = array_map( 'absint', (array) ( $posted['gwc_vt_signup'] ?? array() ) );
 	$attended = (array) ( $posted['gwc_vt_attended'] ?? array() );

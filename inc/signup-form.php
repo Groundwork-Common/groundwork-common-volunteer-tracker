@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  * exists, what the work is, where it is, and that three places are left. They
  * may never see who else is coming.
  *
- * On a site running a court-ordered service programme, the roster for Saturday
+ * On a site running a court-ordered service program, the roster for Saturday
  * is a list of people working one off. A place count says nothing about anybody;
  * a first name says everything about one person. There is no toggle for this and
  * there should not be one — a site that wanted to publish its roster would be
@@ -194,7 +194,7 @@ function gwc_vt_render_shift_choice( int $shift_id, int $selected ): void {
  *                every ordinary visit.
  */
 function gwc_vt_render_signup_manage(): string {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a capability URL; the token is what authorises it.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a capability URL; the token is what authorizes it.
 	if ( ! isset( $_GET['gwc_vt_signup'] ) ) {
 		return '';
 	}
@@ -281,7 +281,7 @@ function gwc_vt_render_signup_manage(): string {
 
 				<?php if ( gwc_vt_event_for_shift( $shift_id ) > 0 ) : ?>
 					<?php
-					/* Said before the button, not after it. A token authorises one
+					/* Said before the button, not after it. A token authorizes one
 					 * slot and no more — widening it to everything this address
 					 * holds would mean a lookup keyed on an email address, and a
 					 * forwarded confirmation would then disclose the lot. The cost

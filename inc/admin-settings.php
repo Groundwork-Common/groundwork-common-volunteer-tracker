@@ -85,7 +85,7 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'signature',
 			'type'    => 'text',
 			'label'   => __( 'Signed by', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Printed under the signature line. Left empty, the line prints unlabelled — which looks unfinished, and is meant to.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Printed under the signature line. Left empty, the line prints unlabeled — which looks unfinished, and is meant to.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signatory_title'           => array(
 			'tab'     => 'letter',
@@ -256,7 +256,7 @@ function gwc_vt_settings_fields(): array {
 				'anonymize' => __( 'Remove the name and contact details, keep the hours', 'groundwork-common-volunteer-tracker' ),
 				'delete'    => __( 'Delete the record and its shifts entirely', 'groundwork-common-volunteer-tracker' ),
 			),
-			'help'    => __( 'Anonymising is usually right: your grant reporting and your Form 990 need the hours, and the hours identify nobody once the name is gone.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Anonymizing is usually right: your grant reporting and your Form 990 need the hours, and the hours identify nobody once the name is gone.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'retention_anchor'          => array(
 			'tab'     => 'privacy',
@@ -698,7 +698,7 @@ function gwc_vt_handle_save_settings(): void {
 		/* Only this tab's fields. Without the check, saving the Letter tab would
 		 * write every OTHER tab's settings back as their unchecked defaults —
 		 * because a checkbox that is not on the page posts nothing, which is
-		 * indistinguishable from one that was unticked. */
+		 * indistinguishable from one that was cleared. */
 		if ( ( $field['tab'] ?? '' ) !== $tab ) {
 			continue;
 		}
@@ -840,7 +840,7 @@ function gwc_vt_retention_undecided_notice(): void {
  *
  * That reasoning was right and unusable. Both were granted to administrator and
  * editor and to nothing else, and no screen anywhere showed who held them or let
- * anybody change it — so realising the separation the code argues for meant
+ * anybody change it — so realizing the separation the code argues for meant
  * installing a capability-manager plugin or writing a filter in PHP. Meanwhile a
  * coordinator on any other role found the Verify button simply absent, with
  * nothing on screen explaining why.
@@ -877,7 +877,7 @@ function gwc_vt_add_permissions_tab( $tabs ): array {
  * The roles these capabilities can sensibly be granted to.
  *
  * Anything that cannot edit posts is left out: a matrix offering to let
- * Subscriber verify hours invites somebody to tick it and then wonder why the
+ * Subscriber verify hours invites somebody to select it and then wonder why the
  * screen is not there.
  *
  * @return array<string, string> Role slug => display name.
@@ -929,7 +929,7 @@ function gwc_vt_render_permission_box( string $name, string $slug, string $label
 	</label>
 	<?php
 	/* A disabled checkbox posts nothing, so the fixed row needs a hidden field
-	 * or saving the form would revoke what it is showing as ticked. */
+	 * or saving the form would revoke what it is showing as selected. */
 	if ( $fixed ) :
 		?>
 		<input type="hidden" name="<?php echo esc_attr( $name ); ?>[]" value="<?php echo esc_attr( $slug ); ?>" />
@@ -1072,7 +1072,7 @@ function gwc_vt_handle_save_permissions(): void {
  *
  * What was wrong is that it was invisible. The flag appeared only in
  * uninstall.php, with no screen, no notice and one line in a changelog five
- * releases back. So both outcomes were reachable by surprise: an organisation
+ * releases back. So both outcomes were reachable by surprise: an organization
  * that deleted the plugin and believed the records went with it, and one obliged
  * to remove those records with no way to do it short of WP-CLI.
  *
@@ -1187,7 +1187,7 @@ function gwc_vt_render_retention_log(): void {
 						echo esc_html(
 							'delete' === ( $run['action'] ?? '' )
 								? __( 'Deleted', 'groundwork-common-volunteer-tracker' )
-								: __( 'Anonymised', 'groundwork-common-volunteer-tracker' )
+								: __( 'Anonymized', 'groundwork-common-volunteer-tracker' )
 						);
 						?>
 					</td>

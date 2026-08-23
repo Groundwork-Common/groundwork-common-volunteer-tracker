@@ -3,7 +3,7 @@
  * Plugin Name:       Groundwork Common Volunteer Tracker
  * Plugin URI:        https://github.com/Groundwork-Common/groundwork-common-volunteer-tracker
  * Description:       Plan volunteer shifts, take the signups and log the hours they produce, have staff attest to them, and produce a verification letter for a court or a school. Built for the nonprofits who host mandated service and currently do this on paper.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Groundwork Common LLC
@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
  * warehouse floor.
  *
  * So the rule the whole letter subsystem is built around: the plugin reports
- * what the organisation recorded, says plainly that the ORGANISATION is the
+ * what the organization recorded, says plainly that the ORGANIZATION is the
  * authoritative record-keeper, timestamps it, and stops. What makes the letter
  * credible is not decoration — it is that the hours are itemised, that each one
  * names the staff member who attested to it and when, and that the reference
@@ -53,7 +53,7 @@ defined( 'ABSPATH' ) || exit;
  * default we pick for them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const GWC_VT_VERSION = '1.0.0';
+const GWC_VT_VERSION = '1.0.1';
 
 /* Deliberately not derived from GWC_VT_VERSION, and VersionTest asserts they can
  * move independently. The stored field schema changes when the shape of a field
@@ -133,7 +133,7 @@ if ( ! function_exists( 'gwc_vt_cap' ) ) {
  * These are the family's one architectural departure and the rule is narrow:
  * objects for values that are COMPUTED, arrays for anything PERSISTED. The
  * field schema and the settings stay arrays, exactly as in the sibling plugins,
- * because they are serialised into an option and wrapping them would mean
+ * because they are serialized into an option and wrapping them would mean
  * hydrating and dehydrating on every read for no safety the defaults-merge does
  * not already provide. Totals and the letter model are computed, flow through
  * four call sites each, and are the two structures whose correctness is the
