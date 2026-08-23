@@ -15,6 +15,10 @@ add_action( 'admin_post_gwc_vt_letter_send', 'gwc_vt_handle_letter_send' );
  * Hang the Letters screen off the Volunteer Hours menu.
  */
 function gwc_vt_register_letters_menu(): void {
+	if ( ! gwc_vt_letters_enabled() ) {
+		return;
+	}
+
 	add_submenu_page(
 		GWC_VT_MENU_SLUG,
 		__( 'Verification Letters', 'groundwork-common-volunteer-tracker' ),
@@ -42,6 +46,18 @@ function gwc_vt_letters_url( array $args = array() ): string {
  * The screen.
  */
 function gwc_vt_render_letters_screen(): void {
+	/* A hidden screen whose handler still answers is not hidden. The menu is not
+	 * registered when letters are off, so this is unreachable through the
+	 * interface — and unreachable through the interface is not the same as
+	 * unreachable. */
+	if ( ! gwc_vt_letters_enabled() ) {
+		wp_die(
+			esc_html__( 'This organization does not issue verification letters.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Not available', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
+	}
+
 	if ( ! current_user_can( GWC_VT_CAP_OPEN_LETTERS ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
@@ -283,6 +299,18 @@ function gwc_vt_letter_action_url( string $action, int $volunteer_id, string $fr
 function gwc_vt_letter_request(): array {
 	$action       = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
 	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
+
+	/* Both admin_post_ handlers come through here, so this is the one place
+	 * producing a letter has to be refused. Before the capability check for the
+	 * same reason the capability check is before the nonce: the cheapest refusal
+	 * that is always correct goes first. */
+	if ( ! gwc_vt_letters_enabled() ) {
+		wp_die(
+			esc_html__( 'This organization does not issue verification letters.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Not available', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
+	}
 
 	gwc_vt_require_cap( 'issue' );
 

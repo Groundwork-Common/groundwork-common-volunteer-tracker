@@ -188,6 +188,18 @@ function gwc_vt_settings_fields(): array {
 
 		/* ── Logging ─────────────────────────────────────────────────────── */
 
+		/* On the Logging tab and not on the Letter tab, which is where symmetry
+		 * with shifts_enabled would have put it. Turning it off hides the Letter
+		 * tab, so a switch living there would be a switch that hides the only
+		 * screen it can be reached from. This tab is always present. */
+		'letters_enabled'           => array(
+			'tab'     => 'logging',
+			'section' => 'hours',
+			'type'    => 'checkbox',
+			'label'   => __( 'Issue verification letters', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'On unless you clear it. Clear it if your organization records hours but never writes to a court or a school: the Letters screen and the Letter settings tab disappear, and nobody can produce or send a letter. Nothing is deleted — every letter already issued, the log of what went out, and every letter setting stay exactly where they are, and selecting this again finds them unchanged.', 'groundwork-common-volunteer-tracker' ),
+		),
+
 		'hour_increment'            => array(
 			'tab'     => 'logging',
 			'section' => 'hours',
@@ -690,6 +702,16 @@ function gwc_vt_handle_save_settings(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce checked directly above; sanitized per field at the foreach below.
 	$posted = isset( $_POST['gwc_vt'] ) ? (array) wp_unslash( $_POST['gwc_vt'] ) : array();
 	$tab    = isset( $_POST['tab'] ) ? sanitize_key( wp_unslash( $_POST['tab'] ) ) : '';
+
+	/* A tab nobody can see is a tab nobody may write. The loop below reads only
+	 * the fields belonging to $tab, so a crafted POST naming a hidden tab would
+	 * otherwise write that tab's settings — every field it did not carry going
+	 * in as an unchecked default. A hidden screen whose handler still answers is
+	 * not hidden. */
+	if ( ! isset( gwc_vt_admin_tabs()[ $tab ] ) ) {
+		wp_safe_redirect( gwc_vt_settings_url() );
+		exit;
+	}
 
 	$stored = get_option( GWC_VT_SETTINGS_OPTION );
 	$stored = is_array( $stored ) ? $stored : array();

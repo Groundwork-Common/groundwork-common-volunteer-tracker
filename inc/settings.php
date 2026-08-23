@@ -117,6 +117,26 @@ function gwc_vt_setting_defaults(): array {
 		 * and one only people who were handed a card at the front desk can. */
 		'self_log_code'             => '',
 
+		/* ── The letter ──────────────────────────────────────────────────────
+		 * ON, and the asymmetry with shifts_enabled below is deliberate rather
+		 * than an oversight. Scheduling is a second product surface and defaults
+		 * off so it does not appear because somebody updated a plugin they
+		 * installed to log hours. The letter is the ORIGINAL product: every
+		 * existing install has it, and defaulting it off would take half the
+		 * plugin away from all of them on update, silently, including from
+		 * organizations mid-way through issuing one.
+		 *
+		 * So the switch exists for the organizations that schedule volunteers
+		 * and log hours and will never write to a court — for whom the letter is
+		 * most of the admin surface and all of the most alarming settings — and
+		 * they turn it off deliberately. Nobody has it turned off for them.
+		 *
+		 * Off means hidden and inert, never destructive. Hard rules 5 and 10
+		 * hold: the issued-letter log, every gwc_vt_letter post, every letter
+		 * setting and both capabilities stay exactly where they are, and turning
+		 * it back on finds them unchanged. */
+		'letters_enabled'           => true,
+
 		/* ── The schedule ────────────────────────────────────────────────── */
 
 		/* Off. Scheduling is a second product surface — a menu item, a set of
@@ -309,6 +329,20 @@ function gwc_vt_reference_note(): string {
  */
 function gwc_vt_timezone(): DateTimeZone {
 	return wp_timezone();
+}
+
+/**
+ * Does this organization issue verification letters?
+ *
+ * Here rather than beside gwc_vt_shifts_enabled() in inc/admin-schedule.php,
+ * which is the obvious place and the wrong one: that file is in the admin
+ * bundle, and this is read by inc/rest.php and by the dashboard counts, which
+ * answer requests with no admin screen involved.
+ *
+ * @return bool
+ */
+function gwc_vt_letters_enabled(): bool {
+	return (bool) gwc_vt_setting( 'letters_enabled' );
 }
 
 /**
