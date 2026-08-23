@@ -44,16 +44,24 @@ function gwc_vt_render_shift_list(): string {
 		return $manage;
 	}
 
-	$result   = (string) ( $GLOBALS['gwc_vt_signup_result'] ?? '' );
-	$shifts   = gwc_vt_public_shift_ids();
-	$code     = (string) gwc_vt_setting( 'signup_code' );
-	$selected = 0;
+	$result = (string) ( $GLOBALS['gwc_vt_signup_result'] ?? '' );
+	$shifts = gwc_vt_public_shift_ids();
+	$code   = (string) gwc_vt_setting( 'signup_code' );
+
+	/* What the visitor sent, when the last submission was refused. Empty for
+	 * every 'accepted' response — real, honeypotted, too fast or rate limited —
+	 * and gwc_vt_signup_result() is what guarantees that rather than this. See
+	 * the note there: a form that came back filled in after one of those four
+	 * and empty after another is the oracle hard rule 3 exists to prevent. */
+	$retry    = gwc_vt_signup_retry();
+	$selected = (int) ( $retry['shift'] ?? 0 );
+	$invalid  = (array) ( $retry['invalid'] ?? array() );
 
 	ob_start();
 	?>
 	<div class="gwcvt-shifts">
 		<?php if ( '' !== $result ) : ?>
-			<p class="gwcvt-shifts__message" role="status"><?php echo esc_html( gwc_vt_signup_message( $result ) ); ?></p>
+			<p class="gwcvt-shifts__message" role="status"><?php echo esc_html( gwc_vt_signup_summary( $result, $invalid ) ); ?></p>
 		<?php endif; ?>
 
 		<?php if ( ! $shifts ) : ?>
@@ -78,23 +86,79 @@ function gwc_vt_render_shift_list(): string {
 				<?php endforeach; ?>
 			</fieldset>
 
+			<?php $name_bad = in_array( 'name', $invalid, true ); ?>
 			<div class="gwcvt-shifts__field">
 				<label for="gwcvt-signup-name"><?php esc_html_e( 'Your name', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-signup-name" name="gwc_vt_name" required maxlength="100" autocomplete="name" />
+				<input
+					type="text"
+					id="gwcvt-signup-name"
+					name="gwc_vt_name"
+					value="<?php echo esc_attr( (string) ( $retry['name'] ?? '' ) ); ?>"
+					required
+					maxlength="100"
+					autocomplete="name"
+					<?php echo $name_bad ? ' aria-invalid="true" aria-describedby="gwcvt-signup-name-error"' : ''; ?>
+				/>
+				<?php if ( $name_bad ) : ?>
+					<p class="gwcvt-shifts__error" id="gwcvt-signup-name-error"><?php echo esc_html( gwc_vt_signup_field_message( 'name' ) ); ?></p>
+				<?php endif; ?>
 			</div>
 
+			<?php
+			/* Two ways to be wrong, told apart: nothing typed, and something
+			 * typed that is not an address. Different mistakes with different
+			 * fixes, and the old single message named neither. */
+			$email_bad = array_values( array_intersect( array( 'email', 'email-format' ), $invalid ) );
+			$email_bad = $email_bad[0] ?? '';
+
+			/* The help text is tied to the field with aria-describedby rather than
+			 * left as a loose paragraph beside it. It was never read out on the
+			 * way into the input, which is the one moment it is any use — and it
+			 * is the sentence that answers "why do you want my address". */
+			$email_described = 'gwcvt-signup-email-help' . ( '' !== $email_bad ? ' gwcvt-signup-email-error' : '' );
+			?>
 			<div class="gwcvt-shifts__field">
 				<label for="gwcvt-signup-email"><?php esc_html_e( 'Your email address', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="email" id="gwcvt-signup-email" name="gwc_vt_email" required maxlength="200" autocomplete="email" />
-				<p class="gwcvt-shifts__help">
+				<input
+					type="email"
+					id="gwcvt-signup-email"
+					name="gwc_vt_email"
+					value="<?php echo esc_attr( (string) ( $retry['email'] ?? '' ) ); ?>"
+					required
+					maxlength="200"
+					autocomplete="email"
+					aria-describedby="<?php echo esc_attr( $email_described ); ?>"
+					<?php echo '' !== $email_bad ? ' aria-invalid="true"' : ''; ?>
+				/>
+				<?php if ( '' !== $email_bad ) : ?>
+					<p class="gwcvt-shifts__error" id="gwcvt-signup-email-error"><?php echo esc_html( gwc_vt_signup_field_message( $email_bad ) ); ?></p>
+				<?php endif; ?>
+				<p class="gwcvt-shifts__help" id="gwcvt-signup-email-help">
 					<?php esc_html_e( 'So we can send you the details and a link to cancel if you need to. It does not create an account.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 			</div>
 
 			<?php if ( '' !== $code ) : ?>
+				<?php $code_bad = in_array( 'code', $invalid, true ); ?>
 				<div class="gwcvt-shifts__field">
 					<label for="gwcvt-signup-code"><?php esc_html_e( 'The code you were given', 'groundwork-common-volunteer-tracker' ); ?></label>
-					<input type="text" id="gwcvt-signup-code" name="gwc_vt_code" maxlength="50" autocomplete="off" />
+					<?php
+					/* No value= here, deliberately, where the two fields above have
+					 * one. A code came off a card at the front desk and is closer
+					 * to a password than to a name: a form that redisplays it puts
+					 * it on the screen of whoever is standing behind. */
+					?>
+					<input
+						type="text"
+						id="gwcvt-signup-code"
+						name="gwc_vt_code"
+						maxlength="50"
+						autocomplete="off"
+						<?php echo $code_bad ? ' aria-invalid="true" aria-describedby="gwcvt-signup-code-error"' : ''; ?>
+					/>
+					<?php if ( $code_bad ) : ?>
+						<p class="gwcvt-shifts__error" id="gwcvt-signup-code-error"><?php echo esc_html( gwc_vt_signup_field_message( 'code' ) ); ?></p>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 

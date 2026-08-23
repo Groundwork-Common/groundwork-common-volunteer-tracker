@@ -136,6 +136,12 @@ Every message then goes to that address instead, with the site's name in the sub
 
 == Changelog ==
 
+= 1.1.1 =
+
+* **A signup that comes back with an error keeps what you typed.** Your name, your email address and the shift you picked all survive, so a mistyped address costs you one correction instead of scrolling back past the whole list and starting again. On a phone that list can be three screens long. Nothing is kept back for a code, where a site uses one — that stays blank on purpose.
+* **The error says which field it was.** It used to say "Please choose a shift and give your name and email address" whatever you had actually missed, and it could not tell a missing address apart from a mistyped one. Each is now its own sentence, the field itself is marked as the one that failed, and screen readers are told which. Choosing no shift used to report that the shift was no longer taking signups, which was a sentence about a shift nobody had picked.
+* **The note explaining why we ask for your address is now read out with the field**, rather than sitting beside it where a screen reader never reached it on the way in.
+
 = 1.1.0 =
 Two things you can decide for yourself: whether this site issues verification letters at all, and where an event's signup grid lives.
 

@@ -170,32 +170,97 @@ function gwc_vt_handle_public_signup(): void {
 		return;
 	}
 
-	$code = (string) gwc_vt_setting( 'signup_code' );
-
-	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
-		/* A distinct message, because this one is not a security boundary — it is
-		 * a word somebody was given, and a person who mistypes it needs telling. */
-		gwc_vt_signup_result( 'bad-code', $started );
-		return;
-	}
-
+	/* Read before the code check rather than after it, so a mistyped code can
+	 * hand the rest back. Retyping a name because a word from a card was wrong
+	 * is the same insult as retyping it because an address was. */
 	$shift_id = absint( $posted['gwc_vt_shift'] ?? 0 );
 	$name     = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 100 );
 	$email    = sanitize_email( (string) ( $posted['gwc_vt_email'] ?? '' ) );
 
+	$code = (string) gwc_vt_setting( 'signup_code' );
+
+	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
+		/* A distinct message, because this one is not a security boundary — it is
+		 * a word somebody was given, and a person who mistypes it needs telling.
+		 *
+		 * The code itself is never handed back. It is closer to a password than
+		 * to a name: it came off a card at the front desk, and a form that
+		 * redisplays it puts it on the screen of whoever is standing behind. */
+		gwc_vt_signup_result(
+			'bad-code',
+			$started,
+			array(
+				'shift'   => $shift_id,
+				'name'    => $name,
+				'email'   => $email,
+				'invalid' => array( 'code' ),
+			)
+		);
+		return;
+	}
+
 	/* An address is required here where the hours form leaves it optional, and
 	 * the reason is the confirmation: a signup nobody can be told about is a
 	 * commitment with no record and no way out of it. */
-	if ( '' === $name || '' === $email || ! is_email( $email ) ) {
-		gwc_vt_signup_result( 'incomplete', $started );
+	/* Which field, rather than a sentence naming all three. Safe to be specific
+	 * for the reason given below about 'too-many' and 'clash': every one of
+	 * these is a fact about what was just posted, not about what the site holds.
+	 * Nothing here may branch on whether the address belongs to somebody — that
+	 * is hard rule 4, and it is why 'email' means "you did not give one" and
+	 * never "we do not know that one". */
+	$invalid = array();
+
+	if ( $shift_id < 1 ) {
+		$invalid[] = 'shift';
+	}
+
+	if ( '' === $name ) {
+		$invalid[] = 'name';
+	}
+
+	/* Told apart on the RAW value, not the sanitized one. sanitize_email()
+	 * reduces anything that is not an address to an empty string, so testing
+	 * $email alone reports "you did not give one" to somebody who gave one and
+	 * mistyped it — which is the more common mistake and the more annoying
+	 * thing to be told. */
+	$typed_email = trim( (string) ( $posted['gwc_vt_email'] ?? '' ) );
+
+	if ( '' === $typed_email ) {
+		$invalid[] = 'email';
+	} elseif ( '' === $email || ! is_email( $email ) ) {
+		$invalid[] = 'email-format';
+	}
+
+	if ( $invalid ) {
+		gwc_vt_signup_result(
+			'incomplete',
+			$started,
+			array(
+				'shift'   => $shift_id,
+				'name'    => $name,
+				'email'   => (string) ( $posted['gwc_vt_email'] ?? '' ),
+				'invalid' => $invalid,
+			)
+		);
 		return;
 	}
 
 	if ( ! gwc_vt_shift_is_signup_visible( $shift_id ) ) {
 		/* Closed, cancelled, in the past, a draft, or not a shift at all. One
 		 * message for all of them: the visitor's list was simply out of date, and
-		 * enumerating why would answer questions about shifts they cannot see. */
-		gwc_vt_signup_result( 'unavailable', $started );
+		 * enumerating why would answer questions about shifts they cannot see.
+		 *
+		 * The name and address come back; the shift deliberately does not. The
+		 * message tells them their list was stale and to pick another, and
+		 * re-selecting the row that just failed would be arguing with it. */
+		gwc_vt_signup_result(
+			'unavailable',
+			$started,
+			array(
+				'name'  => $name,
+				'email' => $email,
+			)
+		);
 		return;
 	}
 
@@ -538,8 +603,10 @@ function gwc_vt_public_shift_ids(): array {
  *
  * @param string $result  What to tell them.
  * @param float  $started microtime when the handler began.
+ * @param array  $retry   What they sent, to hand back to the form. Ignored for
+ *                        'accepted' — see the note below the assignment.
  */
-function gwc_vt_signup_result( string $result, float $started ): void {
+function gwc_vt_signup_result( string $result, float $started, array $retry = array() ): void {
 	$elapsed = microtime( true ) - $started;
 	$floor   = 0.25;
 
@@ -548,6 +615,24 @@ function gwc_vt_signup_result( string $result, float $started ): void {
 	}
 
 	$GLOBALS['gwc_vt_signup_result'] = $result;
+
+	/* Never for 'accepted', and enforced here rather than trusted at the call
+	 * sites. Four paths end with that key — the honeypot, a stamp that came back
+	 * too fast, the rate limiter and a real signup — and hard rule 3 is that a
+	 * visitor cannot tell which of the four happened to them. A form that came
+	 * back filled in after one and empty after another is exactly the oracle the
+	 * rule exists to prevent, and it would be one line of somebody's tidy-up
+	 * away if this were a convention instead of a check. */
+	$GLOBALS['gwc_vt_signup_retry'] = ( 'accepted' === $result ) ? array() : $retry;
+}
+
+/**
+ * What the visitor sent, to hand back to the form after a refusal.
+ *
+ * @return array
+ */
+function gwc_vt_signup_retry(): array {
+	return (array) ( $GLOBALS['gwc_vt_signup_retry'] ?? array() );
 }
 
 /**
@@ -581,4 +666,63 @@ function gwc_vt_signup_message( string $result ): string {
 	);
 
 	return $messages[ $result ] ?? '';
+}
+
+/**
+ * What went wrong with one field, in a sentence of its own.
+ *
+ * One sentence per problem, rather than a template with the field name slotted
+ * into it. A slot reads well in English and badly almost everywhere else, and
+ * these are the sentences a volunteer reads at the moment they are already
+ * annoyed.
+ *
+ * Safe to be this specific for the reason given above about 'too-many' and
+ * 'clash': every one of them is a fact about what was just posted. None of them
+ * reports anything the site knows about the address — that is hard rule 4, and
+ * it is why 'email' means "you did not give one" and can never come to mean
+ * "we do not have that one".
+ *
+ * @param string $field One of 'shift', 'name', 'email', 'email-format', 'code'.
+ * @return string
+ */
+function gwc_vt_signup_field_message( string $field ): string {
+	$messages = array(
+		'shift'        => __( 'Please choose a shift.', 'groundwork-common-volunteer-tracker' ),
+		'name'         => __( 'Please give your name.', 'groundwork-common-volunteer-tracker' ),
+		'email'        => __( 'Please give your email address.', 'groundwork-common-volunteer-tracker' ),
+		'email-format' => __( 'That does not look like an email address. Check it and try again.', 'groundwork-common-volunteer-tracker' ),
+		'code'         => __( 'That code was not recognized. Check the code you were given.', 'groundwork-common-volunteer-tracker' ),
+	);
+
+	return $messages[ $field ] ?? '';
+}
+
+/**
+ * The sentence at the top of a refused form.
+ *
+ * Composed from the fields that actually failed, so a missing address says so
+ * and does not also ask for a name that was given. Falls back to the general
+ * message for the result when there is no field list — a crafted post can reach
+ * a refusal without one, and a blank notice would be worse than a broad one.
+ *
+ * Joined with a space rather than built into one clause. Each sentence is
+ * independently translatable and reads correctly on its own, which a list
+ * stitched together with commas and an "and" does not in every language.
+ *
+ * @param string   $result  Result key.
+ * @param string[] $invalid Which fields were the problem.
+ * @return string
+ */
+function gwc_vt_signup_summary( string $result, array $invalid = array() ): string {
+	$parts = array();
+
+	foreach ( $invalid as $field ) {
+		$sentence = gwc_vt_signup_field_message( (string) $field );
+
+		if ( '' !== $sentence ) {
+			$parts[] = $sentence;
+		}
+	}
+
+	return $parts ? implode( ' ', $parts ) : gwc_vt_signup_message( $result );
 }
