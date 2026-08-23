@@ -164,6 +164,17 @@ function gwc_vt_entry_ids_for_volunteer( int $volunteer_id, array $args = array(
 /**
  * Has a staff member attested to this entry?
  *
+ * The definition of "verified", for everything that reads one entry at a time:
+ * gwc_vt_total_from_ids() below, the letter builder, and the organization-wide
+ * figures on the dashboard.
+ *
+ * Two more copies of this test exist and cannot call this, because they are
+ * SQL rather than PHP — the EXISTS/NOT EXISTS pairs in gwc_vt_verify_queue_ids()
+ * (inc/verify.php) and in the hours list's filter (inc/admin-verify.php). Adding
+ * a condition here — a revocation flag, a check that GWC_VT_ENTRY_VERIFIED_METHOD
+ * is still a registered method — means changing those two by hand or the queue
+ * will offer entries the totals already count.
+ *
  * @param int $entry_id Entry post ID.
  * @return bool
  */

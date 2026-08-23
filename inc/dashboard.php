@@ -505,11 +505,20 @@ function gwc_vt_org_totals( string $from, string $to ): array {
 		static function ( int $entry_id ) use ( &$totals, &$people ): void {
 			$minutes = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
 
-			if ( $minutes < 1 ) {
-				return;
-			}
-
-			if ( '' !== (string) get_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_AT, true ) ) {
+			/* gwc_vt_entry_is_verified() rather than the same meta test written
+			 * out again. This figure is the one described above as what goes
+			 * into a Form 990 or a grant report, and it was the only reader of
+			 * "verified" deciding for itself what the word meant — so a
+			 * condition added to the helper would have been followed by the
+			 * letter and by every per-volunteer rollup, and not by this.
+			 *
+			 * A zero-minute entry is counted rather than skipped. It used to
+			 * return early, which made $totals['entries'] disagree with
+			 * GWC_VT_Totals->entries on the same records — that one is
+			 * count( $entry_ids ) and counts everything. A zero-minute entry is
+			 * a data problem worth seeing in the count rather than one worth
+			 * hiding, and the two figures now answer the same question. */
+			if ( gwc_vt_entry_is_verified( $entry_id ) ) {
 				$totals['verified'] += $minutes;
 			} else {
 				$totals['pending'] += $minutes;
