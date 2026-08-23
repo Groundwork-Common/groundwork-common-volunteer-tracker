@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Groundwork Common Volunteer Tracker 1.1.0\n"
+"Project-Id-Version: Groundwork Common Volunteer Tracker 1.1.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-23T20:11:51+00:00\n"
+"POT-Creation-Date: 2026-08-23T21:11:32+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -3412,52 +3412,52 @@ msgstr ""
 
 #: inc/event-form.php:139
 #: inc/form.php:105
-#: inc/signup-form.php:82
+#: inc/signup-form.php:109
 msgid "Your name"
 msgstr ""
 
 #: inc/event-form.php:144
-#: inc/signup-form.php:87
+#: inc/signup-form.php:139
 msgid "Your email address"
 msgstr ""
 
 #: inc/event-form.php:147
-#: inc/signup-form.php:90
+#: inc/signup-form.php:155
 msgid "So we can send you the details and a link to cancel if you need to. It does not create an account."
 msgstr ""
 
 #: inc/event-form.php:153
-#: inc/signup-form.php:96
+#: inc/signup-form.php:162
 msgid "The code you were given"
 msgstr ""
 
 #: inc/event-form.php:164
 #: inc/form.php:88
-#: inc/signup-form.php:108
+#: inc/signup-form.php:190
 msgid "Leave this field empty"
 msgstr ""
 
 #: inc/event-form.php:170
-#: inc/signup-form.php:114
+#: inc/signup-form.php:196
 msgid "Sign me up"
 msgstr ""
 
-#: inc/event-form.php:228
-#: inc/signup-form.php:167
+#: inc/event-form.php:231
+#: inc/signup-form.php:251
 msgid "Full — you can join the waiting list"
 msgstr ""
 
 #. translators: %d: how many places are left.
-#: inc/event-form.php:232
-#: inc/signup-form.php:171
+#: inc/event-form.php:235
+#: inc/signup-form.php:255
 #, php-format
 msgid "%d place left"
 msgid_plural "%d places left"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/event-form.php:236
-#: inc/signup-form.php:175
+#: inc/event-form.php:239
+#: inc/signup-form.php:259
 msgid "Places available"
 msgstr ""
 
@@ -3470,7 +3470,7 @@ msgstr ""
 #. translators: 1: places taken, 2: places available.
 #. translators: 1: how many people have signed up, 2: how many the shift takes.
 #: inc/events.php:249
-#: inc/shifts.php:687
+#: inc/shifts.php:739
 #, php-format
 msgid "%1$d of %2$d"
 msgstr ""
@@ -3478,7 +3478,7 @@ msgstr ""
 #. translators: %d: how many places are taken.
 #. translators: %d: how many people have signed up.
 #: inc/events.php:257
-#: inc/shifts.php:695
+#: inc/shifts.php:747
 #, php-format
 msgid "%d signed up"
 msgid_plural "%d signed up"
@@ -3894,34 +3894,34 @@ msgstr ""
 msgid "This letter also lists %s of recorded but unverified time. No member of staff has attested to those shifts, and they are excluded from the verified total above."
 msgstr ""
 
-#: inc/render.php:400
+#: inc/render.php:361
 msgid "This letter confirms that {name} performed {hours} hours of verified volunteer service with {org} during {period}. The shifts below are recorded in our volunteer hour log, and each was attested to by a member of our staff."
 msgstr ""
 
 #. translators: 1: a date, 2: a date.
-#: inc/render.php:422
+#: inc/render.php:383
 #, php-format
 msgid "%1$s to %2$s"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/render.php:430
+#: inc/render.php:391
 #, php-format
 msgid "from %s onwards"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/render.php:435
+#: inc/render.php:396
 #, php-format
 msgid "up to %s"
 msgstr ""
 
-#: inc/render.php:438
+#: inc/render.php:399
 msgid "their entire time volunteering with us"
 msgstr ""
 
 #. translators: 1: a volunteer's name, 2: the organization's name.
-#: inc/render.php:450
+#: inc/render.php:411
 #, php-format
 msgid "Volunteer service verification — %1$s — %2$s"
 msgstr ""
@@ -4138,7 +4138,7 @@ msgid "Please give your name, the date, and how long you worked."
 msgstr ""
 
 #: inc/self-log.php:303
-#: inc/signup-handler.php:569
+#: inc/signup-handler.php:654
 msgid "That code was not recognized. Check the code you were given and try again."
 msgstr ""
 
@@ -4147,19 +4147,19 @@ msgid "This form had been open too long to submit safely. Your answers are below
 msgstr ""
 
 #. translators: %s: a number of minutes.
-#: inc/settings.php:508
+#: inc/settings.php:557
 #, php-format
 msgid "%sm"
 msgstr ""
 
 #. translators: %s: a number of hours.
-#: inc/settings.php:513
+#: inc/settings.php:562
 #, php-format
 msgid "%sh"
 msgstr ""
 
 #. translators: 1: a number of hours, 2: a number of minutes.
-#: inc/settings.php:517
+#: inc/settings.php:566
 #, php-format
 msgid "%1$sh %2$sm"
 msgstr ""
@@ -4199,7 +4199,7 @@ msgid "%1$s — %2$s, %3$s"
 msgstr ""
 
 #. translators: 1: a start time, 2: an end time.
-#: inc/shifts.php:668
+#: inc/shifts.php:720
 #, php-format
 msgid "%1$s–%2$s"
 msgstr ""
@@ -4255,76 +4255,102 @@ msgstr ""
 msgid "a shift"
 msgstr ""
 
-#: inc/signup-form.php:61
+#: inc/signup-form.php:69
 msgid "There is nothing on the calendar just now. Please check back, or get in touch."
 msgstr ""
 
-#: inc/signup-form.php:74
+#: inc/signup-form.php:88
 msgid "Choose a shift"
 msgstr ""
 
-#: inc/signup-form.php:235
+#. translators: %s: a timezone abbreviation, e.g. EDT.
+#: inc/signup-form.php:95
+#, php-format
+msgid "All times are %s."
+msgstr ""
+
+#: inc/signup-form.php:319
 msgid "Your shift"
 msgstr ""
 
-#: inc/signup-form.php:252
+#: inc/signup-form.php:337
 msgid "You are not on this shift. If that is wrong, please sign up again below or get in touch."
 msgstr ""
 
-#: inc/signup-form.php:257
+#: inc/signup-form.php:342
 msgid "This shift is full, so you are on the waiting list. We will be in touch if a place comes free."
 msgstr ""
 
-#: inc/signup-form.php:263
+#: inc/signup-form.php:348
 msgid "Add it to your calendar"
 msgstr ""
 
-#: inc/signup-form.php:280
+#: inc/signup-form.php:365
 msgid "Cannot make it any more?"
 msgstr ""
 
-#: inc/signup-form.php:292
+#: inc/signup-form.php:377
 msgid "This takes you off this one only. Anything else you signed up for stays as it is — each has its own link in your confirmation email."
 msgstr ""
 
-#: inc/signup-form.php:297
+#: inc/signup-form.php:382
 msgid "Cancel my place"
 msgstr ""
 
-#: inc/signup-form.php:313
+#: inc/signup-form.php:398
 msgid "See the other times"
 msgstr ""
 
-#: inc/signup-handler.php:566
+#: inc/signup-handler.php:651
 msgid "Thank you — you are signed up. We have sent the details to your email address, along with a link you can use if you need to cancel."
 msgstr ""
 
-#: inc/signup-handler.php:567
+#: inc/signup-handler.php:652
 msgid "Please choose a shift and give your name and email address."
 msgstr ""
 
-#: inc/signup-handler.php:568
+#: inc/signup-handler.php:653
 msgid "That shift is no longer taking signups. The list below is up to date — please pick another."
 msgstr ""
 
-#: inc/signup-handler.php:570
+#: inc/signup-handler.php:655
 msgid "This page had been open too long to submit safely. Please try again."
 msgstr ""
 
-#: inc/signup-handler.php:571
+#: inc/signup-handler.php:656
 msgid "You have been taken off that shift. Thank you for letting us know."
 msgstr ""
 
-#: inc/signup-handler.php:572
+#: inc/signup-handler.php:657
 msgid "That link is no longer valid. It may have already been used, or the shift may have changed. Please get in touch if you need to cancel."
 msgstr ""
 
-#: inc/signup-handler.php:579
+#: inc/signup-handler.php:664
 msgid "That is more times than we can take in one go. Please pick a few, send them, and come back for the rest."
 msgstr ""
 
-#: inc/signup-handler.php:580
+#: inc/signup-handler.php:665
 msgid "Two of the times you picked overlap. Change one, or select the checkbox below to say you meant both."
+msgstr ""
+
+#: inc/signup-handler.php:690
+msgid "Please choose a shift."
+msgstr ""
+
+#: inc/signup-handler.php:691
+msgid "Please give your name."
+msgstr ""
+
+#: inc/signup-handler.php:692
+msgid "Please give your email address."
+msgstr ""
+
+#: inc/signup-handler.php:693
+msgid "That does not look like an email address. Check it and try again."
+msgstr ""
+
+#: inc/signup-handler.php:694
+msgid "That code was not recognized. Check the code you were given."
 msgstr ""
 
 #: inc/verify.php:57
