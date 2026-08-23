@@ -737,7 +737,7 @@ function gwc_vt_handle_delete_shift(): void {
 	 * roster can have gained somebody between the page rendering and the click,
 	 * and deleting a shift out from under them is not recoverable by them. */
 	if ( gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) ) ) {
-		gwc_vt_shift_redirect( $shift_id, 'saved' );
+		gwc_vt_shift_redirect( $shift_id, 'has-roster' );
 	}
 
 	wp_delete_post( $shift_id, true );
@@ -764,7 +764,7 @@ function gwc_vt_handle_roster_add(): void {
 	$volunteer_id = absint( wp_unslash( $_POST['gwc_vt_volunteer'] ?? 0 ) );
 
 	if ( $volunteer_id < 1 ) {
-		gwc_vt_shift_redirect( $shift_id, 'saved' );
+		gwc_vt_shift_redirect( $shift_id, 'no-volunteer' );
 	}
 
 	gwc_vt_add_signup(

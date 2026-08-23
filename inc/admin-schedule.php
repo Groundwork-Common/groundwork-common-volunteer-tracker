@@ -384,11 +384,20 @@ function gwc_vt_schedule_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$count = isset( $_GET['gwc_vt_count'] ) ? absint( wp_unslash( $_GET['gwc_vt_count'] ) ) : 0;
 
+	/* Refusals belong here and not in $messages below, because everything below
+	 * reads as something having happened. Three handlers used to redirect a
+	 * refusal with 'saved', so a delete that was declined because somebody had
+	 * just signed up reported "Shift saved." for an operation that changed
+	 * nothing — and the event screens got this right with 'has-roster' all
+	 * along. A screen that reports success for a refusal is worse than one that
+	 * says nothing: the coordinator leaves believing the shift is gone. */
 	$errors = array(
-		'bad-date'  => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'bad-time'  => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'no-dates'  => __( 'That repeat did not land on any dates. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'not-found' => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
+		'bad-date'     => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'bad-time'     => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'no-dates'     => __( 'That repeat did not land on any dates. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'not-found'    => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
+		'has-roster'   => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
+		'no-volunteer' => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	if ( isset( $errors[ $result ] ) ) {
@@ -396,18 +405,22 @@ function gwc_vt_schedule_notice(): void {
 		return;
 	}
 
+	/* 'promoted' is here because gwc_vt_handle_signup_promote() redirects with it
+	 * on either screen — gwc_vt_event_roster_redirect() for a slot on an event,
+	 * gwc_vt_shift_redirect() for a standalone shift. Only the event map had it,
+	 * so promoting somebody on a standalone shift fell through the lookup below
+	 * and the page rendered with no confirmation at all. */
 	$messages = array(
 		'saved'     => __( 'Shift saved.', 'groundwork-common-volunteer-tracker' ),
 		'cancelled' => __( 'Shift canceled. It stays on the schedule so everybody can see it was called off.', 'groundwork-common-volunteer-tracker' ),
 		'deleted'   => __( 'Shift deleted.', 'groundwork-common-volunteer-tracker' ),
 		'rostered'  => __( 'Added to the shift.', 'groundwork-common-volunteer-tracker' ),
 		'removed'   => __( 'Taken off the shift.', 'groundwork-common-volunteer-tracker' ),
+		'promoted'  => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$told = isset( $_GET['gwc_vt_told'] ) ? absint( wp_unslash( $_GET['gwc_vt_told'] ) ) : 0;
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$slot = isset( $_GET['gwc_vt_slot'] ) ? absint( wp_unslash( $_GET['gwc_vt_slot'] ) ) : 0;
 
 	if ( 'created' === $result ) {
 		$message = sprintf(
@@ -771,6 +784,8 @@ function gwc_vt_event_notice(): void {
 		'no-role'         => __( 'A role with times under it needs a name. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
 		'bad-time'        => __( 'One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight.', 'groundwork-common-volunteer-tracker' ),
 		'has-roster'      => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
+		'no-volunteer'    => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'wrong-slot'      => __( 'That time is not on this event. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
 		'bad-date'        => __( 'That date could not be read.', 'groundwork-common-volunteer-tracker' ),
 		'unknown'         => __( 'That event no longer exists.', 'groundwork-common-volunteer-tracker' ),
 		'failed'          => __( 'That could not be saved. Please try again.', 'groundwork-common-volunteer-tracker' ),
@@ -780,7 +795,7 @@ function gwc_vt_event_notice(): void {
 		return;
 	}
 
-	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'unknown-role', 'failed' );
+	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'unknown-role', 'failed', 'no-volunteer', 'wrong-slot' );
 	$detail = array();
 
 	if ( $made > 0 ) {
@@ -817,7 +832,7 @@ function gwc_vt_event_notice(): void {
 
 	printf(
 		'<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
-		in_array( $result, $errors, true ) ? 'error' : 'success',
+		esc_attr( in_array( $result, $errors, true ) ? 'error' : 'success' ),
 		esc_html( trim( $messages[ $result ] . ' ' . implode( ' ', $detail ) ) )
 	);
 }
