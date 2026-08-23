@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-23T16:12:53+00:00\n"
+"POT-Creation-Date: 2026-08-23T20:11:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -107,106 +107,114 @@ msgid "One occasion of work. A member of staff then verifies it, and verified ho
 msgstr ""
 
 #: inc/admin-dashboard.php:178
-msgid "Decide how long records are kept"
+msgid "Say whether you issue verification letters"
 msgstr ""
 
 #: inc/admin-dashboard.php:179
-msgid "Keeping them indefinitely is a perfectly good answer. Not having decided is not, which is why this one asks until you do."
+msgid "They are on, which is what most organizations want. If yours records hours but never writes to a court or a school, turning them off takes a whole screen and its settings out of your way."
 msgstr ""
 
 #: inc/admin-dashboard.php:185
-msgid "Nothing here yet."
+msgid "Decide how long records are kept"
 msgstr ""
 
 #: inc/admin-dashboard.php:186
+msgid "Keeping them indefinitely is a perfectly good answer. Not having decided is not, which is why this one asks until you do."
+msgstr ""
+
+#: inc/admin-dashboard.php:192
+msgid "Nothing here yet."
+msgstr ""
+
+#: inc/admin-dashboard.php:193
 msgid "This screen fills up on its own once hours are being logged. Until then, here is the order most organizations start in."
 msgstr ""
 
-#: inc/admin-dashboard.php:200
+#: inc/admin-dashboard.php:207
 msgid "Done"
 msgstr ""
 
-#: inc/admin-dashboard.php:201
+#: inc/admin-dashboard.php:208
 msgid "Start"
 msgstr ""
 
-#: inc/admin-dashboard.php:244
+#: inc/admin-dashboard.php:251
 msgid "This week"
 msgstr ""
 
-#: inc/admin-dashboard.php:245
+#: inc/admin-dashboard.php:252
 msgid "Next week"
 msgstr ""
 
-#: inc/admin-dashboard.php:250
+#: inc/admin-dashboard.php:257
 #: inc/admin-schedule.php:211
 #: inc/admin-schedule.php:700
 msgid "Coming up"
 msgstr ""
 
-#: inc/admin-dashboard.php:270
-#: inc/admin-dashboard.php:411
+#: inc/admin-dashboard.php:277
+#: inc/admin-dashboard.php:418
 #: inc/dashboard.php:146
 msgid "Open the schedule"
 msgstr ""
 
 #. translators: %d: how many people the shift needs.
-#: inc/admin-dashboard.php:332
+#: inc/admin-dashboard.php:339
 #, php-format
 msgid "needs %d"
 msgstr ""
 
-#: inc/admin-dashboard.php:336
+#: inc/admin-dashboard.php:343
 msgid "full"
 msgstr ""
 
-#: inc/admin-dashboard.php:355
+#: inc/admin-dashboard.php:362
 msgid "This year"
 msgstr ""
 
-#: inc/admin-dashboard.php:361
+#: inc/admin-dashboard.php:368
 msgid "verified hours"
 msgstr ""
 
-#: inc/admin-dashboard.php:365
+#: inc/admin-dashboard.php:372
 #: inc/volunteer-cpt.php:138
 msgid "Awaiting verification"
 msgstr ""
 
-#: inc/admin-dashboard.php:366
+#: inc/admin-dashboard.php:373
 msgid "Volunteers with hours"
 msgstr ""
 
-#: inc/admin-dashboard.php:367
+#: inc/admin-dashboard.php:374
 #: inc/render.php:129
 msgid "Shifts recorded"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/admin-dashboard.php:374
+#: inc/admin-dashboard.php:381
 #, php-format
 msgid "Since %s. Verified hours only — the rest is counted separately because nobody has attested to it yet."
 msgstr ""
 
-#: inc/admin-dashboard.php:404
+#: inc/admin-dashboard.php:411
 #: inc/admin-help.php:114
 #: inc/admin-screen.php:221
 #: inc/render.php:133
 msgid "Shifts"
 msgstr ""
 
-#: inc/admin-dashboard.php:407
+#: inc/admin-dashboard.php:414
 #: inc/admin-schedule.php:198
 #: inc/admin-shift.php:56
 #: inc/shift-cpt.php:103
 msgid "Add a shift"
 msgstr ""
 
-#: inc/admin-dashboard.php:415
+#: inc/admin-dashboard.php:422
 msgid "Shifts already run"
 msgstr ""
 
-#: inc/admin-dashboard.php:424
+#: inc/admin-dashboard.php:431
 #: inc/admin-quick-add.php:152
 #: inc/admin-quick-add.php:344
 #: inc/admin-volunteer.php:316
@@ -216,67 +224,67 @@ msgstr ""
 msgid "Hours"
 msgstr ""
 
-#: inc/admin-dashboard.php:427
+#: inc/admin-dashboard.php:434
 #: inc/admin-quick-add.php:55
 msgid "Log a day"
 msgstr ""
 
-#: inc/admin-dashboard.php:437
+#: inc/admin-dashboard.php:444
 msgid "Log a single shift"
 msgstr ""
 
-#: inc/admin-dashboard.php:441
+#: inc/admin-dashboard.php:448
 #: inc/cpt.php:108
 msgid "All hours"
 msgstr ""
 
-#: inc/admin-dashboard.php:448
+#: inc/admin-dashboard.php:455
 #: inc/volunteer-cpt.php:95
 msgid "Volunteers"
 msgstr ""
 
-#: inc/admin-dashboard.php:451
+#: inc/admin-dashboard.php:458
 msgid "Add a volunteer"
 msgstr ""
 
-#: inc/admin-dashboard.php:455
+#: inc/admin-dashboard.php:462
 msgid "Find somebody’s record"
 msgstr ""
 
-#: inc/admin-dashboard.php:464
+#: inc/admin-dashboard.php:471
 #: inc/admin-letters.php:25
 msgid "Letters"
 msgstr ""
 
-#: inc/admin-dashboard.php:467
+#: inc/admin-dashboard.php:474
 #: inc/admin-letters.php:103
 msgid "Produce a letter"
 msgstr ""
 
-#: inc/admin-dashboard.php:477
+#: inc/admin-dashboard.php:484
 #: inc/admin-letters.php:539
 msgid "Check a reference"
 msgstr ""
 
-#: inc/admin-dashboard.php:494
+#: inc/admin-dashboard.php:501
 #: inc/admin-help.php:65
 #: inc/admin-screen.php:178
 msgid "Settings"
 msgstr ""
 
-#: inc/admin-dashboard.php:507
+#: inc/admin-dashboard.php:514
 msgid "Export or erase a record"
 msgstr ""
 
-#: inc/admin-dashboard.php:514
+#: inc/admin-dashboard.php:521
 msgid "Setting up"
 msgstr ""
 
-#: inc/admin-dashboard.php:539
+#: inc/admin-dashboard.php:546
 msgid "Where to next"
 msgstr ""
 
-#: inc/admin-dashboard.php:542
+#: inc/admin-dashboard.php:549
 msgid "Everywhere else in Volunteer Hours"
 msgstr ""
 
@@ -361,7 +369,7 @@ msgid "People are on these, so they stay on the schedule marked as called off ra
 msgstr ""
 
 #: inc/admin-event-actions.php:243
-#: inc/admin-settings.php:1211
+#: inc/admin-settings.php:1268
 msgid "Deleted"
 msgstr ""
 
@@ -616,7 +624,7 @@ msgstr ""
 #: inc/admin-letters.php:727
 #: inc/admin-schedule.php:229
 #: inc/admin-schedule.php:710
-#: inc/admin-settings.php:1197
+#: inc/admin-settings.php:1254
 #: inc/admin-shift.php:114
 #: inc/schedule-emails.php:461
 msgid "When"
@@ -737,7 +745,7 @@ msgid "Open the Shifts settings"
 msgstr ""
 
 #: inc/admin-event.php:382
-#: inc/admin-settings.php:987
+#: inc/admin-settings.php:1044
 msgid "Role"
 msgstr ""
 
@@ -1776,7 +1784,7 @@ msgid "Already happened"
 msgstr ""
 
 #: inc/admin-schedule.php:230
-#: inc/admin-settings.php:1198
+#: inc/admin-settings.php:1255
 #: inc/schedule-emails.php:460
 msgid "What"
 msgstr ""
@@ -2610,115 +2618,127 @@ msgstr ""
 msgid "— not set —"
 msgstr ""
 
-#: inc/admin-settings.php:825
+#: inc/admin-settings.php:831
 msgid "Settings saved."
 msgstr ""
 
-#: inc/admin-settings.php:850
+#: inc/admin-settings.php:881
+msgid "Does your organization issue verification letters?"
+msgstr ""
+
+#: inc/admin-settings.php:882
+msgid "They are switched on, which is what most organizations want: a volunteer can be given a letter stating the hours you have verified, for a court or a school. If yours records hours but never writes to either, you can turn the whole thing off — the Letters screen and its settings go away, and nothing you have recorded is affected. Either answer settles this."
+msgstr ""
+
+#: inc/admin-settings.php:884
+msgid "Answer now"
+msgstr ""
+
+#: inc/admin-settings.php:907
 msgid "How long should volunteer records be kept?"
 msgstr ""
 
-#: inc/admin-settings.php:851
+#: inc/admin-settings.php:908
 msgid "This plugin stores names, contact details and — for court-ordered service — information about somebody’s legal obligations. Nothing is being deleted while this is unanswered. Keeping records indefinitely is a perfectly good answer; not having decided is not."
 msgstr ""
 
-#: inc/admin-settings.php:853
+#: inc/admin-settings.php:910
 msgid "Decide now"
 msgstr ""
 
-#: inc/admin-settings.php:889
+#: inc/admin-settings.php:946
 msgid "Permissions"
 msgstr ""
 
-#: inc/admin-settings.php:970
+#: inc/admin-settings.php:1027
 msgid "Who can do what"
 msgstr ""
 
-#: inc/admin-settings.php:973
+#: inc/admin-settings.php:1030
 msgid "Anybody who can edit posts on this site can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization's name on a letter to a court. They are frequently different people."
 msgstr ""
 
-#: inc/admin-settings.php:977
+#: inc/admin-settings.php:1034
 msgid "A role with neither still sees the hours list and can type up a shift. It simply has no Verify button and no Letters screen, rather than being shown buttons that would refuse it."
 msgstr ""
 
-#: inc/admin-settings.php:988
+#: inc/admin-settings.php:1045
 msgid "Verify hours"
 msgstr ""
 
-#: inc/admin-settings.php:989
+#: inc/admin-settings.php:1046
 msgid "Issue letters"
 msgstr ""
 
 #. translators: %s: a role name.
-#: inc/admin-settings.php:1007
+#: inc/admin-settings.php:1064
 #, php-format
 msgid "Let %s verify hours"
 msgstr ""
 
 #. translators: %s: a role name.
-#: inc/admin-settings.php:1020
+#: inc/admin-settings.php:1077
 #, php-format
 msgid "Let %s issue letters"
 msgstr ""
 
-#: inc/admin-settings.php:1032
+#: inc/admin-settings.php:1089
 msgid "Administrator is fixed. A site where nobody can issue a letter has no way to give one back, and an administrator can change this screen anyway."
 msgstr ""
 
-#: inc/admin-settings.php:1120
+#: inc/admin-settings.php:1177
 msgid "Removing this plugin"
 msgstr ""
 
-#: inc/admin-settings.php:1123
+#: inc/admin-settings.php:1180
 msgid "Deleting this plugin from the Plugins screen leaves every volunteer record, every logged shift, every scheduled shift and signup, and the log of letters issued, exactly where they are. Deactivating it does the same. Nothing here removes a person's hours by accident, and reinstalling picks up where you left off."
 msgstr ""
 
-#: inc/admin-settings.php:1127
+#: inc/admin-settings.php:1184
 msgid "That is the right default and it is worth knowing about, because it also means deleting the plugin is not a way to remove somebody's data. To do that, use the retention policy above, or WordPress's own Erase Personal Data tool, before you delete anything."
 msgstr ""
 
-#: inc/admin-settings.php:1137
+#: inc/admin-settings.php:1194
 msgid "On deletion"
 msgstr ""
 
-#: inc/admin-settings.php:1141
+#: inc/admin-settings.php:1198
 msgid "Also remove this plugin's settings when it is deleted"
 msgstr ""
 
-#: inc/admin-settings.php:1144
+#: inc/admin-settings.php:1201
 msgid "Off by default. With it on, deleting the plugin also removes its settings, its retention log and the record of what it had been asked to do. It still does not delete a single volunteer, shift, signup, hour entry or issued letter — nothing this plugin can do from this screen will."
 msgstr ""
 
-#: inc/admin-settings.php:1148
+#: inc/admin-settings.php:1205
 msgid "Currently armed."
 msgstr ""
 
-#: inc/admin-settings.php:1149
+#: inc/admin-settings.php:1206
 msgid "Deleting the plugin will discard its configuration, so a reinstall starts from the defaults and the retention question is asked again."
 msgstr ""
 
-#: inc/admin-settings.php:1157
+#: inc/admin-settings.php:1214
 msgid "Save"
 msgstr ""
 
-#: inc/admin-settings.php:1185
+#: inc/admin-settings.php:1242
 msgid "Recent sweeps"
 msgstr ""
 
-#: inc/admin-settings.php:1189
+#: inc/admin-settings.php:1246
 msgid "Nothing has been purged yet. The sweep runs once a day and does nothing at all while records are kept indefinitely."
 msgstr ""
 
-#: inc/admin-settings.php:1199
+#: inc/admin-settings.php:1256
 msgid "Records"
 msgstr ""
 
-#: inc/admin-settings.php:1200
+#: inc/admin-settings.php:1257
 msgid "Held back"
 msgstr ""
 
-#: inc/admin-settings.php:1212
+#: inc/admin-settings.php:1269
 msgid "Anonymized"
 msgstr ""
 
@@ -4127,19 +4147,19 @@ msgid "This form had been open too long to submit safely. Your answers are below
 msgstr ""
 
 #. translators: %s: a number of minutes.
-#: inc/settings.php:475
+#: inc/settings.php:508
 #, php-format
 msgid "%sm"
 msgstr ""
 
 #. translators: %s: a number of hours.
-#: inc/settings.php:480
+#: inc/settings.php:513
 #, php-format
 msgid "%sh"
 msgstr ""
 
 #. translators: 1: a number of hours, 2: a number of minutes.
-#: inc/settings.php:484
+#: inc/settings.php:517
 #, php-format
 msgid "%1$sh %2$sm"
 msgstr ""
