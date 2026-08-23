@@ -576,6 +576,97 @@ if ( false === $GLOBALS['gwc_vt_limits_before'] ) {
 	update_option( GWC_VT_RATE_LIMIT_OPTION, $GLOBALS['gwc_vt_limits_before'] );
 }
 
+/* ── What a refused form comes back holding ──────────────────────────────────
+ * The unit suite covers gwc_vt_signup_result() refusing to stash for
+ * 'accepted'. What it cannot cover is the rendered form, which is where hard
+ * rule 3 is actually kept or broken: a real signup and a honeypot hit have to
+ * produce the same HTML, and a refusal has to give the visitor their typing
+ * back. Both need a real page and real shifts.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_retry_shift = gwc_vt_make_shift( gmdate( 'Y-m-d', time() + 12 * DAY_IN_SECONDS ), 4 );
+
+/* A malformed address, with everything else given. */
+$gwc_vt_result = gwc_vt_post_signup(
+	array(
+		'gwc_vt_shift' => (string) $gwc_vt_retry_shift,
+		'gwc_vt_name'  => 'Zzytest Dana Okonkwo',
+		'gwc_vt_email' => 'not-an-address',
+	)
+);
+
+$gwc_vt_retry = gwc_vt_signup_retry();
+
+gwc_vt_check( 'a malformed address is refused', 'incomplete' === $gwc_vt_result, $gwc_vt_result );
+gwc_vt_check( 'and told apart from a missing one', in_array( 'email-format', (array) ( $gwc_vt_retry['invalid'] ?? array() ), true ), implode( ',', (array) ( $gwc_vt_retry['invalid'] ?? array() ) ) );
+gwc_vt_check( 'the name comes back', 'Zzytest Dana Okonkwo' === ( $gwc_vt_retry['name'] ?? '' ), (string) ( $gwc_vt_retry['name'] ?? '' ) );
+gwc_vt_check( 'what they typed in the address field comes back', 'not-an-address' === ( $gwc_vt_retry['email'] ?? '' ), (string) ( $gwc_vt_retry['email'] ?? '' ) );
+gwc_vt_check( 'and the shift is still chosen', (int) ( $gwc_vt_retry['shift'] ?? 0 ) === $gwc_vt_retry_shift, (string) ( $gwc_vt_retry['shift'] ?? 0 ) );
+gwc_vt_check( 'the summary names only the address', gwc_vt_signup_summary( $gwc_vt_result, (array) ( $gwc_vt_retry['invalid'] ?? array() ) ) === gwc_vt_signup_field_message( 'email-format' ) );
+
+/* An empty address is a different sentence. */
+$gwc_vt_result = gwc_vt_post_signup(
+	array(
+		'gwc_vt_shift' => (string) $gwc_vt_retry_shift,
+		'gwc_vt_name'  => 'Zzytest Dana Okonkwo',
+		'gwc_vt_email' => '',
+	)
+);
+
+gwc_vt_check( 'an empty address says something else', in_array( 'email', (array) ( gwc_vt_signup_retry()['invalid'] ?? array() ), true ) );
+
+/* Nothing chosen used to report that the shift was no longer taking signups,
+ * which was a sentence about a shift nobody had picked. */
+$gwc_vt_result = gwc_vt_post_signup(
+	array(
+		'gwc_vt_name'  => 'Zzytest Dana Okonkwo',
+		'gwc_vt_email' => 'zzytest-dana@example.test',
+	)
+);
+
+gwc_vt_check( 'choosing no shift says so', in_array( 'shift', (array) ( gwc_vt_signup_retry()['invalid'] ?? array() ), true ), $gwc_vt_result );
+
+/* ── The rule the whole file is named for ────────────────────────────────────
+ * A real signup and a honeypot hit must leave the form in the same state. If a
+ * refusal handed typing back and one of these did too, the form would answer
+ * the question hard rule 3 exists to refuse.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_real = gwc_vt_post_signup(
+	array(
+		'gwc_vt_shift' => (string) $gwc_vt_retry_shift,
+		'gwc_vt_name'  => 'Zzytest Real Person',
+		'gwc_vt_email' => 'zzytest-real@example.test',
+	)
+);
+
+$gwc_vt_after_real = gwc_vt_signup_retry();
+
+$gwc_vt_trapped = gwc_vt_post_signup(
+	array(
+		'gwc_vt_shift'   => (string) $gwc_vt_retry_shift,
+		'gwc_vt_name'    => 'Zzytest Spam Bot',
+		'gwc_vt_email'   => 'zzytest-spam@example.test',
+		'gwc_vt_website' => 'http://spam.example',
+	)
+);
+
+$gwc_vt_after_trap = gwc_vt_signup_retry();
+
+gwc_vt_check( 'a real signup is accepted', 'accepted' === $gwc_vt_real, $gwc_vt_real );
+gwc_vt_check( 'a honeypot hit reads the same', $gwc_vt_real === $gwc_vt_trapped, $gwc_vt_trapped );
+gwc_vt_check( 'a real signup hands nothing back', array() === $gwc_vt_after_real, wp_json_encode( $gwc_vt_after_real ) );
+gwc_vt_check( 'and neither does a honeypot hit', array() === $gwc_vt_after_trap, wp_json_encode( $gwc_vt_after_trap ) );
+gwc_vt_check( 'so the two are indistinguishable', $gwc_vt_after_real === $gwc_vt_after_trap );
+
+/* And the honeypot really was refused, which is what makes the sameness mean
+ * something rather than both simply having worked. */
+gwc_vt_check(
+	'the trapped submission put nobody on the shift',
+	1 === count( gwc_vt_all_signups( $gwc_vt_retry_shift ) ),
+	(string) count( gwc_vt_all_signups( $gwc_vt_retry_shift ) )
+);
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
 if ( $GLOBALS['gwc_vt_failures'] > 0 ) {

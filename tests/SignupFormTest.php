@@ -89,6 +89,105 @@ final class SignupFormTest extends TestCase {
 		}
 	}
 
+	/* ── What the one above does not prove ───────────────────────────────────
+	 * The assertion above compares gwc_vt_signup_message( 'accepted' ) with
+	 * itself three times. It is named after hard rule 3 and it is tautological:
+	 * it would pass unchanged if the honeypot path started answering with a
+	 * different result key tomorrow.
+	 *
+	 * The rule is about the whole response, and the part of it that can now
+	 * differ is what the form comes back holding. gwc_vt_signup_result() takes
+	 * what the visitor sent so a refusal can hand it back, and if it ever handed
+	 * it back for a real signup and not for a honeypot hit, the form would be
+	 * exactly the oracle the rule exists to prevent — fill in the trap and your
+	 * typing survives, do not and it does not.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * Every path that answers 'accepted' clears the form, identically.
+	 *
+	 * @param string $label Which of the four paths this stands for.
+	 */
+	#[DataProvider( 'accepted_paths' )]
+	public function test_no_accepted_path_hands_anything_back( string $label ): void {
+		$sent = array(
+			'shift'   => 41,
+			'name'    => 'Dana Okonkwo',
+			'email'   => 'dana@example.test',
+			'invalid' => array( 'email' ),
+		);
+
+		gwc_vt_signup_result( 'accepted', microtime( true ), $sent );
+
+		$this->assertSame(
+			array(),
+			gwc_vt_signup_retry(),
+			$label . ' handed the form back what was typed; every accepted path must clear it identically'
+		);
+	}
+
+	/**
+	 * The four ways a submission ends at 'accepted'.
+	 *
+	 * @return array<string, string[]>
+	 */
+	public static function accepted_paths(): array {
+		return array(
+			'a real signup'         => array( 'a real signup' ),
+			'a honeypot hit'        => array( 'a honeypot hit' ),
+			'a stamp posted too fast' => array( 'a stamp posted too fast' ),
+			'a rate-limited attempt'  => array( 'a rate-limited attempt' ),
+		);
+	}
+
+	/**
+	 * And a refusal does hand it back, or the check above would pass by doing
+	 * nothing at all.
+	 */
+	public function test_a_refusal_hands_back_what_was_typed(): void {
+		gwc_vt_signup_result(
+			'incomplete',
+			microtime( true ),
+			array(
+				'name'    => 'Dana Okonkwo',
+				'invalid' => array( 'email' ),
+			)
+		);
+
+		$this->assertSame( 'Dana Okonkwo', gwc_vt_signup_retry()['name'] ?? '' );
+	}
+
+	/**
+	 * The summary names the field that failed, and only that field.
+	 */
+	public function test_the_summary_names_only_what_went_wrong(): void {
+		$only_email = gwc_vt_signup_summary( 'incomplete', array( 'email' ) );
+
+		$this->assertSame( gwc_vt_signup_field_message( 'email' ), $only_email );
+		$this->assertStringNotContainsString( gwc_vt_signup_field_message( 'name' ), $only_email );
+	}
+
+	/**
+	 * A missing address and one that is not an address are different mistakes.
+	 */
+	public function test_a_missing_address_reads_differently_from_a_malformed_one(): void {
+		$this->assertNotSame(
+			gwc_vt_signup_field_message( 'email' ),
+			gwc_vt_signup_field_message( 'email-format' )
+		);
+	}
+
+	/**
+	 * With no field list — which a crafted post can produce — it still says
+	 * something, rather than rendering an empty notice.
+	 */
+	public function test_a_refusal_with_no_field_list_still_says_something(): void {
+		$this->assertSame(
+			gwc_vt_signup_message( 'incomplete' ),
+			gwc_vt_signup_summary( 'incomplete', array() )
+		);
+	}
+
 	/**
 	 * A cancellation link that has been used and one that was never valid give
 	 * the same answer, so the URL cannot be used to ask which signup IDs exist.
