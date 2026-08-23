@@ -174,6 +174,13 @@ function gwc_vt_render_dashboard_start_here(): void {
 
 	if ( current_user_can( gwc_vt_cap( 'manage' ) ) ) {
 		$steps[] = array(
+			'url'  => gwc_vt_settings_url( 'logging' ),
+			'what' => __( 'Say whether you issue verification letters', 'groundwork-common-volunteer-tracker' ),
+			'why'  => __( 'They are on, which is what most organizations want. If yours records hours but never writes to a court or a school, turning them off takes a whole screen and its settings out of your way.', 'groundwork-common-volunteer-tracker' ),
+			'done' => gwc_vt_letters_decided(),
+		);
+
+		$steps[] = array(
 			'url'  => gwc_vt_settings_url( 'privacy' ),
 			'what' => __( 'Decide how long records are kept', 'groundwork-common-volunteer-tracker' ),
 			'why'  => __( 'Keeping them indefinitely is a perfectly good answer. Not having decided is not, which is why this one asks until you do.', 'groundwork-common-volunteer-tracker' ),

@@ -142,6 +142,57 @@ $gwc_vt_letter_post = wp_insert_post(
 
 $GLOBALS['gwc_vt_ls_bin'][] = (int) $gwc_vt_letter_post;
 
+/* ── Asked once, and only where it has not been answered ─────────────────────
+ * letters_enabled defaults ON, which is right and is still a decision nobody
+ * made on the sites it is wrong for. The prompt asks; saving the Logging tab
+ * settles it either way. Two things have to hold or it becomes noise: it stops
+ * for good once answered, and it never starts on a site that has already
+ * answered by issuing a letter.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+gwc_vt_ls_check(
+	'nobody has been asked yet on a fresh install',
+	false === ( gwc_vt_setting_defaults()['letters_decided'] ?? null ),
+	var_export( gwc_vt_setting_defaults()['letters_decided'] ?? null, true )
+);
+
+/**
+ * Set the decided flag directly, leaving every other setting alone.
+ *
+ * @param bool $decided Whether the question has been answered.
+ */
+function gwc_vt_ls_decided( bool $decided ): void {
+	$stored = get_option( GWC_VT_SETTINGS_OPTION );
+	$stored = is_array( $stored ) ? $stored : array();
+
+	$stored['letters_decided'] = $decided;
+
+	update_option( GWC_VT_SETTINGS_OPTION, $stored );
+	gwc_vt_settings_cache( null, true );
+}
+
+/* Deliberately after the letter fixture above, and this ordering is load-bearing.
+ * gwc_vt_any_letter_issued() memoizes for the request, so whichever assertion
+ * calls it first fixes the answer for the rest of the run — and whether a bare
+ * site has letters differs between the seeded development database and the
+ * clean 7.4 one. Asking only once the fixture exists makes both of these mean
+ * the same thing on either. An earlier draft asked before, and passed on the
+ * seeded site while failing on the clean one. */
+gwc_vt_ls_decided( false );
+
+gwc_vt_ls_check(
+	'a site that has issued a letter is never asked',
+	gwc_vt_any_letter_issued() && gwc_vt_letters_decided(),
+	'issued ' . var_export( gwc_vt_any_letter_issued(), true ) . ', decided ' . var_export( gwc_vt_letters_decided(), true )
+);
+
+gwc_vt_ls_decided( true );
+
+gwc_vt_ls_check( 'and saying so settles it too, whatever the log holds', gwc_vt_letters_decided() );
+
+gwc_vt_ls_decided( false );
+
+
 gwc_vt_ls_letters( true );
 
 $gwc_vt_settings_on = get_option( GWC_VT_SETTINGS_OPTION );

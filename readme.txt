@@ -136,6 +136,10 @@ Every message then goes to that address instead, with the site's name in the sub
 
 == Changelog ==
 
+= 1.1.1 =
+
+* **New installs are now asked once whether they issue verification letters.** They stay switched on, as before — the question is only so that an organization which records hours but never writes to a court or a school finds out the switch exists, instead of carrying a whole screen of settings it will never use. Answering it either way makes the prompt go away for good, and a site that has already issued a letter is never asked at all.
+
 = 1.1.0 =
 Two things you can decide for yourself: whether this site issues verification letters at all, and where an event's signup grid lives.
 

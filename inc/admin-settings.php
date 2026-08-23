@@ -735,6 +735,12 @@ function gwc_vt_handle_save_settings(): void {
 		$stored['retention_decided'] = true;
 	}
 
+	/* Same rule for the letter switch, which lives on this tab: saving it IS the
+	 * decision, including saving it with letters left on. */
+	if ( 'logging' === $tab ) {
+		$stored['letters_decided'] = true;
+	}
+
 	update_option( GWC_VT_SETTINGS_OPTION, $stored );
 	gwc_vt_settings_cache( null, true );
 
@@ -827,6 +833,57 @@ function gwc_vt_settings_saved_notice(): void {
 }
 
 add_action( 'admin_notices', 'gwc_vt_retention_undecided_notice' );
+
+/* ── Asking once whether this organization issues letters ────────────────────
+ * letters_enabled defaults ON, which is right — the letter is the original
+ * product and defaulting it off would take half the plugin away from every
+ * existing install on update. But a default that is right for most sites is
+ * still a decision nobody made on the ones it is wrong for, and those are the
+ * sites that would benefit most: an organization that schedules volunteers and
+ * logs hours and will never write to a court carries the whole letter surface,
+ * and all of its most alarming settings, until somebody happens to notice a
+ * checkbox.
+ *
+ * So it is asked, once, and the asking stops for good the moment the Logging
+ * tab is saved — whatever it is saved as.
+ *
+ * Three things keep it from becoming noise, and each is a deliberate difference
+ * from the retention notice above:
+ *
+ *   It is an info notice, not a warning. Nothing is at stake here but a screen
+ *   full of settings nobody needs, and dressing that as a warning is how a site
+ *   learns to ignore the warning that does matter.
+ *
+ *   It stays silent on any site that has ever issued a letter. Issuing one is
+ *   the answer, and asking somebody to confirm a decision they have
+ *   demonstrably made is exactly how a prompt becomes noise. That is also what
+ *   keeps this from appearing on every established install on update.
+ *
+ *   It is not shown to anybody who could not act on it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+add_action( 'admin_notices', 'gwc_vt_letters_undecided_notice' );
+
+/**
+ * Ask once whether this organization issues verification letters.
+ */
+function gwc_vt_letters_undecided_notice(): void {
+	if ( ! gwc_vt_is_plugin_screen() || ! current_user_can( gwc_vt_cap( 'manage' ) ) ) {
+		return;
+	}
+
+	if ( gwc_vt_letters_decided() ) {
+		return;
+	}
+
+	printf(
+		'<div class="notice notice-info"><p><strong>%1$s</strong> %2$s</p><p><a class="button" href="%3$s">%4$s</a></p></div>',
+		esc_html__( 'Does your organization issue verification letters?', 'groundwork-common-volunteer-tracker' ),
+		esc_html__( 'They are switched on, which is what most organizations want: a volunteer can be given a letter stating the hours you have verified, for a court or a school. If yours records hours but never writes to either, you can turn the whole thing off — the Letters screen and its settings go away, and nothing you have recorded is affected. Either answer settles this.', 'groundwork-common-volunteer-tracker' ),
+		esc_url( gwc_vt_settings_url( 'logging' ) ),
+		esc_html__( 'Answer now', 'groundwork-common-volunteer-tracker' )
+	);
+}
 
 /**
  * Nag until retention has been considered.
