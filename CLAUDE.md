@@ -132,6 +132,26 @@ left. Two rules follow:
   `slow_db_query_meta_query`. A misspelled code silently matches nothing, and
   nothing tells you.
 
+**Regenerate the translation template as part of the bump**, after the five
+places move and not before — `make-pot` reads the version out of the plugin
+header, so doing it first stamps the old number:
+
+```bash
+npx @wordpress/env run cli -- wp i18n make-pot \
+  wp-content/plugins/groundwork-common-volunteer-tracker \
+  wp-content/plugins/groundwork-common-volunteer-tracker/languages/groundwork-common-volunteer-tracker.pot \
+  --exclude=tests,vendor,node_modules,bin,.claude
+```
+
+**Then check the slug it wrote.** `make-pot` derives `Report-Msgid-Bugs-To` and
+`X-Domain` from the name of the **directory** it was pointed at, not from the
+plugin header — so generating from a git worktree ships a template naming a
+support forum that does not exist, looking perfectly well-formed while it does
+it. That was corrected by hand at three consecutive releases before anybody
+wrote it down. `VersionTest` now fails on both that and a template left
+un-regenerated, so this is a step you are reminded about rather than one you
+have to remember.
+
 **Before a release, also run the directory's own scanner** — phpcs is not the
 whole of what a reviewer runs. Plugin Check reads the readme's headers, the file
 types in the zip, the trademark rules, and the `ABSPATH` guard on every PHP
