@@ -33,6 +33,14 @@ node_modules
 README.md
 .DS_Store
 
+# The help system. Written for the coordinator and the director rather than for
+# anybody reading the source, and excluded for the same reason README.md is:
+# what a site owner installs is the plugin, and the documentation they can
+# actually reach from it is readme.txt and the help tabs. A page sitting inside
+# wp-content/plugins is one nobody opens. Host docs/help/ or publish it; do not
+# ship it.
+docs
+
 # Working notes and tooling. These are tracked in git because they belong to the
 # repository, and excluded here because they belong to nobody who installs the
 # plugin. bin/ especially: the beta deploy script carries an SSH login, and this
