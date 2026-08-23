@@ -275,8 +275,12 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
    does not remove capabilities.
 6. **Add every new hook to the README table.** The rule is stated there: if you
    add one, add its row.
-7. **Bump the version in all four places together** — header, `GWC_VT_VERSION`,
-   `readme.txt` Stable tag, changelog — or `VersionTest` and the deploy gate fail.
+7. **Bump the version in all five places together** — the plugin header,
+   `GWC_VT_VERSION`, `readme.txt`'s Stable tag, its `== Changelog ==` entry and
+   its `== Upgrade Notice ==` entry — or `VersionTest` and the deploy gate fail.
+   This rule said four for a long time and omitted the upgrade notice, which
+   `test_the_upgrade_notice_has_an_entry_for_this_version()` has always asserted:
+   following the rule exactly as written failed the build.
 8. **Nothing may stand between the source and the shipped plugin.** No build
    step, no npm, no transpiler, no autoloader: every file that runs on a user's
    site is a file in this repository, byte for byte. That is what makes
