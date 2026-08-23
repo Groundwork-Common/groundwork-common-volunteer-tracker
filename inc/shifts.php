@@ -326,6 +326,58 @@ function gwc_vt_shift_moved( int $shift_id, array $was ): bool {
 	return false;
 }
 
+/* ── Which clock these times are on ──────────────────────────────────────────
+ * A shift stores wall-clock time and nothing about a zone, which is right — see
+ * the note above. But a volunteer reading "1:00 pm" in an email on a phone that
+ * is still on last week's timezone has no way to know which one o'clock is
+ * meant, and the calendar file beside it carries a UTC instant that their
+ * calendar app will helpfully convert. Two numbers, no stated anchor.
+ *
+ * So the times say which clock they are on. The abbreviation depends on when —
+ * a list running from October to December is EDT for the first half and EST for
+ * the second — which is why this takes a shift rather than reading the setting
+ * once, and why the list helper below asks whether they all agree before saying
+ * it only at the top.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * What the clock is called at the moment a shift starts.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string Empty when the shift has no readable start.
+ */
+function gwc_vt_shift_timezone_label( int $shift_id ): string {
+	$starts = gwc_vt_shift_starts( $shift_id );
+
+	return null === $starts ? '' : gwc_vt_timezone_label( $starts->getTimestamp() );
+}
+
+/**
+ * The one label a whole list shares, or empty when it does not share one.
+ *
+ * A list of Saturdays either side of a daylight-saving change genuinely has two
+ * answers, and saying "all times EDT" over a December row would be stating
+ * something false to save a repetition. So: one label when they agree and the
+ * caller can say it once, nothing when they do not and the caller must say it
+ * per row.
+ *
+ * @param int[] $shift_ids Shift post IDs.
+ * @return string
+ */
+function gwc_vt_shared_timezone_label( array $shift_ids ): string {
+	$labels = array();
+
+	foreach ( $shift_ids as $shift_id ) {
+		$label = gwc_vt_shift_timezone_label( (int) $shift_id );
+
+		if ( '' !== $label ) {
+			$labels[ $label ] = true;
+		}
+	}
+
+	return 1 === count( $labels ) ? (string) array_key_first( $labels ) : '';
+}
+
 /* ── The roster ──────────────────────────────────────────────────────────── */
 
 /**

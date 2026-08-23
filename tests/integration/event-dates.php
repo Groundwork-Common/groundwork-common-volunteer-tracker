@@ -163,6 +163,91 @@ gwc_vt_dt_check(
 	gwc_vt_event_date_label( (int) $gwc_vt_event )
 );
 
+/* ── Which clock a time is on ────────────────────────────────────────────────
+ * Every public time used to print a bare wall-clock reading with no zone, while
+ * the calendar file beside it carried a UTC instant that a calendar app will
+ * convert. Two numbers for one shift and nothing saying which was which.
+ *
+ * The interesting case is a list that spans a daylight-saving change: it has two
+ * honest answers, so a single "all times are EDT" line at the top would be
+ * stating something false over the December rows. This site is on
+ * America/New_York for the whole script, so both sides of the change are
+ * reachable.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_summer = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_SHIFT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest summer shift',
+	)
+);
+
+update_post_meta( (int) $gwc_vt_summer, GWC_VT_SHIFT_DATE, '2026-08-26' );
+update_post_meta( (int) $gwc_vt_summer, GWC_VT_SHIFT_START, '13:00' );
+update_post_meta( (int) $gwc_vt_summer, GWC_VT_SHIFT_END, '16:00' );
+
+$gwc_vt_winter = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_SHIFT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest winter shift',
+	)
+);
+
+update_post_meta( (int) $gwc_vt_winter, GWC_VT_SHIFT_DATE, '2026-12-05' );
+update_post_meta( (int) $gwc_vt_winter, GWC_VT_SHIFT_START, '09:00' );
+update_post_meta( (int) $gwc_vt_winter, GWC_VT_SHIFT_END, '12:00' );
+
+gwc_vt_dt_check(
+	'a summer shift is on daylight time',
+	'EDT' === gwc_vt_shift_timezone_label( (int) $gwc_vt_summer ),
+	gwc_vt_shift_timezone_label( (int) $gwc_vt_summer )
+);
+
+gwc_vt_dt_check(
+	'and a winter one is not',
+	'EST' === gwc_vt_shift_timezone_label( (int) $gwc_vt_winter ),
+	gwc_vt_shift_timezone_label( (int) $gwc_vt_winter )
+);
+
+gwc_vt_dt_check(
+	'a list on one side of the change shares a label, so it is said once',
+	'EDT' === gwc_vt_shared_timezone_label( array( (int) $gwc_vt_summer ) ),
+	gwc_vt_shared_timezone_label( array( (int) $gwc_vt_summer ) )
+);
+
+gwc_vt_dt_check(
+	'a list spanning it shares none, so every row must say its own',
+	'' === gwc_vt_shared_timezone_label( array( (int) $gwc_vt_summer, (int) $gwc_vt_winter ) ),
+	gwc_vt_shared_timezone_label( array( (int) $gwc_vt_summer, (int) $gwc_vt_winter ) )
+);
+
+/* The message a volunteer actually receives, which is where the ambiguity was. */
+gwc_vt_dt_check(
+	'the line quoted back in mail names the clock',
+	false !== strpos( gwc_vt_shift_one_line( (int) $gwc_vt_winter ), 'EST' ),
+	gwc_vt_shift_one_line( (int) $gwc_vt_winter )
+);
+
+/* A shift with no readable start has no clock to name, and says nothing rather
+ * than guessing at the site's current one. */
+$gwc_vt_undated = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_SHIFT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest undated shift',
+	)
+);
+
+gwc_vt_dt_check(
+	'a shift with no readable start names no zone at all',
+	'' === gwc_vt_shift_timezone_label( (int) $gwc_vt_undated ),
+	gwc_vt_shift_timezone_label( (int) $gwc_vt_undated )
+);
+
+$GLOBALS['gwc_vt_dt_shifts'] = array( (int) $gwc_vt_summer, (int) $gwc_vt_winter, (int) $gwc_vt_undated );
+
 /* ── The rosters, and the epoch ──────────────────────────────────────────────
  * Both row renderers echo, so the assertion is on captured output. What is being
  * checked is narrow on purpose: that an unparseable stored date produces neither
@@ -252,7 +337,7 @@ foreach ( array( 'event', 'shift' ) as $gwc_vt_screen ) {
 
 /* ── Teardown ────────────────────────────────────────────────────────────── */
 
-foreach ( array( $gwc_vt_event, $gwc_vt_signup ) as $gwc_vt_id ) {
+foreach ( array_merge( array( $gwc_vt_event, $gwc_vt_signup ), (array) ( $GLOBALS['gwc_vt_dt_shifts'] ?? array() ) ) as $gwc_vt_id ) {
 	wp_delete_post( (int) $gwc_vt_id, true );
 }
 
