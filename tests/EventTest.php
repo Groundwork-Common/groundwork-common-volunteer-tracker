@@ -162,7 +162,7 @@ final class EventTest extends TestCase {
 
 	/* ── A status has to fit the column ──────────────────────────────────────
 	 * wp_posts.post_status is varchar(20). A longer one is not an error, is not
-	 * truncated and is not warned about: wp_insert_post() sanitises what it
+	 * truncated and is not warned about: wp_insert_post() sanitizes what it
 	 * cannot store and the row keeps the status it already had.
 	 *
 	 * GWC_VT_EVENT_CANCELLED was twenty-one characters, so calling an event off
@@ -197,7 +197,7 @@ final class EventTest extends TestCase {
 	 * "2 added, 1 you were already on" tells a stranger which slots somebody
 	 * else was already on.
 	 *
-	 * A count of what was TICKED would in fact be safe. The rule bans all of
+	 * A count of what was SELECTED would in fact be safe. The rule bans all of
 	 * them because this assertion is one line and "only digits derived from the
 	 * request" is a rule the next friendly copy edit will break.
 	 * ─────────────────────────────────────────────────────────────────────── */
@@ -241,7 +241,7 @@ final class EventTest extends TestCase {
 
 	/* ── Which page shows which event ────────────────────────────────────────
 	 * An event has no URL of its own, so the only way to answer "where do
-	 * volunteers see this" is to recognise the placement in a page's content.
+	 * volunteers see this" is to recognize the placement in a page's content.
 	 * Getting it wrong sends a cancellation link to the wrong occasion, which is
 	 * why the matching is asserted rather than eyeballed.
 	 * ─────────────────────────────────────────────────────────────────────── */

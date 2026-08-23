@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 /* ── Why this one is an object ───────────────────────────────────────────────
  * The sibling plugins in this family have no classes at all, and that rule is
  * kept here for everything that is stored: the field schema, a field
- * definition, the settings — all arrays, because they are serialised into an
+ * definition, the settings — all arrays, because they are serialized into an
  * option and wrapping them would mean hydrating and dehydrating on every read
  * for no safety the defaults-merge does not already give.
  *
@@ -144,7 +144,7 @@ class GWC_VT_Totals {
 	 * Rebuild from what was stored.
 	 *
 	 * Everything is cast rather than trusted. This value comes back out of post
-	 * meta, which means it has been through serialisation, possibly a database
+	 * meta, which means it has been through serialization, possibly a database
 	 * migration, and possibly somebody's import script — and a string where an
 	 * int belongs would otherwise be a TypeError on a page load rather than on
 	 * the line that wrote it.

@@ -24,7 +24,7 @@ add_action( 'template_redirect', 'gwc_vt_signup_dispatch' );
  *
  * 1. THE LIST IS PUBLIC AND THE ROSTER IS NOT. A visitor may see that Saturday
  *    exists, what the work is, and that three places are left. They may never
- *    see who is coming. On a site running a court-ordered service programme,
+ *    see who is coming. On a site running a court-ordered service program,
  *    "who is volunteering Saturday" is a list of people working one off, and a
  *    place count is not.
  *
@@ -228,13 +228,13 @@ function gwc_vt_handle_public_signup(): void {
  * gwc_vt_add_signup() is idempotent — a second signup for the same slot by the
  * same address refreshes the first rather than making another — and this form
  * never checks whose address it was given. So a stranger can type somebody
- * else's address and tick three boxes. Three new signups, two new and one
+ * else's address and select three checkboxes. Three new signups, two new and one
  * refresh, or three refreshes: IF THE RESPONSE TELLS THOSE APART, they have
  * learned which of those slots that person was already on, without ever being
  * told a name. On a site running court-ordered service that is a disclosure
  * about a named person, obtained by somebody who supplied nothing but a guess.
  *
- * So the leak is a count of WHAT THE WRITE DID. A count of what was ticked would
+ * So the leak is a count of WHAT THE WRITE DID. A count of what was selected would
  * in fact be safe — it reports only what the sender already posted, and a
  * honeypot hit could produce it too. The rule bans all of them anyway, because
  * "the response carries no number" is one assertion a test can hold, and "only
@@ -242,7 +242,7 @@ function gwc_vt_handle_public_signup(): void {
  * break. Write it down or somebody competent decides the rule is superstition.
  *
  * ── Why the clash check runs before the honeypot ─────────────────────────────
- * Both slots are in the POST, so the check reads only what the sender ticked and
+ * Both slots are in the POST, so the check reads only what the sender selected and
  * the times already printed on the page. Running it FIRST means every path gives
  * the same answer to the same POST — otherwise a bot filling the honeypot would
  * get 'accepted' where a clean clashing submission got a warning, and the
@@ -268,7 +268,7 @@ function gwc_vt_handle_public_event_signup(): void {
 	$wanted   = array_map( 'absint', array_keys( (array) ( $posted['gwc_vt_slots'] ?? array() ) ) );
 	$wanted   = array_values( array_filter( array_unique( $wanted ) ) );
 
-	/* Kept so the form can be handed back with every tick still in place. A
+	/* Kept so the form can be handed back with every selection still in place. A
 	 * visitor who has to answer a question should not have to re-do the grid. */
 	$GLOBALS['gwc_vt_signup_picked'] = $wanted;
 	$GLOBALS['gwc_vt_signup_name']   = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 100 );
@@ -354,7 +354,7 @@ function gwc_vt_handle_public_event_signup(): void {
 		return;
 	}
 
-	/* Counted once. It is one person pressing one button, whatever they ticked —
+	/* Counted once. It is one person pressing one button, whatever they selected —
 	 * and counted before it is reported, so a refused attempt still counts. */
 	if ( gwc_vt_rate_limited( gwc_vt_client_ip(), $GLOBALS['gwc_vt_signup_email'] ) ) {
 		gwc_vt_signup_result( 'accepted', $started );
@@ -421,7 +421,7 @@ function gwc_vt_handle_public_cancel(): void {
 	$token     = sanitize_text_field( (string) ( $posted['gwc_vt_k'] ?? '' ) );
 
 	/* A bad token and a signup that no longer exists give the same answer. The
-	 * token is the only thing that authorises this, so distinguishing them would
+	 * token is the only thing that authorizes this, so distinguishing them would
 	 * turn the URL into a way to ask whether a given signup ID is real. */
 	if ( ! gwc_vt_signup_token_valid( $signup_id, $token ) ) {
 		gwc_vt_signup_result( 'cancel-unknown', $started );
@@ -533,7 +533,7 @@ function gwc_vt_public_shift_ids(): array {
  *
  * The floor exists because "refused instantly" and "accepted after a database
  * write" are distinguishable by a stopwatch. Belt and braces rather than the
- * main defence, and it costs a few milliseconds on a form used a handful of
+ * main defense, and it costs a few milliseconds on a form used a handful of
  * times a day.
  *
  * @param string $result  What to tell them.
@@ -566,18 +566,18 @@ function gwc_vt_signup_message( string $result ): string {
 		'accepted'       => __( 'Thank you — you are signed up. We have sent the details to your email address, along with a link you can use if you need to cancel.', 'groundwork-common-volunteer-tracker' ),
 		'incomplete'     => __( 'Please choose a shift and give your name and email address.', 'groundwork-common-volunteer-tracker' ),
 		'unavailable'    => __( 'That shift is no longer taking signups. The list below is up to date — please pick another.', 'groundwork-common-volunteer-tracker' ),
-		'bad-code'       => __( 'That code was not recognised. Check the code you were given and try again.', 'groundwork-common-volunteer-tracker' ),
+		'bad-code'       => __( 'That code was not recognized. Check the code you were given and try again.', 'groundwork-common-volunteer-tracker' ),
 		'expired'        => __( 'This page had been open too long to submit safely. Please try again.', 'groundwork-common-volunteer-tracker' ),
 		'cancelled'      => __( 'You have been taken off that shift. Thank you for letting us know.', 'groundwork-common-volunteer-tracker' ),
 		'cancel-unknown' => __( 'That link is no longer valid. It may have already been used, or the shift may have changed. Please get in touch if you need to cancel.', 'groundwork-common-volunteer-tracker' ),
 
 		/* Both of these are safe to say because both depend only on what the
-		 * visitor just posted — how many boxes they ticked, and whether two of
+		 * visitor just posted — how many checkboxes they selected, and whether two of
 		 * those boxes are at the same time. Neither reports anything the site
 		 * knows about the address they typed. Nothing else may be added here
 		 * without that being true of it as well. */
 		'too-many'       => __( 'That is more times than we can take in one go. Please pick a few, send them, and come back for the rest.', 'groundwork-common-volunteer-tracker' ),
-		'clash'          => __( 'Two of the times you picked overlap. Change one, or tick the box below to say you meant both.', 'groundwork-common-volunteer-tracker' ),
+		'clash'          => __( 'Two of the times you picked overlap. Change one, or select the checkbox below to say you meant both.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	return $messages[ $result ] ?? '';

@@ -1,6 +1,6 @@
 <?php
 /**
- * A demo organisation, for working on the plugin and taking screenshots.
+ * A demo organization, for working on the plugin and taking screenshots.
  *
  *   npx @wordpress/env run cli -- wp eval-file \
  *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/seed.php
@@ -19,7 +19,7 @@
  *
  * ── Why this is committed when the sibling plugins gitignore their seed ──────
  * The post portal keeps its fixtures in .dev/ and documents the recipe instead.
- * That works when the fixture is "three organisations and a user". Here the
+ * That works when the fixture is "three organizations and a user". Here the
  * fixture IS the domain — a court-ordered volunteer partway through their
  * hours, a dormant record inside the retention window, one on a hold, one with
  * no email so the letter can only be printed. Those states are the plugin's
@@ -147,7 +147,7 @@ function gwc_vt_seed_entry( int $volunteer_id, string $date, string $hours, stri
 	return $id;
 }
 
-/* ── The organisation ────────────────────────────────────────────────────────
+/* ── The organization ────────────────────────────────────────────────────────
  * The site's own title goes with it. The admin bar carries that title into every
  * screenshot, and the shooting guide's rule is that no real site name may appear
  * in one — on a developer's machine the title is usually the folder, which is a
@@ -212,7 +212,7 @@ update_option(
 		'activities'       => "Sorting the produce delivery\nPacking weekend boxes\nWarehouse inventory\nFront desk intake\nHoliday distribution\nDriving the collection van",
 
 		/* Retention answered rather than left open, so the nag is not the first
-		 * thing in every screenshot. Two years, anonymise, from the last shift. */
+		 * thing in every screenshot. Two years, anonymize, from the last shift. */
 		'retention_months'   => 24,
 		'retention_action'   => 'anonymize',
 		'retention_anchor'   => 'last_entry',
@@ -420,7 +420,7 @@ gwc_vt_seed_signup( $gwc_vt_full, array( 'volunteer_id' => $gwc_vt_tomas ) );
 gwc_vt_seed_signup( $gwc_vt_full, array( 'volunteer_id' => $gwc_vt_fatima ) );
 
 /* A weekly series, so the schedule has some depth to scroll and the series
- * behaviour has something to act on. */
+ * behavior has something to act on. */
 $gwc_vt_series = 0;
 
 foreach ( gwc_vt_recurrence_dates( $gwc_vt_midweek, 'weekly', gmdate( 'Y-m-d', strtotime( $gwc_vt_midweek . ' +8 weeks' ) ) )['dates'] as $gwc_vt_date ) {

@@ -400,14 +400,14 @@ final class LetterTest extends TestCase {
 	}
 
 	public function test_the_inliner_does_not_match_a_class_prefix(): void {
-		$html = gwc_vt_inline_letter_styles( '<p class="gwcvt-organisation">Test</p>' );
+		$html = gwc_vt_inline_letter_styles( '<p class="gwcvt-organization">Test</p>' );
 
-		$this->assertSame( '<p class="gwcvt-organisation">Test</p>', $html );
+		$this->assertSame( '<p class="gwcvt-organization">Test</p>', $html );
 	}
 
 	public function test_a_hyphenated_class_does_not_inherit_its_stem(): void {
 		/* The case the prefix test above missed for three releases. It used
-		 * "gwcvt-organisation", where the stem is followed by a letter — but the
+		 * "gwcvt-organization", where the stem is followed by a letter — but the
 		 * real class names are hyphenated, and \b treats a hyphen as a word
 		 * boundary. So the rule for `gwcvt-org` matched inside
 		 * `gwcvt-org-address`, `gwcvt-org-contact` and `gwcvt-org-logo`. */

@@ -7,7 +7,7 @@
  * this does is save the round trips.
  *
  * Field names carry explicit indexes (gwc_vt_roles[2][slots][1][date]), so a
- * clone has to be renumbered or the new row overwrites its neighbour's answer.
+ * clone has to be renumbered or the new row overwrites its neighbor's answer.
  */
 ( function () {
 	'use strict';

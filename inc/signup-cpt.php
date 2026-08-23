@@ -53,7 +53,7 @@ const GWC_VT_SIGNUP_REMINDED = '_gwc_vt_signup_reminded_at';
 
 /* The hour entry reconciliation produced, if any. Its absence on a reconciled
  * shift is how a no-show is derived — there is no stored no-show flag, because a
- * record of who does not turn up is a behaviour file on people working off court
+ * record of who does not turn up is a behavior file on people working off court
  * orders, and this plugin has no business keeping one. */
 const GWC_VT_SIGNUP_ENTRY = '_gwc_vt_signup_entry';
 
@@ -77,7 +77,7 @@ add_action( 'init', 'gwc_vt_register_signup_type' );
  * A signup from the public form stores the name and email as CLAIMS with the
  * volunteer left at '0', exactly as the self-log form does, and a human attaches
  * them later. The form never looks anybody up, so there is no code path whose
- * behaviour depends on whether a person already exists, and therefore no oracle
+ * behavior depends on whether a person already exists, and therefore no oracle
  * to build one out of. See the box comment in inc/self-log.php.
  */
 function gwc_vt_register_signup_type(): void {

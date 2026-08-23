@@ -76,7 +76,7 @@ final class SignupFormTest extends TestCase {
 	 * rate-limited attempt all end at 'accepted', and if the string ever
 	 * differed between them the form would start answering questions about who
 	 * has been signing up — which, on a site running a court-ordered service
-	 * programme, is a question about whether a named person is working one off.
+	 * program, is a question about whether a named person is working one off.
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_accepted_honeypotted_and_rate_limited_are_byte_identical(): void {

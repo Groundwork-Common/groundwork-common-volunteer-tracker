@@ -13,7 +13,7 @@ add_action( 'save_post_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_save_volunteer', 10, 2
 add_action( 'admin_notices', 'gwc_vt_entry_saved_notice' );
 
 /* ── Why every field wrapper here is a div ───────────────────────────────────
- * The obvious markup for a labelled field is a <p>, and it is what wp-admin's
+ * The obvious markup for a labeled field is a <p>, and it is what wp-admin's
  * own older screens use. It cannot be used here, and the reason is worth
  * recording because the failure is completely silent.
  *
@@ -114,7 +114,7 @@ function gwc_vt_render_entry_meta_box( $post ): void {
 			</label>
 			<?php
 			/* An autocomplete rather than a <select>. A select is fine at twenty
-			 * volunteers and unusable at four hundred, and the organisations this
+			 * volunteers and unusable at four hundred, and the organizations this
 			 * is built for get to four hundred faster than they expect. The
 			 * lookup is a REST route — see inc/rest.php. */
 			?>
@@ -518,14 +518,14 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 				<strong><?php esc_html_e( 'Phone', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
 			<input type="text" id="gwcvt-phone" name="gwc_vt_phone" class="regular-text" maxlength="40" value="<?php echo esc_attr( $phone ); ?>" />
-			<span class="description"><?php esc_html_e( 'For your own use — ringing round when a shift is short. It is never printed on a letter and never shown publicly.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'For your own use — calling around when a shift is short. It is never printed on a letter and never shown publicly.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
 		<?php
-		/* The retention hold. Courts do sometimes require an organisation to
+		/* The retention hold. Courts do sometimes require an organization to
 		 * keep a record longer than its own policy, and a sweep that could not
 		 * be overridden per person would make the retention setting unusable for
-		 * exactly the organisations this plugin is for. It also blocks a privacy
+		 * exactly the organizations this plugin is for. It also blocks a privacy
 		 * erasure request, which is why the reason is worth recording — the
 		 * administrator handling that request has to explain the refusal. */
 		?>
@@ -613,7 +613,7 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 				placeholder="<?php esc_attr_e( 'e.g. a court, a school, a scouting group', 'groundwork-common-volunteer-tracker' ); ?>"
 			/>
 			<span class="description">
-				<?php esc_html_e( 'For your own records, so you know which programme this person is here under. Like the rest of this section it never reaches a letter — what a court asked for is a fact about the court\'s document, not about anything you observed.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'For your own records, so you know which program this person is here under. Like the rest of this section it never reaches a letter — what a court asked for is a fact about the court\'s document, not about anything you observed.', 'groundwork-common-volunteer-tracker' ); ?>
 			</span>
 		</div>
 
@@ -642,7 +642,7 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 							<?php
 							printf(
 								/* translators: %s: a number of hours, already formatted. */
-								esc_html__( '%s more is logged but not verified yet, so it does not count towards this.', 'groundwork-common-volunteer-tracker' ),
+								esc_html__( '%s more is logged but not verified yet, so it does not count toward this.', 'groundwork-common-volunteer-tracker' ),
 								esc_html( gwc_vt_format_hours( $progress['pending'] ) )
 							);
 							?>

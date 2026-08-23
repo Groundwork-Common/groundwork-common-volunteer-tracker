@@ -295,7 +295,7 @@ gwc_vt_send_queued_confirmations();
 $gwc_vt_mail = gwc_vt_drain_mail();
 
 gwc_vt_check( 'everybody on the roster is told', 2 === count( $gwc_vt_mail ), (string) count( $gwc_vt_mail ) );
-gwc_vt_check( 'the subject says it is cancelled', false !== strpos( (string) ( $gwc_vt_mail[0]['subject'] ?? '' ), 'cancelled' ), (string) ( $gwc_vt_mail[0]['subject'] ?? '' ) );
+gwc_vt_check( 'the subject says it is canceled', false !== strpos( (string) ( $gwc_vt_mail[0]['subject'] ?? '' ), 'canceled' ), (string) ( $gwc_vt_mail[0]['subject'] ?? '' ) );
 gwc_vt_check( 'the message says not to come', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'do not come' ) );
 gwc_vt_check( 'and gives the reason', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'Zzytest van is in for repairs' ) );
 
@@ -310,7 +310,7 @@ $gwc_vt_was = array(
 	'label'    => gwc_vt_shift_one_line( $gwc_vt_off ),
 );
 
-update_post_meta( $gwc_vt_off, GWC_VT_SHIFT_LOCATION, 'Zzytest community centre' );
+update_post_meta( $gwc_vt_off, GWC_VT_SHIFT_LOCATION, 'Zzytest community center' );
 
 gwc_vt_check( 'moving the place counts as a change', gwc_vt_shift_moved( $gwc_vt_off, $gwc_vt_was ) );
 
@@ -321,7 +321,7 @@ gwc_vt_send_queued_confirmations();
 $gwc_vt_mail = gwc_vt_drain_mail();
 
 gwc_vt_check( 'the change notice goes out', 1 === count( $gwc_vt_mail ), (string) count( $gwc_vt_mail ) );
-gwc_vt_check( 'carrying the new details', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'Zzytest community centre' ) );
+gwc_vt_check( 'carrying the new details', false !== strpos( (string) ( $gwc_vt_mail[0]['message'] ?? '' ), 'Zzytest community center' ) );
 
 /* Quoting what it used to be, because "the details have changed" makes the
  * reader go and find the original to work out what. */
@@ -331,7 +331,7 @@ gwc_vt_check( 'and what it used to be', false !== strpos( (string) ( $gwc_vt_mai
 update_post_meta( $gwc_vt_off, GWC_VT_SHIFT_SUPERVISOR, 'Somebody Else' );
 update_post_meta( $gwc_vt_off, GWC_VT_SHIFT_ACTIVITY, 'Zzytest reworded' );
 
-$gwc_vt_after_cosmetic = array_merge( $gwc_vt_was, array( 'location' => 'Zzytest community centre' ) );
+$gwc_vt_after_cosmetic = array_merge( $gwc_vt_was, array( 'location' => 'Zzytest community center' ) );
 
 gwc_vt_check( 'renaming the activity and the supervisor does not', ! gwc_vt_shift_moved( $gwc_vt_off, $gwc_vt_after_cosmetic ) );
 

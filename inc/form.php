@@ -168,7 +168,7 @@ function gwc_vt_render_self_log_form(): string {
 			</p>
 
 			<p class="gwcvt-form__note">
-				<?php esc_html_e( 'Hours you send here are checked by staff before they count towards anything. Nothing you enter appears publicly.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Hours you send here are checked by staff before they count toward anything. Nothing you enter appears publicly.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</form>
 	</div>

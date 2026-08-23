@@ -124,7 +124,7 @@ final class RetentionTest extends TestCase {
 		$this->assertTrue( gwc_vt_retention_held( $volunteer ) );
 		$this->assertFalse(
 			gwc_vt_retention_due( $volunteer, '2026-08-05' ),
-			'A court can require an organisation to keep a record longer than its own policy.'
+			'A court can require an organization to keep a record longer than its own policy.'
 		);
 	}
 

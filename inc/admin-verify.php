@@ -213,7 +213,7 @@ function gwc_vt_handle_unverify_entry(): void {
  *
  * Capability before nonce, house rule. Both are checked here rather than in
  * gwc_vt_verify_entry() as well as here — the model function checks
- * authorisation too, through the method registry's can_apply, because it is
+ * authorization too, through the method registry's can_apply, because it is
  * also reachable from bulk actions and from WP-CLI.
  *
  * @param string $action The admin_post action, which is also the nonce prefix.
@@ -290,7 +290,7 @@ function gwc_vt_register_bulk_actions( $actions ): array {
  * reason this goes through handle_bulk_actions- rather than a hand-rolled
  * admin_post handler with a checkbox list of its own.
  *
- * Each entry is still authorised individually through gwc_vt_verify_entry(): a
+ * Each entry is still authorized individually through gwc_vt_verify_entry(): a
  * user who may verify most of a selection but not one of them verifies the rest
  * and silently skips that one, rather than the selection succeeding or failing
  * as a block.
@@ -446,7 +446,7 @@ function gwc_vt_bulk_unverify_confirm(): void {
 			<?php esc_html_e( 'Each of these carries a staff member\'s name and the date they attested to it. Withdrawing removes that. Verifying them again afterwards does not restore it — it records whoever does it, on the day they do it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 		<p>
-			<?php esc_html_e( 'The hours themselves are untouched. They stop counting towards anything, and they stop appearing as verified on a letter, until somebody attests to them again.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'The hours themselves are untouched. They stop counting toward anything, and they stop appearing as verified on a letter, until somebody attests to them again.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<?php if ( $skipped > 0 ) : ?>
@@ -533,8 +533,8 @@ function gwc_vt_current_list_url(): string {
 /**
  * Withdraw a confirmed selection.
  *
- * Every entry is authorised again here rather than trusted from the confirmation
- * link — the ids travelled through a URL, and a handler that acts on what a URL
+ * Every entry is authorized again here rather than trusted from the confirmation
+ * link — the ids traveled through a URL, and a handler that acts on what a URL
  * told it is a handler that acts on whatever anybody puts in one.
  */
 function gwc_vt_handle_bulk_unverify(): void {
@@ -613,7 +613,7 @@ function gwc_vt_bulk_action_notice(): void {
 
 	/* Green only when something actually happened. A selection where every row
 	 * was skipped used to come back as a success notice reading "0 entries
-	 * verified. 12 were skipped" — which announces, in the colour reserved for
+	 * verified. 12 were skipped" — which announces, in the color reserved for
 	 * things going right, that nothing went right. */
 	printf(
 		'<div class="notice %1$s is-dismissible"><p>%2$s</p></div>',
@@ -817,7 +817,7 @@ function gwc_vt_render_verify_meta_box( $post ): void {
  * comments and updates.
  *
  * Core's own markup and classes rather than something bespoke, so it inherits
- * the admin colour scheme and reads as part of WordPress rather than as a
+ * the admin color scheme and reads as part of WordPress rather than as a
  * decoration this plugin added.
  */
 function gwc_vt_add_pending_bubble(): void {

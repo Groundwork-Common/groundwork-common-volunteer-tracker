@@ -10,7 +10,7 @@
  *
  * That is exactly what happened. The lookup searched page content for the
  * literal "gwc_vt_event_grid", which the shortcode contains and the BLOCK does
- * not — a block placement serialises as
+ * not — a block placement serializes as
  * "wp:groundwork-common-volunteer-tracker/event-grid". So the block branch was
  * unreachable, and the block is the placement the editor recommends. Every
  * cancellation link in a confirmation email for a block-placed event was empty.

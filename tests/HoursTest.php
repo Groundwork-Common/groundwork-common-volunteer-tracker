@@ -120,7 +120,7 @@ final class HoursTest extends TestCase {
 	public function test_it_rounds_to_the_nearest_and_never_up(): void {
 		$this->settings( array( 'hour_increment' => 15 ) );
 
-		/* Rounding up would be the organisation systematically crediting hours
+		/* Rounding up would be the organization systematically crediting hours
 		 * nobody worked, which on this document is the one direction of error
 		 * that matters. One minute past the hour is the hour. */
 		$this->assertSame( 180, gwc_vt_parse_hours( '3h 1m' ) );

@@ -143,7 +143,7 @@ gwc_vt_check(
 $gwc_vt_print = gwc_vt_render_letter( $gwc_vt_letter, 'print' );
 
 gwc_vt_check( 'the print view is a whole document', 0 === strpos( ltrim( $gwc_vt_print ), '<!doctype html>' ) );
-gwc_vt_check( 'it names the organisation', false !== strpos( $gwc_vt_print, get_bloginfo( 'name' ) ) );
+gwc_vt_check( 'it names the organization', false !== strpos( $gwc_vt_print, get_bloginfo( 'name' ) ) );
 /* Compared against exactly what the template escapes, rather than against a
  * literal typed here. get_the_title() runs the `the_title` filter, which
  * texturizes — so the apostrophe in O'Brien reaches the letter as a curly one.
@@ -181,7 +181,7 @@ gwc_vt_check( 'the email carries the disclaimer', false !== strpos( $gwc_vt_emai
 
 /* Both media must state the same total. This is the assertion behind the
  * one-template rule: if they ever diverge, a court has a letter that differs
- * from the organisation's copy. */
+ * from the organization's copy. */
 gwc_vt_check(
 	'print and email state the same hours',
 	( false !== strpos( $gwc_vt_print, '6.5' ) ) === ( false !== strpos( $gwc_vt_email, '6.5' ) )

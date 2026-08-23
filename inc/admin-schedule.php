@@ -301,7 +301,7 @@ function gwc_vt_render_schedule_row( int $shift_id, string $base ): void {
 			</a>
 
 			<?php if ( $cancelled ) : ?>
-				<span class="gwcvt-badge gwcvt-badge--cancelled"><?php esc_html_e( 'Cancelled', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<span class="gwcvt-badge gwcvt-badge--cancelled"><?php esc_html_e( 'Canceled', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php elseif ( 'draft' === get_post_status( $shift_id ) ) : ?>
 				<span class="gwcvt-badge"><?php esc_html_e( 'Not published', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php elseif ( $awaiting ) : ?>
@@ -386,7 +386,7 @@ function gwc_vt_schedule_notice(): void {
 
 	$errors = array(
 		'bad-date'  => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'bad-time'  => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, tick “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'bad-time'  => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
 		'no-dates'  => __( 'That repeat did not land on any dates. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
 		'not-found' => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
 	);
@@ -398,7 +398,7 @@ function gwc_vt_schedule_notice(): void {
 
 	$messages = array(
 		'saved'     => __( 'Shift saved.', 'groundwork-common-volunteer-tracker' ),
-		'cancelled' => __( 'Shift cancelled. It stays on the schedule so everybody can see it was called off.', 'groundwork-common-volunteer-tracker' ),
+		'cancelled' => __( 'Shift canceled. It stays on the schedule so everybody can see it was called off.', 'groundwork-common-volunteer-tracker' ),
 		'deleted'   => __( 'Shift deleted.', 'groundwork-common-volunteer-tracker' ),
 		'rostered'  => __( 'Added to the shift.', 'groundwork-common-volunteer-tracker' ),
 		'removed'   => __( 'Taken off the shift.', 'groundwork-common-volunteer-tracker' ),
@@ -767,7 +767,7 @@ function gwc_vt_event_notice(): void {
 		'deleted'         => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
 		'promoted'        => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
 		'rostered'        => __( 'They are on the list.', 'groundwork-common-volunteer-tracker' ),
-		'no-title'        => __( 'An event needs a name — it is what volunteers will recognise it by.', 'groundwork-common-volunteer-tracker' ),
+		'no-title'        => __( 'An event needs a name — it is what volunteers will recognize it by.', 'groundwork-common-volunteer-tracker' ),
 		'no-role'         => __( 'A role with times under it needs a name. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
 		'bad-time'        => __( 'One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight.', 'groundwork-common-volunteer-tracker' ),
 		'has-roster'      => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
@@ -793,8 +793,8 @@ function gwc_vt_event_notice(): void {
 
 	if ( $cancelled > 0 ) {
 		$detail[] = sprintf(
-			/* translators: %d: how many times were cancelled. */
-			_n( '%d time cancelled — it stays on the schedule so everybody can see it was called off.', '%d times cancelled — they stay on the schedule so everybody can see they were called off.', $cancelled, 'groundwork-common-volunteer-tracker' ),
+			/* translators: %d: how many times were canceled. */
+			_n( '%d time canceled — it stays on the schedule so everybody can see it was called off.', '%d times canceled — they stay on the schedule so everybody can see they were called off.', $cancelled, 'groundwork-common-volunteer-tracker' ),
 			$cancelled
 		);
 	}

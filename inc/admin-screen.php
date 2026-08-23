@@ -474,7 +474,7 @@ function gwc_vt_colophon_toggle_url( string $action ): string {
  * nobody reaches.
  *
  * Still not a notice. A plugin that interrupts an unrelated admin page to talk
- * about its author is the behaviour the directory guidelines exist to stop, and
+ * about its author is the behavior the directory guidelines exist to stop, and
  * it earns the dismissal it gets. Somebody who has opened this screen has
  * chosen to be here; that is the whole difference.
  *
@@ -516,7 +516,7 @@ function gwc_vt_render_colophon(): void {
 				 * Common"> immediately after a heading saying the same words is
 				 * read out twice.
 				 *
-				 * Two files, swapped by colour scheme in the stylesheet: the logo
+				 * Two files, swapped by color scheme in the stylesheet: the logo
 				 * is ink on transparent, so one version or the other disappears
 				 * depending on what it is sitting on. Naming is by BACKGROUND,
 				 * not by ink — "-light" is the one for light backgrounds.

@@ -97,15 +97,15 @@ function gwc_vt_hour_format_labels(): array {
  *
  * This is the sentence that keeps the whole feature honest, and it is why the
  * setting behind it cannot be saved empty: gwc_vt_disclaimer() falls back here
- * when the stored value sanitizes to ''. An organisation's counsel may well need
+ * when the stored value sanitizes to ''. An organization's counsel may well need
  * different wording — that is what the setting is for — but "no disclaimer at
  * all" is not a wording choice, it is the plugin quietly starting to imply that
  * it certified something.
  *
  * Three claims, in this order, and each is load-bearing:
  *
- *   1. Where the numbers came from — the organisation's own records.
- *   2. Who is answerable for them — the organisation, explicitly, not us.
+ *   1. Where the numbers came from — the organization's own records.
+ *   2. Who is answerable for them — the organization, explicitly, not us.
  *   3. How to check — a named contact and a reference code that can be read
  *      back over the phone.
  *
@@ -138,7 +138,7 @@ function gwc_vt_default_disclaimer(): string {
  * Printed alongside the code itself. Without this sentence a reader reasonably
  * assumes a code means the document was issued by some authority; with it, the
  * code means the narrower and true thing — that this document still matches
- * what the organisation has on file.
+ * what the organization has on file.
  *
  * @return string
  */

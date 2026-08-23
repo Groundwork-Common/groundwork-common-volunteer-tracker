@@ -14,7 +14,7 @@ add_action( 'admin_notices', 'gwc_vt_triage_result_notice' );
 
 /* ── Suggesting a match is not the thing the form must not do ────────────────
  * inc/self-log.php refuses to look a volunteer up, and that refusal is
- * load-bearing: a public handler whose behaviour depends on whether a person
+ * load-bearing: a public handler whose behavior depends on whether a person
  * exists is an oracle for whether a named person is doing court-ordered
  * service, and no amount of careful response-writing removes it once the code
  * path is there.

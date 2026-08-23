@@ -1,6 +1,6 @@
 <?php
 /**
- * Logging hours, totalling them, and the REST lookup — against real WordPress.
+ * Logging hours, totaling them, and the REST lookup — against real WordPress.
  *
  * The unit suite stubs get_posts(), so what it proves about the query layer is
  * only as good as the stub. This runs the same functions against a real

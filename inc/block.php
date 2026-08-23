@@ -13,7 +13,7 @@ add_action( 'enqueue_block_editor_assets', 'gwc_vt_localize_block_editor' );
 /* ── A shortcode as well, permanently ────────────────────────────────────────
  * Not a deprecation path and not a fallback — a supported way to place the form
  * that happens to work in a classic editor, a widget, a page builder, and a
- * theme template. The organisations this plugin is for are not all on block
+ * theme template. The organizations this plugin is for are not all on block
  * themes, and telling one of them their site is too old to log volunteer hours
  * is not an answer.
  * ─────────────────────────────────────────────────────────────────────────── */
@@ -151,7 +151,7 @@ function gwc_vt_localize_block_editor(): void {
 	/* The events to choose from, by name and date. A list rather than a REST
 	 * route for the same reason as the booleans above — and pointedly not the
 	 * event type made queryable, which would publish a location and the shape of
-	 * an organisation's calendar to anybody who asked. */
+	 * an organization's calendar to anybody who asked. */
 	$events = array();
 
 	foreach ( gwc_vt_events_between(

@@ -75,7 +75,7 @@ function gwc_vt_recurrence_patterns(): array {
  * one week to a date and keep the string '09:00', and the nine o'clock shift is
  * at nine o'clock all year, which is what everybody involved already assumed.
  *
- * The UTC zone below is not a claim about where the organisation is. It is the
+ * The UTC zone below is not a claim about where the organization is. It is the
  * absence of a claim: these are calendar dates, and pinning the arithmetic to a
  * fixed zone stops PHP's default timezone from making it drift.
  *

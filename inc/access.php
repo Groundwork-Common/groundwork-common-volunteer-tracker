@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * What it needs instead is two capabilities on the accounts that already exist:
  *
  *   gwc_vt_verify_hours    attest that a shift happened
- *   gwc_vt_issue_letters   put the organisation's name on a document
+ *   gwc_vt_issue_letters   put the organization's name on a document
  *
  * They are deliberately separate. At a small nonprofit the coordinator who
  * knows Jane swept the warehouse on Saturday and the director who signs a
@@ -48,7 +48,7 @@ add_filter( 'map_meta_cap', 'gwc_vt_map_open_letters', 10, 3 );
 
 /* ── Reaching the Letters screen ─────────────────────────────────────────────
  * The screen does two things, and they are not the same size. Producing a letter
- * puts the organisation's name on a document a court reads, and stays behind
+ * puts the organization's name on a document a court reads, and stays behind
  * gwc_vt_issue_letters. Checking a reference somebody has phoned in about is a
  * ten-second lookup that answers "does this still match our records" and
  * discloses nothing the caller is not holding already.
@@ -206,7 +206,7 @@ function gwc_vt_user_can_verify( int $user_id, int $entry_id ): bool {
 }
 
 /**
- * May this user put the organisation's name on a letter?
+ * May this user put the organization's name on a letter?
  *
  * @param int $user_id User ID.
  * @return bool

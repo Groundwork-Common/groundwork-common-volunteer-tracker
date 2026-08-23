@@ -448,7 +448,7 @@ function gwc_vt_signup_ids_for_volunteer( int $volunteer_id ): array {
  * Strip the name and address somebody typed, keeping the place on the roster.
  *
  * The same trade the hours make: what a shift was and who staffed it is the
- * organisation's own record, and it identifies nobody once the claim is gone.
+ * organization's own record, and it identifies nobody once the claim is gone.
  *
  * @param int $signup_id Signup post ID.
  */

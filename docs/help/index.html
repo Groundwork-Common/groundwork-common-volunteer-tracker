@@ -1,0 +1,1421 @@
+<title>Volunteer Tracker Help</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* ─────────────────────────────────────────────────────────────────────────
+   Volunteer Tracker Help
+   Palette: ledger green. The material a volunteer-hours log lived on before
+   software — green-bar accounting paper, ink, and a rubber stamp for the
+   things that cost you something. Type: Bitter (slab, form headings) over
+   Public Sans (the face of civic forms), IBM Plex Mono for codes.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --paper:        #F5F7F2;
+  --surface:      #FFFFFF;
+  --surface-2:    #EDF1EA;
+  --ink:          #19211C;
+  --ink-2:        #4D5B53;
+  --ink-3:        #5D6B63;
+  --rule:         #D6DDD3;
+  --rule-strong:  #B9C4B6;
+  --accent:       #2A6049;
+  --accent-hover: #1D4A37;
+  --accent-soft:  #E4EEE7;
+  --stamp:        #98392C;
+  --stamp-soft:   #F7E8E4;
+  --shadow:       0 1px 2px rgba(25, 33, 28, .06), 0 8px 24px rgba(25, 33, 28, .05);
+
+  --f-display: "Bitter", Georgia, "Times New Roman", serif;
+  --f-body:    "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --f-mono:    "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --sidebar: 17.5rem;
+  --measure: 40rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:        #12160F;
+    --surface:      #1A1F19;
+    --surface-2:    #222922;
+    --ink:          #E7ECE4;
+    --ink-2:        #A3B0A6;
+    --ink-3:        #93A398;
+    --rule:         #2B332B;
+    --rule-strong:  #3C463C;
+    --accent:       #74C39A;
+    --accent-hover: #96D6B3;
+    --accent-soft:  #1D2C24;
+    --stamp:        #E19483;
+    --stamp-soft:   #2E1E1A;
+    --shadow:       0 1px 2px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:        #12160F;
+  --surface:      #1A1F19;
+  --surface-2:    #222922;
+  --ink:          #E7ECE4;
+  --ink-2:        #A3B0A6;
+  --ink-3:        #93A398;
+  --rule:         #2B332B;
+  --rule-strong:  #3C463C;
+  --accent:       #74C39A;
+  --accent-hover: #96D6B3;
+  --accent-soft:  #1D2C24;
+  --stamp:        #E19483;
+  --stamp-soft:   #2E1E1A;
+  --shadow:       0 1px 2px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 1rem;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: .16em; }
+a:hover { color: var(--accent-hover); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* ── Masthead ─────────────────────────────────────────────────────────── */
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 20;
+}
+.masthead-in {
+  max-width: 78rem; margin: 0 auto;
+  padding: .85rem 1.5rem;
+  display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap;
+}
+.wordmark {
+  font-family: var(--f-display); font-weight: 700; font-size: 1.0625rem;
+  letter-spacing: -.01em; color: var(--ink); margin: 0;
+}
+.version {
+  font-family: var(--f-mono); font-size: .75rem; color: var(--ink-3);
+  border: 1px solid var(--rule); border-radius: 2px; padding: .05rem .4rem;
+}
+.masthead-note { margin-left: auto; font-size: .8125rem; color: var(--ink-3); }
+
+/* ── Shell ────────────────────────────────────────────────────────────── */
+
+.shell {
+  max-width: 78rem; margin: 0 auto;
+  display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr);
+  gap: 3.5rem; padding: 0 1.5rem 6rem;
+  align-items: start;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────── */
+
+.sidebar {
+  position: sticky; top: 3.6rem;
+  max-height: calc(100vh - 3.6rem);
+  overflow-y: auto;
+  padding: 2rem 0 3rem;
+  border-right: 1px solid var(--rule);
+  margin-right: -1.75rem;
+}
+.finder { position: relative; margin-bottom: 1.5rem; padding-right: 1.5rem; }
+.finder input {
+  width: 100%; font: inherit; font-size: .875rem;
+  padding: .5rem .7rem; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+}
+.finder input::placeholder { color: var(--ink-3); }
+.nav-group { margin-bottom: 1.4rem; }
+.nav-group h2 {
+  font-family: var(--f-body); font-size: .6875rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3);
+  margin: 0 0 .45rem;
+}
+.nav-group ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.nav-group a {
+  display: block; padding: .26rem .6rem .26rem .7rem;
+  font-size: .875rem; line-height: 1.42; color: var(--ink-2);
+  text-decoration: none; border-left: 2px solid transparent;
+  margin-left: -.7rem;
+}
+.nav-group a:hover { color: var(--ink); background: var(--surface-2); }
+.nav-group a[aria-current="true"] {
+  color: var(--accent); border-left-color: var(--accent); font-weight: 500;
+  background: var(--accent-soft);
+}
+.nav-hidden { display: none !important; }
+.no-hits { font-size: .8125rem; color: var(--ink-3); font-style: italic; padding: .2rem 0; }
+
+/* ── Content ──────────────────────────────────────────────────────────── */
+
+.content { padding: 2.5rem 0 0; min-width: 0; }
+.content > * { max-width: var(--measure); }
+
+.lede { margin: 0 0 3rem; }
+.lede h1 {
+  font-family: var(--f-display); font-weight: 700; font-size: clamp(1.85rem, 3.4vw, 2.4rem);
+  line-height: 1.16; letter-spacing: -.015em; text-wrap: balance; margin: 0 0 .7rem;
+}
+.lede p { font-size: 1.0625rem; color: var(--ink-2); margin: 0 0 1rem; }
+
+.group-head {
+  max-width: none;
+  margin: 4.5rem 0 0; padding-top: 1.1rem;
+  border-top: 2px solid var(--ink);
+  font-family: var(--f-body); font-size: .6875rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink);
+}
+.group-head:first-of-type { margin-top: 0; }
+
+section.topic { scroll-margin-top: 4.5rem; padding: 2rem 0 0; }
+section.topic h3 {
+  font-family: var(--f-display); font-weight: 600; font-size: 1.375rem;
+  line-height: 1.28; letter-spacing: -.01em; text-wrap: balance;
+  margin: 0 0 .55rem; color: var(--ink);
+}
+section.topic h4 {
+  font-family: var(--f-body); font-size: .9375rem; font-weight: 600;
+  margin: 1.6rem 0 .4rem; color: var(--ink);
+}
+section.topic p { margin: 0 0 .9rem; }
+section.topic > p:last-child { margin-bottom: 0; }
+
+ol.steps { margin: 0 0 1rem; padding-left: 1.35rem; }
+ol.steps > li { margin-bottom: .42rem; padding-left: .2rem; }
+ol.steps ul { margin: .35rem 0 .5rem; }
+ul.plain { margin: 0 0 1rem; padding-left: 1.15rem; }
+ul.plain > li { margin-bottom: .35rem; }
+
+.ui { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.path { font-weight: 600; color: var(--ink); }
+.path .sep { color: var(--ink-3); font-weight: 400; padding: 0 .15em; }
+
+code, kbd {
+  font-family: var(--f-mono); font-size: .84em;
+  background: var(--surface-2); border: 1px solid var(--rule);
+  border-radius: 3px; padding: .08em .35em;
+}
+pre {
+  font-family: var(--f-mono); font-size: .8125rem; line-height: 1.6;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule-strong);
+  border-radius: 3px; padding: .85rem 1rem; margin: 0 0 1rem;
+  overflow-x: auto;
+}
+pre code { background: none; border: 0; padding: 0; font-size: 1em; }
+
+/* ── Callouts ─────────────────────────────────────────────────────────── */
+
+.callout {
+  border: 1px solid var(--rule); border-left: 3px solid var(--rule-strong);
+  background: var(--surface); border-radius: 3px;
+  padding: .8rem 1rem; margin: 0 0 1.1rem;
+  font-size: .9375rem;
+}
+.callout p { margin: 0 0 .55rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout .label {
+  display: block; font-size: .6875rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: .28rem;
+}
+.callout.tip { border-left-color: var(--accent); background: var(--accent-soft); }
+.callout.tip .label { color: var(--accent); }
+.callout.important, .callout.warning {
+  border-left-color: var(--stamp); background: var(--stamp-soft);
+}
+.callout.important .label, .callout.warning .label { color: var(--stamp); }
+
+/* ── Tables ───────────────────────────────────────────────────────────── */
+
+.table-wrap { overflow-x: auto; margin: 0 0 1.2rem; max-width: none; }
+table {
+  border-collapse: collapse; width: 100%; min-width: 30rem;
+  font-size: .9063rem; background: var(--surface);
+  border: 1px solid var(--rule); border-radius: 3px;
+}
+th, td { text-align: left; padding: .55rem .8rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+thead th {
+  font-size: .6875rem; letter-spacing: .08em; text-transform: uppercase;
+  font-weight: 600; color: var(--ink-3); background: var(--surface-2);
+  border-bottom: 1px solid var(--rule-strong);
+}
+tbody tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; }
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+
+.colophon {
+  margin-top: 5rem; padding-top: 1.2rem;
+  border-top: 1px solid var(--rule);
+  font-size: .8125rem; color: var(--ink-3);
+}
+
+/* ── Small screens ────────────────────────────────────────────────────── */
+
+.nav-toggle { display: none; }
+
+@media (max-width: 62rem) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .sidebar {
+    position: static; max-height: none; overflow: visible;
+    border-right: 0; margin-right: 0; padding: 1.25rem 0 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-toggle {
+    display: block; width: 100%; text-align: left; font: inherit;
+    font-size: .875rem; font-weight: 600; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--rule-strong);
+    border-radius: 3px; padding: .55rem .8rem; cursor: pointer;
+    margin-bottom: 1rem;
+  }
+  .sidebar[data-collapsed="true"] .nav-body { display: none; }
+  .finder { padding-right: 0; }
+  .content { padding-top: 2rem; }
+  .content > * { max-width: none; }
+  section.topic p, section.topic ol, section.topic ul, .callout, .lede p { max-width: var(--measure); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}
+html { scroll-behavior: smooth; }
+</style>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <p class="wordmark">Volunteer Tracker Help</p>
+    <span class="version">1.0.1</span>
+    <span class="masthead-note">Groundwork Common</span>
+  </div>
+</header>
+
+<div class="shell">
+
+<nav class="sidebar" id="sidebar" aria-label="Help topics" data-collapsed="true">
+  <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navBody">Browse topics</button>
+  <div class="nav-body" id="navBody">
+    <div class="finder">
+      <label class="sr-only" for="finder" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Filter topics</label>
+      <input type="search" id="finder" placeholder="Filter topics" autocomplete="off">
+    </div>
+    <div id="navList">
+      <div class="nav-group"><h2>Get started</h2><ul>
+        <li><a href="#what-it-does">What the Volunteer Tracker does</a></li>
+        <li><a href="#set-up">Set up the plugin</a></li>
+        <li><a href="#permissions">Choose who can verify and issue</a></li>
+        <li><a href="#dry-run">Try it once before you rely on it</a></li>
+        <li><a href="#dashboard">Find what needs doing</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Volunteers</h2><ul>
+        <li><a href="#add-volunteer">Add a volunteer</a></li>
+        <li><a href="#requirements">Track required hours and a deadline</a></li>
+        <li><a href="#hold">Keep a record longer than your policy</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Hours</h2><ul>
+        <li><a href="#hours-ways">Four ways hours get recorded</a></li>
+        <li><a href="#type-hours">Type hours the way you say them</a></li>
+        <li><a href="#log-one">Log hours for one person</a></li>
+        <li><a href="#log-a-day">Log a whole sign-in sheet</a></li>
+        <li><a href="#match">Match hours sent from your website</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Verify and issue</h2><ul>
+        <li><a href="#verify">Verify hours</a></li>
+        <li><a href="#withdraw">Withdraw a verification</a></li>
+        <li><a href="#letter-create">Create a verification letter</a></li>
+        <li><a href="#letter-wording">Change the letter wording</a></li>
+        <li><a href="#reference">Check a reference code</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Schedule</h2><ul>
+        <li><a href="#schedule-on">Turn on the schedule</a></li>
+        <li><a href="#add-shift">Add a shift</a></li>
+        <li><a href="#repeat">Repeat a shift</a></li>
+        <li><a href="#roster">Manage who is coming</a></li>
+        <li><a href="#waiting-list">Waiting lists</a></li>
+        <li><a href="#cancel-shift">Cancel or delete a shift</a></li>
+        <li><a href="#reconcile">Turn a roster into hours</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Events</h2><ul>
+        <li><a href="#event-build">Plan an event</a></li>
+        <li><a href="#event-page">Put an event on a page</a></li>
+        <li><a href="#event-calloff">Call off a time or drop a role</a></li>
+        <li><a href="#event-copy">Copy an event to a new date</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Your website</h2><ul>
+        <li><a href="#signups">Let people sign up for shifts</a></li>
+        <li><a href="#self-log">Let volunteers send in hours</a></li>
+        <li><a href="#blocks">Blocks and shortcodes</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Email</h2><ul>
+        <li><a href="#email-what">What the plugin sends</a></li>
+        <li><a href="#reminders">Turn on shift reminders</a></li>
+        <li><a href="#digest">Get a daily summary</a></li>
+        <li><a href="#staging">Stop a copied site emailing volunteers</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Records and privacy</h2><ul>
+        <li><a href="#retention">Choose how long to keep records</a></li>
+        <li><a href="#export-erase">Export or erase someone's data</a></li>
+        <li><a href="#uninstall">What happens if you delete the plugin</a></li>
+      </ul></div>
+      <div class="nav-group"><h2>Reference</h2><ul>
+        <li><a href="#settings-ref">Settings reference</a></li>
+        <li><a href="#troubleshoot">Fix a problem</a></li>
+        <li><a href="#glossary">Glossary</a></li>
+      </ul></div>
+    </div>
+    <p class="no-hits nav-hidden" id="noHits">No topics match that.</p>
+  </div>
+</nav>
+
+<main class="content">
+
+<div class="lede">
+  <h1>Volunteer Tracker Help</h1>
+  <p>Plan the shifts you need people for, record the hours they work, and produce a verification letter a court or a school will accept. This help covers both halves and the point where they meet.</p>
+  <p>New here? Start with <a href="#set-up">Set up the plugin</a>. Running a copy of your site? Read <a href="#staging">Stop a copied site emailing volunteers</a> first — it's the one mistake that reaches real people.</p>
+</div>
+
+<h2 class="group-head" id="g-start">Get started</h2>
+
+<section class="topic" id="what-it-does">
+  <h3>What the Volunteer Tracker does</h3>
+  <p>It does two jobs that are really one job.</p>
+  <p><strong>Forwards.</strong> Plan the shifts you need people for, let them sign up, remind them, and print the roster for the clipboard.</p>
+  <p><strong>Backwards.</strong> Record the hours that were actually worked, have a staff member attest to them, and produce a verification letter.</p>
+  <p>The two halves meet when a shift ends. The roster becomes the hours, with everybody who signed up already listed and selected and the scheduled times filled in. Clear the checkbox for whoever didn't come, add the walk-ins, and save once. You never type Saturday twice.</p>
+
+  <h4>What the letter doesn't claim</h4>
+  <p>The letter reports what your organization recorded. It doesn't certify anything, because nobody at Groundwork Common watched anybody sweep a floor. There's no seal, no rendered signature, and no affidavit language — the signature block is a ruled line for a real person to sign.</p>
+  <p>You can reword the disclaimer if your counsel wants different wording. You can't empty it.</p>
+
+  <h4>Where everything lives</h4>
+  <p>After you activate the plugin, a <span class="ui">Volunteer Hours</span> menu appears.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Screen</th><th>Use it to</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Dashboard</span></td><td>See what's waiting for you, and get to everything else.</td></tr>
+      <tr><td><span class="ui">Schedule</span></td><td>Plan what's coming up. Appears after you turn shifts on.</td></tr>
+      <tr><td><span class="ui">Volunteers</span></td><td>Keep a record for each person. Nobody signs in.</td></tr>
+      <tr><td><span class="ui">All hours</span></td><td>Review every logged shift, filtered by verification state.</td></tr>
+      <tr><td><span class="ui">Log a day</span></td><td>Type up a whole sign-in sheet at once.</td></tr>
+      <tr><td><span class="ui">Log hours</span></td><td>Record one shift for one person.</td></tr>
+      <tr><td><span class="ui">Letters</span></td><td>Produce a letter, or check a reference code.</td></tr>
+      <tr><td><span class="ui">Settings</span></td><td>Set up the letter, logging, shifts, privacy, and permissions.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="topic" id="set-up">
+  <h3>Set up the plugin</h3>
+  <p>Five things, once. Allow about twenty minutes.</p>
+
+  <h4>1. Tell the letter who you are</h4>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Letter</span>.</li>
+    <li>Fill in <span class="ui">Organization name</span>, <span class="ui">Address</span>, <span class="ui">Contact for questions</span>, and <span class="ui">Signed by</span>.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>Each of these falls back to something reasonable on its own — the site title, your administrator's email address, an unlabeled signature line. Together, those fallbacks produce a letter headed with your <em>website's</em> title, over your <em>webmaster's</em> address, signed by nobody.</p>
+    <p>Make the contact one that's answered. It's the number somebody calls to check a reference code.</p>
+  </div>
+
+  <h4>2. Choose who can verify and who can issue</h4>
+  <p>Go to <span class="path">Settings<span class="sep">&rsaquo;</span>Permissions</span>. See <a href="#permissions">Choose who can verify and issue</a>.</p>
+
+  <h4>3. Decide how long you keep records</h4>
+  <p>Go to <span class="path">Settings<span class="sep">&rsaquo;</span>Privacy</span> and save the tab, even if you keep the default. A notice stays on the plugin's screens until you do. See <a href="#retention">Choose how long to keep records</a>.</p>
+
+  <h4>4. Try it once on somebody made up</h4>
+  <p>See <a href="#dry-run">Try it once before you rely on it</a>.</p>
+
+  <h4>5. Turn on only what you need</h4>
+  <p>Everything public is off on a new install:</p>
+  <ul class="plain">
+    <li><span class="path">Settings<span class="sep">&rsaquo;</span>Shifts<span class="sep">&rsaquo;</span>Plan shifts ahead of time</span> adds the Schedule screen.</li>
+    <li><span class="path">Settings<span class="sep">&rsaquo;</span>Shifts<span class="sep">&rsaquo;</span>Let people sign up for shifts themselves</span> is a separate switch, and needs a page.</li>
+    <li><span class="path">Settings<span class="sep">&rsaquo;</span>Logging<span class="sep">&rsaquo;</span>Let volunteers send in their own hours</span> adds the public hours form, and needs a page.</li>
+  </ul>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>If you take signups on the phone and a clipboard, you can leave all three off. Nothing else depends on them.</p>
+  </div>
+</section>
+
+<section class="topic" id="permissions">
+  <h3>Choose who can verify and issue</h3>
+  <p>Anybody who can edit posts on your site can log hours and see volunteer records. Two decisions are held separately, because they're bigger.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Permission</th><th>Lets somebody</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Verify hours</span></td><td>Attest, as a staff member, that a shift was worked.</td></tr>
+      <tr><td><span class="ui">Issue letters</span></td><td>Put your organization's name on a document a court reads.</td></tr>
+    </tbody>
+  </table></div>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Permissions</span>.</li>
+    <li>Select the roles that can verify hours, and the roles that can issue letters.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>Administrators and Editors hold both by default.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>These are separate on purpose. The coordinator who knows Jane swept the warehouse and the director who signs a letter to a probation officer are often different people.</p>
+    <p>A role with neither still sees the hours list and can type up a shift. It has no Verify button and no Letters screen, rather than buttons that refuse it.</p>
+  </div>
+  <div class="callout tip">
+    <span class="label">Tip</span>
+    <p>Anyone with <em>either</em> permission can check a reference code somebody has called about. Only <span class="ui">Issue letters</span> can produce one.</p>
+  </div>
+</section>
+
+<section class="topic" id="dry-run">
+  <h3>Try it once before you rely on it</h3>
+  <p>Do the whole loop on a made-up person. It takes five minutes and it's the fastest way to find a setting you missed.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Volunteers</span> and add a volunteer called Test Person.</li>
+    <li>Go to <span class="ui">Log hours</span> and record four hours for them.</li>
+    <li>Open the entry and select <span class="ui">Verify these hours</span>.</li>
+    <li>Go to <span class="ui">Letters</span>, choose Test Person, and select <span class="ui">Preview</span>.</li>
+    <li>Select <span class="ui">Open the letter to print</span> and read it. Check the letterhead, the contact, and the signature line.</li>
+    <li>Delete the entry and the volunteer record.</li>
+  </ol>
+</section>
+
+<section class="topic" id="dashboard">
+  <h3>Find what needs doing</h3>
+  <p>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Dashboard</span>. It shows two things: what's waiting for you, and how to get everywhere else.</p>
+  <p><span class="ui">Needs you</span> is a worklist. Everything on it is a job, and doing the job makes the line disappear. It's ordered by what you lose if it waits, not by which number is biggest:</p>
+  <ol class="steps">
+    <li>A shift that happened and was never typed up. Every week takes those hours further from anybody's memory.</li>
+    <li>A shift this week that's short of people. On Sunday there's nothing to be done about Saturday.</li>
+    <li>Hours awaiting verification, and website submissions awaiting matching. Both keep.</li>
+    <li>Somebody past their deadline.</li>
+  </ol>
+  <p>A queue with nothing in it doesn't appear at all.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Nobody is named on this screen. Every line is a count and a link, and the names are on the screen the link goes to.</p>
+  </div>
+  <p><span class="ui">This year</span> reports verified hours only — the figure your Form 990 and your grant reports want. Hours still awaiting verification are counted beside it rather than folded in. The year runs from 1 January; a developer can change that with the <code>gwc_vt_reporting_year_start</code> filter.</p>
+  <p><span class="ui">Coming up</span> runs two weeks, split into this week and next.</p>
+</section>
+
+<h2 class="group-head" id="g-volunteers">Volunteers</h2>
+
+<section class="topic" id="add-volunteer">
+  <h3>Add a volunteer</h3>
+  <p>A volunteer record is a record of a person. It isn't a WordPress account — nobody signs in — and none of it is public or searchable.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Volunteers<span class="sep">&rsaquo;</span>Add volunteer</span>.</li>
+    <li>Enter their name as the title.</li>
+    <li>Add an <span class="ui">Email</span> if you have one. It's where a verification letter goes, and how the privacy tools find this record.</li>
+    <li>Add a <span class="ui">Phone</span> if you want one. It's for calling around when a shift is short, and it never appears on a letter or on your website.</li>
+    <li>Select <span class="ui">Publish</span>.</li>
+  </ol>
+  <p>The volunteer list shows verified hours, hours awaiting verification, anything still required, and the date of their last shift. You can filter it to people who have hours to complete, people past their deadline, or people with no requirement.</p>
+</section>
+
+<section class="topic" id="requirements">
+  <h3>Track required hours and a deadline</h3>
+  <p>Use these for somebody doing court-ordered or school-required service.</p>
+  <ol class="steps">
+    <li>Open the volunteer's record.</li>
+    <li>Enter <span class="ui">Hours they have to complete</span>.</li>
+    <li>Enter <span class="ui">By when</span>, if there's a deadline. It shows as a countdown on their record and in the volunteer list.</li>
+    <li>Enter <span class="ui">Who requires it</span>, so you know which program they're here under.</li>
+    <li>Select <span class="ui">Update</span>.</li>
+  </ol>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>None of this ever appears on a letter, and there's no setting that puts it there. How many hours a court ordered is a fact about the court's own document, which you may have seen as a photograph and may be reading wrong. Printing &ldquo;120 ordered, 94 completed&rdquo; would be your organization certifying the terms of an order back to the court that issued it.</p>
+  </div>
+  <p>Only <em>verified</em> hours count toward a requirement. Unverified hours are reported next to the figure rather than added in, so somebody four hours short with six unverified is a ten-second problem instead of an invisible one.</p>
+  <p>There's no &ldquo;on track&rdquo; indicator. Overdue means the date has passed and the hours aren't there.</p>
+</section>
+
+<section class="topic" id="hold">
+  <h3>Keep a record longer than your policy</h3>
+  <p>Use a hold when a court requires you to keep something longer than your own retention policy allows.</p>
+  <ol class="steps">
+    <li>Open the volunteer's record.</li>
+    <li>Select <span class="ui">Keep this record regardless of the retention policy</span>.</li>
+    <li>Enter a reason in <span class="ui">Why it is held</span>.</li>
+    <li>Select <span class="ui">Update</span>.</li>
+  </ol>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>A hold also blocks an erasure request from WordPress's privacy tools. Whoever handles that request sees the reason you typed, so they can explain the refusal.</p>
+  </div>
+</section>
+
+<h2 class="group-head" id="g-hours">Hours</h2>
+
+<section class="topic" id="hours-ways">
+  <h3>Four ways hours get recorded</h3>
+  <p>An hour entry is one occasion of work: who, when, how long, doing what, supervised by whom. Pick whichever route matches how the information reached you.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>When you have</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>One person, one shift</td><td><a href="#log-one">Log hours</a></td></tr>
+      <tr><td>A marked-up sign-in sheet</td><td><a href="#log-a-day">Log a day</a></td></tr>
+      <tr><td>A shift people signed up for</td><td><a href="#reconcile">Turn a roster into hours</a></td></tr>
+      <tr><td>Something a volunteer sent from your website</td><td><a href="#match">Match hours sent from your website</a></td></tr>
+    </tbody>
+  </table></div>
+  <p>However they arrive, hours start out unverified and stay that way until a staff member attests to them.</p>
+</section>
+
+<section class="topic" id="type-hours">
+  <h3>Type hours the way you say them</h3>
+  <p>Wherever you enter a duration, all of these record three and a half hours:</p>
+  <pre><code>3.5      3:30      3h 30m      210m</code></pre>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>A bare number means hours. So <code>210</code> means two hundred and ten hours, which is nobody's shift — it's almost always minutes typed into an hours field. Anything longer than a single day is refused rather than guessed at. Write <code>210m</code> instead.</p>
+  </div>
+  <p><strong>Rounding is always to the nearest increment, never up.</strong> Set the increment at <span class="path">Settings<span class="sep">&rsaquo;</span>Logging<span class="sep">&rsaquo;</span>Round hours to</span>. The default is 15 minutes, and the screen tells you when it has rounded.</p>
+  <p>Rounding up would mean crediting hours nobody worked, which on this document is the one direction of error that matters.</p>
+  <p><strong>Nothing is corrected silently.</strong> Unreadable hours, a date in the future, or a volunteer that couldn't be attached each say so on screen. These are the numbers a letter prints.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Dates in the future are refused by default, because a shift dated next Tuesday is a typo far more often than a plan. If you need them, turn on <span class="path">Settings<span class="sep">&rsaquo;</span>Logging<span class="sep">&rsaquo;</span>Allow shifts dated in the future</span>.</p>
+  </div>
+</section>
+
+<section class="topic" id="log-one">
+  <h3>Log hours for one person</h3>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Log hours</span>.</li>
+    <li>Search for the volunteer and select them. If they're not on file, select <span class="ui">Add the volunteer</span> first.</li>
+    <li>Set <span class="ui">Date of the shift</span>.</li>
+    <li>Enter <span class="ui">Hours worked</span>. See <a href="#type-hours">Type hours the way you say them</a>.</li>
+    <li>Enter <span class="ui">What they did</span>. This appears on the verification letter, so write it the way you'd want a probation officer to read it.</li>
+    <li>Enter <span class="ui">Supervised by</span> — the person who was there, who isn't necessarily whoever verifies the entry.</li>
+    <li>Select <span class="ui">Publish</span>.</li>
+  </ol>
+  <p>To verify it now, see <a href="#verify">Verify hours</a>.</p>
+</section>
+
+<section class="topic" id="log-a-day">
+  <h3>Log a whole sign-in sheet</h3>
+  <p>Use this when you're typing up a paper sheet from a day everybody worked together.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Log a day</span>.</li>
+    <li>Under <span class="ui">The shift</span>, set the date, what they did, and who supervised. Your name is prefilled as the supervisor — change it if it was somebody else.</li>
+    <li>Under <span class="ui">Who worked it</span>, choose a volunteer and enter their hours on each row.</li>
+    <li>Select <span class="ui">Add more rows</span> if you need them. Leave a row empty to skip it.</li>
+    <li>Select <span class="ui">Log the hours for this shift</span>.</li>
+  </ol>
+  <p>Every entry arrives unverified, the same as any other.</p>
+</section>
+
+<section class="topic" id="match">
+  <h3>Match hours sent from your website</h3>
+  <p>Hours submitted through the public form arrive attached to nobody. The form never looks anybody up, so the name and email on it are <em>claims</em>, not an identity. A staff member decides whose they are.</p>
+  <ol class="steps">
+    <li>On the dashboard, select <span class="ui">Match them</span>. Or filter <span class="ui">All hours</span> to <span class="ui">Awaiting matching</span>.</li>
+    <li>Open an entry and read the submitted name and email at the top.</li>
+    <li>Select <span class="ui">Attach to</span> the suggested volunteer, choose a different one from the list, or select <span class="ui">Create a volunteer from this</span>.</li>
+    <li>Select <span class="ui">Update</span>.</li>
+  </ol>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Check the claim before you attach it. It's whatever the person typed, and nothing has confirmed it.</p>
+  </div>
+  <p>Matching isn't verifying. The entry still needs a staff member to attest to it. See <a href="#verify">Verify hours</a>.</p>
+</section>
+
+<h2 class="group-head" id="g-verify">Verify and issue</h2>
+
+<section class="topic" id="verify">
+  <h3>Verify hours</h3>
+  <p>Verifying records that you, as a staff member, attest these hours were worked. Your name and the date are recorded, and both appear on the verification letter beside the shift.</p>
+  <p>You need the <span class="ui">Verify hours</span> permission.</p>
+  <h4>Verify one entry</h4>
+  <ol class="steps">
+    <li>Open the hour entry. If you've just created it, save it first.</li>
+    <li>Select <span class="ui">Verify these hours</span>.</li>
+  </ol>
+  <h4>Work through the queue</h4>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>All hours</span>.</li>
+    <li>Set <span class="ui">Filter by verification</span> to <span class="ui">Awaiting verification</span>.</li>
+    <li>Open each entry and verify it.</li>
+  </ol>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>Only verified hours count. They're the only ones your organization stands behind, the only ones counted toward a requirement, and the only ones a letter states a total for.</p>
+  </div>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Turning a roster into hours isn't verifying. Matching says whose hours these are, logging says the shift has been written up, and verifying says it happened. Three questions, three answers, often three people.</p>
+  </div>
+</section>
+
+<section class="topic" id="withdraw">
+  <h3>Withdraw a verification</h3>
+  <ol class="steps">
+    <li>Open the hour entry.</li>
+    <li>Select <span class="ui">Withdraw verification</span>.</li>
+    <li>Read what it tells you, then confirm.</li>
+  </ol>
+  <p>The hours themselves are untouched. They stop counting toward anything, and stop appearing as verified on a letter, until somebody attests to them again.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Verifying again afterwards doesn't restore the original attestation. It records whoever does it, on the day they do it.</p>
+  </div>
+</section>
+
+<section class="topic" id="letter-create">
+  <h3>Create a verification letter</h3>
+  <p>You need the <span class="ui">Issue letters</span> permission.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Letters</span>.</li>
+    <li>Under <span class="ui">Produce a letter</span>, choose the volunteer.</li>
+    <li>Set <span class="ui">From</span> and <span class="ui">To</span>. Leave both empty to cover their whole time volunteering with you.</li>
+    <li>Select <span class="ui">Preview</span> and check the verified total, the number of shifts, the period, and the reference code.</li>
+    <li>Select <span class="ui">Open the letter to print</span>, or <span class="ui">Email it</span>.</li>
+  </ol>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Both actions are logged, printing included. A printed letter has left the building just as much as an emailed one.</p>
+  </div>
+  <p>If none of the hours has been verified yet, the preview says so and refuses. A letter reporting zero verified hours isn't something to send.</p>
+  <p>To email it, the volunteer needs an email address on their record.</p>
+
+  <h4>What's on the letter</h4>
+  <ul class="plain">
+    <li>Your letterhead: logo, organization name, and address.</li>
+    <li>An opening paragraph naming the volunteer, the verified hours, and the period.</li>
+    <li>An itemized table: date, hours, activity, supervisor, and who attested to it and when.</li>
+    <li>The verified total and the number of shifts.</li>
+    <li>The disclaimer.</li>
+    <li>A reference code, and a note saying what it proves.</li>
+    <li>A ruled signature line, with the signatory's name and title underneath.</li>
+  </ul>
+  <p>Optionally it also lists hours nobody has verified, marked as such and explicitly excluded from the total. That's off by default, and they're never quietly added in.</p>
+  <div class="callout tip">
+    <span class="label">Tip</span>
+    <p>The letter is styled for print. To make a file, use your browser's <span class="ui">Print to PDF</span>.</p>
+  </div>
+</section>
+
+<section class="topic" id="letter-wording">
+  <h3>Change the letter wording</h3>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Letter</span>.</li>
+    <li>Edit the opening paragraph, the disclaimer, the reference note, the email subject, or the covering note.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>These placeholders are filled in for each volunteer:</p>
+  <pre><code>{org}   {name}    {hours}     {shifts}  {period}
+{contact}  {reference}  {timestamp}  {timezone}</code></pre>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>Two fields can't be emptied: the <span class="ui">Disclaimer</span> and <span class="ui">What the reference code proves</span>. Saving either one blank restores the built-in wording. They're what tell a reader that <em>your organization</em>, not this plugin, is the authoritative record-keeper.</p>
+  </div>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>The email's covering note sits outside the letter. The emailed letter and the printed letter are the same document — a short &ldquo;here's your letter&rdquo; message is added around it, not inside it.</p>
+    <p>Use a <span class="ui">From address</span> at your own domain. A letter sent from an address somewhere else is the one a spam filter is most likely to hold back, and the volunteer never learns it was sent.</p>
+  </div>
+</section>
+
+<section class="topic" id="reference">
+  <h3>Check a reference code</h3>
+  <p>Somebody calls: &ldquo;I'm holding a letter from you, reference FBM-42-20260214-9C4F2A17.&rdquo; Here's how to answer them.</p>
+  <p>You need either permission — <span class="ui">Verify hours</span> or <span class="ui">Issue letters</span>.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Letters</span>.</li>
+    <li>Under <span class="ui">Check a reference</span>, type the code.</li>
+    <li>Select <span class="ui">Check it</span>.</li>
+  </ol>
+  <div class="table-wrap"><table>
+    <thead><tr><th>What it says</th><th>What that means</th></tr></thead>
+    <tbody>
+      <tr><td>No letter with that reference has been issued from this site</td><td>Exactly that.</td></tr>
+      <tr><td>This letter matches our current records</td><td>The document they're holding agrees with what you have now, field for field.</td></tr>
+      <tr><td>Our records have changed since</td><td>Something has been corrected, verified, or withdrawn since the letter went out. Not necessarily anybody's fault.</td></tr>
+    </tbody>
+  </table></div>
+  <p>The screen then renders the whole letter, rebuilt from your records as they stand right now. Read it down the phone against theirs — the code can tell you <em>that</em> something differs, and only the document shows <em>what</em>.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>This is generated live, not from a stored copy. The plugin doesn't keep one. Checking a reference never logs an issuance.</p>
+    <p>The code covers every field the letter prints, not just the total — so a swapped date, a rewritten activity, or a changed supervisor all change it.</p>
+    <p>A code also carries the date the letter was produced, so two letters for the same volunteer and the same period, produced on different days, have different codes. Both are checkable.</p>
+  </div>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>Reference codes don't survive a change of your WordPress security salts. That's deliberate — it's what stops one being forged without access to your database. If you rotate salts, existing codes stop checking.</p>
+  </div>
+</section>
+
+<h2 class="group-head" id="g-schedule">Schedule</h2>
+
+<section class="topic" id="schedule-on">
+  <h3>Turn on the schedule</h3>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Shifts</span>.</li>
+    <li>Select <span class="ui">Plan shifts ahead of time</span>.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>A <span class="ui">Schedule</span> screen appears in the menu.</p>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>A shift is a plan, not a record. Nobody accrues hours by being on a Saturday and not turning up. Hours are logged afterwards, by somebody who was there, and they still have to be verified.</p>
+  </div>
+  <p>Letting people sign up from your website is a <em>second</em> switch. See <a href="#signups">Let people sign up for shifts</a>.</p>
+</section>
+
+<section class="topic" id="add-shift">
+  <h3>Add a shift</h3>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Schedule</span> and select <span class="ui">Add a shift</span>.</li>
+    <li>Fill in the fields below.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>What to enter</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Date</span></td><td>May be in the future, unlike an hour entry.</td></tr>
+      <tr><td><span class="ui">From</span> and <span class="ui">to</span></td><td>Wall-clock times. Nine o'clock is nine o'clock in March and in November, including the weekend the clocks change.</td></tr>
+      <tr><td><span class="ui">Ends the next day</span></td><td>Select this for an overnight shift, such as 22:00 to 06:00. Without it, an end time before the start is treated as a typo and refused.</td></tr>
+      <tr><td><span class="ui">Repeat</span></td><td>See <a href="#repeat">Repeat a shift</a>.</td></tr>
+      <tr><td><span class="ui">What they will do</span></td><td>Copied onto every hour entry when you log the shift, so it ends up on a letter.</td></tr>
+      <tr><td><span class="ui">Where</span></td><td>Free text, with suggestions if you've set any on the Shifts tab.</td></tr>
+      <tr><td><span class="ui">Supervised by</span></td><td>The person who'll be there.</td></tr>
+      <tr><td><span class="ui">What to know</span></td><td>&ldquo;Closed shoes, park round the back, ask for Dana at the desk.&rdquo; Shown to whoever signs up, and repeated in their confirmation, reminder, and calendar entry.</td></tr>
+      <tr><td><span class="ui">We need at least</span></td><td>The minimum. Below it, the schedule flags the shift as short of people. Zero means no minimum.</td></tr>
+      <tr><td><span class="ui">We have room for</span></td><td>The maximum. Zero means no limit. See <a href="#waiting-list">Waiting lists</a>.</td></tr>
+      <tr><td><span class="ui">On the schedule</span></td><td>Clear this to keep it a draft only staff can see.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="topic" id="repeat">
+  <h3>Repeat a shift</h3>
+  <ol class="steps">
+    <li>While adding or editing a shift, set <span class="ui">Repeat</span>.</li>
+    <li>Set the <span class="ui">until</span> date.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>Your choices are: just this once, every day, every weekday, every week, every other week, or every month on the same weekday.</p>
+  <p><strong>Every occurrence becomes a real shift</strong> that you can edit or cancel on its own. Closing the Saturday after Thanksgiving doesn't disturb the rest of the season.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>You can create up to 200 shifts at a time, and up to 12 months ahead. If your request would go past either limit, the screen tells you how many it made. It doesn't quietly make fewer.</p>
+  </div>
+</section>
+
+<section class="topic" id="roster">
+  <h3>Manage who is coming</h3>
+  <p>Open a shift from the schedule to see its roster.</p>
+  <h4>Put somebody on a shift</h4>
+  <ol class="steps">
+    <li>Under <span class="ui">Put somebody on this shift</span>, choose a volunteer.</li>
+    <li>Select <span class="ui">Add</span>.</li>
+  </ol>
+  <p>They need a volunteer record first. Staff add people by picking a record rather than typing a name and address, because a typed one would create an unmatched claim — which is the public form's job, not yours.</p>
+  <h4>Take somebody off</h4>
+  <p>Select <span class="ui">Take off</span> beside their name. This records that they withdrew rather than deleting them, so a glance at the shift shows that two people dropped instead of leaving you wondering. Whoever is next on the waiting list takes the free place right away.</p>
+  <h4>Print the roster</h4>
+  <p>Select <span class="ui">Print the roster</span>. You get the sheet for the clipboard: contact details, blank columns for in and out times and initials, and six spare rows for people who turn up without having signed up.</p>
+  <div class="callout tip">
+    <span class="label">Tip</span>
+    <p>Bring the sheet back marked up and use <a href="#reconcile">Turn a roster into hours</a>. Everybody who signed up is already listed and selected.</p>
+  </div>
+</section>
+
+<section class="topic" id="waiting-list">
+  <h3>Waiting lists</h3>
+  <p>The maximum on a shift isn't a limit on who may sign up. Once it's reached, later signups go on a waiting list instead of being turned away, and you decide what to do with them.</p>
+  <p>That's deliberate. Somebody working off a court order with a deadline shouldn't be bounced by a number a coordinator typed in March. If you can see the list, you can have a conversation; a refusal is a dead end the volunteer can't appeal.</p>
+  <ul class="plain">
+    <li>When somebody withdraws, the next person on the waiting list takes the place automatically.</li>
+    <li>You can promote somebody by hand from the shift's roster.</li>
+    <li>Lowering a shift's maximum makes the shift smaller. It doesn't un-invite the people already coming.</li>
+    <li>Nobody on the waiting list gets a reminder. They don't have a place, and telling them to turn up would be telling them something untrue.</li>
+  </ul>
+</section>
+
+<section class="topic" id="cancel-shift">
+  <h3>Cancel or delete a shift</h3>
+  <p>These are different things.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Action</th><th>What it says</th><th>When you can use it</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Cancel</span></td><td>It was called off, and everybody can see that it was. The shift stays on the schedule, struck through, with your reason.</td><td>Any time.</td></tr>
+      <tr><td><span class="ui">Delete</span></td><td>It never existed, which is only true of a typo.</td><td>Only while nobody is signed up.</td></tr>
+    </tbody>
+  </table></div>
+  <ol class="steps">
+    <li>Open the shift.</li>
+    <li>Under <span class="ui">Calling it off</span>, enter <span class="ui">Why it was canceled</span>.</li>
+    <li>Choose whether to email everybody on the roster. You're shown the count first.</li>
+    <li>Select <span class="ui">Call it off</span>.</li>
+  </ol>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Emailing the roster is always a choice, never a side effect — and only a <em>move</em> offers it. Changing the date, the times, the overnight setting, or the address counts as a move. Rewording the activity, correcting the supervisor, expanding the notes, or changing the capacity emails nobody.</p>
+  </div>
+</section>
+
+<section class="topic" id="reconcile">
+  <h3>Turn a roster into hours</h3>
+  <p>Do this after the shift has ended. Everybody who signed up is already listed and selected, with the date, activity, and supervisor filled in from the shift.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Schedule</span>.</li>
+    <li>Find the shift under <span class="ui">Already happened</span> and select <span class="ui">Log the hours</span>.</li>
+    <li>Under <span class="ui">Who turned up</span>, clear <span class="ui">Came</span> for anybody who didn't come.</li>
+    <li>Adjust anybody's hours if the day ran differently.</li>
+    <li>Use the blank rows at the bottom for people who came without signing up.</li>
+    <li>Select <span class="ui">Log the hours for this shift</span>.</li>
+  </ol>
+  <ul class="plain">
+    <li><strong>You can't log a shift before it ends.</strong> Logging Saturday on Friday would date Saturday's hours to Friday, on the document a court reads.</li>
+    <li><strong>Nothing records that somebody didn't turn up.</strong> A no-show is worked out from a logged shift, a place on the roster, and no entry — never stored as a flag.</li>
+    <li><strong>You can come back.</strong> Reopen a logged shift to add the walk-in you forgot. Anybody who already has an entry is shown without a checkbox and can't be logged twice.</li>
+    <li><strong>The entries arrive unverified.</strong> See <a href="#verify">Verify hours</a>.</li>
+  </ul>
+</section>
+
+<h2 class="group-head" id="g-events">Events</h2>
+
+<section class="topic" id="event-build">
+  <h3>Plan an event</h3>
+  <p>An event is one occasion with several roles offered at several times — a festival, a meal service, a collection drive.</p>
+  <p>Underneath, there's nothing new. Every time on an event is an ordinary shift, so waiting lists, reminders, rosters, calendar files, cancellations, and hours all work exactly as they do for a shift you scheduled on its own.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Schedule</span> and select <span class="ui">Add an event</span>.</li>
+    <li>Enter a <span class="ui">Name</span> volunteers will recognize — &ldquo;Fall Festival&rdquo;, not &ldquo;Event 3&rdquo;.</li>
+    <li>Enter <span class="ui">What it is</span>. It appears above the times on the event's page.</li>
+    <li>Enter <span class="ui">Where</span> and <span class="ui">Supervisor</span> for the whole event.</li>
+    <li>Under <span class="ui">Who you need</span>, name a role, then add its times underneath.</li>
+    <li>Select <span class="ui">+ Add another role</span> for each further role.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>You don't set the event's date. It's read from the times in the grid, because a second date field is a second answer, and it disagrees with the first the moment somebody moves a time.</p>
+  </div>
+  <p><strong>The most specific value wins, and nothing is added together.</strong> A time's own supervisor beats the role's, which beats the event's. For a genuine one-off note, open that single time in the shift editor.</p>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>Role names are printed on volunteers' verification letters. Write them accordingly.</p>
+  </div>
+</section>
+
+<section class="topic" id="event-page">
+  <h3>Put an event on a page</h3>
+  <p>An event has no web address of its own, and publishing it doesn't give it one. It's seen only on a page you put it on.</p>
+  <ol class="steps">
+    <li>Edit or create the page you want it on.</li>
+    <li>Add the <span class="ui">Volunteer Event</span> block and choose the event. Or paste the shortcode with the event's ID:
+      <pre><code>[gwc_vt_event_grid id="123"]</code></pre>
+    </li>
+    <li>Publish the page.</li>
+  </ol>
+  <p>The event editor tells you which page currently shows it, and says so plainly when no page does.</p>
+  <h4>Three things have to be true before anybody can sign up</h4>
+  <ol class="steps">
+    <li>Signing up from your website is turned on, at <span class="path">Settings<span class="sep">&rsaquo;</span>Shifts</span>.</li>
+    <li>A shifts page is pinned at <span class="path">Settings<span class="sep">&rsaquo;</span>Shifts</span>. You need this even though the event sits on its own page, because every public signup goes through it.</li>
+    <li>The event is published.</li>
+  </ol>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>An event's times never appear on the general shifts page. That page lists shifts you scheduled on their own; an event is shown whole, on its own page, or not at all.</p>
+    <p>Visitors see each role, each time, and how many places are left — never who else is coming.</p>
+  </div>
+  <h4>Print the event roster</h4>
+  <p>Open the event and select <span class="ui">Print the roster</span>. You get one sheet, split by role and time, with the same in, out, and initials columns. The roster screen also flags anybody down for two times that overlap. Nothing is blocked — ducking out of the kitchen at noon to greet is a real thing people do — but you're told.</p>
+</section>
+
+<section class="topic" id="event-calloff">
+  <h3>Call off a time or drop a role</h3>
+  <p>Each of these is a button with its own confirmation screen, not something you do by clearing a field.</p>
+  <h4>Call off one time</h4>
+  <ol class="steps">
+    <li>Open the event and select <span class="ui">Call off</span> on the row.</li>
+    <li>Enter <span class="ui">Why</span>. It shows on the schedule, and in the email if you send one.</li>
+    <li>Choose whether to email everybody on it.</li>
+    <li>Select <span class="ui">Call it off</span>.</li>
+  </ol>
+  <h4>Drop a whole role</h4>
+  <ol class="steps">
+    <li>Open the event and select <span class="ui">Remove this whole role</span>.</li>
+    <li>Read what will happen. Times with people on them are called off and kept; times nobody is on are deleted.</li>
+    <li>Enter <span class="ui">Why</span>, and choose whether to email anybody affected.</li>
+    <li>Select <span class="ui">Drop the role</span>.</li>
+  </ol>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Removing a time cancels it when people are on it and deletes it only when nobody is. The row tells you which before you save.</p>
+    <p>A canceled time is struck through, carries its reason, can't be edited, and offers only the action that makes sense — putting it back on.</p>
+  </div>
+</section>
+
+<section class="topic" id="event-copy">
+  <h3>Copy an event to a new date</h3>
+  <ol class="steps">
+    <li>Open the event.</li>
+    <li>Select <span class="ui">Copy</span>.</li>
+    <li>Change the dates on the new copy.</li>
+    <li>Publish it when you're happy with it.</li>
+  </ol>
+  <p>The copy includes every role and time, and it's saved as a <strong>draft</strong> so you can check the dates before anybody sees it.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Events are copied rather than repeated. A repeating grid would need a rule per role per time, plus an exception list per occurrence, and a signup would have to attach to something that isn't a real row.</p>
+  </div>
+</section>
+
+<h2 class="group-head" id="g-website">Your website</h2>
+
+<section class="topic" id="signups">
+  <h3>Let people sign up for shifts</h3>
+  <ol class="steps">
+    <li>Create a page and add the <span class="ui">Volunteer Shifts</span> block, or the <code>[gwc_vt_shift_list]</code> shortcode. Publish it.</li>
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Shifts</span>.</li>
+    <li>Select <span class="ui">Let people sign up for shifts themselves</span>.</li>
+    <li>Choose your page under <span class="ui">The page the shifts are on</span>.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>Visitors see what each shift is, when and where, what to know, and how many places are left. They give a name and an email address. No account is created and nobody signs in.</p>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>The list never shows who is coming, and no setting changes that. On a site running a court-ordered service program, a roster is a list of people working one off. A place count says nothing about anybody; a first name says everything about one person.</p>
+  </div>
+  <h4>Tune the list</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Setting</th><th>What it does</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Show shifts up to</span></td><td>How far ahead the public list looks.</td><td>2 months ahead</td></tr>
+      <tr><td><span class="ui">Close signups</span></td><td>How long before a shift starts signups stop.</td><td>Right up to the start</td></tr>
+      <tr><td><span class="ui">Require a code</span></td><td>A word you give people, which the form then asks for.</td><td>None</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>The code isn't a security control. It's the difference between a form the whole internet can post to and one only people who were told about it will bother with.</p>
+    <p>Somebody who signs up isn't added to your volunteer records automatically. A staff member matches them, the same as with the hours form.</p>
+  </div>
+</section>
+
+<section class="topic" id="self-log">
+  <h3>Let volunteers send in hours</h3>
+  <ol class="steps">
+    <li>Create a page and add the <span class="ui">Volunteer Hours Form</span> block, or the <code>[gwc_vt_hours_form]</code> shortcode. Publish it.</li>
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Logging</span>.</li>
+    <li>Select <span class="ui">Let volunteers send in their own hours</span>.</li>
+    <li>Choose your page under <span class="ui">The page the form is on</span>.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>Visitors give a name, an optional email, the date, how long they worked, what they did, and who supervised them. You can require a front-desk code here too.</p>
+  <p>Everything sent arrives unverified and attached to nobody, and waits for a staff member. Nothing anybody enters appears publicly. See <a href="#match">Match hours sent from your website</a>.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>The form never looks anybody up. No part of it behaves differently depending on whether the email matches an existing volunteer — which is what stops the form becoming a way to ask whether a named person is working off a court order.</p>
+    <p>For the same reason, an accepted submission, one that tripped the spam trap, and one that hit the rate limit all return exactly the same message.</p>
+  </div>
+</section>
+
+<section class="topic" id="blocks">
+  <h3>Blocks and shortcodes</h3>
+  <p>Three blocks, each with a shortcode that does the same thing. Use whichever suits the page.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Block</th><th>Shortcode</th><th>Shows</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ui">Volunteer Shifts</span></td><td><code>[gwc_vt_shift_list]</code></td><td>Upcoming shifts, and a signup form.</td></tr>
+      <tr><td><span class="ui">Volunteer Event</span></td><td><code>[gwc_vt_event_grid id="123"]</code></td><td>One event, all roles and times, and a form for picking several.</td></tr>
+      <tr><td><span class="ui">Volunteer Hours Form</span></td><td><code>[gwc_vt_hours_form]</code></td><td>A form for sending in hours worked.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>For the shift list and the hours form, adding the block isn't enough. You also have to pin that page in Settings. Submissions are only accepted on the pinned page.</p>
+    <p>The page is pinned by ID, so renaming it changes nothing.</p>
+  </div>
+</section>
+
+<h2 class="group-head" id="g-email">Email</h2>
+
+<section class="topic" id="email-what">
+  <h3>What the plugin sends</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Message</th><th>Sent when</th><th>Optional?</th></tr></thead>
+    <tbody>
+      <tr><td>Signup confirmation</td><td>Somebody signs up from your website.</td><td>No</td></tr>
+      <tr><td>Shift reminder</td><td>A set time before the shift.</td><td>Yes — off by default</td></tr>
+      <tr><td>Shift canceled</td><td>You cancel a shift and choose to tell people.</td><td>You choose, each time</td></tr>
+      <tr><td>Shift changed</td><td>You move a shift and choose to tell people.</td><td>You choose, each time</td></tr>
+      <tr><td>Verification letter</td><td>You select <span class="ui">Email it</span>.</td><td>You choose, each time</td></tr>
+      <tr><td>Daily summary</td><td>Once a day, if there's anything to say.</td><td>Yes — off by default</td></tr>
+    </tbody>
+  </table></div>
+  <p>The confirmation isn't a setting. A signup with no confirmation leaves somebody with no record of what they agreed to, no note of where to go, and no way out except calling during office hours.</p>
+  <p>The confirmation and the reminder both carry a calendar link and a cancel link. The cancel link opens a page with a button on it — nothing is withdrawn by clicking a link, because mail clients prefetch links and security appliances follow them.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Nobody is ever asked to confirm they're still coming. An unclicked cancel link means nothing, but an unclicked confirm link looks like an answer — and every way of reading that answer is bad. Promote from the waiting list by hand instead, on real information.</p>
+    <p>A shift that has already started is never reminded about.</p>
+  </div>
+</section>
+
+<section class="topic" id="reminders">
+  <h3>Turn on shift reminders</h3>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Shifts</span>.</li>
+    <li>Select <span class="ui">Remind people before their shift</span>.</li>
+    <li>Set <span class="ui">Send the reminder</span> to the evening before, a day before, two days before, or three days before.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>Each person gets one message per shift, sent once. Two days is usually right: long enough that somebody who can't make it still has time to say so, and you still have time to call somebody else.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>People on the waiting list don't get a reminder, because they don't have a place yet.</p>
+  </div>
+</section>
+
+<section class="topic" id="digest">
+  <h3>Get a daily summary</h3>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Shifts</span>.</li>
+    <li>Select <span class="ui">Send yourself a daily summary</span>.</li>
+    <li>Enter an address in <span class="ui">Send the summary to</span>, or leave it empty to use your site's admin address.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>The summary lists shifts in the next week that are short of people, and shifts that have happened without their hours being logged.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Nothing is sent on a day with nothing to report. A summary that arrived every morning saying &ldquo;nothing to report&rdquo; would get a filter rule inside two weeks — and then the one that says Saturday has two of six would get filtered with it.</p>
+  </div>
+  <p>Reminders and the daily summary are the only messages the plugin sends without somebody selecting a button, and both are off until you turn them on.</p>
+</section>
+
+<section class="topic" id="staging">
+  <h3>Stop a copied site emailing volunteers</h3>
+  <div class="callout warning">
+    <span class="label">Warning</span>
+    <p>This is the most important thing to know about running this plugin.</p>
+    <p>A copy of your site restored from a backup — a staging server, a developer's machine, a clone made to test an upgrade — has the real volunteers and the real email addresses in it, and a working cron. Left running, it sends reminders, confirmations, cancellation notices, and verification letters to those people, about court-ordered service, from a site nobody is watching.</p>
+  </div>
+  <p>Add one line to <code>wp-config.php</code> <strong>on the copy</strong>, before it runs:</p>
+  <pre><code>define( 'GWC_VT_MAIL_MODE', 'off' );</code></pre>
+  <p>That sends nothing at all.</p>
+  <p>To see what would have gone out instead:</p>
+  <pre><code>define( 'GWC_VT_MAIL_MODE', 'trap' );
+define( 'GWC_VT_MAIL_ALLOW', 'you@example.com' );</code></pre>
+  <p>Every message then goes to that address, with the site's name in the subject and a line saying who it was really addressed to.</p>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Neither constant belongs on your live site. Unset means normal delivery, so production needs no configuration at all.</p>
+    <p>Trap mode with no valid address sends nothing, rather than falling through to the real recipient.</p>
+  </div>
+</section>
+
+<h2 class="group-head" id="g-privacy">Records and privacy</h2>
+
+<section class="topic" id="retention">
+  <h3>Choose how long to keep records</h3>
+  <p>Volunteer records here are more sensitive than most plugin data. In the mandated-service case they reveal that a named person is working off a court order. None of it is public, none of it is searchable, and none of it is exposed on the REST API.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Privacy</span>.</li>
+    <li>Set <span class="ui">Keep volunteer records for</span>: indefinitely, 1 year, 18 months, 2, 3, 5, or 7 years.</li>
+    <li>Set <span class="ui">When a record is old enough</span> to either remove the name and contact details and keep the hours, or delete the record and its shifts entirely.</li>
+    <li>Set <span class="ui">Measured from</span> to their last recorded shift, or the last time a shift of theirs was verified.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <div class="callout tip">
+    <span class="label">Tip</span>
+    <p>Anonymizing is usually right. Your grant reporting and your Form 990 need the service totals, and the hours identify nobody once the name is gone. Deleting outright throws away your own statistics to solve a problem that removing the identity already solved.</p>
+  </div>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>Anonymizing removes the requirement along with the name. &ldquo;120 hours required by 15 November for Franklin County Municipal Court&rdquo; says a real person was under a real order, names it, and dates it — and it doesn't stop being a disclosure because the name above it has gone.</p>
+    <p>The clock runs on the whole person, not on each shift. A record is removed when the person has been inactive that long, and their old shifts go with them.</p>
+    <p>Measuring from the last verification is later, sometimes much later: a shift worked in March and attested in June counts from June.</p>
+  </div>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>A notice stays on the plugin's screens until you save this tab — including saving it as &ldquo;keep indefinitely&rdquo;. That's a legitimate answer. Never having considered it isn't.</p>
+  </div>
+</section>
+
+<section class="topic" id="export-erase">
+  <h3>Export or erase someone's data</h3>
+  <p>WordPress's own tools work with this plugin, whether or not you've set a retention period.</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Tools<span class="sep">&rsaquo;</span>Export Personal Data</span> or <span class="path">Tools<span class="sep">&rsaquo;</span>Erase Personal Data</span>.</li>
+    <li>Enter the person's email address.</li>
+    <li>Follow WordPress's confirmation process.</li>
+  </ol>
+  <p>Both cover volunteer records, logged shifts, issued letters, and shifts somebody signed up for — including a signup from a person who never became a volunteer, which nothing else in the plugin would find.</p>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>The eraser names the letter references it affected. If a document a court is holding can no longer be checked, whoever handles the request has to know.</p>
+  </div>
+  <div class="callout">
+    <span class="label">Note</span>
+    <p>The issued-letter log survives an erasure. A letter having been issued is a fact about your organization's own conduct, and the log holds a reference, an ID, and a date — no name.</p>
+    <p>A <a href="#hold">hold</a> on a volunteer's record blocks an erasure request, and shows your reason to whoever handles it.</p>
+  </div>
+</section>
+
+<section class="topic" id="uninstall">
+  <h3>What happens if you delete the plugin</h3>
+  <p><strong>Nothing is removed.</strong> Every volunteer record, logged shift, scheduled shift, signup, and issued letter stays where it is, and so do the two permissions added to your roles. Deactivating does the same.</p>
+  <div class="callout important">
+    <span class="label">Important</span>
+    <p>That means deleting the plugin isn't a way to remove somebody's data. Use the <a href="#retention">retention policy</a> or the <a href="#export-erase">Erase Personal Data</a> tool first.</p>
+  </div>
+  <p>You can ask the plugin to clean up its own settings on deletion:</p>
+  <ol class="steps">
+    <li>Go to <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings<span class="sep">&rsaquo;</span>Privacy</span>.</li>
+    <li>Under <span class="ui">Removing this plugin</span>, select the checkbox.</li>
+    <li>Select <span class="ui">Save</span>.</li>
+  </ol>
+  <p>Even then, it deletes no records of any kind — no posts, no post meta, and no capabilities.</p>
+</section>
+
+<h2 class="group-head" id="g-reference">Reference</h2>
+
+<section class="topic" id="settings-ref">
+  <h3>Settings reference</h3>
+  <p>Find all of these at <span class="path">Volunteer Hours<span class="sep">&rsaquo;</span>Settings</span>.</p>
+
+  <h4>Letter</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Setting</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Organization name</td><td>Your site title</td></tr>
+      <tr><td>Address</td><td>Empty</td></tr>
+      <tr><td>Logo</td><td>None</td></tr>
+      <tr><td>Contact for questions</td><td>Your administrator's email address</td></tr>
+      <tr><td>Signed by, Their title</td><td>Empty</td></tr>
+      <tr><td>Opening paragraph</td><td>Built-in wording</td></tr>
+      <tr><td>Disclaimer</td><td>Built-in wording. Can't be emptied.</td></tr>
+      <tr><td>What the reference code proves</td><td>Built-in wording. Can't be emptied.</td></tr>
+      <tr><td>List every shift</td><td>On</td></tr>
+      <tr><td>Also list hours nobody has verified</td><td>Off</td></tr>
+      <tr><td>Reference prefix</td><td>None. Codes read <code>PREFIX-42-20260214-9C4F2A17</code>.</td></tr>
+      <tr><td>Subject line, covering note, from name, from address</td><td>Empty</td></tr>
+    </tbody>
+  </table></div>
+  <p>The logo is kept small on purpose — this is correspondence, not a flyer. Email programs often refuse to load images, so the organization name is always printed as text underneath and the letter reads correctly without it.</p>
+
+  <h4>Logging</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Setting</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Round hours to</td><td>15 minutes</td></tr>
+      <tr><td>Show hours as</td><td>Decimal hours (3.5)</td></tr>
+      <tr><td>Allow shifts dated in the future</td><td>Off</td></tr>
+      <tr><td>Activity suggestions</td><td>Empty, so the field is free text</td></tr>
+      <tr><td>Let volunteers send in their own hours</td><td><strong>Off</strong></td></tr>
+      <tr><td>The page the form is on</td><td>None</td></tr>
+      <tr><td>Require a code</td><td>None</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Shifts</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Setting</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Plan shifts ahead of time</td><td><strong>Off</strong></td></tr>
+      <tr><td>Location suggestions</td><td>Empty, so the field is free text</td></tr>
+      <tr><td>Let people sign up for shifts themselves</td><td><strong>Off</strong></td></tr>
+      <tr><td>The page the shifts are on</td><td>None</td></tr>
+      <tr><td>Require a code</td><td>None</td></tr>
+      <tr><td>Show shifts up to</td><td>2 months ahead</td></tr>
+      <tr><td>Close signups</td><td>Right up to the start</td></tr>
+      <tr><td>Remind people before their shift</td><td><strong>Off</strong></td></tr>
+      <tr><td>Send the reminder</td><td>Two days before</td></tr>
+      <tr><td>Send yourself a daily summary</td><td><strong>Off</strong></td></tr>
+      <tr><td>Send the summary to</td><td>Your site's admin address</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Privacy</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Setting</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td>Keep volunteer records for</td><td>Keep indefinitely</td></tr>
+      <tr><td>When a record is old enough</td><td>Remove the name and contact details, keep the hours</td></tr>
+      <tr><td>Measured from</td><td>Their last recorded shift</td></tr>
+      <tr><td>Remove this plugin's settings on deletion</td><td>Off</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Permissions</h4>
+  <p><span class="ui">Verify hours</span> and <span class="ui">Issue letters</span>, per role. Administrators and Editors hold both by default.</p>
+</section>
+
+<section class="topic" id="troubleshoot">
+  <h3>Fix a problem</h3>
+
+  <h4>The hours came out wrong. I typed 210 for a three-and-a-half-hour shift.</h4>
+  <p><code>210</code> means 210 hours, and it's refused rather than guessed at. Write <code>210m</code>, <code>3.5</code>, <code>3:30</code>, or <code>3h 30m</code>.</p>
+
+  <h4>A letter shows fewer hours than I expected.</h4>
+  <p>Only verified hours are totaled. Go to <span class="ui">All hours</span>, filter to <span class="ui">Awaiting verification</span>, and check that volunteer.</p>
+
+  <h4>Somebody signed up, but their name isn't in Volunteers.</h4>
+  <p>That's correct. A public signup is a claim, not an identity record. Match them to a volunteer record, or create one, when you're ready.</p>
+
+  <h4>The reference check says our records have changed.</h4>
+  <p>Something has been corrected, verified, or withdrawn since the letter went out. Read the letter rendered on that screen against the copy the caller is holding to see what differs.</p>
+
+  <h4>Nothing appears on the page where I put the shift list.</h4>
+  <p>Check three things: signups are turned on, this page is the one pinned at <span class="path">Settings<span class="sep">&rsaquo;</span>Shifts</span>, and at least one upcoming shift is published.</p>
+
+  <h4>My event's page is blank.</h4>
+  <p>The event is probably still a draft. Also check that the block or shortcode names the right event ID, and that a shifts page is pinned.</p>
+
+  <h4>No email is arriving.</h4>
+  <p>Check <code>wp-config.php</code> for <code>GWC_VT_MAIL_MODE</code>. A copied site often has it, and it sometimes travels back to production by accident. Otherwise this is ordinary WordPress mail delivery, and an SMTP plugin is the usual fix.</p>
+
+  <h4>Staff can't verify hours after a migration.</h4>
+  <p>Check <span class="path">Settings<span class="sep">&rsaquo;</span>Permissions</span>. A security plugin that rebuilds roles, or a restore from an old backup, can drop the two capabilities.</p>
+
+  <h4>A supervisor wants to sign off without an account.</h4>
+  <p>That isn't available in this version. A staff member with the <span class="ui">Verify hours</span> permission attests to hours, which is how the paper forms this replaces already work. Emailed supervisor confirmation is planned.</p>
+</section>
+
+<section class="topic" id="glossary">
+  <h3>Glossary</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Term</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td><strong>entry</strong></td><td>One occasion of work: who, when, how long, doing what, supervised by whom.</td></tr>
+      <tr><td><strong>volunteer</strong></td><td>A record of a person. Never a WordPress user, and never signs in.</td></tr>
+      <tr><td><strong>attest, verify</strong></td><td>A staff member confirming an entry happened. Their name and the date appear on the letter.</td></tr>
+      <tr><td><strong>letter</strong></td><td>The verification document produced for a volunteer over a date range.</td></tr>
+      <tr><td><strong>issued-letter log</strong></td><td>The record that a letter went out. Survives a purge, and holds no name.</td></tr>
+      <tr><td><strong>reference code</strong></td><td>A code printed on every letter, covering every field it prints, checkable by phone.</td></tr>
+      <tr><td><strong>shift</strong></td><td>A plan: a date, a time window, what the work is, and how many people.</td></tr>
+      <tr><td><strong>signup</strong></td><td>Somebody's place on a shift. May be on the waiting list.</td></tr>
+      <tr><td><strong>event</strong></td><td>One occasion with several roles at several times. Every slot on it is an ordinary shift.</td></tr>
+      <tr><td><strong>roster</strong></td><td>Who is coming to a shift.</td></tr>
+      <tr><td><strong>reconcile</strong></td><td>Turning a roster into hour entries once the shift has ended.</td></tr>
+      <tr><td><strong>self-log</strong></td><td>The optional anonymous form on your website for sending in hours.</td></tr>
+      <tr><td><strong>match, triage</strong></td><td>Attaching a self-logged entry to a volunteer record.</td></tr>
+      <tr><td><strong>hold</strong></td><td>A block on the retention sweep for one volunteer, with a reason.</td></tr>
+      <tr><td><strong>anonymize</strong></td><td>Remove the name, contact details, and requirement. Keep the hours.</td></tr>
+      <tr><td><strong>increment</strong></td><td>The rounding granularity for durations. Nearest, never up.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<p class="colophon">Groundwork Common Volunteer Tracker 1.0.1 &middot; <a href="https://www.groundworkcommon.com/">groundworkcommon.com</a></p>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var sidebar  = document.getElementById('sidebar');
+  var toggle   = document.getElementById('navToggle');
+  var finder   = document.getElementById('finder');
+  var navList  = document.getElementById('navList');
+  var noHits   = document.getElementById('noHits');
+  var links    = Array.prototype.slice.call(navList.querySelectorAll('a'));
+  var groups   = Array.prototype.slice.call(navList.querySelectorAll('.nav-group'));
+
+  /* On wide screens the sidebar is always open; the toggle only governs the
+     stacked layout, so start expanded there and let the media query hide it. */
+  function syncCollapsed() {
+    var narrow = window.matchMedia('(max-width: 62rem)').matches;
+    if (!narrow) {
+      sidebar.setAttribute('data-collapsed', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+  }
+  syncCollapsed();
+  window.addEventListener('resize', syncCollapsed);
+
+  toggle.addEventListener('click', function () {
+    var open = sidebar.getAttribute('data-collapsed') === 'false';
+    sidebar.setAttribute('data-collapsed', open ? 'true' : 'false');
+    toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+  });
+
+  /* Filter the contents list. Matches topic titles and their section text, so
+     "salt" finds the reference topic even though the word is not in its name. */
+  var haystack = links.map(function (a) {
+    var target = document.querySelector(a.getAttribute('href'));
+    return (a.textContent + ' ' + (target ? target.textContent : '')).toLowerCase();
+  });
+
+  finder.addEventListener('input', function () {
+    var q = finder.value.trim().toLowerCase();
+    var hits = 0;
+
+    links.forEach(function (a, i) {
+      var match = q === '' || haystack[i].indexOf(q) !== -1;
+      a.parentNode.classList.toggle('nav-hidden', !match);
+      if (match) { hits++; }
+    });
+
+    groups.forEach(function (g) {
+      var any = g.querySelector('li:not(.nav-hidden)');
+      g.classList.toggle('nav-hidden', !any);
+    });
+
+    noHits.classList.toggle('nav-hidden', hits !== 0);
+  });
+
+  /* Mark the topic currently under the masthead. Tracks the last heading to
+     have crossed the top edge rather than whatever is merely visible, so a
+     short topic between two long ones still takes its turn. */
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.topic'));
+  var byId = {};
+  links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+
+  function markActive() {
+    var top = 80;
+    var current = sections[0];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].getBoundingClientRect().top <= top) { current = sections[i]; }
+    }
+    links.forEach(function (a) { a.removeAttribute('aria-current'); });
+    if (current && byId[current.id]) { byId[current.id].setAttribute('aria-current', 'true'); }
+  }
+
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) { return; }
+    ticking = true;
+    window.requestAnimationFrame(function () { markActive(); ticking = false; });
+  }, { passive: true });
+  markActive();
+
+  /* On the stacked layout, choosing a topic should put it on screen rather
+     than leave the reader looking at the list they just used. */
+  links.forEach(function (a) {
+    a.addEventListener('click', function () {
+      if (window.matchMedia('(max-width: 62rem)').matches) {
+        sidebar.setAttribute('data-collapsed', 'true');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+})();
+</script>

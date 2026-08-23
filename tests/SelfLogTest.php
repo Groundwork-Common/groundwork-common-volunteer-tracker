@@ -103,7 +103,7 @@ final class SelfLogTest extends TestCase {
 	/* ── The anti-oracle property ────────────────────────────────────────────
 	 * The reason the whole handler is arranged the way it is. If these ever
 	 * diverge, the form starts answering questions about who has been
-	 * submitting — and on a site running a court-ordered service programme, the
+	 * submitting — and on a site running a court-ordered service program, the
 	 * question being answered is whether a named person is working one off.
 	 * ─────────────────────────────────────────────────────────────────────── */
 
@@ -121,7 +121,7 @@ final class SelfLogTest extends TestCase {
 	}
 
 	public function test_an_unknown_result_says_nothing_at_all(): void {
-		/* Fails closed. A result key nobody recognised must not fall through to
+		/* Fails closed. A result key nobody recognized must not fall through to
 		 * some other outcome's wording. */
 		$this->assertSame( '', gwc_vt_self_log_message( 'something-else' ) );
 		$this->assertSame( '', gwc_vt_self_log_message( '' ) );

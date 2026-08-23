@@ -6,7 +6,7 @@
  * tests/integration/events.php calls gwc_vt_save_event_grid() directly. That
  * proved the model was right and missed the bug that mattered: cancelling a time
  * worked perfectly and the screen came back looking untouched, so a coordinator
- * ticked the box, pressed Save, saw the same editable row with the same Remove
+ * selected the checkbox, pressed Save, saw the same editable row with the same Remove
  * box still on it, and reasonably concluded the feature was broken.
  *
  * A test that calls the function under the form can never catch that. So this
@@ -17,7 +17,7 @@
  *
  * The four lifecycle operations have since moved off the form into actions of
  * their own, which is what that bug was really telling us. The assertions came
- * with them: what used to be "tick a box and save" is now "follow the link and
+ * with them: what used to be "select a checkbox and save" is now "follow the link and
  * confirm", and the things worth pinning are unchanged.
  *
  * Run under wp-env:

@@ -2,7 +2,7 @@
 
    Deliberately restrained. This renders inside somebody else's theme, on a page
    they styled, and a form that arrives with strong opinions about typography
-   looks like an advert for the plugin. Everything inherits: font, colour,
+   looks like an advert for the plugin. Everything inherits: font, color,
    headings. What is styled here is layout and the two things a theme reliably
    gets wrong for a form it did not expect — field spacing and the honeypot. */
 
@@ -77,7 +77,7 @@
 }
 
 /* ─── Messages ─────────────────────────────────────────────────────────────
-   currentColor and a left rule rather than a colour of our own: green-on-white
+   currentColor and a left rule rather than a color of our own: green-on-white
    from a plugin lands badly on a dark theme, and the message is carried by the
    words in any case. */
 .gwcvt-form__message {

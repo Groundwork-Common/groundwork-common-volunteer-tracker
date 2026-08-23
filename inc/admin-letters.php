@@ -317,7 +317,7 @@ function gwc_vt_letter_request(): array {
 
 /* ── Whose letterhead is this? ───────────────────────────────────────────────
  * Three settings fall back to something reasonable when empty, and the letter
- * prints perfectly well without any of them: the organisation's name becomes the
+ * prints perfectly well without any of them: the organization's name becomes the
  * WordPress site title, the contact becomes the site's admin email, and the
  * signature line prints the literal word "Signature".
  *
@@ -491,7 +491,7 @@ function gwc_vt_letters_notice(): void {
 
 /* ── Checking a reference ────────────────────────────────────────────────────
  * This is what turns the reference code from decoration into evidence. A court
- * or a school phones the organisation, reads out the code, and somebody on the
+ * or a school phones the organization, reads out the code, and somebody on the
  * front desk can answer in ten seconds.
  *
  * Three answers, and the wording of each is deliberate — see the note on

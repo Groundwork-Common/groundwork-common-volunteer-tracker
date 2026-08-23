@@ -264,7 +264,7 @@ function gwc_vt_run_digest(): bool {
 	return gwc_vt_send_email(
 		$to,
 		sprintf(
-			/* translators: %s: the organisation's name. */
+			/* translators: %s: the organization's name. */
 			__( '%s: volunteer shifts needing attention', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name()
 		),

@@ -113,9 +113,9 @@
 }
 
 /* ─── Verification badges ───────────────────────────────────────────────────
-   Colour is never the only signal — each badge carries its own words, because
+   Color is never the only signal — each badge carries its own words, because
    "verified" and "not yet verified" is exactly the distinction somebody with a
-   colour vision deficiency must not have to infer from a green dot. The tint is
+   color vision deficiency must not have to infer from a green dot. The tint is
    reinforcement, not information. */
 .gwcvt-badge {
 	display: inline-block;
@@ -236,7 +236,7 @@
 	gap: 8px 40px;
 	/* Stretch, not start: the columns have to be full height for the rule
 	   between them to be, and a rule that stops where the shorter column's text
-	   ends reads as an accident. Each column then centres its own content. */
+	   ends reads as an accident. Each column then centers its own content. */
 	align-items: stretch;
 	margin: 12px 0 24px;
 	padding: 20px 24px;
@@ -253,7 +253,7 @@
 	}
 }
 
-/* Both columns centre their own text against the panel's full height, so
+/* Both columns center their own text against the panel's full height, so
    neither hangs off the top when the other is taller. The toggle is positioned
    absolutely and is deliberately not part of this — it stays pinned top right,
    where it has room and is out of the reading path. */
@@ -470,7 +470,7 @@ a.gwcvt-badge--action:focus {
 	box-shadow: inset 0 0 0 1px #68de7c;
 }
 
-/* Never rely on the hover colour alone to say it is interactive: the focus
+/* Never rely on the hover color alone to say it is interactive: the focus
    ring is what a keyboard user gets, and the pointer is what everybody else
    gets before they commit to a click. */
 a.gwcvt-badge--action:focus-visible {
@@ -552,7 +552,7 @@ a.gwcvt-badge--action:focus-visible {
 /* ─── The schedule ──────────────────────────────────────────────────────────
    A coordinator opens this screen to find out what is short of people and how
    soon, so the fill figure is the loudest thing in the row and "short" is said
-   in words as well as in colour — the same rule as the verification badges
+   in words as well as in color — the same rule as the verification badges
    above. The row tint is reinforcement; the bold count and the screen-reader
    text are the information. */
 .gwcvt-schedule__time {
@@ -680,7 +680,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 }
 
 /* ─── Logging a shift's roster ──────────────────────────────────────────────
-   The tick column is narrow and first, because "who came" is the only question
+   The checkbox column is narrow and first, because "who came" is the only question
    on this screen the coordinator has to answer for every row. A row already
    logged is dimmed rather than removed: it still has to be visible, or the
    screen looks like it lost somebody. */
@@ -699,7 +699,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 /* ─── What somebody has to complete ─────────────────────────────────────────
    Only ever drawn for a volunteer who has a requirement recorded, which is a
-   small minority of them. Overdue is said in words as well as in colour — the
+   small minority of them. Overdue is said in words as well as in color — the
    same rule as the verification badges — because "you are late" is not a thing
    to communicate with a tint alone. */
 .gwcvt-progress--overdue {
@@ -722,7 +722,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    worklist is the widest column because the worklist is the urgent part; the
    map is an index down the side because an index is reference.
 
-   No colours of its own — everything below reuses the badge and schedule
+   No colors of its own — everything below reuses the badge and schedule
    palette already established above, so the dashboard reads as the same
    product rather than a visitor. */
 .gwcvt-dash__masthead {
@@ -915,7 +915,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 /* ─── One upcoming shift ────────────────────────────────────────────────────
    The meter is reinforcement; "3 of 8 · needs 6" is the information. A bar on
-   its own does not say whether three is a problem, and colour does not say it
+   its own does not say whether three is a problem, and color does not say it
    to everybody. */
 .gwcvt-shiftline {
 	display: grid;

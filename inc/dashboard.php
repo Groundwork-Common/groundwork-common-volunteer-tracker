@@ -142,7 +142,7 @@ function gwc_vt_dashboard_items( array $counts ): array {
 				'Find people for shifts this week',
 				'groundwork-common-volunteer-tracker'
 			),
-			'why'      => __( 'There is still time to ring round. On Sunday there is nothing to be done about Saturday.', 'groundwork-common-volunteer-tracker' ),
+			'why'      => __( 'There is still time to call around. On Sunday there is nothing to be done about Saturday.', 'groundwork-common-volunteer-tracker' ),
 			'action'   => __( 'Open the schedule', 'groundwork-common-volunteer-tracker' ),
 		),
 		'overdue'      => array(
@@ -312,7 +312,7 @@ function gwc_vt_fortnight_bounds( string $today, int $start_of_week ): array {
  * The two counts below used to pass a large posts_per_page and take whatever
  * came back: 200 for the overdue count, 5000 for the year's entries. Both are
  * numbers this screen prints, and a cap that is reached does not announce
- * itself — it just reports a smaller organisation than the one running the
+ * itself — it just reports a smaller organization than the one running the
  * site. The year figure is the worse of the two, because the box comment below
  * describes exactly what it is for: "what goes into a Form 990 or a grant
  * report".
@@ -437,7 +437,7 @@ function gwc_vt_overdue_requirement_ids(): array {
 /**
  * When the reporting year starts, as Y-m-d.
  *
- * A filter rather than a setting. Most organisations report on the calendar
+ * A filter rather than a setting. Most organizations report on the calendar
  * year; the ones that do not know exactly when theirs begins and have somebody
  * who can add a line to a theme. A setting would put a question on the Settings
  * screen that almost nobody needs to answer, and answering it wrongly would
@@ -459,10 +459,10 @@ function gwc_vt_reporting_year_start(): string {
 }
 
 /**
- * The organisation's own totals for a date range.
+ * The organization's own totals for a date range.
  *
  * Cached for an hour. This is the one query on the screen that grows with the
- * size of the organisation, and it answers a question whose answer does not
+ * size of the organization, and it answers a question whose answer does not
  * change minute to minute — unlike everything above it, which is a queue and
  * has to be current or it is worse than absent.
  *

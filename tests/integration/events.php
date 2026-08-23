@@ -71,7 +71,7 @@ function gwc_vt_ev_track( int $post_id ): int {
  * Post to the event handler as a browser would.
  *
  * @param int   $event_id Event post ID.
- * @param int[] $slots    Shift IDs to tick.
+ * @param int[] $slots    Shift IDs to select.
  * @param array $extra    Anything else the form sends.
  * @param bool  $aged     Whether to stamp the form as rendered long enough ago.
  * @return string The result key the handler recorded.
@@ -84,10 +84,10 @@ function gwc_vt_ev_post( int $event_id, array $slots, array $extra = array(), bo
 		? ( time() - 30 ) . '.' . hash_hmac( 'sha256', (string) ( time() - 30 ), wp_salt( 'gwc_vt_form' ) )
 		: gwc_vt_form_stamp();
 
-	$ticked = array();
+	$selected = array();
 
 	foreach ( $slots as $shift_id ) {
-		$ticked[ (string) $shift_id ] = '1';
+		$selected[ (string) $shift_id ] = '1';
 	}
 
 	$_POST = array_merge(
@@ -96,7 +96,7 @@ function gwc_vt_ev_post( int $event_id, array $slots, array $extra = array(), bo
 			'gwc_vt_signup_nonce' => wp_create_nonce( 'gwc_vt_signup' ),
 			'gwc_vt_t'            => $stamp,
 			'gwc_vt_event'        => (string) $event_id,
-			'gwc_vt_slots'        => $ticked,
+			'gwc_vt_slots'        => $selected,
 			'gwc_vt_name'         => 'Dana Whitfield',
 			'gwc_vt_email'        => 'dana@example.org',
 		),

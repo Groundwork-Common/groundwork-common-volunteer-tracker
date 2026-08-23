@@ -3,7 +3,7 @@
  * Every event screen, rendered.
  *
  * ── Why this exists as well as tests/integration/events.php ──────────────────
- * That file asserts behaviour. This one asserts that the screens come up at all,
+ * That file asserts behavior. This one asserts that the screens come up at all,
  * and it is here because of what the plugin's own notes say: almost every bug
  * found late in this build was found by a person looking at a screen, not by the
  * suite. A renderer that calls a function which only exists on admin requests,
@@ -267,7 +267,7 @@ gwc_vt_sc_check( 'the roster names the volunteer', false !== strpos( $gwc_vt_ros
 gwc_vt_sc_check( 'the roster flags the double-booking', false !== strpos( $gwc_vt_roster, 'overlap' ) );
 
 gwc_vt_sc_check(
-	'the public grid ticks by shift ID',
+	'the public grid selects by shift ID',
 	false !== strpos( $gwc_vt_grid, 'gwc_vt_slots[' . $gwc_vt_slots[0] . ']' )
 );
 

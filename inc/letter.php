@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * about. A cached number that is subtly stale is precisely the failure this
  * plugin cannot have, because the person holding the letter has no way to know.
  *
- * If somebody later "optimises" this to use gwc_vt_volunteer_totals(), that is
+ * If somebody later "optimizes" this to use gwc_vt_volunteer_totals(), that is
  * the bug.
  *
  * @param int   $volunteer_id Volunteer post ID.
@@ -45,7 +45,7 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 			'to'       => $to,
 			/* Published only. A pending entry is one nobody has accepted yet —
 			 * self-logged and untriaged — and putting it on a letter would mean
-			 * the organisation reporting a claim it has not looked at. */
+			 * the organization reporting a claim it has not looked at. */
 			'statuses' => array( 'publish' ),
 		)
 	);
@@ -111,7 +111,7 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
  * first eight characters of an HMAC over the facts the letter asserts —
  * volunteer, period, attested minutes, number of shifts listed.
  *
- * What it proves: that this document matches the organisation's records as they
+ * What it proves: that this document matches the organization's records as they
  * stand. Regenerating the same letter over unchanged records produces the same
  * code; a letter whose hours were edited in a word processor produces a
  * different one, and the verifier screen will say so.
@@ -222,7 +222,7 @@ function gwc_vt_letter_reference( int $volunteer_id, string $from, string $to, i
  * as they stand now and compares. Three answers, and the wording of each
  * matters as much as the logic:
  *
- *   match    the document still matches the organisation's records
+ *   match    the document still matches the organization's records
  *   changed  the letter was issued, and the records have moved since
  *   unknown  no letter with that reference was ever issued from this site
  *
@@ -302,7 +302,7 @@ function gwc_vt_verify_reference( string $code ): array {
 			'entries' => $current->entry_count(),
 		),
 		/* The rebuilt letter itself, so the screen can render it in full rather
-		 * than summarising it. A summary answers "do the totals agree"; the
+		 * than summarizing it. A summary answers "do the totals agree"; the
 		 * document answers "is this the same document", which is the question
 		 * somebody holding a printed copy is actually asking. */
 		'rebuilt' => $current,
