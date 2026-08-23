@@ -191,16 +191,31 @@ function gwc_vt_event_date_label( int $event_id ): string {
 		return '';
 	}
 
-	$format = (string) get_option( 'date_format' );
-	$format = '' !== $format ? $format : 'D j M Y';
-
+	/* gwc_vt_recurrence_date() is the validity check here and nothing more. It
+	 * builds the instant at midnight UTC, so formatting its timestamp with
+	 * wp_date() moves the date into the site's zone: an event stored as
+	 * 2026-10-12 printed as 11 October on America/New_York, on the public grid
+	 * and in both the confirmation and the reminder mail.
+	 *
+	 * gwc_vt_display_date() formats the date that was stored instead, which is
+	 * what a calendar date wants — an event happened on a day, it never was an
+	 * instant, and no conversion applies to it. The box comment above that
+	 * function in inc/verify.php names this exact hazard.
+	 *
+	 * gwc_vt_shift_date_label() looks parallel to this one and is correct, but
+	 * only because gwc_vt_shift_starts() builds its instant in
+	 * gwc_vt_timezone() rather than UTC. The two are not interchangeable, which
+	 * is why this went unnoticed. */
 	$starts = gwc_vt_recurrence_date( $from );
 
 	if ( null === $starts ) {
 		return '';
 	}
 
-	$first = (string) wp_date( $format, $starts->getTimestamp() );
+	/* No 'D j M Y' fallback for an empty date_format any more: the helper owns
+	 * that policy now and returns the stored Y-m-d, on the same reasoning as the
+	 * letter — a readable unformatted date beats a second, divergent default. */
+	$first = gwc_vt_display_date( $from );
 
 	if ( '' === $to || $to === $from ) {
 		return $first;
@@ -216,7 +231,7 @@ function gwc_vt_event_date_label( int $event_id ): string {
 		/* translators: 1: the first day of an event, 2: the last day. */
 		__( '%1$s – %2$s', 'groundwork-common-volunteer-tracker' ),
 		$first,
-		(string) wp_date( $format, $ends->getTimestamp() )
+		gwc_vt_display_date( $to )
 	);
 }
 

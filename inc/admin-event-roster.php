@@ -269,9 +269,17 @@ function gwc_vt_render_event_slot_roster( int $shift_id ): void {
  * @param bool   $promotable Whether to offer the promote action.
  */
 function gwc_vt_render_event_roster_row( int $signup_id, string $standing, bool $promotable ): void {
+	/* gwc_vt_local_date() rather than the conversion inlined here, and the
+	 * emptiness test on what it returns rather than on the raw meta. This cell
+	 * reimplemented the helper without its guard: a GWC_VT_SIGNUP_CREATED that
+	 * is non-empty but unparseable — a partially anonymized record, a
+	 * hand-edited meta row, a value from an older format — makes strtotime()
+	 * return false, (int) false is a timestamp of 0, and the cell printed
+	 * 1 January 1970 while the raw value stayed truthy enough that the em-dash
+	 * branch was never reached. */
 	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
 	$email        = gwc_vt_signup_email( $signup_id );
-	$created      = (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CREATED, true );
+	$signed_up    = gwc_vt_local_date( (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CREATED, true ) );
 	?>
 	<tr>
 		<td>
@@ -286,8 +294,8 @@ function gwc_vt_render_event_roster_row( int $signup_id, string $standing, bool 
 		<td><?php echo '' !== $email ? esc_html( $email ) : '<span class="description">—</span>'; ?></td>
 		<td>
 			<?php
-			echo '' !== $created
-				? esc_html( (string) wp_date( (string) get_option( 'date_format' ), (int) strtotime( $created . ' UTC' ) ) )
+			echo '' !== $signed_up
+				? esc_html( $signed_up )
 				: '<span class="description">—</span>';
 			?>
 		</td>
