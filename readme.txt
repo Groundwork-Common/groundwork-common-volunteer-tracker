@@ -136,14 +136,11 @@ Every message then goes to that address instead, with the site's name in the sub
 
 == Changelog ==
 
-= 1.1.1 =
-
-* **New installs are now asked once whether they issue verification letters.** They stay switched on, as before — the question is only so that an organization which records hours but never writes to a court or a school finds out the switch exists, instead of carrying a whole screen of settings it will never use. Answering it either way makes the prompt go away for good, and a site that has already issued a letter is never asked at all.
-
 = 1.1.0 =
 Two things you can decide for yourself: whether this site issues verification letters at all, and where an event's signup grid lives.
 
 * **You can turn the verification letter off.** If your organization records volunteer hours but never writes to a court or a school, clear **Issue verification letters** on Settings → Logging. The Letters screen goes away, so does the Letter settings tab and its seventeen fields, and so do the letter actions on a volunteer's record and the letter links on the dashboard. Nothing is deleted: every letter already issued, the log of what went out and every letter setting stay exactly where they are, and selecting it again finds them unchanged. It is on unless you clear it, so nothing changes for anybody who updates.
+* **You are asked once which of those you want.** Letters stay switched on either way — the question exists so that an organization which records hours but never writes to a court or a school finds out the switch is there, instead of carrying a whole screen of settings it will never use. Answering it makes the prompt go away for good, and a site that has already issued a letter is never asked at all.
 * **An event's signup grid now works on a post, not only a page.** If you write a post about an event — the story, the photos, the why — and put the signup on that same post, the grid always rendered, but the plugin could not find it: the confirmation and cancellation emails linked nowhere, and the event editor said no page showed an event that was published and visible. Any public post type with an editor works now, including one your theme or another plugin added. If you put the same event in more than one place, links back to it use whichever you published first.
 
 = 1.0.2 =
@@ -180,7 +177,7 @@ Otherwise nothing about the plugin's behavior changed between the last developme
 == Upgrade Notice ==
 
 = 1.1.0 =
-Adds a switch that turns the verification letter off, for organizations that record hours but never write to a court or a school. It is on unless you clear it, so nothing changes when you update. An event signup grid can also live on a post now, not only a page.
+Adds a switch that turns the verification letter off, for organizations that record hours but never write to a court or a school. Letters stay on unless you clear them, though you may be asked once which you want. An event signup grid can also live on a post now, not only a page.
 
 = 1.0.2 =
 West of UTC, event dates displayed one day early on the public grid and in both emails, so volunteers were told the wrong day. Also stops a canceled shift emailing its roster twice, and screens reporting success for what they refused. Nothing recorded changes.
