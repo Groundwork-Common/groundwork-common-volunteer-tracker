@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, volunteer scheduling, community service, nonpr
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -137,7 +137,7 @@ Every message then goes to that address instead, with the site's name in the sub
 == Changelog ==
 
 = 1.0.2 =
-Fixes to dates that were printing as days other than the ones they were stored as.
+Ten fixes. Dates that printed as the wrong day, screens that reported success for something they had refused, and one path that could email a whole roster twice. Nothing you have already recorded changes.
 
 * **An event's dates now print as the days they were stored as.** On any site west of UTC — which is every site in the Americas — an event stored as October 12th displayed as October 11th: on the public signup grid, in the confirmation email, in the reminder email and in the event picker in the block editor. A one-day event, a multi-day span and the day an event was picked from the editor were all affected. Nothing about the stored dates was wrong, so no event needs re-entering; the display was reading them in a timezone they never had.
 * **A signup date the plugin cannot read now shows a dash instead of a date in 1970.** On the event roster, a "signed up" date that had been anonymized, hand-edited or written by an older version rendered as January 1st 1970. On the shift roster the same value rendered as an empty cell. Both now show the dash that means "not recorded".
@@ -169,8 +169,11 @@ Otherwise nothing about the plugin's behavior changed between the last developme
 
 == Upgrade Notice ==
 
+= 1.0.2 =
+West of UTC, event dates displayed one day early on the public grid and in both emails, so volunteers were told the wrong day. Also stops a canceled shift emailing its roster twice, and screens reporting success for what they refused. Nothing recorded changes.
+
 = 1.0.1 =
-Wording only, and no change to what the plugin does. The screens, emails and letter now read in American English, a tick box is called a checkbox, and "Cancelled" is spelled "Canceled" wherever it is shown. If you have translated this plugin, re-run your `.po` against the new `.pot` — the changed strings no longer match.
+Wording only. The screens, emails and letter now read in American English, a tick box is called a checkbox, and "Cancelled" is spelled "Canceled". If you translated this plugin, re-run your `.po` against the new `.pot` — the changed strings no longer match.
 
 = 1.0.0 =
 The first public release. If you ran a development build, the three shortcodes were renamed to carry the plugin's prefix and the old names no longer work — update any page using one. The blocks are unaffected.
