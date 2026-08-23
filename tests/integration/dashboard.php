@@ -170,6 +170,65 @@ gwc_vt_check( 'and the unverified one is counted apart from it', ( $gwc_vt_after
 gwc_vt_check( 'an entry from years ago is outside the year', ( $gwc_vt_after['verified'] - $gwc_vt_before['verified'] ) !== 780 );
 gwc_vt_check( 'shifts recorded counts both', ( $gwc_vt_after['entries'] - $gwc_vt_before['entries'] ) === 2, (string) ( $gwc_vt_after['entries'] - $gwc_vt_before['entries'] ) );
 
+/* ── And it counts them the way everything else does ─────────────────────────
+ * These figures used to decide for themselves what "verified" meant, inlining
+ * the meta test instead of asking gwc_vt_entry_is_verified() — the only reader
+ * of the word doing so, on the one number described as Form 990 input. They
+ * also skipped any entry of under a minute, while GWC_VT_Totals->entries counts
+ * every row it is given, so a zero-minute entry made the two figures disagree
+ * about the same records.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_zero = gwc_vt_make_entry( $gwc_vt_person, $gwc_vt_year . '-01-04', 0, false );
+
+delete_transient( GWC_VT_YEAR_TOTALS_KEY . '_' . md5( $gwc_vt_start . '|' . $gwc_vt_today ) );
+
+$gwc_vt_with_zero = gwc_vt_org_totals( $gwc_vt_start, $gwc_vt_today );
+
+gwc_vt_check(
+	'a zero-minute entry is counted rather than quietly dropped',
+	( $gwc_vt_with_zero['entries'] - $gwc_vt_before['entries'] ) === 3,
+	(string) ( $gwc_vt_with_zero['entries'] - $gwc_vt_before['entries'] )
+);
+
+gwc_vt_check( 'and adds nothing to either hours figure', ( $gwc_vt_with_zero['verified'] - $gwc_vt_after['verified'] ) === 0 && ( $gwc_vt_with_zero['pending'] - $gwc_vt_after['pending'] ) === 0 );
+
+/* The same records, counted by the rollup rather than by the dashboard. The two
+ * are different queries over one set of entries and must not disagree. */
+$gwc_vt_rollup = gwc_vt_total_from_ids(
+	gwc_vt_entry_ids_for_volunteer(
+		$gwc_vt_person,
+		array(
+			'from' => $gwc_vt_start,
+			'to'   => $gwc_vt_today,
+		)
+	)
+);
+
+gwc_vt_check(
+	'the dashboard and the rollup count the same entries',
+	3 === $gwc_vt_rollup->entries,
+	(string) $gwc_vt_rollup->entries
+);
+
+gwc_vt_check(
+	'and agree on how many of their minutes are verified',
+	180 === $gwc_vt_rollup->verified_minutes && 120 === $gwc_vt_rollup->pending_minutes,
+	$gwc_vt_rollup->verified_minutes . '/' . $gwc_vt_rollup->pending_minutes
+);
+
+/* Verifying the zero-minute entry moves it between the two figures on both
+ * sides, which is what asking the shared predicate buys. */
+update_post_meta( $gwc_vt_zero, GWC_VT_ENTRY_VERIFIED_AT, gmdate( 'Y-m-d H:i:s' ) );
+
+delete_transient( GWC_VT_YEAR_TOTALS_KEY . '_' . md5( $gwc_vt_start . '|' . $gwc_vt_today ) );
+
+gwc_vt_check(
+	'the dashboard reads verification through gwc_vt_entry_is_verified()',
+	gwc_vt_entry_is_verified( $gwc_vt_zero )
+		&& ( gwc_vt_org_totals( $gwc_vt_start, $gwc_vt_today )['entries'] - $gwc_vt_before['entries'] ) === 3
+);
+
 /* ── The cache, and the thing that clears it ─────────────────────────────────
  * An hour-old total is fine for a figure nobody watches change. It is not fine
  * for a coordinator who logs a day and then wonders where their afternoon went.
