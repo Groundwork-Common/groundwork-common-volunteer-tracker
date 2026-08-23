@@ -78,11 +78,29 @@ function gwc_vt_render_shift_list(): string {
 			<?php wp_nonce_field( 'gwc_vt_signup', 'gwc_vt_signup_nonce' ); ?>
 			<input type="hidden" name="gwc_vt_t" value="<?php echo esc_attr( gwc_vt_form_stamp() ); ?>" />
 
+			<?php
+			/* Said once at the top when every row is on the same clock, and left
+			 * to the rows when they are not — a list spanning a daylight-saving
+			 * change has two honest answers and one of them would be false. */
+			$shared_zone = gwc_vt_shared_timezone_label( $shifts );
+			?>
 			<fieldset class="gwcvt-shifts__list">
 				<legend><?php esc_html_e( 'Choose a shift', 'groundwork-common-volunteer-tracker' ); ?></legend>
 
+				<?php if ( '' !== $shared_zone ) : ?>
+					<p class="gwcvt-shifts__zone">
+						<?php
+						printf(
+							/* translators: %s: a timezone abbreviation, e.g. EDT. */
+							esc_html__( 'All times are %s.', 'groundwork-common-volunteer-tracker' ),
+							esc_html( $shared_zone )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+
 				<?php foreach ( $shifts as $shift_id ) : ?>
-					<?php gwc_vt_render_shift_choice( $shift_id, $selected ); ?>
+					<?php gwc_vt_render_shift_choice( $shift_id, $selected, '' === $shared_zone ); ?>
 				<?php endforeach; ?>
 			</fieldset>
 
@@ -188,10 +206,12 @@ function gwc_vt_render_shift_list(): string {
 /**
  * One shift, as something a visitor can choose.
  *
- * @param int $shift_id Shift post ID.
- * @param int $selected Which shift is preselected, if any.
+ * @param int  $shift_id  Shift post ID.
+ * @param int  $selected  Which shift is preselected, if any.
+ * @param bool $with_zone Whether this row names its own timezone, because the
+ *                        list could not name one for all of them.
  */
-function gwc_vt_render_shift_choice( int $shift_id, int $selected ): void {
+function gwc_vt_render_shift_choice( int $shift_id, int $selected, bool $with_zone = false ): void {
 	$spots  = gwc_vt_shift_spots_left( $shift_id );
 	$full   = null !== $spots && $spots < 1;
 	$notes  = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) );
@@ -211,7 +231,7 @@ function gwc_vt_render_shift_choice( int $shift_id, int $selected ): void {
 		<label for="<?php echo esc_attr( $row_id ); ?>">
 			<span class="gwcvt-shift__when">
 				<?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?>,
-				<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
+				<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?><?php echo $with_zone ? ' ' . esc_html( gwc_vt_shift_timezone_label( $shift_id ) ) : ''; ?>
 			</span>
 
 			<?php if ( '' !== $what ) : ?>
@@ -302,6 +322,7 @@ function gwc_vt_render_signup_manage(): string {
 			<span class="gwcvt-shift__when">
 				<?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?>,
 				<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
+				<?php echo esc_html( gwc_vt_shift_timezone_label( $shift_id ) ); ?>
 			</span>
 			<span class="gwcvt-shift__what"><?php echo esc_html( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) ); ?></span>
 

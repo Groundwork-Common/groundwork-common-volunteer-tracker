@@ -379,6 +379,55 @@ function gwc_vt_letters_decided(): bool {
 }
 
 /**
+ * The site's timezone, named the way a person would name it.
+ *
+ * WordPress's wp_timezone_string() returns whatever is in the setting, which for a site
+ * configured by UTC offset is a string like "+00:00". On a letter that reads as
+ * a bug — "Generated 5 August 2026 3:53 pm (+00:00)" — and the timestamp is one
+ * of the things making this document credible, so it cannot look broken.
+ *
+ * Here rather than in inc/render.php, where it was written. Every other function
+ * in that file is letter machinery, and this now has five callers on the
+ * schedule side — the public shift list, the event grid and three messages. A
+ * volunteer signing up for Saturday should not be reaching into the letter
+ * renderer to find out what a timezone is called.
+ *
+ * Note that the answer depends on WHEN. A named zone gives a different
+ * abbreviation either side of a daylight-saving change, which is why callers
+ * pass the instant they are labelling rather than time().
+ *
+ * A named zone gives a real abbreviation through wp_date( 'T' ): EDT, GMT, AEST.
+ * An offset site gets "UTC" or "UTC+2", which is what somebody would say aloud.
+ *
+ * @param int $timestamp The instant being labelled.
+ * @return string
+ */
+function gwc_vt_timezone_label( int $timestamp ): string {
+	$zone = (string) wp_timezone_string();
+
+	if ( '' === $zone ) {
+		return 'UTC';
+	}
+
+	// A named zone, e.g. "America/New_York".
+	if ( false === strpos( $zone, ':' ) && '+' !== $zone[0] && '-' !== $zone[0] ) {
+		$abbreviation = (string) wp_date( 'T', $timestamp );
+
+		return '' !== $abbreviation ? $abbreviation : $zone;
+	}
+
+	// An offset, e.g. "+00:00" or "-05:30".
+	$hours   = (int) substr( $zone, 0, 3 );
+	$minutes = (int) substr( $zone, 4, 2 );
+
+	if ( 0 === $hours && 0 === $minutes ) {
+		return 'UTC';
+	}
+
+	return 'UTC' . sprintf( '%+d', $hours ) . ( 0 !== $minutes ? sprintf( ':%02d', $minutes ) : '' );
+}
+
+/**
  * Today's date in the site's timezone, as Y-m-d.
  *
  * @return string

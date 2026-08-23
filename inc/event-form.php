@@ -211,7 +211,10 @@ function gwc_vt_render_event_slot_choice( int $shift_id, array $picked, array $c
 			<?php checked( in_array( $shift_id, $picked, true ) ); ?>
 		/>
 		<label for="<?php echo esc_attr( $row_id ); ?>">
-			<span class="gwcvt-shift__when"><?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?></span>
+			<span class="gwcvt-shift__when">
+				<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
+				<?php echo esc_html( gwc_vt_shift_timezone_label( $shift_id ) ); ?>
+			</span>
 
 			<?php if ( gwc_vt_event_is_multi_day( gwc_vt_event_for_shift( $shift_id ) ) ) : ?>
 				<span class="gwcvt-shift__day"><?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?></span>

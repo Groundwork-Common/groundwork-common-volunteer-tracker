@@ -458,7 +458,7 @@ function gwc_vt_send_shift_changed_notice( int $signup_id, array $was = array() 
 function gwc_vt_shift_details_table( int $shift_id ): string {
 	$rows = array(
 		__( 'What', 'groundwork-common-volunteer-tracker' )  => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ),
-		__( 'When', 'groundwork-common-volunteer-tracker' )  => trim( gwc_vt_shift_date_label( $shift_id ) . ', ' . gwc_vt_shift_time_label( $shift_id ), ', ' ),
+		__( 'When', 'groundwork-common-volunteer-tracker' )  => trim( gwc_vt_shift_date_label( $shift_id ) . ', ' . trim( gwc_vt_shift_time_label( $shift_id ) . ' ' . gwc_vt_shift_timezone_label( $shift_id ) ), ', ' ),
 		__( 'Where', 'groundwork-common-volunteer-tracker' ) => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
 	);
 
@@ -514,7 +514,7 @@ function gwc_vt_shift_one_line( int $shift_id ): string {
 	$parts = array_filter(
 		array(
 			gwc_vt_shift_date_label( $shift_id ),
-			gwc_vt_shift_time_label( $shift_id ),
+			trim( gwc_vt_shift_time_label( $shift_id ) . ' ' . gwc_vt_shift_timezone_label( $shift_id ) ),
 			(string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ),
 		),
 		'strlen'
@@ -741,7 +741,7 @@ function gwc_vt_event_slot_block( int $signup_id ): string {
 	$block[] = sprintf(
 		'%s, %s</p>',
 		esc_html( gwc_vt_shift_date_label( $shift_id ) ),
-		esc_html( gwc_vt_shift_time_label( $shift_id ) )
+		esc_html( trim( gwc_vt_shift_time_label( $shift_id ) . ' ' . gwc_vt_shift_timezone_label( $shift_id ) ) )
 	);
 
 	if ( $waiting ) {
