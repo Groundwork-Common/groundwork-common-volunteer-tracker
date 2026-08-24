@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, volunteer scheduling, community service, nonpr
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.0.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,76 +136,17 @@ Every message then goes to that address instead, with the site's name in the sub
 
 == Changelog ==
 
-= 1.1.2 =
-The volunteer picker now respects who is allowed to see which records, and the three printable documents load their stylesheet the way WordPress expects. Nothing you have recorded changes.
-
-* **The volunteer lookup no longer offers records the person searching cannot open.** Anyone who can log hours can search the volunteer list, which is as it should be — they have to say whose hours these were. But the search also reached records kept private, or left as a draft or pending by somebody else, and those are readable by fewer people than the search was. A contributor could learn that such a record existed, two letters at a time. The search now asks WordPress, for each record it finds, whether this person may read that one. Staff who could already see everything see no change.
-* **The same check now applies to the suggested match on the triage screen**, which reads a self-logged submission and offers the volunteer it probably belongs to. It could name a record the reader was not able to open.
-* **The letter, the shift roster and the event roster now load their stylesheet through WordPress** rather than linking it themselves. Two of the three were not carrying a version on that link, so a browser that had cached an older copy kept using it after an update. Reported by the WordPress.org plugin review team.
-* **Two admin notices could appear on screens they had nothing to do with.** The messages confirming a bulk verification and a completed triage were shown wherever their web address was pasted — including screens belonging to WordPress or to another plugin, where one could state a number of entries nobody had verified. Both now appear only on the hour entries screens they belong to.
-
-= 1.1.1 =
-Everything a volunteer meets on the way to signing up: the times now say which clock they are on, and a form that comes back with a mistake keeps what you typed and says which field it was.
-
-* **Times on the public pages and in email now say which timezone they are in.** A shift read "1:00 pm" and the calendar file attached to the same message carried a UTC instant, so a volunteer whose phone was on another timezone saw two different times for one shift with nothing to say which was right. Lists say it once at the top; a list running across a daylight-saving change says it on each row instead, because such a list genuinely has two answers. The calendar file is unchanged — it was correct already.
-* **A signup that comes back with an error keeps what you typed.** Your name, your email address and the shift you picked all survive, so a mistyped address costs you one correction instead of scrolling back past the whole list and starting again. On a phone that list can be three screens long. Nothing is kept back for a code, where a site uses one — that stays blank on purpose.
-* **The error says which field it was.** It used to say "Please choose a shift and give your name and email address" whatever you had actually missed, and it could not tell a missing address apart from a mistyped one. Each is now its own sentence, the field itself is marked as the one that failed, and screen readers are told which. Choosing no shift used to report that the shift was no longer taking signups, which was a sentence about a shift nobody had picked.
-* **The note explaining why we ask for your address is now read out with the field**, rather than sitting beside it where a screen reader never reached it on the way in.
-
-= 1.1.0 =
-Two things you can decide for yourself: whether this site issues verification letters at all, and where an event's signup grid lives.
-
-* **You can turn the verification letter off.** If your organization records volunteer hours but never writes to a court or a school, clear **Issue verification letters** on Settings → Logging. The Letters screen goes away, so does the Letter settings tab and its seventeen fields, and so do the letter actions on a volunteer's record and the letter links on the dashboard. Nothing is deleted: every letter already issued, the log of what went out and every letter setting stay exactly where they are, and selecting it again finds them unchanged. It is on unless you clear it, so nothing changes for anybody who updates.
-* **You are asked once which of those you want.** Letters stay switched on either way — the question exists so that an organization which records hours but never writes to a court or a school finds out the switch is there, instead of carrying a whole screen of settings it will never use. Answering it makes the prompt go away for good, and a site that has already issued a letter is never asked at all.
-* **An event's signup grid now works on a post, not only a page.** If you write a post about an event — the story, the photos, the why — and put the signup on that same post, the grid always rendered, but the plugin could not find it: the confirmation and cancellation emails linked nowhere, and the event editor said no page showed an event that was published and visible. Any public post type with an editor works now, including one your theme or another plugin added. If you put the same event in more than one place, links back to it use whichever you published first.
-
-= 1.0.2 =
-Ten fixes. Dates that printed as the wrong day, screens that reported success for something they had refused, and one path that could email a whole roster twice. Nothing you have already recorded changes.
-
-* **An event's dates now print as the days they were stored as.** On any site west of UTC — which is every site in the Americas — an event stored as October 12th displayed as October 11th: on the public signup grid, in the confirmation email, in the reminder email and in the event picker in the block editor. A one-day event, a multi-day span and the day an event was picked from the editor were all affected. Nothing about the stored dates was wrong, so no event needs re-entering; the display was reading them in a timezone they never had.
-* **A signup date the plugin cannot read now shows a dash instead of a date in 1970.** On the event roster, a "signed up" date that had been anonymized, hand-edited or written by an older version rendered as January 1st 1970. On the shift roster the same value rendered as an empty cell. Both now show the dash that means "not recorded".
-* **Canceling a shift that is already canceled no longer emails everybody a second time.** The cancel button is hidden once a shift is called off, but the address behind it could still be reached — and doing so mailed the whole roster again and replaced the reason you had typed with whatever was sent the second time. It now does nothing, as it always did on the event screens.
-* **A canceling reason typed on the shift screen is kept in full.** It was cut off at 200 characters there while both event screens kept 300, so the same explanation survived or was truncated depending on which button you used. Everywhere keeps 300 now. Nothing already saved is changed.
-* **Moving a slot from the event grid now tells volunteers what it moved from.** The email said the slot had changed and then never said what it used to be — the "It was previously..." line was missing, and only on that one screen. Moving the same slot from the shift screen always included it.
-* **The year's "shifts recorded" figure now counts every entry.** An entry logged with no time on it — zero minutes — was left out of that one count while being included everywhere else, so the number under the year's hours could disagree with a volunteer's own record of the same entries. It adds nothing to either hours figure; it is only counted.
-* **Promoting somebody off the waiting list on a shift now confirms it.** On an event it always said "They have a place now." On a standalone shift the page came back with no message at all, so the only way to tell whether it had worked was to read the roster again.
-* **A delete that gets refused no longer reports "Shift saved."** Deleting a shift is refused if somebody signed up between the page loading and the click — correctly — but it then said the shift had been saved, for an operation that changed nothing. It now says that people have signed up, so the shift can be canceled but not deleted, which is what the event screens have always said.
-* **Two roster adds that add nobody now say why.** Submitting the add-to-shift form without choosing anybody, and adding to a time that is not on the event you are looking at, both reported success. They now say what went wrong.
-* **Copying an event now stores its slots exactly as saving one does.** A copied slot with no minimum or maximum set stored an empty value where a saved slot stores 0. Nothing visible changed, and existing copies are left alone.
-
-= 1.0.1 =
-Wording only. Nothing about what the plugin does has changed.
-
-* **Every word the plugin shows you is now American English.** It was written in British English throughout — "organisation", "colour", "programme", "behaviour", "recognise", "anonymise", "defence", "towards" — and that reached the screens, the emails, the letter and this page. Around 250 words changed across the plugin, its documentation and its translation template.
-* **A tick box is now a checkbox, and you select and clear it rather than tick and untick it.** That is what both Windows and macOS call the control and what people expect to read beside one. The instructions that used to say "Untick anybody who did not turn up" now say "Clear the checkbox for anybody who did not turn up".
-* **"Cancelled" is now "Canceled" wherever you can see it** — the shift and event status labels, the schedule, the cancellation email and its subject line. Only the display text changed. The `gwc_vt_cancelled` and `gwc_vt_ev_cancelled` post statuses, the `gwc_vt_shift_cancelled` and `gwc_vt_event_cancelled` actions, the `_gwc_vt_shift_cancelled_reason` and `_gwc_vt_event_cancelled_reason` meta keys and the `gwcvt-*--cancelled` CSS classes all keep the spelling they were registered with. A post status is written into every row that carries it, so renaming one would leave every already-cancelled shift and event holding a status this plugin no longer recognizes.
-* **The translation template was regenerated.** Every changed string is a new entry, so a translation of one of them no longer matches and falls back to the English. Nothing shipped with a translation, so nothing is lost — but a site carrying its own `.po` should re-run it against the new `.pot`.
-
 = 1.0.0 =
 The first release on WordPress.org.
 
 * **The three shortcodes were renamed** to carry the plugin's own prefix, and the old names are gone rather than kept as aliases — an unprefixed name registered globally is the collision this rename exists to avoid, so leaving one behind would defeat it. `[volunteer_hours_form]` → `[gwc_vt_hours_form]`, `[volunteer_shifts]` → `[gwc_vt_shift_list]`, `[volunteer_event]` → `[gwc_vt_event_grid]`. Each now matches the block it is the shortcode for. **If you used a development build, update any page carrying one.** The blocks are unaffected and need no change.
 * **Every global name the plugin registers now carries the `gwc_vt_` prefix**, matching its sibling plugins — functions, constants, hooks, post types, meta keys, options, the settings form, the stylesheet handles and the one REST route (`gwc-vt/v1`). This is invisible on a fresh install. It is listed because the action and filter names in the developer documentation all moved with it, and because records written by a development build use the old post types and will not be seen by this version. CSS class names deliberately keep their shorter form — they are page markup, not registered names.
 * The plugin and author links now point at the canonical host rather than the bare domain that redirects to it.
+* **If you translated a development build, re-run your `.po` against the new `.pot`.** The screens, emails and letter were brought into American English, so a number of strings no longer match.
 
-Otherwise nothing about the plugin's behavior changed between the last development build and this. Everything numbered below 1.0.0 was a development build — never published here, and not a version anybody can be upgrading from, which is why this page starts at the first release rather than at the first commit.
+Everything else here is a development build. Nothing numbered below 1.0.0 was ever published, and neither was anything numbered above it — work carried on in the repository while this first release sat waiting for review, and those numbers were never releases anybody could install. This page therefore starts and stays at the first release rather than reciting a version history no reader had. What the plugin does is described above; how it came to do it is in the repository.
 
 == Upgrade Notice ==
-
-= 1.1.2 =
-The volunteer search could show people the names of records they were not allowed to open — private, draft or pending. It now checks each record against the person searching. Also fixes the printable letter and rosters keeping a stale stylesheet. Nothing recorded changes.
-
-= 1.1.1 =
-Fixes to the public signup form. Times now say which timezone they are in, on the page and in email, so they cannot be read against a calendar entry and disagree. A form refused for a mistake keeps what you typed and names the field that was wrong, instead of clearing everything.
-
-= 1.1.0 =
-Adds a switch that turns the verification letter off, for organizations that record hours but never write to a court or a school. Letters stay on unless you clear them, though you may be asked once which you want. An event signup grid can also live on a post now, not only a page.
-
-= 1.0.2 =
-West of UTC, event dates displayed one day early on the public grid and in both emails, so volunteers were told the wrong day. Also stops a canceled shift emailing its roster twice, and screens reporting success for what they refused. Nothing recorded changes.
-
-= 1.0.1 =
-Wording only. The screens, emails and letter now read in American English, a tick box is called a checkbox, and "Cancelled" is spelled "Canceled". If you translated this plugin, re-run your `.po` against the new `.pot` — the changed strings no longer match.
 
 = 1.0.0 =
 The first public release. If you ran a development build, the three shortcodes were renamed to carry the plugin's prefix and the old names no longer work — update any page using one. The blocks are unaffected.
