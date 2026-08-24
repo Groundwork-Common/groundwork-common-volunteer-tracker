@@ -102,10 +102,16 @@ function gwc_vt_suggest_volunteer_for( string $email, string $name ): array {
 		 * duplicate somebody has to resolve, and picking one of them for them
 		 * would bury the problem inside a record that then looks correct. */
 		if ( 1 === count( $by_email ) ) {
-			return array(
-				'volunteer_id' => (int) $by_email[0],
-				'matched_on'   => 'email',
-			);
+			/* An address that matches exactly one record has identified the
+			 * person, so a reader who may not see that record gets no suggestion
+			 * rather than a fallback to the weaker name match — which would
+			 * either find the same record again or, worse, a different one. */
+			return gwc_vt_may_read_volunteer( (int) $by_email[0] )
+				? array(
+					'volunteer_id' => (int) $by_email[0],
+					'matched_on'   => 'email',
+				)
+				: $none;
 		}
 	}
 
@@ -127,7 +133,7 @@ function gwc_vt_suggest_volunteer_for( string $email, string $name ): array {
 		)
 	);
 
-	if ( 1 === count( (array) $by_name ) ) {
+	if ( 1 === count( (array) $by_name ) && gwc_vt_may_read_volunteer( (int) $by_name[0] ) ) {
 		return array(
 			'volunteer_id' => (int) $by_name[0],
 			'matched_on'   => 'name',
@@ -135,6 +141,27 @@ function gwc_vt_suggest_volunteer_for( string $email, string $name ): array {
 	}
 
 	return $none;
+}
+
+/**
+ * May the person reading this screen see that volunteer record at all?
+ *
+ * The box comment at the top of this file argues that suggesting a match leaks
+ * nothing, because the reader holds edit_posts and could find the same person by
+ * typing the name into the volunteer list. That is true of a PUBLISHED record
+ * and only of a published record. The lookups above deliberately span all four
+ * statuses, and three of them are readable by strictly fewer people than
+ * edit_posts — so on those, the suggestion would be telling somebody a record
+ * exists that the volunteer list would not have shown them.
+ *
+ * Same fix, and the same reasoning, as the per-record check in inc/rest.php:
+ * ask core's meta capability rather than re-deriving the rule here.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return bool
+ */
+function gwc_vt_may_read_volunteer( int $volunteer_id ): bool {
+	return $volunteer_id > 0 && current_user_can( 'read_post', $volunteer_id );
 }
 
 /**
@@ -398,6 +425,20 @@ function gwc_vt_triage_redirect( int $entry_id, string $result ): void {
  * Say what the last triage action did.
  */
 function gwc_vt_triage_result_notice(): void {
+	/* Both screens gwc_vt_triage_redirect() can land on, and nowhere else: the
+	 * entries list and one entry's editor. Without this the notice printed
+	 * wherever the query argument was pasted — see the matching note in
+	 * gwc_vt_bulk_action_notice(). */
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+	if ( ! $screen instanceof WP_Screen ) {
+		return;
+	}
+
+	if ( 'edit-' . GWC_VT_ENTRY_TYPE !== $screen->id && GWC_VT_ENTRY_TYPE !== $screen->id ) {
+		return;
+	}
+
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks a sentence after a redirect.
 	$result = isset( $_GET['gwc_vt_triage'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_triage'] ) ) : '';
 

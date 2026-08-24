@@ -117,7 +117,7 @@ composer lint:fix      # only what phpcbf can fix — read the warning below fir
 composer compat        # PHPCompatibilityWP against the 7.4 floor
 ```
 
-Never add a `phpcs:ignore` without a `--` reason after it. There are 108, and
+Never add a `phpcs:ignore` without a `--` reason after it. There are 103, and
 **every one of them has been checked to actually suppress something** — a sweep
 neutralises each in turn and re-lints, and a stale one is deleted rather than
 left. Two rules follow:
@@ -151,6 +151,32 @@ it. That was corrected by hand at three consecutive releases before anybody
 wrote it down. `VersionTest` now fails on both that and a template left
 un-regenerated, so this is a step you are reminded about rather than one you
 have to remember.
+
+**From a worktree, fix the mount rather than the file.** `.wp-env.json` says
+`"plugins": [ "." ]`, and wp-env mounts that under the directory's **basename**
+— inside a worktree, something like `plugin-dry-review-5ae647`, which is exactly
+the name `make-pot` then stamps into both headers. Correcting the output by hand
+afterwards is what went wrong three times. Put this in `.wp-env.override.json`,
+which is gitignored, and the container gets the real slug so the generated file
+is right the first time:
+
+```json
+{
+	"port": 8971,
+	"testsPort": 8972,
+	"plugins": [],
+	"mappings": {
+		"wp-content/plugins/groundwork-common-volunteer-tracker": "."
+	}
+}
+```
+
+Pick ports nothing else is on while you are there — the override is also where
+they are pinned, so a fresh worktree collides with whatever is already using
+wp-env's default 8888. And keep any scratch config **out of the repository
+root**: `.distignore` names `.wp-env.override.json` and `.wp-env.php74.json`
+literally, so a `.wp-env.php74.local.json` sitting beside them is not excluded
+and rsyncs straight into the release payload.
 
 **Before a release, also run the directory's own scanner** — phpcs is not the
 whole of what a reviewer runs. Plugin Check reads the readme's headers, the file
@@ -246,8 +272,16 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   happened.
 - **Help tabs are added on `load-`, not in the renderer** — from the renderer they
   silently do not appear.
-- **Reference codes do not survive a salt rotation, on purpose.** They are keyed
-  with `wp_salt()` so they cannot be forged without database access.
+- **Reference codes are keyed with `wp_salt()`, so they cannot be forged without
+  database access** — but not with any authentication constant. This entry used
+  to say codes "do not survive a salt rotation", and that is wrong in the
+  direction that matters. `wp_salt()` given a scheme it does not know
+  (`gwc_vt_letter`, `gwc_vt_signup`, `gwc_vt_form`) never touches `AUTH_KEY` and
+  friends: it takes `SECRET_KEY` if defined, and otherwise the `secret_key` site
+  option that WordPress generates once and stores. The wordpress.org generator
+  does not emit `SECRET_KEY`, so the option is the usual answer, and rotating
+  wp-config's eight constants leaves every issued code valid. What breaks a code
+  is losing that option — a fresh install, or a restore predating it.
 - **A count and the screen it links to must come from one function.** The
   dashboard counted overdue volunteers with `gwc_vt_overdue_requirement_ids()` and
   linked to an unfiltered list; the unlogged-hours nag counted event slots with

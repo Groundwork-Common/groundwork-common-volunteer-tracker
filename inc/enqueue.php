@@ -38,17 +38,62 @@ function gwc_vt_register_front_assets(): void {
 		GWC_VT_VERSION
 	);
 
-	/* The letter's own stylesheet, registered rather than enqueued. The print
-	 * view links it by URL because it renders a standalone document; the
-	 * reference checker enqueues this handle so it can show the same letter
-	 * inside wp-admin. One stylesheet either way — see the note at the top of
-	 * inc/render.php about the printed and emailed letters being one document. */
+	/* The letter's own stylesheet, registered rather than enqueued. Three
+	 * standalone documents print it into their own <head> via
+	 * gwc_vt_print_document_styles(); the reference checker enqueues this handle
+	 * so it can show the same letter inside wp-admin. One stylesheet either way
+	 * — see the note at the top of inc/render.php about the printed and emailed
+	 * letters being one document. */
 	wp_register_style(
 		'gwc-vt-letter',
 		GWC_VT_URL . 'assets/css/letter.css',
 		array(),
 		GWC_VT_VERSION
 	);
+}
+
+/* ── Styling a document that is not a WordPress page ─────────────────────────
+ * Three places here render a complete <!doctype html> document and exit: the
+ * printed letter, the shift roster and the event roster. None of them runs the
+ * template loader, so none of them ever reaches wp_head() — which is exactly
+ * the point, and is the same argument as the one against a theme-overridable
+ * letter template. A theme that can inject into that <head> is a theme that can
+ * restyle a court document.
+ *
+ * These used to write the <link> by hand for that reason, with a phpcs:ignore
+ * explaining it. That is defensible and it is still the wrong shape: the
+ * version query string had to be remembered per call site and two of the three
+ * had forgotten it, so a letter.css change did not reach a browser that had
+ * cached the old one.
+ *
+ * wp_print_styles() with an explicit handle is the built-in function for this.
+ * It prints that one handle and nothing else — passing a handle deliberately
+ * skips the 'wp_print_styles' action, so nobody else gets to add to the
+ * document — and the version comes off the registration.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Print one registered stylesheet into a standalone document's <head>.
+ *
+ * @param string $handle A style handle registered by gwc_vt_register_front_assets().
+ */
+function gwc_vt_print_document_styles( string $handle = 'gwc-vt-letter' ): void {
+	/* These documents render from admin_post_* handlers, long after init. The
+	 * guard is for the integration scripts, which call the renderers directly. */
+	if ( ! wp_style_is( $handle, 'registered' ) ) {
+		gwc_vt_register_front_assets();
+	}
+
+	wp_enqueue_style( $handle );
+
+	/* Rendering the same letter twice in one request has to produce the same
+	 * document twice. do_items() marks a handle done and skips it forever after,
+	 * so without this the second render would come out unstyled — which is the
+	 * sort of thing that is invisible until the day somebody prints two. */
+	$styles       = wp_styles();
+	$styles->done = array_values( array_diff( $styles->done, array( $handle ) ) );
+
+	wp_print_styles( $handle );
 }
 
 /**

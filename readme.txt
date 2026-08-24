@@ -5,7 +5,7 @@ Tags: volunteer, volunteer hours, volunteer scheduling, community service, nonpr
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -136,6 +136,14 @@ Every message then goes to that address instead, with the site's name in the sub
 
 == Changelog ==
 
+= 1.1.2 =
+The volunteer picker now respects who is allowed to see which records, and the three printable documents load their stylesheet the way WordPress expects. Nothing you have recorded changes.
+
+* **The volunteer lookup no longer offers records the person searching cannot open.** Anyone who can log hours can search the volunteer list, which is as it should be — they have to say whose hours these were. But the search also reached records kept private, or left as a draft or pending by somebody else, and those are readable by fewer people than the search was. A contributor could learn that such a record existed, two letters at a time. The search now asks WordPress, for each record it finds, whether this person may read that one. Staff who could already see everything see no change.
+* **The same check now applies to the suggested match on the triage screen**, which reads a self-logged submission and offers the volunteer it probably belongs to. It could name a record the reader was not able to open.
+* **The letter, the shift roster and the event roster now load their stylesheet through WordPress** rather than linking it themselves. Two of the three were not carrying a version on that link, so a browser that had cached an older copy kept using it after an update. Reported by the WordPress.org plugin review team.
+* **Two admin notices could appear on screens they had nothing to do with.** The messages confirming a bulk verification and a completed triage were shown wherever their web address was pasted — including screens belonging to WordPress or to another plugin, where one could state a number of entries nobody had verified. Both now appear only on the hour entries screens they belong to.
+
 = 1.1.1 =
 Everything a volunteer meets on the way to signing up: the times now say which clock they are on, and a form that comes back with a mistake keeps what you typed and says which field it was.
 
@@ -183,6 +191,9 @@ The first release on WordPress.org.
 Otherwise nothing about the plugin's behavior changed between the last development build and this. Everything numbered below 1.0.0 was a development build — never published here, and not a version anybody can be upgrading from, which is why this page starts at the first release rather than at the first commit.
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+The volunteer search could show people the names of records they were not allowed to open — private, draft or pending. It now checks each record against the person searching. Also fixes the printable letter and rosters keeping a stale stylesheet. Nothing recorded changes.
 
 = 1.1.1 =
 Fixes to the public signup form. Times now say which timezone they are in, on the page and in email, so they cannot be read against a calendar entry and disagree. A form refused for a mistake keeps what you typed and names the field that was wrong, instead of clearing everything.

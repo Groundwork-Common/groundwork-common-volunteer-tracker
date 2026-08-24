@@ -121,10 +121,32 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
  * recorded and who attested to it.
  *
  * Keyed with wp_salt() so the code cannot be forged by anybody without database
- * access — which also means codes do not survive a salt rotation. That is the
- * right trade: an unforgeable code that occasionally has to be re-issued beats
- * a checksum anyone can compute. The verifier reports a mismatch rather than
- * claiming forgery, so the failure mode is a phone call, not an accusation.
+ * access. That is the right trade: an unforgeable code beats a checksum anyone
+ * can compute. The verifier reports a mismatch rather than claiming forgery, so
+ * the failure mode is a phone call, not an accusation.
+ *
+ * ── Which secret this actually uses, and what rotating one does ──────────────
+ * 'gwc_vt_letter' is not one of the four schemes wp_salt() knows, and the
+ * branch an unknown scheme takes is worth stating plainly, because a letter
+ * carries its code for years and the guess is easy to get backwards.
+ *
+ * An unknown scheme never reads AUTH_KEY, LOGGED_IN_KEY, NONCE_SALT or any of
+ * their siblings. It takes SECRET_KEY if wp-config.php defines it, and
+ * otherwise the 'secret_key' site option — a 64-character value WordPress
+ * generates once and stores in the database. The salt half is then derived from
+ * that key. Since the wordpress.org generator does not emit SECRET_KEY, the
+ * option is what nearly every site ends up using.
+ *
+ * So rotating the eight constants in wp-config.php, which is the thing an
+ * administrator is told to do after a breach and the thing that logs everybody
+ * out, does NOT invalidate letters already in the post. Codes break when the
+ * 'secret_key' option goes: a restore from a database that predates it, or a
+ * migration onto a fresh install. Rarer than a salt rotation, and worth knowing
+ * which is which when somebody rings to check a code and it does not match.
+ *
+ * Two properties this keeps either way: the code is a truncated HMAC, so it
+ * discloses nothing about the key it was made with, and the key is a secret of
+ * this site alone rather than anything the auth cookies are signed with.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**

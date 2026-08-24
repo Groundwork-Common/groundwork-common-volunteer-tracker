@@ -1,6 +1,9 @@
 <?php
 /**
- * What the schedule's two admin notices say, and when they say nothing.
+ * What this plugin's admin notices say, when they say nothing, and where.
+ *
+ * Two subjects. The first half is the schedule's pair and the wording they got
+ * wrong; the second is a scoping fix the WordPress.org review prompted.
  *
  * ── Why this needs a database ────────────────────────────────────────────────
  * Only because these live in inc/admin-schedule.php, which the unit bootstrap
@@ -215,6 +218,98 @@ gwc_vt_an_check(
 	'and the event-side one still carries its own',
 	false !== strpos( gwc_vt_an_render( 'event', 'called-off', array( 'gwc_vt_told' => '3' ) ), '3 people were told' ),
 	trim( wp_strip_all_tags( gwc_vt_an_render( 'event', 'called-off', array( 'gwc_vt_told' => '3' ) ) ) )
+);
+
+/* ── A notice belongs to its own screen ──────────────────────────────────────
+ * Guideline 11: a plugin does not put notices on screens that are not its own.
+ * These two read a query argument and printed on whatever page carried it, so
+ * wp-admin/index.php?gwc_vt_result=verified&gwc_vt_done=999 announced "999
+ * entries verified" on the dashboard. Nobody had verified anything.
+ *
+ * The number is what makes this more than tidiness. Everything this plugin
+ * shows about a record is a claim somebody may act on, and a screen that states
+ * a count of verified hours has to be a screen that counted them.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+require_once ABSPATH . 'wp-admin/includes/screen.php';
+require_once ABSPATH . 'wp-admin/includes/template.php';
+
+/**
+ * Render one entry-side notice on one screen, with $_GET put back afterwards.
+ *
+ * @param string $which     'bulk' or 'triage'.
+ * @param string $screen_id The screen to pretend we are on.
+ * @return string
+ */
+function gwc_vt_an_on_screen( string $which, string $screen_id ): string {
+	$before = $_GET;
+
+	$_GET = 'bulk' === $which
+		? array(
+			'gwc_vt_result' => 'verified',
+			'gwc_vt_done'   => '999',
+		)
+		: array( 'gwc_vt_triage' => 'attached' );
+
+	set_current_screen( $screen_id );
+
+	ob_start();
+
+	if ( 'bulk' === $which ) {
+		gwc_vt_bulk_action_notice();
+	} else {
+		gwc_vt_triage_result_notice();
+	}
+
+	$out = (string) ob_get_clean();
+
+	$_GET = $before;
+
+	return $out;
+}
+
+foreach ( array( 'dashboard', 'options-general', 'edit-post' ) as $gwc_vt_elsewhere ) {
+	gwc_vt_an_check(
+		'the bulk verification notice stays off ' . $gwc_vt_elsewhere,
+		'' === trim( gwc_vt_an_on_screen( 'bulk', $gwc_vt_elsewhere ) ),
+		trim( wp_strip_all_tags( gwc_vt_an_on_screen( 'bulk', $gwc_vt_elsewhere ) ) )
+	);
+
+	gwc_vt_an_check(
+		'the triage notice stays off ' . $gwc_vt_elsewhere,
+		'' === trim( gwc_vt_an_on_screen( 'triage', $gwc_vt_elsewhere ) ),
+		trim( wp_strip_all_tags( gwc_vt_an_on_screen( 'triage', $gwc_vt_elsewhere ) ) )
+	);
+}
+
+/* And still says its piece where the handler actually lands. A scoping fix that
+ * silenced the notice everywhere would pass every check above. */
+
+gwc_vt_an_check(
+	'the bulk verification notice still shows on the entries list',
+	false !== strpos( gwc_vt_an_on_screen( 'bulk', 'edit-' . GWC_VT_ENTRY_TYPE ), '999' ),
+	trim( wp_strip_all_tags( gwc_vt_an_on_screen( 'bulk', 'edit-' . GWC_VT_ENTRY_TYPE ) ) )
+);
+
+gwc_vt_an_check(
+	'the triage notice still shows on the entries list',
+	'' !== trim( gwc_vt_an_on_screen( 'triage', 'edit-' . GWC_VT_ENTRY_TYPE ) ),
+	trim( wp_strip_all_tags( gwc_vt_an_on_screen( 'triage', 'edit-' . GWC_VT_ENTRY_TYPE ) ) )
+);
+
+/* gwc_vt_triage_redirect() also lands on one entry's editor; the bulk handler
+ * never does, and should stay quiet there. */
+
+gwc_vt_an_check(
+	'the triage notice also shows on a single entry',
+	'' !== trim( gwc_vt_an_on_screen( 'triage', GWC_VT_ENTRY_TYPE ) ),
+	trim( wp_strip_all_tags( gwc_vt_an_on_screen( 'triage', GWC_VT_ENTRY_TYPE ) ) )
+);
+
+gwc_vt_an_check(
+	'and the bulk one does not',
+	'' === trim( gwc_vt_an_on_screen( 'bulk', GWC_VT_ENTRY_TYPE ) ),
+	trim( wp_strip_all_tags( gwc_vt_an_on_screen( 'bulk', GWC_VT_ENTRY_TYPE ) ) )
 );
 
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
