@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Groundwork Common Volunteer Tracker 1.1.1\n"
+"Project-Id-Version: Groundwork Common Volunteer Tracker 1.1.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/groundwork-common-volunteer-tracker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-23T21:11:32+00:00\n"
+"POT-Creation-Date: 2026-08-24T12:43:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -49,9 +49,9 @@ msgstr ""
 #: inc/admin-quick-add.php:69
 #: inc/admin-quick-add.php:532
 #: inc/admin-schedule.php:68
-#: inc/admin-shift.php:948
-#: inc/admin-triage.php:270
-#: inc/admin-triage.php:312
+#: inc/admin-shift.php:947
+#: inc/admin-triage.php:297
+#: inc/admin-triage.php:339
 #: inc/admin-verify.php:236
 msgid "Permission denied"
 msgstr ""
@@ -186,7 +186,7 @@ msgid "Volunteers with hours"
 msgstr ""
 
 #: inc/admin-dashboard.php:374
-#: inc/render.php:129
+#: inc/render.php:128
 msgid "Shifts recorded"
 msgstr ""
 
@@ -199,7 +199,7 @@ msgstr ""
 #: inc/admin-dashboard.php:411
 #: inc/admin-help.php:114
 #: inc/admin-screen.php:221
-#: inc/render.php:133
+#: inc/render.php:132
 msgid "Shifts"
 msgstr ""
 
@@ -220,7 +220,7 @@ msgstr ""
 #: inc/admin-volunteer.php:316
 #: inc/cpt.php:229
 #: inc/privacy.php:607
-#: inc/render.php:135
+#: inc/render.php:134
 msgid "Hours"
 msgstr ""
 
@@ -425,7 +425,7 @@ msgstr ""
 #: inc/admin-shift.php:353
 #: inc/cpt.php:227
 #: inc/meta-box.php:113
-#: inc/render.php:130
+#: inc/render.php:129
 msgid "Volunteer"
 msgstr ""
 
@@ -493,18 +493,18 @@ msgid "Log the hours"
 msgstr ""
 
 #: inc/admin-event-roster.php:236
-#: inc/admin-event-roster.php:612
+#: inc/admin-event-roster.php:611
 #: inc/admin-event.php:105
 #: inc/admin-shift.php:311
-#: inc/admin-shift.php:897
+#: inc/admin-shift.php:896
 #: inc/privacy.php:554
 msgid "Name"
 msgstr ""
 
 #: inc/admin-event-roster.php:237
-#: inc/admin-event-roster.php:613
+#: inc/admin-event-roster.php:612
 #: inc/admin-shift.php:312
-#: inc/admin-shift.php:898
+#: inc/admin-shift.php:897
 msgid "Contact"
 msgstr ""
 
@@ -561,39 +561,39 @@ msgstr ""
 #: inc/admin-event-roster.php:532
 #: inc/admin-letters.php:333
 #: inc/admin-shift.php:833
-#: inc/admin-triage.php:262
+#: inc/admin-triage.php:289
 #: inc/admin-verify.php:228
 msgid "Not found"
 msgstr ""
 
 #. translators: %s: a staff member's name.
-#: inc/admin-event-roster.php:583
-#: inc/admin-shift.php:885
+#: inc/admin-event-roster.php:582
+#: inc/admin-shift.php:884
 #, php-format
 msgid "Supervised by %s"
 msgstr ""
 
+#: inc/admin-event-roster.php:613
+#: inc/admin-shift.php:898
+msgid "In"
+msgstr ""
+
 #: inc/admin-event-roster.php:614
 #: inc/admin-shift.php:899
-msgid "In"
+msgid "Out"
 msgstr ""
 
 #: inc/admin-event-roster.php:615
 #: inc/admin-shift.php:900
-msgid "Out"
-msgstr ""
-
-#: inc/admin-event-roster.php:616
-#: inc/admin-shift.php:901
 msgid "Initials"
 msgstr ""
 
-#: inc/admin-event-roster.php:634
+#: inc/admin-event-roster.php:633
 msgid "(waiting list)"
 msgstr ""
 
-#: inc/admin-event-roster.php:655
-#: inc/admin-shift.php:925
+#: inc/admin-event-roster.php:654
+#: inc/admin-shift.php:924
 msgid "Hours from this sheet still need typing up and verifying before they can appear on a letter."
 msgstr ""
 
@@ -802,7 +802,7 @@ msgstr ""
 #: inc/admin-volunteer.php:315
 #: inc/cpt.php:228
 #: inc/privacy.php:603
-#: inc/render.php:134
+#: inc/render.php:133
 msgid "Date"
 msgstr ""
 
@@ -1347,7 +1347,7 @@ msgid "Preview"
 msgstr ""
 
 #: inc/admin-letters.php:175
-#: inc/admin-triage.php:407
+#: inc/admin-triage.php:448
 msgid "That volunteer no longer exists."
 msgstr ""
 
@@ -1357,7 +1357,7 @@ msgstr ""
 
 #: inc/admin-letters.php:196
 #: inc/privacy.php:566
-#: inc/render.php:132
+#: inc/render.php:131
 #: inc/volunteer-cpt.php:137
 msgid "Verified hours"
 msgstr ""
@@ -1592,7 +1592,7 @@ msgstr ""
 #: inc/admin-shift.php:206
 #: inc/meta-box.php:227
 #: inc/privacy.php:615
-#: inc/render.php:137
+#: inc/render.php:136
 msgid "Supervised by"
 msgstr ""
 
@@ -1775,7 +1775,7 @@ msgid "Schedule"
 msgstr ""
 
 #: inc/admin-schedule.php:67
-#: inc/admin-shift.php:947
+#: inc/admin-shift.php:946
 msgid "You do not have permission to manage the schedule."
 msgstr ""
 
@@ -2483,7 +2483,7 @@ msgid "Letterhead"
 msgstr ""
 
 #: inc/admin-settings.php:396
-#: inc/render.php:140
+#: inc/render.php:139
 msgid "Signature"
 msgstr ""
 
@@ -2931,65 +2931,65 @@ msgid "Only offered while nobody is signed up. A shift people committed to is ca
 msgstr ""
 
 #. translators: %d: number of submissions.
-#: inc/admin-triage.php:204
+#: inc/admin-triage.php:231
 #, php-format
 msgid "%d person has sent in hours through the public form and has not been matched to a volunteer record yet."
 msgid_plural "%d people have sent in hours through the public form and have not been matched to a volunteer record yet."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-triage.php:222
+#: inc/admin-triage.php:249
 msgid "Match them now"
 msgstr ""
 
-#: inc/admin-triage.php:261
+#: inc/admin-triage.php:288
 #: inc/admin-verify.php:227
 msgid "That hour entry does not exist."
 msgstr ""
 
-#: inc/admin-triage.php:269
+#: inc/admin-triage.php:296
 msgid "You do not have permission to edit this entry."
 msgstr ""
 
-#: inc/admin-triage.php:311
+#: inc/admin-triage.php:338
 msgid "You do not have permission to create a volunteer record."
 msgstr ""
 
-#: inc/admin-triage.php:405
+#: inc/admin-triage.php:446
 msgid "These hours are now on that volunteer’s record. They still need verifying."
 msgstr ""
 
-#: inc/admin-triage.php:406
+#: inc/admin-triage.php:447
 msgid "A volunteer record was created from the submission and these hours attached to it. They still need verifying."
 msgstr ""
 
-#: inc/admin-triage.php:408
+#: inc/admin-triage.php:449
 msgid "This submission has no name on it, so there is nothing to create a record from. Choose a volunteer instead."
 msgstr ""
 
-#: inc/admin-triage.php:409
+#: inc/admin-triage.php:450
 msgid "The volunteer record could not be created."
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-triage.php:441
+#: inc/admin-triage.php:482
 #, php-format
 msgid "Attach to %s"
 msgstr ""
 
-#: inc/admin-triage.php:450
+#: inc/admin-triage.php:491
 msgid "Their email address matches this volunteer exactly."
 msgstr ""
 
-#: inc/admin-triage.php:451
+#: inc/admin-triage.php:492
 msgid "Their name matches this volunteer exactly. Check it is the same person."
 msgstr ""
 
-#: inc/admin-triage.php:457
+#: inc/admin-triage.php:498
 msgid "Create a volunteer from this"
 msgstr ""
 
-#: inc/admin-triage.php:460
+#: inc/admin-triage.php:501
 msgid "Nobody on file matches this name or email. Or choose an existing volunteer below."
 msgstr ""
 
@@ -3008,7 +3008,7 @@ msgstr ""
 #: inc/admin-verify.php:137
 #: inc/admin-verify.php:281
 #: inc/admin-verify.php:499
-#: inc/admin-verify.php:790
+#: inc/admin-verify.php:804
 msgid "Withdraw verification"
 msgstr ""
 
@@ -3054,7 +3054,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of hour entries.
-#: inc/admin-verify.php:597
+#: inc/admin-verify.php:611
 #, php-format
 msgid "%d entry verified."
 msgid_plural "%d entries verified."
@@ -3062,7 +3062,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of hour entries.
-#: inc/admin-verify.php:602
+#: inc/admin-verify.php:616
 #, php-format
 msgid "Verification withdrawn from %d entry."
 msgid_plural "Verification withdrawn from %d entries."
@@ -3070,40 +3070,40 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of hour entries that were skipped.
-#: inc/admin-verify.php:609
+#: inc/admin-verify.php:623
 #, php-format
 msgid "%d was skipped — you cannot verify it."
 msgid_plural "%d were skipped — you cannot verify them."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-verify.php:641
+#: inc/admin-verify.php:655
 msgid "Filter by verification"
 msgstr ""
 
-#: inc/admin-verify.php:644
+#: inc/admin-verify.php:658
 msgid "Any verification state"
 msgstr ""
 
-#: inc/admin-verify.php:652
+#: inc/admin-verify.php:666
 msgid "Awaiting matching"
 msgstr ""
 
-#: inc/admin-verify.php:755
+#: inc/admin-verify.php:769
 #: inc/privacy.php:619
-#: inc/render.php:138
+#: inc/render.php:137
 msgid "Verification"
 msgstr ""
 
-#: inc/admin-verify.php:775
+#: inc/admin-verify.php:789
 msgid "Save the shift first, then verify it."
 msgstr ""
 
-#: inc/admin-verify.php:803
+#: inc/admin-verify.php:817
 msgid "Verifying records that you, as a member of staff, attest these hours were worked. Your name and the date are recorded and appear on the verification letter."
 msgstr ""
 
-#: inc/admin-verify.php:809
+#: inc/admin-verify.php:823
 msgid "Verify these hours"
 msgstr ""
 
@@ -3142,7 +3142,7 @@ msgstr ""
 #: inc/admin-volunteer.php:317
 #: inc/cpt.php:230
 #: inc/privacy.php:611
-#: inc/render.php:136
+#: inc/render.php:135
 msgid "Activity"
 msgstr ""
 
@@ -3868,60 +3868,60 @@ msgstr ""
 msgid "Every month, on the same weekday"
 msgstr ""
 
-#: inc/render.php:67
+#: inc/render.php:66
 msgid "Print this letter"
 msgstr ""
 
-#: inc/render.php:70
+#: inc/render.php:69
 msgid "Choose “Save as PDF” in the print dialog to email it yourself."
 msgstr ""
 
-#: inc/render.php:128
+#: inc/render.php:127
 msgid "Volunteer Service Verification"
 msgstr ""
 
-#: inc/render.php:131
+#: inc/render.php:130
 msgid "Period covered"
 msgstr ""
 
-#: inc/render.php:139
+#: inc/render.php:138
 msgid "Not verified — not included in the total above"
 msgstr ""
 
 #. translators: %s: a duration, e.g. "1.5".
-#: inc/render.php:265
+#: inc/render.php:264
 #, php-format
 msgid "This letter also lists %s of recorded but unverified time. No member of staff has attested to those shifts, and they are excluded from the verified total above."
 msgstr ""
 
-#: inc/render.php:361
+#: inc/render.php:360
 msgid "This letter confirms that {name} performed {hours} hours of verified volunteer service with {org} during {period}. The shifts below are recorded in our volunteer hour log, and each was attested to by a member of our staff."
 msgstr ""
 
 #. translators: 1: a date, 2: a date.
-#: inc/render.php:383
+#: inc/render.php:382
 #, php-format
 msgid "%1$s to %2$s"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/render.php:391
+#: inc/render.php:390
 #, php-format
 msgid "from %s onwards"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/render.php:396
+#: inc/render.php:395
 #, php-format
 msgid "up to %s"
 msgstr ""
 
-#: inc/render.php:399
+#: inc/render.php:398
 msgid "their entire time volunteering with us"
 msgstr ""
 
 #. translators: 1: a volunteer's name, 2: the organization's name.
-#: inc/render.php:411
+#: inc/render.php:410
 #, php-format
 msgid "Volunteer service verification — %1$s — %2$s"
 msgstr ""
@@ -3962,7 +3962,7 @@ msgstr[1] ""
 msgid "Part of a volunteer’s name."
 msgstr ""
 
-#: inc/rest.php:85
+#: inc/rest.php:91
 msgid "Type at least two characters."
 msgstr ""
 

@@ -55,8 +55,7 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' )
 	<meta name="robots" content="noindex, nofollow" />
 	<title><?php echo esc_html( gwc_vt_letter_title( $letter ) ); ?></title>
 	<?php if ( 'print' === $medium ) : ?>
-		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet -- this is a standalone document with its own <head>, not a WordPress page, so there is no enqueue queue to join. The plugin owning this markup outright is the point: see the note about theme-overridable templates. ?>
-		<link rel="stylesheet" href="<?php echo esc_url( GWC_VT_URL . 'assets/css/letter.css?ver=' . GWC_VT_VERSION ); ?>" />
+		<?php gwc_vt_print_document_styles(); ?>
 	<?php endif; ?>
 </head>
 <body class="gwcvt-letter-page">

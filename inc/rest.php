@@ -63,6 +63,12 @@ function gwc_vt_register_rest_routes(): void {
  * place. Anybody who can log a shift has to be able to say whose it was, and
  * anybody who cannot has no reason to be enumerating the volunteer list.
  *
+ * This is the gate on the ROUTE. It is deliberately not the whole answer: see
+ * gwc_vt_rest_find_volunteers(), which decides per record whether this user may
+ * see that one. edit_posts is a contributor-level capability, and a contributor
+ * who may pick a volunteer from the published list has no business learning that
+ * a private or unpublished record exists.
+ *
  * @return bool
  */
 function gwc_vt_rest_can_search_volunteers(): bool {
@@ -93,11 +99,13 @@ function gwc_vt_rest_validate_search( $value ) {
 /**
  * Names and IDs, and nothing else.
  *
- * The response shape is deliberately two keys wide, and RestTest asserts the
- * exact key set rather than merely that id and label are present. This endpoint
- * sits one careless line away from returning the email address, the phone
- * number, or a case number — the volunteer post carries all three — and an
- * assertion that only fails when something is MISSING would not catch that.
+ * The response shape is deliberately two keys wide, and tests/integration/rest.php
+ * asserts the exact key set rather than merely that id and label are present.
+ * This endpoint sits one careless line away from returning the email address,
+ * the phone number, or a case number — the volunteer post carries all three —
+ * and an assertion that only fails when something is MISSING would not catch
+ * that. (This named a "RestTest" that had never been written; the integration
+ * script now exists and does the work the sentence claimed.)
  *
  * @param WP_REST_Request $request The request.
  * @return WP_REST_Response
@@ -105,12 +113,17 @@ function gwc_vt_rest_validate_search( $value ) {
 function gwc_vt_rest_find_volunteers( $request ) {
 	$search = trim( (string) $request->get_param( 'search' ) );
 
+	/* Over-fetch, because the read_post filter below discards some. Five times
+	 * the page size rather than a second query: on the site this is wrong for —
+	 * one where most volunteer records are private and the caller may read none
+	 * of them — the right answer is an empty list, and paging until it fills
+	 * would just be a slower way to reach it. */
 	$ids = get_posts(
 		array(
 			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
 			'fields'                 => 'ids',
-			'posts_per_page'         => 20,
+			'posts_per_page'         => 100,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			'update_post_meta_cache' => false,
@@ -123,10 +136,31 @@ function gwc_vt_rest_find_volunteers( $request ) {
 	$results = array();
 
 	foreach ( (array) $ids as $id ) {
+		$id = (int) $id;
+
+		/* Asked per record, and asked of core rather than answered here. The
+		 * route's own gate is edit_posts; the four statuses above include three
+		 * that edit_posts does not entitle anybody to read. read_post is the meta
+		 * capability that knows the difference — published records to anybody who
+		 * got this far, private ones to read_private_posts, somebody else's draft
+		 * to edit_others_posts — and it stays right if a site remaps the volunteer
+		 * type's capabilities through the gwc_vt_capabilities filter.
+		 *
+		 * Reported by the plugin directory review: without this, a contributor
+		 * could enumerate the names and IDs of every private, draft and pending
+		 * volunteer record on the site, two characters at a time. */
+		if ( ! current_user_can( 'read_post', $id ) ) {
+			continue;
+		}
+
 		$results[] = array(
-			'id'    => (int) $id,
-			'label' => (string) get_the_title( (int) $id ),
+			'id'    => $id,
+			'label' => (string) get_the_title( $id ),
 		);
+
+		if ( count( $results ) >= 20 ) {
+			break;
+		}
 	}
 
 	return rest_ensure_response( $results );

@@ -579,6 +579,20 @@ function gwc_vt_handle_bulk_unverify(): void {
  * Say what the last action did.
  */
 function gwc_vt_bulk_action_notice(): void {
+	/* Scoped to the screen the redirect actually lands on, like every other
+	 * notice this plugin adds. Reading a query argument was not enough on its
+	 * own: gwc_vt_result is just a string in a URL, so wp-admin/index.php?
+	 * gwc_vt_result=verified&gwc_vt_done=999 printed "999 entries verified" on
+	 * the dashboard, on somebody else's screen, about work nobody had done.
+	 * Harmless as a prank and wrong twice over — guideline 11 is about not
+	 * putting notices on screens that are not yours, and this plugin's whole
+	 * claim is that what it says about a record is true. */
+	$screen = get_current_screen();
+
+	if ( ! $screen instanceof WP_Screen || 'edit-' . GWC_VT_ENTRY_TYPE !== $screen->id ) {
+		return;
+	}
+
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; this only decides which sentence to print after a redirect.
 	$result = isset( $_GET['gwc_vt_result'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_result'] ) ) : '';
 
