@@ -288,8 +288,28 @@ function gwc_vt_render_dashboard_upcoming(): void {
 function gwc_vt_render_dashboard_shiftline( int $shift_id ): void {
 	$max    = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true );
 	$filled = gwc_vt_shift_filled( $shift_id );
-	$short  = gwc_vt_shift_is_understaffed( $shift_id );
-	$full   = $max > 0 && $filled >= $max;
+
+	/* The decision comes from gwc_vt_shift_state_from(), so this line and the
+	 * schedule row cannot disagree about what red means — see the block comment
+	 * above gwc_vt_shift_state() in inc/shifts.php. Facts passed in rather than
+	 * asking by ID for the reason the schedule row does it: $filled is already
+	 * in hand here, and gwc_vt_shift_filled() is a query.
+	 *
+	 * 'logged' joins 'full' on the green meter: both mean there is nothing left
+	 * to do about this shift's roster. */
+	$state = gwc_vt_shift_state_from(
+		array(
+			'cancelled'    => gwc_vt_shift_is_cancelled( $shift_id ),
+			'ended'        => gwc_vt_shift_has_ended( $shift_id ),
+			'reconciled'   => gwc_vt_shift_is_reconciled( $shift_id ),
+			'understaffed' => gwc_vt_shift_is_understaffed( $shift_id ),
+			'filled'       => $filled,
+			'max'          => $max,
+		)
+	);
+
+	$short = 'short' === $state;
+	$full  = in_array( $state, array( 'full', 'logged' ), true );
 
 	/* A hair of width even at zero, so an empty shift still reads as a meter
 	 * rather than as a missing element. */

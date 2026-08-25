@@ -465,6 +465,149 @@ function gwc_vt_shift_is_understaffed( int $shift_id ): bool {
 	return gwc_vt_shift_filled( $shift_id ) < $min;
 }
 
+/* ── What state a shift is in, said once ─────────────────────────────────────
+ * The schedule row and the dashboard's shift line each worked this out for
+ * themselves, and they disagreed: the row knew about cancelled and awaiting and
+ * had no idea what full meant, the line knew short and full and nothing else. A
+ * shift that had ended with nobody on it read as neutral in one place and as
+ * "filling normally" in the other.
+ *
+ * That was survivable while there were two of them. The redesign draws a shift
+ * as a coloured chip in three more places — the dashboard week strip, the month
+ * calendar, the shift drawer — and colour is doing real work there: it is how
+ * "which Saturday is in trouble" gets answered without reading a row. Five
+ * screens each deciding for themselves what red means is five chances to be
+ * inconsistent about the one thing the colour is for.
+ *
+ * So: one function, one vocabulary of six words, and every screen asks it.
+ *
+ * ── Colour is reinforcement, never the only signal ───────────────────────────
+ * Every one of these states has words to go with it — gwc_vt_shift_state_label()
+ * for the state itself, gwc_vt_shift_fill_label() for the numbers — and no
+ * screen may use the tint alone. "Short of people" and "full" is exactly the
+ * distinction somebody with a colour vision deficiency must not have to infer
+ * from a red square.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Which state a shift is in.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string One of the keys in gwc_vt_shift_state_labels().
+ */
+function gwc_vt_shift_state( int $shift_id ): string {
+	return gwc_vt_shift_state_from(
+		array(
+			'cancelled'    => gwc_vt_shift_is_cancelled( $shift_id ),
+			'ended'        => gwc_vt_shift_has_ended( $shift_id ),
+			'reconciled'   => gwc_vt_shift_is_reconciled( $shift_id ),
+			'understaffed' => gwc_vt_shift_is_understaffed( $shift_id ),
+			'filled'       => gwc_vt_shift_filled( $shift_id ),
+			'max'          => (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true ),
+		)
+	);
+}
+
+/**
+ * The same decision, over facts rather than a post ID.
+ *
+ * Split out so the precedence can be asserted without a database — the same
+ * reason inc/dashboard.php keeps its counting apart from its screen. The
+ * ordering below is the whole of this function and every line of it is a
+ * decision somebody could reasonably have made differently.
+ *
+ * @param array $facts cancelled, ended, reconciled, understaffed, filled, max.
+ * @return string
+ */
+function gwc_vt_shift_state_from( array $facts ): string {
+	$cancelled    = (bool) ( $facts['cancelled'] ?? false );
+	$ended        = (bool) ( $facts['ended'] ?? false );
+	$reconciled   = (bool) ( $facts['reconciled'] ?? false );
+	$understaffed = (bool) ( $facts['understaffed'] ?? false );
+	$filled       = (int) ( $facts['filled'] ?? 0 );
+	$max          = (int) ( $facts['max'] ?? 0 );
+
+	/* First, because it survives everything else. A called-off shift that was
+	 * full and had its hours logged is still called off, and that is the only
+	 * thing anybody needs to know about it. */
+	if ( $cancelled ) {
+		return 'cancelled';
+	}
+
+	if ( $ended ) {
+		if ( $reconciled ) {
+			return 'logged';
+		}
+
+		/* Somebody has to have been on it. A shift that ended with an empty
+		 * roster has no hours waiting to be written up, so calling it "awaiting"
+		 * would put a permanent amber row on the schedule for work that never
+		 * happened — and the dashboard's own worklist counts the same way. */
+		if ( $filled > 0 ) {
+			return 'awaiting';
+		}
+
+		/* Past, empty, nothing owed. Neutral rather than a seventh word: the
+		 * schedule has always drawn this as an ordinary row, and the numbers
+		 * beside it say "0 of 8" whatever colour it carries. */
+		return 'ok';
+	}
+
+	/* Before full, because a shift can only be both when its minimum is above
+	 * its maximum — and if somebody has managed to configure that, the state
+	 * worth showing is the one that needs a phone call. Understaffed is already
+	 * false for a shift that has ended; the check above has handled those. */
+	if ( $understaffed ) {
+		return 'short';
+	}
+
+	if ( $max > 0 && $filled >= $max ) {
+		return 'full';
+	}
+
+	return 'ok';
+}
+
+/**
+ * The words for each state.
+ *
+ * A function with a memo and not a const, for the reason every translated table
+ * in this plugin is: a const is evaluated before the request's translations
+ * load, which is invisible on an English site and total on every other one.
+ *
+ * 'full' and 'logged' are separate states that share a colour, and the month
+ * calendar's legend says "Full, or hours logged" for the pair. They keep their
+ * own words here because a row is one or the other and can say which.
+ *
+ * @return array<string, string>
+ */
+function gwc_vt_shift_state_labels(): array {
+	static $labels = null;
+
+	if ( null === $labels ) {
+		$labels = array(
+			'short'     => __( 'Short of people', 'groundwork-common-volunteer-tracker' ),
+			'ok'        => __( 'Filling normally', 'groundwork-common-volunteer-tracker' ),
+			'full'      => __( 'Full', 'groundwork-common-volunteer-tracker' ),
+			'logged'    => __( 'Hours logged', 'groundwork-common-volunteer-tracker' ),
+			'awaiting'  => __( 'Happened, hours not logged', 'groundwork-common-volunteer-tracker' ),
+			'cancelled' => __( 'Called off', 'groundwork-common-volunteer-tracker' ),
+		);
+	}
+
+	return $labels;
+}
+
+/**
+ * The words for one state, or '' when it is not one.
+ *
+ * @param string $state A key from gwc_vt_shift_state_labels().
+ * @return string
+ */
+function gwc_vt_shift_state_label( string $state ): string {
+	return (string) ( gwc_vt_shift_state_labels()[ $state ] ?? '' );
+}
+
 /* ── Finding shifts ──────────────────────────────────────────────────────── */
 
 /**

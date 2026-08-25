@@ -160,4 +160,161 @@ final class ShiftTest extends TestCase {
 		$this->assertNotNull( $instant );
 		$this->assertSame( '2026-03-07 09:00:00', $instant->format( 'Y-m-d H:i:s' ) );
 	}
+
+	/* ── What state a shift is in ────────────────────────────────────────────
+	 * gwc_vt_shift_state_from() is a precedence, and the precedence is the
+	 * whole function: every case below is a shift that satisfies two of the
+	 * conditions at once, where the answer is which one wins. They are asserted
+	 * here rather than left to the screens because five screens will draw this
+	 * as a colour and the colour is the only thing most people will read.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * @param string $expected The state.
+	 * @param array  $facts    What is true of the shift.
+	 */
+	#[DataProvider( 'provide_shift_states' )]
+	public function test_it_says_what_state_a_shift_is_in( string $expected, array $facts ): void {
+		$this->assertSame( $expected, gwc_vt_shift_state_from( $facts ) );
+	}
+
+	/**
+	 * @return array<string, array{0:string, 1:array}>
+	 */
+	public static function provide_shift_states(): array {
+		return array(
+			'a shift filling normally'         => array(
+				'ok',
+				array( 'filled' => 3, 'max' => 8 ),
+			),
+			'below its minimum'                => array(
+				'short',
+				array( 'understaffed' => true, 'filled' => 1, 'max' => 8 ),
+			),
+			'at its maximum'                   => array(
+				'full',
+				array( 'filled' => 8, 'max' => 8 ),
+			),
+			'somehow past its maximum'         => array(
+				'full',
+				array( 'filled' => 9, 'max' => 8 ),
+			),
+			'no maximum is never full'         => array(
+				'ok',
+				array( 'filled' => 40, 'max' => 0 ),
+			),
+			'happened, nobody typed it up'     => array(
+				'awaiting',
+				array( 'ended' => true, 'filled' => 4, 'max' => 8 ),
+			),
+			'happened and written up'          => array(
+				'logged',
+				array( 'ended' => true, 'reconciled' => true, 'filled' => 4, 'max' => 8 ),
+			),
+			'called off'                       => array(
+				'cancelled',
+				array( 'cancelled' => true, 'filled' => 2, 'max' => 8 ),
+			),
+
+			/* The precedences. */
+			'called off beats everything'      => array(
+				'cancelled',
+				array( 'cancelled' => true, 'ended' => true, 'reconciled' => true, 'understaffed' => true, 'filled' => 8, 'max' => 8 ),
+			),
+			'written up beats waiting'         => array(
+				'logged',
+				array( 'ended' => true, 'reconciled' => true, 'filled' => 0, 'max' => 8 ),
+			),
+			'short beats full on a bad config' => array(
+				'short',
+				array( 'understaffed' => true, 'filled' => 8, 'max' => 8 ),
+			),
+		);
+	}
+
+	/**
+	 * A shift that ended with an empty roster is not waiting for anything.
+	 *
+	 * There are no hours to write up, so amber would put a row on the schedule
+	 * for work that never happened — and it would never go away, because
+	 * nothing anybody can do makes it go away. Neutral, which is what the
+	 * schedule has always drawn it as.
+	 */
+	public function test_a_past_shift_nobody_came_to_is_not_awaiting(): void {
+		$this->assertSame(
+			'ok',
+			gwc_vt_shift_state_from(
+				array(
+					'ended'  => true,
+					'filled' => 0,
+					'max'    => 8,
+				)
+			)
+		);
+	}
+
+	/**
+	 * Being short stops mattering once a shift is over.
+	 *
+	 * Nobody can ring round about last Saturday. The facts here say both, and
+	 * the answer has to be the one somebody can act on — which is writing it up.
+	 */
+	public function test_a_past_shift_is_never_short(): void {
+		$this->assertSame(
+			'awaiting',
+			gwc_vt_shift_state_from(
+				array(
+					'ended'        => true,
+					'understaffed' => true,
+					'filled'       => 2,
+					'max'          => 8,
+				)
+			)
+		);
+	}
+
+	/**
+	 * Nothing known is not an error.
+	 */
+	public function test_it_has_an_answer_for_a_shift_it_knows_nothing_about(): void {
+		$this->assertSame( 'ok', gwc_vt_shift_state_from( array() ) );
+	}
+
+	/* ── The words that go with the colour ───────────────────────────────── */
+
+	/**
+	 * Every state has words. The tint is reinforcement and never the only
+	 * signal, so a state that reached a screen without a label would be a
+	 * coloured square nobody could read.
+	 */
+	public function test_every_state_has_words(): void {
+		$states = array( 'short', 'ok', 'full', 'logged', 'awaiting', 'cancelled' );
+
+		foreach ( $states as $state ) {
+			$this->assertNotSame( '', gwc_vt_shift_state_label( $state ), $state . ' needs words' );
+		}
+
+		$this->assertSame( $states, array_keys( gwc_vt_shift_state_labels() ) );
+	}
+
+	/**
+	 * And every state the decision can return is one of them.
+	 *
+	 * Asserted against the provider above rather than by inspection: a seventh
+	 * state added to gwc_vt_shift_state_from() without a label would fail here
+	 * rather than reaching a screen as an unstyled chip.
+	 */
+	public function test_every_state_it_returns_has_words(): void {
+		foreach ( self::provide_shift_states() as $name => $case ) {
+			$this->assertNotSame(
+				'',
+				gwc_vt_shift_state_label( gwc_vt_shift_state_from( $case[1] ) ),
+				$name . ' produced a state with no words'
+			);
+		}
+	}
+
+	public function test_a_state_it_has_never_heard_of_has_no_words(): void {
+		$this->assertSame( '', gwc_vt_shift_state_label( 'overbooked' ) );
+	}
 }

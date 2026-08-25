@@ -277,26 +277,50 @@ function gwc_vt_render_schedule_list(): void {
  * @param string $folded_to The last of their dates, Y-m-d, when it stands for more than itself.
  */
 function gwc_vt_render_schedule_row( int $shift_id, string $base, int $folded = 0, string $folded_to = '' ): void {
-	$cancelled    = gwc_vt_shift_is_cancelled( $shift_id );
-	$ended        = gwc_vt_shift_has_ended( $shift_id );
-	$reconciled   = gwc_vt_shift_is_reconciled( $shift_id );
-	$filled       = gwc_vt_shift_filled( $shift_id );
-	$understaffed = ! $cancelled && ! $ended && gwc_vt_shift_is_understaffed( $shift_id );
-	$edit_url     = add_query_arg( 'shift', $shift_id, $base );
+	$ended      = gwc_vt_shift_has_ended( $shift_id );
+	$reconciled = gwc_vt_shift_is_reconciled( $shift_id );
+	$filled     = gwc_vt_shift_filled( $shift_id );
+	$edit_url   = add_query_arg( 'shift', $shift_id, $base );
 
-	/* Waiting to be typed up: it happened, somebody was on it, and no hours came
-	 * out. Understaffed stops mattering once a shift is over — being short of
-	 * people last Saturday is not something anybody can act on. */
-	$awaiting = $ended && ! $cancelled && ! $reconciled && $filled > 0;
+	/* gwc_vt_shift_state_from() and not gwc_vt_shift_state(), which would look
+	 * tidier and would double this screen's queries. The row needs $ended,
+	 * $reconciled and $filled for its own badges and actions either way, and
+	 * gwc_vt_shift_filled() is a get_posts() over the roster with no memo behind
+	 * it — so asking for the state by ID would count every signup on the page a
+	 * second time, two hundred rows deep.
+	 *
+	 * What is shared is the DECISION, which is the whole point of #88: this row
+	 * used to derive cancelled, awaiting and short for itself and had no idea
+	 * what full meant, while the dashboard's shift line derived short and full
+	 * and knew nothing about the other three. See the block comment above
+	 * gwc_vt_shift_state() in inc/shifts.php. */
+	$state = gwc_vt_shift_state_from(
+		array(
+			'cancelled'    => gwc_vt_shift_is_cancelled( $shift_id ),
+			'ended'        => $ended,
+			'reconciled'   => $reconciled,
+			'understaffed' => gwc_vt_shift_is_understaffed( $shift_id ),
+			'filled'       => $filled,
+			'max'          => (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true ),
+		)
+	);
+
+	$cancelled = 'cancelled' === $state;
+	$awaiting  = 'awaiting' === $state;
+
+	/* Short of people, and still able to do something about it. The state
+	 * already carries that second half — a shift that has ended is never
+	 * 'short', because being short of people last Saturday is not something
+	 * anybody can act on. */
+	$understaffed = 'short' === $state;
 
 	$classes = array( 'gwcvt-schedule__row' );
 
-	if ( $cancelled ) {
-		$classes[] = 'gwcvt-schedule__row--cancelled';
-	} elseif ( $awaiting ) {
-		$classes[] = 'gwcvt-schedule__row--awaiting';
-	} elseif ( $understaffed ) {
-		$classes[] = 'gwcvt-schedule__row--short';
+	/* Only the three that have a rule in admin.css. 'ok', 'full' and 'logged'
+	 * are the ordinary row, which is what they have always looked like here —
+	 * the tinted chip states belong to the calendar and the week strip. */
+	if ( in_array( $state, array( 'cancelled', 'awaiting', 'short' ), true ) ) {
+		$classes[] = 'gwcvt-schedule__row--' . $state;
 	}
 	?>
 	<tr class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">

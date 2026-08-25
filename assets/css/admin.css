@@ -157,6 +157,92 @@
 	font-size: 11px;
 }
 
+/* ─── Shift chips ───────────────────────────────────────────────────────────
+   One shift, drawn small enough to sit in a calendar cell. The six states come
+   from gwc_vt_shift_state(); the palette is the one the badges below use, so a
+   short shift is the same red wherever it appears.
+
+   Color is never the only signal here either. Every chip carries its fill in
+   words on a second line — "3 of 8 · needs 6" — and the calendar's legend spells
+   each color out. The tint answers "which Saturday is in trouble" at a glance
+   for people who can see it, and the words answer it for everybody.
+
+   Each state states BOTH its background and its foreground: a rule that sets a
+   background and lets the text color inherit is the bug the file header
+   describes, waiting to happen again. */
+.gwcvt-chip {
+	display: block;
+	padding: 3px 6px;
+	border-radius: 3px;
+	font-size: 11px;
+	line-height: 1.4;
+	text-decoration: none;
+	min-width: 0;
+}
+
+/* Line one is the activity, on ONE line. A long name must ellipsise rather than
+   reflow — a chip that grows to two lines sets the height of every cell in its
+   week. The full name goes in the title attribute. */
+.gwcvt-chip__what {
+	display: block;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.gwcvt-chip__fill {
+	display: block;
+	opacity: .85;
+}
+
+.gwcvt-chip--short {
+	background: #fcf0f1;
+	color: #8a2424;
+	box-shadow: inset 2px 0 0 0 #d63638;
+}
+
+.gwcvt-chip--ok {
+	background: #f0f6fc;
+	color: #2271b1;
+	box-shadow: inset 2px 0 0 0 #2271b1;
+}
+
+/* Full and logged share a tint deliberately: both mean there is nothing left to
+   do about this shift, which is the question the color answers. Their words are
+   different, and the chip prints them. */
+.gwcvt-chip--full,
+.gwcvt-chip--logged {
+	background: #edfaef;
+	color: #00450c;
+	box-shadow: inset 2px 0 0 0 #68de7c;
+}
+
+.gwcvt-chip--awaiting {
+	background: #fcf9e8;
+	color: #614200;
+	box-shadow: inset 2px 0 0 0 #dba617;
+}
+
+.gwcvt-chip--cancelled {
+	background: #f0f0f1;
+	color: #8c8f94;
+	box-shadow: inset 2px 0 0 0 #8c8f94;
+}
+
+.gwcvt-chip--cancelled .gwcvt-chip__what {
+	text-decoration: line-through;
+}
+
+/* An event is a container over shifts, not a shift, so it reads as ordinary
+   blue with a near-black bar — the bar is what says "this one opens a day, not
+   a roster". */
+.gwcvt-chip--event {
+	background: #f0f6fc;
+	color: #2271b1;
+	box-shadow: inset 2px 0 0 0 #1d2327;
+}
+
 /* ─── Verification badges ───────────────────────────────────────────────────
    Color is never the only signal — each badge carries its own words, because
    "verified" and "not yet verified" is exactly the distinction somebody with a
