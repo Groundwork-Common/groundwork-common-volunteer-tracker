@@ -588,3 +588,37 @@ function gwc_vt_event_state( int $event_id ): string {
 
 	return 'ok';
 }
+
+/**
+ * How full an event is, and whether that is a problem — the chip's second line.
+ *
+ * The event answer to gwc_vt_shift_fill_summary(), and it says "Event" first
+ * because a chip on a calendar has to tell you whether clicking it opens one
+ * roster or a whole day. That is the same thing the near-black bar on the chip
+ * says, for anybody who cannot see the bar.
+ *
+ * @param int $event_id Event post ID.
+ * @return string
+ */
+function gwc_vt_event_fill_summary( int $event_id ): string {
+	$state = gwc_vt_event_state( $event_id );
+	$lead  = __( 'Event', 'groundwork-common-volunteer-tracker' );
+
+	if ( 'cancelled' === $state || 'awaiting' === $state || 'logged' === $state ) {
+		return $lead . ' · ' . gwc_vt_shift_state_label( $state );
+	}
+
+	$summary = $lead . ' · ' . gwc_vt_event_fill_label( $event_id );
+
+	if ( 'short' === $state ) {
+		$short = count( gwc_vt_event_short_slot_ids( $event_id ) );
+
+		return $summary . ' · ' . sprintf(
+			/* translators: %d: how many of an event's times are short of people. */
+			_n( '%d short', '%d short', $short, 'groundwork-common-volunteer-tracker' ),
+			$short
+		);
+	}
+
+	return $summary;
+}

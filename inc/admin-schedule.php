@@ -126,6 +126,11 @@ function gwc_vt_render_schedule_screen(): void {
 		return;
 	}
 
+	if ( 'month' === $view ) {
+		gwc_vt_render_schedule_month();
+		return;
+	}
+
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation between views.
 	$wanted = isset( $_GET['shift'] ) ? sanitize_text_field( wp_unslash( $_GET['shift'] ) ) : '';
 
@@ -149,9 +154,19 @@ function gwc_vt_render_schedule_screen(): void {
  */
 function gwc_vt_render_schedule_list(): void {
 	$when = gwc_vt_schedule_when();
+	$day  = gwc_vt_schedule_day();
 
 	$from = 'past' === $when ? gmdate( 'Y-m-d', time() - ( 120 * DAY_IN_SECONDS ) ) : gwc_vt_today();
 	$to   = 'past' === $when ? gwc_vt_today() : gmdate( 'Y-m-d', time() + ( 400 * DAY_IN_SECONDS ) );
+
+	/* One day, when the calendar's "+2 more" sent somebody here. It overrides
+	 * the half-of-the-calendar window rather than narrowing it: the day might be
+	 * last March, and the past/future split has nothing to say about a date
+	 * somebody named. */
+	if ( '' !== $day ) {
+		$from = $day;
+		$to   = $day;
+	}
 
 	/* Standalone shifts only, because an event appears here as ONE row rather
 	 * than as its six slots. Interleaving a festival's times among next
@@ -240,7 +255,23 @@ function gwc_vt_render_schedule_list(): void {
 			</li>
 		</ul>
 
+		<?php gwc_vt_render_schedule_view_tabs( $base, 'list' ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when ); ?>
+
+		<?php if ( '' !== $day ) : ?>
+			<p class="gwcvt-schedule__day">
+				<?php
+				printf(
+					/* translators: %s: a date. */
+					esc_html__( 'One day only: %s.', 'groundwork-common-volunteer-tracker' ),
+					esc_html( gwc_vt_shift_date_label_from( $day ) )
+				);
+				?>
+				<a href="<?php echo esc_url( remove_query_arg( 'gwc_vt_on' ) ); ?>">
+					<?php esc_html_e( 'Show the whole schedule', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+			</p>
+		<?php endif; ?>
 
 		<table class="widefat striped gwcvt-schedule">
 			<thead>
@@ -299,6 +330,275 @@ function gwc_vt_render_schedule_list(): void {
 			</tbody>
 		</table>
 	</div>
+	<?php
+}
+
+
+/**
+ * The month calendar.
+ */
+function gwc_vt_render_schedule_month(): void {
+	$month = gwc_vt_schedule_month();
+	$today = gwc_vt_today();
+	$weeks = gwc_vt_month_grid( $month, (int) get_option( 'start_of_week' ), $today );
+
+	/* The window is the grid, not the month: the leading and trailing cells
+	 * belong to the neighbouring months and a shift on one of them is still on
+	 * the screen. Querying the month alone would draw those cells empty and lie
+	 * about a Saturday that is right there. */
+	$from = (string) $weeks[0][0]['date'];
+	$last = $weeks[ count( $weeks ) - 1 ];
+	$to   = (string) $last[ count( $last ) - 1 ]['date'];
+
+	$shifts = gwc_vt_shifts_between(
+		array(
+			'from'     => $from,
+			'to'       => $to,
+			'statuses' => array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ),
+			'limit'    => 200,
+			'parent'   => 0,
+		)
+	);
+
+	$events = gwc_vt_events_between(
+		array(
+			'from'     => $from,
+			'to'       => $to,
+			'statuses' => array( 'publish', 'draft', GWC_VT_EVENT_CANCELLED ),
+			'limit'    => 100,
+		)
+	);
+
+	/* The same rows the list builds, narrowed by the same filters — which is
+	 * what makes a chip count and a row count the same number whichever view
+	 * somebody is in. */
+	$rows   = gwc_vt_schedule_rows( $shifts, $events );
+	$term   = gwc_vt_schedule_search();
+	$rows   = gwc_vt_filter_schedule_rows( $rows, '', $term );
+	$counts = gwc_vt_schedule_state_counts( $rows );
+	$state  = gwc_vt_schedule_filter();
+	$rows   = gwc_vt_filter_schedule_rows( $rows, $state, '' );
+
+	$by_day = array();
+
+	foreach ( $rows as $row ) {
+		$by_day[ (string) $row['date'] ][] = $row;
+	}
+
+	$base = add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_SCHEDULE_PAGE,
+		),
+		admin_url( 'edit.php' )
+	);
+
+	$weekdays = gwc_vt_weekday_initials( (int) get_option( 'start_of_week' ) );
+	?>
+	<div class="wrap gwcvt-wrap">
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Schedule', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+		<a href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+		<hr class="wp-header-end" />
+
+		<?php gwc_vt_schedule_notice(); ?>
+		<?php gwc_vt_event_notice(); ?>
+
+		<?php gwc_vt_render_schedule_view_tabs( $base, 'month' ); ?>
+		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'month' ); ?>
+
+		<?php
+		/* ‹ and › as plain links carrying everything else about the view. A
+		 * month you navigated to with a filter on and lost the filter is one
+		 * you have to set up again on arrival. */
+		$carrier = add_query_arg( 'view', 'month', $base );
+
+		if ( '' !== $state ) {
+			$carrier = add_query_arg( 'gwc_vt_state', $state, $carrier );
+		}
+
+		if ( '' !== $term ) {
+			$carrier = add_query_arg( 's', $term, $carrier );
+		}
+
+		/* The same query minus the view, for links that leave the calendar. A
+		 * "+2 more" that kept view=month would land back on the month, which
+		 * does not read gwc_vt_on — the cap would send somebody to the screen
+		 * that could not show them what they clicked for. */
+		$to_list = remove_query_arg( 'view', $carrier );
+
+		$stamp = (int) strtotime( $month . '-01 00:00:00 UTC' );
+		?>
+		<div class="gwcvt-month__nav">
+			<a
+				class="gwcvt-month__step"
+				href="<?php echo esc_url( add_query_arg( 'gwc_vt_month', gwc_vt_month_step( $month, -1 ), $carrier ) ); ?>"
+				rel="prev"
+			>
+				<span aria-hidden="true">&lsaquo;</span>
+				<span class="screen-reader-text"><?php esc_html_e( 'The month before', 'groundwork-common-volunteer-tracker' ); ?></span>
+			</a>
+
+			<strong class="gwcvt-month__name">
+				<?php echo esc_html( (string) wp_date( 'F Y', $stamp, new DateTimeZone( 'UTC' ) ) ); ?>
+			</strong>
+
+			<a
+				class="gwcvt-month__step"
+				href="<?php echo esc_url( add_query_arg( 'gwc_vt_month', gwc_vt_month_step( $month, 1 ), $carrier ) ); ?>"
+				rel="next"
+			>
+				<span aria-hidden="true">&rsaquo;</span>
+				<span class="screen-reader-text"><?php esc_html_e( 'The month after', 'groundwork-common-volunteer-tracker' ); ?></span>
+			</a>
+
+			<?php if ( gwc_vt_schedule_month() !== gmdate( 'Y-m', (int) strtotime( $today . ' 00:00:00 UTC' ) ) ) : ?>
+				<a class="gwcvt-month__today" href="<?php echo esc_url( $carrier ); ?>">
+					<?php esc_html_e( 'Back to this month', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+			<?php endif; ?>
+		</div>
+
+		<div class="gwcvt-month">
+			<?php foreach ( $weekdays as $name ) : ?>
+				<div class="gwcvt-month__weekday"><?php echo esc_html( $name ); ?></div>
+			<?php endforeach; ?>
+
+			<?php
+			foreach ( $weeks as $week ) :
+				foreach ( $week as $day ) :
+					$date  = (string) $day['date'];
+					$stack = (array) ( $by_day[ $date ] ?? array() );
+
+					$classes = array( 'gwcvt-month__day' );
+
+					if ( ! $day['in_month'] ) {
+						$classes[] = 'gwcvt-month__day--outside';
+					}
+					?>
+					<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
+						<span class="gwcvt-month__number<?php echo $day['today'] ? ' gwcvt-month__number--today' : ''; ?>">
+							<?php echo esc_html( (string) wp_date( 'j', (int) strtotime( $date . ' 00:00:00 UTC' ), new DateTimeZone( 'UTC' ) ) ); ?>
+							<?php if ( $day['today'] ) : ?>
+								<span class="screen-reader-text"><?php esc_html_e( '(today)', 'groundwork-common-volunteer-tracker' ); ?></span>
+							<?php endif; ?>
+						</span>
+
+						<?php
+						/* One busy Saturday must not set the height of every row
+						 * in the month, so a cell shows three and says how many
+						 * it is holding back. The overflow link goes to the list
+						 * filtered to that day rather than expanding in place:
+						 * the list is the view that copes with a day like that,
+						 * which is the whole reason it stayed. */
+						$shown = array_slice( $stack, 0, GWC_VT_MONTH_CHIPS );
+						$more  = count( $stack ) - count( $shown );
+
+						foreach ( $shown as $row ) {
+							gwc_vt_render_month_chip( $row, $base );
+						}
+
+						if ( $more > 0 ) :
+							?>
+							<a
+								class="gwcvt-month__more"
+								href="<?php echo esc_url( add_query_arg( 'gwc_vt_on', $date, $to_list ) ); ?>"
+							>
+								<?php
+								printf(
+									/* translators: %d: how many more shifts are on that day. */
+									esc_html( _n( '+%d more', '+%d more', $more, 'groundwork-common-volunteer-tracker' ) ),
+									(int) $more
+								);
+								?>
+							</a>
+							<?php
+						endif;
+						?>
+					</div>
+					<?php
+				endforeach;
+			endforeach;
+			?>
+		</div>
+
+		<?php gwc_vt_render_month_legend(); ?>
+	</div>
+	<?php
+}
+
+/**
+ * One row of the schedule, as a chip in a day cell.
+ *
+ * @param array  $row  One row from gwc_vt_schedule_rows().
+ * @param string $base The screen's own URL.
+ */
+function gwc_vt_render_month_chip( array $row, string $base ): void {
+	$id      = (int) $row['id'];
+	$state   = (string) ( $row['state'] ?? 'ok' );
+	$event   = 'event' === ( $row['type'] ?? '' );
+	$classes = array( 'gwcvt-chip', 'gwcvt-chip--' . $state );
+
+	if ( $event ) {
+		/* On top of the state colour, not instead of it. The tint answers "is
+		 * this one in trouble" and has to keep meaning that for an event whose
+		 * times are short; the bar answers "does this open a day or a roster". */
+		$classes[] = 'gwcvt-chip--event';
+	}
+
+	if ( $event ) {
+		$what = (string) get_the_title( $id );
+		$fill = gwc_vt_event_fill_summary( $id );
+		$url  = gwc_vt_event_roster_url( $id );
+	} else {
+		$what = (string) get_post_meta( $id, GWC_VT_SHIFT_ACTIVITY, true );
+		$fill = gwc_vt_shift_fill_summary( $id, $state );
+		$url  = add_query_arg( 'shift', $id, $base );
+	}
+
+	$what = '' !== trim( $what ) ? $what : __( 'Untitled', 'groundwork-common-volunteer-tracker' );
+	?>
+	<a
+		class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
+		href="<?php echo esc_url( $url ); ?>"
+		title="<?php echo esc_attr( $what ); ?>"
+	>
+		<span class="gwcvt-chip__what"><?php echo esc_html( $what ); ?></span>
+		<span class="gwcvt-chip__fill"><?php echo esc_html( $fill ); ?></span>
+	</a>
+	<?php
+}
+
+/**
+ * What each colour means, in words.
+ *
+ * Not decoration. The tint answers "which Saturday is in trouble" at a glance
+ * for people who can see it; this answers it for everybody else, and it is why
+ * the plugin is allowed to use colour here at all.
+ */
+function gwc_vt_render_month_legend(): void {
+	/* 'full' and 'logged' share a tint and share an entry, which is the one
+	 * place the six states become five words. */
+	$entries = array(
+		'short'     => gwc_vt_shift_state_label( 'short' ),
+		'ok'        => gwc_vt_shift_state_label( 'ok' ),
+		'full'      => __( 'Full, or hours logged', 'groundwork-common-volunteer-tracker' ),
+		'awaiting'  => gwc_vt_shift_state_label( 'awaiting' ),
+		'cancelled' => gwc_vt_shift_state_label( 'cancelled' ),
+	);
+	?>
+	<p class="gwcvt-month__legend">
+		<?php foreach ( $entries as $state => $label ) : ?>
+			<span>
+				<span class="gwcvt-month__swatch gwcvt-month__swatch--<?php echo esc_attr( $state ); ?>" aria-hidden="true"></span>
+				<?php echo esc_html( $label ); ?>
+			</span>
+		<?php endforeach; ?>
+	</p>
 	<?php
 }
 
@@ -783,6 +1083,12 @@ function gwc_vt_fold_cancelled_repeats( array $rows ): array {
 /** The states the filter chips offer, in the order they appear. */
 const GWC_VT_SCHEDULE_FILTERS = array( 'short', 'awaiting', 'full', 'cancelled' );
 
+/* How many chips one day cell draws before it starts counting instead.
+ * Three fits a 92px cell without the cell growing, and a month whose every
+ * Saturday is four shifts tall is a month you have to scroll to read — which is
+ * the thing a calendar is supposed to save you from. */
+const GWC_VT_MONTH_CHIPS = 3;
+
 /**
  * Which state the list is filtered to, or '' for all of them.
  *
@@ -793,6 +1099,22 @@ function gwc_vt_schedule_filter(): string {
 	$wanted = isset( $_GET['gwc_vt_state'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_state'] ) ) : '';
 
 	return in_array( $wanted, GWC_VT_SCHEDULE_FILTERS, true ) ? $wanted : '';
+}
+
+/**
+ * One day, when the calendar sent somebody to see the rest of it.
+ *
+ * The month's cells cap at GWC_VT_MONTH_CHIPS and count the remainder; this is
+ * where that count goes. The list is the view that copes with eleven shifts on
+ * one Saturday, which is most of why it stayed.
+ *
+ * @return string Y-m-d, or ''.
+ */
+function gwc_vt_schedule_day(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; narrows which rows are drawn.
+	$wanted = isset( $_GET['gwc_vt_on'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_on'] ) ) : '';
+
+	return gwc_vt_sanitize_date( $wanted );
 }
 
 /**
@@ -1051,6 +1373,56 @@ function gwc_vt_schedule_group_label( string $date, string $when ): string {
 }
 
 /**
+ * Month | List, as two links.
+ *
+ * A GET parameter rather than a stored preference, unlike the dashboard's
+ * Week | List. This screen's views are already GET — `view=events`,
+ * `when=past` — and the month view carries a month in the query besides, so a
+ * remembered view and a navigated month would be two different mechanisms
+ * deciding what one screen shows.
+ *
+ * @param string $base The screen's own URL.
+ * @param string $view Which one is showing, 'month' or 'list'.
+ */
+function gwc_vt_render_schedule_view_tabs( string $base, string $view ): void {
+	$options = array(
+		'list'  => __( 'List', 'groundwork-common-volunteer-tracker' ),
+		'month' => __( 'Month', 'groundwork-common-volunteer-tracker' ),
+	);
+
+	/* Switching views keeps the filter and the search, and nothing else. The
+	 * month a calendar was on has no meaning in a list, and the past/future
+	 * halves of the list have none in a calendar. */
+	$keep = array();
+
+	$state = gwc_vt_schedule_filter();
+	$term  = gwc_vt_schedule_search();
+
+	if ( '' !== $state ) {
+		$keep['gwc_vt_state'] = $state;
+	}
+
+	if ( '' !== $term ) {
+		$keep['s'] = $term;
+	}
+
+	$carrier = add_query_arg( $keep, $base );
+	?>
+	<span class="gwcvt-segmented gwcvt-schedule__views">
+		<?php foreach ( $options as $key => $label ) : ?>
+			<?php if ( $key === $view ) : ?>
+				<span class="gwcvt-segmented__on" aria-current="true"><?php echo esc_html( $label ); ?></span>
+			<?php else : ?>
+				<a href="<?php echo esc_url( 'month' === $key ? add_query_arg( 'view', 'month', $carrier ) : $carrier ); ?>">
+					<?php echo esc_html( $label ); ?>
+				</a>
+			<?php endif; ?>
+		<?php endforeach; ?>
+	</span>
+	<?php
+}
+
+/**
  * The filter chips and the find box.
  *
  * @param string             $base   The screen's own URL.
@@ -1058,8 +1430,9 @@ function gwc_vt_schedule_group_label( string $date, string $when ): string {
  * @param string             $state  Which state is active, or ''.
  * @param string             $term   What is in the find box.
  * @param string             $when   'past' or 'upcoming'.
+ * @param string             $view   'list' or 'month'.
  */
-function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when ): void {
+function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when, string $view = 'list' ): void {
 	$labels = gwc_vt_shift_state_labels();
 
 	/* Every link keeps the half of the query it is not about: switching a chip
@@ -1067,7 +1440,13 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 	 * upcoming view from the past one. */
 	$keep = array();
 
-	if ( 'past' === $when ) {
+	if ( 'month' === $view ) {
+		$keep['view'] = 'month';
+
+		/* The month being looked at, so clicking a chip narrows THIS month
+		 * rather than sending somebody back to today. */
+		$keep['gwc_vt_month'] = gwc_vt_schedule_month();
+	} elseif ( 'past' === $when ) {
 		$keep['when'] = 'past';
 	}
 
@@ -1087,7 +1466,10 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 			?>
 			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
 			<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_SCHEDULE_PAGE ); ?>" />
-			<?php if ( 'past' === $when ) : ?>
+			<?php if ( 'month' === $view ) : ?>
+				<input type="hidden" name="view" value="month" />
+				<input type="hidden" name="gwc_vt_month" value="<?php echo esc_attr( gwc_vt_schedule_month() ); ?>" />
+			<?php elseif ( 'past' === $when ) : ?>
 				<input type="hidden" name="when" value="past" />
 			<?php endif; ?>
 			<?php if ( '' !== $state ) : ?>
@@ -1168,6 +1550,150 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 function gwc_vt_schedule_is_unfolded(): bool {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; chooses how many rows to draw.
 	return isset( $_GET['gwc_vt_unfold'] ) && '1' === $_GET['gwc_vt_unfold'];
+}
+
+/* ── A rota is a calendar-shaped question ────────────────────────────────────
+ * The list answers "what is on" one row at a time. A month answers "which
+ * Saturday is in trouble" without reading a single row, because the Saturday in
+ * trouble is the red one — the same chips the dashboard's week strip draws, in
+ * the shape a coordinator already has on the wall.
+ *
+ * Server-rendered HTML, all of it. A grid of anchors needs no script to draw
+ * and none to use; only the drawer in #95 will.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A month as whole weeks of seven days.
+ *
+ * Pure calendar arithmetic in UTC, the same way inc/recurrence.php works and for
+ * the same reason: these are dates, not instants, and a bare Y-m-d has the same
+ * weekday everywhere.
+ *
+ * The grid opens on the site's own first day of the week, not on Sunday — the
+ * weekday header rotates with it, because a calendar whose columns start on a
+ * different day from the one on the wall is one somebody has to translate every
+ * time they read it.
+ *
+ * Only as many weeks as the month needs, rather than a fixed six. A trailing
+ * row of nothing but greyed-out numbers is a row of the screen spent saying
+ * that August is over.
+ *
+ * @param string $month         Y-m. Anything unreadable falls back to this month.
+ * @param int    $start_of_week 0 for Sunday through 6 for Saturday, as WordPress stores it.
+ * @param string $today         Y-m-d, so the caller decides what "today" means.
+ * @return array<int, array<int, array{date:string, in_month:bool, today:bool}>>
+ */
+function gwc_vt_month_grid( string $month, int $start_of_week, string $today ): array {
+	$first = (int) strtotime( $month . '-01 00:00:00 UTC' );
+
+	if ( ! $first ) {
+		$first = (int) strtotime( gmdate( 'Y-m', gwc_vt_midnight_utc( $today ) ) . '-01 00:00:00 UTC' );
+	}
+
+	$start_of_week = ( ( $start_of_week % 7 ) + 7 ) % 7;
+	$key           = gmdate( 'Y-m', $first );
+
+	/* How far into its week the first of the month already is. That many cells
+	 * of the previous month open the grid. */
+	$leading = ( (int) gmdate( 'w', $first ) - $start_of_week + 7 ) % 7;
+	$length  = (int) gmdate( 't', $first );
+	$cells   = (int) ( ceil( ( $leading + $length ) / 7 ) * 7 );
+
+	$opening = $first - ( $leading * DAY_IN_SECONDS );
+	$weeks   = array();
+
+	for ( $cell = 0; $cell < $cells; $cell++ ) {
+		$stamp = $opening + ( $cell * DAY_IN_SECONDS );
+		$date  = gmdate( 'Y-m-d', $stamp );
+
+		$weeks[ (int) floor( $cell / 7 ) ][] = array(
+			'date'     => $date,
+			'in_month' => gmdate( 'Y-m', $stamp ) === $key,
+			'today'    => $date === $today,
+		);
+	}
+
+	return array_values( $weeks );
+}
+
+/**
+ * The weekday names, rotated to start on the site's own first day.
+ *
+ * Short forms from WordPress's own translations rather than a table here, so a
+ * German site gets Mo Di Mi and not a transliteration of Mon Tue Wed.
+ *
+ * @param int $start_of_week 0 for Sunday through 6 for Saturday.
+ * @return string[] Seven names, in column order.
+ */
+function gwc_vt_weekday_initials( int $start_of_week ): array {
+	global $wp_locale;
+
+	$start_of_week = ( ( $start_of_week % 7 ) + 7 ) % 7;
+	$names         = array();
+
+	for ( $offset = 0; $offset < 7; $offset++ ) {
+		$weekday = ( $start_of_week + $offset ) % 7;
+
+		$names[] = $wp_locale instanceof WP_Locale
+			? $wp_locale->get_weekday_abbrev( $wp_locale->get_weekday( $weekday ) )
+			: gmdate( 'D', (int) strtotime( 'sunday +' . $weekday . ' days UTC' ) );
+	}
+
+	return $names;
+}
+
+/**
+ * Which month the calendar is showing.
+ *
+ * @return string Y-m.
+ */
+function gwc_vt_schedule_month(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks which month to draw.
+	$wanted = isset( $_GET['gwc_vt_month'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_month'] ) ) : '';
+
+	if ( preg_match( '/^\d{4}-\d{2}$/', $wanted ) && (int) substr( $wanted, 5, 2 ) >= 1 && (int) substr( $wanted, 5, 2 ) <= 12 ) {
+		return $wanted;
+	}
+
+	return gmdate( 'Y-m', gwc_vt_midnight_utc( gwc_vt_today() ) );
+}
+
+/**
+ * Midnight UTC on a Y-m-d, or on the real today when it cannot be read.
+ *
+ * Spelled out rather than written as a short ternary: `strtotime( … ) ?: time()`
+ * reads as "or now" and is a different thing, because strtotime() returns false
+ * for an unreadable date and 0 is a date it can read perfectly well — the first
+ * of January 1970. A month view that silently opened on 1970 because somebody
+ * typed a bad date into the query string is the kind of bug that gets reported
+ * as "the calendar is empty".
+ *
+ * @param string $date Y-m-d.
+ * @return int
+ */
+function gwc_vt_midnight_utc( string $date ): int {
+	$stamp = strtotime( $date . ' 00:00:00 UTC' );
+
+	return false === $stamp ? time() : (int) $stamp;
+}
+
+/**
+ * The month before or after this one.
+ *
+ * @param string $month Y-m.
+ * @param int    $step  -1 or 1.
+ * @return string Y-m.
+ */
+function gwc_vt_month_step( string $month, int $step ): string {
+	$first = (int) strtotime( $month . '-01 00:00:00 UTC' );
+
+	if ( ! $first ) {
+		return $month;
+	}
+
+	/* Anchored to the first of the month before adding, so a 31-day month does
+	 * not have PHP roll February over into March. */
+	return gmdate( 'Y-m', (int) strtotime( gmdate( 'Y-m-01', $first ) . ' ' . ( $step > 0 ? '+' : '-' ) . '1 month UTC' ) );
 }
 
 /**
