@@ -608,6 +608,57 @@ function gwc_vt_shift_state_label( string $state ): string {
 	return (string) ( gwc_vt_shift_state_labels()[ $state ] ?? '' );
 }
 
+/**
+ * How full a shift is, and whether that is a problem — "3 of 8 · needs 6".
+ *
+ * The numbers are not enough on their own: "3 of 8" does not say whether three
+ * is a problem, and on a calendar chip the colour that would say so is the one
+ * thing some readers cannot see. So the sentence says it.
+ *
+ * Said here rather than at each caller because the dashboard's week strip, its
+ * list, and eventually the month calendar all print it, and a chip reading
+ * "needs 6" beside a row reading "full" would be two screens disagreeing about
+ * one shift.
+ *
+ * @param int    $shift_id Shift post ID.
+ * @param string $state    From gwc_vt_shift_state(), when the caller has it.
+ * @return string
+ */
+function gwc_vt_shift_fill_summary( int $shift_id, string $state = '' ): string {
+	$state   = '' !== $state ? $state : gwc_vt_shift_state( $shift_id );
+	$summary = gwc_vt_shift_fill_label( $shift_id );
+
+	if ( 'cancelled' === $state ) {
+		return gwc_vt_shift_state_label( 'cancelled' );
+	}
+
+	if ( 'awaiting' === $state ) {
+		return gwc_vt_shift_state_label( 'awaiting' );
+	}
+
+	if ( 'logged' === $state ) {
+		return gwc_vt_shift_state_label( 'logged' );
+	}
+
+	if ( 'short' === $state ) {
+		$min = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true );
+
+		if ( $min > 0 ) {
+			return $summary . ' · ' . sprintf(
+				/* translators: %d: how many people the shift needs. */
+				__( 'needs %d', 'groundwork-common-volunteer-tracker' ),
+				$min
+			);
+		}
+	}
+
+	if ( 'full' === $state ) {
+		return $summary . ' · ' . __( 'full', 'groundwork-common-volunteer-tracker' );
+	}
+
+	return $summary;
+}
+
 /* ── Finding shifts ──────────────────────────────────────────────────────── */
 
 /**

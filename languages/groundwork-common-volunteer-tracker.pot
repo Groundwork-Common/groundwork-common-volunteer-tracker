@@ -9,14 +9,14 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-25T18:44:20+00:00\n"
+"POT-Creation-Date: 2026-08-25T19:41:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
 
 #. Plugin Name of the plugin
 #: groundwork-common-volunteer-tracker.php
-#: inc/admin-dashboard.php:79
+#: inc/admin-dashboard.php:147
 msgid "Groundwork Common Volunteer Tracker"
 msgstr ""
 
@@ -45,7 +45,7 @@ msgid "You do not have permission to do that."
 msgstr ""
 
 #: inc/access.php:268
-#: inc/admin-dashboard.php:51
+#: inc/admin-dashboard.php:119
 #: inc/admin-letters.php:64
 #: inc/admin-quick-add.php:177
 #: inc/admin-quick-add.php:640
@@ -57,144 +57,149 @@ msgstr ""
 msgid "Permission denied"
 msgstr ""
 
-#: inc/admin-dashboard.php:36
+#: inc/admin-dashboard.php:104
 msgid "Volunteer Hours"
 msgstr ""
 
-#: inc/admin-dashboard.php:37
+#: inc/admin-dashboard.php:105
 msgid "Dashboard"
 msgstr ""
 
-#: inc/admin-dashboard.php:50
+#: inc/admin-dashboard.php:118
 #: inc/admin-letters.php:63
 msgid "You do not have permission to see this."
 msgstr ""
 
-#: inc/admin-dashboard.php:149
+#: inc/admin-dashboard.php:217
 msgid "Needs you"
 msgstr ""
 
-#: inc/admin-dashboard.php:168
+#: inc/admin-dashboard.php:236
 msgid "Nothing is waiting. Everything logged has been verified, everything that has happened has been written up, and no shift this week is short of people."
 msgstr ""
 
-#: inc/admin-dashboard.php:211
+#: inc/admin-dashboard.php:279
 msgid "Tell the letter who you are"
 msgstr ""
 
-#: inc/admin-dashboard.php:212
+#: inc/admin-dashboard.php:280
 msgid "Your organization's name, the address, and who signs. Left empty, a letter goes out headed with this website's title."
 msgstr ""
 
-#: inc/admin-dashboard.php:219
+#: inc/admin-dashboard.php:287
 msgid "Add your first volunteer"
 msgstr ""
 
-#: inc/admin-dashboard.php:220
+#: inc/admin-dashboard.php:288
 msgid "A record of a person, not a WordPress account. Nobody signs in."
 msgstr ""
 
-#: inc/admin-dashboard.php:226
+#: inc/admin-dashboard.php:294
 msgid "Log a shift they worked"
 msgstr ""
 
-#: inc/admin-dashboard.php:227
+#: inc/admin-dashboard.php:295
 msgid "One occasion of work. A member of staff then verifies it, and verified hours are what a letter reports."
 msgstr ""
 
-#: inc/admin-dashboard.php:234
+#: inc/admin-dashboard.php:302
 msgid "Say whether you issue verification letters"
 msgstr ""
 
-#: inc/admin-dashboard.php:235
+#: inc/admin-dashboard.php:303
 msgid "They are on, which is what most organizations want. If yours records hours but never writes to a court or a school, turning them off takes a whole screen and its settings out of your way."
 msgstr ""
 
-#: inc/admin-dashboard.php:241
+#: inc/admin-dashboard.php:309
 msgid "Decide how long records are kept"
 msgstr ""
 
-#: inc/admin-dashboard.php:242
+#: inc/admin-dashboard.php:310
 msgid "Keeping them indefinitely is a perfectly good answer. Not having decided is not, which is why this one asks until you do."
 msgstr ""
 
-#: inc/admin-dashboard.php:248
+#: inc/admin-dashboard.php:316
 msgid "Nothing here yet."
 msgstr ""
 
-#: inc/admin-dashboard.php:249
+#: inc/admin-dashboard.php:317
 msgid "This screen fills up on its own once hours are being logged. Until then, here is the order most organizations start in."
 msgstr ""
 
-#: inc/admin-dashboard.php:263
+#: inc/admin-dashboard.php:338
 msgid "Done"
 msgstr ""
 
-#: inc/admin-dashboard.php:264
+#: inc/admin-dashboard.php:339
 msgid "Start"
 msgstr ""
 
-#: inc/admin-dashboard.php:307
-#: inc/admin-schedule.php:1043
-msgid "This week"
-msgstr ""
-
-#: inc/admin-dashboard.php:308
-#: inc/admin-schedule.php:1047
-msgid "Next week"
-msgstr ""
-
-#: inc/admin-dashboard.php:313
+#: inc/admin-dashboard.php:386
 #: inc/admin-schedule.php:228
 #: inc/admin-schedule.php:1330
 msgid "Coming up"
 msgstr ""
 
-#: inc/admin-dashboard.php:333
-#: inc/dashboard.php:146
-msgid "Open the schedule"
+#: inc/admin-dashboard.php:411
+msgid "Open the full calendar"
 msgstr ""
 
-#. translators: %d: how many people the shift needs.
-#: inc/admin-dashboard.php:415
-#, php-format
-msgid "needs %d"
+#: inc/admin-dashboard.php:424
+#: inc/admin-schedule.php:1043
+msgid "This week"
 msgstr ""
 
-#: inc/admin-dashboard.php:419
-msgid "full"
+#: inc/admin-dashboard.php:425
+#: inc/admin-schedule.php:1047
+msgid "Next week"
 msgstr ""
 
-#: inc/admin-dashboard.php:438
+#: inc/admin-dashboard.php:436
+msgid "Week"
+msgstr ""
+
+#: inc/admin-dashboard.php:437
+msgid "List"
+msgstr ""
+
+#: inc/admin-dashboard.php:508
+msgid "(today)"
+msgstr ""
+
+#: inc/admin-dashboard.php:531
+msgid "Untitled shift"
+msgstr ""
+
+#: inc/admin-dashboard.php:637
 msgid "This year"
 msgstr ""
 
-#: inc/admin-dashboard.php:444
+#: inc/admin-dashboard.php:643
 msgid "verified hours"
 msgstr ""
 
-#: inc/admin-dashboard.php:448
+#: inc/admin-dashboard.php:647
 #: inc/volunteer-cpt.php:138
 msgid "Awaiting verification"
 msgstr ""
 
-#: inc/admin-dashboard.php:449
+#: inc/admin-dashboard.php:648
 msgid "Volunteers with hours"
 msgstr ""
 
-#: inc/admin-dashboard.php:450
+#: inc/admin-dashboard.php:649
 #: inc/render.php:128
 msgid "Shifts recorded"
 msgstr ""
 
-#: inc/admin-dashboard.php:484
+#: inc/admin-dashboard.php:683
 #: inc/admin-schedule.php:215
 #: inc/admin-shift.php:56
 #: inc/shift-cpt.php:103
 msgid "Add a shift"
 msgstr ""
 
-#: inc/admin-dashboard.php:489
+#: inc/admin-dashboard.php:688
 #: inc/admin-event.php:77
 #: inc/admin-schedule.php:218
 #: inc/admin-schedule.php:1322
@@ -202,24 +207,24 @@ msgstr ""
 msgid "Add an event"
 msgstr ""
 
-#: inc/admin-dashboard.php:496
+#: inc/admin-dashboard.php:695
 msgid "Log a day’s sign-in sheet"
 msgstr ""
 
-#: inc/admin-dashboard.php:501
+#: inc/admin-dashboard.php:700
 msgid "Add a volunteer"
 msgstr ""
 
-#: inc/admin-dashboard.php:506
+#: inc/admin-dashboard.php:705
 msgid "Find somebody’s record"
 msgstr ""
 
-#: inc/admin-dashboard.php:516
+#: inc/admin-dashboard.php:715
 msgid "Export or erase a record"
 msgstr ""
 
-#: inc/admin-dashboard.php:545
-#: inc/admin-dashboard.php:548
+#: inc/admin-dashboard.php:744
+#: inc/admin-dashboard.php:747
 msgid "Quick actions"
 msgstr ""
 
@@ -3288,6 +3293,10 @@ msgstr[1] ""
 msgid "There is still time to call around. On Sunday there is nothing to be done about Saturday."
 msgstr ""
 
+#: inc/dashboard.php:146
+msgid "Open the schedule"
+msgstr ""
+
 #: inc/dashboard.php:150
 msgid "Check on somebody past their deadline"
 msgid_plural "Check on people past their deadline"
@@ -3466,7 +3475,7 @@ msgstr ""
 #. translators: 1: places taken, 2: places available.
 #. translators: 1: how many people have signed up, 2: how many the shift takes.
 #: inc/events.php:249
-#: inc/shifts.php:1031
+#: inc/shifts.php:1082
 #, php-format
 msgid "%1$d of %2$d"
 msgstr ""
@@ -3474,7 +3483,7 @@ msgstr ""
 #. translators: %d: how many places are taken.
 #. translators: %d: how many people have signed up.
 #: inc/events.php:257
-#: inc/shifts.php:1039
+#: inc/shifts.php:1090
 #, php-format
 msgid "%d signed up"
 msgid_plural "%d signed up"
@@ -4287,14 +4296,24 @@ msgstr ""
 msgid "Full"
 msgstr ""
 
+#. translators: %d: how many people the shift needs.
+#: inc/shifts.php:649
+#, php-format
+msgid "needs %d"
+msgstr ""
+
+#: inc/shifts.php:656
+msgid "full"
+msgstr ""
+
 #. translators: 1: how many shifts the repeat made. 2: the last date in it.
-#: inc/shifts.php:937
+#: inc/shifts.php:988
 #, php-format
 msgid "One of %1$d made together, through %2$s"
 msgstr ""
 
 #. translators: 1: a start time, 2: an end time.
-#: inc/shifts.php:1012
+#: inc/shifts.php:1063
 #, php-format
 msgid "%1$s–%2$s"
 msgstr ""

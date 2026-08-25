@@ -1138,6 +1138,122 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	border-top: 0;
 }
 
+/* ─── The week strip ────────────────────────────────────────────────────────
+   The same fortnight the list draws, as two rows of seven. A list answers "what
+   is on" one row at a time; a strip answers "which day is in trouble" without
+   reading anything, because the day in trouble is the red one.
+
+   Seven equal columns whatever is in them, so the dates line up under their
+   weekday. minmax(0, 1fr) rather than 1fr: a bare 1fr takes its minimum size
+   from its content, and one long activity name would widen its column and pull
+   every date out of alignment. The 1px gaps on a #f0f0f1 ground are the grid
+   lines — cheaper than seven borders and they never double up. */
+.gwcvt-strip__week {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 1px;
+	background: #f0f0f1;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.gwcvt-strip__day {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-height: 74px;
+	min-width: 0;
+	padding: 5px;
+	background: #fff;
+	color: #3c434a;
+}
+
+/* Days earlier in this week. The panel starts at today, so these are empty by
+   definition — quiet rather than blank-and-white, so they do not read as days
+   nobody has booked anything on. */
+.gwcvt-strip__day--past {
+	background: #f6f7f7;
+}
+
+.gwcvt-strip__label {
+	align-self: flex-start;
+	padding: 2px 6px;
+	border-radius: 9999px;
+	font-size: 11px;
+	line-height: 1.3;
+	font-variant-numeric: tabular-nums;
+	color: #646970;
+}
+
+/* Today, filled. The only thing on the strip that is about the reader rather
+   than about the schedule, so it is the only thing carrying the accent. */
+.gwcvt-strip__label--today {
+	background: #2271b1;
+	color: #fff;
+}
+
+/* Below the width core uses to switch wp-admin into its touch layout, seven
+   columns of 40px is not a calendar — it is seven columns of clipped text. The
+   strip becomes a stack, each day a full-width row, and the day label sits
+   where a heading would. */
+@media ( max-width: 782px ) {
+	.gwcvt-strip__week {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.gwcvt-strip__day {
+		min-height: 0;
+	}
+
+	/* An empty day in a stack is a blank row with nothing to say. In the grid it
+	   has to be there to hold its column; here it does not. */
+	.gwcvt-strip__day:not(:has(.gwcvt-chip)) {
+		display: none;
+	}
+}
+
+/* ─── Week | List ───────────────────────────────────────────────────────────
+   Two links and a label, not a control: the choice is stored per user and the
+   page reloads, so there is nothing here for a script to do. The one that is on
+   is a <span> rather than a link to itself — a link that goes where you already
+   are is one somebody clicks twice wondering why nothing happened. */
+.gwcvt-segmented {
+	display: inline-flex;
+	border: 1px solid #8c8f94;
+	border-radius: 3px;
+	overflow: hidden;
+	font-size: 11px;
+	line-height: 1;
+}
+
+.gwcvt-segmented a,
+.gwcvt-segmented__on {
+	padding: 4px 10px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.gwcvt-segmented a {
+	background: #fff;
+	color: #2271b1;
+}
+
+.gwcvt-segmented a:hover,
+.gwcvt-segmented a:focus {
+	background: #f0f6fc;
+	color: #135e96;
+}
+
+.gwcvt-segmented__on {
+	background: #2271b1;
+	color: #fff;
+}
+
+.gwcvt-segmented a + a,
+.gwcvt-segmented a + .gwcvt-segmented__on,
+.gwcvt-segmented__on + a {
+	border-left: 1px solid #8c8f94;
+}
+
 /* Below the panel rather than inside it: within the border it sat under the last
    line of next week and read as belonging to next week, when it is the way out
    of the whole fortnight. Quiet either way — it is not competing with the

@@ -308,6 +308,71 @@ function gwc_vt_fortnight_bounds( string $today, int $start_of_week ): array {
 	);
 }
 
+/**
+ * The fortnight as two rows of seven days.
+ *
+ * The same window gwc_vt_fortnight_bounds() describes, spelled out day by day
+ * so the week strip can draw it. Pure calendar arithmetic in UTC, for the
+ * reason inc/recurrence.php works that way: these are dates, not instants, and
+ * a bare Y-m-d has the same weekday everywhere.
+ *
+ * ── The columns start on the site's own first day ────────────────────────────
+ * Not on Sunday. WordPress asks on Settings → General and a great many places
+ * outside Europe and North America answer Saturday or Monday; a strip whose
+ * columns start on a different day from the calendar on the wall is one a
+ * coordinator has to translate every time they read it.
+ *
+ * ── Days earlier in this week are cells, not shifts ──────────────────────────
+ * The panel is "Coming up" and its query starts at today, so Monday and Tuesday
+ * of a week whose Thursday it is have nothing in them. They are still drawn,
+ * because a week is seven columns and dropping two would put Saturday under the
+ * Thursday heading. They carry `past => true` so the strip can keep them quiet
+ * rather than making them look like days nobody has booked.
+ *
+ * @param string $today         Y-m-d.
+ * @param int    $start_of_week 0 for Sunday through 6 for Saturday, as WordPress stores it.
+ * @return array<int, array{title_key:string, days:array<int, array{date:string, past:bool, today:bool}>}>
+ */
+function gwc_vt_fortnight_grid( string $today, int $start_of_week ): array {
+	$midnight = (int) strtotime( $today . ' 00:00:00 UTC' );
+
+	if ( ! $midnight ) {
+		$today    = gmdate( 'Y-m-d' );
+		$midnight = (int) strtotime( $today . ' 00:00:00 UTC' );
+	}
+
+	$start_of_week = ( ( $start_of_week % 7 ) + 7 ) % 7;
+
+	/* Back up to the first day of the week today is in — the same arithmetic
+	 * gwc_vt_fortnight_bounds() uses to find how far in we already are. */
+	$elapsed = ( (int) gmdate( 'w', $midnight ) - $start_of_week + 7 ) % 7;
+	$opening = $midnight - ( $elapsed * DAY_IN_SECONDS );
+
+	$weeks = array();
+
+	foreach ( array( 'this', 'next' ) as $index => $key ) {
+		$days = array();
+
+		for ( $offset = 0; $offset < 7; $offset++ ) {
+			$stamp = $opening + ( ( ( $index * 7 ) + $offset ) * DAY_IN_SECONDS );
+			$date  = gmdate( 'Y-m-d', $stamp );
+
+			$days[] = array(
+				'date'  => $date,
+				'past'  => $date < $today,
+				'today' => $date === $today,
+			);
+		}
+
+		$weeks[] = array(
+			'title_key' => $key,
+			'days'      => $days,
+		);
+	}
+
+	return $weeks;
+}
+
 /* ── Reading every matching row, without asking for them all at once ─────────
  * The two counts below used to pass a large posts_per_page and take whatever
  * came back: 200 for the overdue count, 5000 for the year's entries. Both are
