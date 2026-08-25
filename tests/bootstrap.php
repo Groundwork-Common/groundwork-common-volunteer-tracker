@@ -636,3 +636,11 @@ require GWC_VT_DIR . 'inc/admin-screen.php';
  * the same split as the dashboard's worklist — so it is unit-testable. The rest
  * of that file renders meta boxes and is covered by tests/integration. */
 require GWC_VT_DIR . 'inc/admin-volunteer.php';
+
+/* admin-schedule.php for the same reason. Four things in it decide what the
+ * screen shows before any of it is drawn — which rows a filter keeps, how many
+ * are in each state, which week or month heading a date sits under, and where a
+ * run of cancelled occurrences folds — and all four are arithmetic over an array
+ * of rows. The rendering either side of them needs a database and is covered by
+ * tests/integration/schedule-folding.php. */
+require GWC_VT_DIR . 'inc/admin-schedule.php';

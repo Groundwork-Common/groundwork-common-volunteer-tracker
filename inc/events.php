@@ -531,3 +531,60 @@ function gwc_vt_event_roster_url( int $event_id ): string {
 		)
 	);
 }
+
+/* ── An event, in the schedule's own vocabulary ──────────────────────────────
+ * An event is a container over shifts by post_parent, so it has no roster and
+ * no minimum of its own — its state is the worst news among its slots. Said in
+ * the same six words gwc_vt_shift_state() uses, because the filter chips and
+ * the calendar draw both kinds of row and a coordinator asking "show me what is
+ * short" means both.
+ *
+ * Ordered the way the shift version is, and for the same reasons: called off
+ * beats everything, then what has already happened, then what can still be
+ * acted on.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Which state an event is in.
+ *
+ * @param int $event_id Event post ID.
+ * @return string One of the keys in gwc_vt_shift_state_labels().
+ */
+function gwc_vt_event_state( int $event_id ): string {
+	if ( gwc_vt_event_is_cancelled( $event_id ) ) {
+		return 'cancelled';
+	}
+
+	/* Hours waiting on any of its times is the thing somebody has to go and do,
+	 * so it outranks a time that is short — by the point hours are outstanding,
+	 * being short of people is history. */
+	if ( gwc_vt_event_unlogged_slot_ids( $event_id ) ) {
+		return 'awaiting';
+	}
+
+	if ( gwc_vt_event_short_slot_ids( $event_id ) ) {
+		return 'short';
+	}
+
+	$slots = gwc_vt_event_slot_ids( $event_id );
+
+	/* Every time finished and written up. Nothing left to do about it, which is
+	 * what 'logged' means on a shift. An event with no times at all is not
+	 * "logged" — it is a draft somebody has not filled in, so it stays neutral. */
+	if ( $slots ) {
+		$done = true;
+
+		foreach ( $slots as $slot_id ) {
+			if ( ! gwc_vt_shift_is_reconciled( $slot_id ) ) {
+				$done = false;
+				break;
+			}
+		}
+
+		if ( $done ) {
+			return 'logged';
+		}
+	}
+
+	return 'ok';
+}

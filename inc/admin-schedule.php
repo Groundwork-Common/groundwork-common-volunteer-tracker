@@ -179,6 +179,16 @@ function gwc_vt_render_schedule_list(): void {
 
 	$rows = gwc_vt_schedule_rows( $shifts, $events );
 
+	/* Narrowed before anything is counted, so the chips and the rows come from
+	 * one array. The search narrows first and the chips count what survives it —
+	 * "Short of people · 7" over two rows because the other five did not match
+	 * the search is the same lie as counting the wrong thing. */
+	$term   = gwc_vt_schedule_search();
+	$rows   = gwc_vt_filter_schedule_rows( $rows, '', $term );
+	$counts = gwc_vt_schedule_state_counts( $rows );
+	$state  = gwc_vt_schedule_filter();
+	$rows   = gwc_vt_filter_schedule_rows( $rows, $state, '' );
+
 	if ( 'past' === $when ) {
 		$rows = array_reverse( $rows );
 	}
@@ -230,6 +240,8 @@ function gwc_vt_render_schedule_list(): void {
 			</li>
 		</ul>
 
+		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when ); ?>
+
 		<table class="widefat striped gwcvt-schedule">
 			<thead>
 				<tr>
@@ -244,24 +256,46 @@ function gwc_vt_render_schedule_list(): void {
 					<tr>
 						<td colspan="4">
 							<?php
-							echo 'past' === $when
-								? esc_html__( 'Nothing in the last few months.', 'groundwork-common-volunteer-tracker' )
-								: esc_html__( 'Nothing scheduled yet. Add a shift to get started.', 'groundwork-common-volunteer-tracker' );
+							if ( '' !== $state || '' !== $term ) {
+								esc_html_e( 'Nothing on the schedule matches that.', 'groundwork-common-volunteer-tracker' );
+							} else {
+								echo 'past' === $when
+									? esc_html__( 'Nothing in the last few months.', 'groundwork-common-volunteer-tracker' )
+									: esc_html__( 'Nothing scheduled yet. Add a shift to get started.', 'groundwork-common-volunteer-tracker' );
+							}
 							?>
 						</td>
 					</tr>
 				<?php endif; ?>
 
-				<?php foreach ( $rows as $row ) : ?>
-					<?php
+				<?php
+				/* The frame the dashboard taught the coordinator — this week,
+				 * next week, then by month — which the schedule was the only
+				 * screen to drop. A <th scope="rowgroup"> rather than a styled
+				 * <td>: this is a heading for the rows under it, and saying so
+				 * is what makes the table still make sense read aloud. */
+				$group = '';
+
+				foreach ( $rows as $row ) :
+					$heading = gwc_vt_schedule_group_label( (string) $row['date'], $when );
+
+					if ( $heading !== $group ) :
+						$group = $heading;
+						?>
+						<tr class="gwcvt-schedule__group">
+							<th scope="rowgroup" colspan="4"><?php echo esc_html( $heading ); ?></th>
+						</tr>
+						<?php
+					endif;
+
 					if ( 'event' === $row['type'] ) {
 						gwc_vt_render_event_summary_row( $row['id'] );
 						continue;
 					}
 
-					gwc_vt_render_schedule_row( $row['id'], $base, (int) ( $row['folded'] ?? 0 ), (string) ( $row['folded_to'] ?? '' ) );
-					?>
-				<?php endforeach; ?>
+					gwc_vt_render_schedule_row( $row, $base );
+				endforeach;
+				?>
 			</tbody>
 		</table>
 	</div>
@@ -271,39 +305,26 @@ function gwc_vt_render_schedule_list(): void {
 /**
  * One row of the schedule.
  *
- * @param int    $shift_id  Shift post ID.
- * @param string $base      The screen's own URL.
- * @param int    $folded    How many adjacent cancelled occurrences this row stands for, or 0.
- * @param string $folded_to The last of their dates, Y-m-d, when it stands for more than itself.
+ * Takes the row rather than an ID because the row already carries its state —
+ * gwc_vt_schedule_rows() worked it out, the filter chips counted it, and
+ * deriving it a second time here would both risk disagreeing with the chip
+ * above and count every signup on the page twice. gwc_vt_shift_filled() is a
+ * get_posts() over the roster with no memo behind it, and this screen draws two
+ * hundred rows.
+ *
+ * @param array  $row  One row from gwc_vt_schedule_rows(), possibly folded.
+ * @param string $base The screen's own URL.
  */
-function gwc_vt_render_schedule_row( int $shift_id, string $base, int $folded = 0, string $folded_to = '' ): void {
+function gwc_vt_render_schedule_row( array $row, string $base ): void {
+	$shift_id  = (int) $row['id'];
+	$state     = (string) ( $row['state'] ?? gwc_vt_shift_state( $shift_id ) );
+	$folded    = (int) ( $row['folded'] ?? 0 );
+	$folded_to = (string) ( $row['folded_to'] ?? '' );
+
 	$ended      = gwc_vt_shift_has_ended( $shift_id );
 	$reconciled = gwc_vt_shift_is_reconciled( $shift_id );
 	$filled     = gwc_vt_shift_filled( $shift_id );
 	$edit_url   = add_query_arg( 'shift', $shift_id, $base );
-
-	/* gwc_vt_shift_state_from() and not gwc_vt_shift_state(), which would look
-	 * tidier and would double this screen's queries. The row needs $ended,
-	 * $reconciled and $filled for its own badges and actions either way, and
-	 * gwc_vt_shift_filled() is a get_posts() over the roster with no memo behind
-	 * it — so asking for the state by ID would count every signup on the page a
-	 * second time, two hundred rows deep.
-	 *
-	 * What is shared is the DECISION, which is the whole point of #88: this row
-	 * used to derive cancelled, awaiting and short for itself and had no idea
-	 * what full meant, while the dashboard's shift line derived short and full
-	 * and knew nothing about the other three. See the block comment above
-	 * gwc_vt_shift_state() in inc/shifts.php. */
-	$state = gwc_vt_shift_state_from(
-		array(
-			'cancelled'    => gwc_vt_shift_is_cancelled( $shift_id ),
-			'ended'        => $ended,
-			'reconciled'   => $reconciled,
-			'understaffed' => gwc_vt_shift_is_understaffed( $shift_id ),
-			'filled'       => $filled,
-			'max'          => (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true ),
-		)
-	);
 
 	$cancelled = 'cancelled' === $state;
 	$awaiting  = 'awaiting' === $state;
@@ -625,26 +646,33 @@ function gwc_vt_unreconciled_notice(): void {
 /**
  * Merge standalone shifts and events into one list, ordered by when they are.
  *
+ * Each row carries its state, worked out once here rather than by whichever
+ * screen happens to be drawing it. The filter chips count these rows and the
+ * list draws these rows, which is the only way a chip that says seven and a
+ * list that shows six cannot happen.
+ *
  * @param int[] $shifts Standalone shift post IDs.
  * @param int[] $events Event post IDs.
- * @return array<int, array{type: string, id: int, date: string}>
+ * @return array<int, array{type: string, id: int, date: string, state: string}>
  */
 function gwc_vt_schedule_rows( array $shifts, array $events ): array {
 	$rows = array();
 
 	foreach ( $shifts as $shift_id ) {
 		$rows[] = array(
-			'type' => 'shift',
-			'id'   => (int) $shift_id,
-			'date' => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
+			'type'  => 'shift',
+			'id'    => (int) $shift_id,
+			'date'  => (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ),
+			'state' => gwc_vt_shift_state( (int) $shift_id ),
 		);
 	}
 
 	foreach ( $events as $event_id ) {
 		$rows[] = array(
-			'type' => 'event',
-			'id'   => (int) $event_id,
-			'date' => (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true ),
+			'type'  => 'event',
+			'id'    => (int) $event_id,
+			'date'  => (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true ),
+			'state' => gwc_vt_event_state( (int) $event_id ),
 		);
 	}
 
@@ -738,6 +766,395 @@ function gwc_vt_fold_cancelled_repeats( array $rows ): array {
 	$flush();
 
 	return $folded;
+}
+
+/* ── Narrowing the schedule ──────────────────────────────────────────────────
+ * "Which shift?" used to mean scrolling. Two plain GET parameters now answer
+ * it: `gwc_vt_state` for the four states a coordinator hunts for, and `s` for a
+ * word.
+ *
+ * Both are applied to the rows AFTER gwc_vt_schedule_rows() has built them and
+ * BEFORE anything is counted or drawn, so the chip that says "Short of people ·
+ * 7" and the seven rows underneath it come from one array. A count and the
+ * screen it links to coming from one function is a rule this plugin already
+ * has, and this is the same rule inside one screen.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** The states the filter chips offer, in the order they appear. */
+const GWC_VT_SCHEDULE_FILTERS = array( 'short', 'awaiting', 'full', 'cancelled' );
+
+/**
+ * Which state the list is filtered to, or '' for all of them.
+ *
+ * @return string
+ */
+function gwc_vt_schedule_filter(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; narrows which rows are drawn.
+	$wanted = isset( $_GET['gwc_vt_state'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_state'] ) ) : '';
+
+	return in_array( $wanted, GWC_VT_SCHEDULE_FILTERS, true ) ? $wanted : '';
+}
+
+/**
+ * What was typed into the find box.
+ *
+ * @return string
+ */
+function gwc_vt_schedule_search(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; narrows which rows are drawn.
+	return isset( $_GET['s'] ) ? trim( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : '';
+}
+
+/**
+ * The shift IDs somebody's name puts on the schedule.
+ *
+ * Two queries whatever the size of the schedule: find the volunteers whose name
+ * matches, then find the signups pointing at them and read their parent. The
+ * obvious implementation — walk every shift on the page and read its roster —
+ * is a query per row, and the roster is the one thing on this screen that is
+ * not already in the meta cache.
+ *
+ * Unattached signups are searched by the name somebody typed into the public
+ * form, because "which shift is that person on" is the same question whether or
+ * not anybody has matched them to a record yet.
+ *
+ * @param string $term What was typed.
+ * @return int[] Shift post IDs, unordered and possibly empty.
+ */
+function gwc_vt_schedule_shift_ids_for_person( string $term ): array {
+	if ( '' === $term ) {
+		return array();
+	}
+
+	$volunteers = get_posts(
+		array(
+			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
+			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the volunteers whose name matches one search term. 200 is a ceiling on how many people one word can put on the schedule, not a page; the query is ids-only with no_found_rows and both caches off.
+			'posts_per_page'         => 200,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
+			's'                      => $term,
+		)
+	);
+
+	$signups = array();
+
+	if ( $volunteers ) {
+		$signups = get_posts(
+			array(
+				'post_type'              => GWC_VT_SIGNUP_TYPE,
+				'post_status'            => array( 'publish', GWC_VT_SIGNUP_WAITLIST ),
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the signups belonging to the volunteers one search matched, across the whole schedule. A bound rather than a page: the result is collapsed to a set of parent IDs, and a search that reached this many rows has already told the coordinator their term was too broad.
+				'posts_per_page'         => 500,
+				'no_found_rows'          => true,
+				'update_post_term_cache' => false,
+				'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the volunteer a signup points at is meta; there is no other way to ask which shifts somebody is on.
+					array(
+						'key'     => GWC_VT_SIGNUP_VOLUNTEER,
+						'value'   => array_map( 'intval', (array) $volunteers ),
+						'compare' => 'IN',
+					),
+				),
+			)
+		);
+	}
+
+	/* And the ones nobody has matched to a record yet, by what they typed. */
+	$claimed = get_posts(
+		array(
+			'post_type'              => GWC_VT_SIGNUP_TYPE,
+			'post_status'            => array( 'publish', GWC_VT_SIGNUP_WAITLIST ),
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the unmatched signups whose typed name contains the search term. A bound rather than a page, for the reason the query above carries one: the result is collapsed to a set of parent IDs.
+			'posts_per_page'         => 500,
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- as above; the typed name is meta too.
+				array(
+					'key'     => GWC_VT_SIGNUP_CLAIM_NAME,
+					'value'   => $term,
+					'compare' => 'LIKE',
+				),
+			),
+		)
+	);
+
+	$shift_ids = array();
+
+	foreach ( array_merge( (array) $signups, (array) $claimed ) as $signup ) {
+		$parent = (int) ( $signup->post_parent ?? 0 );
+
+		if ( $parent > 0 ) {
+			$shift_ids[ $parent ] = $parent;
+		}
+	}
+
+	return array_values( $shift_ids );
+}
+
+/**
+ * Narrow the rows to a state, a search term, or both.
+ *
+ * @param array[] $rows   As gwc_vt_schedule_rows() returns them.
+ * @param string  $state  A key from GWC_VT_SCHEDULE_FILTERS, or ''.
+ * @param string  $term   What was typed into the find box, or ''.
+ * @return array[]
+ */
+function gwc_vt_filter_schedule_rows( array $rows, string $state, string $term ): array {
+	if ( '' !== $state ) {
+		$rows = array_values(
+			array_filter(
+				$rows,
+				static function ( array $row ) use ( $state ): bool {
+					return ( $row['state'] ?? '' ) === $state;
+				}
+			)
+		);
+	}
+
+	if ( '' === $term ) {
+		return $rows;
+	}
+
+	/* Worked out once for the whole list rather than per row — see the note on
+	 * gwc_vt_schedule_shift_ids_for_person(). */
+	$by_person = array_flip( gwc_vt_schedule_shift_ids_for_person( $term ) );
+
+	return array_values(
+		array_filter(
+			$rows,
+			static function ( array $row ) use ( $term, $by_person ): bool {
+				$id = (int) ( $row['id'] ?? 0 );
+
+				if ( isset( $by_person[ $id ] ) ) {
+					return true;
+				}
+
+				/* An event has no roster of its own; somebody is on one of its
+				 * times, and those are shifts with the event as their parent. */
+				if ( 'event' === ( $row['type'] ?? '' ) ) {
+					foreach ( gwc_vt_event_slot_ids( $id ) as $slot_id ) {
+						if ( isset( $by_person[ (int) $slot_id ] ) ) {
+							return true;
+						}
+					}
+
+					return gwc_vt_schedule_row_matches_words( $row, $term );
+				}
+
+				return gwc_vt_schedule_row_matches_words( $row, $term );
+			}
+		)
+	);
+}
+
+/**
+ * Whether a row's own words contain the term.
+ *
+ * Activity and location for a shift, the title for an event. Case-insensitive
+ * and anywhere in the string, which is what somebody typing three letters of
+ * "warehouse" expects.
+ *
+ * @param array  $row  One row.
+ * @param string $term What was typed.
+ * @return bool
+ */
+function gwc_vt_schedule_row_matches_words( array $row, string $term ): bool {
+	$id = (int) ( $row['id'] ?? 0 );
+
+	$haystacks = 'event' === ( $row['type'] ?? '' )
+		? array( (string) get_the_title( $id ), (string) get_post_meta( $id, GWC_VT_EVENT_LOCATION, true ) )
+		: array(
+			(string) get_post_meta( $id, GWC_VT_SHIFT_ACTIVITY, true ),
+			(string) get_post_meta( $id, GWC_VT_SHIFT_LOCATION, true ),
+		);
+
+	foreach ( $haystacks as $haystack ) {
+		if ( '' !== $haystack && false !== stripos( $haystack, $term ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * How many rows are in each state.
+ *
+ * Counted from the rows the screen is about to draw, which is the whole point:
+ * a chip reading "Called off · 6" over five rows is the bug this plugin has a
+ * rule about. The search narrows the rows before this runs, so the chips count
+ * within a search rather than describing a list nobody is looking at.
+ *
+ * @param array[] $rows As gwc_vt_schedule_rows() returns them.
+ * @return array<string, int>
+ */
+function gwc_vt_schedule_state_counts( array $rows ): array {
+	$counts = array_fill_keys( GWC_VT_SCHEDULE_FILTERS, 0 );
+
+	foreach ( $rows as $row ) {
+		$state = (string) ( $row['state'] ?? '' );
+
+		if ( isset( $counts[ $state ] ) ) {
+			++$counts[ $state ];
+		}
+	}
+
+	return $counts;
+}
+
+/**
+ * Which group a date belongs to: this week, next week, or its month.
+ *
+ * The dashboard's fortnight, extended. gwc_vt_fortnight_bounds() gives the two
+ * boundaries and respects the site's start_of_week, which is the site's
+ * business and not this plugin's — a great many places outside Europe and North
+ * America start theirs on Saturday.
+ *
+ * The past view gets month names throughout. "This week" reading backwards
+ * would be a heading over Tuesday and Monday in that order, which is a frame
+ * that makes the list harder to read rather than easier.
+ *
+ * @param string $date Y-m-d.
+ * @param string $when 'past' or 'upcoming'.
+ * @return string
+ */
+function gwc_vt_schedule_group_label( string $date, string $when ): string {
+	$parsed = gwc_vt_recurrence_date( $date );
+
+	if ( null === $parsed ) {
+		return __( 'Undated', 'groundwork-common-volunteer-tracker' );
+	}
+
+	/* F Y rather than the site's date format: this is a month, not a day, and
+	 * running a Y-m-d format string over it would print a heading reading
+	 * "2026-08-01" above every shift in August. */
+	$month = (string) wp_date( 'F Y', $parsed->getTimestamp(), new DateTimeZone( 'UTC' ) );
+
+	if ( 'past' === $when ) {
+		return $month;
+	}
+
+	$bounds = gwc_vt_fortnight_bounds( gwc_vt_today(), (int) get_option( 'start_of_week' ) );
+
+	if ( $date <= $bounds['this_week'] ) {
+		return __( 'This week', 'groundwork-common-volunteer-tracker' );
+	}
+
+	if ( $date <= $bounds['fortnight'] ) {
+		return __( 'Next week', 'groundwork-common-volunteer-tracker' );
+	}
+
+	return $month;
+}
+
+/**
+ * The filter chips and the find box.
+ *
+ * @param string             $base   The screen's own URL.
+ * @param array<string, int> $counts How many rows are in each state.
+ * @param string             $state  Which state is active, or ''.
+ * @param string             $term   What is in the find box.
+ * @param string             $when   'past' or 'upcoming'.
+ */
+function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when ): void {
+	$labels = gwc_vt_shift_state_labels();
+
+	/* Every link keeps the half of the query it is not about: switching a chip
+	 * must not silently drop a search, and neither may throw you back to the
+	 * upcoming view from the past one. */
+	$keep = array();
+
+	if ( 'past' === $when ) {
+		$keep['when'] = 'past';
+	}
+
+	if ( '' !== $term ) {
+		$keep['s'] = $term;
+	}
+
+	$carrier = add_query_arg( $keep, $base );
+	?>
+	<div class="gwcvt-schedule__filters">
+		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="gwcvt-schedule__find">
+			<?php
+			/* Every GET parameter that is not the search has to be re-posted as
+			 * a hidden field, because a GET form replaces the query string
+			 * rather than adding to it — a search from the past view would
+			 * otherwise land on the upcoming one. */
+			?>
+			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
+			<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_SCHEDULE_PAGE ); ?>" />
+			<?php if ( 'past' === $when ) : ?>
+				<input type="hidden" name="when" value="past" />
+			<?php endif; ?>
+			<?php if ( '' !== $state ) : ?>
+				<input type="hidden" name="gwc_vt_state" value="<?php echo esc_attr( $state ); ?>" />
+			<?php endif; ?>
+
+			<label class="screen-reader-text" for="gwcvt-schedule-search">
+				<?php esc_html_e( 'Find a shift', 'groundwork-common-volunteer-tracker' ); ?>
+			</label>
+			<input
+				type="search"
+				id="gwcvt-schedule-search"
+				name="s"
+				value="<?php echo esc_attr( $term ); ?>"
+				placeholder="<?php esc_attr_e( 'Find a shift — activity, place, or person', 'groundwork-common-volunteer-tracker' ); ?>"
+			/>
+			<button type="submit" class="button"><?php esc_html_e( 'Find', 'groundwork-common-volunteer-tracker' ); ?></button>
+
+			<?php if ( '' !== $term ) : ?>
+				<a href="<?php echo esc_url( remove_query_arg( 's', $carrier ) ); ?>" class="gwcvt-schedule__clear">
+					<?php esc_html_e( 'Clear', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+			<?php endif; ?>
+		</form>
+
+		<div class="gwcvt-schedule__chips">
+			<?php
+			foreach ( GWC_VT_SCHEDULE_FILTERS as $key ) :
+				$count  = (int) ( $counts[ $key ] ?? 0 );
+				$active = $key === $state;
+
+				/* A chip with nothing behind it is not offered — except the one
+				 * that is currently on, which has to stay clickable or there is
+				 * no way back to the whole list. */
+				if ( 0 === $count && ! $active ) {
+					continue;
+				}
+
+				$url = $active
+					? remove_query_arg( 'gwc_vt_state', $carrier )
+					: add_query_arg( 'gwc_vt_state', $key, $carrier );
+				?>
+				<a
+					href="<?php echo esc_url( $url ); ?>"
+					class="gwcvt-chip-filter<?php echo $active ? ' gwcvt-chip-filter--on gwcvt-chip-filter--' . esc_attr( $key ) : ''; ?>"
+					<?php echo $active ? 'aria-current="true"' : ''; ?>
+				>
+					<?php
+					printf(
+						/* translators: 1: the state, such as "Short of people". 2: how many. */
+						esc_html__( '%1$s · %2$d', 'groundwork-common-volunteer-tracker' ),
+						esc_html( (string) ( $labels[ $key ] ?? $key ) ),
+						(int) $count
+					);
+
+					if ( $active ) {
+						echo ' <span aria-hidden="true">&times;</span>';
+						echo '<span class="screen-reader-text"> ' . esc_html__( '— clear this filter', 'groundwork-common-volunteer-tracker' ) . '</span>';
+					}
+					?>
+				</a>
+				<?php
+			endforeach;
+			?>
+		</div>
+	</div>
+	<?php
 }
 
 /**

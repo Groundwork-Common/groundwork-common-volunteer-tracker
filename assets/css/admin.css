@@ -1336,3 +1336,108 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	font-size: 12px;
 	color: #646970;
 }
+
+/* ─── Narrowing the schedule ────────────────────────────────────────────────
+   The find box and the state chips, above both views. Plain links and a plain
+   GET form — nothing here needs JavaScript, which is what makes this the cheap
+   half of the schedule work. */
+.gwcvt-schedule__filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	margin: 12px 0;
+}
+
+.gwcvt-schedule__find {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.gwcvt-schedule__find input[type="search"] {
+	width: 22em;
+	max-width: 100%;
+}
+
+.gwcvt-schedule__clear {
+	font-size: 12px;
+}
+
+.gwcvt-schedule__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+/* Off is an outline, on is filled with that state's own palette — the same
+   tints the chips and badges use, so "short" is the same red everywhere. The
+   count is part of the label rather than a separate badge: the chip is one
+   sentence, and it reads "Short of people · 7".
+
+   Each state pins its foreground beside its background, per the note at the top
+   of this file. */
+.gwcvt-chip-filter {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 9999px;
+	font-size: 12px;
+	line-height: 1.6;
+	white-space: nowrap;
+	text-decoration: none;
+	background: #fff;
+	color: #2271b1;
+	box-shadow: inset 0 0 0 1px #c3c4c7;
+}
+
+.gwcvt-chip-filter:hover,
+.gwcvt-chip-filter:focus {
+	color: #135e96;
+	box-shadow: inset 0 0 0 1px #2271b1;
+}
+
+.gwcvt-chip-filter--short {
+	background: #fcf0f1;
+	color: #8a2424;
+	box-shadow: inset 0 0 0 1px #d63638;
+}
+
+.gwcvt-chip-filter--awaiting {
+	background: #fcf9e8;
+	color: #614200;
+	box-shadow: inset 0 0 0 1px #dba617;
+}
+
+.gwcvt-chip-filter--full {
+	background: #edfaef;
+	color: #00450c;
+	box-shadow: inset 0 0 0 1px #68de7c;
+}
+
+.gwcvt-chip-filter--cancelled {
+	background: #f0f0f1;
+	color: #50575e;
+	box-shadow: inset 0 0 0 1px #8c8f94;
+}
+
+/* The active chip keeps its own colour on hover; without this the generic rule
+   above repaints it blue the moment somebody moves the mouse to clear it. */
+.gwcvt-chip-filter--on:hover,
+.gwcvt-chip-filter--on:focus {
+	color: inherit;
+}
+
+/* ─── Week and month headings on the schedule ───────────────────────────────
+   "This week", "Next week", then by month — the frame the dashboard uses for
+   its fortnight, which the schedule was the only screen to drop. A real
+   <th scope="rowgroup">, so the table still makes sense read aloud. */
+.gwcvt-schedule__group th {
+	padding: 8px 10px;
+	background: #f6f7f7;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	color: #646970;
+	text-align: left;
+}
