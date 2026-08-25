@@ -148,8 +148,7 @@ function gwc_vt_render_schedule_screen(): void {
  * Everything coming up, soonest first.
  */
 function gwc_vt_render_schedule_list(): void {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks which half of the calendar to show.
-	$when = isset( $_GET['when'] ) && 'past' === $_GET['when'] ? 'past' : 'upcoming';
+	$when = gwc_vt_schedule_when();
 
 	$from = 'past' === $when ? gmdate( 'Y-m-d', time() - ( 120 * DAY_IN_SECONDS ) ) : gwc_vt_today();
 	$to   = 'past' === $when ? gwc_vt_today() : gmdate( 'Y-m-d', time() + ( 400 * DAY_IN_SECONDS ) );
@@ -182,6 +181,14 @@ function gwc_vt_render_schedule_list(): void {
 
 	if ( 'past' === $when ) {
 		$rows = array_reverse( $rows );
+	}
+
+	/* After the reverse, so a run folds in the order it is about to be printed
+	 * rather than in the order it was queried. Folding first and reversing after
+	 * would put the last cancelled Saturday's date on a row summarising the six
+	 * before it. */
+	if ( ! gwc_vt_schedule_is_unfolded() ) {
+		$rows = gwc_vt_fold_cancelled_repeats( $rows );
 	}
 
 	$base = add_query_arg(
@@ -252,7 +259,7 @@ function gwc_vt_render_schedule_list(): void {
 						continue;
 					}
 
-					gwc_vt_render_schedule_row( $row['id'], $base );
+					gwc_vt_render_schedule_row( $row['id'], $base, (int) ( $row['folded'] ?? 0 ), (string) ( $row['folded_to'] ?? '' ) );
 					?>
 				<?php endforeach; ?>
 			</tbody>
@@ -264,10 +271,12 @@ function gwc_vt_render_schedule_list(): void {
 /**
  * One row of the schedule.
  *
- * @param int    $shift_id Shift post ID.
- * @param string $base     The screen's own URL.
+ * @param int    $shift_id  Shift post ID.
+ * @param string $base      The screen's own URL.
+ * @param int    $folded    How many adjacent cancelled occurrences this row stands for, or 0.
+ * @param string $folded_to The last of their dates, Y-m-d, when it stands for more than itself.
  */
-function gwc_vt_render_schedule_row( int $shift_id, string $base ): void {
+function gwc_vt_render_schedule_row( int $shift_id, string $base, int $folded = 0, string $folded_to = '' ): void {
 	$cancelled    = gwc_vt_shift_is_cancelled( $shift_id );
 	$ended        = gwc_vt_shift_has_ended( $shift_id );
 	$reconciled   = gwc_vt_shift_is_reconciled( $shift_id );
@@ -293,7 +302,19 @@ function gwc_vt_render_schedule_row( int $shift_id, string $base ): void {
 	<tr class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 		<td>
 			<strong><?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?></strong><br />
-			<span class="gwcvt-schedule__time"><?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?></span>
+			<?php if ( $folded > 1 && '' !== $folded_to ) : ?>
+				<span class="gwcvt-schedule__time">
+					<?php
+					printf(
+						/* translators: %s: the last date of the run this row stands for. */
+						esc_html__( 'through %s', 'groundwork-common-volunteer-tracker' ),
+						esc_html( gwc_vt_shift_date_label_from( $folded_to ) )
+					);
+					?>
+				</span>
+			<?php else : ?>
+				<span class="gwcvt-schedule__time"><?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?></span>
+			<?php endif; ?>
 		</td>
 		<td>
 			<a class="row-title" href="<?php echo esc_url( $edit_url ); ?>">
@@ -312,10 +333,59 @@ function gwc_vt_render_schedule_row( int $shift_id, string $base ): void {
 				<span class="gwcvt-badge gwcvt-badge--verified"><?php esc_html_e( 'Hours logged', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<?php endif; ?>
 
+			<?php
+			/* A folded run says what it stands for instead of what repeat it
+			 * came from: "these six are all called off" is the news, and the
+			 * pattern behind them is not what anybody is reading the line for.
+			 *
+			 * Deliberately NOT "one decision called off all six" — which is what
+			 * the design drew, and which this plugin cannot honestly say.
+			 * Cancelling six occurrences is six separate actions today; there is
+			 * no series-level call-off to have been the one decision. */
+			if ( $folded > 1 ) :
+				?>
+				<div class="gwcvt-schedule__repeat">
+					<?php
+					printf(
+						/* translators: %d: how many adjacent cancelled occurrences are drawn as this one row. */
+						esc_html( _n( 'Called off %d time in a row · folded here', 'Called off %d times in a row · folded here', $folded, 'groundwork-common-volunteer-tracker' ) ),
+						(int) $folded
+					);
+					?>
+				</div>
+				<?php
+			else :
+				/* What repeat this came from, when it came from one. Under the
+				 * activity rather than beside it, because it is about the row's
+				 * relationship to the other rows rather than about this shift. */
+				$repeat = gwc_vt_shift_repeat_note( $shift_id );
+
+				if ( '' !== $repeat ) :
+					?>
+					<div class="gwcvt-schedule__repeat"><?php echo esc_html( $repeat ); ?></div>
+					<?php
+				endif;
+			endif;
+			?>
+
 			<div class="row-actions">
 				<span class="edit">
 					<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit and roster', 'groundwork-common-volunteer-tracker' ); ?></a>
 				</span>
+				<?php
+				/* Folding hides rows, so the way back has to be on the row that
+				 * hid them — and a plain link, because a coordinator who needs
+				 * to reach the third of six cancelled Saturdays should not need
+				 * JavaScript to get there. */
+				if ( $folded > 1 ) :
+					?>
+					|
+					<span class="view">
+						<a href="<?php echo esc_url( gwc_vt_schedule_unfold_url( $base ) ); ?>">
+							<?php esc_html_e( 'Show them separately', 'groundwork-common-volunteer-tracker' ); ?>
+						</a>
+					</span>
+				<?php endif; ?>
 				<?php if ( $ended && ! $cancelled ) : ?>
 					|
 					<span class="gwcvt-log">
@@ -564,6 +634,129 @@ function gwc_vt_schedule_rows( array $shifts, array $events ): array {
 	);
 
 	return $rows;
+}
+
+/* ── Folding a fortnight of called-off Saturdays into one line ───────────────
+ * Cancelling a repeat means cancelling each of its occurrences, and each one is
+ * a row. Six called-off "Holiday distribution" shifts put six struck-through
+ * lines between the 16th and the 23rd, and everything a coordinator actually
+ * has to do that fortnight sits underneath them.
+ *
+ * The rows are still there — nothing is filtered away, and a called-off shift is
+ * an answer this organization owes whoever signed up for it. They are drawn as
+ * one line with a count, and one link puts them back.
+ *
+ * CONSECUTIVE, and only consecutive. A cancelled Saturday in October and
+ * another in December are two separate pieces of news, and a fold that reached
+ * across the live shifts between them would be hiding one of them rather than
+ * tidying it. Adjacency is measured in the ordered row list, which is the same
+ * order the screen prints, so what folds is always what would have printed
+ * together.
+ *
+ * A transform over the finished row list, deliberately: anything counted from
+ * $rows before this runs — the filter chips in the redesign say "Called off ·
+ * 6" — counts occurrences, which is what somebody asking that question means.
+ * Folding is how many lines get drawn, not how many shifts there are.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Collapse runs of adjacent cancelled shifts from one repeat.
+ *
+ * @param array[] $rows As gwc_vt_schedule_rows() returns them.
+ * @return array[] The same rows, with a 'folded' count on the survivors.
+ */
+function gwc_vt_fold_cancelled_repeats( array $rows ): array {
+	$folded = array();
+	$run    = array();
+	$series = 0;
+
+	/**
+	 * Close the run in progress, if there is one worth folding.
+	 */
+	$flush = static function () use ( &$folded, &$run, &$series ): void {
+		if ( count( $run ) > 1 ) {
+			$first              = $run[0];
+			$first['folded']    = count( $run );
+			$first['folded_to'] = (string) $run[ count( $run ) - 1 ]['date'];
+			$folded[]           = $first;
+		} else {
+			foreach ( $run as $one ) {
+				$folded[] = $one;
+			}
+		}
+
+		$run    = array();
+		$series = 0;
+	};
+
+	foreach ( $rows as $row ) {
+		$is_shift = 'shift' === ( $row['type'] ?? '' );
+		$id       = (int) ( $row['id'] ?? 0 );
+
+		$row_series = $is_shift && gwc_vt_shift_is_cancelled( $id )
+			? (int) get_post_meta( $id, GWC_VT_SHIFT_SERIES, true )
+			: 0;
+
+		if ( $row_series < 1 ) {
+			$flush();
+			$folded[] = $row;
+			continue;
+		}
+
+		if ( $row_series !== $series ) {
+			$flush();
+			$series = $row_series;
+		}
+
+		$run[] = $row;
+	}
+
+	$flush();
+
+	return $folded;
+}
+
+/**
+ * Whether the list should draw every cancelled occurrence separately.
+ *
+ * A plain GET parameter, so "show them separately" is a link rather than a
+ * script, and so the unfolded view is somewhere a coordinator can be sent.
+ *
+ * @return bool
+ */
+function gwc_vt_schedule_is_unfolded(): bool {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; chooses how many rows to draw.
+	return isset( $_GET['gwc_vt_unfold'] ) && '1' === $_GET['gwc_vt_unfold'];
+}
+
+/**
+ * Which half of the calendar the list is showing.
+ *
+ * Read here rather than in two places, because the unfold link has to keep
+ * somebody where they were: following "show them separately" from the past view
+ * and landing on next month's schedule is a link that loses your place.
+ *
+ * @return string 'past' or 'upcoming'.
+ */
+function gwc_vt_schedule_when(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks which half of the calendar to show.
+	return isset( $_GET['when'] ) && 'past' === $_GET['when'] ? 'past' : 'upcoming';
+}
+
+/**
+ * Where "show them separately" goes.
+ *
+ * @param string $base The screen's own URL.
+ * @return string
+ */
+function gwc_vt_schedule_unfold_url( string $base ): string {
+	$url = add_query_arg( 'gwc_vt_unfold', '1', $base );
+
+	if ( 'past' === gwc_vt_schedule_when() ) {
+		$url = add_query_arg( 'when', 'past', $url );
+	}
+
+	return $url;
 }
 
 /**

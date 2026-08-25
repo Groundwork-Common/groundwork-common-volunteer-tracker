@@ -335,6 +335,149 @@ final class RecurrenceTest extends TestCase {
 		$this->assertSame( '', gwc_vt_recurrence_capped_note( '' ) );
 	}
 
+	/* ── Reading a pattern back off the dates ────────────────────────────────
+	 * A series stores which shifts one repeat made and nothing else, so the row
+	 * that says "Repeats weekly through December 19" has to derive both halves
+	 * from the dates. The round trip is the assertion worth having: what
+	 * gwc_vt_recurrence_dates() produces for a pattern must read back as that
+	 * pattern.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * @param string $pattern Pattern key.
+	 * @param string $start   First occurrence.
+	 * @param string $until   Last date to consider.
+	 */
+	#[DataProvider( 'provide_patterns_to_round_trip' )]
+	public function test_a_generated_run_reads_back_as_the_pattern_that_made_it( string $pattern, string $start, string $until ): void {
+		$run = gwc_vt_recurrence_dates( $start, $pattern, $until );
+
+		$this->assertGreaterThan( 1, count( $run['dates'] ), 'the fixture has to actually repeat' );
+		$this->assertSame( $pattern, gwc_vt_recurrence_pattern_of( $run['dates'] ) );
+	}
+
+	/**
+	 * @return array<string, array{0:string, 1:string, 2:string}>
+	 */
+	public static function provide_patterns_to_round_trip(): array {
+		return array(
+			'daily'       => array( 'daily', '2026-08-03', '2026-08-20' ),
+			'weekdays'    => array( 'weekdays', '2026-08-03', '2026-08-28' ),
+			'weekly'      => array( 'weekly', '2026-08-08', '2026-12-19' ),
+			'fortnightly' => array( 'fortnightly', '2026-08-08', '2026-12-19' ),
+			'monthly'     => array( 'monthly', '2026-08-08', '2027-06-30' ),
+		);
+	}
+
+	/**
+	 * A series with occurrences taken out of it still reads as what it is.
+	 *
+	 * This is the case that decides whether deriving beats storing. Cancel the
+	 * Saturday after a holiday and delete another, and the gaps become 7, 14 and
+	 * 21 — every one still a whole number of weeks. A rule that demanded exactly
+	 * seven would call this "no pattern" and the row would stop saying anything,
+	 * on the series most likely to have been edited.
+	 */
+	public function test_a_weekly_series_with_holes_still_reads_as_weekly(): void {
+		$this->assertSame(
+			'weekly',
+			gwc_vt_recurrence_pattern_of(
+				array( '2026-08-08', '2026-08-15', '2026-08-29', '2026-09-19', '2026-09-26' )
+			)
+		);
+	}
+
+	/**
+	 * But a genuinely irregular set is not rounded to the nearest name.
+	 *
+	 * Saying "weekly" about four dates that are not weekly would send somebody
+	 * looking for shifts that were never made.
+	 */
+	public function test_an_irregular_set_is_not_given_a_name(): void {
+		$this->assertSame(
+			'',
+			gwc_vt_recurrence_pattern_of(
+				array( '2026-08-08', '2026-08-11', '2026-08-30', '2026-09-04' )
+			)
+		);
+	}
+
+	/**
+	 * Monthly wins over fortnightly on dates that could be read as either.
+	 *
+	 * A monthly run steps 28 or 35 days, and 28 is a multiple of fourteen. What
+	 * tells them apart is that a monthly series keeps the same ordinal — the
+	 * second Saturday every month — where a fortnightly one alternates between
+	 * the second and the fourth.
+	 */
+	public function test_a_monthly_run_is_not_mistaken_for_a_fortnightly_one(): void {
+		$monthly = gwc_vt_recurrence_dates( '2026-08-08', 'monthly', '2027-06-30' );
+
+		$this->assertSame( 'monthly', gwc_vt_recurrence_pattern_of( $monthly['dates'] ) );
+
+		$fortnightly = gwc_vt_recurrence_dates( '2026-08-08', 'fortnightly', '2026-12-19' );
+
+		$this->assertSame( 'fortnightly', gwc_vt_recurrence_pattern_of( $fortnightly['dates'] ) );
+	}
+
+	public function test_one_date_is_not_a_pattern(): void {
+		$this->assertSame( '', gwc_vt_recurrence_pattern_of( array( '2026-08-08' ) ) );
+		$this->assertSame( '', gwc_vt_recurrence_pattern_of( array() ) );
+	}
+
+	/**
+	 * The same day twice is one day, not a daily repeat.
+	 */
+	public function test_duplicates_are_one_date(): void {
+		$this->assertSame(
+			'',
+			gwc_vt_recurrence_pattern_of( array( '2026-08-08', '2026-08-08' ) )
+		);
+	}
+
+	public function test_it_ignores_what_it_cannot_read(): void {
+		$this->assertSame(
+			'weekly',
+			gwc_vt_recurrence_pattern_of(
+				array( '2026-08-08', 'not-a-date', '2026-08-15', '2026-02-31', '2026-08-22' )
+			)
+		);
+	}
+
+	/**
+	 * Order is the caller's business, not a precondition.
+	 */
+	public function test_it_does_not_care_what_order_the_dates_arrive_in(): void {
+		$this->assertSame(
+			'weekly',
+			gwc_vt_recurrence_pattern_of( array( '2026-08-22', '2026-08-08', '2026-08-15' ) )
+		);
+	}
+
+	/**
+	 * Every pattern the form offers, except 'once', has a row sentence.
+	 *
+	 * 'once' is deliberately absent: a shift that does not repeat has no repeat
+	 * to describe. A pattern added to the form without one here would silently
+	 * fall through to the "One of N made together" fallback, which is true but
+	 * is not the sentence anybody wanted.
+	 */
+	public function test_every_repeating_pattern_has_something_to_say(): void {
+		$patterns = gwc_vt_recurrence_patterns();
+		unset( $patterns['once'] );
+
+		$this->assertSame(
+			array_keys( $patterns ),
+			array_keys( gwc_vt_recurrence_repeat_notes() )
+		);
+	}
+
+	public function test_each_row_sentence_takes_the_date(): void {
+		foreach ( gwc_vt_recurrence_repeat_notes() as $key => $note ) {
+			$this->assertStringContainsString( '%s', $note, $key . ' has to name the last date' );
+		}
+	}
+
 	/**
 	 * The caps quote their own constants rather than a copy of the number.
 	 */

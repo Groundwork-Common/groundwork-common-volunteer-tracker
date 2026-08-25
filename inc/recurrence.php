@@ -322,6 +322,166 @@ function gwc_vt_recurrence_preview( string $start, string $pattern, string $unti
 	);
 }
 
+/* ── Reading a pattern back off the dates ────────────────────────────────────
+ * A series records which shifts came from one repeat — GWC_VT_SHIFT_SERIES, the
+ * first occurrence's own ID — and nothing else. Not the pattern, not the end
+ * date. So "Repeats weekly through December 19" on a schedule row has to be
+ * read back off the dates themselves.
+ *
+ * Derived rather than stored, deliberately. A stored pattern is a claim about
+ * what somebody once typed, and it stops being true the moment they cancel the
+ * Saturday after Thanksgiving or delete three occurrences in June. The dates are
+ * what the schedule actually contains, and a sentence derived from them cannot
+ * disagree with the rows underneath it.
+ *
+ * The cost is that an edited series may no longer look like any pattern, which
+ * is why gwc_vt_recurrence_pattern_of() is allowed to answer "none" and the
+ * caller has a sentence for that case. Guessing would be worse: a series with
+ * four of its Saturdays removed is not weekly, and saying so would send somebody
+ * looking for shifts that were deliberately taken out.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Which pattern a set of dates looks like, or '' when they look like none.
+ *
+ * Tolerant of gaps, because a series that has had occurrences cancelled or
+ * deleted is still the repeat somebody made: every gap being a multiple of
+ * seven reads as weekly, not as "no pattern". What it will not do is round a
+ * genuinely irregular set into the nearest name.
+ *
+ * @param string[] $dates Y-m-d, in any order. Duplicates are ignored.
+ * @return string A key from gwc_vt_recurrence_patterns(), or ''.
+ */
+function gwc_vt_recurrence_pattern_of( array $dates ): string {
+	$parsed = array();
+
+	foreach ( $dates as $date ) {
+		$one = gwc_vt_recurrence_date( (string) $date );
+
+		if ( null !== $one ) {
+			$parsed[ $one->format( 'Y-m-d' ) ] = $one;
+		}
+	}
+
+	if ( count( $parsed ) < 2 ) {
+		return '';
+	}
+
+	ksort( $parsed );
+
+	$parsed   = array_values( $parsed );
+	$gaps     = array();
+	$weekdays = array();
+	$ordinals = array();
+
+	foreach ( $parsed as $i => $one ) {
+		$weekdays[] = (int) $one->format( 'N' );
+
+		/* The same arithmetic gwc_vt_recurrence_monthly_step() uses to decide
+		 * "the second Saturday", so a monthly series it created is recognised by
+		 * the definition that made it rather than by a similar-looking one. */
+		$ordinals[] = (int) floor( ( (int) $one->format( 'j' ) - 1 ) / 7 ) + 1;
+
+		if ( $i > 0 ) {
+			$gaps[] = (int) $parsed[ $i - 1 ]->diff( $one )->format( '%a' );
+		}
+	}
+
+	$one_weekday = 1 === count( array_unique( $weekdays ) );
+	$one_ordinal = 1 === count( array_unique( $ordinals ) );
+
+	/* Exactly one day apart, not "a multiple of one day" — every gap is a
+	 * multiple of one, and asking that question here matched every pattern
+	 * below it. The tolerance the others have is deliberately absent: a daily
+	 * run with a day taken out of it is indistinguishable from a set of dates
+	 * that happen to be near each other, and there is no honest way to tell. */
+	if ( array( 1 ) === array_values( array_unique( $gaps ) ) ) {
+		return 'daily';
+	}
+
+	/* Weekdays before the weekly checks: Monday to Friday with a three-day jump
+	 * over each weekend is not a multiple of seven and would otherwise fall
+	 * through to "none". */
+	if ( 5 >= max( $weekdays ) && 3 >= max( $gaps ) ) {
+		return 'weekdays';
+	}
+
+	/* Monthly before fortnightly, because a monthly series steps 28 or 35 days
+	 * and 28 is a multiple of fourteen. What tells them apart is the ordinal: a
+	 * fortnightly run alternates between the second and fourth Saturday, and a
+	 * monthly one does not. */
+	if ( $one_weekday && $one_ordinal && 21 <= min( $gaps ) ) {
+		return 'monthly';
+	}
+
+	if ( $one_weekday && gwc_vt_recurrence_every_gap( $gaps, 14 ) ) {
+		return 'fortnightly';
+	}
+
+	if ( $one_weekday && gwc_vt_recurrence_every_gap( $gaps, 7 ) ) {
+		return 'weekly';
+	}
+
+	return '';
+}
+
+/**
+ * Whether every gap is a positive whole multiple of a step.
+ *
+ * @param int[] $gaps Days between consecutive dates.
+ * @param int   $step The step to test against.
+ * @return bool
+ */
+function gwc_vt_recurrence_every_gap( array $gaps, int $step ): bool {
+	if ( ! $gaps || $step < 1 ) {
+		return false;
+	}
+
+	foreach ( $gaps as $gap ) {
+		if ( $gap < 1 || 0 !== $gap % $step ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * How a row says it is part of a repeat, keyed by pattern.
+ *
+ * A second table rather than a reuse of gwc_vt_recurrence_patterns(), because
+ * these are a different sentence for a different place: the form offers "Every
+ * week" as a choice, and a schedule row reports "Repeats weekly through
+ * December 19" as a fact. Composing the first into the second gives "Repeats
+ * Every week through …", which is why they are written out rather than glued.
+ *
+ * A function with a memo and not a const, for the reason the patterns table is:
+ * a const is evaluated before the request's translations load, which is
+ * invisible on an English site and total on every other one.
+ *
+ * @return array<string, string> Each carrying one %s, the last date.
+ */
+function gwc_vt_recurrence_repeat_notes(): array {
+	static $notes = null;
+
+	if ( null === $notes ) {
+		$notes = array(
+			/* translators: %s: the last date in the repeat. */
+			'daily'       => __( 'Repeats daily through %s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: %s: the last date in the repeat. */
+			'weekdays'    => __( 'Repeats every weekday through %s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: %s: the last date in the repeat. */
+			'weekly'      => __( 'Repeats weekly through %s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: %s: the last date in the repeat. */
+			'fortnightly' => __( 'Repeats every other week through %s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: %s: the last date in the repeat. */
+			'monthly'     => __( 'Repeats monthly through %s', 'groundwork-common-volunteer-tracker' ),
+		);
+	}
+
+	return $notes;
+}
+
 /**
  * The nth occurrence after the first, or null when that step has no date.
  *

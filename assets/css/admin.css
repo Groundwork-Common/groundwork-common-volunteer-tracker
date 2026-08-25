@@ -1240,3 +1240,13 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-map__links a:focus {
 	text-decoration: underline;
 }
+
+/* The sub-line under a schedule row's activity: which repeat it came from, or
+   how many called-off occurrences the row stands for. Description-sized and
+   muted, because it is context for the row above it rather than another fact
+   competing with the activity's own link. */
+.gwcvt-schedule__repeat {
+	margin-top: 2px;
+	font-size: 12px;
+	color: #646970;
+}
