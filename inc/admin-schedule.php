@@ -449,19 +449,15 @@ function gwc_vt_schedule_notice(): void {
 
 	/* A run that was truncated says so. A screen that quietly makes fewer shifts
 	 * than somebody asked for is a screen that loses them a month of Saturdays,
-	 * and they find out when nobody turns up. */
-	if ( 'count' === $capped ) {
-		$message .= ' ' . sprintf(
-			/* translators: %d: the maximum number of shifts one repeat can create. */
-			__( 'That is the most one repeat can add at a time (%d). Add the rest by repeating from the last one.', 'groundwork-common-volunteer-tracker' ),
-			GWC_VT_RECURRENCE_MAX
-		);
-	} elseif ( 'horizon' === $capped ) {
-		$message .= ' ' . sprintf(
-			/* translators: %d: how many months ahead a repeat may reach. */
-			__( 'Repeats reach %d months ahead at most, so the later dates were not added.', 'groundwork-common-volunteer-tracker' ),
-			GWC_VT_RECURRENCE_HORIZON_MONTHS
-		);
+	 * and they find out when nobody turns up.
+	 *
+	 * The two sentences live in inc/recurrence.php beside the constants they
+	 * quote, because the preview on the add-a-shift form says the same thing
+	 * before the save and the two must not drift. */
+	$note = gwc_vt_recurrence_capped_note( $capped );
+
+	if ( '' !== $note ) {
+		$message .= ' ' . $note;
 	}
 
 	printf(

@@ -111,143 +111,165 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 			<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
 			<?php wp_nonce_field( 'gwc_vt_save_shift_' . $shift_id ); ?>
 
-			<h2><?php esc_html_e( 'When', 'groundwork-common-volunteer-tracker' ); ?></h2>
+			<?php
+			/* ── One card, not three form-tables ─────────────────────────────
+			 * The fields used to be three <table class="form-table"> sections
+			 * under three headings — When, What and where, How many people —
+			 * which put the date, the times and the capacity on three separate
+			 * eye-lines with a heading between each. A coordinator adding a
+			 * shift says all of that in one breath.
+			 *
+			 * So: one card, two columns, in the order somebody describes a
+			 * shift out loud. The repeat and everything it creates sit below a
+			 * rule, because they are a decision about how many of this shift to
+			 * make rather than another of its attributes.
+			 *
+			 * The labels keep their explicit `for`, which the form-table's
+			 * <th scope="row"> was doing structurally. A grid has no row header
+			 * to lean on, so the association has to be stated — dropping it
+			 * would leave a screen reader announcing six unlabelled inputs.
+			 * ───────────────────────────────────────────────────────────── */
+			?>
+			<div class="gwcvt-shift-card">
+				<div class="gwcvt-shift-grid">
+					<div class="gwcvt-shift-field">
+						<label for="gwcvt-shift-activity"><?php esc_html_e( 'What they will do', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<input type="text" id="gwcvt-shift-activity" name="gwc_vt_activity" maxlength="200" value="<?php echo esc_attr( $activity ); ?>" <?php echo $vocabulary ? 'list="gwcvt-shift-activities"' : ''; ?> />
+						<?php if ( $vocabulary ) : ?>
+							<datalist id="gwcvt-shift-activities">
+								<?php foreach ( $vocabulary as $option ) : ?>
+									<option value="<?php echo esc_attr( $option ); ?>"></option>
+								<?php endforeach; ?>
+							</datalist>
+						<?php endif; ?>
+						<p class="description"><?php esc_html_e( 'Copied onto every hour entry when you log the shift, so it ends up on a letter.', 'groundwork-common-volunteer-tracker' ); ?></p>
+					</div>
 
-			<table class="form-table" role="presentation">
-				<tbody>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-date"><?php esc_html_e( 'Date', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
-							<input type="date" id="gwcvt-shift-date" name="gwc_vt_date" required value="<?php echo esc_attr( $date ); ?>" />
-							<p class="description">
-								<?php esc_html_e( 'A shift is something that has not happened yet, so this one is allowed to be in the future — unlike an hour entry, which records a day somebody already worked.', 'groundwork-common-volunteer-tracker' ); ?>
-							</p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-start"><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
+					<div class="gwcvt-shift-field">
+						<label for="gwcvt-shift-location"><?php esc_html_e( 'Where', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<input type="text" id="gwcvt-shift-location" name="gwc_vt_location" maxlength="200" value="<?php echo esc_attr( $location ); ?>" <?php echo $locations ? 'list="gwcvt-shift-locations"' : ''; ?> />
+						<?php if ( $locations ) : ?>
+							<datalist id="gwcvt-shift-locations">
+								<?php foreach ( $locations as $option ) : ?>
+									<option value="<?php echo esc_attr( $option ); ?>"></option>
+								<?php endforeach; ?>
+							</datalist>
+						<?php endif; ?>
+					</div>
+
+					<div class="gwcvt-shift-field">
+						<label for="gwcvt-shift-date"><?php esc_html_e( 'Date', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<input type="date" id="gwcvt-shift-date" name="gwc_vt_date" required value="<?php echo esc_attr( $date ); ?>" />
+						<p class="description">
+							<?php esc_html_e( 'A shift is something that has not happened yet, so this one is allowed to be in the future — unlike an hour entry, which records a day somebody already worked.', 'groundwork-common-volunteer-tracker' ); ?>
+						</p>
+					</div>
+
+					<div class="gwcvt-shift-field">
+						<label for="gwcvt-shift-start"><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<span class="gwcvt-shift-pair">
 							<input type="time" id="gwcvt-shift-start" name="gwc_vt_start" required value="<?php echo esc_attr( $start ); ?>" />
 							<label for="gwcvt-shift-end" class="gwcvt-shift-form__inline"><?php esc_html_e( 'to', 'groundwork-common-volunteer-tracker' ); ?></label>
 							<input type="time" id="gwcvt-shift-end" name="gwc_vt_end" required value="<?php echo esc_attr( $end ); ?>" />
+						</span>
 
-							<label for="gwcvt-shift-overnight" class="gwcvt-shift-form__inline">
-								<input type="checkbox" id="gwcvt-shift-overnight" name="gwc_vt_overnight" value="1" <?php checked( (bool) $overnight ); ?> />
-								<?php esc_html_e( 'ends the next day', 'groundwork-common-volunteer-tracker' ); ?>
-							</label>
+						<label for="gwcvt-shift-overnight" class="gwcvt-shift-check">
+							<input type="checkbox" id="gwcvt-shift-overnight" name="gwc_vt_overnight" value="1" <?php checked( (bool) $overnight ); ?> />
+							<?php esc_html_e( 'ends the next day', 'groundwork-common-volunteer-tracker' ); ?>
+						</label>
 
-							<p class="description">
-								<?php esc_html_e( 'An overnight shift at a shelter runs 22:00 to 06:00 with that checkbox selected. Without it, an end time before the start is treated as a typo and refused.', 'groundwork-common-volunteer-tracker' ); ?>
-							</p>
-						</td>
-					</tr>
+						<p class="description">
+							<?php esc_html_e( 'An overnight shift at a shelter runs 22:00 to 06:00 with that checkbox selected. Without it, an end time before the start is treated as a typo and refused.', 'groundwork-common-volunteer-tracker' ); ?>
+						</p>
+					</div>
 
-					<?php if ( $is_new ) : ?>
-						<tr>
-							<th scope="row"><label for="gwcvt-shift-repeat"><?php esc_html_e( 'Repeat', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-							<td>
-								<select id="gwcvt-shift-repeat" name="gwc_vt_repeat">
-									<?php foreach ( gwc_vt_recurrence_patterns() as $key => $label ) : ?>
-										<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
-									<?php endforeach; ?>
-								</select>
-
-								<label for="gwcvt-shift-until" class="gwcvt-shift-form__inline"><?php esc_html_e( 'until', 'groundwork-common-volunteer-tracker' ); ?></label>
-								<input type="date" id="gwcvt-shift-until" name="gwc_vt_until" value="" />
-
-								<p class="description">
-									<?php
-									printf(
-										/* translators: 1: the maximum number of shifts, 2: how many months ahead. */
-										esc_html__( 'Every repeat becomes a real shift you can edit or cancel on its own. Up to %1$d at a time, and up to %2$d months ahead.', 'groundwork-common-volunteer-tracker' ),
-										(int) GWC_VT_RECURRENCE_MAX,
-										(int) GWC_VT_RECURRENCE_HORIZON_MONTHS
-									);
-									?>
-								</p>
-							</td>
-						</tr>
-					<?php endif; ?>
-				</tbody>
-			</table>
-
-			<h2><?php esc_html_e( 'What and where', 'groundwork-common-volunteer-tracker' ); ?></h2>
-
-			<table class="form-table" role="presentation">
-				<tbody>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-activity"><?php esc_html_e( 'What they will do', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
-							<input type="text" id="gwcvt-shift-activity" name="gwc_vt_activity" class="regular-text" maxlength="200" value="<?php echo esc_attr( $activity ); ?>" <?php echo $vocabulary ? 'list="gwcvt-shift-activities"' : ''; ?> />
-							<?php if ( $vocabulary ) : ?>
-								<datalist id="gwcvt-shift-activities">
-									<?php foreach ( $vocabulary as $option ) : ?>
-										<option value="<?php echo esc_attr( $option ); ?>"></option>
-									<?php endforeach; ?>
-								</datalist>
-							<?php endif; ?>
-							<p class="description"><?php esc_html_e( 'Copied onto every hour entry when you log the shift, so it ends up on a letter.', 'groundwork-common-volunteer-tracker' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-location"><?php esc_html_e( 'Where', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
-							<input type="text" id="gwcvt-shift-location" name="gwc_vt_location" class="regular-text" maxlength="200" value="<?php echo esc_attr( $location ); ?>" <?php echo $locations ? 'list="gwcvt-shift-locations"' : ''; ?> />
-							<?php if ( $locations ) : ?>
-								<datalist id="gwcvt-shift-locations">
-									<?php foreach ( $locations as $option ) : ?>
-										<option value="<?php echo esc_attr( $option ); ?>"></option>
-									<?php endforeach; ?>
-								</datalist>
-							<?php endif; ?>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-supervisor"><?php esc_html_e( 'Supervised by', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
-							<input type="text" id="gwcvt-shift-supervisor" name="gwc_vt_supervisor" class="regular-text" maxlength="100" value="<?php echo esc_attr( $supervisor ); ?>" />
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
-							<textarea id="gwcvt-shift-notes" name="gwc_vt_notes" class="large-text" rows="3" maxlength="1000"><?php echo esc_textarea( $notes ); ?></textarea>
-							<p class="description"><?php esc_html_e( 'Closed shoes, park around the back, ask for Dana at the desk. Shown to whoever signs up.', 'groundwork-common-volunteer-tracker' ); ?></p>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<h2><?php esc_html_e( 'How many people', 'groundwork-common-volunteer-tracker' ); ?></h2>
-
-			<table class="form-table" role="presentation">
-				<tbody>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-min"><?php esc_html_e( 'We need at least', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
+					<div class="gwcvt-shift-field">
+						<label for="gwcvt-shift-min"><?php esc_html_e( 'We need at least', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<span class="gwcvt-shift-pair">
 							<input type="number" id="gwcvt-shift-min" name="gwc_vt_min" class="small-text" min="0" max="<?php echo esc_attr( (string) GWC_VT_SHIFT_CAPACITY_MAX ); ?>" value="<?php echo esc_attr( (string) $min ); ?>" />
-							<p class="description"><?php esc_html_e( 'A shift below this is flagged on the schedule. Zero means no minimum.', 'groundwork-common-volunteer-tracker' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="gwcvt-shift-max"><?php esc_html_e( 'We have room for', 'groundwork-common-volunteer-tracker' ); ?></label></th>
-						<td>
+							<label for="gwcvt-shift-max" class="gwcvt-shift-form__inline"><?php esc_html_e( 'and have room for', 'groundwork-common-volunteer-tracker' ); ?></label>
 							<input type="number" id="gwcvt-shift-max" name="gwc_vt_max" class="small-text" min="0" max="<?php echo esc_attr( (string) GWC_VT_SHIFT_CAPACITY_MAX ); ?>" value="<?php echo esc_attr( (string) $max ); ?>" />
-							<p class="description"><?php esc_html_e( 'Once it is full, later signups go on a waiting list rather than being turned away — you decide what to do with them. Zero means no limit.', 'groundwork-common-volunteer-tracker' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><?php esc_html_e( 'On the schedule', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<td>
-							<label for="gwcvt-shift-published">
-								<input type="checkbox" id="gwcvt-shift-published" name="gwc_vt_published" value="1" <?php checked( $published ); ?> <?php disabled( $cancelled ); ?> />
-								<?php esc_html_e( 'Published — people can be put on it, and it can appear publicly', 'groundwork-common-volunteer-tracker' ); ?>
-							</label>
-							<p class="description"><?php esc_html_e( 'Cleared, it is a draft only staff can see.', 'groundwork-common-volunteer-tracker' ); ?></p>
-						</td>
-					</tr>
-				</tbody>
-			</table>
+						</span>
+						<p class="description"><?php esc_html_e( 'Below the first, the shift is flagged on the schedule. Past the second, later signups go on a waiting list rather than being turned away. Zero means no minimum and no limit.', 'groundwork-common-volunteer-tracker' ); ?></p>
+					</div>
+
+					<div class="gwcvt-shift-field">
+						<label for="gwcvt-shift-supervisor"><?php esc_html_e( 'Supervised by', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<input type="text" id="gwcvt-shift-supervisor" name="gwc_vt_supervisor" maxlength="100" value="<?php echo esc_attr( $supervisor ); ?>" />
+					</div>
+				</div>
+
+				<div class="gwcvt-shift-field gwcvt-shift-field--wide">
+					<label for="gwcvt-shift-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label>
+					<textarea id="gwcvt-shift-notes" name="gwc_vt_notes" class="large-text" rows="3" maxlength="1000"><?php echo esc_textarea( $notes ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'Closed shoes, park around the back, ask for Dana at the desk. Shown to whoever signs up.', 'groundwork-common-volunteer-tracker' ); ?></p>
+				</div>
+
+				<?php if ( $is_new ) : ?>
+					<hr class="gwcvt-shift-rule" />
+
+					<div class="gwcvt-shift-grid">
+						<div class="gwcvt-shift-field">
+							<label for="gwcvt-shift-repeat"><?php esc_html_e( 'Repeats', 'groundwork-common-volunteer-tracker' ); ?></label>
+							<select id="gwcvt-shift-repeat" name="gwc_vt_repeat">
+								<?php foreach ( gwc_vt_recurrence_patterns() as $key => $label ) : ?>
+									<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</div>
+
+						<div class="gwcvt-shift-field">
+							<label for="gwcvt-shift-until"><?php esc_html_e( 'Until', 'groundwork-common-volunteer-tracker' ); ?></label>
+							<input type="date" id="gwcvt-shift-until" name="gwc_vt_until" value="" />
+							<p class="description">
+								<?php
+								printf(
+									/* translators: 1: the maximum number of shifts, 2: how many months ahead. */
+									esc_html__( 'Every repeat becomes a real shift you can edit or cancel on its own. Up to %1$d at a time, and up to %2$d months ahead.', 'groundwork-common-volunteer-tracker' ),
+									(int) GWC_VT_RECURRENCE_MAX,
+									(int) GWC_VT_RECURRENCE_HORIZON_MONTHS
+								);
+								?>
+							</p>
+						</div>
+					</div>
+
+					<?php
+					/* Filled by assets/js/admin-shift-repeat.js from the REST
+					 * route, which runs the same function the save runs. Empty
+					 * and hidden on load: the pattern starts at "Just this
+					 * once", so there is nothing to say until somebody picks a
+					 * repeat.
+					 *
+					 * With the script absent this stays empty and the after-save
+					 * report in gwc_vt_schedule_notice() is the answer, exactly
+					 * as it was before — which is why the box is a container the
+					 * server leaves blank rather than something the form depends
+					 * on.
+					 *
+					 * aria-live, because the sentence changes under somebody who
+					 * may be nowhere near it: the control they just used is the
+					 * select, and the count is the consequence of using it. */
+					?>
+					<div
+						class="gwcvt-repeat-preview"
+						id="gwcvt-shift-preview"
+						data-gwcvt-repeat-preview
+						aria-live="polite"
+						hidden
+					></div>
+				<?php endif; ?>
+
+				<hr class="gwcvt-shift-rule" />
+
+				<div class="gwcvt-shift-field">
+					<label for="gwcvt-shift-published" class="gwcvt-shift-check">
+						<input type="checkbox" id="gwcvt-shift-published" name="gwc_vt_published" value="1" <?php checked( $published ); ?> <?php disabled( $cancelled ); ?> />
+						<?php esc_html_e( 'Published — people can be put on it, and it can appear publicly', 'groundwork-common-volunteer-tracker' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'Cleared, it is a draft only staff can see.', 'groundwork-common-volunteer-tracker' ); ?></p>
+				</div>
+			</div>
 
 			<?php
 			/* Only where it could matter: an existing shift, still to come, with
@@ -275,10 +297,19 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 			<?php endif; ?>
 
 			<?php
+			/* An id on the new-shift button so the repeat preview can relabel it
+			 * — "Add 20 shifts to the schedule" is the same sentence as the box,
+			 * said on the control that does it. Its starting text is the same
+			 * string gwc_vt_recurrence_preview() returns for a run that does not
+			 * repeat, so the script has something to put back. */
 			submit_button(
 				$is_new
 					? __( 'Add to the schedule', 'groundwork-common-volunteer-tracker' )
-					: __( 'Save this shift', 'groundwork-common-volunteer-tracker' )
+					: __( 'Save this shift', 'groundwork-common-volunteer-tracker' ),
+				'primary',
+				'submit',
+				true,
+				$is_new ? array( 'id' => 'gwcvt-shift-submit' ) : ''
 			);
 			?>
 		</form>

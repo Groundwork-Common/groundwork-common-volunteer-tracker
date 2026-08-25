@@ -216,4 +216,137 @@ final class RecurrenceTest extends TestCase {
 			array_keys( $patterns )
 		);
 	}
+
+	/* ── Saying it before the save ───────────────────────────────────────────
+	 * The preview exists so a coordinator finds out what a repeat will create
+	 * before they commit to it rather than after. What makes it worth having is
+	 * that it is the same arithmetic — so the thing most worth asserting is not
+	 * the wording but that the two cannot disagree.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * The number the box promises is the number the save will make.
+	 *
+	 * Asserted against gwc_vt_recurrence_dates() rather than against a literal,
+	 * because a literal would go on passing if the preview grew its own copy of
+	 * the rule and both were changed together. This fails the moment they are
+	 * two implementations.
+	 *
+	 * @param string $start   First occurrence.
+	 * @param string $pattern Pattern key.
+	 * @param string $until   Last date to consider.
+	 */
+	#[DataProvider( 'provide_runs_worth_previewing' )]
+	public function test_the_preview_promises_what_the_save_would_make( string $start, string $pattern, string $until ): void {
+		$run     = gwc_vt_recurrence_dates( $start, $pattern, $until );
+		$preview = gwc_vt_recurrence_preview( $start, $pattern, $until );
+
+		$this->assertSame( count( $run['dates'] ), $preview['count'] );
+		$this->assertSame( $run['capped'], $preview['capped'] );
+	}
+
+	/**
+	 * @return array<string, array{0:string, 1:string, 2:string}>
+	 */
+	public static function provide_runs_worth_previewing(): array {
+		return array(
+			'a term of Saturdays'      => array( '2026-08-08', 'weekly', '2026-12-19' ),
+			'every other week'         => array( '2026-08-08', 'fortnightly', '2026-12-19' ),
+			'weekdays, which skip'     => array( '2026-08-03', 'weekdays', '2026-08-31' ),
+			'monthly across a gap'     => array( '2026-01-31', 'monthly', '2026-12-31' ),
+			'past the count cap'       => array( '2026-01-01', 'daily', '2026-12-31' ),
+			'past the horizon'         => array( '2026-01-03', 'weekly', '2030-01-01' ),
+			'no end date at all'       => array( '2026-08-08', 'weekly', '' ),
+			'an end before the start'  => array( '2026-08-08', 'weekly', '2026-08-01' ),
+		);
+	}
+
+	public function test_a_run_that_does_not_repeat_has_nothing_to_preview(): void {
+		$preview = gwc_vt_recurrence_preview( '2026-08-08', 'once', '2026-12-19' );
+
+		$this->assertFalse( $preview['repeats'] );
+		$this->assertSame( '', $preview['headline'] );
+	}
+
+	public function test_a_pattern_it_has_never_heard_of_has_nothing_to_preview(): void {
+		$preview = gwc_vt_recurrence_preview( '2026-08-08', 'every-third-tuesday', '2026-12-19' );
+
+		$this->assertFalse( $preview['repeats'] );
+	}
+
+	/**
+	 * The count reaches the words, both of them.
+	 *
+	 * The button and the box say the same number, because they are the same
+	 * sentence said in two places — a box promising twenty over a button
+	 * offering to add one is the confusion this whole change is about.
+	 */
+	public function test_the_count_reaches_the_headline_and_the_button(): void {
+		$preview = gwc_vt_recurrence_preview( '2026-08-08', 'weekly', '2026-12-19' );
+
+		$this->assertSame( 20, $preview['count'] );
+		$this->assertStringContainsString( '20', $preview['headline'] );
+		$this->assertStringContainsString( '20', $preview['submit'] );
+	}
+
+	/**
+	 * A repeat with no end date makes one shift, and the preview says so.
+	 *
+	 * gwc_vt_recurrence_dates() has always answered this way — "no end date is
+	 * not forever, it is a question nobody answered" — but until now the answer
+	 * arrived after the save, as a schedule with one Saturday on it. Somebody
+	 * who meant to book a term and got a single shift found out by looking.
+	 */
+	public function test_a_repeat_with_no_end_date_says_it_will_make_one(): void {
+		$preview = gwc_vt_recurrence_preview( '2026-08-08', 'weekly', '' );
+
+		$this->assertTrue( $preview['repeats'], 'the box has to appear to say this' );
+		$this->assertSame( 1, $preview['count'] );
+		$this->assertNotSame( '', $preview['headline'] );
+		$this->assertSame( '', $preview['note'], 'nothing was truncated; this is not a cap' );
+	}
+
+	/* ── The capped sentences, said once ─────────────────────────────────── */
+
+	public function test_a_capped_run_carries_the_note_the_save_would_print(): void {
+		$horizon = gwc_vt_recurrence_preview( '2026-01-03', 'weekly', '2030-01-01' );
+
+		$this->assertSame( 'horizon', $horizon['capped'] );
+		$this->assertSame( gwc_vt_recurrence_capped_note( 'horizon' ), $horizon['note'] );
+		$this->assertNotSame( '', $horizon['note'] );
+	}
+
+	public function test_a_run_that_was_not_capped_carries_no_note(): void {
+		$preview = gwc_vt_recurrence_preview( '2026-08-08', 'weekly', '2026-12-19' );
+
+		$this->assertSame( '', $preview['capped'] );
+		$this->assertSame( '', $preview['note'] );
+	}
+
+	public function test_the_two_caps_do_not_say_the_same_thing(): void {
+		$this->assertNotSame(
+			gwc_vt_recurrence_capped_note( 'count' ),
+			gwc_vt_recurrence_capped_note( 'horizon' ),
+			'they are different news and a coordinator does different things about them'
+		);
+	}
+
+	public function test_no_cap_is_no_sentence(): void {
+		$this->assertSame( '', gwc_vt_recurrence_capped_note( '' ) );
+	}
+
+	/**
+	 * The caps quote their own constants rather than a copy of the number.
+	 */
+	public function test_the_cap_sentences_quote_the_constants(): void {
+		$this->assertStringContainsString(
+			(string) GWC_VT_RECURRENCE_MAX,
+			gwc_vt_recurrence_capped_note( 'count' )
+		);
+
+		$this->assertStringContainsString(
+			(string) GWC_VT_RECURRENCE_HORIZON_MONTHS,
+			gwc_vt_recurrence_capped_note( 'horizon' )
+		);
+	}
 }

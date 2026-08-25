@@ -173,6 +173,155 @@ function gwc_vt_recurrence_dates( string $start, string $pattern, string $until 
 	);
 }
 
+/* ── Saying what a run will do, before and after ─────────────────────────────
+ * The cap used to be reported only after the save, from gwc_vt_schedule_notice()
+ * in inc/admin-schedule.php, where the two sentences below lived as literals.
+ * That is the right sentence at the wrong moment: by the time somebody reads it
+ * they have already committed, and the shifts they did not get are the ones they
+ * have to notice are missing.
+ *
+ * So the preview says it first. Both now read the same two sentences from here,
+ * which is the point — a preview that promises twenty-six and a save that makes
+ * twenty is worse than no preview at all, and two copies of a sentence about a
+ * constant is how that starts.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * What to add when a run was truncated, or '' when it was not.
+ *
+ * @param string $capped '', 'count' or 'horizon', as gwc_vt_recurrence_dates() reports it.
+ * @return string
+ */
+function gwc_vt_recurrence_capped_note( string $capped ): string {
+	if ( 'count' === $capped ) {
+		return sprintf(
+			/* translators: %d: the maximum number of shifts one repeat can create. */
+			__( 'That is the most one repeat can add at a time (%d). Add the rest by repeating from the last one.', 'groundwork-common-volunteer-tracker' ),
+			GWC_VT_RECURRENCE_MAX
+		);
+	}
+
+	if ( 'horizon' === $capped ) {
+		return sprintf(
+			/* translators: %d: how many months ahead a repeat may reach. */
+			__( 'Repeats reach %d months ahead at most, so the later dates were not added.', 'groundwork-common-volunteer-tracker' ),
+			GWC_VT_RECURRENCE_HORIZON_MONTHS
+		);
+	}
+
+	return '';
+}
+
+/**
+ * A date in the site's format, without letting a timezone move it.
+ *
+ * Timestamps are the trap here. wp_date() converts one into the site's zone,
+ * and everything in this file is a bare calendar date built in UTC. On a site
+ * behind UTC that conversion lands the previous evening, and a preview reading
+ * "August 7 through December 18" for a run that creates the 8th through the
+ * 19th is worse than one that says nothing. Passing UTC back in is what keeps
+ * the arithmetic and the wording talking about the same day.
+ *
+ * @param string $date Y-m-d.
+ * @return string Empty when the date does not parse.
+ */
+function gwc_vt_recurrence_date_label( string $date ): string {
+	$parsed = gwc_vt_recurrence_date( $date );
+
+	if ( null === $parsed ) {
+		return '';
+	}
+
+	$format = (string) get_option( 'date_format' );
+
+	return (string) wp_date(
+		'' !== $format ? $format : 'j F Y',
+		$parsed->getTimestamp(),
+		new DateTimeZone( 'UTC' )
+	);
+}
+
+/**
+ * What a run would create, in the words the screen will print.
+ *
+ * Every string comes back finished and translated. The alternative — hand the
+ * browser a count and let a script assemble a sentence from fragments — puts
+ * word order in JavaScript, which is where translations go to die: a language
+ * that says the date before the verb has no way to express that through a
+ * template it cannot see.
+ *
+ * @param string $start   First occurrence, Y-m-d.
+ * @param string $pattern One of gwc_vt_recurrence_patterns().
+ * @param string $until   Last date to consider, Y-m-d.
+ * @return array{count:int, repeats:bool, headline:string, detail:string, submit:string, capped:string, note:string}
+ */
+function gwc_vt_recurrence_preview( string $start, string $pattern, string $until ): array {
+	$patterns = gwc_vt_recurrence_patterns();
+
+	$blank = array(
+		'count'    => 0,
+		'repeats'  => false,
+		'headline' => '',
+		'detail'   => '',
+		'submit'   => __( 'Add to the schedule', 'groundwork-common-volunteer-tracker' ),
+		'capped'   => '',
+		'note'     => '',
+	);
+
+	if ( 'once' === $pattern || ! isset( $patterns[ $pattern ] ) ) {
+		return $blank;
+	}
+
+	$run   = gwc_vt_recurrence_dates( $start, $pattern, $until );
+	$dates = $run['dates'];
+	$count = count( $dates );
+
+	if ( 0 === $count ) {
+		return $blank;
+	}
+
+	/* One date from a repeating pattern means the end date is missing or is not
+	 * after the start — see the comment on that branch in
+	 * gwc_vt_recurrence_dates(). Saying so here is the whole point of a preview:
+	 * "no end date" silently producing a single shift is exactly the surprise
+	 * this box exists to prevent. */
+	if ( 1 === $count ) {
+		return array(
+			'count'    => 1,
+			'repeats'  => true,
+			'headline' => __( 'This creates one shift, not a repeat.', 'groundwork-common-volunteer-tracker' ),
+			'detail'   => __( 'A repeat needs an end date. Without one there is no way to know how many to make, so it makes the one you asked for.', 'groundwork-common-volunteer-tracker' ),
+			'submit'   => __( 'Add the shift', 'groundwork-common-volunteer-tracker' ),
+			'capped'   => '',
+			'note'     => '',
+		);
+	}
+
+	return array(
+		'count'    => $count,
+		'repeats'  => true,
+		'headline' => sprintf(
+			/* translators: %s: how many shifts, already formatted for the locale. */
+			__( 'This creates %s real shifts', 'groundwork-common-volunteer-tracker' ),
+			number_format_i18n( $count )
+		),
+		'detail'   => sprintf(
+			/* translators: 1: the repeat pattern, such as "Every week". 2: the first date. 3: the last date. */
+			__( '%1$s, %2$s through %3$s. Each is its own row: cancel one and the rest are untouched, and each keeps its own roster.', 'groundwork-common-volunteer-tracker' ),
+			$patterns[ $pattern ],
+			gwc_vt_recurrence_date_label( (string) reset( $dates ) ),
+			gwc_vt_recurrence_date_label( (string) end( $dates ) )
+		),
+		'submit'   => sprintf(
+			/* translators: %s: how many shifts, already formatted for the locale. */
+			__( 'Add %s shifts to the schedule', 'groundwork-common-volunteer-tracker' ),
+			number_format_i18n( $count )
+		),
+		'capped'   => (string) $run['capped'],
+		'note'     => gwc_vt_recurrence_capped_note( (string) $run['capped'] ),
+	);
+}
+
 /**
  * The nth occurrence after the first, or null when that step has no date.
  *

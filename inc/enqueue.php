@@ -192,6 +192,20 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			GWC_VT_VERSION,
 			true
 		);
+
+		/* The repeat preview on the add-a-shift form. wp-api-fetch for the same
+		 * reason the picker takes it: it carries the X-WP-Nonce middleware, so
+		 * nothing here has to ship a nonce to the browser or remember to send
+		 * it. No strings of its own — every word it prints comes back from the
+		 * route already translated, which is why there is no
+		 * wp_set_script_translations() call for this handle. */
+		wp_enqueue_script(
+			'gwc-vt-shift-repeat',
+			GWC_VT_URL . 'assets/js/admin-shift-repeat.js',
+			array( 'wp-api-fetch' ),
+			GWC_VT_VERSION,
+			true
+		);
 	}
 
 	wp_set_script_translations(

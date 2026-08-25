@@ -605,6 +605,120 @@ a.gwcvt-badge--action:focus-visible {
 	margin-left: 8px;
 }
 
+/* The form is one card in two columns rather than three form-tables under three
+   headings, so the date, the times and the capacity land on one eye-line — see
+   the block comment in inc/admin-shift.php.
+
+   The grid collapses to one column below 782px, which is the width core itself
+   uses to switch wp-admin into its touch layout. Matching it rather than
+   picking a number means the form reflows at the same moment everything around
+   it does. */
+.gwcvt-shift-card {
+	max-width: 60em;
+	margin: 16px 0 0;
+	padding: 18px 20px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+	color: #3c434a;
+}
+
+.gwcvt-shift-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px 24px;
+	align-items: start;
+}
+
+@media screen and (max-width: 782px) {
+	.gwcvt-shift-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.gwcvt-shift-field {
+	min-width: 0;
+}
+
+.gwcvt-shift-field > label {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 600;
+}
+
+/* Text and date inputs fill their column; the number and time pairs below opt
+   out, because a width on those makes the browser's own spinner and clock
+   furniture look stretched. */
+.gwcvt-shift-field > input[type="text"],
+.gwcvt-shift-field > input[type="date"],
+.gwcvt-shift-field > select,
+.gwcvt-shift-field > textarea {
+	width: 100%;
+	max-width: 100%;
+}
+
+.gwcvt-shift-field--wide {
+	margin-top: 14px;
+}
+
+/* Two controls that are one answer — from and to, at-least and room-for. */
+.gwcvt-shift-pair {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+/* A checkbox and its words, which want the label's own weight rather than the
+   600 the field labels above carry. */
+.gwcvt-shift-check {
+	display: inline-block;
+	margin-top: 6px;
+	font-weight: 400;
+}
+
+.gwcvt-shift-rule {
+	margin: 18px 0;
+	border: 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+/* What a repeat is about to create. Core's own info tint and rule, because the
+   sentence is telling you what the button will do rather than warning you off
+   it — the warning colour is reserved for the capped case below, where the run
+   really is going to be shorter than what was asked for.
+
+   [hidden] needs saying: this rule sets display, which beats the attribute's
+   own user-agent rule and would leave an empty tinted band on the form before
+   anybody has picked a repeat. */
+.gwcvt-repeat-preview {
+	display: block;
+	max-width: 46em;
+	margin: 12px 0 0;
+	padding: 10px 14px;
+	border-left: 4px solid #2271b1;
+	background: #f0f6fc;
+	color: #3c434a;
+}
+
+.gwcvt-repeat-preview[hidden] {
+	display: none;
+}
+
+/* A truncated run is a different sentence: it says the schedule will be shorter
+   than what was typed, which is the one case where somebody has to do something
+   about it. Same amber the after-save notice uses for the same news. */
+.gwcvt-repeat-preview--capped {
+	border-left-color: #dba617;
+	background: #fcf9e8;
+	color: #614200;
+}
+
+.gwcvt-repeat-preview__note {
+	margin: 6px 0 0;
+	font-weight: 600;
+}
+
 .gwcvt-roster {
 	max-width: 60em;
 }
