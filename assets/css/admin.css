@@ -37,6 +37,25 @@
    something on the document that can be selected on, and that is what to key
    off; the dark-field wordmark is already in assets/img/ for that day. */
 
+/* ─── Title actions ─────────────────────────────────────────────────────────
+   The holder "Log a day" is rendered into on the All hours screen, before
+   assets/js/admin-title-actions.js lifts it up beside the heading. Core has no
+   hook between that <h1> and the <hr> under it, so the button starts life in
+   the notices area and is moved.
+
+   This rule is only ever seen with JavaScript off — the script removes the
+   element, so on a normal load it applies to nothing.
+
+   all_admin_notices fires OUTSIDE .wrap and above the heading, which is why the
+   holder carries core's `wrap` class as well as this one: that is what gets it
+   the page gutter and gets `.wrap .page-title-action` to style the button. All
+   that is left to add is the space underneath, which .wrap does not set.
+   Checked in the browser — which side of .wrap a hook fires on is not
+   something the hook's name tells you. */
+.gwcvt-title-actions {
+	margin-bottom: 12px;
+}
+
 /* ─── Meta box fields ───────────────────────────────────────────────────────
    Core's own spacing inside a meta box is built for a two-column table layout
    this plugin does not use, so labels and descriptions get their own stacking

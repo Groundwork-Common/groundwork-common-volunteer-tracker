@@ -26,9 +26,15 @@ final class MenuTest extends TestCase {
 	 */
 	private function as_registered(): array {
 		return array(
+			/* The two WordPress adds for the post type, and Volunteers, which it
+			 * adds for that one — all three from wp-admin/menu.php, before any
+			 * admin_menu callback runs. */
 			array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 			array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 			array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
+
+			// Then this plugin's own, at 9, 10, 11, 12 and 13.
+			array( 'Dashboard', 'edit_posts', GWC_VT_DASHBOARD_PAGE ),
 			array( 'Settings', 'manage_options', GWC_VT_SETTINGS_PAGE ),
 			array( 'Letters', 'gwc_vt_issue_letters', GWC_VT_LETTERS_PAGE ),
 			array( 'Log a day', 'edit_posts', GWC_VT_QUICK_ADD_PAGE ),
@@ -51,17 +57,98 @@ final class MenuTest extends TestCase {
 	}
 
 	/**
-	 * What is coming, then who is coming, then what they did, then writing it
-	 * up, then what gets produced for them. It reads forwards.
+	 * Both passes, in the order admin_menu fires them: hide at 98, order at 99.
+	 *
+	 * Every test that cares about the finished menu goes through this, because
+	 * asserting either half alone would describe a menu no user ever sees.
+	 */
+	private function build(): void {
+		gwc_vt_hide_menu_verbs();
+		gwc_vt_order_menu();
+	}
+
+	/**
+	 * What is coming, then who is coming, then what they did, then what gets
+	 * produced for them. It reads forwards, and every entry is a place.
 	 */
 	public function test_it_puts_the_screens_in_the_order_things_happen(): void {
 		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
-		gwc_vt_order_menu();
+		$this->build();
 
 		$this->assertSame(
-			array( 'Schedule', 'Volunteers', 'All hours', 'Log a day', 'Log hours', 'Letters', 'Settings' ),
+			array( 'Dashboard', 'Schedule', 'Volunteers', 'All hours', 'Letters', 'Settings' ),
 			$this->labels()
+		);
+	}
+
+	/* ── Verbs are not destinations ──────────────────────────────────────────
+	 * "Log a day" and "Log hours" came off the menu and became buttons on All
+	 * hours. What is asserted here is that they leave the MENU — the pages stay
+	 * registered, which is core's behaviour in remove_submenu_page() and is
+	 * what keeps every "Log the hours" link in this plugin working.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_the_two_logging_verbs_leave_the_menu(): void {
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
+
+		$this->build();
+
+		$labels = $this->labels();
+
+		$this->assertNotContains( 'Log a day', $labels );
+		$this->assertNotContains( 'Log hours', $labels );
+	}
+
+	/**
+	 * Eight entries in, six out. The count is the point of the change, so it is
+	 * asserted as a count rather than left to be inferred from the order above.
+	 */
+	public function test_the_menu_is_six_entries(): void {
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
+
+		$this->assertCount( 8, $this->as_registered() );
+
+		$this->build();
+
+		$this->assertCount( 6, $this->labels() );
+	}
+
+	/**
+	 * A site that wants them back gets them back, and they land where
+	 * gwc_vt_menu_order() would have put them rather than at the end.
+	 */
+	public function test_a_filter_can_put_the_verbs_back(): void {
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
+
+		add_filter(
+			'gwc_vt_hidden_menu_items',
+			static function (): array {
+				return array();
+			}
+		);
+
+		$this->build();
+
+		$this->assertContains( 'Log a day', $this->labels() );
+		$this->assertContains( 'Log hours', $this->labels() );
+
+		gwc_vt_test_reset_filters();
+	}
+
+	/**
+	 * Hiding leaves a hole in an array whose keys WordPress reads as positions,
+	 * which is why it runs before the ordering pass rather than after it. If
+	 * that order is ever reversed this is the test that says so.
+	 */
+	public function test_the_menu_is_still_a_list_after_hiding(): void {
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
+
+		$this->build();
+
+		$this->assertSame(
+			range( 0, count( $this->labels() ) - 1 ),
+			array_keys( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] )
 		);
 	}
 

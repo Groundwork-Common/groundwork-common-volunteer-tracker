@@ -131,6 +131,20 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		);
 	}
 
+	/* "Log a day" on the All hours list, moved up beside the heading. Enqueued
+	 * above the early return below, because that return covers the four screens
+	 * the picker serves and the entries LIST is not one of them — it is the
+	 * editor that is. */
+	if ( 'edit' === (string) ( $screen->base ?? '' ) && GWC_VT_ENTRY_TYPE === (string) ( $screen->post_type ?? '' ) ) {
+		wp_enqueue_script(
+			'gwc-vt-admin-title-actions',
+			GWC_VT_URL . 'assets/js/admin-title-actions.js',
+			array(),
+			GWC_VT_VERSION,
+			true
+		);
+	}
+
 	/* The picker appears in two places: the entry editor, and the Letters
 	 * screen. One script serves both — it binds to every [data-gwcvt-picker] on
 	 * the page rather than to a known ID, so a third caller costs nothing. */

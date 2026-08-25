@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-24T13:06:44+00:00\n"
+"POT-Creation-Date: 2026-08-25T17:31:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -46,8 +46,8 @@ msgstr ""
 #: inc/access.php:268
 #: inc/admin-dashboard.php:47
 #: inc/admin-letters.php:64
-#: inc/admin-quick-add.php:69
-#: inc/admin-quick-add.php:532
+#: inc/admin-quick-add.php:177
+#: inc/admin-quick-add.php:640
 #: inc/admin-schedule.php:68
 #: inc/admin-shift.php:947
 #: inc/admin-triage.php:297
@@ -198,7 +198,7 @@ msgstr ""
 
 #: inc/admin-dashboard.php:411
 #: inc/admin-help.php:114
-#: inc/admin-screen.php:221
+#: inc/admin-screen.php:277
 #: inc/render.php:132
 msgid "Shifts"
 msgstr ""
@@ -215,17 +215,18 @@ msgid "Shifts already run"
 msgstr ""
 
 #: inc/admin-dashboard.php:431
-#: inc/admin-quick-add.php:152
-#: inc/admin-quick-add.php:344
+#: inc/admin-quick-add.php:260
+#: inc/admin-quick-add.php:452
 #: inc/admin-volunteer.php:316
-#: inc/cpt.php:229
+#: inc/cpt.php:246
 #: inc/privacy.php:607
 #: inc/render.php:134
 msgid "Hours"
 msgstr ""
 
 #: inc/admin-dashboard.php:434
-#: inc/admin-quick-add.php:55
+#: inc/admin-quick-add.php:69
+#: inc/admin-quick-add.php:164
 msgid "Log a day"
 msgstr ""
 
@@ -234,7 +235,7 @@ msgid "Log a single shift"
 msgstr ""
 
 #: inc/admin-dashboard.php:448
-#: inc/cpt.php:108
+#: inc/cpt.php:125
 msgid "All hours"
 msgstr ""
 
@@ -268,7 +269,7 @@ msgstr ""
 
 #: inc/admin-dashboard.php:501
 #: inc/admin-help.php:65
-#: inc/admin-screen.php:178
+#: inc/admin-screen.php:234
 msgid "Settings"
 msgstr ""
 
@@ -420,10 +421,10 @@ msgstr ""
 #: inc/admin-event-roster.php:109
 #: inc/admin-letters.php:111
 #: inc/admin-letters.php:725
-#: inc/admin-quick-add.php:151
-#: inc/admin-quick-add.php:343
+#: inc/admin-quick-add.php:259
+#: inc/admin-quick-add.php:451
 #: inc/admin-shift.php:353
-#: inc/cpt.php:227
+#: inc/cpt.php:244
 #: inc/meta-box.php:113
 #: inc/render.php:129
 msgid "Volunteer"
@@ -431,8 +432,8 @@ msgstr ""
 
 #: inc/admin-event-roster.php:118
 #: inc/admin-letters.php:113
-#: inc/admin-quick-add.php:203
-#: inc/admin-quick-add.php:465
+#: inc/admin-quick-add.php:311
+#: inc/admin-quick-add.php:573
 #: inc/admin-shift.php:354
 #: inc/meta-box.php:121
 msgid "No volunteer of that name"
@@ -440,8 +441,8 @@ msgstr ""
 
 #: inc/admin-event-roster.php:128
 #: inc/admin-letters.php:123
-#: inc/admin-quick-add.php:213
-#: inc/admin-quick-add.php:476
+#: inc/admin-quick-add.php:321
+#: inc/admin-quick-add.php:584
 #: inc/admin-shift.php:364
 #: inc/meta-box.php:131
 msgid "Start typing a name…"
@@ -652,7 +653,7 @@ msgid "A role can override this. Most will not."
 msgstr ""
 
 #: inc/admin-event.php:147
-#: inc/cpt.php:231
+#: inc/cpt.php:248
 msgid "Supervisor"
 msgstr ""
 
@@ -796,11 +797,11 @@ msgstr ""
 
 #: inc/admin-event.php:453
 #: inc/admin-event.php:533
-#: inc/admin-quick-add.php:110
-#: inc/admin-quick-add.php:306
+#: inc/admin-quick-add.php:218
+#: inc/admin-quick-add.php:414
 #: inc/admin-shift.php:119
 #: inc/admin-volunteer.php:315
-#: inc/cpt.php:228
+#: inc/cpt.php:245
 #: inc/privacy.php:603
 #: inc/render.php:133
 msgid "Date"
@@ -923,12 +924,12 @@ msgid "Only offered while nobody has signed up. Once somebody has, it can be cal
 msgstr ""
 
 #: inc/admin-help.php:64
-#: inc/admin-screen.php:256
+#: inc/admin-screen.php:312
 msgid "Volunteer Tracker"
 msgstr ""
 
 #: inc/admin-help.php:66
-#: inc/admin-screen.php:589
+#: inc/admin-screen.php:645
 msgid "Report a problem"
 msgstr ""
 
@@ -1559,36 +1560,36 @@ msgstr ""
 msgid "Printed"
 msgstr ""
 
-#: inc/admin-quick-add.php:54
-#: inc/admin-quick-add.php:93
+#: inc/admin-quick-add.php:59
+#: inc/admin-quick-add.php:201
 msgid "Log a day’s shifts"
 msgstr ""
 
-#: inc/admin-quick-add.php:68
-#: inc/admin-quick-add.php:531
+#: inc/admin-quick-add.php:176
+#: inc/admin-quick-add.php:639
 msgid "You do not have permission to log hours."
 msgstr ""
 
-#: inc/admin-quick-add.php:98
+#: inc/admin-quick-add.php:206
 msgid "For typing up a sign-in sheet. Everything the shift had in common goes at the top; add each volunteer and the hours they worked below. They arrive unverified, the same as any other entry."
 msgstr ""
 
-#: inc/admin-quick-add.php:105
+#: inc/admin-quick-add.php:213
 msgid "The shift"
 msgstr ""
 
-#: inc/admin-quick-add.php:123
-#: inc/admin-quick-add.php:314
+#: inc/admin-quick-add.php:231
+#: inc/admin-quick-add.php:422
 #: inc/meta-box.php:204
 msgid "What they did"
 msgstr ""
 
-#: inc/admin-quick-add.php:133
+#: inc/admin-quick-add.php:241
 msgid "Appears on every letter these hours reach."
 msgstr ""
 
-#: inc/admin-quick-add.php:137
-#: inc/admin-quick-add.php:328
+#: inc/admin-quick-add.php:245
+#: inc/admin-quick-add.php:436
 #: inc/admin-shift.php:206
 #: inc/meta-box.php:227
 #: inc/privacy.php:615
@@ -1596,151 +1597,151 @@ msgstr ""
 msgid "Supervised by"
 msgstr ""
 
-#: inc/admin-quick-add.php:140
+#: inc/admin-quick-add.php:248
 msgid "The person who was there. Prefilled with your name — change it if it was somebody else."
 msgstr ""
 
-#: inc/admin-quick-add.php:146
+#: inc/admin-quick-add.php:254
 msgid "Who worked it"
 msgstr ""
 
-#: inc/admin-quick-add.php:163
-#: inc/admin-quick-add.php:365
+#: inc/admin-quick-add.php:271
+#: inc/admin-quick-add.php:473
 msgid "Add more rows"
 msgstr ""
 
-#: inc/admin-quick-add.php:167
+#: inc/admin-quick-add.php:275
 msgid "Leave a row empty to skip it. Hours accept 3.5, 3:30, 3h 30m or 210m."
 msgstr ""
 
-#: inc/admin-quick-add.php:170
+#: inc/admin-quick-add.php:278
 msgid "Log these shifts"
 msgstr ""
 
 #. translators: %d: a row number.
-#: inc/admin-quick-add.php:198
+#: inc/admin-quick-add.php:306
 #, php-format
 msgid "Volunteer for row %d"
 msgstr ""
 
 #. translators: %d: a row number.
-#: inc/admin-quick-add.php:224
+#: inc/admin-quick-add.php:332
 #, php-format
 msgid "Hours for row %d"
 msgstr ""
 
-#: inc/admin-quick-add.php:249
+#: inc/admin-quick-add.php:357
 msgid "Log the hours for this shift"
 msgstr ""
 
-#: inc/admin-quick-add.php:253
+#: inc/admin-quick-add.php:361
 msgid "Back to the shift"
 msgstr ""
 
-#: inc/admin-quick-add.php:273
+#: inc/admin-quick-add.php:381
 msgid "This shift has not finished yet."
 msgstr ""
 
-#: inc/admin-quick-add.php:274
+#: inc/admin-quick-add.php:382
 msgid "Hours can be logged once it has. Recording them early would date them the day you typed them rather than the day they were worked, and that date is what a letter prints."
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/admin-quick-add.php:289
+#: inc/admin-quick-add.php:397
 #, php-format
 msgid "Hours were already logged for this shift on %s. Anybody who has an entry already is shown below and cannot be logged twice; you can still add somebody who was missed."
 msgstr ""
 
-#: inc/admin-quick-add.php:310
+#: inc/admin-quick-add.php:418
 msgid "The shift’s own date. Every entry below is dated that day."
 msgstr ""
 
-#: inc/admin-quick-add.php:324
+#: inc/admin-quick-add.php:432
 msgid "From the shift. Change it if the day turned out differently — this is what appears on every letter these hours reach."
 msgstr ""
 
-#: inc/admin-quick-add.php:331
+#: inc/admin-quick-add.php:439
 msgid "From the shift. Change it if somebody else actually covered it."
 msgstr ""
 
-#: inc/admin-quick-add.php:337
+#: inc/admin-quick-add.php:445
 msgid "Who turned up"
 msgstr ""
 
-#: inc/admin-quick-add.php:342
+#: inc/admin-quick-add.php:450
 msgid "Came"
 msgstr ""
 
-#: inc/admin-quick-add.php:369
+#: inc/admin-quick-add.php:477
 msgid "Clear the checkbox for anybody who did not turn up — nothing is recorded for them. The blank rows at the bottom are for people who came without signing up. Hours accept 3.5, 3:30, 3h 30m or 210m."
 msgstr ""
 
-#: inc/admin-quick-add.php:372
+#: inc/admin-quick-add.php:480
 msgid "Log these hours"
 msgstr ""
 
-#: inc/admin-quick-add.php:422
+#: inc/admin-quick-add.php:530
 msgid "Logged"
 msgstr ""
 
 #. translators: %s: a person's name.
-#: inc/admin-quick-add.php:429
+#: inc/admin-quick-add.php:537
 #, php-format
 msgid "%s turned up"
 msgstr ""
 
-#: inc/admin-quick-add.php:453
+#: inc/admin-quick-add.php:561
 msgid "Open the entry"
 msgstr ""
 
-#: inc/admin-quick-add.php:458
+#: inc/admin-quick-add.php:566
 msgid "Recorded as not having come. Select the checkbox only if that was wrong."
 msgstr ""
 
-#: inc/admin-quick-add.php:463
+#: inc/admin-quick-add.php:571
 msgid "Which volunteer this is"
 msgstr ""
 
 #. translators: %s: the name somebody signed up under.
-#: inc/admin-quick-add.php:490
+#: inc/admin-quick-add.php:598
 #, php-format
 msgid "Signed up as %s — check this is the right person."
 msgstr ""
 
 #. translators: %s: the name somebody signed up under.
-#: inc/admin-quick-add.php:496
+#: inc/admin-quick-add.php:604
 #, php-format
 msgid "Signed up as %s, and is not on file. Pick who they are, or add a volunteer record first."
 msgstr ""
 
 #. translators: %s: a person's name.
-#: inc/admin-quick-add.php:509
+#: inc/admin-quick-add.php:617
 #, php-format
 msgid "Hours for %s"
 msgstr ""
 
-#: inc/admin-quick-add.php:749
+#: inc/admin-quick-add.php:857
 msgid "Give a date for the shift. Nothing was logged."
 msgstr ""
 
-#: inc/admin-quick-add.php:757
+#: inc/admin-quick-add.php:865
 msgid "That shift has not finished yet, so nothing was logged. Hours dated in the future are recorded against the day you typed them, and that date is what a letter prints."
 msgstr ""
 
 #. translators: %d: how many people signed up.
-#: inc/admin-quick-add.php:772
+#: inc/admin-quick-add.php:880
 #, php-format
 msgid "Nobody turned up — %d person signed up and did not come. The shift is marked as dealt with and nothing was recorded against anybody."
 msgid_plural "Nobody turned up — %d people signed up and did not come. The shift is marked as dealt with and nothing was recorded against anybody."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-quick-add.php:781
+#: inc/admin-quick-add.php:889
 msgid "No rows were filled in, so nothing was logged."
 msgstr ""
 
 #. translators: %d: number of shifts.
-#: inc/admin-quick-add.php:788
+#: inc/admin-quick-add.php:896
 #, php-format
 msgid "%d shift logged. It is waiting to be verified."
 msgid_plural "%d shifts logged. They are waiting to be verified."
@@ -1748,7 +1749,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many people did not turn up.
-#: inc/admin-quick-add.php:795
+#: inc/admin-quick-add.php:903
 #, php-format
 msgid "%d person who signed up did not come, and nothing was recorded for them."
 msgid_plural "%d people who signed up did not come, and nothing was recorded for them."
@@ -1756,14 +1757,14 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of rows.
-#: inc/admin-quick-add.php:808
+#: inc/admin-quick-add.php:916
 #, php-format
 msgid "%d row was skipped — it needed both a volunteer and a readable number of hours."
 msgid_plural "%d rows were skipped — each needed both a volunteer and a readable number of hours."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-quick-add.php:831
+#: inc/admin-quick-add.php:939
 msgid "Verify them now"
 msgstr ""
 
@@ -2067,72 +2068,72 @@ msgid_plural "%d people were told."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-screen.php:177
+#: inc/admin-screen.php:233
 msgid "Volunteer Tracker Settings"
 msgstr ""
 
-#: inc/admin-screen.php:217
+#: inc/admin-screen.php:273
 msgid "Letter"
 msgstr ""
 
-#: inc/admin-screen.php:220
+#: inc/admin-screen.php:276
 msgid "Logging"
 msgstr ""
 
-#: inc/admin-screen.php:222
+#: inc/admin-screen.php:278
 msgid "Privacy"
 msgstr ""
 
-#: inc/admin-screen.php:260
+#: inc/admin-screen.php:316
 msgid "Settings sections"
 msgstr ""
 
 #. translators: %s: the name of a settings tab.
-#: inc/admin-screen.php:294
+#: inc/admin-screen.php:350
 #, php-format
 msgid "The %s settings are not built yet. Hours logging works without them."
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:369
+#: inc/admin-screen.php:425
 #, php-format
 msgid "Built by %s — technology leadership and support for nonprofits."
 msgstr ""
 
-#: inc/admin-screen.php:373
-#: inc/admin-screen.php:505
-#: inc/admin-screen.php:535
-#: inc/admin-screen.php:549
+#: inc/admin-screen.php:429
+#: inc/admin-screen.php:561
+#: inc/admin-screen.php:591
+#: inc/admin-screen.php:605
 msgid "Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:507
+#: inc/admin-screen.php:563
 msgid "Show"
 msgstr ""
 
-#: inc/admin-screen.php:515
+#: inc/admin-screen.php:571
 msgid "Hide for 30 days"
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:554
+#: inc/admin-screen.php:610
 #, php-format
 msgid "%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it."
 msgstr ""
 
-#: inc/admin-screen.php:562
+#: inc/admin-screen.php:618
 msgid "If you find this plugin useful, the most valuable thing you can do for us is mention us to a nonprofit who might benefit from our services. Referrals are how our business continues to grow its impact and reach."
 msgstr ""
 
-#: inc/admin-screen.php:568
+#: inc/admin-screen.php:624
 msgid "Learn about Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:577
+#: inc/admin-screen.php:633
 msgid "You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give."
 msgstr ""
 
-#: inc/admin-screen.php:582
+#: inc/admin-screen.php:638
 msgid "Support our work"
 msgstr ""
 
@@ -3140,7 +3141,7 @@ msgid "No hours logged for this volunteer yet."
 msgstr ""
 
 #: inc/admin-volunteer.php:317
-#: inc/cpt.php:230
+#: inc/cpt.php:247
 #: inc/privacy.php:611
 #: inc/render.php:135
 msgid "Activity"
@@ -3207,67 +3208,67 @@ msgctxt "admin menu"
 msgid "Volunteer Hours"
 msgstr ""
 
-#: inc/cpt.php:100
-#: inc/cpt.php:101
-msgid "Log hours"
+#: inc/cpt.php:117
+#: inc/cpt.php:118
+msgid "Log one shift"
 msgstr ""
 
-#: inc/cpt.php:102
+#: inc/cpt.php:119
 msgid "Edit entry"
 msgstr ""
 
-#: inc/cpt.php:103
+#: inc/cpt.php:120
 msgid "New entry"
 msgstr ""
 
-#: inc/cpt.php:104
+#: inc/cpt.php:121
 msgid "View entry"
 msgstr ""
 
-#: inc/cpt.php:105
+#: inc/cpt.php:122
 msgid "Search entries"
 msgstr ""
 
-#: inc/cpt.php:106
+#: inc/cpt.php:123
 msgid "No hours logged yet."
 msgstr ""
 
-#: inc/cpt.php:107
+#: inc/cpt.php:124
 msgid "No entries in the trash."
 msgstr ""
 
 #. translators: %s: the name somebody typed into the public form.
-#: inc/cpt.php:190
+#: inc/cpt.php:207
 #: inc/signup-cpt.php:188
 #, php-format
 msgid "%s (unmatched)"
 msgstr ""
 
-#: inc/cpt.php:191
+#: inc/cpt.php:208
 msgid "Unassigned"
 msgstr ""
 
 #. translators: 1: volunteer name, 2: date, 3: duration.
-#: inc/cpt.php:196
+#: inc/cpt.php:213
 #, php-format
 msgid "%1$s — %2$s — %3$s"
 msgstr ""
 
-#: inc/cpt.php:198
+#: inc/cpt.php:215
 msgid "no date"
 msgstr ""
 
 #. translators: %s: the name somebody typed into the public form.
-#: inc/cpt.php:281
+#: inc/cpt.php:298
 #, php-format
 msgid "%s — not yet matched"
 msgstr ""
 
-#: inc/cpt.php:282
+#: inc/cpt.php:299
 msgid "Not assigned"
 msgstr ""
 
-#: inc/cpt.php:352
+#: inc/cpt.php:369
 #: inc/privacy.php:550
 msgid "Volunteer record"
 msgstr ""

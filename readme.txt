@@ -56,7 +56,7 @@ Volunteer records here are more sensitive than most plugin data — in the manda
 4. On the **Permissions** tab, choose which roles may verify hours and which may issue letters. They are frequently different people, which is why they are separate.
 5. On the **Privacy** tab, decide how long records are kept. The plugin will not choose for you, and it will not quietly keep them forever either.
 
-Then log a shift under **Volunteer Hours → Log hours**, verify it, and produce a letter from **Letters**. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
+Then open **Volunteer Hours → All hours** and press **Log one shift**, verify what you logged, and produce a letter from **Letters**. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
 
 Nothing here is public until you say so. The shift signup form and the volunteer self-log form are both switched off on a new install — they live under **Settings → Shifts** and **Settings → Logging**.
 

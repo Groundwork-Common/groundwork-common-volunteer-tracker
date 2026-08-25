@@ -147,6 +147,7 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwc_vt_volunteer_post_type_args` | filter | `register_post_type()` arguments for volunteers. |
 | `gwc_vt_admin_tabs` | filter | The settings screen's tabs, keyed by slug. |
 | `gwc_vt_menu_order` | filter | The order of the Volunteer Hours submenu, by slug. |
+| `gwc_vt_hidden_menu_items` | filter | Submenu slugs taken off the Volunteer Hours menu; the pages stay registered. |
 | `gwc_vt_dashboard_items` | filter | The dashboard's worklist, after empty queues are dropped. |
 | `gwc_vt_dashboard_map` | filter | The dashboard's map of everywhere else, already filtered by capability. |
 | `gwc_vt_reporting_year_start` | filter | The first day of the reporting year. |

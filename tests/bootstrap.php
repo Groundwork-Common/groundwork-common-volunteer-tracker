@@ -554,6 +554,33 @@ function get_current_screen() {
 	return $GLOBALS['gwc_vt_test']['screen'] ?? null;
 }
 
+/**
+ * As core does it: unset the menu entry and leave the registered page alone.
+ *
+ * That asymmetry is the whole reason gwc_vt_hide_menu_verbs() can take Log a
+ * day off the menu without taking the screen off the site, so the stub has to
+ * reproduce it rather than simply forgetting the slug. Core also re-keys
+ * nothing, which is why the hiding pass runs before gwc_vt_order_menu().
+ *
+ * @param string $parent_slug The parent menu's slug.
+ * @param string $menu_slug   The submenu slug to remove.
+ * @return array|false The removed entry, or false if it was not there.
+ */
+function remove_submenu_page( $parent_slug, $menu_slug ) {
+	if ( ! isset( $GLOBALS['submenu'][ $parent_slug ] ) ) {
+		return false;
+	}
+
+	foreach ( (array) $GLOBALS['submenu'][ $parent_slug ] as $i => $item ) {
+		if ( (string) ( $item[2] ?? '' ) === (string) $menu_slug ) {
+			unset( $GLOBALS['submenu'][ $parent_slug ][ $i ] );
+			return $item;
+		}
+	}
+
+	return false;
+}
+
 function wp_next_scheduled( $hook, $args = array() ) {
 	return $GLOBALS['gwc_vt_test']['cron'][ $hook ] ?? false;
 }
