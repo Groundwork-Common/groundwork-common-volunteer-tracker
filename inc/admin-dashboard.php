@@ -165,15 +165,38 @@ function gwc_vt_render_dashboard(): void {
 }
 
 /* ── Checking a reference, where the phone gets answered ─────────────────────
- * The checker is a panel here as well as a box on the Letters screen. Whoever
- * picks up the phone is not necessarily whoever issues letters, and asking them
- * to find a screen they have never opened — to answer a question that takes ten
- * seconds — is how a caller gets told somebody will ring them back.
+ * The checker lives here, and only here. Whoever picks up the phone is not
+ * necessarily whoever issues letters, and asking them to find a screen they
+ * have never opened — to answer a question that takes ten seconds — is how a
+ * caller gets told somebody will ring them back.
  *
- * Rendered only where it would work: letters switched on, and the capability to
- * open the Letters screen the answer links to. A box that refuses everybody who
- * uses it is worse than no box.
+ * The capability is unchanged by the move: GWC_VT_CAP_OPEN_LETTERS, which
+ * inc/access.php maps to EITHER verifying or issuing, precisely so the front
+ * desk can answer without the right to sign. Anybody who could reach the old
+ * box can reach this one — both screens hang off a parent menu that needs
+ * edit_posts to appear at all.
  * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The dashboard, with a reference already in the checker's box.
+ *
+ * The issued-letter table on a volunteer's record links here: the usual reason
+ * for reading that table is that somebody has phoned about one of the rows, and
+ * the checker takes its code from the query string because it is a GET form.
+ *
+ * @param string $reference The code to prefill.
+ * @return string
+ */
+function gwc_vt_dashboard_reference_url( string $reference ): string {
+	return add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_DASHBOARD_PAGE,
+			'reference' => $reference,
+		),
+		admin_url( 'edit.php' )
+	);
+}
 
 /**
  * The reference checker, in the rail.

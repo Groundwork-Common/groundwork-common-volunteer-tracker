@@ -83,6 +83,24 @@ $GLOBALS['gwc_vt_ls_bin'] = array();
 
 register_shutdown_function( 'gwc_vt_ls_restore' );
 
+/* Everything this script creates, tracked so it can be taken away again. These
+ * scripts run against a database that belongs to somebody else, and a leaked
+ * "Zzytest" volunteer is not merely untidy: tests/integration/entries.php
+ * asserts that a search for that word finds exactly its own two, so one left
+ * behind here fails a script over there. */
+$GLOBALS['gwc_vt_made'] = array();
+
+/**
+ * Delete what this script made.
+ */
+function gwc_vt_ls_cleanup(): void {
+	foreach ( (array) ( $GLOBALS['gwc_vt_made'] ?? array() ) as $id ) {
+		wp_delete_post( (int) $id, true );
+	}
+}
+
+register_shutdown_function( 'gwc_vt_ls_cleanup' );
+
 /**
  * Set letters on or off, leaving every other setting alone.
  *
@@ -324,6 +342,156 @@ gwc_vt_ls_check( 'and the issued letter is still there', GWC_VT_LETTER_TYPE === 
  * settings, on shutdown, so a run that stops early still leaves the site as it
  * found it.
  * ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── The readiness line says what the letter will say ────────────────────────
+ * It is built by gwc_vt_build_letter() with include_unverified forced ON, which
+ * is not the obvious thing to do: the screen has already built a letter, and
+ * reading unverified_minutes off THAT would be one lookup cheaper and wrong on
+ * half the sites in the world. That field is only populated when the letter was
+ * asked to LIST unattested shifts, and whether it was is the
+ * letter_include_unverified setting — so the shortcut gives the right answer
+ * with the setting on and a confident zero with it off.
+ *
+ * "Nothing of theirs is waiting to be verified" is exactly the sentence that
+ * must not be wrong, so it is checked under both settings.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_ls_person'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest Readiness Person',
+	)
+);
+
+$GLOBALS['gwc_vt_made'][] = (int) $GLOBALS['gwc_vt_ls_person'];
+
+/**
+ * One entry for the readiness fixture.
+ *
+ * @param int  $minutes  How long.
+ * @param bool $verified Whether to attest to it.
+ * @return int
+ */
+function gwc_vt_ls_hours( int $minutes, bool $verified ): int {
+	$id = wp_insert_post(
+		array(
+			'post_type'   => GWC_VT_ENTRY_TYPE,
+			'post_status' => 'publish',
+			'post_title'  => 'tmp',
+		)
+	);
+
+	$id = (int) $id;
+
+	$GLOBALS['gwc_vt_made'][] = $id;
+
+	update_post_meta( $id, GWC_VT_ENTRY_VOLUNTEER, (int) $GLOBALS['gwc_vt_ls_person'] );
+	update_post_meta( $id, GWC_VT_ENTRY_DATE, gmdate( 'Y-m-d', time() - ( 30 * DAY_IN_SECONDS ) ) );
+	update_post_meta( $id, GWC_VT_ENTRY_MINUTES, $minutes );
+	update_post_meta( $id, GWC_VT_ENTRY_ACTIVITY, 'Zzytest sorting' );
+
+	if ( $verified ) {
+		gwc_vt_verify_entry( $id, 1 );
+	}
+
+	return $id;
+}
+
+gwc_vt_ls_hours( 240, true );
+gwc_vt_ls_hours( 180, false );
+
+foreach ( array( true, false ) as $gwc_vt_ls_listing ) {
+	$gwc_vt_ls_settings                              = (array) get_option( GWC_VT_SETTINGS_OPTION );
+	$gwc_vt_ls_settings['letter_include_unverified'] = $gwc_vt_ls_listing;
+	update_option( GWC_VT_SETTINGS_OPTION, $gwc_vt_ls_settings );
+	gwc_vt_settings_cache( null, true );
+
+	ob_start();
+	gwc_vt_render_letter_readiness( (int) $GLOBALS['gwc_vt_ls_person'], '', '' );
+	$gwc_vt_ls_line = (string) ob_get_clean();
+
+	gwc_vt_ls_check(
+		'with the unverified listing ' . ( $gwc_vt_ls_listing ? 'on' : 'off' ) . ', the readiness line reports the waiting hours',
+		false !== strpos( $gwc_vt_ls_line, 'not verified yet' ),
+		false !== strpos( $gwc_vt_ls_line, 'Nothing of theirs' ) ? 'it said nothing was waiting' : 'reported'
+	);
+
+	gwc_vt_ls_check(
+		'and states the verified total either way',
+		false !== strpos( $gwc_vt_ls_line, gwc_vt_format_hours( 240 ) ),
+		gwc_vt_format_hours( 240 )
+	);
+}
+
+/* Verify the last one, and the sentence flips. */
+foreach ( gwc_vt_entry_ids_for_volunteer( (int) $GLOBALS['gwc_vt_ls_person'] ) as $gwc_vt_ls_id ) {
+	gwc_vt_verify_entry( (int) $gwc_vt_ls_id, 1 );
+}
+
+ob_start();
+gwc_vt_render_letter_readiness( (int) $GLOBALS['gwc_vt_ls_person'], '', '' );
+$gwc_vt_ls_line = (string) ob_get_clean();
+
+gwc_vt_ls_check(
+	'once nothing is waiting, it says so',
+	false !== strpos( $gwc_vt_ls_line, 'Nothing of theirs' ),
+	false !== strpos( $gwc_vt_ls_line, 'not verified yet' ) ? 'it still warned' : 'said so'
+);
+
+gwc_vt_ls_check(
+	'and the total is now everything',
+	false !== strpos( $gwc_vt_ls_line, gwc_vt_format_hours( 420 ) ),
+	gwc_vt_format_hours( 420 )
+);
+
+/* ── The split ──────────────────────────────────────────────────────────────
+ * The records screen is the log; producing starts from the volunteer. Asserted
+ * by rendering both, because "it is on the other screen now" is the sort of
+ * claim that is true on the day it is written.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Both renderers refuse somebody without the capability, which is the point of
+ * them — so this has to be somebody. */
+$gwc_vt_ls_admins = get_users(
+	array(
+		'role'   => 'administrator',
+		'number' => 1,
+		'fields' => 'ID',
+	)
+);
+
+if ( $gwc_vt_ls_admins ) {
+	wp_set_current_user( (int) $gwc_vt_ls_admins[0] );
+}
+
+ob_start();
+gwc_vt_render_letters_screen();
+$gwc_vt_ls_records = (string) ob_get_clean();
+
+gwc_vt_ls_check(
+	'the records screen has no produce form on it',
+	false === strpos( $gwc_vt_ls_records, 'gwcvt-letter-volunteer' )
+);
+
+gwc_vt_ls_check(
+	'nor the reference checker, which moved to the dashboard',
+	false === strpos( $gwc_vt_ls_records, 'gwcvt-reference' )
+);
+
+gwc_vt_ls_check(
+	'and it says where both of them went',
+	false !== strpos( $gwc_vt_ls_records, 'Dashboard' )
+);
+
+ob_start();
+gwc_vt_render_dashboard_reference();
+$gwc_vt_ls_dash = (string) ob_get_clean();
+
+gwc_vt_ls_check(
+	'the checker is on the dashboard',
+	false !== strpos( $gwc_vt_ls_dash, 'gwcvt-reference' )
+);
 
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
 

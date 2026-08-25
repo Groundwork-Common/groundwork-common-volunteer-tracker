@@ -452,14 +452,7 @@ function gwc_vt_render_verify_letter_cta(): void {
 		}
 	}
 
-	$letter = add_query_arg(
-		array(
-			'post_type' => GWC_VT_ENTRY_TYPE,
-			'page'      => GWC_VT_LETTERS_PAGE,
-			'volunteer' => $volunteer_id,
-		),
-		admin_url( 'edit.php' )
-	);
+	$letter = gwc_vt_produce_letter_url( $volunteer_id );
 	?>
 	<div class="notice notice-success gwcvt-verify__done">
 		<p>

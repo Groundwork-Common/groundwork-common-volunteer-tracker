@@ -1983,3 +1983,45 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 		text-align: left;
 	}
 }
+
+/* ─── Letter records, and producing one ─────────────────────────────────────
+   Two screens now rather than one with three jobs on it. The log keeps the menu
+   page; producing a letter starts from the volunteer it is about. */
+.gwcvt-letters__intro {
+	max-width: 46em;
+}
+
+.gwcvt-letters__log {
+	max-width: 46em;
+	margin-top: 16px;
+}
+
+.gwcvt-letters__crumbs {
+	margin: 0 0 12px;
+	font-size: 12px;
+	color: #646970;
+}
+
+/* What the letter will say, before anybody presses Preview. Green when nothing
+   of theirs is waiting, amber when something is — because an amber total is one
+   that is about to change, and that is the whole reason to say it here rather
+   than let somebody find out from the letter. Both state their own foreground
+   beside their own background, per the note at the top of this file. */
+.gwcvt-readiness {
+	max-width: 46em;
+	margin: 14px 0;
+	padding: 10px 14px;
+	border-left: 4px solid #00a32a;
+	background: #edfaef;
+	color: #00450c;
+}
+
+.gwcvt-readiness p {
+	margin: 0;
+}
+
+.gwcvt-readiness--waiting {
+	border-left-color: #dba617;
+	background: #fcf9e8;
+	color: #614200;
+}

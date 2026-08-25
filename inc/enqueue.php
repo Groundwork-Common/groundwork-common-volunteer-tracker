@@ -145,18 +145,27 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		);
 	}
 
-	/* The picker appears in two places: the entry editor, and the Letters
-	 * screen. One script serves both — it binds to every [data-gwcvt-picker] on
-	 * the page rather than to a known ID, so a third caller costs nothing. */
+	/* The picker appears wherever somebody has to name a volunteer: the entry
+	 * editor, the produce-a-letter screen, the log-a-day rows, the schedule's
+	 * roster box and the drawer. One script serves all of them — it binds to
+	 * every [data-gwcvt-picker] on the page rather than to a known ID, so a
+	 * further caller costs nothing.
+	 *
+	 * The Letters screen is on this list for its own reason: it is the records
+	 * log now and has no picker, but it does show the issued table, and leaving
+	 * the handle enqueued there costs one HTTP request against the chance of a
+	 * later panel needing it. Dropping it is a one-line change if that stops
+	 * being true. */
 	$on_entry_editor = in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true )
 		&& $screen
 		&& GWC_VT_ENTRY_TYPE === $screen->post_type;
 
 	$on_letters   = $screen && false !== strpos( (string) $screen->id, GWC_VT_LETTERS_PAGE );
+	$on_produce   = $screen && false !== strpos( (string) $screen->id, GWC_VT_PRODUCE_PAGE );
 	$on_quick_add = $screen && false !== strpos( (string) $screen->id, GWC_VT_QUICK_ADD_PAGE );
 	$on_schedule  = $screen && false !== strpos( (string) $screen->id, GWC_VT_SCHEDULE_PAGE );
 
-	if ( ! $on_entry_editor && ! $on_letters && ! $on_quick_add && ! $on_schedule ) {
+	if ( ! $on_entry_editor && ! $on_letters && ! $on_produce && ! $on_quick_add && ! $on_schedule ) {
 		return;
 	}
 
