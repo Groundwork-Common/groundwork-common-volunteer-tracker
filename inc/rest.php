@@ -1,6 +1,6 @@
 <?php
 /**
- * The two REST routes.
+ * The three REST routes.
  *
  * @package VolunteerTracker
  */
@@ -46,12 +46,60 @@ add_action( 'rest_api_init', 'gwc_vt_register_rest_routes' );
  *
  * So the browser asks the same function the save will use, and gets back
  * finished sentences rather than numbers to assemble.
+ *
+ * ── The third one, and why it returns markup ─────────────────────────────────
+ * /shift-panel is one shift rendered for the schedule's drawer. It answers with
+ * HTML rather than with the shift's fields, for the same reason
+ * /recurrence-preview answers with sentences: every string in that panel is
+ * translated, several are sentences with a number in them, and assembling those
+ * in the browser puts word order in JavaScript.
+ *
+ * The panel also carries forms, and those carry nonces. A nonce is minted for
+ * one user and one action; rendering the form where the nonce is made is the
+ * only version of this that does not involve shipping a token to the browser
+ * and trusting it to be used for what it was issued for.
+ *
+ * It discloses a roster, which is names — so unlike the other two, this gate is
+ * doing real work. edit_posts is what it takes to open the schedule screen the
+ * drawer lives on and to read the same roster there.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
  * Register the routes.
  */
 function gwc_vt_register_rest_routes(): void {
+	register_rest_route(
+		GWC_VT_REST_NAMESPACE,
+		'/shift-panel',
+		array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => 'gwc_vt_rest_shift_panel',
+			'permission_callback' => 'gwc_vt_rest_can_open_shift_panel',
+			'args'                => array(
+				'shift' => array(
+					'type'              => 'integer',
+					'required'          => true,
+					'sanitize_callback' => 'absint',
+					'description'       => __( 'The shift to describe.', 'groundwork-common-volunteer-tracker' ),
+				),
+				'back'  => array(
+					'type'              => 'string',
+					'required'          => false,
+					'default'           => '',
+					'sanitize_callback' => 'sanitize_key',
+					'description'       => __( 'Which view a roster add should return to.', 'groundwork-common-volunteer-tracker' ),
+				),
+				'month' => array(
+					'type'              => 'string',
+					'required'          => false,
+					'default'           => '',
+					'sanitize_callback' => 'sanitize_text_field',
+					'description'       => __( 'The month the calendar was showing, as Y-m.', 'groundwork-common-volunteer-tracker' ),
+				),
+			),
+		)
+	);
+
 	register_rest_route(
 		GWC_VT_REST_NAMESPACE,
 		'/recurrence-preview',
@@ -99,6 +147,56 @@ function gwc_vt_register_rest_routes(): void {
 					'description'       => __( 'Part of a volunteer’s name.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
+		)
+	);
+}
+
+/**
+ * Who may open the drawer.
+ *
+ * Gated on edit_posts, which is what it takes to open the schedule screen the
+ * drawer lives on. Unlike the other two routes this one discloses something —
+ * the roster is names — so the gate is the point rather than a formality.
+ *
+ * @return bool
+ */
+function gwc_vt_rest_can_open_shift_panel(): bool {
+	return current_user_can( 'edit_posts' );
+}
+
+/**
+ * One shift, rendered.
+ *
+ * @param WP_REST_Request $request The request.
+ * @return WP_REST_Response|WP_Error
+ */
+function gwc_vt_rest_shift_panel( $request ) {
+	$shift_id = (int) $request->get_param( 'shift' );
+
+	/* A shift, and not something else with the same ID. Without this, any post
+	 * ID would reach a renderer that reads meta keys off it and prints whatever
+	 * it finds. */
+	if ( $shift_id < 1 || GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+		return new WP_Error(
+			'gwc_vt_no_shift',
+			__( 'That shift does not exist.', 'groundwork-common-volunteer-tracker' ),
+			array( 'status' => 404 )
+		);
+	}
+
+	$back = (string) $request->get_param( 'back' );
+	$back = in_array( $back, array( 'month', 'list' ), true ) ? $back : '';
+
+	$month = (string) $request->get_param( 'month' );
+	$month = preg_match( '/^\d{4}-\d{2}$/', $month ) ? $month : '';
+
+	ob_start();
+	gwc_vt_render_shift_panel( $shift_id, $back, $month );
+
+	return rest_ensure_response(
+		array(
+			'shift' => $shift_id,
+			'html'  => (string) ob_get_clean(),
 		)
 	);
 }

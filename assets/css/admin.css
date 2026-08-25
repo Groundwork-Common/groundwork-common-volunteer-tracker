@@ -1692,3 +1692,174 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 		align-self: flex-start;
 	}
 }
+
+/* ─── The shift drawer ──────────────────────────────────────────────────────
+   One shift beside the calendar, so filling a short Saturday is not a page load
+   per glance. The panel is filled by assets/js/admin-shift-drawer.js from
+   markup PHP rendered; with no script the element stays hidden and empty and
+   every chip on the screen is still a link to the shift editor.
+
+   Fixed rather than absolute: the calendar is taller than the viewport in a
+   busy month, and a panel that scrolled away from the chip that opened it would
+   be a panel somebody has to scroll back up to read. 32px from the top is the
+   admin bar. */
+.gwcvt-drawer {
+	position: fixed;
+	top: 32px;
+	right: 0;
+	bottom: 0;
+	z-index: 100;
+	width: 360px;
+	max-width: 100%;
+	padding: 18px 20px;
+	overflow-y: auto;
+	background: #fff;
+	color: #3c434a;
+	border-left: 1px solid #c3c4c7;
+	box-shadow: -4px 0 16px rgb( 0 0 0 / .08 );
+}
+
+/* The admin bar goes to 46px tall below 782px, where it also stops being
+   fixed — so the drawer's offset has to follow it or it covers the bar. */
+@media screen and ( max-width: 782px ) {
+	.gwcvt-drawer {
+		top: 46px;
+	}
+}
+
+.gwcvt-drawer__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.gwcvt-drawer__title {
+	margin: 0;
+	padding: 0;
+	font-size: 17px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.gwcvt-drawer__close {
+	padding: 0 4px;
+	border: 0;
+	background: none;
+	color: #646970;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.gwcvt-drawer__close:hover,
+.gwcvt-drawer__close:focus {
+	color: #1d2327;
+}
+
+.gwcvt-drawer__when,
+.gwcvt-drawer__where {
+	margin: 4px 0 0;
+	color: #646970;
+}
+
+.gwcvt-drawer__repeat {
+	margin: 12px 0;
+	padding: 8px 12px;
+	background: #f0f6fc;
+	color: #3c434a;
+	border-left: 4px solid #2271b1;
+	font-size: 12px;
+}
+
+.gwcvt-drawer__repeat a {
+	display: block;
+	margin-top: 2px;
+}
+
+.gwcvt-drawer__fill {
+	margin: 14px 0;
+}
+
+.gwcvt-drawer__fill-label {
+	display: block;
+	margin-top: 4px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.gwcvt-drawer__heading {
+	margin: 14px 0 6px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.gwcvt-drawer__roster {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.gwcvt-drawer__roster li {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 0;
+	padding-bottom: 6px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.gwcvt-drawer__standing {
+	font-size: 12px;
+	color: #646970;
+	white-space: nowrap;
+}
+
+.gwcvt-drawer__nobody {
+	color: #646970;
+	font-style: italic;
+	border-bottom: 0;
+}
+
+.gwcvt-drawer__add {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	margin: 12px 0;
+}
+
+/* The picker sets its own max-width for the wide entry screen; in a rail it
+   takes what is left beside the button. */
+.gwcvt-drawer__add .gwcvt-picker {
+	flex: 1;
+	max-width: none;
+}
+
+.gwcvt-drawer__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 16px;
+	padding-top: 14px;
+	border-top: 1px solid #f0f0f1;
+}
+
+/* Calling it off is the one action here that cannot be undone by clicking
+   again, so it is the one that does not look like the others. An outline
+   rather than a filled red button: this is a link to the form that asks why,
+   not the thing itself. */
+.gwcvt-drawer__danger {
+	color: #b32d2e;
+	border-color: #b32d2e;
+}
+
+.gwcvt-drawer__danger:hover,
+.gwcvt-drawer__danger:focus {
+	color: #8a2424;
+	border-color: #8a2424;
+	background: #fcf0f1;
+}

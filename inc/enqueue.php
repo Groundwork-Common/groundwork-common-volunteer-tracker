@@ -206,6 +206,22 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			GWC_VT_VERSION,
 			true
 		);
+
+		/* The shift drawer. Depends on the picker as well as wp-api-fetch,
+		 * because the panel it injects carries one and tells it to bind — a
+		 * dependency in the ordering sense rather than an API one, which is
+		 * exactly what wp_enqueue_script's third argument is for.
+		 *
+		 * No strings of its own: every word it shows comes back from the route
+		 * already translated, which is why there is no
+		 * wp_set_script_translations() call for this handle either. */
+		wp_enqueue_script(
+			'gwc-vt-shift-drawer',
+			GWC_VT_URL . 'assets/js/admin-shift-drawer.js',
+			array( 'wp-api-fetch', 'gwc-vt-admin-picker' ),
+			GWC_VT_VERSION,
+			true
+		);
 	}
 
 	wp_set_script_translations(

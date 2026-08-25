@@ -329,6 +329,8 @@ function gwc_vt_render_schedule_list(): void {
 				?>
 			</tbody>
 		</table>
+
+		<?php gwc_vt_render_shift_drawer( 'list' ); ?>
 	</div>
 	<?php
 }
@@ -527,6 +529,7 @@ function gwc_vt_render_schedule_month(): void {
 		</div>
 
 		<?php gwc_vt_render_month_legend(); ?>
+		<?php gwc_vt_render_shift_drawer( 'month', $month ); ?>
 	</div>
 	<?php
 }
@@ -566,6 +569,13 @@ function gwc_vt_render_month_chip( array $row, string $base ): void {
 		class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
 		href="<?php echo esc_url( $url ); ?>"
 		title="<?php echo esc_attr( $what ); ?>"
+		<?php
+		/* Only a shift opens the drawer. The panel is a roster and the three
+		 * actions that go with one; an event has neither — it is a container
+		 * over times, each with its own — so an event chip stays a plain link
+		 * to the day-of view, which is the screen that can answer for it. */
+		?>
+		<?php echo $event ? '' : 'data-gwcvt-shift="' . esc_attr( (string) $id ) . '"'; ?>
 	>
 		<span class="gwcvt-chip__what"><?php echo esc_html( $what ); ?></span>
 		<span class="gwcvt-chip__fill"><?php echo esc_html( $fill ); ?></span>
@@ -662,7 +672,7 @@ function gwc_vt_render_schedule_row( array $row, string $base ): void {
 			<?php endif; ?>
 		</td>
 		<td>
-			<a class="row-title" href="<?php echo esc_url( $edit_url ); ?>">
+			<a class="row-title" href="<?php echo esc_url( $edit_url ); ?>" data-gwcvt-shift="<?php echo esc_attr( (string) $shift_id ); ?>">
 				<?php echo esc_html( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) ); ?>
 			</a>
 
@@ -1370,6 +1380,30 @@ function gwc_vt_schedule_group_label( string $date, string $when ): string {
 	}
 
 	return $month;
+}
+
+/**
+ * The drawer's empty shell.
+ *
+ * Rendered by PHP and left empty. It is hidden until a script fills it, which
+ * is the whole arrangement: with no script the element sits there doing nothing
+ * and every chip on the screen is still a link to the shift editor.
+ *
+ * @param string $view  'month' or 'list'.
+ * @param string $month The month the calendar is on, Y-m, when it is on one.
+ */
+function gwc_vt_render_shift_drawer( string $view, string $month = '' ): void {
+	?>
+	<div
+		class="gwcvt-drawer"
+		data-gwcvt-drawer
+		data-gwcvt-view="<?php echo esc_attr( $view ); ?>"
+		data-gwcvt-month="<?php echo esc_attr( $month ); ?>"
+		role="dialog"
+		aria-label="<?php esc_attr_e( 'Shift details', 'groundwork-common-volunteer-tracker' ); ?>"
+		hidden
+	></div>
+	<?php
 }
 
 /**

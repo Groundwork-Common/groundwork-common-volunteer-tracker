@@ -324,6 +324,204 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 	<?php
 }
 
+
+/* ── The drawer's panel ──────────────────────────────────────────────────────
+ * One shift, rendered small enough to sit in a 360px rail beside the calendar.
+ * Filling a short shift used to be a page load per glance: open the shift, add
+ * a name, get sent back, find the next red Saturday, open that. The drawer
+ * keeps the month underneath while somebody rings round.
+ *
+ * ── Server-rendered, and fetched as HTML ─────────────────────────────────────
+ * The panel comes back from gwc-vt/v1/shift-panel as finished markup rather
+ * than as JSON the script assembles. Two reasons, and the second is the one
+ * that decided it:
+ *
+ *   Every string in here is translated, and several are sentences with a number
+ *   in them. Assembling those in JavaScript puts word order in the browser,
+ *   which is where translations go to die.
+ *
+ *   And the forms carry nonces. A nonce is minted for one user and one action;
+ *   rendering the form where the nonce is made is the only version of this that
+ *   does not involve shipping a token to the browser and hoping it is used for
+ *   what it was issued for.
+ *
+ * Nothing here is a new write path. Adding somebody posts to the same
+ * gwc_vt_roster_add handler the shift editor posts to; printing is the same
+ * URL; calling it off is a LINK to the editor's own form, because that form
+ * asks for a reason and offers to email the roster, and those questions are the
+ * confirmation. A drawer is not a reason to lose one.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * One shift, as the drawer shows it.
+ *
+ * @param int    $shift_id Shift post ID.
+ * @param string $back     Where a roster add should return to: 'month', 'list' or ''.
+ * @param string $month    The month the calendar was on, Y-m, when it was on one.
+ */
+function gwc_vt_render_shift_panel( int $shift_id, string $back = '', string $month = '' ): void {
+	$state     = gwc_vt_shift_state( $shift_id );
+	$cancelled = 'cancelled' === $state;
+	$ended     = gwc_vt_shift_has_ended( $shift_id );
+	$activity  = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true );
+	$where     = trim( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_LOCATION, true ) );
+	$max       = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true );
+	$filled    = gwc_vt_shift_filled( $shift_id );
+	$edit_url  = gwc_vt_schedule_url( array( 'shift' => $shift_id ) );
+
+	/* A hair of width even at zero, so an empty shift still reads as a meter
+	 * rather than as a missing element — the same rule the dashboard's line
+	 * follows. */
+	$width = $max > 0 ? max( 2, (int) round( ( $filled / $max ) * 100 ) ) : 2;
+
+	$roster  = gwc_vt_shift_signup_ids( $shift_id );
+	$waiting = gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WAITLIST ) );
+	$repeat  = gwc_vt_shift_repeat_note( $shift_id );
+	?>
+	<div class="gwcvt-drawer__head">
+		<h2 class="gwcvt-drawer__title">
+			<?php echo esc_html( '' !== $activity ? $activity : __( 'Untitled shift', 'groundwork-common-volunteer-tracker' ) ); ?>
+		</h2>
+		<button type="button" class="gwcvt-drawer__close" data-gwcvt-drawer-close>
+			<span aria-hidden="true">&times;</span>
+			<span class="screen-reader-text"><?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?></span>
+		</button>
+	</div>
+
+	<p class="gwcvt-drawer__when">
+		<?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?><br />
+		<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
+	</p>
+
+	<?php if ( '' !== $where ) : ?>
+		<p class="gwcvt-drawer__where"><?php echo esc_html( $where ); ?></p>
+	<?php endif; ?>
+
+	<?php if ( '' !== $repeat ) : ?>
+		<?php
+		/* What repeat this came from, and the way into the one occurrence.
+		 * "Edit the whole repeat" is deliberately not here: editing a series is
+		 * a batch write over twenty rosters and needs a screen that says so
+		 * before it runs. Offering it as a link beside "edit this one" would be
+		 * the silent-correction bug this plugin has a rule about, dressed as a
+		 * convenience. */
+		?>
+		<div class="gwcvt-drawer__repeat">
+			<?php echo esc_html( $repeat ); ?>
+			<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit only this one', 'groundwork-common-volunteer-tracker' ); ?></a>
+		</div>
+	<?php endif; ?>
+
+	<div class="gwcvt-drawer__fill gwcvt-shiftline--<?php echo esc_attr( 'short' === $state ? 'short' : 'full' ); ?>">
+		<span class="gwcvt-meter"><span class="gwcvt-meter__bar" style="width: <?php echo esc_attr( (string) $width ); ?>%"></span></span>
+		<span class="gwcvt-drawer__fill-label"><?php echo esc_html( gwc_vt_shift_fill_summary( $shift_id, $state ) ); ?></span>
+	</div>
+
+	<h3 class="gwcvt-drawer__heading"><?php esc_html_e( 'Who is coming', 'groundwork-common-volunteer-tracker' ); ?></h3>
+
+	<ul class="gwcvt-drawer__roster">
+		<?php if ( ! $roster && ! $waiting ) : ?>
+			<li class="gwcvt-drawer__nobody"><?php esc_html_e( 'Nobody yet.', 'groundwork-common-volunteer-tracker' ); ?></li>
+		<?php endif; ?>
+
+		<?php foreach ( $roster as $signup_id ) : ?>
+			<li>
+				<span><?php echo esc_html( gwc_vt_signup_name( (int) $signup_id ) ); ?></span>
+				<span class="gwcvt-drawer__standing"><?php esc_html_e( 'On the roster', 'groundwork-common-volunteer-tracker' ); ?></span>
+			</li>
+		<?php endforeach; ?>
+
+		<?php foreach ( $waiting as $signup_id ) : ?>
+			<li>
+				<span><?php echo esc_html( gwc_vt_signup_name( (int) $signup_id ) ); ?></span>
+				<?php
+				/* The waiting list is the one standing that is also a question,
+				 * so it links to the screen that can answer it rather than
+				 * repeating the promote control in a rail. */
+				?>
+				<span class="gwcvt-drawer__standing">
+					<a href="<?php echo esc_url( $edit_url . '#gwcvt-roster' ); ?>">
+						<?php esc_html_e( 'Waiting list — promote?', 'groundwork-common-volunteer-tracker' ); ?>
+					</a>
+				</span>
+			</li>
+		<?php endforeach; ?>
+	</ul>
+
+	<?php if ( ! $cancelled && ! $ended && current_user_can( 'edit_posts' ) ) : ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-drawer__add">
+			<input type="hidden" name="action" value="gwc_vt_roster_add" />
+			<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
+			<?php wp_nonce_field( 'gwc_vt_roster_add_' . $shift_id ); ?>
+
+			<?php
+			/* Where to come back to. Not a URL — a URL in a form field is an
+			 * open redirect waiting to be found, and wp_safe_redirect() only
+			 * catches the off-site half of that. Two known values the redirect
+			 * rebuilds a schedule URL from instead. */
+			?>
+			<?php if ( '' !== $back ) : ?>
+				<input type="hidden" name="gwc_vt_back" value="<?php echo esc_attr( $back ); ?>" />
+				<?php if ( '' !== $month ) : ?>
+					<input type="hidden" name="gwc_vt_back_month" value="<?php echo esc_attr( $month ); ?>" />
+				<?php endif; ?>
+			<?php endif; ?>
+
+			<label class="screen-reader-text" for="gwcvt-drawer-name"><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></label>
+			<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
+				<input
+					type="text"
+					id="gwcvt-drawer-name"
+					autocomplete="off"
+					role="combobox"
+					aria-expanded="false"
+					aria-autocomplete="list"
+					aria-controls="gwcvt-drawer-results"
+					placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
+				/>
+				<input type="hidden" name="gwc_vt_volunteer" value="0" />
+				<ul id="gwcvt-drawer-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
+			</div>
+
+			<button type="submit" class="button"><?php esc_html_e( 'Add them', 'groundwork-common-volunteer-tracker' ); ?></button>
+		</form>
+	<?php endif; ?>
+
+	<div class="gwcvt-drawer__actions">
+		<?php if ( $ended && ! $cancelled ) : ?>
+			<a class="button button-primary" href="<?php echo esc_url( gwc_vt_shift_log_url( $shift_id ) ); ?>">
+				<?php
+				echo gwc_vt_shift_is_reconciled( $shift_id )
+					? esc_html__( 'Log more hours', 'groundwork-common-volunteer-tracker' )
+					: esc_html__( 'Log the hours', 'groundwork-common-volunteer-tracker' );
+				?>
+			</a>
+		<?php endif; ?>
+
+		<a class="button" href="<?php echo esc_url( $edit_url ); ?>">
+			<?php esc_html_e( 'Edit and roster', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+
+		<?php if ( $roster ) : ?>
+			<a class="button" href="<?php echo esc_url( gwc_vt_roster_print_url( $shift_id ) ); ?>" target="_blank" rel="noopener noreferrer">
+				<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+		<?php endif; ?>
+
+		<?php if ( ! $cancelled && current_user_can( 'publish_posts' ) ) : ?>
+			<?php
+			/* A link to the editor's own call-off form, not a button that calls
+			 * it off. That form asks why and offers to tell everybody signed up,
+			 * and those two questions ARE the confirmation. */
+			?>
+			<a class="button gwcvt-drawer__danger" href="<?php echo esc_url( $edit_url . '#gwcvt-danger' ); ?>">
+				<?php esc_html_e( 'Call it off…', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
 /**
  * Who is coming, and the box for adding somebody.
  *
@@ -487,7 +685,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 		return;
 	}
 	?>
-	<h2><?php esc_html_e( 'Calling it off', 'groundwork-common-volunteer-tracker' ); ?></h2>
+	<h2 id="gwcvt-danger"><?php esc_html_e( 'Calling it off', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 	<?php if ( ! $cancelled ) : ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-shift-cancel">
@@ -992,6 +1190,45 @@ function gwc_vt_shift_redirect( int $shift_id, string $result, array $extra = ar
 		array( 'gwc_vt_shift_result' => $result ),
 		$extra
 	);
+
+	/* Somebody who added a name from the drawer wanted to stay on the calendar.
+	 * Sending them to the shift editor instead is the page load the drawer
+	 * exists to remove — they came to fill Saturday, not to look at it.
+	 *
+	 * Rebuilt from two known values rather than from a URL the form carried. A
+	 * URL in a form field is an open redirect waiting to be found, and
+	 * wp_safe_redirect() only catches the off-site half of that: it would
+	 * happily send somebody to any admin screen this plugin never meant to
+	 * name. */
+	$back = isset( $_REQUEST['gwc_vt_back'] ) ? sanitize_key( wp_unslash( $_REQUEST['gwc_vt_back'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- every caller has already checked its own nonce; this only decides which screen to land on.
+
+	if ( in_array( $back, array( 'month', 'list' ), true ) ) {
+		if ( 'month' === $back ) {
+			$args['view'] = 'month';
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+			$month = isset( $_REQUEST['gwc_vt_back_month'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['gwc_vt_back_month'] ) ) : '';
+
+			if ( preg_match( '/^\d{4}-\d{2}$/', $month ) ) {
+				$args['gwc_vt_month'] = $month;
+			}
+		}
+
+		/* And reopen the drawer on the shift they were working on, so the next
+		 * name goes in the same box rather than after another two clicks. */
+		if ( $shift_id > 0 ) {
+			$args['gwc_vt_open'] = $shift_id;
+		}
+
+		foreach ( $args as $key => $value ) {
+			if ( '' === $value ) {
+				unset( $args[ $key ] );
+			}
+		}
+
+		wp_safe_redirect( gwc_vt_schedule_url( $args ) );
+		exit;
+	}
 
 	if ( $shift_id > 0 ) {
 		$args['shift'] = $shift_id;
