@@ -10,14 +10,18 @@ defined( 'ABSPATH' ) || exit;
 add_action( 'admin_menu', 'gwc_vt_register_dashboard_menu', 9 );
 
 /* ── The page does two things ────────────────────────────────────────────────
- * Above: what is true right now and what is owed. Below and to the side: every
- * way out of here.
+ * Left: what is true — the fortnight ahead, and the year's one figure. Right: a
+ * narrower rail of what somebody might do about it.
  *
- * A coordinator arrives either wanting to be told or wanting to go somewhere,
- * and the screen should not make them work out which half they are in. The
- * worklist is the widest thing on it because the worklist is the urgent part;
- * the map is an index down the side because an index is reference, and it reads
- * straight down.
+ * A coordinator arrives either wanting to be told or wanting to do something,
+ * and the screen should not make them work out which half they are in. Reading
+ * across answers "how are we"; reading down the rail answers "what now".
+ *
+ * This used to be four panels in two even columns — the worklist widest because
+ * it was the urgent part, and an index of every screen in the plugin down the
+ * side. The index went when the menu became six nouns and started carrying the
+ * same information; what survived it is the verbs, which the menu deliberately
+ * does not list. See gwc_vt_dashboard_actions().
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -50,33 +54,71 @@ function gwc_vt_render_dashboard(): void {
 	}
 
 	$items = gwc_vt_dashboard_items( gwc_vt_dashboard_counts() );
+
+	/* ── Information on the left, action on the right ────────────────────────
+	 * The screen used to be four panels in two even columns, in no particular
+	 * relation to each other. It is now a split: what is true — the fortnight
+	 * and the year — on the left, and what somebody might do about it in a
+	 * narrower rail on the right.
+	 *
+	 * The rail reads downwards in the order the work arrives. The verbs first,
+	 * because "add a shift" is what somebody arrives wanting on most days.
+	 * Then what is waiting, which is the thing that changes. Then the reference
+	 * checker, which is not about this organization's week at all — it is here
+	 * because a phone call about a letter interrupts whatever you were doing,
+	 * and this is the screen you were on.
+	 *
+	 * The masthead above this — org name, today's date, a 2px rule — is gone.
+	 * The date is on every clock in the building and the org name is on the
+	 * letterhead settings; between them they were a strip of chrome above the
+	 * only two numbers on the page anybody reads.
+	 * ─────────────────────────────────────────────────────────────────────── */
 	?>
 	<div class="wrap gwcvt-wrap gwcvt-dash">
 
-		<header class="gwcvt-dash__masthead">
-			<div>
-				<h1><?php esc_html_e( 'Volunteer Hours', 'groundwork-common-volunteer-tracker' ); ?></h1>
-				<span class="gwcvt-dash__org"><?php echo esc_html( gwc_vt_org_name() ); ?></span>
-			</div>
-			<span class="gwcvt-dash__date">
-				<?php echo esc_html( wp_date( (string) get_option( 'date_format' ) ?: 'j F Y' ) ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- an empty date_format must fall back too, which ?? does not do; spelling it out would call get_option() twice. ?>
-			</span>
-		</header>
+		<h1><?php esc_html_e( 'Groundwork Common Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
-		<div class="gwcvt-dash__columns">
+		<div class="gwcvt-dash__split">
 
-			<div class="gwcvt-dash__column">
-				<?php gwc_vt_render_dashboard_worklist( $items ); ?>
+			<div class="gwcvt-dash__main">
 				<?php gwc_vt_render_dashboard_upcoming(); ?>
+				<?php gwc_vt_render_dashboard_year(); ?>
 			</div>
 
-			<div class="gwcvt-dash__column">
-				<?php gwc_vt_render_dashboard_year(); ?>
-				<?php gwc_vt_render_dashboard_map(); ?>
+			<div class="gwcvt-dash__rail">
+				<?php gwc_vt_render_dashboard_actions(); ?>
+				<?php gwc_vt_render_dashboard_worklist( $items ); ?>
+				<?php gwc_vt_render_dashboard_reference(); ?>
 			</div>
 
 		</div>
 	</div>
+	<?php
+}
+
+/* ── Checking a reference, where the phone gets answered ─────────────────────
+ * The checker is a panel here as well as a box on the Letters screen. Whoever
+ * picks up the phone is not necessarily whoever issues letters, and asking them
+ * to find a screen they have never opened — to answer a question that takes ten
+ * seconds — is how a caller gets told somebody will ring them back.
+ *
+ * Rendered only where it would work: letters switched on, and the capability to
+ * open the Letters screen the answer links to. A box that refuses everybody who
+ * uses it is worse than no box.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The reference checker, in the rail.
+ */
+function gwc_vt_render_dashboard_reference(): void {
+	if ( ! gwc_vt_letters_enabled() || ! current_user_can( GWC_VT_CAP_OPEN_LETTERS ) ) {
+		return;
+	}
+
+	?>
+	<section class="gwcvt-dash__section">
+		<?php gwc_vt_render_reference_checker( GWC_VT_DASHBOARD_PAGE ); ?>
+	</section>
 	<?php
 }
 
@@ -86,13 +128,25 @@ function gwc_vt_render_dashboard(): void {
  * @param array $items From gwc_vt_dashboard_items().
  */
 function gwc_vt_render_dashboard_worklist( array $items ): void {
+	/* ── One line per queue ──────────────────────────────────────────────────
+	 * The rules are untouched and are the reason this panel is worth having:
+	 * every line is a queue, they are ordered by what is lost if they wait,
+	 * nobody's name appears, and a queue at zero is not drawn at all. See
+	 * gwc_vt_dashboard_items().
+	 *
+	 * What changed is the width. In a rail there is no room for the sentence
+	 * explaining why each queue matters, so it moves into the row's title
+	 * attribute — still there for anybody who wants it, no longer competing
+	 * with the count for the two seconds somebody spends on this panel.
+	 *
+	 * A title attribute is a poor place for anything load-bearing, which is why
+	 * nothing load-bearing is in it: the count, the task and the destination are
+	 * all still on the row.
+	 * ─────────────────────────────────────────────────────────────────────── */
 	?>
-	<section>
+	<section class="gwcvt-dash__section">
 		<div class="gwcvt-dash__head">
 			<h2><?php esc_html_e( 'Needs you', 'groundwork-common-volunteer-tracker' ); ?></h2>
-			<?php if ( $items ) : ?>
-				<span class="gwcvt-dash__aside"><?php esc_html_e( 'Ordered by what goes wrong if it waits', 'groundwork-common-volunteer-tracker' ); ?></span>
-			<?php endif; ?>
 		</div>
 
 		<div class="gwcvt-dash__panel gwcvt-docket">
@@ -116,14 +170,16 @@ function gwc_vt_render_dashboard_worklist( array $items ): void {
 			<?php endif; ?>
 
 			<?php foreach ( $items as $item ) : ?>
-				<a class="gwcvt-docket__row gwcvt-docket__row--<?php echo esc_attr( $item['severity'] ); ?>" href="<?php echo esc_url( gwc_vt_dashboard_item_url( (string) $item['key'] ) ); ?>">
+				<a
+					class="gwcvt-docket__row gwcvt-docket__row--<?php echo esc_attr( $item['severity'] ); ?>"
+					href="<?php echo esc_url( gwc_vt_dashboard_item_url( (string) $item['key'] ) ); ?>"
+					title="<?php echo esc_attr( (string) $item['why'] ); ?>"
+				>
 					<span class="gwcvt-docket__stripe" aria-hidden="true"></span>
 					<span class="gwcvt-docket__count"><?php echo esc_html( number_format_i18n( (int) $item['count'] ) ); ?></span>
-					<span class="gwcvt-docket__body">
-						<span class="gwcvt-docket__what"><?php echo esc_html( (string) $item['what'] ); ?></span>
-						<span class="gwcvt-docket__why"><?php echo esc_html( (string) $item['why'] ); ?></span>
-					</span>
-					<span class="gwcvt-docket__go"><?php echo esc_html( (string) $item['action'] ); ?></span>
+					<span class="gwcvt-docket__what"><?php echo esc_html( (string) $item['what'] ); ?></span>
+					<span class="gwcvt-docket__go" aria-hidden="true">&rarr;</span>
+					<span class="screen-reader-text"><?php echo esc_html( (string) $item['action'] ); ?></span>
 				</a>
 			<?php endforeach; ?>
 		</div>
@@ -393,190 +449,108 @@ function gwc_vt_render_dashboard_year(): void {
 				<div><dt><?php esc_html_e( 'Volunteers with hours', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( number_format_i18n( (int) $totals['volunteers'] ) ); ?></dd></div>
 				<div><dt><?php esc_html_e( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( number_format_i18n( (int) $totals['entries'] ) ); ?></dd></div>
 			</dl>
-
-			<p class="gwcvt-year__note">
-				<?php
-				printf(
-					/* translators: %s: a date. */
-					esc_html__( 'Since %s. Verified hours only — the rest is counted separately because nobody has attested to it yet.', 'groundwork-common-volunteer-tracker' ),
-					esc_html( gwc_vt_local_date( $from . ' 00:00:00' ) )
-				);
-				?>
-			</p>
 		</div>
 	</section>
 	<?php
 }
 
-/* ── The map ────────────────────────────────────────────────────────────────
- * Every way out of this page, grouped by what it is about.
+/* ── The verbs ───────────────────────────────────────────────────────────────
+ * What is left of "Where to next", which used to be five groups of links to
+ * every screen in the plugin. With a six-noun menu in the sidebar, most of that
+ * was the sidebar written out again in the middle of the page.
  *
- * Filtered to what the person looking at it can actually reach: an editor
- * without gwc_vt_issue_letters gets no Letters group at all rather than three
- * links that will refuse them. A link that fails when clicked is worse than an
- * absent one, because the first teaches somebody the screen is broken and the
- * second teaches them nothing.
+ * What the sidebar does NOT carry is the verbs: adding a shift, adding an
+ * event, adding a volunteer. Those left the menu in #89 precisely because they
+ * are actions rather than places, and this is where they went — a plain list,
+ * no headings, no explanatory sentences, in the order somebody reaches for
+ * them.
+ *
+ * Filtered to what the person looking at it can actually reach, by the same
+ * rules the map used. A link that fails when clicked is worse than an absent
+ * one: the first teaches somebody the screen is broken, and the second teaches
+ * them nothing.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The map's groups and links.
+ * The verbs, already filtered by capability.
  *
- * @return array<int, array{title:string, links:array<int, array{label:string, url:string}>}>
+ * @return array<int, array{label:string, url:string}>
  */
-function gwc_vt_dashboard_map(): array {
-	$groups = array();
+function gwc_vt_dashboard_actions(): array {
+	$actions = array();
 
 	if ( gwc_vt_shifts_enabled() && current_user_can( 'edit_posts' ) ) {
-		$groups[] = array(
-			'title' => __( 'Shifts', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwc_vt_schedule_url( array( 'shift' => 'new' ) ),
-				),
-				array(
-					'label' => __( 'Open the schedule', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwc_vt_schedule_url(),
-				),
-				array(
-					'label' => __( 'Shifts already run', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwc_vt_schedule_url( array( 'when' => 'past' ) ),
-				),
-			),
+		$actions[] = array(
+			'label' => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
+			'url'   => gwc_vt_schedule_url( array( 'shift' => 'new' ) ),
+		);
+
+		$actions[] = array(
+			'label' => __( 'Add an event', 'groundwork-common-volunteer-tracker' ),
+			'url'   => gwc_vt_schedule_url( array( 'gwc_vt_event' => 'new' ) ),
 		);
 	}
 
 	if ( current_user_can( 'edit_posts' ) ) {
-		$groups[] = array(
-			'title' => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Log a day', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg(
-						array(
-							'post_type' => GWC_VT_ENTRY_TYPE,
-							'page'      => GWC_VT_QUICK_ADD_PAGE,
-						),
-						admin_url( 'edit.php' )
-					),
-				),
-				array(
-					'label' => __( 'Log a single shift', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-				),
-				array(
-					'label' => __( 'All hours', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-				),
-			),
+		$actions[] = array(
+			'label' => __( 'Log a day’s sign-in sheet', 'groundwork-common-volunteer-tracker' ),
+			'url'   => gwc_vt_quick_add_url(),
 		);
 
-		$groups[] = array(
-			'title' => __( 'Volunteers', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Add a volunteer', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
-				),
-				array(
-					'label' => __( 'Find somebody’s record', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
-				),
-			),
+		$actions[] = array(
+			'label' => __( 'Add a volunteer', 'groundwork-common-volunteer-tracker' ),
+			'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
+		);
+
+		$actions[] = array(
+			'label' => __( 'Find somebody’s record', 'groundwork-common-volunteer-tracker' ),
+			'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 		);
 	}
 
-	if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) ) {
-		$groups[] = array(
-			'title' => __( 'Letters', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Produce a letter', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg(
-						array(
-							'post_type' => GWC_VT_ENTRY_TYPE,
-							'page'      => GWC_VT_LETTERS_PAGE,
-						),
-						admin_url( 'edit.php' )
-					),
-				),
-				array(
-					'label' => __( 'Check a reference', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg(
-						array(
-							'post_type' => GWC_VT_ENTRY_TYPE,
-							'page'      => GWC_VT_LETTERS_PAGE,
-						),
-						admin_url( 'edit.php' )
-					) . '#gwcvt-reference',
-				),
-			),
-		);
-	}
-
-	$setup = array();
-
-	if ( current_user_can( gwc_vt_cap( 'manage' ) ) ) {
-		$setup[] = array(
-			'label' => __( 'Settings', 'groundwork-common-volunteer-tracker' ),
-			'url'   => add_query_arg(
-				array(
-					'post_type' => GWC_VT_ENTRY_TYPE,
-					'page'      => GWC_VT_SETTINGS_PAGE,
-				),
-				admin_url( 'edit.php' )
-			),
-		);
-	}
-
+	/* Not an ordinary verb, and deliberately last: it is the one thing here
+	 * somebody does because a person asked them to rather than because the week
+	 * needs it. export_others_personal_data is core's own capability for it. */
 	if ( current_user_can( 'export_others_personal_data' ) ) {
-		$setup[] = array(
+		$actions[] = array(
 			'label' => __( 'Export or erase a record', 'groundwork-common-volunteer-tracker' ),
 			'url'   => admin_url( 'export-personal-data.php' ),
 		);
 	}
 
-	if ( $setup ) {
-		$groups[] = array(
-			'title' => __( 'Setting up', 'groundwork-common-volunteer-tracker' ),
-			'links' => $setup,
-		);
-	}
-
 	/**
-	 * The dashboard's map of everywhere else.
+	 * The dashboard's quick actions, already filtered by capability.
 	 *
-	 * @param array $groups Groups of links, already filtered by capability.
+	 * Replaces gwc_vt_dashboard_map, which described a panel that no longer
+	 * exists: with the verbs on the menu and the nouns in the sidebar, the map
+	 * was mostly the sidebar written out twice.
+	 *
+	 * @param array $actions Label-and-url pairs, in the order they appear.
 	 */
-	return (array) apply_filters( 'gwc_vt_dashboard_map', $groups );
+	return (array) apply_filters( 'gwc_vt_dashboard_actions', $actions );
 }
 
 /**
- * Render it.
+ * Render them.
  */
-function gwc_vt_render_dashboard_map(): void {
-	$groups = gwc_vt_dashboard_map();
+function gwc_vt_render_dashboard_actions(): void {
+	$actions = gwc_vt_dashboard_actions();
 
-	if ( ! $groups ) {
+	if ( ! $actions ) {
 		return;
 	}
 	?>
-	<section>
+	<section class="gwcvt-dash__section">
 		<div class="gwcvt-dash__head">
-			<h2><?php esc_html_e( 'Where to next', 'groundwork-common-volunteer-tracker' ); ?></h2>
+			<h2><?php esc_html_e( 'Quick actions', 'groundwork-common-volunteer-tracker' ); ?></h2>
 		</div>
 
-		<nav class="gwcvt-dash__panel gwcvt-map" aria-label="<?php esc_attr_e( 'Everywhere else in Volunteer Hours', 'groundwork-common-volunteer-tracker' ); ?>">
-			<?php foreach ( $groups as $group ) : ?>
-				<div class="gwcvt-map__group">
-					<h3><?php echo esc_html( (string) $group['title'] ); ?></h3>
-					<ul class="gwcvt-map__links">
-						<?php foreach ( (array) $group['links'] as $link ) : ?>
-							<li><a href="<?php echo esc_url( (string) $link['url'] ); ?>"><?php echo esc_html( (string) $link['label'] ); ?></a></li>
-						<?php endforeach; ?>
-					</ul>
-				</div>
-			<?php endforeach; ?>
+		<nav class="gwcvt-dash__panel gwcvt-actions" aria-label="<?php esc_attr_e( 'Quick actions', 'groundwork-common-volunteer-tracker' ); ?>">
+			<ul class="gwcvt-actions__list">
+				<?php foreach ( $actions as $action ) : ?>
+					<li><a href="<?php echo esc_url( (string) $action['url'] ); ?>"><?php echo esc_html( (string) $action['label'] ); ?></a></li>
+				<?php endforeach; ?>
+			</ul>
 		</nav>
 	</section>
 	<?php

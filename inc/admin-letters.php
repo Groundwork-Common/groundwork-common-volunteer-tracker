@@ -530,8 +530,17 @@ function gwc_vt_letters_notice(): void {
 
 /**
  * The reference checker box.
+ *
+ * Takes the page it should come back to, because it is no longer only on the
+ * Letters screen: the dashboard's rail carries it too, on the grounds that
+ * whoever picks up the phone is not necessarily whoever issues letters, and the
+ * dashboard is where they already are. The form is a GET, so the answer is
+ * rendered by whichever screen the query lands on — pointing it at the wrong
+ * one would answer the question on a page the person was not looking at.
+ *
+ * @param string $page The admin page slug to submit to.
  */
-function gwc_vt_render_reference_checker(): void {
+function gwc_vt_render_reference_checker( string $page = GWC_VT_LETTERS_PAGE ): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup; nothing is written and no data is disclosed that the viewer cannot already see.
 	$code = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
 	?>
@@ -544,7 +553,7 @@ function gwc_vt_render_reference_checker(): void {
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
 			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
-			<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_LETTERS_PAGE ); ?>" />
+			<input type="hidden" name="page" value="<?php echo esc_attr( $page ); ?>" />
 
 			<p>
 				<label class="screen-reader-text" for="gwcvt-reference"><?php esc_html_e( 'Reference code', 'groundwork-common-volunteer-tracker' ); ?></label>

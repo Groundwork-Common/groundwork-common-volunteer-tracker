@@ -899,66 +899,73 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 }
 
 /* ─── The dashboard ─────────────────────────────────────────────────────────
-   Two things on one screen: what is true right now, and every way out. The
-   worklist is the widest column because the worklist is the urgent part; the
-   map is an index down the side because an index is reference.
+   Information on the left, action on the right. The fortnight and the year are
+   what is true; the rail beside them is what somebody might do about it. The
+   split is 1.85fr to 1fr because the left column carries a seven-column week
+   strip and the right carries a list of short lines.
 
    No colors of its own — everything below reuses the badge and schedule
    palette already established above, so the dashboard reads as the same
    product rather than a visitor. */
-.gwcvt-dash__masthead {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 4px 20px;
-	margin: 0 0 20px;
-	padding-bottom: 14px;
-	border-bottom: 2px solid #1d2327;
-}
-
-.gwcvt-dash__masthead h1 {
-	display: inline;
-	padding: 0;
-	margin-right: 10px;
-}
-
-.gwcvt-dash__org,
-.gwcvt-dash__date {
-	color: #646970;
-}
-
-/* WordPress floats the Help tab over the top right of .wrap, so the date has to
-   stop short of it or the two collide into one line. The padding sits on the
-   date rather than the masthead so the rule underneath still runs full width. */
-.gwcvt-dash__date {
-	padding-right: 120px;
-}
-
-@media ( max-width: 960px ) {
-	.gwcvt-dash__date {
-		padding-right: 0;
-	}
-}
-
-.gwcvt-dash__columns {
+.gwcvt-dash__split {
 	display: grid;
 	grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
 	gap: 24px;
 	align-items: start;
 }
 
+/* One column below the width core itself uses to switch wp-admin into its
+   touch layout. The rail goes UNDER the information rather than above it: on a
+   narrow screen the week is still the thing somebody came to read. */
 @media ( max-width: 960px ) {
-	.gwcvt-dash__columns {
+	.gwcvt-dash__split {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
-.gwcvt-dash__column {
+.gwcvt-dash__main,
+.gwcvt-dash__rail {
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
 	min-width: 0;
+}
+
+/* The reference checker is a .gwcvt-box, which was written for the Letters
+   screen's wider sidebar. Two things it brings with it do not fit a rail:
+
+   The input carries core's .regular-text, a fixed 25em. In a column narrower
+   than that it runs off the right-hand edge of the panel — seen in the browser,
+   not guessed. Percentage width instead, with box-sizing so the border stays
+   inside the panel.
+
+   And its <h2> is the Letters screen's box heading, 14px and sentence case,
+   beside three section headings that are 11px uppercase. Restyled to match its
+   neighbours rather than restyled at source, because on the Letters screen it
+   is still a box heading among box headings. */
+.gwcvt-dash__rail .gwcvt-box {
+	padding: 13px 18px;
+}
+
+.gwcvt-dash__rail .gwcvt-box h2 {
+	margin: 0 0 8px;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.gwcvt-dash__rail .gwcvt-box input[type="text"] {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+/* Core's inline notices carry a 5px 15px margin meant for the top of a page.
+   Inside a panel that is a notice hanging off both edges. */
+.gwcvt-dash__rail .gwcvt-box .notice {
+	margin: 10px 0 0;
 }
 
 .gwcvt-dash__head {
@@ -998,9 +1005,9 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    stripe AND the words — the same rule the verification badges follow. */
 .gwcvt-docket__row {
 	display: grid;
-	grid-template-columns: 5px 4rem minmax(0, 1fr) auto;
+	grid-template-columns: 4px 2.4rem minmax(0, 1fr) auto;
 	align-items: center;
-	gap: 0 14px;
+	gap: 0 10px;
 	text-decoration: none;
 	color: inherit;
 	border-bottom: 1px solid #f0f0f1;
@@ -1028,9 +1035,9 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-docket__row--done .gwcvt-docket__stripe { background: #00a32a; }
 
 .gwcvt-docket__count {
-	padding: 16px 0;
-	font-size: 28px;
-	font-weight: 300;
+	padding: 10px 0;
+	font-size: 17px;
+	font-weight: 600;
 	line-height: 1;
 	text-align: right;
 	font-variant-numeric: tabular-nums;
@@ -1040,34 +1047,22 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-docket__row--waiting .gwcvt-docket__count { color: #614200; }
 .gwcvt-docket__row--done .gwcvt-docket__count { color: #00733c; }
 
-.gwcvt-docket__body {
-	padding: 14px 0;
+/* One line, in a rail: the explaining sentence moved into the row's title
+   attribute, so what is left is the count, the task and the arrow. 13px rather
+   than 15px because the panel is now a third of the screen instead of two. */
+.gwcvt-docket__what {
+	display: block;
+	padding: 10px 0;
+	font-size: 13px;
+	line-height: 1.35;
 	min-width: 0;
 }
 
-.gwcvt-docket__what {
-	display: block;
-	font-size: 15px;
-	line-height: 1.35;
-}
-
-.gwcvt-docket__why {
-	display: block;
-	margin-top: 2px;
-	font-size: 12px;
-	color: #646970;
-}
-
 .gwcvt-docket__go {
-	padding: 14px 16px 14px 0;
-	font-size: 12px;
-	font-weight: 600;
+	padding: 10px 12px 10px 0;
+	font-size: 14px;
 	color: #2271b1;
 	white-space: nowrap;
-}
-
-.gwcvt-docket__go::after {
-	content: " \2192";
 }
 
 .gwcvt-docket__row:hover .gwcvt-docket__go {
@@ -1082,16 +1077,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 @media ( max-width: 600px ) {
 	.gwcvt-docket__row {
-		grid-template-columns: 5px 3rem minmax(0, 1fr);
-	}
-
-	.gwcvt-docket__count {
-		font-size: 22px;
-	}
-
-	.gwcvt-docket__go {
-		grid-column: 2 / -1;
-		padding: 0 0 14px;
+		grid-template-columns: 4px 2.4rem minmax(0, 1fr) auto;
 	}
 }
 
@@ -1281,49 +1267,26 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	font-variant-numeric: tabular-nums;
 }
 
-.gwcvt-year__note {
-	margin: 12px 0 0;
-	font-size: 12px;
-	color: #646970;
-}
-
-/* ─── The map ───────────────────────────────────────────────────────────────
-   Every way out, grouped by what it is about. An index rather than a row of
-   tiles: somebody who opens this weekly rather than daily needs the shape of
-   the whole thing, and tiles would only show whichever few we guessed at. */
-.gwcvt-map__group {
-	padding: 13px 18px;
-	border-bottom: 1px solid #f0f0f1;
-}
-
-.gwcvt-map__group:last-child {
-	border-bottom: 0;
-}
-
-.gwcvt-map__group h3 {
-	margin: 0 0 7px;
-	font-size: 11px;
-	font-weight: 700;
-	letter-spacing: .08em;
-	text-transform: uppercase;
-	color: #646970;
-}
-
-.gwcvt-map__links {
+/* ─── Quick actions ─────────────────────────────────────────────────────────
+   What is left of the map: the verbs, which the six-noun menu deliberately does
+   not carry. A plain list with no headings and no explaining sentences — the
+   panel is six links in a rail, and anything else in it competes with the
+   worklist underneath for the same glance. */
+.gwcvt-actions__list {
 	margin: 0;
-	padding: 0;
+	padding: 13px 18px;
 	list-style: none;
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 8px;
 }
 
-.gwcvt-map__links a {
+.gwcvt-actions__list a {
 	text-decoration: none;
 }
 
-.gwcvt-map__links a:hover,
-.gwcvt-map__links a:focus {
+.gwcvt-actions__list a:hover,
+.gwcvt-actions__list a:focus {
 	text-decoration: underline;
 }
 
