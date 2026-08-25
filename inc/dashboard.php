@@ -241,19 +241,27 @@ function gwc_vt_dashboard_item_url( string $key ): string {
 			);
 
 		case 'unverified':
-			return add_query_arg(
-				array(
-					'post_type'    => GWC_VT_ENTRY_TYPE,
-					'gwc_vt_state' => 'unverified',
-				),
-				admin_url( 'edit.php' )
-			);
-
 		case 'unmatched':
+			/* Both land on the queue, which is the screen that shows exactly
+			 * what these two lines counted: gwc_vt_unverified_entry_ids() asks
+			 * the same question of the same meta key gwc_vt_unverified_count()
+			 * does, and the queue holds the unmatched ones apart in their own
+			 * group rather than leaving them out.
+			 *
+			 * They used to go to the list table filtered by gwc_vt_state, which
+			 * was honest but was a list of posts in date order — six trips
+			 * through the editor for six entries. The queue is the same six
+			 * grouped by the person they are about, which is how somebody
+			 * actually remembers whether a shift happened.
+			 *
+			 * The slug is spelled out rather than referenced through
+			 * GWC_VT_VERIFY_PAGE for the reason the volunteer filter above is:
+			 * that constant lives in the admin bundle, and this file is loaded
+			 * for cron and WP-CLI too. */
 			return add_query_arg(
 				array(
-					'post_type'    => GWC_VT_ENTRY_TYPE,
-					'gwc_vt_state' => 'unmatched',
+					'post_type' => GWC_VT_ENTRY_TYPE,
+					'page'      => 'gwc-vt-verify',
 				),
 				admin_url( 'edit.php' )
 			);

@@ -1863,3 +1863,123 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	border-color: #8a2424;
 	background: #fcf0f1;
 }
+
+/* ─── The verify queue ──────────────────────────────────────────────────────
+   Grouped by the person it is about, because attestation happens one person at
+   a time: what a supervisor is remembering is "yes, Priya was here, all three
+   times", not six unrelated facts about six rows. */
+.gwcvt-verify__intro {
+	max-width: 46em;
+	color: #646970;
+}
+
+.gwcvt-verify__summary {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	max-width: 46em;
+	margin: 0 0 20px;
+	padding: 12px 16px;
+	background: #fff;
+	color: #3c434a;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+}
+
+.gwcvt-verify__count {
+	font-size: 28px;
+	font-weight: 300;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Amber while anything is waiting, green when nothing is. The words say the
+   same thing either way — the colour is reinforcement, as everywhere else. */
+.gwcvt-verify__summary--waiting .gwcvt-verify__count { color: #614200; }
+.gwcvt-verify__summary--clear .gwcvt-verify__count { color: #00733c; }
+
+.gwcvt-verify__group {
+	max-width: 60em;
+	margin: 0 0 14px;
+	background: #fff;
+	color: #3c434a;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.gwcvt-verify__head {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	flex-wrap: wrap;
+	padding: 10px 16px;
+	background: #f6f7f7;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.gwcvt-verify__note {
+	font-size: 12px;
+	color: #646970;
+}
+
+.gwcvt-verify__row {
+	display: grid;
+	grid-template-columns: 8rem 5rem minmax( 0, 1fr ) 9rem 9rem;
+	align-items: center;
+	gap: 0 14px;
+	padding: 9px 16px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.gwcvt-verify__row:last-child {
+	border-bottom: 0;
+}
+
+.gwcvt-verify__date,
+.gwcvt-verify__hours {
+	font-variant-numeric: tabular-nums;
+}
+
+.gwcvt-verify__what {
+	min-width: 0;
+}
+
+.gwcvt-verify__by,
+.gwcvt-verify__source {
+	display: block;
+	font-size: 12px;
+	color: #646970;
+}
+
+.gwcvt-verify__act {
+	text-align: right;
+}
+
+.gwcvt-verify__cannot {
+	font-size: 12px;
+	color: #646970;
+}
+
+/* An unmatched claim has no verify button and its match controls need the room
+   the button and the source label were using. */
+.gwcvt-verify__row--unmatched {
+	grid-template-columns: 8rem 5rem minmax( 0, 1fr ) 18rem;
+}
+
+.gwcvt-verify__group--unmatched .gwcvt-verify__head {
+	background: #fcf9e8;
+	color: #614200;
+}
+
+@media screen and ( max-width: 782px ) {
+	.gwcvt-verify__row,
+	.gwcvt-verify__row--unmatched {
+		grid-template-columns: minmax( 0, 1fr );
+		gap: 4px;
+	}
+
+	.gwcvt-verify__act {
+		text-align: left;
+	}
+}

@@ -416,6 +416,94 @@ function gwc_vt_unverified_count(): int {
 }
 
 /**
+ * The entries that count is counting.
+ *
+ * Beside gwc_vt_unverified_count() and asking the same two questions of the
+ * same two keys, because a screen that lists six rows under a line that says
+ * eight is the failure this plugin has a rule about. The count is cached and
+ * this is not — a count is read on every admin page and a list is read on one.
+ *
+ * Oldest first: the hours furthest from anybody's memory are the ones worth
+ * attesting to while somebody still remembers the day.
+ *
+ * @param int $limit How many to return.
+ * @return int[]
+ */
+function gwc_vt_unverified_entry_ids( int $limit = 200 ): array {
+	$ids = get_posts(
+		array(
+			'post_type'              => GWC_VT_ENTRY_TYPE,
+			'post_status'            => array( 'publish', 'pending' ),
+			'fields'                 => 'ids',
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- a bound on one screen's work, not a page. A site further behind than this has a bigger problem than the two hundredth row, and the summary above the list reports the real figure from gwc_vt_unverified_count().
+			'posts_per_page'         => max( 1, $limit ),
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'orderby'                => array(
+				'gwc_vt_entry_date' => 'ASC',
+				'ID'                => 'ASC',
+			),
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the same two keys gwc_vt_unverified_count() asks about; ordering by the entry's own date needs the clause named.
+			'meta_query'             => array(
+				'relation'          => 'AND',
+				array(
+					'key'     => GWC_VT_ENTRY_VERIFIED_AT,
+					'compare' => 'NOT EXISTS',
+				),
+				/* Named, and paired with a NOT EXISTS, because ordering by a meta
+				 * key uses an INNER JOIN: an entry missing that key would vanish
+				 * from the queue rather than sort last. See the note in
+				 * CLAUDE.md — this is the trap it describes. */
+				'gwc_vt_entry_date' => array(
+					'relation' => 'OR',
+					array(
+						'key'     => GWC_VT_ENTRY_DATE,
+						'compare' => 'EXISTS',
+					),
+					array(
+						'key'     => GWC_VT_ENTRY_DATE,
+						'compare' => 'NOT EXISTS',
+					),
+				),
+			),
+		)
+	);
+
+	$ids = array_map( 'intval', (array) $ids );
+
+	if ( $ids ) {
+		update_postmeta_cache( $ids );
+	}
+
+	return $ids;
+}
+
+/**
+ * Where an entry came from, in words.
+ *
+ * Three answers, and the third is derived rather than stored: an entry logged
+ * against a shift carries GWC_VT_ENTRY_SHIFT, and one typed into a blank day
+ * does not. Both are 'staff' as far as the source key is concerned, and they
+ * are worth telling apart on this screen — "logged from the roster" means
+ * somebody ticked names off a list that already existed, which is a different
+ * claim from somebody typing six names from memory.
+ *
+ * @param int $entry_id Entry post ID.
+ * @return string
+ */
+function gwc_vt_entry_source_label( int $entry_id ): string {
+	if ( 'self' === (string) get_post_meta( $entry_id, GWC_VT_ENTRY_SOURCE, true ) ) {
+		return __( 'Public form · matched', 'groundwork-common-volunteer-tracker' );
+	}
+
+	if ( (int) get_post_meta( $entry_id, GWC_VT_ENTRY_SHIFT, true ) > 0 ) {
+		return __( 'Logged from the roster', 'groundwork-common-volunteer-tracker' );
+	}
+
+	return __( 'Logged by staff', 'groundwork-common-volunteer-tracker' );
+}
+
+/**
  * Drop the cached count.
  */
 function gwc_vt_forget_unverified_count(): void {

@@ -22,6 +22,7 @@ const GWC_VT_LETTERS_PAGE   = 'gwc-vt-letters';
 const GWC_VT_QUICK_ADD_PAGE = 'gwc-vt-log-a-day';
 const GWC_VT_SCHEDULE_PAGE  = 'gwc-vt-schedule';
 const GWC_VT_DASHBOARD_PAGE = 'gwc-vt-dashboard';
+const GWC_VT_VERIFY_PAGE    = 'gwc-vt-verify';
 
 add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
 add_action( 'admin_init', 'gwc_vt_handle_colophon_toggle' );
@@ -151,6 +152,11 @@ function gwc_vt_hidden_menu_items(): array {
 	$hidden = array(
 		GWC_VT_QUICK_ADD_PAGE,
 		'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE,
+
+		/* Not a verb, but not a place either: the verify queue is All hours
+		 * narrowed to what is waiting, and it is offered where WordPress offers
+		 * a narrowed list — beside "All" on that screen's own views. */
+		GWC_VT_VERIFY_PAGE,
 	);
 
 	/**

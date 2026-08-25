@@ -25,6 +25,8 @@ add_action( 'admin_post_gwc_vt_bulk_unverify', 'gwc_vt_handle_bulk_unverify' );
 
 add_action( 'add_meta_boxes', 'gwc_vt_add_verify_meta_box' );
 add_action( 'admin_menu', 'gwc_vt_add_pending_bubble', 20 );
+add_action( 'admin_menu', 'gwc_vt_register_verify_queue', 14 );
+add_filter( 'views_edit-' . GWC_VT_ENTRY_TYPE, 'gwc_vt_verify_queue_view' );
 
 /* ── The column ──────────────────────────────────────────────────────────── */
 
@@ -157,15 +159,16 @@ function gwc_vt_entry_row_actions( $actions, $post ): array {
  *
  * @param string $action   admin_post action name.
  * @param int    $entry_id Entry post ID.
+ * @param string $returnto Where to come back to. Defaults to the current screen.
  * @return string
  */
-function gwc_vt_verify_action_url( string $action, int $entry_id ): string {
+function gwc_vt_verify_action_url( string $action, int $entry_id, string $returnto = '' ): string {
 	return wp_nonce_url(
 		add_query_arg(
 			array(
 				'action'   => $action,
 				'entry'    => $entry_id,
-				'returnto' => rawurlencode( gwc_vt_current_admin_url() ),
+				'returnto' => rawurlencode( '' !== $returnto ? $returnto : gwc_vt_current_admin_url() ),
 			),
 			admin_url( 'admin-post.php' )
 		),
@@ -182,6 +185,436 @@ function gwc_vt_current_admin_url(): string {
 	$query = isset( $_SERVER['QUERY_STRING'] ) ? sanitize_text_field( wp_unslash( $_SERVER['QUERY_STRING'] ) ) : '';
 
 	return admin_url( 'edit.php' . ( '' !== $query ? '?' . $query : '?post_type=' . GWC_VT_ENTRY_TYPE ) );
+}
+
+
+/* ── The queue, grouped by the person it is about ────────────────────────────
+ * Six waiting entries meant six trips through the post editor. Attestation does
+ * not happen one entry at a time — it happens one person at a time, because the
+ * thing a supervisor is remembering is "yes, Priya was here, all three times".
+ * So the screen is grouped by volunteer and every row has its own button.
+ *
+ * ── It is a fourth caller, not a fourth write path ───────────────────────────
+ * The question this screen had to answer before it was worth building was
+ * whether it becomes a third place to keep the capability check right, beside
+ * the list table and the entry editor. It does not, and the reason is that
+ * there was never more than one place: gwc_vt_verify_entry() checks
+ * authorization itself, through the attestation method registry's can_apply,
+ * because it is also reachable from bulk actions and from WP-CLI.
+ *
+ * So this screen adds no handler. Every button here is a nonced link to
+ * gwc_vt_handle_verify_entry() — the same URL the list table's row action
+ * builds, from the same gwc_vt_verify_action_url(), which already carries a
+ * returnto and already comes back to wherever it was clicked from.
+ *
+ * The list table keeps its bulk actions and stays the general-purpose view of
+ * every hour ever logged. This is the queue.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Add the screen, and take it straight off the menu.
+ *
+ * The menu lists six nouns and this is a view of one of them. It is reached
+ * from the dashboard's worklist line and from the All hours screen's own list
+ * of views, which is where WordPress puts "the same list, narrowed".
+ */
+function gwc_vt_register_verify_queue(): void {
+	$hook = add_submenu_page(
+		GWC_VT_MENU_SLUG,
+		gwc_vt_verify_queue_title(),
+		gwc_vt_verify_queue_title(),
+		'edit_posts',
+		GWC_VT_VERIFY_PAGE,
+		'gwc_vt_render_verify_queue'
+	);
+
+	if ( $hook ) {
+		add_action( 'load-' . $hook, 'gwc_vt_restore_verify_queue_title' );
+	}
+}
+
+/**
+ * The screen's title, said once.
+ *
+ * @return string
+ */
+function gwc_vt_verify_queue_title(): string {
+	return __( 'All hours — verify', 'groundwork-common-volunteer-tracker' );
+}
+
+/**
+ * Give the screen its title back.
+ *
+ * Taken off the menu by gwc_vt_hidden_menu_items(), and get_admin_page_title()
+ * reads a page's title out of $submenu — see the longer note on
+ * gwc_vt_restore_quick_add_title(), which is the same problem for the same
+ * reason.
+ */
+function gwc_vt_restore_verify_queue_title(): void {
+	if ( ! empty( $GLOBALS['title'] ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $title is how core carries an admin page's title into admin-header.php, and there is no API for setting it; this writes it only for this plugin's own screen, and only when nothing else has.
+	$GLOBALS['title'] = gwc_vt_verify_queue_title();
+}
+
+/**
+ * The screen's own URL.
+ *
+ * @return string
+ */
+function gwc_vt_verify_queue_url(): string {
+	return add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_VERIFY_PAGE,
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/**
+ * Offer it beside "All" on the hours list.
+ *
+ * The list table's views are where WordPress puts "the same list, narrowed",
+ * and this is the only place on that screen it would not be a fourth button
+ * competing with the two for logging.
+ *
+ * @param array $views The list table's view links.
+ * @return array
+ */
+function gwc_vt_verify_queue_view( $views ): array {
+	$views = (array) $views;
+
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		return $views;
+	}
+
+	$waiting = gwc_vt_unverified_count();
+
+	/* Nothing waiting, nothing to offer — the same rule the dashboard worklist
+	 * follows. A link reading "Waiting to verify (0)" is a link nobody needs to
+	 * be told about. */
+	if ( $waiting < 1 ) {
+		return $views;
+	}
+
+	$views['gwc_vt_verify'] = sprintf(
+		'<a href="%1$s">%2$s <span class="count">(%3$s)</span></a>',
+		esc_url( gwc_vt_verify_queue_url() ),
+		esc_html__( 'Waiting to verify', 'groundwork-common-volunteer-tracker' ),
+		esc_html( number_format_i18n( $waiting ) )
+	);
+
+	return $views;
+}
+
+/**
+ * The queue.
+ */
+function gwc_vt_render_verify_queue(): void {
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		wp_die(
+			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
+	}
+
+	$waiting = gwc_vt_unverified_count();
+	$entries = gwc_vt_unverified_entry_ids();
+
+	/* Grouped by the person, and the unmatched ones held apart. An entry nobody
+	 * has said whose it is cannot be attested to — that is the verify/log/match
+	 * separation, and this screen shows it rather than hiding those rows. */
+	$groups    = array();
+	$unmatched = array();
+
+	foreach ( $entries as $entry_id ) {
+		$volunteer_id = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true );
+
+		if ( $volunteer_id < 1 ) {
+			$unmatched[] = $entry_id;
+			continue;
+		}
+
+		$groups[ $volunteer_id ][] = $entry_id;
+	}
+	?>
+	<div class="wrap gwcvt-wrap">
+		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_verify_queue_title() ); ?></h1>
+
+		<a href="<?php echo esc_url( gwc_vt_quick_add_url() ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Log a day', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+		<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Log one shift', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+		<hr class="wp-header-end" />
+
+		<?php gwc_vt_bulk_action_notice(); ?>
+		<?php gwc_vt_render_verify_letter_cta(); ?>
+
+		<p class="gwcvt-verify__intro">
+			<?php esc_html_e( 'Verifying an entry is you attesting the shift happened. Only verified hours appear on a letter.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+
+		<div class="gwcvt-verify__summary gwcvt-verify__summary--<?php echo esc_attr( $waiting > 0 ? 'waiting' : 'clear' ); ?>">
+			<span class="gwcvt-verify__count"><?php echo esc_html( number_format_i18n( $waiting ) ); ?></span>
+			<span>
+				<?php
+				echo $waiting > 0
+					? esc_html(
+						sprintf(
+							/* translators: %s: how many entries are waiting, already formatted. */
+							_n(
+								'entry is waiting. Only verified hours reach a letter, so it counts for nobody yet.',
+								'entries are waiting. Only verified hours reach a letter, so these count for nobody yet.',
+								$waiting,
+								'groundwork-common-volunteer-tracker'
+							),
+							number_format_i18n( $waiting )
+						)
+					)
+					: esc_html__( 'Nothing is waiting. Every hour logged has somebody’s name against it.', 'groundwork-common-volunteer-tracker' );
+				?>
+			</span>
+		</div>
+
+		<?php
+		foreach ( $groups as $volunteer_id => $ids ) {
+			gwc_vt_render_verify_group( (int) $volunteer_id, $ids );
+		}
+
+		if ( $unmatched ) {
+			gwc_vt_render_verify_unmatched( $unmatched );
+		}
+		?>
+	</div>
+	<?php
+}
+
+/* ── Closing the loop the dashboard opens ────────────────────────────────────
+ * The design puts "All verified — produce their letter →" on the volunteer's
+ * group header the moment their last waiting entry is attested to. On a screen
+ * that reloads, that group is gone by then: verifying the last one takes them
+ * out of the queue, which is the queue working correctly.
+ *
+ * So the sentence moves to where the moment actually happens — a notice at the
+ * top of the screen they land back on, naming the person and offering the
+ * letter. It fires only when it is true: the volunteer is looked up again after
+ * the write, and the offer appears only if nothing of theirs is waiting any
+ * more. Somebody who verified the second-to-last entry gets no offer, which is
+ * the honest answer.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Where a verify button on this screen comes back to.
+ *
+ * Carries the volunteer so the screen can check, after the write, whether that
+ * was the last one.
+ *
+ * @param int $entry_id The entry being verified.
+ * @return string
+ */
+function gwc_vt_verify_return_url( int $entry_id ): string {
+	$volunteer_id = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true );
+
+	if ( $volunteer_id < 1 ) {
+		return gwc_vt_verify_queue_url();
+	}
+
+	return add_query_arg( 'gwc_vt_finished', $volunteer_id, gwc_vt_verify_queue_url() );
+}
+
+/**
+ * "All verified — produce their letter", when that is now true.
+ */
+function gwc_vt_render_verify_letter_cta(): void {
+	if ( ! gwc_vt_letters_enabled() || ! current_user_can( gwc_vt_cap( 'issue' ) ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; the write it follows checked its own nonce, and this only decides whether to offer a link.
+	$volunteer_id = isset( $_GET['gwc_vt_finished'] ) ? absint( wp_unslash( $_GET['gwc_vt_finished'] ) ) : 0;
+
+	if ( $volunteer_id < 1 || GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+		return;
+	}
+
+	/* Asked again rather than assumed. The button that sent us here verified one
+	 * entry; whether it was the LAST one is a question about everything else on
+	 * file, and the answer may have changed while somebody was reading. */
+	foreach ( gwc_vt_entry_ids_for_volunteer( $volunteer_id ) as $entry_id ) {
+		if ( ! gwc_vt_entry_is_verified( (int) $entry_id ) ) {
+			return;
+		}
+	}
+
+	$letter = add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_LETTERS_PAGE,
+			'volunteer' => $volunteer_id,
+		),
+		admin_url( 'edit.php' )
+	);
+	?>
+	<div class="notice notice-success gwcvt-verify__done">
+		<p>
+			<?php
+			printf(
+				/* translators: %s: a volunteer's name. */
+				esc_html__( 'Everything on file for %s is verified.', 'groundwork-common-volunteer-tracker' ),
+				esc_html( get_the_title( $volunteer_id ) )
+			);
+			?>
+			<a href="<?php echo esc_url( $letter ); ?>">
+				<?php esc_html_e( 'Produce their letter', 'groundwork-common-volunteer-tracker' ); ?> &rarr;
+			</a>
+		</p>
+	</div>
+	<?php
+}
+
+/**
+ * One volunteer, and everything of theirs that is waiting.
+ *
+ * @param int   $volunteer_id Volunteer post ID.
+ * @param int[] $ids          Their unverified entries.
+ */
+function gwc_vt_render_verify_group( int $volunteer_id, array $ids ): void {
+	/* How many of this person's hours are done, out of everything on file — not
+	 * out of what is on this screen. "2 of 9 verified" is the sentence somebody
+	 * needs before they decide whether to produce a letter; "0 of 3" would only
+	 * describe the queue, which they can already see. */
+	$all      = gwc_vt_entry_ids_for_volunteer( $volunteer_id );
+	$total    = count( $all );
+	$verified = $total - count( $ids );
+	?>
+	<div class="gwcvt-verify__group">
+		<div class="gwcvt-verify__head">
+			<strong><?php echo esc_html( get_the_title( $volunteer_id ) ); ?></strong>
+			<span class="gwcvt-verify__note">
+				<?php
+				printf(
+					/* translators: 1: how many of their entries are verified. 2: how many they have. */
+					esc_html__( '%1$s of %2$s verified', 'groundwork-common-volunteer-tracker' ),
+					esc_html( number_format_i18n( $verified ) ),
+					esc_html( number_format_i18n( $total ) )
+				);
+				?>
+			</span>
+		</div>
+
+		<?php foreach ( $ids as $entry_id ) : ?>
+			<?php gwc_vt_render_verify_row( (int) $entry_id ); ?>
+		<?php endforeach; ?>
+	</div>
+	<?php
+}
+
+/**
+ * One waiting entry.
+ *
+ * @param int $entry_id Entry post ID.
+ */
+function gwc_vt_render_verify_row( int $entry_id ): void {
+	$minutes    = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
+	$activity   = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true );
+	$supervisor = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, true );
+	$date       = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true );
+	$may        = gwc_vt_user_can_verify( get_current_user_id(), $entry_id );
+	?>
+	<div class="gwcvt-verify__row">
+		<span class="gwcvt-verify__date"><?php echo esc_html( '' !== $date ? gwc_vt_shift_date_label_from( $date ) : '' ); ?></span>
+
+		<?php /* Rendered from integer minutes, never from a stored decimal. */ ?>
+		<span class="gwcvt-verify__hours"><?php echo esc_html( gwc_vt_format_hours( $minutes ) ); ?></span>
+
+		<span class="gwcvt-verify__what">
+			<a href="<?php echo esc_url( get_edit_post_link( $entry_id ) ); ?>"><?php echo esc_html( $activity ); ?></a>
+			<?php if ( '' !== $supervisor ) : ?>
+				<span class="gwcvt-verify__by">
+					<?php
+					printf(
+						/* translators: %s: a member of staff's name. */
+						esc_html__( 'Supervised by %s', 'groundwork-common-volunteer-tracker' ),
+						esc_html( $supervisor )
+					);
+					?>
+				</span>
+			<?php endif; ?>
+		</span>
+
+		<span class="gwcvt-verify__source"><?php echo esc_html( gwc_vt_entry_source_label( $entry_id ) ); ?></span>
+
+		<span class="gwcvt-verify__act">
+			<?php if ( $may ) : ?>
+				<?php
+				/* The same nonced URL the list table's row action builds, going
+				 * to the same handler. The weight of the word is the point:
+				 * this is somebody saying the shift happened, and a button
+				 * reading "Verify" alone lets it feel like filing. */
+				?>
+				<a class="button" href="<?php echo esc_url( gwc_vt_verify_action_url( 'gwc_vt_verify_entry', $entry_id, gwc_vt_verify_return_url( $entry_id ) ) ); ?>">
+					<?php esc_html_e( 'I attest — verify', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+			<?php else : ?>
+				<span class="gwcvt-verify__cannot"><?php esc_html_e( 'Not yours to verify', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<?php endif; ?>
+		</span>
+	</div>
+	<?php
+}
+
+/**
+ * The claims nobody has said whose they are.
+ *
+ * @param int[] $ids Unmatched entries.
+ */
+function gwc_vt_render_verify_unmatched( array $ids ): void {
+	?>
+	<div class="gwcvt-verify__group gwcvt-verify__group--unmatched">
+		<div class="gwcvt-verify__head">
+			<strong><?php esc_html_e( 'Sent through the public form — match first', 'groundwork-common-volunteer-tracker' ); ?></strong>
+			<span class="gwcvt-verify__note">
+				<?php esc_html_e( 'A claim until somebody says whose it is', 'groundwork-common-volunteer-tracker' ); ?>
+			</span>
+		</div>
+
+		<?php foreach ( $ids as $entry_id ) : ?>
+			<?php
+			$entry_id = (int) $entry_id;
+			$minutes  = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
+			$date     = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true );
+			$claimed  = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, true );
+			?>
+			<div class="gwcvt-verify__row gwcvt-verify__row--unmatched">
+				<span class="gwcvt-verify__date"><?php echo esc_html( '' !== $date ? gwc_vt_shift_date_label_from( $date ) : '' ); ?></span>
+				<span class="gwcvt-verify__hours"><?php echo esc_html( gwc_vt_format_hours( $minutes ) ); ?></span>
+
+				<span class="gwcvt-verify__what">
+					<a href="<?php echo esc_url( get_edit_post_link( $entry_id ) ); ?>">
+						<?php echo esc_html( '' !== $claimed ? $claimed : __( 'Somebody', 'groundwork-common-volunteer-tracker' ) ); ?>
+					</a>
+					<span class="gwcvt-verify__by"><?php echo esc_html( (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true ) ); ?></span>
+				</span>
+
+				<?php
+				/* The match controls, reused from the triage screen rather than
+				 * rebuilt: gwc_vt_render_triage_actions() already offers the
+				 * suggestion, the picker and "create a record from this", and it
+				 * already refuses anybody who may not read a volunteer. */
+				?>
+				<span class="gwcvt-verify__match" colspan="2">
+					<?php gwc_vt_render_triage_actions( $entry_id ); ?>
+				</span>
+			</div>
+		<?php endforeach; ?>
+	</div>
+	<?php
 }
 
 /* ── The handlers ────────────────────────────────────────────────────────── */

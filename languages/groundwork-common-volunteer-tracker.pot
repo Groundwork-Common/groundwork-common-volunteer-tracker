@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-25T21:48:41+00:00\n"
+"POT-Creation-Date: 2026-08-25T23:09:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -53,7 +53,8 @@ msgstr ""
 #: inc/admin-shift.php:1176
 #: inc/admin-triage.php:297
 #: inc/admin-triage.php:339
-#: inc/admin-verify.php:236
+#: inc/admin-verify.php:320
+#: inc/admin-verify.php:669
 msgid "Permission denied"
 msgstr ""
 
@@ -67,6 +68,7 @@ msgstr ""
 
 #: inc/admin-dashboard.php:118
 #: inc/admin-letters.php:63
+#: inc/admin-verify.php:319
 msgid "You do not have permission to see this."
 msgstr ""
 
@@ -282,7 +284,7 @@ msgstr ""
 
 #: inc/admin-event-actions.php:177
 #: inc/admin-event-actions.php:280
-#: inc/admin-verify.php:502
+#: inc/admin-verify.php:935
 msgid "Leave it alone"
 msgstr ""
 
@@ -515,13 +517,15 @@ msgstr ""
 #: inc/admin-letters.php:333
 #: inc/admin-shift.php:1062
 #: inc/admin-triage.php:289
-#: inc/admin-verify.php:228
+#: inc/admin-verify.php:661
 msgid "Not found"
 msgstr ""
 
 #. translators: %s: a staff member's name.
+#. translators: %s: a member of staff's name.
 #: inc/admin-event-roster.php:582
 #: inc/admin-shift.php:1113
+#: inc/admin-verify.php:543
 #, php-format
 msgid "Supervised by %s"
 msgstr ""
@@ -869,17 +873,17 @@ msgid "Only offered while nobody has signed up. Once somebody has, it can be cal
 msgstr ""
 
 #: inc/admin-help.php:64
-#: inc/admin-screen.php:313
+#: inc/admin-screen.php:319
 msgid "Volunteer Tracker"
 msgstr ""
 
 #: inc/admin-help.php:65
-#: inc/admin-screen.php:235
+#: inc/admin-screen.php:241
 msgid "Settings"
 msgstr ""
 
 #: inc/admin-help.php:66
-#: inc/admin-screen.php:646
+#: inc/admin-screen.php:652
 msgid "Report a problem"
 msgstr ""
 
@@ -921,7 +925,7 @@ msgid "The public form is switched off until you switch it on and choose a page 
 msgstr ""
 
 #: inc/admin-help.php:114
-#: inc/admin-screen.php:278
+#: inc/admin-screen.php:284
 #: inc/render.php:132
 msgid "Shifts"
 msgstr ""
@@ -1536,6 +1540,7 @@ msgstr ""
 
 #: inc/admin-quick-add.php:69
 #: inc/admin-quick-add.php:164
+#: inc/admin-verify.php:349
 msgid "Log a day"
 msgstr ""
 
@@ -2142,72 +2147,72 @@ msgid_plural "%d people were told."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-screen.php:234
+#: inc/admin-screen.php:240
 msgid "Volunteer Tracker Settings"
 msgstr ""
 
-#: inc/admin-screen.php:274
+#: inc/admin-screen.php:280
 msgid "Letter"
 msgstr ""
 
-#: inc/admin-screen.php:277
+#: inc/admin-screen.php:283
 msgid "Logging"
 msgstr ""
 
-#: inc/admin-screen.php:279
+#: inc/admin-screen.php:285
 msgid "Privacy"
 msgstr ""
 
-#: inc/admin-screen.php:317
+#: inc/admin-screen.php:323
 msgid "Settings sections"
 msgstr ""
 
 #. translators: %s: the name of a settings tab.
-#: inc/admin-screen.php:351
+#: inc/admin-screen.php:357
 #, php-format
 msgid "The %s settings are not built yet. Hours logging works without them."
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:426
+#: inc/admin-screen.php:432
 #, php-format
 msgid "Built by %s — technology leadership and support for nonprofits."
 msgstr ""
 
-#: inc/admin-screen.php:430
-#: inc/admin-screen.php:562
-#: inc/admin-screen.php:592
-#: inc/admin-screen.php:606
+#: inc/admin-screen.php:436
+#: inc/admin-screen.php:568
+#: inc/admin-screen.php:598
+#: inc/admin-screen.php:612
 msgid "Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:564
+#: inc/admin-screen.php:570
 msgid "Show"
 msgstr ""
 
-#: inc/admin-screen.php:572
+#: inc/admin-screen.php:578
 msgid "Hide for 30 days"
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:611
+#: inc/admin-screen.php:617
 #, php-format
 msgid "%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it."
 msgstr ""
 
-#: inc/admin-screen.php:619
+#: inc/admin-screen.php:625
 msgid "If you find this plugin useful, the most valuable thing you can do for us is mention us to a nonprofit who might benefit from our services. Referrals are how our business continues to grow its impact and reach."
 msgstr ""
 
-#: inc/admin-screen.php:625
+#: inc/admin-screen.php:631
 msgid "Learn about Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:634
+#: inc/admin-screen.php:640
 msgid "You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give."
 msgstr ""
 
-#: inc/admin-screen.php:639
+#: inc/admin-screen.php:645
 msgid "Support our work"
 msgstr ""
 
@@ -3020,7 +3025,7 @@ msgid "Match them now"
 msgstr ""
 
 #: inc/admin-triage.php:288
-#: inc/admin-verify.php:227
+#: inc/admin-verify.php:660
 msgid "That hour entry does not exist."
 msgstr ""
 
@@ -3070,52 +3075,117 @@ msgstr ""
 msgid "Nobody on file matches this name or email. Or choose an existing volunteer below."
 msgstr ""
 
-#: inc/admin-verify.php:40
+#: inc/admin-verify.php:42
 #: inc/admin-volunteer.php:318
 #: inc/i18n.php:50
 msgid "Verified"
 msgstr ""
 
 #. translators: %s: an hour entry's description, e.g. "Jane Doe — 2026-03-04 — 3.5".
-#: inc/admin-verify.php:90
+#: inc/admin-verify.php:92
 #, php-format
 msgid "Verify these hours: %s"
 msgstr ""
 
-#: inc/admin-verify.php:137
-#: inc/admin-verify.php:281
-#: inc/admin-verify.php:499
-#: inc/admin-verify.php:804
+#: inc/admin-verify.php:139
+#: inc/admin-verify.php:714
+#: inc/admin-verify.php:932
+#: inc/admin-verify.php:1237
 msgid "Withdraw verification"
 msgstr ""
 
-#: inc/admin-verify.php:146
-#: inc/admin-verify.php:280
+#: inc/admin-verify.php:148
+#: inc/admin-verify.php:713
 msgid "Verify"
 msgstr ""
 
-#: inc/admin-verify.php:235
+#: inc/admin-verify.php:242
+msgid "All hours — verify"
+msgstr ""
+
+#: inc/admin-verify.php:306
+msgid "Waiting to verify"
+msgstr ""
+
+#: inc/admin-verify.php:352
+#: inc/cpt.php:117
+#: inc/cpt.php:118
+msgid "Log one shift"
+msgstr ""
+
+#: inc/admin-verify.php:360
+msgid "Verifying an entry is you attesting the shift happened. Only verified hours appear on a letter."
+msgstr ""
+
+#. translators: %s: how many entries are waiting, already formatted.
+#: inc/admin-verify.php:371
+msgid "entry is waiting. Only verified hours reach a letter, so it counts for nobody yet."
+msgid_plural "entries are waiting. Only verified hours reach a letter, so these count for nobody yet."
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/admin-verify.php:380
+msgid "Nothing is waiting. Every hour logged has somebody’s name against it."
+msgstr ""
+
+#. translators: %s: a volunteer's name.
+#: inc/admin-verify.php:469
+#, php-format
+msgid "Everything on file for %s is verified."
+msgstr ""
+
+#: inc/admin-verify.php:474
+msgid "Produce their letter"
+msgstr ""
+
+#. translators: 1: how many of their entries are verified. 2: how many they have.
+#: inc/admin-verify.php:503
+#, php-format
+msgid "%1$s of %2$s verified"
+msgstr ""
+
+#: inc/admin-verify.php:562
+msgid "I attest — verify"
+msgstr ""
+
+#: inc/admin-verify.php:565
+msgid "Not yours to verify"
+msgstr ""
+
+#: inc/admin-verify.php:581
+msgid "Sent through the public form — match first"
+msgstr ""
+
+#: inc/admin-verify.php:583
+msgid "A claim until somebody says whose it is"
+msgstr ""
+
+#: inc/admin-verify.php:600
+msgid "Somebody"
+msgstr ""
+
+#: inc/admin-verify.php:668
 msgid "You do not have permission to verify hours."
 msgstr ""
 
 #. translators: %d: how many shifts.
-#: inc/admin-verify.php:433
+#: inc/admin-verify.php:866
 #, php-format
 msgid "Withdraw verification from %d shift?"
 msgid_plural "Withdraw verification from %d shifts?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-verify.php:446
+#: inc/admin-verify.php:879
 msgid "Each of these carries a staff member's name and the date they attested to it. Withdrawing removes that. Verifying them again afterwards does not restore it — it records whoever does it, on the day they do it."
 msgstr ""
 
-#: inc/admin-verify.php:449
+#: inc/admin-verify.php:882
 msgid "The hours themselves are untouched. They stop counting toward anything, and they stop appearing as verified on a letter, until somebody attests to them again."
 msgstr ""
 
 #. translators: %d: how many of the selected shifts are not affected.
-#: inc/admin-verify.php:458
+#: inc/admin-verify.php:891
 #, php-format
 msgid "%d of the shifts you selected is not included — either it was never verified, or it is not yours to verify."
 msgid_plural "%d of the shifts you selected are not included — either they were never verified, or they are not yours to verify."
@@ -3123,7 +3193,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many more shifts are in the selection.
-#: inc/admin-verify.php:482
+#: inc/admin-verify.php:915
 #, php-format
 msgid "and %d more"
 msgid_plural "and %d more"
@@ -3131,7 +3201,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of hour entries.
-#: inc/admin-verify.php:611
+#: inc/admin-verify.php:1044
 #, php-format
 msgid "%d entry verified."
 msgid_plural "%d entries verified."
@@ -3139,7 +3209,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of hour entries.
-#: inc/admin-verify.php:616
+#: inc/admin-verify.php:1049
 #, php-format
 msgid "Verification withdrawn from %d entry."
 msgid_plural "Verification withdrawn from %d entries."
@@ -3147,40 +3217,40 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of hour entries that were skipped.
-#: inc/admin-verify.php:623
+#: inc/admin-verify.php:1056
 #, php-format
 msgid "%d was skipped — you cannot verify it."
 msgid_plural "%d were skipped — you cannot verify them."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-verify.php:655
+#: inc/admin-verify.php:1088
 msgid "Filter by verification"
 msgstr ""
 
-#: inc/admin-verify.php:658
+#: inc/admin-verify.php:1091
 msgid "Any verification state"
 msgstr ""
 
-#: inc/admin-verify.php:666
+#: inc/admin-verify.php:1099
 msgid "Awaiting matching"
 msgstr ""
 
-#: inc/admin-verify.php:769
+#: inc/admin-verify.php:1202
 #: inc/privacy.php:619
 #: inc/render.php:137
 msgid "Verification"
 msgstr ""
 
-#: inc/admin-verify.php:789
+#: inc/admin-verify.php:1222
 msgid "Save the shift first, then verify it."
 msgstr ""
 
-#: inc/admin-verify.php:817
+#: inc/admin-verify.php:1250
 msgid "Verifying records that you, as a member of staff, attest these hours were worked. Your name and the date are recorded and appear on the verification letter."
 msgstr ""
 
-#: inc/admin-verify.php:823
+#: inc/admin-verify.php:1256
 msgid "Verify these hours"
 msgstr ""
 
@@ -3282,11 +3352,6 @@ msgstr ""
 #: inc/cpt.php:99
 msgctxt "admin menu"
 msgid "Volunteer Hours"
-msgstr ""
-
-#: inc/cpt.php:117
-#: inc/cpt.php:118
-msgid "Log one shift"
 msgstr ""
 
 #: inc/cpt.php:119
@@ -4589,6 +4654,18 @@ msgstr ""
 #: inc/verify.php:146
 #, php-format
 msgid "Verified %1$s by %2$s"
+msgstr ""
+
+#: inc/verify.php:496
+msgid "Public form · matched"
+msgstr ""
+
+#: inc/verify.php:500
+msgid "Logged from the roster"
+msgstr ""
+
+#: inc/verify.php:503
+msgid "Logged by staff"
 msgstr ""
 
 #: inc/volunteer-cpt.php:85
