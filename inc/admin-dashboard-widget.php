@@ -202,8 +202,15 @@ function gwc_vt_render_widget_week(): void {
 		<ul class="gwcvt-widget__week">
 			<?php foreach ( array_slice( $shifts, 0, GWC_VT_WIDGET_PER_DAY ) as $shift_id ) : ?>
 				<?php $shift_id = (int) $shift_id; ?>
+				<?php $url = gwc_vt_widget_shift_url( $shift_id ); ?>
 				<li>
-					<span class="gwcvt-widget__what"><?php echo esc_html( gwc_vt_widget_shift_name( $shift_id ) ); ?></span>
+					<span class="gwcvt-widget__what">
+						<?php if ( '' !== $url ) : ?>
+							<a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( gwc_vt_widget_shift_name( $shift_id ) ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( gwc_vt_widget_shift_name( $shift_id ) ); ?>
+						<?php endif; ?>
+					</span>
 					<span class="gwcvt-widget__fill"><?php echo esc_html( gwc_vt_shift_fill_label( $shift_id ) ); ?></span>
 				</li>
 			<?php endforeach; ?>
@@ -264,6 +271,45 @@ function gwc_vt_widget_days( array $shift_ids, int $days = GWC_VT_WIDGET_DAYS ):
 	}
 
 	return $by_day;
+}
+
+/**
+ * Where a row in the week block goes.
+ *
+ * Two destinations, because the schedule has two kinds of row and they are not
+ * managed the same way.
+ *
+ * A SLOT — a shift whose post_parent is an event — goes to that event's roster.
+ * It is not a standalone shift and has no screen of its own; the event is where
+ * its times, its roles and its people are edited, and sending somebody to a
+ * lone slot would be sending them somewhere the rest of the day is invisible.
+ *
+ * A STANDALONE shift goes to its own screen, which is the form and the roster
+ * together — the thing a coordinator wants after reading "3 of 8".
+ *
+ * ── Why this can return nothing ─────────────────────────────────────────────
+ * Both screens require edit_posts, and this widget is gated on
+ * gwc_vt_cap( 'verify' ), which is a different capability that an administrator
+ * may have granted to a role without the other. Every role that gets verify by
+ * default also has edit_posts, so in practice this is always a link — but a
+ * capability set is a thing a site can change, and offering somebody a link to
+ * a 403 is worse than showing them the name they were already reading.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string The URL, or '' when this user could not open it.
+ */
+function gwc_vt_widget_shift_url( int $shift_id ): string {
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		return '';
+	}
+
+	$event_id = (int) wp_get_post_parent_id( $shift_id );
+
+	if ( $event_id > 0 && GWC_VT_EVENT_TYPE === get_post_type( $event_id ) ) {
+		return gwc_vt_event_roster_url( $event_id );
+	}
+
+	return gwc_vt_schedule_url( array( 'shift' => $shift_id ) );
 }
 
 /**

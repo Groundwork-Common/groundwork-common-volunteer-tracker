@@ -207,6 +207,77 @@ gwc_vt_dw_check(
 	$gwc_vt_dw_missing_date . ' day(s) grouped but not drawn'
 );
 
+/* ── Every shift it shows is a way through to that shift ─────────────────────
+ * A coordinator who has just read "3 of 8" wants the roster, and the widget is
+ * on a screen they did not navigate to — so the row has to be the way there or
+ * it is a notification rather than a tool.
+ *
+ * Two destinations, and the distinction is the point: an event's time goes to
+ * the EVENT's roster, because a slot has no screen of its own and the rest of
+ * the day would be invisible from one.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_dw_unlinked = 0;
+
+foreach ( $gwc_vt_dw_soonest as $gwc_vt_dw_one ) {
+	$gwc_vt_dw_url = gwc_vt_widget_shift_url( (int) $gwc_vt_dw_one );
+
+	if ( '' === $gwc_vt_dw_url || false === strpos( $gwc_vt_dw_html, esc_url( $gwc_vt_dw_url ) ) ) {
+		++$gwc_vt_dw_unlinked;
+	}
+}
+
+gwc_vt_dw_check(
+	'every shift it shows links somewhere',
+	0 === $gwc_vt_dw_unlinked,
+	$gwc_vt_dw_unlinked . ' of ' . count( $gwc_vt_dw_soonest ) . ' shown without a link'
+);
+
+/* A slot's link is the event's roster, not the slot. Built here rather than
+ * asserted against a fixture, because the seeded event is in the past and the
+ * week block will not show it — what is being checked is the routing rule. */
+$gwc_vt_dw_event = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_EVENT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzdw meal service',
+	)
+);
+
+$GLOBALS['gwc_vt_dw_made'][] = $gwc_vt_dw_event;
+
+$gwc_vt_dw_slot = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_SHIFT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzdw slot',
+		'post_parent' => $gwc_vt_dw_event,
+	)
+);
+
+update_post_meta( $gwc_vt_dw_slot, GWC_VT_SHIFT_DATE, gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +1 day' ) ) );
+update_post_meta( $gwc_vt_dw_slot, GWC_VT_SHIFT_START, '09:00' );
+update_post_meta( $gwc_vt_dw_slot, GWC_VT_SHIFT_END, '12:00' );
+
+$GLOBALS['gwc_vt_dw_made'][] = $gwc_vt_dw_slot;
+
+gwc_vt_dw_check(
+	'an event’s time links to the event’s roster',
+	gwc_vt_widget_shift_url( $gwc_vt_dw_slot ) === gwc_vt_event_roster_url( $gwc_vt_dw_event ),
+	gwc_vt_widget_shift_url( $gwc_vt_dw_slot )
+);
+
+gwc_vt_dw_check(
+	'and a standalone shift links to its own screen',
+	gwc_vt_widget_shift_url( $gwc_vt_dw_shift ) === gwc_vt_schedule_url( array( 'shift' => $gwc_vt_dw_shift ) ),
+	gwc_vt_widget_shift_url( $gwc_vt_dw_shift )
+);
+
+gwc_vt_dw_check(
+	'the two are not the same place',
+	gwc_vt_widget_shift_url( $gwc_vt_dw_slot ) !== gwc_vt_widget_shift_url( $gwc_vt_dw_shift )
+);
+
 gwc_vt_dw_check(
 	'never more days than the widget promises',
 	count( $gwc_vt_dw_days ) <= GWC_VT_WIDGET_DAYS,
@@ -383,6 +454,60 @@ if ( ! is_wp_error( $gwc_vt_dw_contributor ) ) {
 		'an administrator does',
 		gwc_vt_can_see_dashboard_widget()
 	);
+
+	/* And the case the link guard is actually for, which is NOT a contributor:
+	 * contributors have edit_posts, so the schedule opens for them fine. The
+	 * guard exists for somebody an administrator granted the verify capability
+	 * to WITHOUT edit_posts — a subscriber, say — who can therefore read the
+	 * widget and cannot open anything it points at. Built here rather than
+	 * assumed, because assuming is how the first version of this check tested
+	 * the wrong user and passed for the wrong reason. */
+	$gwc_vt_dw_reader = wp_insert_user(
+		array(
+			'user_login' => 'zzdw_reader',
+			'user_pass'  => wp_generate_password( 20, true ),
+			'role'       => 'subscriber',
+		)
+	);
+
+	if ( ! is_wp_error( $gwc_vt_dw_reader ) ) {
+		$gwc_vt_dw_who = new WP_User( (int) $gwc_vt_dw_reader );
+		$gwc_vt_dw_who->add_cap( GWC_VT_CAP_VERIFY );
+
+		wp_set_current_user( (int) $gwc_vt_dw_reader );
+
+		gwc_vt_dw_check(
+			'that reader does get the widget',
+			gwc_vt_can_see_dashboard_widget(),
+			gwc_vt_can_see_dashboard_widget() ? '' : 'the fixture did not produce the case the guard is for'
+		);
+
+		gwc_vt_dw_check(
+			'but cannot open the schedule',
+			! current_user_can( 'edit_posts' )
+		);
+
+		gwc_vt_dw_check(
+			'so the row is a name rather than a link to a 403',
+			'' === gwc_vt_widget_shift_url( $gwc_vt_dw_shift ),
+			gwc_vt_widget_shift_url( $gwc_vt_dw_shift )
+		);
+
+		ob_start();
+		gwc_vt_render_dashboard_widget();
+		$gwc_vt_dw_reader_html = (string) ob_get_clean();
+
+		gwc_vt_dw_check(
+			'and the widget still draws for them',
+			'' !== trim( $gwc_vt_dw_reader_html ),
+			'' !== trim( $gwc_vt_dw_reader_html ) ? '' : 'drew nothing'
+		);
+
+		wp_set_current_user( 1 );
+		wp_delete_user( (int) $gwc_vt_dw_reader );
+	}
+
+	wp_set_current_user( 1 );
 
 	require_once ABSPATH . 'wp-admin/includes/user.php';
 	wp_delete_user( (int) $gwc_vt_dw_contributor );
