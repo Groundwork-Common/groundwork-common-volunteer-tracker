@@ -24,7 +24,6 @@ add_action( 'admin_post_gwc_vt_unverify_entry', 'gwc_vt_handle_unverify_entry' )
 add_action( 'admin_post_gwc_vt_bulk_unverify', 'gwc_vt_handle_bulk_unverify' );
 
 add_action( 'add_meta_boxes', 'gwc_vt_add_verify_meta_box' );
-add_action( 'admin_menu', 'gwc_vt_add_pending_bubble', 20 );
 add_action( 'admin_menu', 'gwc_vt_register_verify_queue', 14 );
 add_filter( 'views_edit-' . GWC_VT_ENTRY_TYPE, 'gwc_vt_verify_queue_view' );
 
@@ -1297,42 +1296,3 @@ function gwc_vt_render_verify_meta_box( $post ): void {
 	);
 }
 
-/* ── The bubble ──────────────────────────────────────────────────────────── */
-
-/**
- * Put the unverified count next to the menu item, the way core does for
- * comments and updates.
- *
- * Core's own markup and classes rather than something bespoke, so it inherits
- * the admin color scheme and reads as part of WordPress rather than as a
- * decoration this plugin added.
- */
-function gwc_vt_add_pending_bubble(): void {
-	global $menu;
-
-	if ( ! is_array( $menu ) || ! current_user_can( gwc_vt_cap( 'verify' ) ) ) {
-		return;
-	}
-
-	$count = gwc_vt_unverified_count();
-
-	if ( $count < 1 ) {
-		return;
-	}
-
-	$slug = 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE;
-
-	foreach ( $menu as $index => $item ) {
-		if ( ! isset( $item[2] ) || $slug !== $item[2] ) {
-			continue;
-		}
-
-		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- appending the pending-count bubble to this plugin's own menu item, which is how core itself renders the comments count. There is no API for it.
-		$menu[ $index ][0] .= sprintf(
-			' <span class="awaiting-mod"><span class="pending-count">%s</span></span>',
-			esc_html( number_format_i18n( $count ) )
-		);
-
-		break;
-	}
-}
