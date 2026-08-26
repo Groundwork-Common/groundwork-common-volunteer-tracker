@@ -27,7 +27,7 @@ add_action( 'admin_notices', 'gwc_vt_unreconciled_notice' );
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Hang the schedule off the Volunteer Hours menu.
+ * Hang the schedule off the Volunteer Tracker menu.
  */
 function gwc_vt_register_schedule_menu(): void {
 	if ( ! gwc_vt_shifts_enabled() ) {

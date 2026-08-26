@@ -325,7 +325,7 @@ function gwc_vt_digest_body( array $short, array $waiting ): string {
 
 	$lines[] = sprintf(
 		'<p><small>%s</small></p>',
-		esc_html__( 'You are getting this because the daily summary is switched on under Volunteer Hours → Settings → Shifts. Nothing is sent on a day with nothing to report.', 'groundwork-common-volunteer-tracker' )
+		esc_html__( 'You are getting this because the daily summary is switched on under Volunteer Tracker → Settings → Shifts. Nothing is sent on a day with nothing to report.', 'groundwork-common-volunteer-tracker' )
 	);
 
 	return implode( "\n", $lines );

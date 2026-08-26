@@ -93,7 +93,7 @@ function gwc_vt_dashboard_view_url( string $view ): string {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Hang the dashboard off the Volunteer Hours menu.
+ * Hang the dashboard off the Volunteer Tracker menu.
  *
  * Priority 9, before every other screen registers, so it is first in the list
  * even before gwc_vt_order_menu() has its say.
@@ -101,7 +101,7 @@ function gwc_vt_dashboard_view_url( string $view ): string {
 function gwc_vt_register_dashboard_menu(): void {
 	add_submenu_page(
 		GWC_VT_MENU_SLUG,
-		__( 'Volunteer Hours', 'groundwork-common-volunteer-tracker' ),
+		__( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ),
 		__( 'Dashboard', 'groundwork-common-volunteer-tracker' ),
 		'edit_posts',
 		GWC_VT_DASHBOARD_PAGE,

@@ -447,6 +447,19 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 						<a href="<?php echo esc_url( gwc_vt_dashboard_reference_url( $record['reference'] ) ); ?>">
 							<?php esc_html_e( 'Check it', 'groundwork-common-volunteer-tracker' ); ?>
 						</a>
+						<?php
+						/* And the other question this table gets asked: "can you
+						 * send that again". Separate from Check it because they
+						 * are different jobs — checking answers somebody else's
+						 * question about a letter they hold, looking at it again
+						 * is this organization deciding whether to send another
+						 * one. Both land somewhere that says whether the records
+						 * still agree with what went out. */
+						?>
+						<span aria-hidden="true"> | </span>
+						<a href="<?php echo esc_url( gwc_vt_letter_review_url( $record ) ); ?>">
+							<?php esc_html_e( 'View or send again', 'groundwork-common-volunteer-tracker' ); ?>
+						</a>
 					</td>
 				</tr>
 			<?php endforeach; ?>

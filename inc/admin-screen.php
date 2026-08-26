@@ -66,7 +66,7 @@ add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The order the Volunteer Hours submenu appears in.
+ * The order the Volunteer Tracker submenu appears in.
  *
  * By slug, and anything not named here keeps its place at the end — a site that
  * has added its own screen to this menu should not lose it because this list
@@ -80,7 +80,7 @@ function gwc_vt_menu_order(): array {
 	 * produced for them. It reads forwards.
 	 *
 	 * It puts the schedule above the hours list, which means the first item is
-	 * not what the top-level "Volunteer Hours" link opens — that still goes to
+	 * not what the top-level "Volunteer Tracker" link opens — that still goes to
 	 * All hours. Worth knowing rather than worth avoiding: the top-level link
 	 * has a destination either way, and a menu ordered by when things happen is
 	 * easier to hold in your head than one ordered by which screen we thought
@@ -111,7 +111,7 @@ function gwc_vt_menu_order(): array {
 	}
 
 	/**
-	 * The order of the Volunteer Hours submenu, by slug.
+	 * The order of the Volunteer Tracker submenu, by slug.
 	 *
 	 * Settings is deliberately absent from this list: anything not named here
 	 * is appended, and Settings is appended after that, so it lands at the
@@ -174,7 +174,7 @@ function gwc_vt_hidden_menu_items(): array {
 	);
 
 	/**
-	 * Submenu entries to take off the Volunteer Hours menu, by slug.
+	 * Submenu entries to take off the Volunteer Tracker menu, by slug.
 	 *
 	 * Returning an empty array puts both back, for a site that would rather
 	 * have them. The pages themselves are never deregistered either way, so
@@ -242,7 +242,7 @@ function gwc_vt_order_menu(): void {
 }
 
 /**
- * Hang the settings screen off the Volunteer Hours menu.
+ * Hang the settings screen off the Volunteer Tracker menu.
  *
  * A submenu of the post type rather than a top-level menu of its own. The post
  * type already owns a menu; a second top-level entry for the same plugin is the
