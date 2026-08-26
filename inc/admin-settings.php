@@ -279,6 +279,13 @@ function gwc_vt_settings_fields(): array {
 			'label'   => __( 'Ask whether they have required service hours', 'groundwork-common-volunteer-tracker' ),
 			'help'    => __( 'Off by default, and worth reading before you turn it on. With it on, a public page asks a stranger whether they are completing court-ordered or school-required service, and this site stores the answer against their name. It is useful — you can plan around a deadline from day one instead of finding out after the first shift — but it is the most sensitive thing this plugin holds, arriving through the least trusted door it has. Leave it off and a staff member can record the same thing on the volunteer record afterwards, having spoken to them.', 'groundwork-common-volunteer-tracker' ),
 		),
+		'registration_ask_photo'    => array(
+			'tab'     => 'logging',
+			'section' => 'registration',
+			'type'    => 'checkbox',
+			'label'   => __( 'Invite a photo', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off by default. With it on, the form offers to take a photo — from a file, or from the camera on the device they are using. It is optional for them, kept out of the Media Library, never given a public address, and only visible to staff who can open the record. Turning this on is the one place this plugin lets an anonymous visitor put a file on your server, so leave it off unless you want faces on your volunteer records.', 'groundwork-common-volunteer-tracker' ),
+		),
 		'retention_months'          => array(
 			'tab'     => 'privacy',
 			'section' => 'retention',

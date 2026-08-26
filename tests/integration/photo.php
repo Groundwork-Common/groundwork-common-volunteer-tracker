@@ -17,7 +17,7 @@
  * Run under wp-env:
  *
  *   npx @wordpress/env run cli -- wp eval-file \
- *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/volunteer-photo.php
+ *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/photo.php
  *
  * @package VolunteerTracker
  */
@@ -68,7 +68,7 @@ function gwc_vt_vp_make_jpeg( int $size = 1400 ): string {
 /**
  * Store a photo the way the save handler would, minus is_uploaded_file().
  *
- * gwc_vt_store_volunteer_photo() refuses anything is_uploaded_file() rejects,
+ * gwc_vt_store_photo() refuses anything is_uploaded_file() rejects,
  * which is every file a test can create. Rather than weaken that check for
  * testability, this drives the same steps against the same helpers — the
  * guard itself is asserted separately below.
@@ -92,6 +92,7 @@ function gwc_vt_vp_store( int $volunteer_id, string $source ): string {
 		return 'wrong-type';
 	}
 
+
 	$editor = wp_get_image_editor( $source );
 
 	if ( is_wp_error( $editor ) ) {
@@ -106,8 +107,8 @@ function gwc_vt_vp_store( int $volunteer_id, string $source ): string {
 		return 'upload-failed';
 	}
 
-	gwc_vt_delete_volunteer_photo( $volunteer_id );
-	update_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHOTO, basename( (string) $saved['path'] ) );
+	gwc_vt_delete_photo( $volunteer_id );
+	update_post_meta( $volunteer_id, GWC_VT_PHOTO_KEY, basename( (string) $saved['path'] ) );
 
 	return '';
 }
@@ -170,11 +171,11 @@ $GLOBALS['gwc_vt_vp_error'] = gwc_vt_vp_store( (int) $GLOBALS['gwc_vt_vp_volunte
 
 gwc_vt_vp_check(
 	'a photo is stored',
-	'' === $GLOBALS['gwc_vt_vp_error'] && gwc_vt_volunteer_has_photo( (int) $GLOBALS['gwc_vt_vp_volunteer'] ),
+	'' === $GLOBALS['gwc_vt_vp_error'] && gwc_vt_has_photo( (int) $GLOBALS['gwc_vt_vp_volunteer'] ),
 	'store said "' . $GLOBALS['gwc_vt_vp_error'] . '"'
 );
 
-$GLOBALS['gwc_vt_vp_path'] = gwc_vt_volunteer_photo_path( (int) $GLOBALS['gwc_vt_vp_volunteer'] );
+$GLOBALS['gwc_vt_vp_path'] = gwc_vt_photo_path( (int) $GLOBALS['gwc_vt_vp_volunteer'] );
 $GLOBALS['gwc_vt_vp_name'] = basename( $GLOBALS['gwc_vt_vp_path'] );
 
 gwc_vt_vp_check(
@@ -231,7 +232,7 @@ gwc_vt_vp_check(
 
 gwc_vt_vp_check(
 	'and the photo already on file survived the refusal',
-	gwc_vt_volunteer_has_photo( (int) $GLOBALS['gwc_vt_vp_volunteer'] ),
+	gwc_vt_has_photo( (int) $GLOBALS['gwc_vt_vp_volunteer'] ),
 	'a refused upload destroyed the existing photo'
 );
 
@@ -240,7 +241,7 @@ gwc_vt_vp_check(
  * copied somewhere readable. */
 gwc_vt_vp_check(
 	'the handler refuses a file that was not uploaded',
-	'upload-failed' === gwc_vt_store_volunteer_photo(
+	'upload-failed' === gwc_vt_store_photo(
 		(int) $GLOBALS['gwc_vt_vp_volunteer'],
 		array(
 			'tmp_name' => $GLOBALS['gwc_vt_vp_source'],
@@ -253,15 +254,73 @@ gwc_vt_vp_check(
 gwc_vt_vp_check(
 	'a stored name carrying a path separator is not honoured',
 	( function () {
-		update_post_meta( (int) $GLOBALS['gwc_vt_vp_volunteer'], GWC_VT_VOLUNTEER_PHOTO, '../../../wp-config.php' );
+		update_post_meta( (int) $GLOBALS['gwc_vt_vp_volunteer'], GWC_VT_PHOTO_KEY, '../../../wp-config.php' );
 
-		$leaked = gwc_vt_volunteer_photo_file( (int) $GLOBALS['gwc_vt_vp_volunteer'] );
+		$leaked = gwc_vt_photo_file( (int) $GLOBALS['gwc_vt_vp_volunteer'] );
 
-		update_post_meta( (int) $GLOBALS['gwc_vt_vp_volunteer'], GWC_VT_VOLUNTEER_PHOTO, $GLOBALS['gwc_vt_vp_name'] );
+		update_post_meta( (int) $GLOBALS['gwc_vt_vp_volunteer'], GWC_VT_PHOTO_KEY, $GLOBALS['gwc_vt_vp_name'] );
 
 		return '' === $leaked;
 	} )(),
 	'a traversal in the stored name was read back'
+);
+
+/* ── A picture that is small on disk and enormous decoded ─────────────────────
+ * A byte cap says almost nothing about what opening a file costs. Flat colour
+ * compresses to nothing in both JPEG and PNG, so a 30,000-square image arrives
+ * as a few hundred bytes and wants three and a half gigabytes the moment
+ * anything decodes it — the whole idea of a decompression bomb.
+ *
+ * The header carries the dimensions and getimagesize() reads only the header,
+ * so this is knowable before committing to anything. The guard has to fire
+ * BEFORE wp_get_image_editor() is asked to open the file, which is what this
+ * fixture proves: the IDAT below is deliberately not a valid image, so anything
+ * that reached the editor would come back 'wrong-type' rather than 'too-big'.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_vp_bomb'] = get_temp_dir() . 'zzvp-bomb.png';
+
+( function () {
+	$chunk = function ( string $type, string $data ): string {
+		return pack( 'N', strlen( $data ) ) . $type . $data . pack( 'N', crc32( $type . $data ) );
+	};
+
+	file_put_contents(
+		$GLOBALS['gwc_vt_vp_bomb'],
+		"\x89PNG\r\n\x1a\n"
+			. $chunk( 'IHDR', pack( 'NNCCCCC', 30000, 30000, 8, 2, 0, 0, 0 ) )
+			. $chunk( 'IDAT', "\x78\x9c\x03\x00\x00\x00\x00\x01" )
+			. $chunk( 'IEND', '' )
+	);
+} )();
+
+$GLOBALS['gwc_vt_vp_measured'] = getimagesize( $GLOBALS['gwc_vt_vp_bomb'] );
+
+gwc_vt_vp_check(
+	'the fixture really does declare an enormous image in a tiny file',
+	is_array( $GLOBALS['gwc_vt_vp_measured'] )
+		&& $GLOBALS['gwc_vt_vp_measured'][0] * $GLOBALS['gwc_vt_vp_measured'][1] > GWC_VT_PHOTO_MAX_PIXELS
+		&& filesize( $GLOBALS['gwc_vt_vp_bomb'] ) < 1024,
+	is_array( $GLOBALS['gwc_vt_vp_measured'] )
+		? $GLOBALS['gwc_vt_vp_measured'][0] . 'x' . $GLOBALS['gwc_vt_vp_measured'][1] . ' in ' . filesize( $GLOBALS['gwc_vt_vp_bomb'] ) . ' bytes'
+		: 'the header was not readable'
+);
+
+/* gwc_vt_photo_refusal() and not the helper above. The helper is a copy of the
+ * production steps, so asserting against it proves the copy agrees with itself
+ * — which is exactly what happened: this passed with the guard deleted from
+ * inc/photo.php. The validator was split out so a test could reach the real
+ * one without a real HTTP upload. */
+gwc_vt_vp_check(
+	'and it is refused on its dimensions, not on its size',
+	'too-big' === gwc_vt_photo_refusal( $GLOBALS['gwc_vt_vp_bomb'] ),
+	'it came back "' . gwc_vt_photo_refusal( $GLOBALS['gwc_vt_vp_bomb'] ) . '" — "wrong-type" would mean it got as far as the decoder'
+);
+
+gwc_vt_vp_check(
+	'and an ordinary photograph is not',
+	'' === gwc_vt_photo_refusal( $GLOBALS['gwc_vt_vp_source'] ),
+	'a real photo was refused: "' . gwc_vt_photo_refusal( $GLOBALS['gwc_vt_vp_source'] ) . '"'
 );
 
 /* ── Who can read it ─────────────────────────────────────────────────────── */
@@ -313,15 +372,15 @@ gwc_vt_vp_check(
  * accident is a one-line mistake with no visible symptom. */
 gwc_vt_vp_check(
 	'the endpoint is not registered for logged-out requests',
-	false === has_action( 'admin_post_nopriv_gwc_vt_volunteer_photo' ),
+	false === has_action( 'admin_post_nopriv_gwc_vt_photo' ),
 	'a nopriv handler exists'
 );
 
 gwc_vt_vp_check(
 	'the URL points at the endpoint and never at the uploads folder',
-	false !== strpos( gwc_vt_volunteer_photo_url( (int) $GLOBALS['gwc_vt_vp_volunteer'] ), 'admin-post.php' )
-		&& false === strpos( gwc_vt_volunteer_photo_url( (int) $GLOBALS['gwc_vt_vp_volunteer'] ), 'uploads' ),
-	gwc_vt_volunteer_photo_url( (int) $GLOBALS['gwc_vt_vp_volunteer'] )
+	false !== strpos( gwc_vt_photo_url( (int) $GLOBALS['gwc_vt_vp_volunteer'] ), 'admin-post.php' )
+		&& false === strpos( gwc_vt_photo_url( (int) $GLOBALS['gwc_vt_vp_volunteer'] ), 'uploads' ),
+	gwc_vt_photo_url( (int) $GLOBALS['gwc_vt_vp_volunteer'] )
 );
 
 /* ── What removes it ─────────────────────────────────────────────────────── */
@@ -344,13 +403,13 @@ gwc_vt_vp_check(
 	'the export did not mention it'
 );
 
-$GLOBALS['gwc_vt_vp_before_anon'] = gwc_vt_volunteer_photo_path( (int) $GLOBALS['gwc_vt_vp_volunteer'] );
+$GLOBALS['gwc_vt_vp_before_anon'] = gwc_vt_photo_path( (int) $GLOBALS['gwc_vt_vp_volunteer'] );
 
 gwc_vt_anonymize_volunteer( (int) $GLOBALS['gwc_vt_vp_volunteer'] );
 
 gwc_vt_vp_check(
 	'anonymizing removes the record of it',
-	! gwc_vt_volunteer_has_photo( (int) $GLOBALS['gwc_vt_vp_volunteer'] ),
+	! gwc_vt_has_photo( (int) $GLOBALS['gwc_vt_vp_volunteer'] ),
 	'the meta survived'
 );
 
@@ -376,7 +435,7 @@ $GLOBALS['gwc_vt_vp_second'] = wp_insert_post(
 
 gwc_vt_vp_store( (int) $GLOBALS['gwc_vt_vp_second'], gwc_vt_vp_make_jpeg( 800 ) );
 
-$GLOBALS['gwc_vt_vp_second_path'] = gwc_vt_volunteer_photo_path( (int) $GLOBALS['gwc_vt_vp_second'] );
+$GLOBALS['gwc_vt_vp_second_path'] = gwc_vt_photo_path( (int) $GLOBALS['gwc_vt_vp_second'] );
 
 wp_delete_post( (int) $GLOBALS['gwc_vt_vp_second'], true );
 
@@ -398,7 +457,7 @@ foreach ( $GLOBALS['gwc_vt_vp_users'] as $gwc_vt_vp_user_id ) {
 	wp_delete_user( (int) $gwc_vt_vp_user_id );
 }
 
-foreach ( array( $GLOBALS['gwc_vt_vp_source'], $GLOBALS['gwc_vt_vp_fake'] ) as $gwc_vt_vp_tmp ) {
+foreach ( array( $GLOBALS['gwc_vt_vp_source'], $GLOBALS['gwc_vt_vp_fake'], $GLOBALS['gwc_vt_vp_bomb'] ) as $gwc_vt_vp_tmp ) {
 	if ( file_exists( $gwc_vt_vp_tmp ) ) {
 		unlink( $gwc_vt_vp_tmp );
 	}

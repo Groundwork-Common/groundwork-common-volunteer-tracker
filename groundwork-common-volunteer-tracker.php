@@ -156,13 +156,6 @@ if ( ! function_exists( 'gwc_vt_register_post_type' ) ) {
 if ( ! function_exists( 'gwc_vt_register_volunteer_type' ) ) {
 	require GWC_VT_DIR . 'inc/volunteer-cpt.php';
 }
-/* A volunteer's photograph, kept out of the media library. After
- * volunteer-cpt.php, which defines the post type it guards on, and before
- * privacy.php, which deletes the file when a record is anonymized, erased or
- * swept. Not admin-only: the retention sweep runs on cron. */
-if ( ! function_exists( 'gwc_vt_volunteer_photo_path' ) ) {
-	require GWC_VT_DIR . 'inc/volunteer-photo.php';
-}
 if ( ! function_exists( 'gwc_vt_entry_ids_for_volunteer' ) ) {
 	require GWC_VT_DIR . 'inc/entries.php';
 }
@@ -204,6 +197,16 @@ if ( ! function_exists( 'gwc_vt_register_signup_type' ) ) {
  * runs on cron. */
 if ( ! function_exists( 'gwc_vt_register_application_type' ) ) {
 	require GWC_VT_DIR . 'inc/application-cpt.php';
+}
+/* A photograph of a volunteer, or of somebody who has offered to become one,
+ * kept out of the media library. After BOTH post types, because it decides who
+ * may see a face from the type of the record the photo hangs off — moving it
+ * above either leaves that decision reading a constant that does not exist yet.
+ *
+ * Before privacy.php, which deletes the file when a record is anonymized,
+ * erased or swept. Not admin-only: the retention sweep runs on cron. */
+if ( ! function_exists( 'gwc_vt_photo_path' ) ) {
+	require GWC_VT_DIR . 'inc/photo.php';
 }
 if ( ! function_exists( 'gwc_vt_shift_duration' ) ) {
 	require GWC_VT_DIR . 'inc/shifts.php';

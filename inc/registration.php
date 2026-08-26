@@ -86,6 +86,19 @@ function gwc_vt_registration_asks_required(): bool {
 }
 
 /**
+ * Whether the form invites a photograph.
+ *
+ * A third switch, and gated on the form being on for the same reason the
+ * required-service question is: a site that armed this and then switched the
+ * form off is not inviting anything.
+ *
+ * @return bool
+ */
+function gwc_vt_registration_asks_photo(): bool {
+	return gwc_vt_registration_enabled() && (bool) gwc_vt_setting( 'registration_ask_photo' );
+}
+
+/**
  * Whether this request is on the page the form was pinned to.
  *
  * @return bool
@@ -233,6 +246,12 @@ function gwc_vt_insert_application( string $name, string $email, array $posted )
 		}
 	}
 
+	/* The photograph, if they sent one and the organization asked. Stored last,
+	 * so a picture that will not decode costs them the whole submission and not
+	 * the record — the offer is already written by this point and a refused
+	 * photo leaves it exactly as it would have been without one. */
+	gwc_vt_store_offer_photo( $application_id );
+
 	/**
 	 * Fires after somebody has offered to volunteer.
 	 *
@@ -244,6 +263,54 @@ function gwc_vt_insert_application( string $name, string $email, array $posted )
 	do_action( 'gwc_vt_application_received', $application_id );
 
 	return $application_id;
+}
+
+/**
+ * Take the photograph off a public submission, if there is one.
+ *
+ * Split out so the one place an anonymous visitor can write a file to this
+ * server is a named function somebody can read in one sitting.
+ *
+ * Everything it does not do is the point. It never reports a failure to the
+ * visitor: the outcomes of this form stay byte-identical, and "your photo was
+ * rejected" would be a second channel out of a form built not to have one. A
+ * picture that will not decode is simply not stored, and the offer arrives
+ * without one — which is the same thing that happens when somebody chooses not
+ * to send a photo at all, and is indistinguishable from it.
+ *
+ * The setting is checked HERE rather than by the caller, and that is
+ * deliberate: gated on the WRITE and not merely on the field, so a form that
+ * stopped inviting photographs stops accepting them too — otherwise anybody
+ * with a copy of the old page can go on posting files at the server. Keeping
+ * the gate inside also means the refusal is something a test can observe, which
+ * it could not when the condition sat in the caller.
+ *
+ * @param int $application_id The offer just written.
+ * @return string '' when a photo was stored, otherwise why not.
+ */
+function gwc_vt_store_offer_photo( int $application_id ): string {
+	if ( ! gwc_vt_registration_asks_photo() ) {
+		return 'not-asked';
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the nonce was verified in gwc_vt_handle_registration() above; the array is never used as it stands, only the three keys cast immediately below, and gwc_vt_store_photo() re-reads the bytes and decodes the image before believing any of it.
+	$raw = isset( $_FILES['gwc_vt_photo'] ) ? (array) $_FILES['gwc_vt_photo'] : array();
+
+	if ( ! $raw ) {
+		return 'none';
+	}
+
+	$file = array(
+		'tmp_name' => isset( $raw['tmp_name'] ) ? (string) $raw['tmp_name'] : '',
+		'error'    => isset( $raw['error'] ) ? (int) $raw['error'] : UPLOAD_ERR_NO_FILE,
+		'size'     => isset( $raw['size'] ) ? (int) $raw['size'] : 0,
+	);
+
+	if ( UPLOAD_ERR_NO_FILE === $file['error'] ) {
+		return 'none';
+	}
+
+	return gwc_vt_store_photo( $application_id, $file );
 }
 
 /**

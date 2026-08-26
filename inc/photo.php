@@ -33,7 +33,7 @@
  *
  *   The index.php. Stops a directory listing if the server has indexes on.
  *
- * A caller that wants the bytes uses gwc_vt_volunteer_photo_url(), which points
+ * A caller that wants the bytes uses gwc_vt_photo_url(), which points
  * at the capability-checked endpoint. Nothing in this plugin ever emits the
  * filesystem path or a direct uploads URL.
  *
@@ -52,17 +52,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'admin_post_gwc_vt_volunteer_photo', 'gwc_vt_serve_volunteer_photo' );
+add_action( 'admin_post_gwc_vt_photo', 'gwc_vt_serve_photo' );
 add_action( 'before_delete_post', 'gwc_vt_delete_photo_with_volunteer' );
 
 /** The stored filename, relative to the private directory. */
-const GWC_VT_VOLUNTEER_PHOTO = '_gwc_vt_photo';
+const GWC_VT_PHOTO_KEY = '_gwc_vt_photo';
 
 /** Longest edge, in pixels, a stored photo is reduced to. */
 const GWC_VT_PHOTO_MAX_EDGE = 600;
 
 /** Largest upload accepted, in bytes, before anything is decoded. */
 const GWC_VT_PHOTO_MAX_BYTES = 8388608;
+
+/* ── The cap that matters, which is not the one above ────────────────────────
+ * A file size says almost nothing about what decoding it costs. JPEG and PNG
+ * both compress flat colour to almost nothing, so a 40,000 x 40,000 image can
+ * arrive as a few hundred kilobytes and want six gigabytes of memory the moment
+ * anything opens it — the whole point of a decompression bomb.
+ *
+ * getimagesize() reads the header only and never decodes, so the dimensions are
+ * knowable before committing to anything. 50 megapixels is comfortably above
+ * any phone or camera somebody would photograph a face with, and far below what
+ * would hurt.
+ *
+ * This guards the staff upload too, which had the byte cap and nothing else.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** Largest image accepted, in pixels, measured before it is decoded. */
+const GWC_VT_PHOTO_MAX_PIXELS = 50000000;
 
 /**
  * What a volunteer photo may be.
@@ -168,11 +185,11 @@ function gwc_vt_write_private_file( string $path, string $contents ): bool {
  * traversal waiting for a caller that concatenates without thinking, so it is
  * checked on the way out rather than trusted because this file wrote it.
  *
- * @param int $volunteer_id Volunteer post ID.
+ * @param int $post_id Volunteer or offer post ID.
  * @return string
  */
-function gwc_vt_volunteer_photo_file( int $volunteer_id ): string {
-	$stored = (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHOTO, true );
+function gwc_vt_photo_file( int $post_id ): string {
+	$stored = (string) get_post_meta( $post_id, GWC_VT_PHOTO_KEY, true );
 
 	if ( '' === $stored || basename( $stored ) !== $stored ) {
 		return '';
@@ -184,11 +201,11 @@ function gwc_vt_volunteer_photo_file( int $volunteer_id ): string {
 /**
  * The absolute path of a volunteer's photo, or '' if there is not one on disk.
  *
- * @param int $volunteer_id Volunteer post ID.
+ * @param int $post_id Volunteer or offer post ID.
  * @return string
  */
-function gwc_vt_volunteer_photo_path( int $volunteer_id ): string {
-	$file = gwc_vt_volunteer_photo_file( $volunteer_id );
+function gwc_vt_photo_path( int $post_id ): string {
+	$file = gwc_vt_photo_file( $post_id );
 
 	if ( '' === $file ) {
 		return '';
@@ -206,11 +223,11 @@ function gwc_vt_volunteer_photo_path( int $volunteer_id ): string {
 /**
  * Whether this volunteer has a photo.
  *
- * @param int $volunteer_id Volunteer post ID.
+ * @param int $post_id Volunteer or offer post ID.
  * @return bool
  */
-function gwc_vt_volunteer_has_photo( int $volunteer_id ): bool {
-	return '' !== gwc_vt_volunteer_photo_path( $volunteer_id );
+function gwc_vt_has_photo( int $post_id ): bool {
+	return '' !== gwc_vt_photo_path( $post_id );
 }
 
 /**
@@ -220,27 +237,31 @@ function gwc_vt_volunteer_has_photo( int $volunteer_id ): bool {
  * turns a cached page into broken images, and it would be guarding a read that
  * changes nothing — the CSRF a nonce prevents does not apply to fetching an
  * image, which any page on the internet can already attempt. What matters is
- * that gwc_vt_serve_volunteer_photo() re-checks the capability on every single
+ * that gwc_vt_serve_photo() re-checks the capability on every single
  * request, so a URL that leaks is a URL that stops working for whoever it
  * leaked to.
  *
- * @param int $volunteer_id Volunteer post ID.
+ * @param int $post_id Volunteer or offer post ID.
  * @return string Empty when there is no photo.
  */
-function gwc_vt_volunteer_photo_url( int $volunteer_id ): string {
-	if ( ! gwc_vt_volunteer_has_photo( $volunteer_id ) ) {
+function gwc_vt_photo_url( int $post_id ): string {
+	if ( ! gwc_vt_has_photo( $post_id ) ) {
 		return '';
 	}
 
 	return add_query_arg(
 		array(
-			'action'    => 'gwc_vt_volunteer_photo',
-			'volunteer' => $volunteer_id,
+			'action' => 'gwc_vt_photo',
+			/* 'record' and not 'volunteer': the same endpoint serves a
+			 * volunteer's photograph and the one attached to an offer nobody
+			 * has accepted yet, and a parameter that names only one of them is
+			 * a parameter somebody will trust. */
+			'record' => $post_id,
 			/* Changes when the photo changes, so a replaced picture is not the
 			 * old one out of the browser cache. Not a secret and not doing any
 			 * protecting — the filename it is derived from is already known to
 			 * anybody who can call this. */
-			'v'         => substr( md5( gwc_vt_volunteer_photo_file( $volunteer_id ) ), 0, 8 ),
+			'v'      => substr( md5( gwc_vt_photo_file( $post_id ) ), 0, 8 ),
 		),
 		admin_url( 'admin-post.php' )
 	);
@@ -254,28 +275,42 @@ function gwc_vt_volunteer_photo_url( int $volunteer_id ): string {
  * wrong on a migration, and there is no coherent role that may read somebody's
  * court-referral status and hours but not see their face.
  *
- * @param int $volunteer_id Volunteer post ID.
+ * @param int $post_id Volunteer or offer post ID.
  * @param int $user_id      Optional. Defaults to the current user.
  * @return bool
  */
-function gwc_vt_can_see_photo( int $volunteer_id, int $user_id = 0 ): bool {
-	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
-		return false;
+function gwc_vt_can_see_photo( int $post_id, int $user_id = 0 ): bool {
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+	$type    = get_post_type( $post_id );
+
+	if ( GWC_VT_VOLUNTEER_TYPE === $type ) {
+		return user_can( $user_id, 'edit_post', $post_id );
 	}
 
-	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+	/* An offer to volunteer, which nobody has accepted yet. Gated on the same
+	 * capability as the queue it appears in, because that is the screen the
+	 * picture is shown on and there is no coherent role that may read a
+	 * stranger's name, address and court-order status but not see their face.
+	 *
+	 * Worth saying plainly that this is the MORE sensitive of the two. A
+	 * volunteer photograph belongs to somebody the organization decided to work
+	 * with; this one belongs to somebody who may be turned down, and whose face
+	 * is sitting in a queue while they wait to find out. */
+	if ( GWC_VT_APPLICATION_TYPE === $type ) {
+		return user_can( $user_id, 'edit_posts' );
+	}
 
-	return user_can( $user_id, 'edit_post', $volunteer_id );
+	return false;
 }
 
 /**
  * Send the bytes, to somebody allowed to have them.
  */
-function gwc_vt_serve_volunteer_photo(): void {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a read authorized by capability on every request; see the note on gwc_vt_volunteer_photo_url().
-	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
+function gwc_vt_serve_photo(): void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a read authorized by capability on every request; see the note on gwc_vt_photo_url().
+	$post_id = isset( $_GET['record'] ) ? absint( wp_unslash( $_GET['record'] ) ) : 0;
 
-	if ( ! gwc_vt_can_see_photo( $volunteer_id ) ) {
+	if ( ! gwc_vt_can_see_photo( $post_id ) ) {
 		/* 403 and nothing else. Not 404: distinguishing "no such volunteer" from
 		 * "not yours to see" would answer, to anybody who can log in at all,
 		 * whether a given record exists — which for these records is most of
@@ -285,7 +320,7 @@ function gwc_vt_serve_volunteer_photo(): void {
 		exit;
 	}
 
-	$path = gwc_vt_volunteer_photo_path( $volunteer_id );
+	$path = gwc_vt_photo_path( $post_id );
 
 	if ( '' === $path ) {
 		status_header( 404 );
@@ -324,6 +359,53 @@ function gwc_vt_serve_volunteer_photo(): void {
 }
 
 /**
+ * Whether these bytes are a photograph this plugin will accept.
+ *
+ * Split out of the store so it can be called with a path — the store cannot,
+ * because is_uploaded_file() correctly refuses anything a test writes, and a
+ * check reachable only through a real HTTP upload is a check nothing verifies.
+ * The first version of the decompression-bomb test worked around that by
+ * reimplementing these rules in the test file, which meant the test agreed with
+ * itself and passed with the guard deleted from here.
+ *
+ * Reads the header only. Nothing here decodes the image.
+ *
+ * @param string $path Path to the candidate file.
+ * @return string '' when it is acceptable, otherwise an error slug.
+ */
+function gwc_vt_photo_refusal( string $path ): string {
+	if ( '' === $path || ! is_readable( $path ) ) {
+		return 'upload-failed';
+	}
+
+	if ( filesize( $path ) > GWC_VT_PHOTO_MAX_BYTES ) {
+		return 'too-big';
+	}
+
+	/* Read from the bytes, never from the name somebody sent. A file called
+	 * portrait.jpg containing PHP is the oldest upload bug there is. */
+	$measured = getimagesize( $path );
+
+	if ( ! is_array( $measured ) ) {
+		return 'wrong-type';
+	}
+
+	if ( ! isset( gwc_vt_photo_types()[ (string) ( $measured['mime'] ?? '' ) ] ) ) {
+		return 'wrong-type';
+	}
+
+	/* Before anything is asked to open it, and from the header rather than from
+	 * the file size. See the note on GWC_VT_PHOTO_MAX_PIXELS. */
+	$pixels = (int) ( $measured[0] ?? 0 ) * (int) ( $measured[1] ?? 0 );
+
+	if ( $pixels < 1 || $pixels > GWC_VT_PHOTO_MAX_PIXELS ) {
+		return 'too-big';
+	}
+
+	return '';
+}
+
+/**
  * Store an uploaded photo against a volunteer, replacing any previous one.
  *
  * Everything is re-encoded through wp_get_image_editor() rather than moved into
@@ -333,12 +415,12 @@ function gwc_vt_serve_volunteer_photo(): void {
  * taken, usually somebody's home — and it caps the dimensions so a record does
  * not carry twelve megapixels of a face around for the next six years.
  *
- * @param int   $volunteer_id Volunteer post ID.
+ * @param int   $post_id Volunteer post ID.
  * @param array $file         One entry from $_FILES.
  * @return string '' on success, otherwise an error slug for gwc_vt_photo_error().
  */
-function gwc_vt_store_volunteer_photo( int $volunteer_id, array $file ): string {
-	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+function gwc_vt_store_photo( int $post_id, array $file ): string {
+	if ( ! in_array( get_post_type( $post_id ), array( GWC_VT_VOLUNTEER_TYPE, GWC_VT_APPLICATION_TYPE ), true ) ) {
 		return 'no-volunteer';
 	}
 
@@ -360,19 +442,15 @@ function gwc_vt_store_volunteer_photo( int $volunteer_id, array $file ): string 
 		return 'upload-failed';
 	}
 
-	if ( filesize( $tmp ) > GWC_VT_PHOTO_MAX_BYTES ) {
-		return 'too-big';
+	$refusal = gwc_vt_photo_refusal( $tmp );
+
+	if ( '' !== $refusal ) {
+		return $refusal;
 	}
 
-	/* Read from the bytes, never from the name somebody sent. A file called
-	 * portrait.jpg containing PHP is the oldest upload bug there is. */
 	$measured = getimagesize( $tmp );
-	$mime     = is_array( $measured ) ? (string) ( $measured['mime'] ?? '' ) : '';
+	$mime     = (string) ( $measured['mime'] ?? '' );
 	$types    = gwc_vt_photo_types();
-
-	if ( ! isset( $types[ $mime ] ) ) {
-		return 'wrong-type';
-	}
 
 	$dir = gwc_vt_photo_dir();
 
@@ -399,9 +477,9 @@ function gwc_vt_store_volunteer_photo( int $volunteer_id, array $file ): string 
 
 	/* The old one goes only once the new one is on disk. Deleting first would
 	 * lose the existing photo to a failed re-encode. */
-	gwc_vt_delete_volunteer_photo( $volunteer_id );
+	gwc_vt_delete_photo( $post_id );
 
-	update_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHOTO, basename( (string) $saved['path'] ) );
+	update_post_meta( $post_id, GWC_VT_PHOTO_KEY, basename( (string) $saved['path'] ) );
 
 	return '';
 }
@@ -412,13 +490,13 @@ function gwc_vt_store_volunteer_photo( int $volunteer_id, array $file ): string 
  * Safe to call for a volunteer who has none, which is what lets the retention
  * sweep and the eraser call it without asking first.
  *
- * @param int $volunteer_id Volunteer post ID.
+ * @param int $post_id Volunteer or offer post ID.
  * @return bool Whether a file was removed.
  */
-function gwc_vt_delete_volunteer_photo( int $volunteer_id ): bool {
-	$path = gwc_vt_volunteer_photo_path( $volunteer_id );
+function gwc_vt_delete_photo( int $post_id ): bool {
+	$path = gwc_vt_photo_path( $post_id );
 
-	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHOTO );
+	delete_post_meta( $post_id, GWC_VT_PHOTO_KEY );
 
 	if ( '' === $path ) {
 		return false;
@@ -448,11 +526,11 @@ function gwc_vt_delete_volunteer_photo( int $volunteer_id ): bool {
 function gwc_vt_delete_photo_with_volunteer( $post_id ): void {
 	$post_id = (int) $post_id;
 
-	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $post_id ) ) {
+	if ( ! in_array( get_post_type( $post_id ), array( GWC_VT_VOLUNTEER_TYPE, GWC_VT_APPLICATION_TYPE ), true ) ) {
 		return;
 	}
 
-	gwc_vt_delete_volunteer_photo( $post_id );
+	gwc_vt_delete_photo( $post_id );
 }
 
 /**
@@ -461,7 +539,7 @@ function gwc_vt_delete_photo_with_volunteer( $post_id ): void {
  * A function, not a const: evaluated at include time these would freeze in
  * English for the request. See the trap in CLAUDE.md.
  *
- * @param string $slug What gwc_vt_store_volunteer_photo() returned.
+ * @param string $slug What gwc_vt_store_photo() returned.
  * @return string Empty when the slug is not one of ours.
  */
 function gwc_vt_photo_error( string $slug ): string {
