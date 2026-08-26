@@ -32,8 +32,18 @@
 	margin-top: 0;
 }
 
+/* The date is a heading over its shifts rather than a column beside them. It
+   was a column when the block showed three shifts whatever their dates; now
+   that it shows the next two days, repeating the date on every row would be
+   repeating the thing the rows are grouped by. */
+.gwcvt-widget__when {
+	margin: 0 0 2px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
 .gwcvt-widget__week {
-	margin: 0 0 14px;
+	margin: 0 0 10px;
 }
 
 .gwcvt-widget__week li {
@@ -41,17 +51,19 @@
 	gap: 10px;
 	align-items: baseline;
 	margin: 0 0 4px;
+	padding-left: 10px;
 	font-size: 13px;
-}
-
-.gwcvt-widget__when {
-	flex: 0 0 auto;
-	min-width: 96px;
-	color: #646970;
 }
 
 .gwcvt-widget__what {
 	flex: 1 1 auto;
+}
+
+/* What the per-day cap left out. Counted rather than dropped silently, and
+   quiet, because it is a fact about the widget and not about the day. */
+.gwcvt-widget__more {
+	color: #646970;
+	font-size: 12px;
 }
 
 .gwcvt-widget__fill {

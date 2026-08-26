@@ -654,6 +654,10 @@ require GWC_VT_DIR . 'inc/admin-volunteer.php';
  * the kind that is invisible until it is in front of a coordinator. */
 require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
 
+/* The widget's week block groups shifts into days, which is arithmetic over
+ * post meta and nothing else — the same split as the worklist it sits under. */
+require GWC_VT_DIR . 'inc/admin-dashboard-widget.php';
+
 /* admin-schedule.php for the same reason. Four things in it decide what the
  * screen shows before any of it is drawn — which rows a filter keeps, how many
  * are in each state, which week or month heading a date sits under, and where a
