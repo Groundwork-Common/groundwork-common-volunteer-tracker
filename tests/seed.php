@@ -213,6 +213,17 @@ $gwc_vt_offer_page = (int) wp_insert_post(
 );
 update_post_meta( $gwc_vt_offer_page, GWC_VT_SEED_MARK, 1 );
 
+$gwc_vt_signin_page = (int) wp_insert_post(
+	array(
+		'post_type'    => 'page',
+		'post_status'  => 'publish',
+		'post_title'   => 'Your volunteering',
+		'post_name'    => 'your-volunteering',
+		'post_content' => "<!-- wp:paragraph --><p>Already volunteer with us? Sign in to see your hours and what you are down for.</p><!-- /wp:paragraph -->\n<!-- wp:groundwork-common-volunteer-tracker/volunteer-signin /-->",
+	)
+);
+update_post_meta( $gwc_vt_signin_page, GWC_VT_SEED_MARK, 1 );
+
 update_option(
 	GWC_VT_SETTINGS_OPTION,
 	array(
@@ -251,6 +262,16 @@ update_option(
 		'registration_page'         => $gwc_vt_offer_page,
 		'registration_ask_required' => true,
 		'registration_ask_photo'    => true,
+
+		/* On, like the other public surfaces here, because the fixture exists to
+		 * show the plugin working. Off is the shipped default.
+		 *
+		 * Every seeded volunteer except Fatima Sørensen has an address, so the
+		 * demo has somebody who can sign in and somebody who cannot — which is
+		 * the case worth being able to see, since a volunteer with no address on
+		 * file has no way in and a coordinator has to roster them by hand. */
+		'signin_enabled'            => true,
+		'signin_page'               => $gwc_vt_signin_page,
 
 		'shifts_enabled'   => true,
 		'shift_locations'  => "Main warehouse\nFront desk\nRiverbend Community Center\nThe collection van",
@@ -926,5 +947,6 @@ echo "  Letters   ", admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE . '&pa
 echo "  Schedule  ", admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE . '&page=' . GWC_VT_SCHEDULE_PAGE ), "\n";
 echo "  Form      ", get_permalink( $gwc_vt_page ), "\n";
 echo "  Sign up   ", get_permalink( $gwc_vt_shift_page ), "\n";
-echo "  Offer     ", get_permalink( $gwc_vt_offer_page ), "\n\n";
+echo "  Offer     ", get_permalink( $gwc_vt_offer_page ), "\n";
+echo "  Sign in   ", get_permalink( $gwc_vt_signin_page ), "\n\n";
 echo "  Every name here is invented. See the note at the top of this file.\n";

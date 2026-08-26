@@ -286,6 +286,20 @@ function gwc_vt_settings_fields(): array {
 			'label'   => __( 'Invite a photo', 'groundwork-common-volunteer-tracker' ),
 			'help'    => __( 'Off by default. With it on, the form offers to take a photo — from a file, or from the camera on the device they are using. It is optional for them, kept out of the Media Library, never given a public address, and only visible to staff who can open the record. Turning this on is the one place this plugin lets an anonymous visitor put a file on your server, so leave it off unless you want faces on your volunteer records.', 'groundwork-common-volunteer-tracker' ),
 		),
+		'signin_enabled'            => array(
+			'tab'     => 'logging',
+			'section' => 'signin',
+			'type'    => 'checkbox',
+			'label'   => __( 'Let volunteers sign in', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. A volunteer types their email address, and if it matches one of your records they are sent a link that signs them in for the day. No account is created and no password exists. Signed in, they can see their own hours, see what they are down for, and cancel a shift — and anything they sign up for arrives already matched to their record instead of waiting to be matched by hand. It needs email to work from this site: there is no second way in.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'signin_page'               => array(
+			'tab'     => 'logging',
+			'section' => 'signin',
+			'type'    => 'page',
+			'label'   => __( 'The page the sign-in form is on', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Sign-in block, or the [gwc_vt_volunteer_signin] shortcode, to a page and choose it here. The link in the email points at this page, so it has to be the one the form is on.', 'groundwork-common-volunteer-tracker' ),
+		),
 		'retention_months'          => array(
 			'tab'     => 'privacy',
 			'section' => 'retention',
@@ -437,6 +451,7 @@ function gwc_vt_settings_sections(): array {
 			'hours'        => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
 			'selflog'      => __( 'The public hours form', 'groundwork-common-volunteer-tracker' ),
 			'registration' => __( 'Offering to volunteer', 'groundwork-common-volunteer-tracker' ),
+			'signin'       => __( 'Signing in', 'groundwork-common-volunteer-tracker' ),
 		),
 		'shifts'  => array(
 			'schedule' => __( 'Planning ahead', 'groundwork-common-volunteer-tracker' ),

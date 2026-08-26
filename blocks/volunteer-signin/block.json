@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "groundwork-common-volunteer-tracker/volunteer-signin",
+	"title": "Volunteer Sign-in",
+	"category": "widgets",
+	"icon": "unlock",
+	"description": "Lets a volunteer sign in with an emailed link, and see their own hours and shifts. No account and no password.",
+	"keywords": [ "volunteer", "sign in", "login" ],
+	"textdomain": "groundwork-common-volunteer-tracker",
+	"supports": {
+		"html": false,
+		"multiple": false,
+		"align": [ "wide" ]
+	},
+	"editorScript": "file:./edit.js",
+	"style": "gwc-vt-form",
+	"render": "file:./render.php"
+}

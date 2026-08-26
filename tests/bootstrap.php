@@ -635,6 +635,8 @@ require GWC_VT_DIR . 'inc/form.php';
  * ordering the bootstrap enforces with a function_exists() guard. */
 require GWC_VT_DIR . 'inc/registration.php';
 require GWC_VT_DIR . 'inc/registration-form.php';
+require GWC_VT_DIR . 'inc/signin.php';
+require GWC_VT_DIR . 'inc/signin-form.php';
 require GWC_VT_DIR . 'inc/admin-settings.php';
 require GWC_VT_DIR . 'inc/admin-screen.php';
 

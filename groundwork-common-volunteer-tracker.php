@@ -300,6 +300,17 @@ if ( ! function_exists( 'gwc_vt_registration_enabled' ) ) {
 if ( ! function_exists( 'gwc_vt_render_registration_form' ) ) {
 	require GWC_VT_DIR . 'inc/registration-form.php';
 }
+/* Volunteers signing in. After self-log.php, whose timing stamp, rate limiter
+ * and client-IP reader it shares rather than restating — so a fix to either
+ * protects all three public forms and none can drift into being the weaker one.
+ *
+ * Not admin-only: the whole point is that it runs for a logged-out visitor. */
+if ( ! function_exists( 'gwc_vt_signin_enabled' ) ) {
+	require GWC_VT_DIR . 'inc/signin.php';
+}
+if ( ! function_exists( 'gwc_vt_render_signin' ) ) {
+	require GWC_VT_DIR . 'inc/signin-form.php';
+}
 if ( ! function_exists( 'gwc_vt_render_entry_meta_box' ) ) {
 	require GWC_VT_DIR . 'inc/meta-box.php';
 }

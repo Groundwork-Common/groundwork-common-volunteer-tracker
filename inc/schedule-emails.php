@@ -48,9 +48,12 @@ add_action( 'shutdown', 'gwc_vt_send_queued_confirmations' );
  * missed reminder is recoverable because the pass is idempotent, and a missed
  * confirmation is visible to the person who did not get one.
  *
- * @param string $kind      'confirmation', 'reminder', 'cancelled' or 'changed'.
- * @param int    $signup_id Signup post ID.
- * @param array  $context   Anything the message needs beyond the signup.
+ * @param string $kind      'confirmation', 'event-confirmation', 'reminder',
+ *                          'cancelled', 'changed' or 'signin'.
+ * @param int    $signup_id Signup post ID — except for 'signin', which carries a
+ *                          volunteer ID. The queue never reads it; only the case
+ *                          in the flush below knows what the number means.
+ * @param array  $context   Anything the message needs beyond that ID.
  */
 function gwc_vt_queue_signup_mail( string $kind, int $signup_id, array $context = array() ): void {
 	if ( ! isset( $GLOBALS['gwc_vt_pending_mail'] ) ) {
@@ -99,6 +102,20 @@ function gwc_vt_send_queued_confirmations(): void {
 
 			case 'reminder':
 				gwc_vt_send_shift_reminder( $signup_id );
+				break;
+
+			/* A sign-in link. The int slot carries a VOLUNTEER id rather than a
+			 * signup id — the queue has never cared what the number means, and
+			 * inventing a parallel queue for one message would be two things to
+			 * keep flushed.
+			 *
+			 * It is on this queue for a reason that is not tidiness: sending
+			 * inline would make a request that matched a volunteer measurably
+			 * slower than one that did not, and the sign-in form's whole promise
+			 * is that those two are indistinguishable. See the long note on
+			 * gwc_vt_issue_signin_link(). */
+			case 'signin':
+				gwc_vt_deliver_signin_link( $signup_id, (string) ( $context['token'] ?? '' ) );
 				break;
 
 			case 'cancelled':
