@@ -188,7 +188,8 @@ function gwc_vt_render_help_page(): void {
 		);
 	}
 
-	$topics = gwc_vt_help_topics();
+	$topics  = gwc_vt_help_topics();
+	$current = gwc_vt_current_help_topic();
 	?>
 	<div class="wrap gwcvt-wrap gwcvt-help">
 		<h1><?php echo esc_html( gwc_vt_help_page_title() ); ?></h1>
@@ -197,14 +198,30 @@ function gwc_vt_render_help_page(): void {
 			<?php esc_html_e( 'How to do the things this plugin is for. Every screen also has a Help tab at the top right, which explains what the screen means rather than how to use it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
-		<ul class="gwcvt-help__contents">
+		<?php
+		/* The same tab bar the Settings screen uses. One topic at a time,
+		 * because twenty how-tos and ninety-two steps in a single scroll is a
+		 * document nobody reads twice — and because a tab is a real URL, so a
+		 * topic can be linked to, bookmarked, and reached with the back button.
+		 *
+		 * No JavaScript. A reader with it switched off gets the same guide. */
+		?>
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Help topics', 'groundwork-common-volunteer-tracker' ); ?>">
 			<?php foreach ( $topics as $topic ) : ?>
-				<li><a href="#gwcvt-help-<?php echo esc_attr( $topic['id'] ); ?>"><?php echo esc_html( $topic['title'] ); ?></a></li>
+				<a
+					class="nav-tab <?php echo $topic['id'] === $current ? 'nav-tab-active' : ''; ?>"
+					href="<?php echo esc_url( gwc_vt_help_page_url( (string) $topic['id'] ) ); ?>"
+					<?php echo $topic['id'] === $current ? 'aria-current="page"' : ''; ?>
+				>
+					<?php echo esc_html( $topic['title'] ); ?>
+				</a>
 			<?php endforeach; ?>
-		</ul>
+		</nav>
 
 		<?php foreach ( $topics as $topic ) : ?>
-			<h2 id="gwcvt-help-<?php echo esc_attr( $topic['id'] ); ?>"><?php echo esc_html( $topic['title'] ); ?></h2>
+			<?php if ( $topic['id'] !== $current ) : ?>
+				<?php continue; ?>
+			<?php endif; ?>
 
 			<?php if ( '' !== (string) ( $topic['intro'] ?? '' ) ) : ?>
 				<p class="gwcvt-help__intro"><?php echo esc_html( (string) $topic['intro'] ); ?></p>
@@ -218,9 +235,6 @@ function gwc_vt_render_help_page(): void {
 						<?php foreach ( (array) ( $task['steps'] ?? array() ) as $step ) : ?>
 							<li>
 								<?php
-								/* Bold marks the words that appear on screen, which is
-								 * the one piece of markup a step needs and the reason
-								 * these are not plain strings. */
 								echo wp_kses(
 									(string) $step,
 									array(
@@ -247,16 +261,80 @@ function gwc_vt_render_help_page(): void {
 /**
  * Where the how-to guide lives.
  *
+ * @param string $topic Which topic to open, or '' for the first.
  * @return string
  */
-function gwc_vt_help_page_url(): string {
-	return add_query_arg(
-		array(
-			'post_type' => GWC_VT_ENTRY_TYPE,
-			'page'      => GWC_VT_HELP_PAGE,
-		),
-		admin_url( 'edit.php' )
+function gwc_vt_help_page_url( string $topic = '' ): string {
+	$args = array(
+		'post_type' => GWC_VT_ENTRY_TYPE,
+		'page'      => GWC_VT_HELP_PAGE,
 	);
+
+	if ( '' !== $topic ) {
+		$args['topic'] = $topic;
+	}
+
+	return add_query_arg( $args, admin_url( 'edit.php' ) );
+}
+
+/**
+ * Which topic is being read.
+ *
+ * Falls back to the first rather than to nothing, so a bookmark pointing at a
+ * topic that has since been renamed lands on the guide instead of on an empty
+ * page — the same shape as gwc_vt_current_tab() on the settings screen.
+ *
+ * @return string
+ */
+function gwc_vt_current_help_topic(): string {
+	$topics = array();
+
+	foreach ( gwc_vt_help_topics() as $topic ) {
+		$topics[] = (string) $topic['id'];
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from this value.
+	$wanted = isset( $_GET['topic'] ) ? sanitize_key( wp_unslash( $_GET['topic'] ) ) : '';
+
+	return in_array( $wanted, $topics, true ) ? $wanted : (string) ( $topics[0] ?? '' );
+}
+
+/**
+ * The topic that answers the screen somebody is on.
+ *
+ * So the link in a Help tab lands on the four how-tos for credentials rather
+ * than at the top of a guide with ninety-two steps in it. A screen with no
+ * obvious topic gets the guide's front, which is the setting-up one.
+ *
+ * @param string $screen_id A WP_Screen id.
+ * @return string A topic id, or '' for the guide's front.
+ */
+function gwc_vt_help_topic_for_screen( string $screen_id ): string {
+	$map = array(
+		GWC_VT_CREDENTIALS_PAGE  => 'credentials',
+		GWC_VT_APPLICATIONS_PAGE => 'public',
+		GWC_VT_SCHEDULE_PAGE     => 'schedule',
+		GWC_VT_REPEAT_PAGE       => 'schedule',
+		GWC_VT_VERIFY_PAGE       => 'hours',
+		GWC_VT_QUICK_ADD_PAGE    => 'hours',
+		GWC_VT_LETTERS_PAGE      => 'letters',
+		GWC_VT_PRODUCE_PAGE      => 'letters',
+		GWC_VT_SETTINGS_PAGE     => 'start',
+	);
+
+	foreach ( $map as $page => $topic ) {
+		if ( false !== strpos( $screen_id, (string) $page ) ) {
+			return $topic;
+		}
+	}
+
+	/* The list tables and one volunteer's record, which are named rather than
+	 * matched on a page slug. */
+	if ( 'edit-' . GWC_VT_ENTRY_TYPE === $screen_id || GWC_VT_VOLUNTEER_TYPE === $screen_id || 'edit-' . GWC_VT_VOLUNTEER_TYPE === $screen_id ) {
+		return 'hours';
+	}
+
+	return '';
 }
 
 /**
