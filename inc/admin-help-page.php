@@ -17,12 +17,32 @@
  * explains. The page exists because a menu item is findable, and because
  * somebody reading before they start has nowhere to sit down otherwise.
  *
+ * ── Why `read` and not the capability every other screen uses ────────────────
+ * Every screen in this plugin is behind gwc_vt_records_cap(), because every one
+ * of them shows somebody else's record. This page shows none — it is a guide to
+ * the software, with no site data in it at all.
+ *
+ * Gating documentation on the capability to act would mean somebody deciding
+ * whether to ask for access cannot read what they would be asking for, and
+ * somebody who has just lost access cannot read why the screens went.
+ *
+ * `read` is what WordPress gives everybody who can log in at all, subscribers
+ * included.
+ *
  * ── Why it is not a rendering of the Help tabs ──────────────────────────────
  * It was, briefly, and that was the wrong document. The tabs answer "what does
  * this mean" — what verifying IS, why a letter cannot be emailed. Conceptual,
  * read once, and rightly beside the thing they explain. Somebody who has never
  * opened the plugin needs "how do I", in order, with the steps numbered, and
  * cannot get that from thirteen conceptual tabs however well written.
+ *
+ * So the tabs stay where they are and this carries its own document, written to
+ * the Microsoft Writing Style Guide. inc/help-content.php holds it as data and
+ * explains the conventions; this file is the loop that prints it.
+ *
+ * The two are not duplicates and must not become each other: if a how-to here
+ * starts explaining what a credential IS, it belongs in the tab, and if a tab
+ * starts listing steps, they belong here.
  *
  * So the tabs stay where they are and this carries its own document, written to
  * the Microsoft Writing Style Guide. inc/help-content.php holds it as data and
@@ -125,7 +145,7 @@ function gwc_vt_register_help_page(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_help_page_title(),
 		gwc_vt_help_page_title(),
-		gwc_vt_records_cap(),
+		'read',
 		GWC_VT_HELP_PAGE,
 		'gwc_vt_render_help_page'
 	);
