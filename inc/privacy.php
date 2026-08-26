@@ -359,8 +359,37 @@ function gwc_vt_run_retention(): void {
 	}
 
 	$purged += gwc_vt_sweep_orphan_signups( $months );
+	$purged += gwc_vt_sweep_stale_applications( $months );
 
 	gwc_vt_log_retention_run( $action, $purged, $held );
+}
+
+/**
+ * Delete offers to volunteer nobody dealt with, once the policy says so.
+ *
+ * Deleted outright rather than anonymized, and that differs from how the sweep
+ * treats a volunteer. An anonymized volunteer keeps their hours, which are the
+ * organization's own service record and identify nobody without a name. An
+ * offer with the name taken out is not a record of anything — it is a row
+ * saying somebody once wanted to help, which is of no use to anybody and is
+ * still a row that used to have a name on it.
+ *
+ * An approved offer is left alone here whatever its age: it is the provenance
+ * of a live volunteer record, and it goes when that record goes.
+ *
+ * @param int $months How long records may be kept.
+ * @return int How many were removed.
+ */
+function gwc_vt_sweep_stale_applications( int $months ): int {
+	$removed = 0;
+
+	foreach ( gwc_vt_stale_application_ids( $months, GWC_VT_RETENTION_BATCH ) as $application_id ) {
+		if ( gwc_vt_delete_application( (int) $application_id ) ) {
+			++$removed;
+		}
+	}
+
+	return $removed;
 }
 
 /**
@@ -513,6 +542,52 @@ function gwc_vt_volunteers_by_email( string $email ): array {
 			'meta_key'               => GWC_VT_VOLUNTEER_EMAIL,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
 			'meta_value'             => $email,
+		)
+	);
+
+	return array_map( 'intval', (array) $ids );
+}
+
+/**
+ * Offers to volunteer made by this address.
+ *
+ * The sibling of gwc_vt_signups_by_claim_email(), and needed for the same
+ * reason: an offer holds a name and an email belonging to somebody who may
+ * never have become a volunteer, so nothing that walks out from a volunteer
+ * record will ever reach it.
+ *
+ * Every status, discarded included. "We said no to this person" is exactly the
+ * sort of record somebody asking what is held about them means, and an
+ * erasure that skipped it would report itself complete while leaving their name
+ * on a rejection.
+ *
+ * @param string $email The address being asked about.
+ * @return int[]
+ */
+function gwc_vt_applications_by_email( string $email ): array {
+	$email = sanitize_email( $email );
+
+	if ( '' === $email || ! is_email( $email ) ) {
+		return array();
+	}
+
+	$ids = get_posts(
+		array(
+			'post_type'              => GWC_VT_APPLICATION_TYPE,
+			'post_status'            => array( 'pending', 'publish', GWC_VT_APPLICATION_DISCARDED ),
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- every offer one address ever sent, on a privacy request run by hand. A bound rather than a page: an ids-only query with no_found_rows, and an erasure that silently stopped at ten would report itself complete having missed the rest.
+			'posts_per_page'         => 200,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed key lookup, on a privacy request that runs by hand.
+			'meta_query'             => array(
+				array(
+					'key'     => GWC_VT_APPLICATION_EMAIL,
+					'value'   => $email,
+					'compare' => '=',
+				),
+			),
 		)
 	);
 
@@ -724,6 +799,64 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 		}
 	}
 
+	/* ── Offers to volunteer ─────────────────────────────────────────────────
+	 * Found by address, because an offer belongs to no volunteer record — which
+	 * is exactly why nothing above would ever have reached it. Reported on the
+	 * first page only: there are never many, and paginating them alongside a
+	 * volunteer's shifts would mean two different things counting the pages.
+	 * ─────────────────────────────────────────────────────────────────────── */
+	if ( 1 === $page ) {
+		foreach ( gwc_vt_applications_by_email( (string) $email ) as $application_id ) {
+			$offer = gwc_vt_application_record( (int) $application_id );
+
+			if ( ! $offer ) {
+				continue;
+			}
+
+			$items[] = array(
+				'group_id'    => 'gwc_vt_application',
+				'group_label' => __( 'Offer to volunteer', 'groundwork-common-volunteer-tracker' ),
+				'item_id'     => 'gwcvt-application-' . $offer['id'],
+				'data'        => array(
+					array(
+						'name'  => __( 'Name given', 'groundwork-common-volunteer-tracker' ),
+						'value' => $offer['name'],
+					),
+					array(
+						'name'  => __( 'Email given', 'groundwork-common-volunteer-tracker' ),
+						'value' => $offer['email'],
+					),
+					array(
+						'name'  => __( 'Phone given', 'groundwork-common-volunteer-tracker' ),
+						'value' => $offer['phone'],
+					),
+					array(
+						'name'  => __( 'What they wrote', 'groundwork-common-volunteer-tracker' ),
+						'value' => $offer['note'],
+					),
+					array(
+						'name'  => __( 'Required service they described', 'groundwork-common-volunteer-tracker' ),
+						'value' => $offer['required'] > 0
+							? trim(
+								gwc_vt_format_hours( $offer['required'] ) . ' '
+								. $offer['required_by'] . ' '
+								. $offer['required_for']
+							)
+							: '',
+					),
+					array(
+						'name'  => __( 'Offered', 'groundwork-common-volunteer-tracker' ),
+						'value' => $offer['created'],
+					),
+					array(
+						'name'  => __( 'What happened to it', 'groundwork-common-volunteer-tracker' ),
+						'value' => gwc_vt_application_outcome_label( $offer ),
+					),
+				),
+			);
+		}
+	}
+
 	$most_entries = 0;
 
 	foreach ( $volunteers as $volunteer_id ) {
@@ -876,6 +1009,48 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 				);
 			}
 		}
+	}
+
+	/* ── Offers to volunteer ─────────────────────────────────────────────────
+	 * Reached by address rather than through a volunteer record, because the
+	 * whole point of an offer is that it belongs to nobody yet. Discarded ones
+	 * included: "we said no to this person" is precisely what an erasure request
+	 * means, and skipping it would report itself complete while leaving somebody's
+	 * name on a rejection.
+	 * ─────────────────────────────────────────────────────────────────────── */
+	$erased_offers = 0;
+
+	foreach ( gwc_vt_applications_by_email( (string) $email ) as $application_id ) {
+		$application_id = (int) $application_id;
+		$approved       = (int) get_post_meta( $application_id, GWC_VT_APPLICATION_APPROVED, true );
+
+		/* An approved offer whose volunteer is on a hold is held with it. The
+		 * offer is where that record came from, and destroying the provenance of
+		 * a record somebody is obliged to keep is the thing a hold exists to
+		 * prevent. */
+		if ( $approved > 0 && gwc_vt_retention_held( $approved ) ) {
+			$retained = true;
+			continue;
+		}
+
+		gwc_vt_delete_application( $application_id );
+
+		$removed  = true;
+		$retained = true;
+		++$erased_offers;
+	}
+
+	if ( $erased_offers > 0 ) {
+		$messages[] = sprintf(
+			/* translators: %d: how many offers to volunteer were removed. */
+			_n(
+				'%d offer to volunteer sent through the form on the site was deleted, including anything written in it.',
+				'%d offers to volunteer sent through the form on the site were deleted, including anything written in them.',
+				$erased_offers,
+				'groundwork-common-volunteer-tracker'
+			),
+			$erased_offers
+		);
 	}
 
 	/* ── Signups made by somebody nobody matched ─────────────────────────────

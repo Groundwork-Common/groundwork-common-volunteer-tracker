@@ -198,6 +198,13 @@ if ( ! function_exists( 'gwc_vt_register_event_type' ) ) {
 if ( ! function_exists( 'gwc_vt_register_signup_type' ) ) {
 	require GWC_VT_DIR . 'inc/signup-cpt.php';
 }
+/* Somebody who has offered to volunteer and nobody has said yes to yet. A post
+ * type rather than a pending volunteer, for the reason in the file. Loaded with
+ * the other types and not with the admin, because privacy.php sweeps these and
+ * runs on cron. */
+if ( ! function_exists( 'gwc_vt_register_application_type' ) ) {
+	require GWC_VT_DIR . 'inc/application-cpt.php';
+}
 if ( ! function_exists( 'gwc_vt_shift_duration' ) ) {
 	require GWC_VT_DIR . 'inc/shifts.php';
 }
@@ -280,6 +287,16 @@ if ( ! function_exists( 'gwc_vt_dispatch' ) ) {
 if ( ! function_exists( 'gwc_vt_render_self_log_form' ) ) {
 	require GWC_VT_DIR . 'inc/form.php';
 }
+/* Offering to volunteer. registration.php shares self-log.php's timing stamp,
+ * rate limiter and client-IP reader rather than reimplementing them — so it
+ * cannot move above it — and registration-form.php calls
+ * gwc_vt_registration_enabled(), so it cannot move above that. */
+if ( ! function_exists( 'gwc_vt_registration_enabled' ) ) {
+	require GWC_VT_DIR . 'inc/registration.php';
+}
+if ( ! function_exists( 'gwc_vt_render_registration_form' ) ) {
+	require GWC_VT_DIR . 'inc/registration-form.php';
+}
 if ( ! function_exists( 'gwc_vt_render_entry_meta_box' ) ) {
 	require GWC_VT_DIR . 'inc/meta-box.php';
 }
@@ -316,6 +333,9 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 
 	// Turning a public submission into a shift on somebody's record.
 	require GWC_VT_DIR . 'inc/admin-triage.php';
+
+	// Where an offer to volunteer becomes a volunteer, or does not.
+	require GWC_VT_DIR . 'inc/admin-applications.php';
 
 	// Typing up a sign-in sheet in one pass.
 	require GWC_VT_DIR . 'inc/admin-quick-add.php';

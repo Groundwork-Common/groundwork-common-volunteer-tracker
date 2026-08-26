@@ -26,6 +26,7 @@ function gwc_vt_register_block(): void {
 		register_block_type_from_metadata( GWC_VT_DIR . 'blocks/hours-form' );
 		register_block_type_from_metadata( GWC_VT_DIR . 'blocks/shift-list' );
 		register_block_type_from_metadata( GWC_VT_DIR . 'blocks/event-grid' );
+		register_block_type_from_metadata( GWC_VT_DIR . 'blocks/volunteer-form' );
 
 		/* ── The editor scripts' translations ────────────────────────────────
 		 * Registered here, immediately after the handles exist, rather than in
@@ -40,7 +41,7 @@ function gwc_vt_register_block(): void {
 		 * they were guessed. They are the same names inc/block.php's
 		 * wp_localize_script() calls already rely on.
 		 * ─────────────────────────────────────────────────────────────────── */
-		foreach ( array( 'hours-form', 'shift-list', 'event-grid' ) as $block ) {
+		foreach ( array( 'hours-form', 'shift-list', 'event-grid', 'volunteer-form' ) as $block ) {
 			wp_set_script_translations(
 				'groundwork-common-volunteer-tracker-' . $block . '-editor-script',
 				'groundwork-common-volunteer-tracker',
@@ -52,6 +53,7 @@ function gwc_vt_register_block(): void {
 	add_shortcode( 'gwc_vt_hours_form', 'gwc_vt_form_shortcode' );
 	add_shortcode( 'gwc_vt_shift_list', 'gwc_vt_shifts_shortcode' );
 	add_shortcode( 'gwc_vt_event_grid', 'gwc_vt_event_shortcode' );
+	add_shortcode( 'gwc_vt_volunteer_form', 'gwc_vt_registration_shortcode' );
 }
 
 /**
@@ -134,6 +136,20 @@ function gwc_vt_localize_block_editor(): void {
 			'selfLogEnabled' => (bool) gwc_vt_setting( 'self_log_enabled' ),
 			'pinnedPage'     => (int) gwc_vt_setting( 'self_log_page' ),
 			'currentPage'    => $current,
+		)
+	);
+
+	wp_localize_script(
+		'groundwork-common-volunteer-tracker-volunteer-form-editor-script',
+		'GWC_VT_OFFER_EDITOR',
+		array(
+			'registrationEnabled' => (bool) gwc_vt_setting( 'registration_enabled' ),
+			'pinnedPage'          => (int) gwc_vt_setting( 'registration_page' ),
+			'currentPage'         => $current,
+			/* So the editor can say that the form asks about court-ordered
+			 * service. gwc_vt_registration_asks_required() rather than the raw
+			 * setting, because the question is off whenever the form is. */
+			'asksRequired'        => gwc_vt_registration_asks_required(),
 		)
 	);
 

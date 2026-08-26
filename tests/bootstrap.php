@@ -609,6 +609,7 @@ require GWC_VT_DIR . 'inc/recurrence.php';
 require GWC_VT_DIR . 'inc/shift-cpt.php';
 require GWC_VT_DIR . 'inc/signup-cpt.php';
 require GWC_VT_DIR . 'inc/event-cpt.php';
+require GWC_VT_DIR . 'inc/application-cpt.php';
 require GWC_VT_DIR . 'inc/shifts.php';
 require GWC_VT_DIR . 'inc/events.php';
 require GWC_VT_DIR . 'inc/signups.php';
@@ -629,6 +630,10 @@ require GWC_VT_DIR . 'inc/emails.php';
 require GWC_VT_DIR . 'inc/privacy.php';
 require GWC_VT_DIR . 'inc/self-log.php';
 require GWC_VT_DIR . 'inc/form.php';
+/* After self-log.php, whose stamp and rate limiter these share — the same
+ * ordering the bootstrap enforces with a function_exists() guard. */
+require GWC_VT_DIR . 'inc/registration.php';
+require GWC_VT_DIR . 'inc/registration-form.php';
 require GWC_VT_DIR . 'inc/admin-settings.php';
 require GWC_VT_DIR . 'inc/admin-screen.php';
 
