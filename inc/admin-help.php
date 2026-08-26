@@ -195,7 +195,207 @@ function gwc_vt_add_screen_help( $screen ): void {
 
 	if ( false !== strpos( (string) $screen->id, GWC_VT_QUICK_ADD_PAGE ) ) {
 		gwc_vt_add_quick_add_help( $screen );
+		return;
 	}
+
+	if ( false !== strpos( (string) $screen->id, GWC_VT_CREDENTIALS_PAGE ) ) {
+		gwc_vt_add_credentials_help( $screen );
+		return;
+	}
+
+	if ( false !== strpos( (string) $screen->id, GWC_VT_APPLICATIONS_PAGE ) ) {
+		gwc_vt_add_offers_help( $screen );
+		return;
+	}
+
+	if ( false !== strpos( (string) $screen->id, GWC_VT_VERIFY_PAGE ) ) {
+		gwc_vt_add_verify_help( $screen );
+		return;
+	}
+
+	if ( false !== strpos( (string) $screen->id, GWC_VT_REPEAT_PAGE ) ) {
+		gwc_vt_add_repeat_help( $screen );
+		return;
+	}
+
+	/* The single volunteer's record, not the list. The list had help and this
+	 * did not, which was the wrong way round: the list is names and totals, and
+	 * this is where somebody records that a named person holds a background
+	 * check and where their photograph lives. */
+	if ( GWC_VT_VOLUNTEER_TYPE === $screen->id ) {
+		gwc_vt_add_volunteer_record_help( $screen );
+	}
+}
+
+/**
+ * Defining what volunteers have to hold.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_credentials_help( $screen ): void {
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-credentials-what',
+		__( 'What a credential is', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Something a volunteer has to <strong>hold</strong> before doing certain work — a training course, a signed waiver, a background check.', 'groundwork-common-volunteer-tracker' ),
+			__( 'This is not the same as the hours a court or a school required of somebody. Those live on the volunteer’s own record and never appear here.', 'groundwork-common-volunteer-tracker' ),
+			__( 'You define each one here. You record who holds it on each volunteer’s own record, which is also where you can see what somebody is missing.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-credentials-expiry',
+		__( 'Renewing', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'When something expires is worked out from the day it was granted, and is never stored. Change a credential from twelve months to twenty-four and everybody who holds it is re-dated — there are no old dates left behind.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Somebody who did it on the 31st renews on the 31st, or on the last day of a month that is shorter.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Recording a renewal does not replace what came before it. Every grant is kept, so “renewed every year since 2019” is still there to read.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-credentials-missing',
+		__( 'If somebody has not got it', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( '<strong>Reporting</strong> is the safer default and what most organizations want: whoever is short of it is flagged on the roster, and a person decides what to do.', 'groundwork-common-volunteer-tracker' ),
+			__( '<strong>Stopping a signup</strong> is for the things nobody may work without. A staff member can still put somebody on, but only by giving a reason — which is recorded with their name and shown on the roster from then on.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Nobody is ever taken off a roster automatically. Somebody already accepted for a shift stays accepted, and the roster tells you rather than deciding for you.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-credentials-retiring',
+		__( 'Retiring one', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Retiring a credential stops it being asked for. It does not take it away from the people who hold it, and it does not delete anything.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Every record of who held it is kept, and you can still see who they were. Put it back into use and every shift that asked for it asks again.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_sidebar( $screen );
+}
+
+/**
+ * Offers to volunteer.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_offers_help( $screen ): void {
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-offers-what',
+		__( 'What is waiting here', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'What somebody typed into the form on your site. Nothing here is a volunteer record yet, and nothing here counts toward anything.', 'groundwork-common-volunteer-tracker' ),
+			__( 'That is deliberate: a public form cannot create a volunteer record, so spam and mistakes reach a queue somebody empties rather than your volunteer list.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Accepting one makes a volunteer record from what they wrote. Setting one aside keeps what they sent and takes it off this list.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-offers-waiting',
+		__( 'Nobody is told they are waiting', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'The plugin sends nothing when an offer arrives and nothing while it sits here. Somebody who offered to help and hears nothing for three weeks has usually concluded the answer was no.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The count beside this screen’s name in the menu, and the line on the dashboard, are how you find out one is waiting.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_sidebar( $screen );
+}
+
+/**
+ * The verify queue.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_verify_help( $screen ): void {
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-verify-what',
+		__( 'What verifying means', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'A member of your staff saying the work happened. Who did it and when is recorded, and it appears on any letter that includes those hours.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Only verified hours reach a letter. Everything waiting here counts toward nothing until somebody says it happened.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-verify-unmatched',
+		__( 'Hours attached to nobody', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Anything sent through the public form arrives as a claim — a name and an address somebody typed, attached to no volunteer record.', 'groundwork-common-volunteer-tracker' ),
+			__( 'They are held apart here until a person says whose they are. The form never looks anybody up, so what it recorded is what was typed and nothing more.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_sidebar( $screen );
+}
+
+/**
+ * Changing a whole repeat.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_repeat_help( $screen ): void {
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-repeat-what',
+		__( 'Changing every occurrence', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Every occurrence of a repeat is a real shift you can edit or call off on its own. This screen changes the ones you choose, all at once.', 'groundwork-common-volunteer-tracker' ),
+			__( 'It tells you how many it will touch and how many it will leave, before it does anything. Occurrences that have already happened, and ones that were called off, are left alone unless you say otherwise.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Changing what a shift asks people to hold <strong>replaces</strong> what each occurrence asks for rather than adding to it — so selecting that box with nothing chosen clears them across the repeat.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_sidebar( $screen );
+}
+
+/**
+ * One volunteer's own record.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_volunteer_record_help( $screen ): void {
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-record-what',
+		__( 'What this record holds', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Who somebody is, how to reach them, what they have done, and what they hold. A volunteer is not a WordPress user: there is no account here and no password.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Hours and letters below are shown for reading, not editing. Hours are corrected on the entry itself, and a letter that has been issued is not editable at all.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-record-credentials',
+		__( 'Recording a credential', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Every credential your organization asks for is listed, including the ones this person has never held — the box answers “what are they missing” as well as “what do they hold”.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Give the date they actually did it, not today’s date. Anything that expires counts from that day, so a class taken in March and entered in June expires in March.', 'groundwork-common-volunteer-tracker' ),
+			__( 'It is saved when you press Update, along with the rest of the record.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-record-required',
+		__( 'Hours somebody has to complete', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'How many hours a court or a school required, by when, and for whom. It is for your planning only and never appears on a letter.', 'groundwork-common-volunteer-tracker' ),
+			__( 'It is also kept off every screen a volunteer can see. What somebody was ordered to do is a fact about another organization’s document.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**
