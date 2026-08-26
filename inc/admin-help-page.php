@@ -245,6 +245,21 @@ function gwc_vt_render_help_page(): void {
 }
 
 /**
+ * Where the how-to guide lives.
+ *
+ * @return string
+ */
+function gwc_vt_help_page_url(): string {
+	return add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_HELP_PAGE,
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/**
  * A stable anchor for one screen's section.
  *
  * Kept for tests/integration/help.php, which still walks every screen to check

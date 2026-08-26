@@ -142,6 +142,41 @@ gwc_vt_help_check(
 	implode( ', ', $gwc_vt_help_thin )
 );
 
+echo "\n── Every help tab points at the guide ───────────────────────────\n";
+
+/* The tab is where WordPress trained people to look; the guide is where the
+ * how-tos are. Without a link between them the only route is knowing the page
+ * exists — which is the thing that made somebody ask where the help was. */
+$GLOBALS['gwc_vt_help_unlinked'] = array();
+
+foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {
+	set_current_screen( (string) $gwc_vt_help_id );
+
+	$gwc_vt_help_screen = get_current_screen();
+
+	foreach ( array_keys( $gwc_vt_help_screen->get_help_tabs() ) as $gwc_vt_help_old ) {
+		$gwc_vt_help_screen->remove_help_tab( $gwc_vt_help_old );
+	}
+
+	$gwc_vt_help_screen->set_help_sidebar( '' );
+
+	do_action( 'current_screen', $gwc_vt_help_screen );
+
+	if ( false !== strpos( (string) $gwc_vt_help_id, GWC_VT_SETTINGS_PAGE ) ) {
+		do_action( 'gwc_vt_settings_screen_loaded' );
+	}
+
+	if ( false === strpos( (string) $gwc_vt_help_screen->get_help_sidebar(), GWC_VT_HELP_PAGE ) ) {
+		$GLOBALS['gwc_vt_help_unlinked'][] = (string) $gwc_vt_help_what;
+	}
+}
+
+gwc_vt_help_check(
+	'every screen with help links to the guide',
+	array() === $GLOBALS['gwc_vt_help_unlinked'],
+	implode( ', ', $GLOBALS['gwc_vt_help_unlinked'] )
+);
+
 echo "\n── The page is a how-to guide ───────────────────────────────────\n";
 
 /* It used to be a rendering of the Help tabs, and this section asserted every
