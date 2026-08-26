@@ -111,7 +111,7 @@ $gwc_vt_counts = gwc_vt_dashboard_counts();
 
 gwc_vt_check(
 	'every queue reports a number',
-	array( 'unreconciled', 'understaffed', 'overdue', 'unverified', 'unmatched' ) === array_keys( $gwc_vt_counts ),
+	array( 'unreconciled', 'understaffed', 'overdue', 'lapsed', 'unverified', 'unmatched' ) === array_keys( $gwc_vt_counts ),
 	implode( ',', array_keys( $gwc_vt_counts ) )
 );
 

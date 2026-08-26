@@ -198,6 +198,16 @@ if ( ! function_exists( 'gwc_vt_register_signup_type' ) ) {
 if ( ! function_exists( 'gwc_vt_register_application_type' ) ) {
 	require GWC_VT_DIR . 'inc/application-cpt.php';
 }
+/* Credentials: what a volunteer has to hold, and who holds it. After
+ * volunteer-cpt.php, whose type a record is parented to, and before privacy.php,
+ * which erases records and sweeps orphans. Loaded with the other types rather
+ * than with the admin, because the retention sweep runs on cron. */
+if ( ! function_exists( 'gwc_vt_register_credential_types' ) ) {
+	require GWC_VT_DIR . 'inc/credential-cpt.php';
+}
+if ( ! function_exists( 'gwc_vt_volunteer_holds' ) ) {
+	require GWC_VT_DIR . 'inc/credentials.php';
+}
 /* A photograph of a volunteer, or of somebody who has offered to become one,
  * kept out of the media library. After BOTH post types, because it decides who
  * may see a face from the type of the record the photo hangs off — moving it
@@ -350,6 +360,12 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 
 	// Where an offer to volunteer becomes a volunteer, or does not.
 	require GWC_VT_DIR . 'inc/admin-applications.php';
+
+	// Defining what volunteers have to hold.
+	require GWC_VT_DIR . 'inc/admin-credentials.php';
+
+	// Recording that a named volunteer holds one.
+	require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
 
 	// Typing up a sign-in sheet in one pass.
 	require GWC_VT_DIR . 'inc/admin-quick-add.php';

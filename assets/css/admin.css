@@ -271,6 +271,15 @@
 	box-shadow: inset 0 0 0 1px #dba617;
 }
 
+/* Neutral, and used for "nothing recorded". A state that is merely absent is
+   not a warning — see the note beside the badge table in
+   inc/admin-volunteer-credentials.php. */
+.gwcvt-badge--none {
+	background: #f0f0f1;
+	color: #50575e;
+	box-shadow: inset 0 0 0 1px #c3c4c7;
+}
+
 .gwcvt-badge__detail {
 	display: inline-block;
 	margin-top: 3px;
@@ -2117,4 +2126,44 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	border-radius: 3px;
 	background: #f0f0f1;
 	color: #3c434a;
+}
+
+/* ─── Credentials ───────────────────────────────────────────────────────────
+   Two tables that look alike and are not: the definitions screen lists what the
+   organization asks for, the box on a volunteer's record lists where one person
+   stands on each of them. */
+.gwcvt-credentials__actions {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.gwcvt-held td {
+	vertical-align: top;
+}
+
+.gwcvt-held__list {
+	margin: 0;
+	list-style: none;
+}
+
+.gwcvt-held__list li {
+	margin: 0 0 2px;
+	font-size: 12px;
+	color: #50575e;
+}
+
+.gwcvt-held__remove {
+	margin-left: 6px;
+}
+
+.gwcvt-record-credential {
+	margin-top: 12px;
+}
+
+.gwcvt-record-credential label {
+	margin-right: 4px;
+}
+
+.gwcvt-record-credential label + label {
+	margin-left: 12px;
 }

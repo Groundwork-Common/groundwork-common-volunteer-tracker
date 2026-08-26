@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T15:32:06+00:00\n"
+"POT-Creation-Date: 2026-08-26T17:09:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -48,6 +48,8 @@ msgstr ""
 #: inc/access.php:268
 #: inc/admin-applications.php:139
 #: inc/admin-applications.php:439
+#: inc/admin-credentials.php:126
+#: inc/admin-credentials.php:434
 #: inc/admin-dashboard.php:119
 #: inc/admin-letters.php:167
 #: inc/admin-letters.php:203
@@ -59,6 +61,7 @@ msgstr ""
 #: inc/admin-triage.php:339
 #: inc/admin-verify.php:338
 #: inc/admin-verify.php:680
+#: inc/admin-volunteer-credentials.php:379
 msgid "Permission denied"
 msgstr ""
 
@@ -101,11 +104,12 @@ msgid "What they said"
 msgstr ""
 
 #: inc/admin-applications.php:177
-#: inc/privacy.php:848
+#: inc/privacy.php:911
 msgid "Offered"
 msgstr ""
 
 #: inc/admin-applications.php:178
+#: inc/admin-credentials.php:168
 #: inc/admin-event-roster.php:414
 #: inc/admin-shift.php:577
 #: inc/admin-volunteer.php:319
@@ -157,6 +161,140 @@ msgstr ""
 
 #: inc/admin-applications.php:528
 msgid "Open their record"
+msgstr ""
+
+#: inc/admin-credentials.php:69
+#: inc/admin-volunteer-credentials.php:70
+#: inc/privacy.php:721
+msgid "Credentials"
+msgstr ""
+
+#: inc/admin-credentials.php:125
+msgid "You do not have permission to see credentials."
+msgstr ""
+
+#: inc/admin-credentials.php:148
+msgid "Things a volunteer has to hold before doing certain work — a training course, a signed waiver, a background check. You define them here and record who holds them on each volunteer’s own record."
+msgstr ""
+
+#: inc/admin-credentials.php:158
+msgid "Recording who holds what works now. Attaching credentials to shifts and events — so that a missing one is reported, or stops somebody signing up — is still being built, so nothing here refuses anybody yet."
+msgstr ""
+
+#: inc/admin-credentials.php:165
+#: inc/privacy.php:725
+msgid "Credential"
+msgstr ""
+
+#: inc/admin-credentials.php:166
+msgid "Renewed"
+msgstr ""
+
+#: inc/admin-credentials.php:167
+#: inc/admin-credentials.php:279
+msgid "If somebody has not got it"
+msgstr ""
+
+#: inc/admin-credentials.php:178
+msgid "Nothing defined yet."
+msgstr ""
+
+#: inc/admin-credentials.php:185
+msgid "Defining a credential changes what your organization asks of everybody, so it needs a site administrator. Recording that somebody holds one does not — that is on each volunteer’s record."
+msgstr ""
+
+#: inc/admin-credentials.php:208
+msgid "Retired"
+msgstr ""
+
+#. translators: %s: a number of months, already formatted.
+#: inc/admin-credentials.php:220
+#, php-format
+msgid "Every %s month"
+msgid_plural "Every %s months"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/admin-credentials.php:223
+msgid "Never expires"
+msgstr ""
+
+#: inc/admin-credentials.php:232
+msgid "Put it back"
+msgstr ""
+
+#: inc/admin-credentials.php:236
+msgid "Retire"
+msgstr ""
+
+#: inc/admin-credentials.php:256
+msgid "Add a credential"
+msgstr ""
+
+#: inc/admin-credentials.php:264
+#: inc/admin-event.php:112
+msgid "What it is"
+msgstr ""
+
+#: inc/admin-credentials.php:267
+msgid "What you would call it out loud — “Child safety class”, “Liability waiver”."
+msgstr ""
+
+#: inc/admin-credentials.php:271
+msgid "Renewed every"
+msgstr ""
+
+#: inc/admin-credentials.php:274
+msgid "months"
+msgstr ""
+
+#: inc/admin-credentials.php:275
+msgid "Zero means it never expires. Somebody who did it on the 31st of a month renews on the 31st, or on the last day of a month that is shorter."
+msgstr ""
+
+#: inc/admin-credentials.php:286
+msgid "Reporting is the safer default and the one most organizations want: you find out who is short, and decide. Stopping somebody is for the things nobody may work without."
+msgstr ""
+
+#: inc/admin-credentials.php:290
+msgid "A note"
+msgstr ""
+
+#: inc/admin-credentials.php:293
+msgid "Optional, and for staff. Where the course is booked, who countersigns the form — whatever whoever records this needs to know."
+msgstr ""
+
+#: inc/admin-credentials.php:298
+msgid "Add it"
+msgstr ""
+
+#: inc/admin-credentials.php:433
+msgid "You do not have permission to define credentials."
+msgstr ""
+
+#: inc/admin-credentials.php:471
+msgid "Give the credential a name. Nothing was added."
+msgstr ""
+
+#: inc/admin-credentials.php:472
+msgid "That could not be saved. Nothing was added."
+msgstr ""
+
+#: inc/admin-credentials.php:473
+#: inc/credentials.php:294
+msgid "That credential no longer exists."
+msgstr ""
+
+#: inc/admin-credentials.php:482
+msgid "Credential added. Record who holds it on each volunteer’s own record."
+msgstr ""
+
+#: inc/admin-credentials.php:486
+msgid "Retired. Nobody will be asked for it again, and every record of somebody holding it is kept."
+msgstr ""
+
+#: inc/admin-credentials.php:487
+msgid "Back in use."
 msgstr ""
 
 #: inc/admin-dashboard.php:104
@@ -555,7 +693,7 @@ msgstr ""
 #: inc/admin-event-roster.php:383
 #: inc/admin-schedule.php:884
 #: inc/admin-shift.php:529
-#: inc/dashboard.php:136
+#: inc/dashboard.php:137
 msgid "Log the hours"
 msgstr ""
 
@@ -564,7 +702,7 @@ msgstr ""
 #: inc/admin-event.php:105
 #: inc/admin-shift.php:573
 #: inc/admin-shift.php:1158
-#: inc/privacy.php:636
+#: inc/privacy.php:658
 msgid "Name"
 msgstr ""
 
@@ -578,13 +716,13 @@ msgstr ""
 #: inc/admin-event-roster.php:412
 #: inc/admin-event.php:459
 #: inc/admin-shift.php:575
-#: inc/privacy.php:790
+#: inc/privacy.php:853
 msgid "Signed up"
 msgstr ""
 
 #: inc/admin-event-roster.php:413
 #: inc/admin-shift.php:576
-#: inc/privacy.php:794
+#: inc/privacy.php:857
 msgid "Standing"
 msgstr ""
 
@@ -595,13 +733,13 @@ msgstr ""
 #: inc/admin-event-roster.php:423
 #: inc/admin-shift.php:463
 #: inc/admin-shift.php:586
-#: inc/privacy.php:897
+#: inc/privacy.php:960
 msgid "On the roster"
 msgstr ""
 
 #: inc/admin-event-roster.php:427
 #: inc/admin-shift.php:590
-#: inc/privacy.php:894
+#: inc/privacy.php:957
 msgid "Waiting list"
 msgstr ""
 
@@ -665,10 +803,6 @@ msgstr ""
 
 #: inc/admin-event.php:108
 msgid "What volunteers will recognize it by. \"Fall Festival\", not \"Event 3\"."
-msgstr ""
-
-#: inc/admin-event.php:112
-msgid "What it is"
 msgstr ""
 
 #: inc/admin-event.php:115
@@ -855,7 +989,7 @@ msgstr ""
 #: inc/admin-shift.php:161
 #: inc/admin-volunteer.php:315
 #: inc/cpt.php:254
-#: inc/privacy.php:699
+#: inc/privacy.php:762
 #: inc/render.php:133
 msgid "Date"
 msgstr ""
@@ -889,6 +1023,7 @@ msgstr ""
 
 #: inc/admin-event.php:460
 #: inc/admin-settings.php:665
+#: inc/admin-volunteer-credentials.php:215
 msgid "Remove"
 msgstr ""
 
@@ -1469,6 +1604,7 @@ msgstr ""
 
 #: inc/admin-letters.php:431
 #: inc/admin-triage.php:448
+#: inc/credentials.php:288
 msgid "That volunteer no longer exists."
 msgstr ""
 
@@ -1477,7 +1613,7 @@ msgid "There are no published hour entries for this volunteer in that period, so
 msgstr ""
 
 #: inc/admin-letters.php:452
-#: inc/privacy.php:648
+#: inc/privacy.php:670
 #: inc/render.php:131
 #: inc/volunteer-cpt.php:137
 msgid "Verified hours"
@@ -1494,7 +1630,7 @@ msgstr ""
 #: inc/admin-letters.php:464
 #: inc/admin-letters.php:1123
 #: inc/admin-volunteer.php:410
-#: inc/privacy.php:731
+#: inc/privacy.php:794
 msgid "Reference"
 msgstr ""
 
@@ -1736,7 +1872,7 @@ msgstr ""
 #: inc/admin-quick-add.php:473
 #: inc/admin-shift.php:197
 #: inc/meta-box.php:233
-#: inc/privacy.php:711
+#: inc/privacy.php:774
 #: inc/render.php:136
 msgid "Supervised by"
 msgstr ""
@@ -1753,7 +1889,7 @@ msgstr ""
 #: inc/admin-quick-add.php:489
 #: inc/admin-volunteer.php:316
 #: inc/cpt.php:255
-#: inc/privacy.php:703
+#: inc/privacy.php:766
 #: inc/render.php:134
 msgid "Hours"
 msgstr ""
@@ -3698,7 +3834,7 @@ msgid "Awaiting matching"
 msgstr ""
 
 #: inc/admin-verify.php:1242
-#: inc/privacy.php:715
+#: inc/privacy.php:778
 #: inc/render.php:137
 msgid "Verification"
 msgstr ""
@@ -3713,6 +3849,114 @@ msgstr ""
 
 #: inc/admin-verify.php:1296
 msgid "Verify these hours"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:89
+msgid "Save this volunteer first, then you can record what they hold."
+msgstr ""
+
+#. translators: %s: a link to the credentials screen, its text already translated.
+#: inc/admin-volunteer-credentials.php:102
+#, php-format
+msgid "Nothing is defined yet. %s — a training course, a signed waiver, a background check — and you can record who holds it here."
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:104
+msgid "Say what your organization asks volunteers to hold"
+msgstr ""
+
+#. translators: %s: a date.
+#: inc/admin-volunteer-credentials.php:150
+#, php-format
+msgid "Good until %s"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:154
+#: inc/privacy.php:741
+msgid "Does not expire"
+msgstr ""
+
+#. translators: %s: a date.
+#: inc/admin-volunteer-credentials.php:158
+#, php-format
+msgid "Lapsed %s"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:191
+msgid "Nothing recorded"
+msgstr ""
+
+#. translators: 1: a date. 2: a staff member's name.
+#: inc/admin-volunteer-credentials.php:206
+#, php-format
+msgid "%1$s, recorded by %2$s"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:238
+msgid "Held"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:239
+msgid "Lapsed"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:240
+msgid "Not recorded"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:264
+msgid "Recording that somebody holds a credential needs permission to verify hours, which your account does not have."
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:274
+msgid "Record one"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:276
+msgid "— nothing to record —"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:285
+#: inc/privacy.php:734
+msgid "Granted on"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:289
+msgid "The day they actually did it, not the day you are typing. Anything that expires counts from that date, so a class taken in March and entered in June expires in March."
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:298
+msgid "Saved when you press Update."
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:378
+msgid "You do not have permission to change credentials."
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:422
+msgid "Credential recorded."
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:423
+msgid "That record was removed."
+msgstr ""
+
+#. translators: %s: why the credential was not recorded.
+#: inc/admin-volunteer-credentials.php:436
+#, php-format
+msgid "The volunteer was saved, but the credential was not recorded: %s"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:477
+msgid "Any credential"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:478
+msgid "Has one that has lapsed"
+msgstr ""
+
+#: inc/admin-volunteer-credentials.php:503
+msgid "Filter by credential"
 msgstr ""
 
 #: inc/admin-volunteer.php:46
@@ -3749,7 +3993,7 @@ msgstr ""
 
 #: inc/admin-volunteer.php:317
 #: inc/cpt.php:256
-#: inc/privacy.php:707
+#: inc/privacy.php:770
 #: inc/render.php:135
 msgid "Activity"
 msgstr ""
@@ -3774,12 +4018,12 @@ msgid "No verification letter has been issued for this volunteer."
 msgstr ""
 
 #: inc/admin-volunteer.php:409
-#: inc/privacy.php:735
+#: inc/privacy.php:798
 msgid "Issued"
 msgstr ""
 
 #: inc/admin-volunteer.php:411
-#: inc/privacy.php:743
+#: inc/privacy.php:806
 msgid "Hours stated"
 msgstr ""
 
@@ -3914,73 +4158,129 @@ msgid "Not assigned"
 msgstr ""
 
 #: inc/cpt.php:378
-#: inc/privacy.php:632
+#: inc/privacy.php:654
 msgid "Volunteer record"
 msgstr ""
 
-#: inc/dashboard.php:130
+#: inc/credential-cpt.php:109
+msgctxt "credential status"
+msgid "Retired"
+msgstr ""
+
+#. translators: %s: how many are retired.
+#: inc/credential-cpt.php:116
+#, php-format
+msgid "Retired <span class=\"count\">(%s)</span>"
+msgid_plural "Retired <span class=\"count\">(%s)</span>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/credential-cpt.php:126
+msgctxt "post type general name"
+msgid "Credentials"
+msgstr ""
+
+#: inc/credential-cpt.php:127
+msgctxt "post type singular name"
+msgid "Credential"
+msgstr ""
+
+#: inc/credential-cpt.php:158
+msgctxt "post type general name"
+msgid "Credential records"
+msgstr ""
+
+#: inc/credential-cpt.php:159
+msgctxt "post type singular name"
+msgid "Credential record"
+msgstr ""
+
+#: inc/credential-cpt.php:195
+msgid "Report that it is missing"
+msgstr ""
+
+#: inc/credential-cpt.php:196
+msgid "Stop them signing up"
+msgstr ""
+
+#: inc/credentials.php:305
+msgid "Give the date it was granted, as a real date on or before today."
+msgstr ""
+
+#: inc/dashboard.php:131
 msgid "Write up a shift that has already happened"
 msgid_plural "Write up shifts that have already happened"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:135
+#: inc/dashboard.php:136
 msgid "Until somebody types them up, those hours are on nobody’s record and cannot reach a letter."
 msgstr ""
 
-#: inc/dashboard.php:140
+#: inc/dashboard.php:141
 msgid "Find people for a shift this week"
 msgid_plural "Find people for shifts this week"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:145
+#: inc/dashboard.php:146
 msgid "There is still time to call around. On Sunday there is nothing to be done about Saturday."
 msgstr ""
 
-#: inc/dashboard.php:146
+#: inc/dashboard.php:147
 msgid "Open the schedule"
 msgstr ""
 
-#: inc/dashboard.php:150
+#: inc/dashboard.php:151
 msgid "Check on somebody past their deadline"
 msgid_plural "Check on people past their deadline"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:155
+#: inc/dashboard.php:156
 msgid "Hours of theirs may be logged and simply not verified yet — that may be all it is. The names are on the volunteer list."
 msgstr ""
 
-#: inc/dashboard.php:156
+#: inc/dashboard.php:157
+#: inc/dashboard.php:167
 msgid "See who"
 msgstr ""
 
-#: inc/dashboard.php:160
+#: inc/dashboard.php:161
+msgid "Renew a credential that has lapsed"
+msgid_plural "Renew credentials that have lapsed"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/dashboard.php:166
+msgid "A course or a check the organization asks for has run out for somebody on your list. Recording the renewal takes them off this line."
+msgstr ""
+
+#: inc/dashboard.php:171
 msgid "Verify a shift somebody has logged"
 msgid_plural "Verify shifts somebody has logged"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:165
+#: inc/dashboard.php:176
 msgid "Only verified hours appear on a letter, so these count for nobody yet."
 msgstr ""
 
-#: inc/dashboard.php:166
+#: inc/dashboard.php:177
 msgid "Verify them"
 msgstr ""
 
-#: inc/dashboard.php:170
+#: inc/dashboard.php:181
 msgid "Match somebody who sent in hours"
 msgid_plural "Match people who sent in hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:175
+#: inc/dashboard.php:186
 msgid "What somebody typed into the public form is a claim until a person says whose it is."
 msgstr ""
 
-#: inc/dashboard.php:176
+#: inc/dashboard.php:187
 msgid "Match them"
 msgstr ""
 
@@ -4250,7 +4550,7 @@ msgid "Issued letter"
 msgstr ""
 
 #: inc/meta-box.php:47
-#: inc/privacy.php:778
+#: inc/privacy.php:841
 msgid "Shift"
 msgstr ""
 
@@ -4335,7 +4635,7 @@ msgid "Recorded as %1$s. Hours are rounded to the nearest %2$d minutes — to th
 msgstr ""
 
 #: inc/meta-box.php:515
-#: inc/privacy.php:640
+#: inc/privacy.php:662
 msgid "Email"
 msgstr ""
 
@@ -4344,7 +4644,7 @@ msgid "Where a verification letter is sent, and how the privacy tools find this 
 msgstr ""
 
 #: inc/meta-box.php:523
-#: inc/privacy.php:644
+#: inc/privacy.php:666
 msgid "Phone"
 msgstr ""
 
@@ -4389,7 +4689,7 @@ msgid "Optional. Shown as a countdown on their record and on the volunteer list.
 msgstr ""
 
 #: inc/meta-box.php:611
-#: inc/privacy.php:664
+#: inc/privacy.php:686
 msgid "Who requires it"
 msgstr ""
 
@@ -4472,123 +4772,139 @@ msgstr ""
 msgid "Former volunteer #%d"
 msgstr ""
 
-#: inc/privacy.php:607
-#: inc/privacy.php:935
+#: inc/privacy.php:629
+#: inc/privacy.php:998
 msgid "Volunteer hours"
 msgstr ""
 
-#: inc/privacy.php:652
+#: inc/privacy.php:674
 msgid "Hours awaiting verification"
 msgstr ""
 
-#: inc/privacy.php:656
+#: inc/privacy.php:678
 msgid "Hours they are required to complete"
 msgstr ""
 
-#: inc/privacy.php:660
+#: inc/privacy.php:682
 msgid "Required by"
 msgstr ""
 
-#: inc/privacy.php:676
-#: inc/privacy.php:852
+#: inc/privacy.php:698
+#: inc/privacy.php:915
 msgid "Photograph"
 msgstr ""
 
-#: inc/privacy.php:678
+#: inc/privacy.php:700
 msgid "A photograph is held on this record. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you."
 msgstr ""
 
-#: inc/privacy.php:679
-#: inc/privacy.php:857
+#: inc/privacy.php:701
+#: inc/privacy.php:920
 msgid "None held."
 msgstr ""
 
-#: inc/privacy.php:695
+#: inc/privacy.php:730
+msgid "A credential that is no longer defined"
+msgstr ""
+
+#: inc/privacy.php:738
+msgid "Good until"
+msgstr ""
+
+#: inc/privacy.php:758
 msgid "Volunteer shifts"
 msgstr ""
 
-#: inc/privacy.php:727
+#: inc/privacy.php:790
 msgid "Verification letters issued"
 msgstr ""
 
-#: inc/privacy.php:739
+#: inc/privacy.php:802
 msgid "Sent to"
 msgstr ""
 
-#: inc/privacy.php:740
+#: inc/privacy.php:803
 msgid "Printed, not emailed"
 msgstr ""
 
-#: inc/privacy.php:774
+#: inc/privacy.php:837
 msgid "Shifts signed up for"
 msgstr ""
 
-#: inc/privacy.php:782
-#: inc/privacy.php:822
+#: inc/privacy.php:845
+#: inc/privacy.php:885
 msgid "Name given"
 msgstr ""
 
-#: inc/privacy.php:786
-#: inc/privacy.php:826
+#: inc/privacy.php:849
+#: inc/privacy.php:889
 msgid "Email given"
 msgstr ""
 
-#: inc/privacy.php:818
+#: inc/privacy.php:881
 msgid "Offer to volunteer"
 msgstr ""
 
-#: inc/privacy.php:830
+#: inc/privacy.php:893
 msgid "Phone given"
 msgstr ""
 
-#: inc/privacy.php:834
+#: inc/privacy.php:897
 msgid "What they wrote"
 msgstr ""
 
-#: inc/privacy.php:838
+#: inc/privacy.php:901
 msgid "Required service they described"
 msgstr ""
 
-#: inc/privacy.php:856
+#: inc/privacy.php:919
 msgid "A photograph you sent with this offer is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you."
 msgstr ""
 
-#: inc/privacy.php:860
+#: inc/privacy.php:923
 msgid "What happened to it"
 msgstr ""
 
-#: inc/privacy.php:890
+#: inc/privacy.php:953
 msgid "Withdrawn"
 msgstr ""
 
 #. translators: %s: the reason recorded for the hold.
-#: inc/privacy.php:970
+#: inc/privacy.php:1033
 #, php-format
 msgid "This volunteer record is on a retention hold and was not erased. Reason recorded: %s"
 msgstr ""
 
-#: inc/privacy.php:973
+#: inc/privacy.php:1036
 msgid "This volunteer record is on a retention hold and was not erased. Remove the hold on their record if the erasure should go ahead."
 msgstr ""
 
 #. translators: %s: a duration, already formatted — "42.5" or "42h 30m" depending on the site's setting, so the sentence must not add a unit of its own.
-#: inc/privacy.php:995
+#: inc/privacy.php:1059
 #, php-format
 msgid "The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymized, they identify nobody, and the organization needs them for its own service reporting."
 msgstr ""
 
-#: inc/privacy.php:1005
+#: inc/privacy.php:1069
 msgid "A photograph was held on this record. The image file was deleted."
 msgstr ""
 
+#. translators: %s: a count of credential records, already formatted.
+#: inc/privacy.php:1080
+#, php-format
+msgid "%s credential record was held — a course, a waiver or a check the organization had recorded. It was deleted."
+msgid_plural "%s credential records were held — courses, waivers or checks the organization had recorded. They were deleted."
+msgstr[0] ""
+msgstr[1] ""
+
 #. translators: %s: a comma-separated list of reference codes.
-#: inc/privacy.php:1015
+#: inc/privacy.php:1097
 #, php-format
 msgid "Verification letters were previously issued for this person. Their references remain in the issued-letter log and can no longer be matched against a named record: %s"
 msgstr ""
 
 #. translators: %d: how many offers to volunteer were removed.
-#: inc/privacy.php:1054
+#: inc/privacy.php:1136
 #, php-format
 msgid "%d offer to volunteer sent through the form on the site was deleted, including anything written in it."
 msgid_plural "%d offers to volunteer sent through the form on the site were deleted, including anything written in them."
@@ -4596,7 +4912,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many shift signups were affected.
-#: inc/privacy.php:1097
+#: inc/privacy.php:1179
 #, php-format
 msgid "The name and email address given when signing up for %d shift were removed. The place on the shift itself was kept — it is the organization's record of who staffed it, and it now identifies nobody."
 msgid_plural "The name and email address given when signing up for %d shifts were removed. The places on the shifts themselves were kept — they are the organization's record of who staffed them, and they now identify nobody."
@@ -4604,7 +4920,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many shift signups were left alone.
-#: inc/privacy.php:1110
+#: inc/privacy.php:1192
 #, php-format
 msgid "%d shift signup belongs to a volunteer record on a retention hold and was not erased."
 msgid_plural "%d shift signups belong to a volunteer record on a retention hold and were not erased."

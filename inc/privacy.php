@@ -255,6 +255,19 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 		gwc_vt_retitle_entry( (int) $entry_id );
 	}
 
+	/* Credentials go with the name, and this is the one item in this list whose
+	 * reasoning is not obvious, so it is written down. The hours survive
+	 * anonymization because they are the ORGANIZATION'S record — what it asked
+	 * for and what it got. A credential is the other kind of fact: it is about
+	 * the person, and it is exactly the kind that stays sensitive after a name
+	 * is removed. "Former volunteer #412 passed a background check on this date"
+	 * is a statement about a real individual that anonymizing does not soften,
+	 * and no service record needs it once the person is gone.
+	 *
+	 * Deleted, not orphaned. These are children by post_parent and the volunteer
+	 * post survives anonymization, so nothing else would ever collect them. */
+	gwc_vt_delete_credential_records( $volunteer_id );
+
 	/* And the same again on their signups, which carry their own copy of a name
 	 * and an address typed into the public form. The shift and the place on it
 	 * survive — that is the organization's record of what it ran and who staffed
@@ -290,6 +303,15 @@ function gwc_vt_delete_volunteer( int $volunteer_id ): bool {
 	foreach ( gwc_vt_entry_ids_for_volunteer( $volunteer_id, array( 'statuses' => array( 'publish', 'pending', 'draft' ) ) ) as $entry_id ) {
 		wp_delete_post( (int) $entry_id, true );
 	}
+
+	/* Before the volunteer post goes, not after. These are children by
+	 * post_parent, and WordPress DOES NOT CASCADE: deleting a parent leaves its
+	 * children in place with a post_parent pointing at nothing. Doing it
+	 * afterwards would still work, because the ID is enough to find them, but
+	 * ordering it this way means an early return or a fatal between the two
+	 * leaves the records attached to a volunteer who still exists rather than
+	 * loose in the database with nothing to say whose they were. */
+	gwc_vt_delete_credential_records( $volunteer_id );
 
 	wp_delete_post( $volunteer_id, true );
 
@@ -681,6 +703,47 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 			),
 		);
 
+		/* Every credential this person holds or has held, one item each. Not
+		 * folded into the record above: a person who has renewed a class four
+		 * times has four separate facts held about them, and collapsing them
+		 * into one comma-separated line is a summary of the answer rather than
+		 * the answer. Not paginated either — a volunteer has a handful of these
+		 * where they may have four years of Saturdays. */
+		foreach ( gwc_vt_credential_record_ids( $volunteer_id ) as $record_id ) {
+			$record = gwc_vt_credential_record( (int) $record_id );
+
+			if ( ! $record ) {
+				continue;
+			}
+
+			$items[] = array(
+				'group_id'    => 'gwc_vt_credential',
+				'group_label' => __( 'Credentials', 'groundwork-common-volunteer-tracker' ),
+				'item_id'     => 'gwcvt-credential-' . $record['id'],
+				'data'        => array(
+					array(
+						'name'  => __( 'Credential', 'groundwork-common-volunteer-tracker' ),
+						/* The definition may have been deleted. Saying so is
+						 * more honest than an empty cell, which reads as "we
+						 * hold nothing" on a record that plainly holds one. */
+						'value' => $record['orphan']
+							? __( 'A credential that is no longer defined', 'groundwork-common-volunteer-tracker' )
+							: $record['name'],
+					),
+					array(
+						'name'  => __( 'Granted on', 'groundwork-common-volunteer-tracker' ),
+						'value' => $record['date'],
+					),
+					array(
+						'name'  => __( 'Good until', 'groundwork-common-volunteer-tracker' ),
+						'value' => '' !== $record['expires']
+							? $record['expires']
+							: __( 'Does not expire', 'groundwork-common-volunteer-tracker' ),
+					),
+				),
+			);
+		}
+
 		/* Paginated over this volunteer's shifts. An exporter that returned
 		 * everything at once is one that times out on the volunteer with four
 		 * years of Saturdays — which is exactly the person most likely to ask. */
@@ -983,8 +1046,9 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 		$letters = gwc_vt_letters_for_volunteer( $volunteer_id );
 		$totals  = gwc_vt_compute_totals( $volunteer_id );
 
-		/* Asked before the anonymize, which is what removes it. */
-		$had_photo = gwc_vt_has_photo( $volunteer_id );
+		/* Asked before the anonymize, which is what removes them. */
+		$had_photo   = gwc_vt_has_photo( $volunteer_id );
+		$credentials = count( gwc_vt_credential_record_ids( $volunteer_id ) );
 
 		if ( gwc_vt_anonymize_volunteer( $volunteer_id ) ) {
 			$removed  = true;
@@ -1003,6 +1067,24 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 			 * own line on a reply to an erasure request. */
 			if ( $had_photo ) {
 				$messages[] = __( 'A photograph was held on this record. The image file was deleted.', 'groundwork-common-volunteer-tracker' );
+			}
+
+			/* Its own line for the same reason, and one more: unlike the hours,
+			 * a credential is not something the organization can decide to keep.
+			 * Saying how many went tells the administrator what the volunteer
+			 * will have to produce again if they ever come back — which is a
+			 * real consequence of the erasure and not a hidden one. */
+			if ( $credentials > 0 ) {
+				$messages[] = sprintf(
+					/* translators: %s: a count of credential records, already formatted. */
+					_n(
+						'%s credential record was held — a course, a waiver or a check the organization had recorded. It was deleted.',
+						'%s credential records were held — courses, waivers or checks the organization had recorded. They were deleted.',
+						$credentials,
+						'groundwork-common-volunteer-tracker'
+					),
+					number_format_i18n( $credentials )
+				);
 			}
 
 			/* Naming the affected letters, because silently destroying the record

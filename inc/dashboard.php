@@ -78,6 +78,7 @@ function gwc_vt_dashboard_counts(): array {
 		'unreconciled' => count( gwc_vt_unreconciled_shift_ids( 20 ) ),
 		'understaffed' => count( gwc_vt_understaffed_shift_ids( 7 ) ),
 		'overdue'      => count( gwc_vt_overdue_requirement_ids() ),
+		'lapsed'       => count( gwc_vt_lapsed_credential_ids() ),
 		'unverified'   => gwc_vt_unverified_count(),
 		'unmatched'    => gwc_vt_unmatched_count(),
 	);
@@ -153,6 +154,16 @@ function gwc_vt_dashboard_items( array $counts ): array {
 				'groundwork-common-volunteer-tracker'
 			),
 			'why'      => __( 'Hours of theirs may be logged and simply not verified yet — that may be all it is. The names are on the volunteer list.', 'groundwork-common-volunteer-tracker' ),
+			'action'   => __( 'See who', 'groundwork-common-volunteer-tracker' ),
+		),
+		'lapsed'       => array(
+			'severity' => 'waiting',
+			'what'     => _n_noop(
+				'Renew a credential that has lapsed',
+				'Renew credentials that have lapsed',
+				'groundwork-common-volunteer-tracker'
+			),
+			'why'      => __( 'A course or a check the organization asks for has run out for somebody on your list. Recording the renewal takes them off this line.', 'groundwork-common-volunteer-tracker' ),
 			'action'   => __( 'See who', 'groundwork-common-volunteer-tracker' ),
 		),
 		'unverified'   => array(
@@ -261,6 +272,21 @@ function gwc_vt_dashboard_item_url( string $key ): string {
 				array(
 					'post_type'          => GWC_VT_VOLUNTEER_TYPE,
 					'gwc_vt_requirement' => 'overdue',
+				),
+				admin_url( 'edit.php' )
+			);
+
+		case 'lapsed':
+			/* Filtered by the same function that produced the count, which is
+			 * the rule this plugin has about a number and the screen it links
+			 * to. Spelled out rather than referenced through
+			 * GWC_VT_CREDENTIAL_FILTER for the reason the requirement filter
+			 * above is: that constant lives in the admin bundle, and this file
+			 * is loaded for cron and WP-CLI too. */
+			return add_query_arg(
+				array(
+					'post_type'         => GWC_VT_VOLUNTEER_TYPE,
+					'gwc_vt_credential' => 'lapsed',
 				),
 				admin_url( 'edit.php' )
 			);
