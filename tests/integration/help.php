@@ -142,12 +142,47 @@ gwc_vt_help_check(
 	implode( ', ', $gwc_vt_help_thin )
 );
 
-echo "\n── The page carries the same text, and never a second copy ──────\n";
+echo "\n── Every help tab points at the guide ───────────────────────────\n";
 
-/* The page is a second RENDERING of the tabs, not a second copy of the words.
- * If it ever grows its own text, the two drift and the one nobody edited is
- * the one somebody reads — so this asserts the page's content comes from the
- * screens rather than from itself. */
+/* The tab is where WordPress trained people to look; the guide is where the
+ * how-tos are. Without a link between them the only route is knowing the page
+ * exists — which is the thing that made somebody ask where the help was. */
+$GLOBALS['gwc_vt_help_unlinked'] = array();
+
+foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {
+	set_current_screen( (string) $gwc_vt_help_id );
+
+	$gwc_vt_help_screen = get_current_screen();
+
+	foreach ( array_keys( $gwc_vt_help_screen->get_help_tabs() ) as $gwc_vt_help_old ) {
+		$gwc_vt_help_screen->remove_help_tab( $gwc_vt_help_old );
+	}
+
+	$gwc_vt_help_screen->set_help_sidebar( '' );
+
+	do_action( 'current_screen', $gwc_vt_help_screen );
+
+	if ( false !== strpos( (string) $gwc_vt_help_id, GWC_VT_SETTINGS_PAGE ) ) {
+		do_action( 'gwc_vt_settings_screen_loaded' );
+	}
+
+	if ( false === strpos( (string) $gwc_vt_help_screen->get_help_sidebar(), GWC_VT_HELP_PAGE ) ) {
+		$GLOBALS['gwc_vt_help_unlinked'][] = (string) $gwc_vt_help_what;
+	}
+}
+
+gwc_vt_help_check(
+	'every screen with help links to the guide',
+	array() === $GLOBALS['gwc_vt_help_unlinked'],
+	implode( ', ', $GLOBALS['gwc_vt_help_unlinked'] )
+);
+
+echo "\n── The page is a how-to guide ───────────────────────────────────\n";
+
+/* It used to be a rendering of the Help tabs, and this section asserted every
+ * tab appeared on it. That is no longer true and should not be: the tabs answer
+ * "what does this mean" and the page answers "how do I". Two documents, and the
+ * guard below is about whether the guide is a guide. */
 wp_set_current_user( 1 );
 require_once ABSPATH . 'wp-admin/includes/screen.php';
 
@@ -161,57 +196,153 @@ gwc_vt_help_check(
 	'' === trim( $GLOBALS['gwc_vt_help_html'] ) ? 'drew nothing' : strlen( $GLOBALS['gwc_vt_help_html'] ) . ' bytes'
 );
 
-$GLOBALS['gwc_vt_help_expected'] = 0;
-$GLOBALS['gwc_vt_help_absent']   = array();
+$GLOBALS['gwc_vt_help_topics']   = gwc_vt_help_topics();
+$GLOBALS['gwc_vt_help_taskless'] = array();
+$GLOBALS['gwc_vt_help_short']    = array();
+$GLOBALS['gwc_vt_help_missing']  = array();
 
-foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {
-	foreach ( gwc_vt_help_tabs_for_screen( (string) $gwc_vt_help_id ) as $gwc_vt_help_tab ) {
-		++$GLOBALS['gwc_vt_help_expected'];
+foreach ( $GLOBALS['gwc_vt_help_topics'] as $gwc_vt_help_topic ) {
+	if ( ! $gwc_vt_help_topic['tasks'] ) {
+		$GLOBALS['gwc_vt_help_taskless'][] = $gwc_vt_help_topic['id'];
+	}
 
-		/* The tab's title, and the first words of its body — enough that a page
-		 * printing headings with somebody else's text under them fails. */
-		$gwc_vt_help_body = wp_strip_all_tags( (string) ( $gwc_vt_help_tab['content'] ?? '' ) );
-		$gwc_vt_help_open = trim( substr( $gwc_vt_help_body, 0, 40 ) );
+	foreach ( $gwc_vt_help_topic['tasks'] as $gwc_vt_help_task ) {
+		/* Two steps is not a procedure — it is a sentence wearing a number,
+		 * and usually means the task was not thought through. */
+		if ( count( (array) $gwc_vt_help_task['steps'] ) < 3 ) {
+			$GLOBALS['gwc_vt_help_short'][] = (string) $gwc_vt_help_task['title'];
+		}
 
-		if ( false === strpos( $GLOBALS['gwc_vt_help_html'], (string) ( $gwc_vt_help_tab['title'] ?? '' ) )
-			|| ( '' !== $gwc_vt_help_open && false === strpos( wp_strip_all_tags( $GLOBALS['gwc_vt_help_html'] ), $gwc_vt_help_open ) ) ) {
-			$GLOBALS['gwc_vt_help_absent'][] = $gwc_vt_help_what . '/' . (string) ( $gwc_vt_help_tab['id'] ?? '?' );
+		if ( false === strpos( $GLOBALS['gwc_vt_help_html'], (string) $gwc_vt_help_task['title'] ) ) {
+			$GLOBALS['gwc_vt_help_missing'][] = (string) $gwc_vt_help_task['title'];
 		}
 	}
 }
 
-gwc_vt_help_check(
-	'every tab on every screen appears on the page',
-	array() === $GLOBALS['gwc_vt_help_absent'],
-	implode( ', ', $GLOBALS['gwc_vt_help_absent'] )
-);
+/* A LITERAL list, not one read back out of gwc_vt_help_topics().
+ *
+ * Everything else in this section derives its expectation from that function —
+ * which is the function a change would break, so deleting a whole topic moved
+ * the expectation with it and passed. This is the forcing function: removing a
+ * topic fails here, and adding one fails until somebody comes and says the
+ * guide now covers it. The same shape as DashboardTest's worklist fixture, and
+ * for the same reason. */
+$GLOBALS['gwc_vt_help_ids'] = array();
+
+foreach ( $GLOBALS['gwc_vt_help_topics'] as $gwc_vt_help_topic ) {
+	$GLOBALS['gwc_vt_help_ids'][] = (string) $gwc_vt_help_topic['id'];
+}
+
+sort( $GLOBALS['gwc_vt_help_ids'] );
 
 gwc_vt_help_check(
-	'and the page has a heading for each screen',
-	substr_count( $GLOBALS['gwc_vt_help_html'], '<h2 id=' ) === count( $GLOBALS['gwc_vt_help_screens'] ),
-	substr_count( $GLOBALS['gwc_vt_help_html'], '<h2 id=' ) . ' of ' . count( $GLOBALS['gwc_vt_help_screens'] )
+	'the guide covers every part of the plugin it is meant to',
+	array( 'credentials', 'hours', 'letters', 'public', 'schedule', 'start' ) === $GLOBALS['gwc_vt_help_ids'],
+	implode( ', ', $GLOBALS['gwc_vt_help_ids'] )
 );
+
+gwc_vt_help_check( 'every topic has at least one how-to', array() === $GLOBALS['gwc_vt_help_taskless'], implode( ', ', $GLOBALS['gwc_vt_help_taskless'] ) );
+gwc_vt_help_check( 'every how-to has three steps or more', array() === $GLOBALS['gwc_vt_help_short'], implode( ', ', $GLOBALS['gwc_vt_help_short'] ) );
+gwc_vt_help_check( 'every how-to reaches the page', array() === $GLOBALS['gwc_vt_help_missing'], implode( ', ', $GLOBALS['gwc_vt_help_missing'] ) );
 
 gwc_vt_help_check(
-	'with a contents entry for every one of them',
-	substr_count( $GLOBALS['gwc_vt_help_html'], '<li><a href="#' ) === substr_count( $GLOBALS['gwc_vt_help_html'], '<h2 id=' ),
-	substr_count( $GLOBALS['gwc_vt_help_html'], '<li><a href="#' ) . ' link(s)'
+	'the steps are numbered lists, not prose',
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<ol>' ) === substr_count( $GLOBALS['gwc_vt_help_html'], '<h3>' ),
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<ol>' ) . ' list(s) for ' . substr_count( $GLOBALS['gwc_vt_help_html'], '<h3>' ) . ' how-to(s)'
 );
 
-/* Reading the page must not change the screen the reader is on — the whole
- * reason it uses WP_Screen::get() rather than set_current_screen(). */
-set_current_screen( 'edit-post' );
-$GLOBALS['gwc_vt_help_before'] = get_current_screen()->id;
+/* ── The house style it says it is written in ────────────────────────────────
+ * The Microsoft Writing Style Guide, which this repository does not otherwise
+ * use. Asserted rather than trusted: a guide drifts one contributed paragraph
+ * at a time, and "click" is the word everybody reaches for. */
+$GLOBALS['gwc_vt_help_prose'] = wp_strip_all_tags( $GLOBALS['gwc_vt_help_html'] );
 
-ob_start();
-gwc_vt_render_help_page();
-ob_end_clean();
+foreach ( array( 'click', 'please', 'simply', 'just ', 'easy', 'in order to' ) as $gwc_vt_help_banned ) {
+	gwc_vt_help_check(
+		'the guide avoids "' . trim( $gwc_vt_help_banned ) . '"',
+		false === stripos( $GLOBALS['gwc_vt_help_prose'], $gwc_vt_help_banned )
+	);
+}
 
 gwc_vt_help_check(
-	'and rendering it does not move the current screen',
-	$GLOBALS['gwc_vt_help_before'] === get_current_screen()->id,
-	$GLOBALS['gwc_vt_help_before'] . ' became ' . get_current_screen()->id
+	'and uses "Select" for what a reader does to a control',
+	substr_count( $GLOBALS['gwc_vt_help_prose'], 'Select ' ) > 10,
+	substr_count( $GLOBALS['gwc_vt_help_prose'], 'Select ' ) . ' occurrence(s)'
 );
+
+echo "\n── Anybody who can log in may read the page ─────────────────────\n";
+
+/* Every other screen in the plugin is behind the records capability, because
+ * every other screen shows somebody else's record. This one shows none — the
+ * tabs are static strings with nothing interpolated — so gating it on the
+ * capability to ACT would mean somebody deciding whether to ask for access
+ * cannot read what they would be asking for. */
+require_once ABSPATH . 'wp-admin/includes/user.php';
+
+foreach ( array( 'subscriber', 'contributor', 'author', 'editor' ) as $gwc_vt_help_role ) {
+	$gwc_vt_help_user = wp_insert_user(
+		array(
+			'user_login' => 'zzhelp_' . $gwc_vt_help_role,
+			'user_pass'  => wp_generate_password( 20, true ),
+			'role'       => $gwc_vt_help_role,
+		)
+	);
+
+	if ( is_wp_error( $gwc_vt_help_user ) ) {
+		continue;
+	}
+
+	wp_set_current_user( (int) $gwc_vt_help_user );
+
+	ob_start();
+	gwc_vt_render_help_page();
+	$gwc_vt_help_seen = (string) ob_get_clean();
+
+	gwc_vt_help_check(
+		( in_array( substr( $gwc_vt_help_role, 0, 1 ), array( 'a', 'e', 'i', 'o', 'u' ), true ) ? 'an ' : 'a ' ) . $gwc_vt_help_role . ' can read the help page',
+		substr_count( $gwc_vt_help_seen, '<h2 id=' ) === count( $GLOBALS['gwc_vt_help_topics'] ),
+		substr_count( $gwc_vt_help_seen, '<h2 id=' ) . ' of ' . count( $GLOBALS['gwc_vt_help_topics'] ) . ' topics'
+	);
+
+	wp_set_current_user( 1 );
+	wp_delete_user( (int) $gwc_vt_help_user );
+}
+
+/* The guide is the SAME for every reader, and that is the change from when
+ * this page rendered the tabs. Then it was personalised — a subscriber got 31
+ * tabs where an administrator got 32, because one tab is gated on a
+ * capability. A how-to guide should not be: somebody reading to find out what
+ * the plugin does, or what they would be asking for access to, needs all of
+ * it. Asserted so the difference is deliberate rather than drift. */
+$gwc_vt_help_reader = wp_insert_user(
+	array(
+		'user_login' => 'zzhelp_reader',
+		'user_pass'  => wp_generate_password( 20, true ),
+		'role'       => 'subscriber',
+	)
+);
+
+if ( ! is_wp_error( $gwc_vt_help_reader ) ) {
+	wp_set_current_user( (int) $gwc_vt_help_reader );
+
+	ob_start();
+	gwc_vt_render_help_page();
+	$gwc_vt_help_thin_page = (string) ob_get_clean();
+
+	wp_set_current_user( 1 );
+
+	ob_start();
+	gwc_vt_render_help_page();
+	$gwc_vt_help_full_page = (string) ob_get_clean();
+
+	gwc_vt_help_check(
+		'a subscriber reads exactly what an administrator reads',
+		$gwc_vt_help_thin_page === $gwc_vt_help_full_page,
+		substr_count( $gwc_vt_help_thin_page, '<h3>' ) . ' vs ' . substr_count( $gwc_vt_help_full_page, '<h3>' ) . ' how-tos'
+	);
+
+	wp_delete_user( (int) $gwc_vt_help_reader );
+}
 
 echo "\n── A screen that is not ours is left alone ──────────────────────\n";
 

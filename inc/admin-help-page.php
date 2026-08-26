@@ -17,16 +17,40 @@
  * explains. The page exists because a menu item is findable, and because
  * somebody reading before they start has nowhere to sit down otherwise.
  *
- * ── Why this is not a copy of the text ───────────────────────────────────────
- * Not one word of help lives in this file. It asks each screen what its Help
- * tab would say and prints the answers — the same functions, the same routing,
- * the same strings. Two copies of thirty-three tabs would drift within a
- * release, and the one nobody edited would be the one somebody read.
+ * ── Why `read` and not the capability every other screen uses ────────────────
+ * Every screen in this plugin is behind gwc_vt_records_cap(), because every one
+ * of them shows somebody else's record. This page shows none — it is a guide to
+ * the software, with no site data in it at all.
  *
- * The mechanism is WP_Screen::get(), which builds a screen object WITHOUT
- * making it current. set_current_screen() would have been simpler and would
- * have replaced the screen this page is being rendered on halfway through
- * rendering it.
+ * Gating documentation on the capability to act would mean somebody deciding
+ * whether to ask for access cannot read what they would be asking for, and
+ * somebody who has just lost access cannot read why the screens went.
+ *
+ * `read` is what WordPress gives everybody who can log in at all, subscribers
+ * included.
+ *
+ * ── Why it is not a rendering of the Help tabs ──────────────────────────────
+ * It was, briefly, and that was the wrong document. The tabs answer "what does
+ * this mean" — what verifying IS, why a letter cannot be emailed. Conceptual,
+ * read once, and rightly beside the thing they explain. Somebody who has never
+ * opened the plugin needs "how do I", in order, with the steps numbered, and
+ * cannot get that from thirteen conceptual tabs however well written.
+ *
+ * So the tabs stay where they are and this carries its own document, written to
+ * the Microsoft Writing Style Guide. inc/help-content.php holds it as data and
+ * explains the conventions; this file is the loop that prints it.
+ *
+ * The two are not duplicates and must not become each other: if a how-to here
+ * starts explaining what a credential IS, it belongs in the tab, and if a tab
+ * starts listing steps, they belong here.
+ *
+ * So the tabs stay where they are and this carries its own document, written to
+ * the Microsoft Writing Style Guide. inc/help-content.php holds it as data and
+ * explains the conventions; this file is the loop that prints it.
+ *
+ * The two are not duplicates and must not become each other: if a how-to here
+ * starts explaining what a credential IS, it belongs in the tab, and if a tab
+ * starts listing steps, they belong here.
  *
  * @package VolunteerTracker
  */
@@ -121,7 +145,7 @@ function gwc_vt_register_help_page(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_help_page_title(),
 		gwc_vt_help_page_title(),
-		gwc_vt_records_cap(),
+		'read',
 		GWC_VT_HELP_PAGE,
 		'gwc_vt_render_help_page'
 	);
@@ -156,7 +180,7 @@ function gwc_vt_restore_help_title(): void {
  * The page.
  */
 function gwc_vt_render_help_page(): void {
-	if ( ! gwc_vt_can_see_records() ) {
+	if ( ! current_user_can( 'read' ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
@@ -164,50 +188,56 @@ function gwc_vt_render_help_page(): void {
 		);
 	}
 
-	$screens = gwc_vt_help_screens();
+	$topics = gwc_vt_help_topics();
 	?>
 	<div class="wrap gwcvt-wrap gwcvt-help">
 		<h1><?php echo esc_html( gwc_vt_help_page_title() ); ?></h1>
 
-		<p class="description">
-			<?php esc_html_e( 'Everything here also appears in the Help tab at the top right of the screen it is about, where it sits beside the thing it explains. This is the same text in one place, for reading before you start.', 'groundwork-common-volunteer-tracker' ); ?>
+		<p class="description gwcvt-help__lede">
+			<?php esc_html_e( 'How to do the things this plugin is for. Every screen also has a Help tab at the top right, which explains what the screen means rather than how to use it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
-		<?php
-		/* A list of links to the sections below. On a page this long the
-		 * alternative is scrolling past nine screens to reach the tenth. */
-		?>
 		<ul class="gwcvt-help__contents">
-			<?php foreach ( $screens as $label => $screen_id ) : ?>
-				<li><a href="#<?php echo esc_attr( gwc_vt_help_anchor( (string) $screen_id ) ); ?>"><?php echo esc_html( $label ); ?></a></li>
+			<?php foreach ( $topics as $topic ) : ?>
+				<li><a href="#gwcvt-help-<?php echo esc_attr( $topic['id'] ); ?>"><?php echo esc_html( $topic['title'] ); ?></a></li>
 			<?php endforeach; ?>
 		</ul>
 
-		<?php foreach ( $screens as $label => $screen_id ) : ?>
-			<?php $tabs = gwc_vt_help_tabs_for_screen( (string) $screen_id ); ?>
-			<?php if ( ! $tabs ) : ?>
-				<?php continue; ?>
+		<?php foreach ( $topics as $topic ) : ?>
+			<h2 id="gwcvt-help-<?php echo esc_attr( $topic['id'] ); ?>"><?php echo esc_html( $topic['title'] ); ?></h2>
+
+			<?php if ( '' !== (string) ( $topic['intro'] ?? '' ) ) : ?>
+				<p class="gwcvt-help__intro"><?php echo esc_html( (string) $topic['intro'] ); ?></p>
 			<?php endif; ?>
 
-			<h2 id="<?php echo esc_attr( gwc_vt_help_anchor( (string) $screen_id ) ); ?>"><?php echo esc_html( $label ); ?></h2>
+			<?php foreach ( (array) ( $topic['tasks'] ?? array() ) as $task ) : ?>
+				<div class="gwcvt-help__task">
+					<h3><?php echo esc_html( (string) ( $task['title'] ?? '' ) ); ?></h3>
 
-			<?php foreach ( $tabs as $tab ) : ?>
-				<h3><?php echo esc_html( (string) ( $tab['title'] ?? '' ) ); ?></h3>
+					<ol>
+						<?php foreach ( (array) ( $task['steps'] ?? array() ) as $step ) : ?>
+							<li>
+								<?php
+								/* Bold marks the words that appear on screen, which is
+								 * the one piece of markup a step needs and the reason
+								 * these are not plain strings. */
+								echo wp_kses(
+									(string) $step,
+									array(
+										'strong' => array(),
+										'em'     => array(),
+										'code'   => array(),
+									)
+								);
+								?>
+							</li>
+						<?php endforeach; ?>
+					</ol>
 
-				<?php
-				/* The tab's own body, already assembled and escaped by
-				 * gwc_vt_add_help_tab() — which wp_kses()es every paragraph to
-				 * strong, em and code before it ever reaches a screen. */
-				echo wp_kses(
-					(string) ( $tab['content'] ?? '' ),
-					array(
-						'p'      => array(),
-						'strong' => array(),
-						'em'     => array(),
-						'code'   => array(),
-					)
-				);
-				?>
+					<?php if ( '' !== (string) ( $task['note'] ?? '' ) ) : ?>
+						<p class="gwcvt-help__note"><?php echo esc_html( (string) $task['note'] ); ?></p>
+					<?php endif; ?>
+				</div>
 			<?php endforeach; ?>
 		<?php endforeach; ?>
 	</div>
@@ -215,7 +245,25 @@ function gwc_vt_render_help_page(): void {
 }
 
 /**
+ * Where the how-to guide lives.
+ *
+ * @return string
+ */
+function gwc_vt_help_page_url(): string {
+	return add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_HELP_PAGE,
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/**
  * A stable anchor for one screen's section.
+ *
+ * Kept for tests/integration/help.php, which still walks every screen to check
+ * each one has a Help tab — that guard outlived the page rendering from it.
  *
  * @param string $screen_id A WP_Screen id.
  * @return string

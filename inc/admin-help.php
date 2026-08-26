@@ -60,8 +60,25 @@ function gwc_vt_add_help_tab( $screen, string $id, string $title, array $paragra
  * @param WP_Screen $screen The screen.
  */
 function gwc_vt_add_help_sidebar( $screen ): void {
+	/* The guide first, and named for what it contains rather than "Help" —
+	 * somebody is already reading help, so a link called Help is a link to
+	 * where they are. What they might want is the thing these tabs are not:
+	 * steps, in order, for a task.
+	 *
+	 * This is the whole reason the page is findable at all. The tab is where
+	 * WordPress trained people to look; the page is where the how-tos are; and
+	 * without this line the only route between them is knowing it exists.
+	 *
+	 * function_exists() because inc/admin-help-page.php is required after this
+	 * file — and because a site that has somehow loaded one without the other
+	 * should lose a link, not fatal on every admin screen. */
+	$guide = function_exists( 'gwc_vt_help_page_url' )
+		? '<p><a href="' . esc_url( gwc_vt_help_page_url() ) . '">' . esc_html__( 'How-to guide', 'groundwork-common-volunteer-tracker' ) . '</a></p>'
+		: '';
+
 	$screen->set_help_sidebar(
 		'<p><strong>' . esc_html__( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ) . '</strong></p>' .
+		$guide .
 		'<p><a href="' . esc_url( gwc_vt_settings_url() ) . '">' . esc_html__( 'Settings', 'groundwork-common-volunteer-tracker' ) . '</a></p>' .
 		'<p><a href="' . esc_url( GWC_VT_SUPPORT_URL ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Report a problem', 'groundwork-common-volunteer-tracker' ) . '</a></p>'
 	);
