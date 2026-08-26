@@ -2025,3 +2025,58 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	background: #fcf9e8;
 	color: #614200;
 }
+
+/* ─── The day of an event ───────────────────────────────────────────────────
+   Two figures and the two things somebody does with the whole event. The second
+   figure is what the day turns on: a four-time event is four separate acts of
+   logging, and without it the only way to know where you are is to scroll and
+   count green badges.
+
+   Amber while any finished time is still unwritten, green when none is. The
+   words say the same either way — the colour is reinforcement, as everywhere
+   else in this file. */
+.gwcvt-event-progress {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 20px;
+	max-width: 60em;
+	margin: 0 0 16px;
+	padding: 12px 16px;
+	background: #fff;
+	color: #3c434a;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	border-left-width: 4px;
+	border-left-color: #00a32a;
+}
+
+.gwcvt-event-progress--waiting {
+	border-left-color: #dba617;
+}
+
+.gwcvt-event-progress strong {
+	font-size: 18px;
+	font-variant-numeric: tabular-nums;
+}
+
+.gwcvt-event-progress--clear strong {
+	color: #00733c;
+}
+
+.gwcvt-event-progress--waiting strong {
+	color: #614200;
+}
+
+/* The two buttons sit at the far end, away from the figures they are not
+   about. */
+.gwcvt-event-progress__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-left: auto;
+}
+
+.gwcvt-event-progress__actions strong {
+	font-size: inherit;
+}

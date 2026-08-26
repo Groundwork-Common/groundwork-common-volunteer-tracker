@@ -348,10 +348,6 @@ function gwc_vt_render_quick_add_row( int $index, bool $walk_in = false ): void 
  * @param int $shift_id Shift post ID.
  */
 function gwc_vt_render_shift_log_screen( int $shift_id ): void {
-	$vocabulary = gwc_vt_activity_vocabulary();
-	$roster     = gwc_vt_shift_signup_ids( $shift_id );
-	$ended      = gwc_vt_shift_has_ended( $shift_id );
-	$logged_at  = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_RECONCILED, true );
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1><?php esc_html_e( 'Log the hours for this shift', 'groundwork-common-volunteer-tracker' ); ?></h1>
@@ -366,6 +362,37 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 
 		<h2><?php echo esc_html( get_the_title( $shift_id ) ); ?></h2>
 
+		<?php gwc_vt_render_shift_log_form( $shift_id ); ?>
+	</div>
+	<?php
+}
+
+/* ── The form, without the screen around it ──────────────────────────────────
+ * Split out so an event's roster can put it under the time it belongs to. The
+ * day of a four-time event used to be eight screens: read the roster, go to the
+ * log screen, come back, find the next time, and again. This is the same form,
+ * the same handler and the same rules — relocated, not rewritten — so there is
+ * no second write path to keep in step with the first.
+ *
+ * The guards come with it, and that is the point of moving the whole thing
+ * rather than just the table: the refusal to log a shift that has not finished,
+ * and the notice about a shift already logged, are the two things a coordinator
+ * most needs on the screen where they are typing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The log-a-shift form.
+ *
+ * @param int $shift_id   Shift post ID.
+ * @param int $back_event Event to return to after saving, or 0 for the usual place.
+ */
+function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): void {
+	$vocabulary = gwc_vt_activity_vocabulary();
+	$roster     = gwc_vt_shift_signup_ids( $shift_id );
+	$ended      = gwc_vt_shift_has_ended( $shift_id );
+	$logged_at  = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_RECONCILED, true );
+
+	?>
 		<?php
 		/* ── Not yet ────────────────────────────────────────────────────────
 		 * Refused rather than allowed-with-a-warning, and the reason is the one
@@ -381,7 +408,6 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 					<strong><?php esc_html_e( 'This shift has not finished yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
 					<?php esc_html_e( 'Hours can be logged once it has. Recording them early would date them the day you typed them rather than the day they were worked, and that date is what a letter prints.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
-			</div>
 			</div>
 			<?php
 			return;
@@ -407,6 +433,17 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 			<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
 			<input type="hidden" name="gwc_vt_date" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ) ); ?>" />
 			<?php wp_nonce_field( 'gwc_vt_quick_add' ); ?>
+
+			<?php
+			/* An event ID rather than a URL. A URL in a form field is an open
+			 * redirect waiting to be found, and wp_safe_redirect() only catches
+			 * the off-site half of it — the redirect rebuilds a roster URL from
+			 * this instead. Same reasoning as the drawer's return in
+			 * inc/admin-shift.php. */
+			?>
+			<?php if ( $back_event > 0 ) : ?>
+				<input type="hidden" name="gwc_vt_back_event" value="<?php echo esc_attr( (string) $back_event ); ?>" />
+			<?php endif; ?>
 
 			<table class="form-table" role="presentation">
 				<tbody>
@@ -479,7 +516,6 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 
 			<?php submit_button( __( 'Log these hours', 'groundwork-common-volunteer-tracker' ) ); ?>
 		</form>
-	</div>
 	<?php
 }
 
@@ -826,6 +862,27 @@ function gwc_vt_quick_add_redirect( int $made, int $skipped, string $result, int
 	if ( $shift_id > 0 ) {
 		$args['gwc_vt_shift']    = $shift_id;
 		$args['gwc_vt_no_shows'] = $no_shows;
+	}
+
+	/* Somebody logging a time from an event's roster wanted to stay there: the
+	 * next time is on the same screen, and sending them to the standalone log
+	 * page is the round trip that made a four-time event eight of them.
+	 *
+	 * Rebuilt from an ID rather than from a URL the form carried — see the note
+	 * on the hidden field in gwc_vt_render_shift_log_form(). */
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- gwc_vt_handle_quick_add() checked its nonce before this runs; this only decides which screen to land on.
+	$back_event = isset( $_POST['gwc_vt_back_event'] ) ? absint( wp_unslash( $_POST['gwc_vt_back_event'] ) ) : 0;
+
+	if ( $back_event > 0 && GWC_VT_EVENT_TYPE === get_post_type( $back_event ) ) {
+		unset( $args['page'], $args['gwc_vt_shift'] );
+
+		wp_safe_redirect(
+			add_query_arg(
+				$args,
+				gwc_vt_event_roster_url( $back_event )
+			)
+		);
+		exit;
 	}
 
 	wp_safe_redirect( add_query_arg( $args, admin_url( 'edit.php' ) ) );

@@ -532,7 +532,7 @@ function gwc_vt_render_verify_row( int $entry_id ): void {
 				<span class="gwcvt-verify__by">
 					<?php
 					printf(
-						/* translators: %s: a member of staff's name. */
+						/* translators: %s: a staff member's name. */
 						esc_html__( 'Supervised by %s', 'groundwork-common-volunteer-tracker' ),
 						esc_html( $supervisor )
 					);
