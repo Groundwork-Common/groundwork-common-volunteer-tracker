@@ -584,7 +584,22 @@ function gwc_vt_seed_signup( int $shift_id, array $args ): int {
 $gwc_vt_saturday = gmdate( 'Y-m-d', strtotime( 'saturday this week', strtotime( gwc_vt_today() ) ) );
 $gwc_vt_next_sat = gmdate( 'Y-m-d', strtotime( $gwc_vt_saturday . ' +7 days' ) );
 $gwc_vt_last_sat = gmdate( 'Y-m-d', strtotime( $gwc_vt_saturday . ' -7 days' ) );
-$gwc_vt_midweek  = gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +3 days' ) );
+/* Two days out, and never the same day as that Saturday.
+ *
+ * This was "+3 days", which lands ON the Saturday whenever the seed is run on a
+ * Wednesday — putting every shift in the coming week onto a single date. It
+ * looked fine for a year: the schedule screen shows a fortnight and did not
+ * care, and the variable is called midweek, so nobody read it as a collision.
+ *
+ * What noticed was the dashboard widget, which shows the next two DAYS that
+ * have anything on them and could only ever find one. A fixture that cannot
+ * demonstrate the thing it is a fixture for is worse than no fixture: it makes
+ * a working feature look broken. */
+$gwc_vt_midweek = gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +2 days' ) );
+
+if ( $gwc_vt_midweek === $gwc_vt_saturday ) {
+	$gwc_vt_midweek = gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +1 day' ) );
+}
 
 /* Short of people, and soon. The row the whole screen exists to surface. */
 $gwc_vt_short = gwc_vt_seed_shift(
@@ -1140,6 +1155,7 @@ printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count(
 printf( "  %-22s %s\n", 'Credentials', count( gwc_vt_live_credential_ids() ) . ' asked for, 1 retired — ' . count( gwc_vt_lapsed_credential_ids() ) . ' volunteer with one that has lapsed' );
 printf( "  %-22s %s\n", 'Asked for on the day', 'a waiver across Thanksgiving, a food handler card in the kitchen' );
 printf( "  %-22s %s\n", 'Flagged this Saturday', 'one of the two people on it is short of the food handler card' );
+printf( "  %-22s %s\n", 'Front desk', gwc_vt_shift_date_label_from( $gwc_vt_midweek ) . ' — a different day, so the widget has two to show' );
 printf( "  %-22s %s\n", 'Next Saturday', 'asks for the waiver, which blocks — signed-in volunteers only' );
 printf( "  %-22s %s\n", 'One override on it', 'Tomás, put on anyway, with the reason recorded' );
 printf( "  %-22s %s\n", 'Awaiting verification', gwc_vt_unverified_count() );
