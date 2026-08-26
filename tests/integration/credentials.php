@@ -345,6 +345,125 @@ gwc_vt_cr_check(
 
 $GLOBALS['gwc_vt_cr_made'][] = $gwc_vt_cr_di_r;
 
+echo "\n── 8b. Who holds one, asked the other way round ─────────────────\n";
+
+/* The inverse of everything above: not "what does this person hold" but "who
+ * has a food handler card". Ada holds the waiver (never expires), the class
+ * (lapsed at -13 months, renewed at -2 months) and the retired thing. */
+$gwc_vt_cr_holders = gwc_vt_credential_holder_ids( $gwc_vt_cr_waiver );
+
+gwc_vt_cr_check(
+	'somebody who holds it is listed',
+	in_array( $gwc_vt_cr_ada, $gwc_vt_cr_holders, true ),
+	implode( ',', $gwc_vt_cr_holders )
+);
+
+gwc_vt_cr_check(
+	'and somebody who has never held it is not',
+	! in_array( $gwc_vt_cr_bo, gwc_vt_credential_holder_ids( $gwc_vt_cr_waiver ), true )
+);
+
+/* Somebody whose class lapsed and was never renewed, so both lists below have
+ * a person in them. Without this, "the two lists never share a person" and
+ * "either gives the two combined" are 1 == 1 + 0 — arithmetic that cannot
+ * fail and therefore checks nothing. */
+$gwc_vt_cr_gus = gwc_vt_cr_volunteer( 'Zzcr Gus Lindqvist', 'zzcr-gus@example.com' );
+gwc_vt_record_credential( $gwc_vt_cr_gus, $gwc_vt_cr_class, gwc_vt_cr_date( '-20 months' ) );
+
+/* And a DIFFERENT credential, granted today, so it is his newest record.
+ *
+ * That detail is the fixture doing real work. Records come back newest first,
+ * so an implementation that read the standing off the first record rather than
+ * asking about this credential would see the waiver, find it current, and
+ * report Gus as holding a class that ran out twenty months ago. Without this
+ * line the fixture's newest record happened to give the right answer anyway and
+ * the sabotage passed. */
+gwc_vt_record_credential( $gwc_vt_cr_gus, $gwc_vt_cr_waiver, gwc_vt_today() );
+
+/* THE case this function exists to get right. Ada holds the class twice — a
+ * grant that lapsed and a later one that did not. Walking records instead of
+ * volunteers would report her as current AND expired, so she would appear on
+ * both lists and the two counts would add up to more people than exist. */
+$gwc_vt_cr_current = gwc_vt_credential_holder_ids( $gwc_vt_cr_class, GWC_VT_HOLDS_CURRENT );
+$gwc_vt_cr_lapsed  = gwc_vt_credential_holder_ids( $gwc_vt_cr_class, GWC_VT_HOLDS_EXPIRED );
+
+gwc_vt_cr_check(
+	'somebody who renewed after lapsing counts as current',
+	in_array( $gwc_vt_cr_ada, $gwc_vt_cr_current, true ),
+	implode( ',', $gwc_vt_cr_current )
+);
+
+gwc_vt_cr_check(
+	'and is NOT also counted as lapsed',
+	! in_array( $gwc_vt_cr_ada, $gwc_vt_cr_lapsed, true ),
+	implode( ',', $gwc_vt_cr_lapsed )
+);
+
+gwc_vt_cr_check(
+	'somebody who never renewed is on the lapsed list',
+	in_array( $gwc_vt_cr_gus, $gwc_vt_cr_lapsed, true ),
+	implode( ',', $gwc_vt_cr_lapsed )
+);
+
+gwc_vt_cr_check(
+	'so both lists have somebody on them',
+	array() !== $gwc_vt_cr_current && array() !== $gwc_vt_cr_lapsed,
+	count( $gwc_vt_cr_current ) . ' current, ' . count( $gwc_vt_cr_lapsed ) . ' lapsed'
+);
+
+gwc_vt_cr_check(
+	'the two lists never share a person',
+	array() === array_intersect( $gwc_vt_cr_current, $gwc_vt_cr_lapsed ),
+	implode( ',', array_intersect( $gwc_vt_cr_current, $gwc_vt_cr_lapsed ) )
+);
+
+/* And "any" is the two together, not a third answer. */
+$gwc_vt_cr_any = gwc_vt_credential_holder_ids( $gwc_vt_cr_class );
+
+gwc_vt_cr_check(
+	'asking for either gives exactly the two lists combined',
+	count( $gwc_vt_cr_any ) === count( $gwc_vt_cr_current ) + count( $gwc_vt_cr_lapsed ),
+	count( $gwc_vt_cr_any ) . ' vs ' . ( count( $gwc_vt_cr_current ) + count( $gwc_vt_cr_lapsed ) )
+);
+
+$gwc_vt_cr_counts = gwc_vt_credential_holder_counts( $gwc_vt_cr_class );
+
+gwc_vt_cr_check(
+	'the counts on the definitions screen match the lists they link to',
+	$gwc_vt_cr_counts['current'] === count( $gwc_vt_cr_current )
+		&& $gwc_vt_cr_counts['expired'] === count( $gwc_vt_cr_lapsed ),
+	$gwc_vt_cr_counts['current'] . '/' . $gwc_vt_cr_counts['expired']
+);
+
+/* A retired credential still has holders — retiring stopped the organization
+ * asking for it and did not take it off anybody. */
+gwc_vt_cr_check(
+	'a retired credential still lists who holds it',
+	in_array( $gwc_vt_cr_ada, gwc_vt_credential_holder_ids( $gwc_vt_cr_old ), true ),
+	implode( ',', gwc_vt_credential_holder_ids( $gwc_vt_cr_old ) )
+);
+
+gwc_vt_cr_check(
+	'and it is offered in the filter, marked retired',
+	false !== strpos( (string) ( gwc_vt_credential_filter_options()[ (string) $gwc_vt_cr_old ] ?? '' ), 'retired' ),
+	(string) ( gwc_vt_credential_filter_options()[ (string) $gwc_vt_cr_old ] ?? '(absent)' )
+);
+
+gwc_vt_cr_check(
+	'a credential that does not exist has no holders',
+	array() === gwc_vt_credential_holder_ids( 999999 )
+);
+
+/* The list the filter would actually produce, through the same function the
+ * screen uses — nobody holding it must show nobody, not everybody. */
+$gwc_vt_cr_vars = gwc_vt_credential_holder_query_vars( $gwc_vt_cr_waiver, GWC_VT_HOLDS_EXPIRED );
+
+gwc_vt_cr_check(
+	'nobody lapsed on a never-expiring credential shows nobody',
+	array( 'post__in' => array( 0 ) ) === $gwc_vt_cr_vars,
+	wp_json_encode( $gwc_vt_cr_vars )
+);
+
 echo "\n── 9. The count and the screen it links to ──────────────────────\n";
 
 /* CLAUDE.md: where a screen acts on a count, it filters by the same function
@@ -537,7 +656,7 @@ restore_error_handler();
 
 echo "\n── Clean up ─────────────────────────────────────────────────────\n";
 
-foreach ( array( $gwc_vt_cr_ada, $gwc_vt_cr_bo, $gwc_vt_cr_el, $gwc_vt_cr_fi ) as $gwc_vt_cr_left ) {
+foreach ( array( $gwc_vt_cr_ada, $gwc_vt_cr_bo, $gwc_vt_cr_el, $gwc_vt_cr_fi, $gwc_vt_cr_gus ) as $gwc_vt_cr_left ) {
 	foreach ( gwc_vt_credential_record_ids( (int) $gwc_vt_cr_left ) as $gwc_vt_cr_left_r ) {
 		$GLOBALS['gwc_vt_cr_made'][] = (int) $gwc_vt_cr_left_r;
 	}

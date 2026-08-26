@@ -439,3 +439,105 @@ function gwc_vt_lapsed_credential_ids( string $today = '' ): array {
 
 	return array_values( $lapsed );
 }
+
+/**
+ * Everybody who holds one credential, asked the other way round.
+ *
+ * The rest of this file answers "what does this person hold". A coordinator
+ * staffing Saturday asks the inverse — "who has a food handler card" — and
+ * until now the only way to find out was to open volunteers one at a time.
+ *
+ * ── Why this walks records rather than volunteers ────────────────────────────
+ * A site has hundreds of volunteers and a handful of records per credential.
+ * Asking every volunteer whether they hold this one is a question per
+ * volunteer; asking which records point at this credential is one indexed
+ * meta query, and the answer is already the shortlist.
+ *
+ * ── Why the standing is asked per volunteer and not read off the record ──────
+ * Because a person may hold the same credential twice — renewed last month, and
+ * the lapsed one from three years ago is still on file. Reading each record
+ * would report that person as both current AND expired. gwc_vt_volunteer_holds()
+ * is the function that already knows a later grant supersedes an earlier one,
+ * and it is the one the volunteer's own record renders from, so the list and
+ * the record cannot disagree about somebody.
+ *
+ * @param int    $credential_id Credential post ID.
+ * @param string $state         'current', 'expired', or 'any' for both.
+ * @param string $today         Y-m-d to judge against. Defaults to the site's today.
+ * @return int[] Volunteer IDs, each once, in no particular order.
+ */
+function gwc_vt_credential_holder_ids( int $credential_id, string $state = 'any', string $today = '' ): array {
+	if ( $credential_id < 1 || ! gwc_vt_credential( $credential_id ) ) {
+		return array();
+	}
+
+	$volunteers = array();
+
+	gwc_vt_walk_matching_ids(
+		array(
+			'post_type'              => GWC_VT_RECORD_TYPE,
+			'post_status'            => 'publish',
+			'update_post_term_cache' => false,
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed key against one value; the alternative is a query per volunteer.
+			'meta_query'             => array(
+				array(
+					'key'     => GWC_VT_RECORD_CREDENTIAL,
+					'value'   => $credential_id,
+					'compare' => '=',
+					'type'    => 'NUMERIC',
+				),
+			),
+		),
+		static function ( int $record_id ) use ( &$volunteers ): void {
+			$volunteer_id = (int) wp_get_post_parent_id( $record_id );
+
+			/* Keyed, so somebody who renewed four times is asked about once —
+			 * and so the answer below is computed once for them rather than
+			 * four times with the same result. */
+			if ( $volunteer_id > 0 && GWC_VT_VOLUNTEER_TYPE === get_post_type( $volunteer_id ) ) {
+				$volunteers[ $volunteer_id ] = $volunteer_id;
+			}
+		}
+	);
+
+	$wanted = array();
+
+	foreach ( $volunteers as $volunteer_id ) {
+		$holds = gwc_vt_volunteer_holds( $volunteer_id, $credential_id, $today );
+
+		/* An invariant guard, not a reachable branch: the set above was built
+		 * from records pointing at THIS credential, so gwc_vt_volunteer_holds()
+		 * has one to find and never answers "never". Kept because 'any' below
+		 * would otherwise include whatever a future change let through, and
+		 * labelled because a sabotage of it passes — which would otherwise
+		 * read as a check that is missing rather than a branch that cannot
+		 * fire. */
+		if ( GWC_VT_HOLDS_NEVER === $holds ) {
+			continue;
+		}
+
+		if ( 'any' === $state || $holds === $state ) {
+			$wanted[] = $volunteer_id;
+		}
+	}
+
+	return $wanted;
+}
+
+/**
+ * How many hold one credential, currently and lapsed.
+ *
+ * Both numbers from one walk. The definitions screen shows them side by side,
+ * and computing them separately would walk the same records twice to produce
+ * two halves of one sentence.
+ *
+ * @param int    $credential_id Credential post ID.
+ * @param string $today         Y-m-d to judge against.
+ * @return array{current:int, expired:int}
+ */
+function gwc_vt_credential_holder_counts( int $credential_id, string $today = '' ): array {
+	return array(
+		'current' => count( gwc_vt_credential_holder_ids( $credential_id, GWC_VT_HOLDS_CURRENT, $today ) ),
+		'expired' => count( gwc_vt_credential_holder_ids( $credential_id, GWC_VT_HOLDS_EXPIRED, $today ) ),
+	);
+}
