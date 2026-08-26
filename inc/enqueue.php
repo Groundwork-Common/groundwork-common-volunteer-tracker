@@ -131,18 +131,41 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		);
 	}
 
-	/* The picker appears in two places: the entry editor, and the Letters
-	 * screen. One script serves both — it binds to every [data-gwcvt-picker] on
-	 * the page rather than to a known ID, so a third caller costs nothing. */
+	/* "Log a day" on the All hours list, moved up beside the heading. Enqueued
+	 * above the early return below, because that return covers the four screens
+	 * the picker serves and the entries LIST is not one of them — it is the
+	 * editor that is. */
+	if ( 'edit' === (string) ( $screen->base ?? '' ) && GWC_VT_ENTRY_TYPE === (string) ( $screen->post_type ?? '' ) ) {
+		wp_enqueue_script(
+			'gwc-vt-admin-title-actions',
+			GWC_VT_URL . 'assets/js/admin-title-actions.js',
+			array(),
+			GWC_VT_VERSION,
+			true
+		);
+	}
+
+	/* The picker appears wherever somebody has to name a volunteer: the entry
+	 * editor, the produce-a-letter screen, the log-a-day rows, the schedule's
+	 * roster box and the drawer. One script serves all of them — it binds to
+	 * every [data-gwcvt-picker] on the page rather than to a known ID, so a
+	 * further caller costs nothing.
+	 *
+	 * The Letters screen is on this list for its own reason: it is the records
+	 * log now and has no picker, but it does show the issued table, and leaving
+	 * the handle enqueued there costs one HTTP request against the chance of a
+	 * later panel needing it. Dropping it is a one-line change if that stops
+	 * being true. */
 	$on_entry_editor = in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true )
 		&& $screen
 		&& GWC_VT_ENTRY_TYPE === $screen->post_type;
 
 	$on_letters   = $screen && false !== strpos( (string) $screen->id, GWC_VT_LETTERS_PAGE );
+	$on_produce   = $screen && false !== strpos( (string) $screen->id, GWC_VT_PRODUCE_PAGE );
 	$on_quick_add = $screen && false !== strpos( (string) $screen->id, GWC_VT_QUICK_ADD_PAGE );
 	$on_schedule  = $screen && false !== strpos( (string) $screen->id, GWC_VT_SCHEDULE_PAGE );
 
-	if ( ! $on_entry_editor && ! $on_letters && ! $on_quick_add && ! $on_schedule ) {
+	if ( ! $on_entry_editor && ! $on_letters && ! $on_produce && ! $on_quick_add && ! $on_schedule ) {
 		return;
 	}
 
@@ -175,6 +198,36 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-event-grid',
 			GWC_VT_URL . 'assets/js/admin-event-grid.js',
 			array(),
+			GWC_VT_VERSION,
+			true
+		);
+
+		/* The repeat preview on the add-a-shift form. wp-api-fetch for the same
+		 * reason the picker takes it: it carries the X-WP-Nonce middleware, so
+		 * nothing here has to ship a nonce to the browser or remember to send
+		 * it. No strings of its own — every word it prints comes back from the
+		 * route already translated, which is why there is no
+		 * wp_set_script_translations() call for this handle. */
+		wp_enqueue_script(
+			'gwc-vt-shift-repeat',
+			GWC_VT_URL . 'assets/js/admin-shift-repeat.js',
+			array( 'wp-api-fetch' ),
+			GWC_VT_VERSION,
+			true
+		);
+
+		/* The shift drawer. Depends on the picker as well as wp-api-fetch,
+		 * because the panel it injects carries one and tells it to bind — a
+		 * dependency in the ordering sense rather than an API one, which is
+		 * exactly what wp_enqueue_script's third argument is for.
+		 *
+		 * No strings of its own: every word it shows comes back from the route
+		 * already translated, which is why there is no
+		 * wp_set_script_translations() call for this handle either. */
+		wp_enqueue_script(
+			'gwc-vt-shift-drawer',
+			GWC_VT_URL . 'assets/js/admin-shift-drawer.js',
+			array( 'wp-api-fetch', 'gwc-vt-admin-picker' ),
 			GWC_VT_VERSION,
 			true
 		);

@@ -31,6 +31,13 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 	$clashes   = gwc_vt_event_clashes( $event_id );
 	$capacity  = gwc_vt_event_capacity( $event_id );
 	$slot_list = gwc_vt_event_slot_ids( $event_id, array( 'publish', 'draft' ) );
+
+	/* Which time is open for logging. A GET parameter and not a script: the
+	 * design draws this as an inline expansion, and a link that re-renders one
+	 * section expanded is the same thing without a line of JavaScript — and it
+	 * is a real URL, so "the screen with the two o'clock open" is somewhere a
+	 * coordinator can be sent. */
+	$open = gwc_vt_event_open_slot( $event_id );
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></h1>
@@ -44,27 +51,23 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 			if ( '' !== $where ) {
 				echo ' · ' . esc_html( $where );
 			}
-
-			echo ' · ';
-			echo esc_html(
-				null !== $capacity
-					? gwc_vt_event_fill_label( $event_id ) . ' ' . __( 'places filled', 'groundwork-common-volunteer-tracker' )
-					: gwc_vt_event_fill_label( $event_id )
-			);
 			?>
 		</p>
 
-		<p>
-			<a class="button" href="<?php echo esc_url( gwc_vt_event_edit_url( $event_id ) ); ?>">
-				<?php esc_html_e( 'Edit the event', 'groundwork-common-volunteer-tracker' ); ?>
-			</a>
-			<?php if ( $slot_list ) : ?>
-				<a class="button" href="<?php echo esc_url( gwc_vt_event_print_url( $event_id ) ); ?>" target="_blank" rel="noopener noreferrer">
-					<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
-				</a>
-				<span class="description"><?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use "Log the hours" beside each time — everybody who signed up is already listed and selected.', 'groundwork-common-volunteer-tracker' ); ?></span>
-			<?php endif; ?>
-		</p>
+		<?php
+		/* What the last save did, said on the screen it came back to. Logging a
+		 * time from here no longer lands on the quick-add screen, so its notice
+		 * has to be here or "1 entry logged, 1 no-show" is reported to nobody. */
+		gwc_vt_quick_add_notice();
+		?>
+
+		<?php gwc_vt_render_event_progress( $event_id, $capacity, $slot_list ); ?>
+
+		<?php if ( $slot_list ) : ?>
+			<p class="description">
+				<?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use "Log the hours" beside each time — everybody who signed up is already listed and selected.', 'groundwork-common-volunteer-tracker' ); ?>
+			</p>
+		<?php endif; ?>
 
 		<?php foreach ( $clashes as $clash ) : ?>
 			<div class="notice notice-warning inline">
@@ -90,7 +93,7 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 			<h2><?php echo esc_html( (string) $role ); ?></h2>
 
 			<?php foreach ( $slot_ids as $shift_id ) : ?>
-				<?php gwc_vt_render_event_slot_roster( (int) $shift_id ); ?>
+				<?php gwc_vt_render_event_slot_roster( (int) $shift_id, $event_id, (int) $shift_id === $open ); ?>
 			<?php endforeach; ?>
 		<?php endforeach; ?>
 
@@ -175,11 +178,143 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 }
 
 /**
- * One time, and who is on it.
+ * Which of an event's times is open for logging.
  *
- * @param int $shift_id Shift post ID.
+ * @param int $event_id Event post ID.
+ * @return int A shift post ID, or 0.
  */
-function gwc_vt_render_event_slot_roster( int $shift_id ): void {
+function gwc_vt_event_open_slot( int $event_id ): int {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; decides which section is drawn expanded.
+	$wanted = isset( $_GET['gwc_vt_log'] ) ? absint( wp_unslash( $_GET['gwc_vt_log'] ) ) : 0;
+
+	/* A time of THIS event, and not any shift whose ID somebody typed. Without
+	 * the parentage check the roster would happily open a log form for a
+	 * standalone Saturday under a festival's heading. */
+	if ( $wanted > 0 && gwc_vt_event_for_shift( $wanted ) === $event_id ) {
+		return $wanted;
+	}
+
+	return 0;
+}
+
+/**
+ * The roster with one of its times open for logging.
+ *
+ * @param int $event_id Event post ID.
+ * @param int $shift_id The time to open, or 0 to close them all.
+ * @return string
+ */
+function gwc_vt_event_log_url( int $event_id, int $shift_id ): string {
+	$url = gwc_vt_event_roster_url( $event_id );
+
+	if ( $shift_id < 1 ) {
+		return $url;
+	}
+
+	/* An anchor as well as the parameter, so a page of six times does not
+	 * reload at the top with the open one below the fold. */
+	return add_query_arg( 'gwc_vt_log', $shift_id, $url ) . '#gwcvt-time-' . $shift_id;
+}
+
+/* ── How far through the day this is ─────────────────────────────────────────
+ * Two figures, and the second is the one the day turns on: how many of the
+ * event's times have had their hours written up. A four-time event is four
+ * separate acts of logging, and the only way to know where you are is to scroll
+ * and count green badges.
+ *
+ * Both halves read GWC_VT_SHIFT_RECONCILED, which is also what each section's
+ * own badge reads. A header saying "2 of 4" above four sections showing three
+ * badges is the count-and-screen-disagree bug CLAUDE.md has a rule about, and
+ * the only defence is that there is one source.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The progress card.
+ *
+ * @param int      $event_id  Event post ID.
+ * @param int|null $capacity  How many places the event has, or null when a slot is uncapped.
+ * @param int[]    $slot_list Its times.
+ */
+function gwc_vt_render_event_progress( int $event_id, ?int $capacity, array $slot_list ): void {
+	$due    = 0;
+	$logged = 0;
+
+	foreach ( $slot_list as $shift_id ) {
+		/* Only times that have finished are counted. A festival at ten in the
+		 * morning has three times still to come, and "0 of 4 logged" would be
+		 * reporting a backlog that does not exist yet. */
+		if ( gwc_vt_shift_is_cancelled( (int) $shift_id ) || ! gwc_vt_shift_has_ended( (int) $shift_id ) ) {
+			continue;
+		}
+
+		++$due;
+
+		if ( gwc_vt_shift_is_reconciled( (int) $shift_id ) ) {
+			++$logged;
+		}
+	}
+
+	$outstanding = $due - $logged;
+	?>
+	<div class="gwcvt-event-progress gwcvt-event-progress--<?php echo esc_attr( $outstanding > 0 ? 'waiting' : 'clear' ); ?>">
+		<span>
+			<strong><?php echo esc_html( gwc_vt_event_fill_label( $event_id ) ); ?></strong>
+			<?php
+			echo null !== $capacity
+				? ' ' . esc_html__( 'places filled', 'groundwork-common-volunteer-tracker' )
+				: '';
+			?>
+		</span>
+
+		<?php if ( $due > 0 ) : ?>
+			<span>
+				<?php
+				/* One sentence, not a number beside a phrase. Split in two it was
+				 * the bare string "%1$s of %2$s", which the letter's readiness
+				 * line already uses for hours — same string, two unrelated
+				 * meanings, and make-pot warned about the contradictory
+				 * translator comments. A language that words a count of things
+				 * differently from a count of hours could not tell them apart. */
+				printf(
+					wp_kses(
+						/* translators: 1: how many of the day's times have had their hours written up, 2: how many times have finished. Both already formatted. */
+						_n(
+							'<strong>%1$s of %2$s</strong> time has its hours logged',
+							'<strong>%1$s of %2$s</strong> times have their hours logged',
+							$due,
+							'groundwork-common-volunteer-tracker'
+						),
+						array( 'strong' => array() )
+					),
+					esc_html( number_format_i18n( $logged ) ),
+					esc_html( number_format_i18n( $due ) )
+				);
+				?>
+			</span>
+		<?php endif; ?>
+
+		<span class="gwcvt-event-progress__actions">
+			<a class="button" href="<?php echo esc_url( gwc_vt_event_edit_url( $event_id ) ); ?>">
+				<?php esc_html_e( 'Edit the event', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+			<?php if ( $slot_list ) : ?>
+				<a class="button" href="<?php echo esc_url( gwc_vt_event_print_url( $event_id ) ); ?>" target="_blank" rel="noopener noreferrer">
+					<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+			<?php endif; ?>
+		</span>
+	</div>
+	<?php
+}
+
+/**
+ * One role-time, its roster, and — when it is the open one — its log form.
+ *
+ * @param int  $shift_id Shift post ID.
+ * @param int  $event_id The event it belongs to.
+ * @param bool $open     Whether to draw the log form under it.
+ */
+function gwc_vt_render_event_slot_roster( int $shift_id, int $event_id = 0, bool $open = false ): void {
 	$roster    = gwc_vt_shift_signup_ids( $shift_id );
 	$waiting   = gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WAITLIST ) );
 	$gone      = gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WITHDRAWN ) );
@@ -195,7 +330,7 @@ function gwc_vt_render_event_slot_roster( int $shift_id ): void {
 	$ended      = ! $cancelled && gwc_vt_shift_has_ended( $shift_id );
 	$reconciled = $ended && gwc_vt_shift_is_reconciled( $shift_id );
 	?>
-	<h3 style="margin-bottom:4px">
+	<h3 id="gwcvt-time-<?php echo esc_attr( (string) $shift_id ); ?>" style="margin-bottom:4px">
 		<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
 		<span class="description" style="font-weight:400">
 			<?php
@@ -215,20 +350,59 @@ function gwc_vt_render_event_slot_roster( int $shift_id ): void {
 			?>
 		</span>
 
-		<?php if ( $ended ) : ?>
-			<a
-				class="gwcvt-badge <?php echo $reconciled ? 'gwcvt-badge--verified' : 'gwcvt-badge--waiting gwcvt-badge--action'; ?>"
-				style="font-weight:400"
-				href="<?php echo esc_url( gwc_vt_shift_log_url( $shift_id ) ); ?>"
-			>
-				<?php
-				echo $reconciled
-					? esc_html__( 'Log more hours', 'groundwork-common-volunteer-tracker' )
-					: esc_html__( 'Log the hours', 'groundwork-common-volunteer-tracker' );
+		<?php
+		/* Three states, and the third is the one that makes the day one screen:
+		 * a time that is open for logging says so and offers the way out, rather
+		 * than repeating the offer that got you here.
+		 *
+		 * The badge is a link either way, and where it goes is the fallback: on
+		 * an event this opens the form below, and gwc_vt_shift_log_url() — the
+		 * standalone screen this used to be the only route to — is still what
+		 * every other screen links to. */
+		if ( $ended ) :
+			if ( $open ) :
 				?>
-			</a>
-		<?php endif; ?>
+				<a
+					class="gwcvt-badge gwcvt-badge--action"
+					style="font-weight:400"
+					href="<?php echo esc_url( gwc_vt_event_log_url( $event_id, 0 ) ); ?>"
+				>
+					<?php esc_html_e( 'Ticking who came, below — close', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+				<?php
+			else :
+				?>
+				<a
+					class="gwcvt-badge <?php echo $reconciled ? 'gwcvt-badge--verified' : 'gwcvt-badge--waiting gwcvt-badge--action'; ?>"
+					style="font-weight:400"
+					href="<?php echo esc_url( $event_id > 0 ? gwc_vt_event_log_url( $event_id, $shift_id ) : gwc_vt_shift_log_url( $shift_id ) ); ?>"
+				>
+					<?php
+					echo $reconciled
+						? esc_html__( 'Hours logged ✓ — log more', 'groundwork-common-volunteer-tracker' )
+						: esc_html__( 'Log the hours', 'groundwork-common-volunteer-tracker' );
+					?>
+				</a>
+				<?php
+			endif;
+		endif;
+		?>
 	</h3>
+
+	<?php
+	/* The log form, under the time it belongs to. Same form, same handler, same
+	 * rules — gwc_vt_render_shift_log_form() is the standalone screen's own
+	 * form, moved rather than copied, so there is no second write path.
+	 *
+	 * Drawn instead of the roster table, not above it: the form already lists
+	 * everybody who signed up, with a checkbox and their scheduled hours. Two
+	 * lists of the same people on one screen is how somebody ticks the wrong
+	 * one. */
+	if ( $open ) :
+		gwc_vt_render_shift_log_form( $shift_id, $event_id );
+		return;
+	endif;
+	?>
 
 	<table class="widefat striped" style="margin-bottom:14px">
 		<thead>

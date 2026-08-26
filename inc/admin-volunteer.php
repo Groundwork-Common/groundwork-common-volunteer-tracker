@@ -370,7 +370,7 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 
 	<?php if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) && $totals->verified_minutes > 0 ) : ?>
 		<p>
-			<a class="button" href="<?php echo esc_url( gwc_vt_letters_url( array( 'volunteer' => $volunteer_id ) ) ); ?>">
+			<a class="button" href="<?php echo esc_url( gwc_vt_produce_letter_url( $volunteer_id ) ); ?>">
 				<?php esc_html_e( 'Produce a letter for this volunteer', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		</p>
@@ -437,9 +437,14 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 						<?php
 						/* Straight to the checker with the reference already in
 						 * the box. The common reason for looking at this table is
-						 * that somebody has phoned about one of these. */
+						 * that somebody has phoned about one of these.
+						 *
+						 * The checker is a panel on the dashboard now, not a box
+						 * on the Letters screen — so this points there. It is a
+						 * GET form either way, which is what lets a link fill it
+						 * in. */
 						?>
-						<a href="<?php echo esc_url( gwc_vt_letters_url( array( 'reference' => $record['reference'] ) ) ); ?>">
+						<a href="<?php echo esc_url( gwc_vt_dashboard_reference_url( $record['reference'] ) ); ?>">
 							<?php esc_html_e( 'Check it', 'groundwork-common-volunteer-tracker' ); ?>
 						</a>
 					</td>

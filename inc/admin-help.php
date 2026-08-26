@@ -173,6 +173,11 @@ function gwc_vt_add_screen_help( $screen ): void {
 		return;
 	}
 
+	if ( gwc_vt_letters_enabled() && false !== strpos( (string) $screen->id, GWC_VT_PRODUCE_PAGE ) ) {
+		gwc_vt_add_produce_help( $screen );
+		return;
+	}
+
 	if ( gwc_vt_letters_enabled() && false !== strpos( (string) $screen->id, GWC_VT_LETTERS_PAGE ) ) {
 		gwc_vt_add_letters_help( $screen );
 		return;
@@ -204,7 +209,7 @@ function gwc_vt_add_dashboard_help( $screen ): void {
 		'gwc-vt-help-dashboard',
 		__( 'What this screen shows', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'Two things: what is waiting for you, and every way out of here. Nothing on it is a number for its own sake — each line in <strong>Needs you</strong> is something to do, and the count is what tells you whether to do it now.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Information on the left, action on the right. The fortnight ahead and the year’s one figure are what is true; the rail beside them — the verbs, what is waiting, and the reference checker — is what you might do about it. Nothing on it is a number for its own sake: each line in <strong>Needs you</strong> is something to do, and the count is what tells you whether to do it now.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The order is not by size. It runs by what is lost if it waits: hours from a shift that happened and was never typed up come first, because every week takes them further from anybody remembering them. Shifts still short of people come next, because on Sunday there is nothing to be done about Saturday. Verifying and matching sit at the bottom — both keep.', 'groundwork-common-volunteer-tracker' ),
 			__( 'A queue with nothing in it does not appear at all. A screen that says “none waiting” five times over is one people stop reading, and then the line that matters gets skimmed with it.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Nobody is named here. Every line is a count and a link, and the names are on the screen the link goes to — which is somewhere you have gone deliberately.', 'groundwork-common-volunteer-tracker' ),
@@ -221,6 +226,11 @@ function gwc_vt_add_dashboard_help( $screen ): void {
 			__( 'The year runs from 1 January. If yours does not, a developer can set the start date with the <code>gwc_vt_reporting_year_start</code> filter — it is not a setting, because a wrong answer here quietly misstates a figure that goes to a funder.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
+
+	/* The checker is on this screen, so its tab is too. */
+	if ( gwc_vt_letters_enabled() && current_user_can( GWC_VT_CAP_OPEN_LETTERS ) ) {
+		gwc_vt_add_reference_help( $screen );
+	}
 
 	gwc_vt_add_help_sidebar( $screen );
 }
@@ -365,28 +375,60 @@ function gwc_vt_add_volunteers_help( $screen ): void {
 function gwc_vt_add_letters_help( $screen ): void {
 	gwc_vt_add_help_tab(
 		$screen,
+		'gwc-vt-help-log',
+		__( 'What this log is', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'Every letter that has left the building, printed or emailed. A printed letter has left the building just as much as an emailed one, so both are recorded.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Rows reading <strong>record removed</strong> are letters produced for somebody whose volunteer record has since been erased or anonymized. They stay, deliberately: the log holds no name and no hours of its own, and it is the receipt of this organization’s own conduct. Losing it when a record goes would be losing it exactly when it starts to matter.', 'groundwork-common-volunteer-tracker' ),
+			__( 'To produce a letter, start from the volunteer’s own record. To check a reference somebody has phoned in, use the panel on the Dashboard.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_sidebar( $screen );
+}
+
+/**
+ * The produce-a-letter screen.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_produce_help( $screen ): void {
+	gwc_vt_add_help_tab(
+		$screen,
 		'gwc-vt-help-producing',
 		__( 'Producing a letter', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Choose a volunteer and, if you need one, a date range. Leaving both dates empty covers their whole time volunteering.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Printing opens the letter in a new tab; use your browser’s print dialog and choose “Save as PDF” if you need a file. Both printing and emailing are recorded in the log — a printed letter has left the building just as much as an emailed one.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The letter is built fresh from your records every time it is produced. It is never a stored copy, so it always states what you currently have on file.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The line above Preview says what the letter will state and whether anything of theirs is still waiting to be verified. Unverified hours are never on a letter, so a total that is about to change is worth knowing before you send one.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
+	gwc_vt_add_help_sidebar( $screen );
+}
+
+/**
+ * The reference checker's tab, wherever it is being shown.
+ *
+ * Its own function because the checker moved to the dashboard and the tab went
+ * with it — a help tab describing a panel that is not on the screen is worse
+ * than no tab.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_reference_help( $screen ): void {
 	gwc_vt_add_help_tab(
 		$screen,
 		'gwc-vt-help-references',
 		__( 'Checking a reference', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'Every letter carries a reference code. Somebody who has been sent one — a court, a school, an employer — can phone and read it out, and this screen will tell you whether the letter still matches your records.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Every letter carries a reference code. Somebody who has been sent one — a court, a school, an employer — can phone and read it out, and the panel on this screen will tell you whether the letter still matches your records.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The code covers every detail the letter prints, not just the total: the dates, the activities, the supervisors and each shift’s hours. Two shifts swapped so the total came out the same will still show as changed.', 'groundwork-common-volunteer-tracker' ),
 			__( '<strong>Records have changed</strong> is not an accusation. Hours get corrected and shifts get verified after a letter goes out, and all of that is ordinary. The whole letter is shown as your records stand now so you can compare it against the copy somebody was sent.', 'groundwork-common-volunteer-tracker' ),
 			__( 'What the code proves is that a document matches your records. It does not prove the hours were worked — that is what your staff attested to, and it is stated on the letter itself.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
-
-	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**

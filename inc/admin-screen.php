@@ -22,15 +22,22 @@ const GWC_VT_LETTERS_PAGE   = 'gwc-vt-letters';
 const GWC_VT_QUICK_ADD_PAGE = 'gwc-vt-log-a-day';
 const GWC_VT_SCHEDULE_PAGE  = 'gwc-vt-schedule';
 const GWC_VT_DASHBOARD_PAGE = 'gwc-vt-dashboard';
+const GWC_VT_VERIFY_PAGE    = 'gwc-vt-verify';
+const GWC_VT_PRODUCE_PAGE   = 'gwc-vt-produce-letter';
 
 add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
 add_action( 'admin_init', 'gwc_vt_handle_colophon_toggle' );
 add_action( 'admin_menu', 'gwc_vt_register_menu' );
 
-/* Priority 99: after every screen has registered itself, including any a site
- * has added of its own. Ordering cannot be done at registration time because
- * the two screens WordPress adds for the post type — All hours and Log hours —
- * are not added by this plugin at all. */
+/* Priority 98, and 99 for the ordering: both after every screen has registered
+ * itself, including any a site has added of its own. Neither can be done at
+ * registration time because the two screens WordPress adds for the post type —
+ * All hours and Log hours — are not added by this plugin at all.
+ *
+ * Hiding runs first so that gwc_vt_order_menu() re-keys a menu that is already
+ * the right length. Removing afterwards would leave a hole in an array whose
+ * keys WordPress reads as positions. */
+add_action( 'admin_menu', 'gwc_vt_hide_menu_verbs', 98 );
 add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
 
 /* ── Why the menu is reordered rather than registered in order ───────────────
@@ -42,11 +49,12 @@ add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
  * registered at 11, 12 and 13. Nobody chose that order; it is the order the
  * files happen to load in, and it grew one entry at a time over five releases.
  *
- * The order below is the coordinator's week instead. The hours cluster first,
- * because the queue is what they open every day and it is what the top-level
- * menu item points at. Then the schedule, which is the same job seen forwards.
- * Then the people, then what gets produced for them, then — last, always —
- * the settings.
+ * The order below is the coordinator's week instead: where you start, then what
+ * is coming, then who is coming, then what they did, then what gets produced
+ * for them, then — last, always — the settings.
+ *
+ * It is also six entries rather than eight, because two of the originals were
+ * verbs. See gwc_vt_hide_menu_verbs() below.
  *
  * add_submenu_page() takes a position argument, which looks like the answer and
  * is not: positions are per-registration integers with no coordination between
@@ -67,8 +75,8 @@ add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
  */
 function gwc_vt_menu_order(): array {
 	/* ── The order is a volunteer's life, not a screen's importance ───────────
-	 * What is coming, then who is coming, then what they did, then writing it
-	 * up, then what gets produced for them. It reads forwards.
+	 * What is coming, then who is coming, then what they did, then what gets
+	 * produced for them. It reads forwards.
 	 *
 	 * It puts the schedule above the hours list, which means the first item is
 	 * not what the top-level "Volunteer Hours" link opens — that still goes to
@@ -87,12 +95,13 @@ function gwc_vt_menu_order(): array {
 		// Who is coming, and what each of them still has to do.
 		'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE,
 
-		// What they did, and the queue of what nobody has attested to yet.
+		/* What they did, and the queue of what nobody has attested to yet.
+		 *
+		 * Writing it up used to be two more entries here — Log a day, then the
+		 * single-entry way. Both are verbs, and gwc_vt_hide_menu_verbs() now
+		 * takes them off the menu and puts them on this screen as buttons, so
+		 * naming them here would be describing a menu that no longer exists. */
 		'edit.php?post_type=' . GWC_VT_ENTRY_TYPE,
-
-		// Writing it up: the common way, then the single-entry way.
-		GWC_VT_QUICK_ADD_PAGE,
-		'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE,
 	);
 
 	// What gets produced for them, when this organization produces it.
@@ -115,6 +124,68 @@ function gwc_vt_menu_order(): array {
 	 * @param string[] $order Submenu slugs, in the order they should appear.
 	 */
 	return (array) apply_filters( 'gwc_vt_menu_order', $order );
+}
+
+/* ── A menu of places, and buttons for the verbs ─────────────────────────────
+ * "Log a day" and "Log hours" are not destinations. They are the two ways of
+ * writing up work that has already happened, and both of them are things you
+ * do to the hours you are already looking at. On the menu they read as two more
+ * screens to hold in your head, between Volunteers and Letters, and they took
+ * the submenu to eight entries when six of them are nouns.
+ *
+ * So they come off the menu and go on All hours as page-title-action buttons —
+ * "Log a day" and "Log one shift" — which is where the work they do begins.
+ *
+ * Neither page is deregistered. remove_submenu_page() unsets the menu entry and
+ * leaves $_registered_pages alone, so both remain reachable by URL: a bookmark
+ * still works, and so does every link in this plugin that points at them. That
+ * is the difference between this and simply not calling add_submenu_page() —
+ * which would take the Log-a-day screen off the site entirely, along with the
+ * "Log the hours" link on every shift.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The submenu slugs that are verbs rather than places.
+ *
+ * @return string[]
+ */
+function gwc_vt_hidden_menu_items(): array {
+	$hidden = array(
+		GWC_VT_QUICK_ADD_PAGE,
+		'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE,
+
+		/* Not a verb, but not a place either: the verify queue is All hours
+		 * narrowed to what is waiting, and it is offered where WordPress offers
+		 * a narrowed list — beside "All" on that screen's own views. */
+		GWC_VT_VERIFY_PAGE,
+
+		/* Producing a letter is about one person, so it is reached from that
+		 * person: their record, their row on the volunteer list, and the verify
+		 * queue's offer when their last hours are attested to. A menu item would
+		 * be an invitation to start from a blank form and go looking for
+		 * somebody, which is the flow it replaced. */
+		GWC_VT_PRODUCE_PAGE,
+	);
+
+	/**
+	 * Submenu entries to take off the Volunteer Hours menu, by slug.
+	 *
+	 * Returning an empty array puts both back, for a site that would rather
+	 * have them. The pages themselves are never deregistered either way, so
+	 * this only decides whether they are listed.
+	 *
+	 * @param string[] $hidden Submenu slugs to remove.
+	 */
+	return (array) apply_filters( 'gwc_vt_hidden_menu_items', $hidden );
+}
+
+/**
+ * Take those entries off the menu.
+ */
+function gwc_vt_hide_menu_verbs(): void {
+	foreach ( gwc_vt_hidden_menu_items() as $slug ) {
+		remove_submenu_page( GWC_VT_MENU_SLUG, (string) $slug );
+	}
 }
 
 /**

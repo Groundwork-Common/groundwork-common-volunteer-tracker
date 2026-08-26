@@ -21,12 +21,90 @@ function gwc_vt_register_letters_menu(): void {
 
 	add_submenu_page(
 		GWC_VT_MENU_SLUG,
-		__( 'Verification Letters', 'groundwork-common-volunteer-tracker' ),
-		__( 'Letters', 'groundwork-common-volunteer-tracker' ),
+		gwc_vt_letters_page_title(),
+		gwc_vt_letters_page_title(),
 		GWC_VT_CAP_OPEN_LETTERS,
 		GWC_VT_LETTERS_PAGE,
 		'gwc_vt_render_letters_screen'
 	);
+
+	/* Producing one is its own screen, registered and then taken off the menu by
+	 * gwc_vt_hidden_menu_items(). It is reached from the volunteer it is about. */
+	$hook = add_submenu_page(
+		GWC_VT_MENU_SLUG,
+		gwc_vt_produce_page_title(),
+		gwc_vt_produce_page_title(),
+		gwc_vt_cap( 'issue' ),
+		GWC_VT_PRODUCE_PAGE,
+		'gwc_vt_render_produce_letter_screen'
+	);
+
+	if ( $hook ) {
+		add_action( 'load-' . $hook, 'gwc_vt_restore_produce_page_title' );
+	}
+}
+
+/**
+ * The records screen's name.
+ *
+ * "Letter records", not "Letters": what is on it is the log of what has left
+ * the building, and the thing somebody means when they say "letters" — writing
+ * one — is somewhere else now.
+ *
+ * @return string
+ */
+function gwc_vt_letters_page_title(): string {
+	return __( 'Letter records', 'groundwork-common-volunteer-tracker' );
+}
+
+/**
+ * The produce screen's name.
+ *
+ * @return string
+ */
+function gwc_vt_produce_page_title(): string {
+	return __( 'Produce a letter', 'groundwork-common-volunteer-tracker' );
+}
+
+/**
+ * Give the produce screen its title back.
+ *
+ * Off the menu, so get_admin_page_title() cannot find it — the same problem
+ * gwc_vt_restore_quick_add_title() describes at length.
+ */
+function gwc_vt_restore_produce_page_title(): void {
+	if ( ! empty( $GLOBALS['title'] ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $title is how core carries an admin page's title into admin-header.php, and there is no API for setting it; this writes it only for this plugin's own screen, and only when nothing else has.
+	$GLOBALS['title'] = gwc_vt_produce_page_title();
+}
+
+/**
+ * Where a letter for one volunteer is produced.
+ *
+ * @param int    $volunteer_id Volunteer post ID.
+ * @param string $from         Y-m-d or ''.
+ * @param string $to           Y-m-d or ''.
+ * @return string
+ */
+function gwc_vt_produce_letter_url( int $volunteer_id, string $from = '', string $to = '' ): string {
+	$args = array(
+		'post_type' => GWC_VT_ENTRY_TYPE,
+		'page'      => GWC_VT_PRODUCE_PAGE,
+		'volunteer' => $volunteer_id,
+	);
+
+	if ( '' !== $from ) {
+		$args['from'] = $from;
+	}
+
+	if ( '' !== $to ) {
+		$args['to'] = $to;
+	}
+
+	return add_query_arg( $args, admin_url( 'edit.php' ) );
 }
 
 /**
@@ -42,8 +120,33 @@ function gwc_vt_letters_url( array $args = array() ): string {
 	);
 }
 
+/* ── Three things, three places ──────────────────────────────────────────────
+ * This screen used to be all of it: produce a letter on the left, check a
+ * reference and read the issued log down the right. Three jobs that share a
+ * noun and nothing else.
+ *
+ * A letter is about ONE PERSON, so producing one starts from that person — from
+ * their record, their row on the volunteer list, or the verify queue's offer
+ * when their last hours are attested to. Arriving at a blank form and going
+ * looking for somebody is the flow that made "which Priya?" a question.
+ *
+ * Checking a reference is not about a person the organization is choosing; it
+ * is about a phone call that has already happened, and it is now a panel on the
+ * dashboard, which is the screen whoever picks up the phone is already on. The
+ * capability that gates it is unchanged — GWC_VT_CAP_OPEN_LETTERS, satisfied by
+ * either verifying or issuing, so the front desk can still answer without the
+ * right to sign. Anybody who could reach this screen can reach the dashboard:
+ * both hang off a parent menu that needs edit_posts to appear at all.
+ *
+ * What is left here is the log, and it stays its own page for a reason that is
+ * not tidiness: it outlives the volunteer records it refers to. The "record
+ * removed" rows are the receipt of this organization's own conduct, and a
+ * screen that only existed while there was somebody to produce a letter FOR
+ * would lose them exactly when they start to matter.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 /**
- * The screen.
+ * The issued log.
  */
 function gwc_vt_render_letters_screen(): void {
 	/* A hidden screen whose handler still answers is not hidden. The menu is not
@@ -65,10 +168,42 @@ function gwc_vt_render_letters_screen(): void {
 			array( 'response' => 403 )
 		);
 	}
+	?>
+	<div class="wrap gwcvt-wrap">
+		<h1><?php echo esc_html( gwc_vt_letters_page_title() ); ?></h1>
 
-	/* Producing one is the higher-trust half and stays where it was. Somebody who
-	 * can only verify gets the reference checker and the log. */
-	$can_issue = current_user_can( gwc_vt_cap( 'issue' ) );
+		<?php gwc_vt_letters_notice(); ?>
+
+		<p class="description gwcvt-letters__intro">
+			<?php esc_html_e( 'Every letter that has left the building, printed or emailed. To produce one, start from the volunteer’s record; to check a phoned-in reference, use the panel on the Dashboard.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+
+		<div class="gwcvt-letters__log">
+			<?php gwc_vt_render_letter_log(); ?>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Producing a letter for one volunteer.
+ */
+function gwc_vt_render_produce_letter_screen(): void {
+	if ( ! gwc_vt_letters_enabled() ) {
+		wp_die(
+			esc_html__( 'This organization does not issue verification letters.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Not available', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
+	}
+
+	if ( ! current_user_can( gwc_vt_cap( 'issue' ) ) ) {
+		wp_die(
+			esc_html__( 'You do not have permission to produce letters.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
+	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from these.
 	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
@@ -88,73 +223,167 @@ function gwc_vt_render_letters_screen(): void {
 		: null;
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php esc_html_e( 'Verification Letters', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1><?php echo esc_html( gwc_vt_produce_page_title() ); ?></h1>
 
 		<?php gwc_vt_letters_notice(); ?>
+		<?php gwc_vt_render_letterhead_warning(); ?>
 
-		<div class="gwcvt-letters-layout">
-			<div class="gwcvt-letters-main">
-			<?php if ( ! $can_issue ) : ?>
-				<h2 class="title"><?php esc_html_e( 'Checking a letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
-				<p class="description" style="max-width:40em">
-					<?php esc_html_e( 'You can check whether a reference somebody has phoned in about still matches this organization\'s records. Producing a letter is a separate permission — ask an administrator if you need it.', 'groundwork-common-volunteer-tracker' ); ?>
-				</p>
-			<?php else : ?>
-				<h2 class="title"><?php esc_html_e( 'Produce a letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
+		<?php if ( $volunteer_id > 0 && $letter instanceof GWC_VT_Letter ) : ?>
+			<?php
+			/* Where they came from, said as a path rather than a back button:
+			 * this screen is reached from three places and a browser's back
+			 * button is the only one of them that knows which. */
+			?>
+			<p class="gwcvt-letters__crumbs">
+				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ) ); ?>">
+					<?php esc_html_e( 'Volunteers', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
+				<span aria-hidden="true">&rarr;</span>
+				<a href="<?php echo esc_url( (string) get_edit_post_link( $volunteer_id ) ); ?>">
+					<?php echo esc_html( $letter->volunteer_name ); ?>
+				</a>
+				<span aria-hidden="true">&rarr;</span>
+				<strong><?php echo esc_html( gwc_vt_produce_page_title() ); ?></strong>
+			</p>
+		<?php endif; ?>
 
-				<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="gwcvt-letter-form">
-					<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
-					<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_LETTERS_PAGE ); ?>" />
+		<div class="gwcvt-letters-main">
+			<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="gwcvt-letter-form">
+				<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
+				<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_PRODUCE_PAGE ); ?>" />
 
+				<div class="gwcvt-field">
+					<label for="gwcvt-letter-volunteer">
+						<strong><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></strong>
+					</label>
+					<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
+						<input
+							type="text"
+							id="gwcvt-letter-volunteer"
+							class="regular-text"
+							autocomplete="off"
+							role="combobox"
+							aria-expanded="false"
+							aria-autocomplete="list"
+							aria-controls="gwcvt-letter-volunteer-results"
+							placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
+							value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : '' ); ?>"
+						/>
+						<input type="hidden" name="volunteer" id="gwcvt-letter-volunteer-id" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
+						<ul id="gwcvt-letter-volunteer-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
+					</div>
+				</div>
+
+				<div class="gwcvt-field-row">
 					<div class="gwcvt-field">
-						<label for="gwcvt-letter-volunteer">
-							<strong><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></strong>
-						</label>
-						<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
-							<input
-								type="text"
-								id="gwcvt-letter-volunteer"
-								class="regular-text"
-								autocomplete="off"
-								role="combobox"
-								aria-expanded="false"
-								aria-autocomplete="list"
-								aria-controls="gwcvt-letter-volunteer-results"
-								placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
-								value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : '' ); ?>"
-							/>
-							<input type="hidden" name="volunteer" id="gwcvt-letter-volunteer-id" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
-							<ul id="gwcvt-letter-volunteer-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
-						</div>
+						<label for="gwcvt-letter-from"><strong><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
+						<input type="date" id="gwcvt-letter-from" name="from" value="<?php echo esc_attr( $from ); ?>" />
 					</div>
-
-					<div class="gwcvt-field-row">
-						<div class="gwcvt-field">
-							<label for="gwcvt-letter-from"><strong><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
-							<input type="date" id="gwcvt-letter-from" name="from" value="<?php echo esc_attr( $from ); ?>" />
-						</div>
-						<div class="gwcvt-field">
-							<label for="gwcvt-letter-to"><strong><?php esc_html_e( 'To', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
-							<input type="date" id="gwcvt-letter-to" name="to" value="<?php echo esc_attr( $to ); ?>" />
-						</div>
+					<div class="gwcvt-field">
+						<label for="gwcvt-letter-to"><strong><?php esc_html_e( 'To', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
+						<input type="date" id="gwcvt-letter-to" name="to" value="<?php echo esc_attr( $to ); ?>" />
 					</div>
+				</div>
 
-					<p class="description">
-						<?php esc_html_e( 'Leave both dates empty to cover their whole time volunteering.', 'groundwork-common-volunteer-tracker' ); ?>
-					</p>
+				<p class="description">
+					<?php esc_html_e( 'Leave both dates empty to cover their whole time volunteering.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
 
-					<p><button type="submit" class="button"><?php esc_html_e( 'Preview', 'groundwork-common-volunteer-tracker' ); ?></button></p>
-				</form>
+				<?php gwc_vt_render_letter_readiness( $volunteer_id, $from, $to ); ?>
 
-				<?php gwc_vt_render_letter_preview( $letter, $volunteer_id, $from, $to ); ?>
-			<?php endif; ?>
-			</div>
+				<p><button type="submit" class="button"><?php esc_html_e( 'Preview the letter', 'groundwork-common-volunteer-tracker' ); ?></button></p>
+			</form>
 
-			<div class="gwcvt-letters-aside">
-				<?php gwc_vt_render_reference_checker(); ?>
-				<?php gwc_vt_render_letter_log(); ?>
-			</div>
+			<?php gwc_vt_render_letter_preview( $letter, $volunteer_id, $from, $to ); ?>
 		</div>
+	</div>
+	<?php
+}
+
+/**
+ * What the letter will say, before anybody presses Preview.
+ *
+ * ── Recomputed, never read off the rollup ────────────────────────────────────
+ * The volunteer's cached total is right there and would answer this in one
+ * lookup. It must not be used: a sentence that disagrees with the letter printed
+ * thirty seconds later is worse than no sentence, and the letter is built from
+ * entries every time precisely so it cannot inherit a stale number. So this goes
+ * through gwc_vt_build_letter() — the same path the print and email handlers
+ * use.
+ *
+ * ── And built again, with include_unverified forced on ───────────────────────
+ * Not handed the letter the screen already built, which would look like the
+ * obvious saving and would be wrong half the time. GWC_VT_Letter's
+ * unverified_minutes is only populated when the letter was asked to LIST
+ * unattested shifts, and whether it was is a site setting — so reading that
+ * field would give the right answer on a site with the setting on and a
+ * confident zero on a site with it off. "Nothing of theirs is waiting" is
+ * exactly the sentence that must not be wrong.
+ *
+ * The second half is the one worth having at all. It is the difference between
+ * a total somebody can hand over and a total that is about to change, and it is
+ * invisible on the letter itself, which reports only what is attested.
+ *
+ * @param int    $volunteer_id Volunteer post ID, or 0 before one is chosen.
+ * @param string $from         Y-m-d or ''.
+ * @param string $to           Y-m-d or ''.
+ */
+function gwc_vt_render_letter_readiness( int $volunteer_id, string $from, string $to ): void {
+	if ( $volunteer_id < 1 ) {
+		return;
+	}
+
+	$letter = gwc_vt_build_letter(
+		$volunteer_id,
+		array(
+			'from'               => $from,
+			'to'                 => $to,
+			'include_unverified' => true,
+		)
+	);
+
+	if ( ! $letter instanceof GWC_VT_Letter || $letter->is_empty() ) {
+		return;
+	}
+
+	$unverified = $letter->unverified_minutes;
+	?>
+	<div class="gwcvt-readiness gwcvt-readiness--<?php echo esc_attr( $unverified > 0 ? 'waiting' : 'clear' ); ?>">
+		<p>
+			<strong>
+				<?php
+				/* "%s of verified time", not "%s hours" — gwc_vt_format_hours()
+				 * respects the site's hour_format, so on a site set to hours and
+				 * minutes it returns "3h 15m" and appending a unit would read
+				 * "3h 15m hours". The letter itself solved this the same way; see
+				 * the unverified note in inc/render.php. */
+				printf(
+					/* translators: 1: a duration, e.g. "12.5". 2: how many shifts. */
+					esc_html__( 'The letter will state %1$s of verified time across %2$s.', 'groundwork-common-volunteer-tracker' ),
+					esc_html( gwc_vt_format_hours( $letter->verified_minutes ) ),
+					esc_html(
+						sprintf(
+							/* translators: %d: number of shifts. */
+							_n( '%d shift', '%d shifts', $letter->verified_count(), 'groundwork-common-volunteer-tracker' ),
+							$letter->verified_count()
+						)
+					)
+				);
+				?>
+			</strong>
+
+			<?php
+			echo $unverified > 0
+				? esc_html(
+					sprintf(
+						/* translators: %s: a duration, e.g. "3". */
+						__( 'A further %s of their recorded time is not verified yet, and is not in that total. Verifying it would change what the letter says.', 'groundwork-common-volunteer-tracker' ),
+						gwc_vt_format_hours( $unverified )
+					)
+				)
+				: esc_html__( 'Nothing of theirs is waiting to be verified, so nothing is about to change that total.', 'groundwork-common-volunteer-tracker' );
+			?>
+		</p>
 	</div>
 	<?php
 }
@@ -479,13 +708,18 @@ function gwc_vt_handle_letter_send(): void {
  * @param array  $request From gwc_vt_letter_request().
  */
 function gwc_vt_letters_redirect( string $result, array $request ): void {
+	/* Back to the produce screen, not to the records log. Somebody who has just
+	 * printed a letter is looking at the letter — the log's job starts later,
+	 * and landing them there would answer a question they have not asked while
+	 * losing the volunteer and the dates they were working with. */
 	wp_safe_redirect(
-		gwc_vt_letters_url(
-			array(
-				'volunteer'     => $request['volunteer_id'],
-				'from'          => $request['from'],
-				'to'            => $request['to'],
-				'gwc_vt_letter' => $result,
+		add_query_arg(
+			'gwc_vt_letter',
+			$result,
+			gwc_vt_produce_letter_url(
+				(int) $request['volunteer_id'],
+				(string) $request['from'],
+				(string) $request['to']
 			)
 		)
 	);
@@ -530,8 +764,17 @@ function gwc_vt_letters_notice(): void {
 
 /**
  * The reference checker box.
+ *
+ * Takes the page it should come back to, because it is no longer only on the
+ * Letters screen: the dashboard's rail carries it too, on the grounds that
+ * whoever picks up the phone is not necessarily whoever issues letters, and the
+ * dashboard is where they already are. The form is a GET, so the answer is
+ * rendered by whichever screen the query lands on — pointing it at the wrong
+ * one would answer the question on a page the person was not looking at.
+ *
+ * @param string $page The admin page slug to submit to.
  */
-function gwc_vt_render_reference_checker(): void {
+function gwc_vt_render_reference_checker( string $page = GWC_VT_LETTERS_PAGE ): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup; nothing is written and no data is disclosed that the viewer cannot already see.
 	$code = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
 	?>
@@ -544,7 +787,7 @@ function gwc_vt_render_reference_checker(): void {
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
 			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
-			<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_LETTERS_PAGE ); ?>" />
+			<input type="hidden" name="page" value="<?php echo esc_attr( $page ); ?>" />
 
 			<p>
 				<label class="screen-reader-text" for="gwcvt-reference"><?php esc_html_e( 'Reference code', 'groundwork-common-volunteer-tracker' ); ?></label>

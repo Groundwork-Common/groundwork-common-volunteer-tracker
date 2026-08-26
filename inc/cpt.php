@@ -97,8 +97,25 @@ function gwc_vt_register_post_type(): void {
 		'name'               => _x( 'Volunteer Hours', 'post type general name', 'groundwork-common-volunteer-tracker' ),
 		'singular_name'      => _x( 'Hour Entry', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
 		'menu_name'          => _x( 'Volunteer Hours', 'admin menu', 'groundwork-common-volunteer-tracker' ),
-		'add_new'            => __( 'Log hours', 'groundwork-common-volunteer-tracker' ),
-		'add_new_item'       => __( 'Log hours', 'groundwork-common-volunteer-tracker' ),
+		/* "Log one shift", because it now sits next to "Log a day" as one of the
+		 * two page-title-action buttons on All hours — the two ways of writing
+		 * up work, told apart by how much of it you are writing up. Both said
+		 * "Log hours" when they were menu entries, which is most of why that
+		 * menu was unreadable.
+		 *
+		 * BOTH labels, and they have to agree. WordPress renders that button
+		 * from 'add_new' up to 6.3 and from 'add_new_item' from 6.4 on — see
+		 * wp-admin/edit.php — and this plugin's floor is 6.3. Setting only one
+		 * of them leaves the button reading the old name on half the versions
+		 * it supports, which is exactly what it did when this was first
+		 * written: the label was right, the screen said "Log hours", and
+		 * nothing anywhere reported a problem.
+		 *
+		 * 'add_new_item' is also the heading of the screen the button opens, so
+		 * the two now match rather than handing you off to a differently named
+		 * page. */
+		'add_new'            => __( 'Log one shift', 'groundwork-common-volunteer-tracker' ),
+		'add_new_item'       => __( 'Log one shift', 'groundwork-common-volunteer-tracker' ),
 		'edit_item'          => __( 'Edit entry', 'groundwork-common-volunteer-tracker' ),
 		'new_item'           => __( 'New entry', 'groundwork-common-volunteer-tracker' ),
 		'view_item'          => __( 'View entry', 'groundwork-common-volunteer-tracker' ),

@@ -313,4 +313,164 @@ final class DashboardTest extends TestCase {
 
 		gwc_vt_test_reset_filters();
 	}
+
+	/* ── The fortnight as fourteen cells ─────────────────────────────────────
+	 * gwc_vt_fortnight_bounds() says where the two halves end;
+	 * gwc_vt_fortnight_grid() spells out the days between so the week strip can
+	 * draw them. Pure calendar arithmetic, and the part worth pinning is the
+	 * one a reader would notice immediately if it were wrong: which day the
+	 * columns start on.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_the_fortnight_is_two_weeks_of_seven(): void {
+		$weeks = gwc_vt_fortnight_grid( '2026-08-06', 0 );
+
+		$this->assertCount( 2, $weeks );
+		$this->assertCount( 7, $weeks[0]['days'] );
+		$this->assertCount( 7, $weeks[1]['days'] );
+		$this->assertSame( array( 'this', 'next' ), array_column( $weeks, 'title_key' ) );
+	}
+
+	/**
+	 * The columns start on the site's own first day, not on Sunday.
+	 *
+	 * WordPress asks on Settings → General, and a great many places outside
+	 * Europe and North America answer Saturday or Monday. A strip whose columns
+	 * start on a different day from the calendar on the wall is one somebody has
+	 * to translate every time they read it.
+	 *
+	 * 6 August 2026 is a Thursday, so each setting has a different answer and
+	 * none of them can pass by accident.
+	 *
+	 * @param int    $start_of_week As WordPress stores it, 0 for Sunday.
+	 * @param string $expected      The first cell's date.
+	 */
+	#[DataProvider( 'provide_week_starts' )]
+	public function test_the_columns_start_on_the_sites_own_first_day( int $start_of_week, string $expected ): void {
+		$weeks = gwc_vt_fortnight_grid( '2026-08-06', $start_of_week );
+
+		$this->assertSame( $expected, $weeks[0]['days'][0]['date'] );
+	}
+
+	/**
+	 * @return array<string, array{0:int, 1:string}>
+	 */
+	public static function provide_week_starts(): array {
+		return array(
+			'Sunday'   => array( 0, '2026-08-02' ),
+			'Monday'   => array( 1, '2026-08-03' ),
+			'Saturday' => array( 6, '2026-08-01' ),
+			'Thursday' => array( 4, '2026-08-06' ),
+		);
+	}
+
+	/**
+	 * The second row starts the day after the first row ends, whatever the
+	 * first day of the week is — no gap, no overlap.
+	 */
+	public function test_the_two_weeks_run_on(): void {
+		foreach ( range( 0, 6 ) as $start ) {
+			$weeks = gwc_vt_fortnight_grid( '2026-08-06', $start );
+
+			$last  = $weeks[0]['days'][6]['date'];
+			$first = $weeks[1]['days'][0]['date'];
+
+			$this->assertSame(
+				gmdate( 'Y-m-d', (int) strtotime( $last . ' 00:00:00 UTC' ) + DAY_IN_SECONDS ),
+				$first,
+				'start_of_week ' . $start
+			);
+		}
+	}
+
+	/**
+	 * And the window is the one gwc_vt_fortnight_bounds() describes.
+	 *
+	 * Asserted against that function rather than against literals, because the
+	 * strip and the query that fills it have to agree about where the fortnight
+	 * stops: a fifteenth cell would be a day whose shifts were never fetched.
+	 */
+	public function test_the_grid_ends_where_the_bounds_do(): void {
+		foreach ( range( 0, 6 ) as $start ) {
+			$bounds = gwc_vt_fortnight_bounds( '2026-08-06', $start );
+			$weeks  = gwc_vt_fortnight_grid( '2026-08-06', $start );
+
+			$this->assertSame( $bounds['this_week'], $weeks[0]['days'][6]['date'], 'this week, start ' . $start );
+			$this->assertSame( $bounds['fortnight'], $weeks[1]['days'][6]['date'], 'fortnight, start ' . $start );
+		}
+	}
+
+	/**
+	 * Exactly one cell is today, and the days before it are marked past.
+	 *
+	 * The panel is "Coming up" and its query starts at today, so those cells are
+	 * empty by definition. They are still drawn — a week is seven columns, and
+	 * dropping two would put Saturday under the Thursday heading — and the flag
+	 * is how the strip knows to keep them quiet rather than making them look
+	 * like days nobody has booked.
+	 */
+	public function test_today_is_one_cell_and_the_days_before_it_are_past(): void {
+		$weeks = gwc_vt_fortnight_grid( '2026-08-06', 1 );
+		$days  = array_merge( $weeks[0]['days'], $weeks[1]['days'] );
+
+		$today = array_values(
+			array_filter(
+				$days,
+				static function ( array $day ): bool {
+					return $day['today'];
+				}
+			)
+		);
+
+		$this->assertCount( 1, $today );
+		$this->assertSame( '2026-08-06', $today[0]['date'] );
+
+		/* Monday the 3rd through Wednesday the 5th. */
+		$past = array_filter(
+			$days,
+			static function ( array $day ): bool {
+				return $day['past'];
+			}
+		);
+
+		$this->assertCount( 3, $past );
+		$this->assertFalse( $today[0]['past'], 'today has not happened yet' );
+	}
+
+	/**
+	 * Nothing in the second week is past, whatever the first day of the week is.
+	 */
+	public function test_next_week_is_never_past(): void {
+		foreach ( range( 0, 6 ) as $start ) {
+			$weeks = gwc_vt_fortnight_grid( '2026-08-06', $start );
+
+			foreach ( $weeks[1]['days'] as $day ) {
+				$this->assertFalse( $day['past'], 'start ' . $start . ', ' . $day['date'] );
+			}
+		}
+	}
+
+	/**
+	 * An out-of-range start_of_week is wrapped, not trusted.
+	 *
+	 * The same guard gwc_vt_fortnight_bounds() carries, and asserted the same
+	 * way: the option is an integer somebody could have written anything into.
+	 */
+	public function test_an_impossible_first_day_is_wrapped(): void {
+		$sane = gwc_vt_fortnight_grid( '2026-08-06', 1 );
+
+		$this->assertSame( $sane, gwc_vt_fortnight_grid( '2026-08-06', 8 ) );
+		$this->assertSame( $sane, gwc_vt_fortnight_grid( '2026-08-06', -6 ) );
+	}
+
+	/**
+	 * A date it cannot read falls back to today rather than to 1970.
+	 */
+	public function test_an_unreadable_date_still_produces_a_fortnight(): void {
+		$weeks = gwc_vt_fortnight_grid( 'the day after tomorrow', 1 );
+
+		$this->assertCount( 2, $weeks );
+		$this->assertCount( 7, $weeks[0]['days'] );
+		$this->assertNotSame( '1970-01-01', $weeks[0]['days'][0]['date'] );
+	}
 }

@@ -465,6 +465,200 @@ function gwc_vt_shift_is_understaffed( int $shift_id ): bool {
 	return gwc_vt_shift_filled( $shift_id ) < $min;
 }
 
+/* ── What state a shift is in, said once ─────────────────────────────────────
+ * The schedule row and the dashboard's shift line each worked this out for
+ * themselves, and they disagreed: the row knew about cancelled and awaiting and
+ * had no idea what full meant, the line knew short and full and nothing else. A
+ * shift that had ended with nobody on it read as neutral in one place and as
+ * "filling normally" in the other.
+ *
+ * That was survivable while there were two of them. The redesign draws a shift
+ * as a coloured chip in three more places — the dashboard week strip, the month
+ * calendar, the shift drawer — and colour is doing real work there: it is how
+ * "which Saturday is in trouble" gets answered without reading a row. Five
+ * screens each deciding for themselves what red means is five chances to be
+ * inconsistent about the one thing the colour is for.
+ *
+ * So: one function, one vocabulary of six words, and every screen asks it.
+ *
+ * ── Colour is reinforcement, never the only signal ───────────────────────────
+ * Every one of these states has words to go with it — gwc_vt_shift_state_label()
+ * for the state itself, gwc_vt_shift_fill_label() for the numbers — and no
+ * screen may use the tint alone. "Short of people" and "full" is exactly the
+ * distinction somebody with a colour vision deficiency must not have to infer
+ * from a red square.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Which state a shift is in.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string One of the keys in gwc_vt_shift_state_labels().
+ */
+function gwc_vt_shift_state( int $shift_id ): string {
+	return gwc_vt_shift_state_from(
+		array(
+			'cancelled'    => gwc_vt_shift_is_cancelled( $shift_id ),
+			'ended'        => gwc_vt_shift_has_ended( $shift_id ),
+			'reconciled'   => gwc_vt_shift_is_reconciled( $shift_id ),
+			'understaffed' => gwc_vt_shift_is_understaffed( $shift_id ),
+			'filled'       => gwc_vt_shift_filled( $shift_id ),
+			'max'          => (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true ),
+		)
+	);
+}
+
+/**
+ * The same decision, over facts rather than a post ID.
+ *
+ * Split out so the precedence can be asserted without a database — the same
+ * reason inc/dashboard.php keeps its counting apart from its screen. The
+ * ordering below is the whole of this function and every line of it is a
+ * decision somebody could reasonably have made differently.
+ *
+ * @param array $facts cancelled, ended, reconciled, understaffed, filled, max.
+ * @return string
+ */
+function gwc_vt_shift_state_from( array $facts ): string {
+	$cancelled    = (bool) ( $facts['cancelled'] ?? false );
+	$ended        = (bool) ( $facts['ended'] ?? false );
+	$reconciled   = (bool) ( $facts['reconciled'] ?? false );
+	$understaffed = (bool) ( $facts['understaffed'] ?? false );
+	$filled       = (int) ( $facts['filled'] ?? 0 );
+	$max          = (int) ( $facts['max'] ?? 0 );
+
+	/* First, because it survives everything else. A called-off shift that was
+	 * full and had its hours logged is still called off, and that is the only
+	 * thing anybody needs to know about it. */
+	if ( $cancelled ) {
+		return 'cancelled';
+	}
+
+	if ( $ended ) {
+		if ( $reconciled ) {
+			return 'logged';
+		}
+
+		/* Somebody has to have been on it. A shift that ended with an empty
+		 * roster has no hours waiting to be written up, so calling it "awaiting"
+		 * would put a permanent amber row on the schedule for work that never
+		 * happened — and the dashboard's own worklist counts the same way. */
+		if ( $filled > 0 ) {
+			return 'awaiting';
+		}
+
+		/* Past, empty, nothing owed. Neutral rather than a seventh word: the
+		 * schedule has always drawn this as an ordinary row, and the numbers
+		 * beside it say "0 of 8" whatever colour it carries. */
+		return 'ok';
+	}
+
+	/* Before full, because a shift can only be both when its minimum is above
+	 * its maximum — and if somebody has managed to configure that, the state
+	 * worth showing is the one that needs a phone call. Understaffed is already
+	 * false for a shift that has ended; the check above has handled those. */
+	if ( $understaffed ) {
+		return 'short';
+	}
+
+	if ( $max > 0 && $filled >= $max ) {
+		return 'full';
+	}
+
+	return 'ok';
+}
+
+/**
+ * The words for each state.
+ *
+ * A function with a memo and not a const, for the reason every translated table
+ * in this plugin is: a const is evaluated before the request's translations
+ * load, which is invisible on an English site and total on every other one.
+ *
+ * 'full' and 'logged' are separate states that share a colour, and the month
+ * calendar's legend says "Full, or hours logged" for the pair. They keep their
+ * own words here because a row is one or the other and can say which.
+ *
+ * @return array<string, string>
+ */
+function gwc_vt_shift_state_labels(): array {
+	static $labels = null;
+
+	if ( null === $labels ) {
+		$labels = array(
+			'short'     => __( 'Short of people', 'groundwork-common-volunteer-tracker' ),
+			'ok'        => __( 'Filling normally', 'groundwork-common-volunteer-tracker' ),
+			'full'      => __( 'Full', 'groundwork-common-volunteer-tracker' ),
+			'logged'    => __( 'Hours logged', 'groundwork-common-volunteer-tracker' ),
+			'awaiting'  => __( 'Happened, hours not logged', 'groundwork-common-volunteer-tracker' ),
+			'cancelled' => __( 'Called off', 'groundwork-common-volunteer-tracker' ),
+		);
+	}
+
+	return $labels;
+}
+
+/**
+ * The words for one state, or '' when it is not one.
+ *
+ * @param string $state A key from gwc_vt_shift_state_labels().
+ * @return string
+ */
+function gwc_vt_shift_state_label( string $state ): string {
+	return (string) ( gwc_vt_shift_state_labels()[ $state ] ?? '' );
+}
+
+/**
+ * How full a shift is, and whether that is a problem — "3 of 8 · needs 6".
+ *
+ * The numbers are not enough on their own: "3 of 8" does not say whether three
+ * is a problem, and on a calendar chip the colour that would say so is the one
+ * thing some readers cannot see. So the sentence says it.
+ *
+ * Said here rather than at each caller because the dashboard's week strip, its
+ * list, and eventually the month calendar all print it, and a chip reading
+ * "needs 6" beside a row reading "full" would be two screens disagreeing about
+ * one shift.
+ *
+ * @param int    $shift_id Shift post ID.
+ * @param string $state    From gwc_vt_shift_state(), when the caller has it.
+ * @return string
+ */
+function gwc_vt_shift_fill_summary( int $shift_id, string $state = '' ): string {
+	$state   = '' !== $state ? $state : gwc_vt_shift_state( $shift_id );
+	$summary = gwc_vt_shift_fill_label( $shift_id );
+
+	if ( 'cancelled' === $state ) {
+		return gwc_vt_shift_state_label( 'cancelled' );
+	}
+
+	if ( 'awaiting' === $state ) {
+		return gwc_vt_shift_state_label( 'awaiting' );
+	}
+
+	if ( 'logged' === $state ) {
+		return gwc_vt_shift_state_label( 'logged' );
+	}
+
+	if ( 'short' === $state ) {
+		$min = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true );
+
+		if ( $min > 0 ) {
+			return $summary . ' · ' . sprintf(
+				/* translators: %d: how many people the shift needs. */
+				__( 'needs %d', 'groundwork-common-volunteer-tracker' ),
+				$min
+			);
+		}
+	}
+
+	if ( 'full' === $state ) {
+		return $summary . ' · ' . __( 'full', 'groundwork-common-volunteer-tracker' );
+	}
+
+	return $summary;
+}
+
 /* ── Finding shifts ──────────────────────────────────────────────────────── */
 
 /**
@@ -678,7 +872,156 @@ function gwc_vt_shift_log_url( int $shift_id ): string {
 	);
 }
 
+/* ── The repeat a shift came from ────────────────────────────────────────────
+ * Twenty Saturdays created by one repeat are indistinguishable on the schedule
+ * from twenty shifts somebody made by hand, which is most of why nobody dares
+ * edit one of them: there is no way to tell, from the row, whether changing it
+ * changes the other nineteen. (It does not. Every occurrence is its own post —
+ * see the note at the top of inc/recurrence.php.)
+ *
+ * So the row says so. The series ID is on every occurrence; the pattern and the
+ * end date are read back off the siblings' dates by
+ * gwc_vt_recurrence_pattern_of(), which is pure and lives beside the arithmetic
+ * that produced them.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Every date in a shift's series, ascending.
+ *
+ * Memoized per request and keyed by series, because the schedule calls this once
+ * per row: a page of twenty Saturdays from one repeat is one query, not twenty.
+ * Not a persistent cache — a series changes whenever a shift in it is added,
+ * cancelled or deleted, and the invalidation would have to hang off three write
+ * paths to buy a saving on a screen that already runs two queries.
+ *
+ * @param int $series_id The first occurrence's post ID, as stored on every one.
+ * @return string[] Y-m-d, ascending. Empty when the series is unknown.
+ */
+function gwc_vt_shift_series_dates( int $series_id ): array {
+	static $seen = array();
+
+	if ( $series_id < 1 ) {
+		return array();
+	}
+
+	if ( isset( $seen[ $series_id ] ) ) {
+		return $seen[ $series_id ];
+	}
+
+	/* Every status, including cancelled: a called-off Saturday is still one of
+	 * the dates the repeat created, and leaving it out would make a fully
+	 * cancelled fortnight read as a gap in the pattern. */
+	$ids = get_posts(
+		array(
+			'post_type'              => GWC_VT_SHIFT_TYPE,
+			'post_status'            => array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ),
+			'posts_per_page'         => GWC_VT_RECURRENCE_MAX,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the series ID is meta; there is no other way to ask which shifts one repeat made.
+				array(
+					'key'   => GWC_VT_SHIFT_SERIES,
+					'value' => (string) $series_id,
+				),
+			),
+		)
+	);
+
+	$ids = array_map( 'intval', (array) $ids );
+
+	if ( $ids ) {
+		update_postmeta_cache( $ids );
+	}
+
+	$dates = array();
+
+	foreach ( $ids as $id ) {
+		$date = (string) get_post_meta( $id, GWC_VT_SHIFT_DATE, true );
+
+		if ( '' !== $date ) {
+			$dates[] = $date;
+		}
+	}
+
+	sort( $dates );
+
+	$seen[ $series_id ] = $dates;
+
+	return $dates;
+}
+
+/**
+ * What a row says about the repeat a shift belongs to, or '' when it has none.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return string
+ */
+function gwc_vt_shift_repeat_note( int $shift_id ): string {
+	$series = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_SERIES, true );
+
+	if ( $series < 1 ) {
+		return '';
+	}
+
+	$dates = gwc_vt_shift_series_dates( $series );
+
+	/* One date is not a repeat. It is what is left of one after everything else
+	 * was deleted, and there is nothing useful to say about it. */
+	if ( count( $dates ) < 2 ) {
+		return '';
+	}
+
+	$pattern = gwc_vt_recurrence_pattern_of( $dates );
+	$last    = gwc_vt_shift_date_label_from( (string) end( $dates ) );
+	$notes   = gwc_vt_recurrence_repeat_notes();
+
+	if ( isset( $notes[ $pattern ] ) ) {
+		return sprintf( $notes[ $pattern ], $last );
+	}
+
+	/* An edited series that no longer looks like any pattern still says what it
+	 * is, because the useful half of the sentence is "this is one of several and
+	 * they were made together" rather than the name of the rhythm. */
+	return sprintf(
+		/* translators: 1: how many shifts the repeat made. 2: the last date in it. */
+		__( 'One of %1$d made together, through %2$s', 'groundwork-common-volunteer-tracker' ),
+		count( $dates ),
+		$last
+	);
+}
+
 /* ── Labels ──────────────────────────────────────────────────────────────── */
+
+/**
+ * A bare Y-m-d, as the site formats dates.
+ *
+ * The date half of gwc_vt_shift_date_label() without a post to read it from —
+ * the series dates are strings, and loading twenty shifts to format one of them
+ * would be a query for a comma.
+ *
+ * UTC passed back in for the reason gwc_vt_recurrence_date_label() does it: a
+ * bare calendar date has no time of day, and letting wp_date() move it into the
+ * site's zone lands the previous evening on any site behind UTC.
+ *
+ * @param string $date Y-m-d.
+ * @return string
+ */
+function gwc_vt_shift_date_label_from( string $date ): string {
+	$parsed = gwc_vt_recurrence_date( $date );
+
+	if ( null === $parsed ) {
+		return $date;
+	}
+
+	$format = (string) get_option( 'date_format' );
+
+	return (string) wp_date(
+		'' !== $format ? $format : 'D j M Y',
+		$parsed->getTimestamp(),
+		new DateTimeZone( 'UTC' )
+	);
+}
 
 /**
  * A shift's date, as the site formats dates.

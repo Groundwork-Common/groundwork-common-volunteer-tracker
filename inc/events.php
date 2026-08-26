@@ -531,3 +531,94 @@ function gwc_vt_event_roster_url( int $event_id ): string {
 		)
 	);
 }
+
+/* ── An event, in the schedule's own vocabulary ──────────────────────────────
+ * An event is a container over shifts by post_parent, so it has no roster and
+ * no minimum of its own — its state is the worst news among its slots. Said in
+ * the same six words gwc_vt_shift_state() uses, because the filter chips and
+ * the calendar draw both kinds of row and a coordinator asking "show me what is
+ * short" means both.
+ *
+ * Ordered the way the shift version is, and for the same reasons: called off
+ * beats everything, then what has already happened, then what can still be
+ * acted on.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Which state an event is in.
+ *
+ * @param int $event_id Event post ID.
+ * @return string One of the keys in gwc_vt_shift_state_labels().
+ */
+function gwc_vt_event_state( int $event_id ): string {
+	if ( gwc_vt_event_is_cancelled( $event_id ) ) {
+		return 'cancelled';
+	}
+
+	/* Hours waiting on any of its times is the thing somebody has to go and do,
+	 * so it outranks a time that is short — by the point hours are outstanding,
+	 * being short of people is history. */
+	if ( gwc_vt_event_unlogged_slot_ids( $event_id ) ) {
+		return 'awaiting';
+	}
+
+	if ( gwc_vt_event_short_slot_ids( $event_id ) ) {
+		return 'short';
+	}
+
+	$slots = gwc_vt_event_slot_ids( $event_id );
+
+	/* Every time finished and written up. Nothing left to do about it, which is
+	 * what 'logged' means on a shift. An event with no times at all is not
+	 * "logged" — it is a draft somebody has not filled in, so it stays neutral. */
+	if ( $slots ) {
+		$done = true;
+
+		foreach ( $slots as $slot_id ) {
+			if ( ! gwc_vt_shift_is_reconciled( $slot_id ) ) {
+				$done = false;
+				break;
+			}
+		}
+
+		if ( $done ) {
+			return 'logged';
+		}
+	}
+
+	return 'ok';
+}
+
+/**
+ * How full an event is, and whether that is a problem — the chip's second line.
+ *
+ * The event answer to gwc_vt_shift_fill_summary(), and it says "Event" first
+ * because a chip on a calendar has to tell you whether clicking it opens one
+ * roster or a whole day. That is the same thing the near-black bar on the chip
+ * says, for anybody who cannot see the bar.
+ *
+ * @param int $event_id Event post ID.
+ * @return string
+ */
+function gwc_vt_event_fill_summary( int $event_id ): string {
+	$state = gwc_vt_event_state( $event_id );
+	$lead  = __( 'Event', 'groundwork-common-volunteer-tracker' );
+
+	if ( 'cancelled' === $state || 'awaiting' === $state || 'logged' === $state ) {
+		return $lead . ' · ' . gwc_vt_shift_state_label( $state );
+	}
+
+	$summary = $lead . ' · ' . gwc_vt_event_fill_label( $event_id );
+
+	if ( 'short' === $state ) {
+		$short = count( gwc_vt_event_short_slot_ids( $event_id ) );
+
+		return $summary . ' · ' . sprintf(
+			/* translators: %d: how many of an event's times are short of people. */
+			_n( '%d short', '%d short', $short, 'groundwork-common-volunteer-tracker' ),
+			$short
+		);
+	}
+
+	return $summary;
+}

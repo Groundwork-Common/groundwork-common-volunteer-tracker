@@ -8,16 +8,88 @@
 defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'gwc_vt_register_dashboard_menu', 9 );
+add_action( 'admin_init', 'gwc_vt_handle_dashboard_view_toggle' );
+
+/* ── Week or list, remembered ────────────────────────────────────────────────
+ * The strip reads at a glance when an organization runs a handful of shifts a
+ * week. It stops working the moment somebody runs six a day: seven columns of
+ * stacked chips is a wall. The list holds up under that and is what somebody
+ * printing or reading carefully wants anyway.
+ *
+ * Neither is right for everybody, so it is a choice, and a choice somebody
+ * makes once. Stored per user in user meta — one coordinator preferring the
+ * list should not decide it for their colleagues — exactly as the colophon's
+ * collapse is, and toggled the same way: a nonced link handled server-side,
+ * then a redirect that strips the argument back off so a refresh does not
+ * re-fire it. Both views are rendered by PHP; there is no script here.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** Where the choice is kept. */
+const GWC_VT_DASHBOARD_VIEW_META = 'gwc_vt_dashboard_view';
+
+/**
+ * Which view the current user last chose.
+ *
+ * The strip is the default because it is the one that answers "how is next
+ * Saturday" without reading anything.
+ *
+ * @return string 'week' or 'list'.
+ */
+function gwc_vt_dashboard_view(): string {
+	$stored = (string) get_user_meta( get_current_user_id(), GWC_VT_DASHBOARD_VIEW_META, true );
+
+	return 'list' === $stored ? 'list' : 'week';
+}
+
+/**
+ * Store the choice, then send the browser back where it was.
+ */
+function gwc_vt_handle_dashboard_view_toggle(): void {
+	if ( ! isset( $_GET['gwc_vt_view'] ) ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		return;
+	}
+
+	check_admin_referer( 'gwc_vt_dashboard_view' );
+
+	$wanted = sanitize_key( wp_unslash( $_GET['gwc_vt_view'] ) );
+
+	if ( 'list' === $wanted ) {
+		update_user_meta( get_current_user_id(), GWC_VT_DASHBOARD_VIEW_META, 'list' );
+	} else {
+		delete_user_meta( get_current_user_id(), GWC_VT_DASHBOARD_VIEW_META );
+	}
+
+	wp_safe_redirect( remove_query_arg( array( 'gwc_vt_view', '_wpnonce' ) ) );
+	exit;
+}
+
+/**
+ * The link that switches to a view, nonced.
+ *
+ * @param string $view 'week' or 'list'.
+ * @return string
+ */
+function gwc_vt_dashboard_view_url( string $view ): string {
+	return wp_nonce_url( add_query_arg( 'gwc_vt_view', $view ), 'gwc_vt_dashboard_view' );
+}
 
 /* ── The page does two things ────────────────────────────────────────────────
- * Above: what is true right now and what is owed. Below and to the side: every
- * way out of here.
+ * Left: what is true — the fortnight ahead, and the year's one figure. Right: a
+ * narrower rail of what somebody might do about it.
  *
- * A coordinator arrives either wanting to be told or wanting to go somewhere,
- * and the screen should not make them work out which half they are in. The
- * worklist is the widest thing on it because the worklist is the urgent part;
- * the map is an index down the side because an index is reference, and it reads
- * straight down.
+ * A coordinator arrives either wanting to be told or wanting to do something,
+ * and the screen should not make them work out which half they are in. Reading
+ * across answers "how are we"; reading down the rail answers "what now".
+ *
+ * This used to be four panels in two even columns — the worklist widest because
+ * it was the urgent part, and an index of every screen in the plugin down the
+ * side. The index went when the menu became six nouns and started carrying the
+ * same information; what survived it is the verbs, which the menu deliberately
+ * does not list. See gwc_vt_dashboard_actions().
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -50,33 +122,94 @@ function gwc_vt_render_dashboard(): void {
 	}
 
 	$items = gwc_vt_dashboard_items( gwc_vt_dashboard_counts() );
+
+	/* ── Information on the left, action on the right ────────────────────────
+	 * The screen used to be four panels in two even columns, in no particular
+	 * relation to each other. It is now a split: what is true — the fortnight
+	 * and the year — on the left, and what somebody might do about it in a
+	 * narrower rail on the right.
+	 *
+	 * The rail reads downwards in the order the work arrives. The verbs first,
+	 * because "add a shift" is what somebody arrives wanting on most days.
+	 * Then what is waiting, which is the thing that changes. Then the reference
+	 * checker, which is not about this organization's week at all — it is here
+	 * because a phone call about a letter interrupts whatever you were doing,
+	 * and this is the screen you were on.
+	 *
+	 * The masthead above this — org name, today's date, a 2px rule — is gone.
+	 * The date is on every clock in the building and the org name is on the
+	 * letterhead settings; between them they were a strip of chrome above the
+	 * only two numbers on the page anybody reads.
+	 * ─────────────────────────────────────────────────────────────────────── */
 	?>
 	<div class="wrap gwcvt-wrap gwcvt-dash">
 
-		<header class="gwcvt-dash__masthead">
-			<div>
-				<h1><?php esc_html_e( 'Volunteer Hours', 'groundwork-common-volunteer-tracker' ); ?></h1>
-				<span class="gwcvt-dash__org"><?php echo esc_html( gwc_vt_org_name() ); ?></span>
-			</div>
-			<span class="gwcvt-dash__date">
-				<?php echo esc_html( wp_date( (string) get_option( 'date_format' ) ?: 'j F Y' ) ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- an empty date_format must fall back too, which ?? does not do; spelling it out would call get_option() twice. ?>
-			</span>
-		</header>
+		<h1><?php esc_html_e( 'Groundwork Common Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
-		<div class="gwcvt-dash__columns">
+		<div class="gwcvt-dash__split">
 
-			<div class="gwcvt-dash__column">
-				<?php gwc_vt_render_dashboard_worklist( $items ); ?>
+			<div class="gwcvt-dash__main">
 				<?php gwc_vt_render_dashboard_upcoming(); ?>
+				<?php gwc_vt_render_dashboard_year(); ?>
 			</div>
 
-			<div class="gwcvt-dash__column">
-				<?php gwc_vt_render_dashboard_year(); ?>
-				<?php gwc_vt_render_dashboard_map(); ?>
+			<div class="gwcvt-dash__rail">
+				<?php gwc_vt_render_dashboard_actions(); ?>
+				<?php gwc_vt_render_dashboard_worklist( $items ); ?>
+				<?php gwc_vt_render_dashboard_reference(); ?>
 			</div>
 
 		</div>
 	</div>
+	<?php
+}
+
+/* ── Checking a reference, where the phone gets answered ─────────────────────
+ * The checker lives here, and only here. Whoever picks up the phone is not
+ * necessarily whoever issues letters, and asking them to find a screen they
+ * have never opened — to answer a question that takes ten seconds — is how a
+ * caller gets told somebody will ring them back.
+ *
+ * The capability is unchanged by the move: GWC_VT_CAP_OPEN_LETTERS, which
+ * inc/access.php maps to EITHER verifying or issuing, precisely so the front
+ * desk can answer without the right to sign. Anybody who could reach the old
+ * box can reach this one — both screens hang off a parent menu that needs
+ * edit_posts to appear at all.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The dashboard, with a reference already in the checker's box.
+ *
+ * The issued-letter table on a volunteer's record links here: the usual reason
+ * for reading that table is that somebody has phoned about one of the rows, and
+ * the checker takes its code from the query string because it is a GET form.
+ *
+ * @param string $reference The code to prefill.
+ * @return string
+ */
+function gwc_vt_dashboard_reference_url( string $reference ): string {
+	return add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_DASHBOARD_PAGE,
+			'reference' => $reference,
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/**
+ * The reference checker, in the rail.
+ */
+function gwc_vt_render_dashboard_reference(): void {
+	if ( ! gwc_vt_letters_enabled() || ! current_user_can( GWC_VT_CAP_OPEN_LETTERS ) ) {
+		return;
+	}
+
+	?>
+	<section class="gwcvt-dash__section">
+		<?php gwc_vt_render_reference_checker( GWC_VT_DASHBOARD_PAGE ); ?>
+	</section>
 	<?php
 }
 
@@ -86,13 +219,25 @@ function gwc_vt_render_dashboard(): void {
  * @param array $items From gwc_vt_dashboard_items().
  */
 function gwc_vt_render_dashboard_worklist( array $items ): void {
+	/* ── One line per queue ──────────────────────────────────────────────────
+	 * The rules are untouched and are the reason this panel is worth having:
+	 * every line is a queue, they are ordered by what is lost if they wait,
+	 * nobody's name appears, and a queue at zero is not drawn at all. See
+	 * gwc_vt_dashboard_items().
+	 *
+	 * What changed is the width. In a rail there is no room for the sentence
+	 * explaining why each queue matters, so it moves into the row's title
+	 * attribute — still there for anybody who wants it, no longer competing
+	 * with the count for the two seconds somebody spends on this panel.
+	 *
+	 * A title attribute is a poor place for anything load-bearing, which is why
+	 * nothing load-bearing is in it: the count, the task and the destination are
+	 * all still on the row.
+	 * ─────────────────────────────────────────────────────────────────────── */
 	?>
-	<section>
+	<section class="gwcvt-dash__section">
 		<div class="gwcvt-dash__head">
 			<h2><?php esc_html_e( 'Needs you', 'groundwork-common-volunteer-tracker' ); ?></h2>
-			<?php if ( $items ) : ?>
-				<span class="gwcvt-dash__aside"><?php esc_html_e( 'Ordered by what goes wrong if it waits', 'groundwork-common-volunteer-tracker' ); ?></span>
-			<?php endif; ?>
 		</div>
 
 		<div class="gwcvt-dash__panel gwcvt-docket">
@@ -116,14 +261,16 @@ function gwc_vt_render_dashboard_worklist( array $items ): void {
 			<?php endif; ?>
 
 			<?php foreach ( $items as $item ) : ?>
-				<a class="gwcvt-docket__row gwcvt-docket__row--<?php echo esc_attr( $item['severity'] ); ?>" href="<?php echo esc_url( gwc_vt_dashboard_item_url( (string) $item['key'] ) ); ?>">
+				<a
+					class="gwcvt-docket__row gwcvt-docket__row--<?php echo esc_attr( $item['severity'] ); ?>"
+					href="<?php echo esc_url( gwc_vt_dashboard_item_url( (string) $item['key'] ) ); ?>"
+					title="<?php echo esc_attr( (string) $item['why'] ); ?>"
+				>
 					<span class="gwcvt-docket__stripe" aria-hidden="true"></span>
 					<span class="gwcvt-docket__count"><?php echo esc_html( number_format_i18n( (int) $item['count'] ) ); ?></span>
-					<span class="gwcvt-docket__body">
-						<span class="gwcvt-docket__what"><?php echo esc_html( (string) $item['what'] ); ?></span>
-						<span class="gwcvt-docket__why"><?php echo esc_html( (string) $item['why'] ); ?></span>
-					</span>
-					<span class="gwcvt-docket__go"><?php echo esc_html( (string) $item['action'] ); ?></span>
+					<span class="gwcvt-docket__what"><?php echo esc_html( (string) $item['what'] ); ?></span>
+					<span class="gwcvt-docket__go" aria-hidden="true">&rarr;</span>
+					<span class="screen-reader-text"><?php echo esc_html( (string) $item['action'] ); ?></span>
 				</a>
 			<?php endforeach; ?>
 		</div>
@@ -193,15 +340,22 @@ function gwc_vt_render_dashboard_start_here(): void {
 		<?php esc_html_e( 'This screen fills up on its own once hours are being logged. Until then, here is the order most organizations start in.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
+	<?php
+	/* The same compressed row the worklist uses, for the same reason: this
+	 * panel is in a rail now, and the explaining sentence goes in the title
+	 * attribute rather than on a second line. */
+	?>
 	<?php foreach ( $steps as $step ) : ?>
-		<a class="gwcvt-docket__row gwcvt-docket__row--<?php echo $step['done'] ? 'done' : 'waiting'; ?>" href="<?php echo esc_url( (string) $step['url'] ); ?>">
+		<a
+			class="gwcvt-docket__row gwcvt-docket__row--<?php echo $step['done'] ? 'done' : 'waiting'; ?>"
+			href="<?php echo esc_url( (string) $step['url'] ); ?>"
+			title="<?php echo esc_attr( (string) $step['why'] ); ?>"
+		>
 			<span class="gwcvt-docket__stripe" aria-hidden="true"></span>
 			<span class="gwcvt-docket__count" aria-hidden="true"><?php echo $step['done'] ? '&#10003;' : '&middot;'; ?></span>
-			<span class="gwcvt-docket__body">
-				<span class="gwcvt-docket__what"><?php echo esc_html( (string) $step['what'] ); ?></span>
-				<span class="gwcvt-docket__why"><?php echo esc_html( (string) $step['why'] ); ?></span>
-			</span>
-			<span class="gwcvt-docket__go">
+			<span class="gwcvt-docket__what"><?php echo esc_html( (string) $step['what'] ); ?></span>
+			<span class="gwcvt-docket__go" aria-hidden="true">&rarr;</span>
+			<span class="screen-reader-text">
 				<?php
 				echo $step['done']
 					? esc_html__( 'Done', 'groundwork-common-volunteer-tracker' )
@@ -247,26 +401,29 @@ function gwc_vt_render_dashboard_upcoming(): void {
 		$weeks[ $date <= $bounds['this_week'] ? 'this' : 'next' ][] = (int) $shift_id;
 	}
 
-	$titles = array(
-		'this' => __( 'This week', 'groundwork-common-volunteer-tracker' ),
-		'next' => __( 'Next week', 'groundwork-common-volunteer-tracker' ),
-	);
+	$titles = gwc_vt_fortnight_titles();
+	$view   = gwc_vt_dashboard_view();
 	?>
-	<section>
+	<section class="gwcvt-dash__section">
 		<div class="gwcvt-dash__head">
 			<h2><?php esc_html_e( 'Coming up', 'groundwork-common-volunteer-tracker' ); ?></h2>
+			<?php gwc_vt_render_dashboard_view_toggle( $view ); ?>
 		</div>
 
-		<div class="gwcvt-dash__panel">
-			<?php foreach ( array_filter( $weeks ) as $when => $ids ) : ?>
-				<?php /* array_filter drops an empty half rather than heading it and leaving it blank: a heading over nothing reads as a fault in the screen. */ ?>
-				<h3 class="gwcvt-shiftweek"><?php echo esc_html( $titles[ $when ] ); ?></h3>
+		<?php if ( 'list' === $view ) : ?>
+			<div class="gwcvt-dash__panel">
+				<?php foreach ( array_filter( $weeks ) as $when => $ids ) : ?>
+					<?php /* array_filter drops an empty half rather than heading it and leaving it blank: a heading over nothing reads as a fault in the screen. */ ?>
+					<h3 class="gwcvt-shiftweek"><?php echo esc_html( $titles[ $when ] ); ?></h3>
 
-				<?php foreach ( $ids as $shift_id ) : ?>
-					<?php gwc_vt_render_dashboard_shiftline( (int) $shift_id ); ?>
+					<?php foreach ( $ids as $shift_id ) : ?>
+						<?php gwc_vt_render_dashboard_shiftline( (int) $shift_id ); ?>
+					<?php endforeach; ?>
 				<?php endforeach; ?>
-			<?php endforeach; ?>
-		</div>
+			</div>
+		<?php else : ?>
+			<?php gwc_vt_render_dashboard_week_strip( $shifts, $today ); ?>
+		<?php endif; ?>
 
 		<?php
 		/* Outside the panel, not in it. Inside, it sat under the last line of
@@ -274,9 +431,141 @@ function gwc_vt_render_dashboard_upcoming(): void {
 		 * the whole fortnight. */
 		?>
 		<p class="gwcvt-dash__more">
-			<a href="<?php echo esc_url( gwc_vt_schedule_url() ); ?>"><?php esc_html_e( 'Open the schedule', 'groundwork-common-volunteer-tracker' ); ?></a>
+			<a href="<?php echo esc_url( gwc_vt_schedule_url() ); ?>"><?php esc_html_e( 'Open the full calendar', 'groundwork-common-volunteer-tracker' ); ?> &rarr;</a>
 		</p>
 	</section>
+	<?php
+}
+
+/**
+ * The two halves of the fortnight, named.
+ *
+ * @return array<string, string>
+ */
+function gwc_vt_fortnight_titles(): array {
+	return array(
+		'this' => __( 'This week', 'groundwork-common-volunteer-tracker' ),
+		'next' => __( 'Next week', 'groundwork-common-volunteer-tracker' ),
+	);
+}
+
+/**
+ * Week | List, as two links.
+ *
+ * @param string $view Which one is showing.
+ */
+function gwc_vt_render_dashboard_view_toggle( string $view ): void {
+	$options = array(
+		'week' => __( 'Week', 'groundwork-common-volunteer-tracker' ),
+		'list' => __( 'List', 'groundwork-common-volunteer-tracker' ),
+	);
+	?>
+	<span class="gwcvt-segmented">
+		<?php foreach ( $options as $key => $label ) : ?>
+			<?php if ( $key === $view ) : ?>
+				<span class="gwcvt-segmented__on" aria-current="true"><?php echo esc_html( $label ); ?></span>
+			<?php else : ?>
+				<a href="<?php echo esc_url( gwc_vt_dashboard_view_url( $key ) ); ?>"><?php echo esc_html( $label ); ?></a>
+			<?php endif; ?>
+		<?php endforeach; ?>
+	</span>
+	<?php
+}
+
+/* ── The fortnight as a calendar ─────────────────────────────────────────────
+ * Two rows of seven, drawn in the language the month view uses: one chip per
+ * shift, coloured by gwc_vt_shift_state(), carrying its fill in words.
+ *
+ * The chips are the whole point. A list answers "what is on" one row at a time;
+ * a strip answers "which day is in trouble" without reading anything, because
+ * the day that is in trouble is the red one. The words are on every chip
+ * regardless — the colour is reinforcement, and never the only signal.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The week strip.
+ *
+ * @param int[]  $shifts Shift post IDs in the fortnight, soonest first.
+ * @param string $today  Y-m-d.
+ */
+function gwc_vt_render_dashboard_week_strip( array $shifts, string $today ): void {
+	$by_day = array();
+
+	foreach ( $shifts as $shift_id ) {
+		$date = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true );
+
+		if ( '' !== $date ) {
+			$by_day[ $date ][] = (int) $shift_id;
+		}
+	}
+
+	$weeks  = gwc_vt_fortnight_grid( $today, (int) get_option( 'start_of_week' ) );
+	$titles = gwc_vt_fortnight_titles();
+	?>
+	<div class="gwcvt-dash__panel gwcvt-strip">
+		<?php foreach ( $weeks as $week ) : ?>
+			<h3 class="gwcvt-shiftweek"><?php echo esc_html( (string) ( $titles[ $week['title_key'] ] ?? '' ) ); ?></h3>
+
+			<div class="gwcvt-strip__week">
+				<?php foreach ( $week['days'] as $day ) : ?>
+					<?php
+					$date  = (string) $day['date'];
+					$stamp = (int) strtotime( $date . ' 00:00:00 UTC' );
+
+					$classes = array( 'gwcvt-strip__day' );
+
+					if ( $day['past'] ) {
+						$classes[] = 'gwcvt-strip__day--past';
+					}
+					?>
+					<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
+						<span class="gwcvt-strip__label<?php echo $day['today'] ? ' gwcvt-strip__label--today' : ''; ?>">
+							<?php
+							/* The weekday, then the day of the month. Not the
+							 * site's date format: that is written for a date on
+							 * its own and would print the month and the year in
+							 * every one of fourteen cells. */
+							echo esc_html( (string) wp_date( 'D j', $stamp, new DateTimeZone( 'UTC' ) ) );
+							?>
+							<?php if ( $day['today'] ) : ?>
+								<span class="screen-reader-text"><?php esc_html_e( '(today)', 'groundwork-common-volunteer-tracker' ); ?></span>
+							<?php endif; ?>
+						</span>
+
+						<?php foreach ( (array) ( $by_day[ $date ] ?? array() ) as $shift_id ) : ?>
+							<?php gwc_vt_render_dashboard_chip( (int) $shift_id ); ?>
+						<?php endforeach; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		<?php endforeach; ?>
+	</div>
+	<?php
+}
+
+/**
+ * One shift, as a chip in a day cell.
+ *
+ * @param int $shift_id Shift post ID.
+ */
+function gwc_vt_render_dashboard_chip( int $shift_id ): void {
+	$state    = gwc_vt_shift_state( $shift_id );
+	$activity = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true );
+	$activity = '' !== $activity ? $activity : __( 'Untitled shift', 'groundwork-common-volunteer-tracker' );
+	?>
+	<a
+		class="gwcvt-chip gwcvt-chip--<?php echo esc_attr( $state ); ?>"
+		href="<?php echo esc_url( gwc_vt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>"
+		title="<?php echo esc_attr( $activity ); ?>"
+	>
+		<?php
+		/* The full name in the title attribute, because line one is one line and
+		 * ellipsises: a chip that wrapped would set the height of every cell in
+		 * its week. */
+		?>
+		<span class="gwcvt-chip__what"><?php echo esc_html( $activity ); ?></span>
+		<span class="gwcvt-chip__fill"><?php echo esc_html( gwc_vt_shift_fill_summary( $shift_id, $state ) ); ?></span>
+	</a>
 	<?php
 }
 
@@ -288,8 +577,28 @@ function gwc_vt_render_dashboard_upcoming(): void {
 function gwc_vt_render_dashboard_shiftline( int $shift_id ): void {
 	$max    = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MAX, true );
 	$filled = gwc_vt_shift_filled( $shift_id );
-	$short  = gwc_vt_shift_is_understaffed( $shift_id );
-	$full   = $max > 0 && $filled >= $max;
+
+	/* The decision comes from gwc_vt_shift_state_from(), so this line and the
+	 * schedule row cannot disagree about what red means — see the block comment
+	 * above gwc_vt_shift_state() in inc/shifts.php. Facts passed in rather than
+	 * asking by ID for the reason the schedule row does it: $filled is already
+	 * in hand here, and gwc_vt_shift_filled() is a query.
+	 *
+	 * 'logged' joins 'full' on the green meter: both mean there is nothing left
+	 * to do about this shift's roster. */
+	$state = gwc_vt_shift_state_from(
+		array(
+			'cancelled'    => gwc_vt_shift_is_cancelled( $shift_id ),
+			'ended'        => gwc_vt_shift_has_ended( $shift_id ),
+			'reconciled'   => gwc_vt_shift_is_reconciled( $shift_id ),
+			'understaffed' => gwc_vt_shift_is_understaffed( $shift_id ),
+			'filled'       => $filled,
+			'max'          => $max,
+		)
+	);
+
+	$short = 'short' === $state;
+	$full  = in_array( $state, array( 'full', 'logged' ), true );
 
 	/* A hair of width even at zero, so an empty shift still reads as a meter
 	 * rather than as a missing element. */
@@ -324,26 +633,15 @@ function gwc_vt_render_dashboard_shiftline( int $shift_id ): void {
 		</span>
 		<span class="gwcvt-shiftline__fill">
 			<span class="gwcvt-meter"><span class="gwcvt-meter__bar" style="width: <?php echo esc_attr( (string) $width ); ?>%"></span></span>
-			<span class="gwcvt-shiftline__count">
-				<?php
-				echo esc_html( gwc_vt_shift_fill_label( $shift_id ) );
-
-				$min = (int) get_post_meta( $shift_id, GWC_VT_SHIFT_MIN, true );
-
-				/* The number is not enough on its own: "3 of 8" does not say
-				 * whether three is a problem. Color does not say it either, for
-				 * anybody who cannot see it. */
-				if ( $short && $min > 0 ) {
-					printf(
-						/* translators: %d: how many people the shift needs. */
-						' · ' . esc_html__( 'needs %d', 'groundwork-common-volunteer-tracker' ),
-						(int) $min
-					);
-				} elseif ( $full ) {
-					echo ' · ' . esc_html__( 'full', 'groundwork-common-volunteer-tracker' );
-				}
-				?>
-			</span>
+			<?php
+			/* "3 of 8 · needs 6". The number is not enough on its own — it does
+			 * not say whether three is a problem — and colour does not say it
+			 * either, for anybody who cannot see it. Built by
+			 * gwc_vt_shift_fill_summary() rather than here, because the week
+			 * strip's chips print the same sentence and this line and those
+			 * chips are the same fortnight seen twice. */
+			?>
+			<span class="gwcvt-shiftline__count"><?php echo esc_html( gwc_vt_shift_fill_summary( $shift_id, $state ) ); ?></span>
 		</span>
 	</div>
 	<?php
@@ -373,190 +671,108 @@ function gwc_vt_render_dashboard_year(): void {
 				<div><dt><?php esc_html_e( 'Volunteers with hours', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( number_format_i18n( (int) $totals['volunteers'] ) ); ?></dd></div>
 				<div><dt><?php esc_html_e( 'Shifts recorded', 'groundwork-common-volunteer-tracker' ); ?></dt><dd><?php echo esc_html( number_format_i18n( (int) $totals['entries'] ) ); ?></dd></div>
 			</dl>
-
-			<p class="gwcvt-year__note">
-				<?php
-				printf(
-					/* translators: %s: a date. */
-					esc_html__( 'Since %s. Verified hours only — the rest is counted separately because nobody has attested to it yet.', 'groundwork-common-volunteer-tracker' ),
-					esc_html( gwc_vt_local_date( $from . ' 00:00:00' ) )
-				);
-				?>
-			</p>
 		</div>
 	</section>
 	<?php
 }
 
-/* ── The map ────────────────────────────────────────────────────────────────
- * Every way out of this page, grouped by what it is about.
+/* ── The verbs ───────────────────────────────────────────────────────────────
+ * What is left of "Where to next", which used to be five groups of links to
+ * every screen in the plugin. With a six-noun menu in the sidebar, most of that
+ * was the sidebar written out again in the middle of the page.
  *
- * Filtered to what the person looking at it can actually reach: an editor
- * without gwc_vt_issue_letters gets no Letters group at all rather than three
- * links that will refuse them. A link that fails when clicked is worse than an
- * absent one, because the first teaches somebody the screen is broken and the
- * second teaches them nothing.
+ * What the sidebar does NOT carry is the verbs: adding a shift, adding an
+ * event, adding a volunteer. Those left the menu in #89 precisely because they
+ * are actions rather than places, and this is where they went — a plain list,
+ * no headings, no explanatory sentences, in the order somebody reaches for
+ * them.
+ *
+ * Filtered to what the person looking at it can actually reach, by the same
+ * rules the map used. A link that fails when clicked is worse than an absent
+ * one: the first teaches somebody the screen is broken, and the second teaches
+ * them nothing.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The map's groups and links.
+ * The verbs, already filtered by capability.
  *
- * @return array<int, array{title:string, links:array<int, array{label:string, url:string}>}>
+ * @return array<int, array{label:string, url:string}>
  */
-function gwc_vt_dashboard_map(): array {
-	$groups = array();
+function gwc_vt_dashboard_actions(): array {
+	$actions = array();
 
 	if ( gwc_vt_shifts_enabled() && current_user_can( 'edit_posts' ) ) {
-		$groups[] = array(
-			'title' => __( 'Shifts', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwc_vt_schedule_url( array( 'shift' => 'new' ) ),
-				),
-				array(
-					'label' => __( 'Open the schedule', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwc_vt_schedule_url(),
-				),
-				array(
-					'label' => __( 'Shifts already run', 'groundwork-common-volunteer-tracker' ),
-					'url'   => gwc_vt_schedule_url( array( 'when' => 'past' ) ),
-				),
-			),
+		$actions[] = array(
+			'label' => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
+			'url'   => gwc_vt_schedule_url( array( 'shift' => 'new' ) ),
+		);
+
+		$actions[] = array(
+			'label' => __( 'Add an event', 'groundwork-common-volunteer-tracker' ),
+			'url'   => gwc_vt_schedule_url( array( 'gwc_vt_event' => 'new' ) ),
 		);
 	}
 
 	if ( current_user_can( 'edit_posts' ) ) {
-		$groups[] = array(
-			'title' => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Log a day', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg(
-						array(
-							'post_type' => GWC_VT_ENTRY_TYPE,
-							'page'      => GWC_VT_QUICK_ADD_PAGE,
-						),
-						admin_url( 'edit.php' )
-					),
-				),
-				array(
-					'label' => __( 'Log a single shift', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-				),
-				array(
-					'label' => __( 'All hours', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-				),
-			),
+		$actions[] = array(
+			'label' => __( 'Log a day’s sign-in sheet', 'groundwork-common-volunteer-tracker' ),
+			'url'   => gwc_vt_quick_add_url(),
 		);
 
-		$groups[] = array(
-			'title' => __( 'Volunteers', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Add a volunteer', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
-				),
-				array(
-					'label' => __( 'Find somebody’s record', 'groundwork-common-volunteer-tracker' ),
-					'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
-				),
-			),
+		$actions[] = array(
+			'label' => __( 'Add a volunteer', 'groundwork-common-volunteer-tracker' ),
+			'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
+		);
+
+		$actions[] = array(
+			'label' => __( 'Find somebody’s record', 'groundwork-common-volunteer-tracker' ),
+			'url'   => admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 		);
 	}
 
-	if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) ) {
-		$groups[] = array(
-			'title' => __( 'Letters', 'groundwork-common-volunteer-tracker' ),
-			'links' => array(
-				array(
-					'label' => __( 'Produce a letter', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg(
-						array(
-							'post_type' => GWC_VT_ENTRY_TYPE,
-							'page'      => GWC_VT_LETTERS_PAGE,
-						),
-						admin_url( 'edit.php' )
-					),
-				),
-				array(
-					'label' => __( 'Check a reference', 'groundwork-common-volunteer-tracker' ),
-					'url'   => add_query_arg(
-						array(
-							'post_type' => GWC_VT_ENTRY_TYPE,
-							'page'      => GWC_VT_LETTERS_PAGE,
-						),
-						admin_url( 'edit.php' )
-					) . '#gwcvt-reference',
-				),
-			),
-		);
-	}
-
-	$setup = array();
-
-	if ( current_user_can( gwc_vt_cap( 'manage' ) ) ) {
-		$setup[] = array(
-			'label' => __( 'Settings', 'groundwork-common-volunteer-tracker' ),
-			'url'   => add_query_arg(
-				array(
-					'post_type' => GWC_VT_ENTRY_TYPE,
-					'page'      => GWC_VT_SETTINGS_PAGE,
-				),
-				admin_url( 'edit.php' )
-			),
-		);
-	}
-
+	/* Not an ordinary verb, and deliberately last: it is the one thing here
+	 * somebody does because a person asked them to rather than because the week
+	 * needs it. export_others_personal_data is core's own capability for it. */
 	if ( current_user_can( 'export_others_personal_data' ) ) {
-		$setup[] = array(
+		$actions[] = array(
 			'label' => __( 'Export or erase a record', 'groundwork-common-volunteer-tracker' ),
 			'url'   => admin_url( 'export-personal-data.php' ),
 		);
 	}
 
-	if ( $setup ) {
-		$groups[] = array(
-			'title' => __( 'Setting up', 'groundwork-common-volunteer-tracker' ),
-			'links' => $setup,
-		);
-	}
-
 	/**
-	 * The dashboard's map of everywhere else.
+	 * The dashboard's quick actions, already filtered by capability.
 	 *
-	 * @param array $groups Groups of links, already filtered by capability.
+	 * Replaces gwc_vt_dashboard_map, which described a panel that no longer
+	 * exists: with the verbs on the menu and the nouns in the sidebar, the map
+	 * was mostly the sidebar written out twice.
+	 *
+	 * @param array $actions Label-and-url pairs, in the order they appear.
 	 */
-	return (array) apply_filters( 'gwc_vt_dashboard_map', $groups );
+	return (array) apply_filters( 'gwc_vt_dashboard_actions', $actions );
 }
 
 /**
- * Render it.
+ * Render them.
  */
-function gwc_vt_render_dashboard_map(): void {
-	$groups = gwc_vt_dashboard_map();
+function gwc_vt_render_dashboard_actions(): void {
+	$actions = gwc_vt_dashboard_actions();
 
-	if ( ! $groups ) {
+	if ( ! $actions ) {
 		return;
 	}
 	?>
-	<section>
+	<section class="gwcvt-dash__section">
 		<div class="gwcvt-dash__head">
-			<h2><?php esc_html_e( 'Where to next', 'groundwork-common-volunteer-tracker' ); ?></h2>
+			<h2><?php esc_html_e( 'Quick actions', 'groundwork-common-volunteer-tracker' ); ?></h2>
 		</div>
 
-		<nav class="gwcvt-dash__panel gwcvt-map" aria-label="<?php esc_attr_e( 'Everywhere else in Volunteer Hours', 'groundwork-common-volunteer-tracker' ); ?>">
-			<?php foreach ( $groups as $group ) : ?>
-				<div class="gwcvt-map__group">
-					<h3><?php echo esc_html( (string) $group['title'] ); ?></h3>
-					<ul class="gwcvt-map__links">
-						<?php foreach ( (array) $group['links'] as $link ) : ?>
-							<li><a href="<?php echo esc_url( (string) $link['url'] ); ?>"><?php echo esc_html( (string) $link['label'] ); ?></a></li>
-						<?php endforeach; ?>
-					</ul>
-				</div>
-			<?php endforeach; ?>
+		<nav class="gwcvt-dash__panel gwcvt-actions" aria-label="<?php esc_attr_e( 'Quick actions', 'groundwork-common-volunteer-tracker' ); ?>">
+			<ul class="gwcvt-actions__list">
+				<?php foreach ( $actions as $action ) : ?>
+					<li><a href="<?php echo esc_url( (string) $action['url'] ); ?>"><?php echo esc_html( (string) $action['label'] ); ?></a></li>
+				<?php endforeach; ?>
+			</ul>
 		</nav>
 	</section>
 	<?php

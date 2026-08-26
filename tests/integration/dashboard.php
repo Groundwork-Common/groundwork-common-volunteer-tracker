@@ -289,29 +289,39 @@ gwc_vt_check( 'and an unreadable one falls back to January', $gwc_vt_start === g
 
 remove_filter( 'gwc_vt_reporting_year_start', 'gwc_vt_test_bad_year' );
 
-/* ── The map shows only what the person can reach ────────────────────────────
+/* ── Quick actions show only what the person can reach ───────────────────────
  * A link that refuses when clicked is worse than an absent one: the first
  * teaches somebody the screen is broken, the second teaches them nothing.
+ *
+ * This used to be asserted against the "Where to next" map, which grouped every
+ * screen in the plugin by subject. The map went when the menu became six nouns
+ * and started carrying the same information; what survived it is the verbs, and
+ * the capability rule survived with them.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The titles of the map's groups, for whoever is currently signed in.
+ * The labels of the quick actions, for whoever is currently signed in.
  *
  * @return string[]
  */
-function gwc_vt_map_titles(): array {
+function gwc_vt_action_labels(): array {
 	return array_map(
-		static function ( array $group ): string {
-			return (string) $group['title'];
+		static function ( array $action ): string {
+			return (string) $action['label'];
 		},
-		gwc_vt_dashboard_map()
+		gwc_vt_dashboard_actions()
 	);
 }
 
-$gwc_vt_admin_sees = gwc_vt_map_titles();
+$gwc_vt_admin_sees = gwc_vt_action_labels();
 
-gwc_vt_check( 'an administrator sees the letters group', in_array( 'Letters', $gwc_vt_admin_sees, true ), implode( ',', $gwc_vt_admin_sees ) );
-gwc_vt_check( 'and the setting-up group', in_array( 'Setting up', $gwc_vt_admin_sees, true ) );
+gwc_vt_check(
+	'an administrator is offered the privacy tools',
+	in_array( 'Export or erase a record', $gwc_vt_admin_sees, true ),
+	implode( ', ', $gwc_vt_admin_sees )
+);
+
+gwc_vt_check( 'and the verbs they use every week', in_array( 'Add a volunteer', $gwc_vt_admin_sees, true ) );
 
 $gwc_vt_author = wp_insert_user(
 	array(
@@ -325,12 +335,16 @@ $gwc_vt_author = wp_insert_user(
 if ( ! is_wp_error( $gwc_vt_author ) ) {
 	wp_set_current_user( (int) $gwc_vt_author );
 
-	$gwc_vt_author_sees = gwc_vt_map_titles();
+	$gwc_vt_author_sees = gwc_vt_action_labels();
 
-	gwc_vt_check( 'somebody who cannot issue letters is not offered them', ! in_array( 'Letters', $gwc_vt_author_sees, true ), implode( ',', $gwc_vt_author_sees ) );
-	gwc_vt_check( 'nor the settings they cannot open', ! in_array( 'Setting up', $gwc_vt_author_sees, true ) );
-	gwc_vt_check( 'but they still get the hours they can log', in_array( 'Hours', $gwc_vt_author_sees, true ) );
-	gwc_vt_check( 'and the shifts they can staff', in_array( 'Shifts', $gwc_vt_author_sees, true ) );
+	gwc_vt_check(
+		'somebody who cannot export personal data is not offered it',
+		! in_array( 'Export or erase a record', $gwc_vt_author_sees, true ),
+		implode( ', ', $gwc_vt_author_sees )
+	);
+
+	gwc_vt_check( 'but they still get the hours they can log', in_array( 'Log a day’s sign-in sheet', $gwc_vt_author_sees, true ) );
+	gwc_vt_check( 'and the volunteers they can add', in_array( 'Add a volunteer', $gwc_vt_author_sees, true ) );
 
 	wp_set_current_user( 1 );
 	wp_delete_user( (int) $gwc_vt_author );
@@ -343,8 +357,14 @@ $gwc_vt_settings['shifts_enabled'] = false;
 update_option( GWC_VT_SETTINGS_OPTION, $gwc_vt_settings );
 gwc_vt_settings_cache( null, true );
 
-gwc_vt_check( 'with shifts off the map drops them', ! in_array( 'Shifts', gwc_vt_map_titles(), true ), implode( ',', gwc_vt_map_titles() ) );
-gwc_vt_check( 'and hours are still there', in_array( 'Hours', gwc_vt_map_titles(), true ) );
+gwc_vt_check(
+	'with shifts off, adding one is not offered',
+	! in_array( 'Add a shift', gwc_vt_action_labels(), true ),
+	implode( ', ', gwc_vt_action_labels() )
+);
+
+gwc_vt_check( 'nor adding an event', ! in_array( 'Add an event', gwc_vt_action_labels(), true ) );
+gwc_vt_check( 'and logging hours is still there', in_array( 'Log a day’s sign-in sheet', gwc_vt_action_labels(), true ) );
 
 $gwc_vt_settings['shifts_enabled'] = true;
 update_option( GWC_VT_SETTINGS_OPTION, $gwc_vt_settings );
@@ -358,14 +378,12 @@ foreach ( array( 'unreconciled', 'understaffed', 'overdue', 'unverified', 'unmat
 	gwc_vt_check( 'the ' . $gwc_vt_key_name . ' line has somewhere to go', '' !== $gwc_vt_url && false !== strpos( $gwc_vt_url, 'wp-admin' ), $gwc_vt_url );
 }
 
-foreach ( gwc_vt_dashboard_map() as $gwc_vt_group ) {
-	foreach ( (array) $gwc_vt_group['links'] as $gwc_vt_link ) {
-		gwc_vt_check(
-			'the map link "' . $gwc_vt_link['label'] . '" has a destination',
-			'' !== $gwc_vt_link['url'] && false !== strpos( $gwc_vt_link['url'], 'wp-admin' ),
-			(string) $gwc_vt_link['url']
-		);
-	}
+foreach ( gwc_vt_dashboard_actions() as $gwc_vt_action ) {
+	gwc_vt_check(
+		'the action "' . $gwc_vt_action['label'] . '" has a destination',
+		'' !== $gwc_vt_action['url'] && false !== strpos( $gwc_vt_action['url'], 'wp-admin' ),
+		(string) $gwc_vt_action['url']
+	);
 }
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */

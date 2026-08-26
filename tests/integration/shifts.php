@@ -250,6 +250,148 @@ gwc_vt_check(
 	get_the_title( $gwc_vt_first )
 );
 
+/* ── What state a shift is in ────────────────────────────────────────────────
+ * tests/ShiftTest.php asserts the precedence in gwc_vt_shift_state_from(),
+ * which is pure. What it cannot reach is gwc_vt_shift_state() — the half that
+ * decides WHICH facts to gather, off real post meta, a real post status and a
+ * real roster. A gatherer that read the wrong meta key would hand the pure
+ * function a perfectly consistent set of wrong facts, and every unit test would
+ * still pass.
+ *
+ * Five screens draw this as a colour, so it is worth one fixture per state.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_soon = gmdate( 'Y-m-d', time() + ( 7 * DAY_IN_SECONDS ) );
+$gwc_vt_gone = gmdate( 'Y-m-d', time() - ( 3 * DAY_IN_SECONDS ) );
+
+/**
+ * Put somebody on a shift.
+ *
+ * @param int $shift_id Shift post ID.
+ * @param int $how_many How many signups to make.
+ */
+function gwc_vt_fill_shift( int $shift_id, int $how_many ): void {
+	for ( $i = 0; $i < $how_many; $i++ ) {
+		$id = wp_insert_post(
+			array(
+				'post_type'   => GWC_VT_SIGNUP_TYPE,
+				'post_status' => 'publish',
+				'post_parent' => $shift_id,
+				'post_title'  => 'zzytest signup ' . $i,
+			)
+		);
+
+		$GLOBALS['gwc_vt_made'][] = (int) $id;
+	}
+}
+
+$gwc_vt_state_ok = gwc_vt_make_shift( $gwc_vt_soon, '09:00', '12:00', array( GWC_VT_SHIFT_MAX => 8 ) );
+gwc_vt_fill_shift( $gwc_vt_state_ok, 3 );
+gwc_vt_check( 'a shift filling normally is ok', 'ok' === gwc_vt_shift_state( $gwc_vt_state_ok ), gwc_vt_shift_state( $gwc_vt_state_ok ) );
+
+$gwc_vt_state_short = gwc_vt_make_shift(
+	$gwc_vt_soon,
+	'09:00',
+	'12:00',
+	array(
+		GWC_VT_SHIFT_MIN => 4,
+		GWC_VT_SHIFT_MAX => 8,
+	)
+);
+gwc_vt_fill_shift( $gwc_vt_state_short, 1 );
+gwc_vt_check( 'below its minimum is short', 'short' === gwc_vt_shift_state( $gwc_vt_state_short ), gwc_vt_shift_state( $gwc_vt_state_short ) );
+
+$gwc_vt_state_full = gwc_vt_make_shift( $gwc_vt_soon, '09:00', '12:00', array( GWC_VT_SHIFT_MAX => 2 ) );
+gwc_vt_fill_shift( $gwc_vt_state_full, 2 );
+gwc_vt_check( 'at its maximum is full', 'full' === gwc_vt_shift_state( $gwc_vt_state_full ), gwc_vt_shift_state( $gwc_vt_state_full ) );
+
+$gwc_vt_state_awaiting = gwc_vt_make_shift( $gwc_vt_gone, '09:00', '12:00', array( GWC_VT_SHIFT_MAX => 8 ) );
+gwc_vt_fill_shift( $gwc_vt_state_awaiting, 2 );
+gwc_vt_check( 'past with people and no hours is awaiting', 'awaiting' === gwc_vt_shift_state( $gwc_vt_state_awaiting ), gwc_vt_shift_state( $gwc_vt_state_awaiting ) );
+
+update_post_meta( $gwc_vt_state_awaiting, GWC_VT_SHIFT_RECONCILED, gmdate( 'Y-m-d H:i:s' ) );
+gwc_vt_check( 'and written up, it is logged', 'logged' === gwc_vt_shift_state( $gwc_vt_state_awaiting ), gwc_vt_shift_state( $gwc_vt_state_awaiting ) );
+
+$gwc_vt_state_empty = gwc_vt_make_shift( $gwc_vt_gone, '09:00', '12:00', array( GWC_VT_SHIFT_MAX => 8 ) );
+gwc_vt_check( 'past with nobody on it is not awaiting', 'ok' === gwc_vt_shift_state( $gwc_vt_state_empty ), gwc_vt_shift_state( $gwc_vt_state_empty ) );
+
+$gwc_vt_state_off = gwc_vt_make_shift(
+	$gwc_vt_soon,
+	'09:00',
+	'12:00',
+	array(
+		GWC_VT_SHIFT_MIN => 4,
+		GWC_VT_SHIFT_MAX => 8,
+	),
+	GWC_VT_SHIFT_CANCELLED
+);
+gwc_vt_check( 'called off beats being short', 'cancelled' === gwc_vt_shift_state( $gwc_vt_state_off ), gwc_vt_shift_state( $gwc_vt_state_off ) );
+
+/* Every state a real shift can be in has words to print beside its colour. */
+foreach ( array( $gwc_vt_state_ok, $gwc_vt_state_short, $gwc_vt_state_full, $gwc_vt_state_awaiting, $gwc_vt_state_empty, $gwc_vt_state_off ) as $gwc_vt_state_id ) {
+	gwc_vt_check(
+		'state ' . gwc_vt_shift_state( $gwc_vt_state_id ) . ' has words',
+		'' !== gwc_vt_shift_state_label( gwc_vt_shift_state( $gwc_vt_state_id ) )
+	);
+}
+
+/* ── The sentence beside the colour ──────────────────────────────────────────
+ * Every chip and every line prints gwc_vt_shift_fill_summary(), because the
+ * numbers are not enough on their own — "3 of 8" does not say whether three is
+ * a problem — and the colour that would say so is the one thing some readers
+ * cannot see. The dashboard's strip and its list are the same fortnight drawn
+ * twice, so they read it from here rather than each building it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+gwc_vt_check(
+	'a short shift says how many it needs',
+	false !== strpos( gwc_vt_shift_fill_summary( $gwc_vt_state_short ), '4' ),
+	gwc_vt_shift_fill_summary( $gwc_vt_state_short )
+);
+
+gwc_vt_check(
+	'and still says how many it has',
+	false !== strpos( gwc_vt_shift_fill_summary( $gwc_vt_state_short ), '1' ),
+	gwc_vt_shift_fill_summary( $gwc_vt_state_short )
+);
+
+gwc_vt_check(
+	'a full shift says so',
+	gwc_vt_shift_fill_summary( $gwc_vt_state_full ) !== gwc_vt_shift_fill_label( $gwc_vt_state_full ),
+	gwc_vt_shift_fill_summary( $gwc_vt_state_full )
+);
+
+gwc_vt_check(
+	'a shift filling normally says only the numbers',
+	gwc_vt_shift_fill_summary( $gwc_vt_state_ok ) === gwc_vt_shift_fill_label( $gwc_vt_state_ok ),
+	gwc_vt_shift_fill_summary( $gwc_vt_state_ok )
+);
+
+/* A shift that has happened, or been called off, reports what happened to it
+ * rather than how full it was. "2 of 8" on a cancelled Saturday is answering a
+ * question nobody is asking any more. */
+gwc_vt_check(
+	'a called-off shift reports being called off',
+	gwc_vt_shift_state_label( 'cancelled' ) === gwc_vt_shift_fill_summary( $gwc_vt_state_off ),
+	gwc_vt_shift_fill_summary( $gwc_vt_state_off )
+);
+
+gwc_vt_check(
+	'a written-up shift reports being written up',
+	gwc_vt_shift_state_label( 'logged' ) === gwc_vt_shift_fill_summary( $gwc_vt_state_awaiting ),
+	gwc_vt_shift_fill_summary( $gwc_vt_state_awaiting )
+);
+
+/* Passing the state in must not change the answer — it is an optimisation for
+ * callers that already have it, not a second way of deciding. */
+foreach ( array( $gwc_vt_state_ok, $gwc_vt_state_short, $gwc_vt_state_full, $gwc_vt_state_off ) as $gwc_vt_fs_id ) {
+	gwc_vt_check(
+		'the summary is the same whether the state is handed in or looked up',
+		gwc_vt_shift_fill_summary( $gwc_vt_fs_id ) === gwc_vt_shift_fill_summary( $gwc_vt_fs_id, gwc_vt_shift_state( $gwc_vt_fs_id ) ),
+		gwc_vt_shift_fill_summary( $gwc_vt_fs_id )
+	);
+}
+
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
 foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {

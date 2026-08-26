@@ -15,6 +15,7 @@ const GWC_VT_QUICK_ADD_WALK_IN_ROWS = 4;
 
 add_action( 'admin_menu', 'gwc_vt_register_quick_add_menu', 12 );
 add_action( 'admin_post_gwc_vt_quick_add', 'gwc_vt_handle_quick_add' );
+add_action( 'all_admin_notices', 'gwc_vt_render_log_a_day_button' );
 
 /* ── Why this screen exists ──────────────────────────────────────────────────
  * Logging Saturday meant six trips through post-new.php: load the editor, pick
@@ -46,17 +47,124 @@ add_action( 'admin_post_gwc_vt_quick_add', 'gwc_vt_handle_quick_add' );
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
+ * The screen's title, said once.
+ *
+ * Registration needs it, and so does gwc_vt_restore_quick_add_title() below —
+ * which exists precisely because the copy registration puts in the menu is no
+ * longer there to be read back.
+ *
+ * @return string
+ */
+function gwc_vt_quick_add_page_title(): string {
+	return __( 'Log a day’s shifts', 'groundwork-common-volunteer-tracker' );
+}
+
+/**
  * Add the screen under Volunteer Hours.
  */
 function gwc_vt_register_quick_add_menu(): void {
-	add_submenu_page(
+	$hook = add_submenu_page(
 		GWC_VT_MENU_SLUG,
-		__( 'Log a day’s shifts', 'groundwork-common-volunteer-tracker' ),
+		gwc_vt_quick_add_page_title(),
 		__( 'Log a day', 'groundwork-common-volunteer-tracker' ),
 		'edit_posts',
 		GWC_VT_QUICK_ADD_PAGE,
 		'gwc_vt_render_quick_add_screen'
 	);
+
+	if ( $hook ) {
+		add_action( 'load-' . $hook, 'gwc_vt_restore_quick_add_title' );
+	}
+}
+
+/**
+ * Give the screen its title back.
+ *
+ * Core has no register of page titles. get_admin_page_title() finds one by
+ * searching $submenu for the current slug and taking the entry's title off it.
+ * gwc_vt_hide_menu_verbs() removes that entry, so the search comes back empty
+ * and $title stays null — which cost this screen its <title>, its <h1> on any
+ * screen that leans on the global, and, on PHP 8.1 and up, a deprecation
+ * notice printed across the top of wp-admin from inside core's own
+ * admin-header.php. The page still worked, which is what made it easy to miss.
+ *
+ * On `load-`, because admin-header.php reads $title and runs after it.
+ */
+function gwc_vt_restore_quick_add_title(): void {
+	if ( ! empty( $GLOBALS['title'] ) ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $title is how core carries an admin page's title into admin-header.php, and there is no API for setting it; this writes it only for this plugin's own screen, and only when nothing else has.
+	$GLOBALS['title'] = gwc_vt_quick_add_page_title();
+}
+
+/**
+ * The screen's own URL, with no shift attached.
+ *
+ * @return string
+ */
+function gwc_vt_quick_add_url(): string {
+	return add_query_arg(
+		array(
+			'post_type' => GWC_VT_ENTRY_TYPE,
+			'page'      => GWC_VT_QUICK_ADD_PAGE,
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/* ── The button that replaced the menu entry ─────────────────────────────────
+ * gwc_vt_hide_menu_verbs() takes Log a day off the submenu, so All hours has to
+ * offer it instead. WordPress renders its own page-title-action there for the
+ * post type — that is the "Log one shift" button, and it comes from the
+ * add_new label in inc/cpt.php — but core has no hook between the <h1> and the
+ * <hr class="wp-header-end"> that follows it, so a second button cannot be
+ * printed into that spot from PHP.
+ *
+ * So it is printed into the notices area, which is the nearest hook that is
+ * unambiguously ours to write to, and assets/js/admin-title-actions.js lifts it
+ * up beside the heading. The script moves a link that is already on the screen
+ * and already works; with JavaScript off the button sits above the heading
+ * instead of beside it and does the same thing. That is the difference between
+ * enhancement and carriage, and it is why the anchor is rendered here rather
+ * than written by the script.
+ *
+ * Above, not below: all_admin_notices fires before <div class="wrap"> opens,
+ * so the no-JS button lands outside the column the rest of the screen lines up
+ * with — and core styles page-title-action as `.wrap .page-title-action`, so
+ * outside a .wrap it is not a button at all, just an underlined link floating
+ * over the heading. Hence the holder carrying core's own `wrap` class: it earns
+ * both the gutter and the button back without this plugin copying out a single
+ * one of core's declarations to drift from later.
+ *
+ * The alternative hooks are all worse. The only two that fire inside .wrap on
+ * this screen are views_edit-<type>, which would make the button an <li> in the
+ * "All (0)" list with a separating pipe after it, and restrict_manage_posts,
+ * which would file a page action among the filter controls.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * "Log a day", on the All hours screen.
+ */
+function gwc_vt_render_log_a_day_button(): void {
+	$screen = get_current_screen();
+
+	if ( ! $screen || 'edit' !== $screen->base || GWC_VT_ENTRY_TYPE !== $screen->post_type ) {
+		return;
+	}
+
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		return;
+	}
+
+	?>
+	<div class="wrap gwcvt-title-actions" data-gwcvt-title-actions>
+		<a href="<?php echo esc_url( gwc_vt_quick_add_url() ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Log a day', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+	</div>
+	<?php
 }
 
 /**
@@ -240,10 +348,6 @@ function gwc_vt_render_quick_add_row( int $index, bool $walk_in = false ): void 
  * @param int $shift_id Shift post ID.
  */
 function gwc_vt_render_shift_log_screen( int $shift_id ): void {
-	$vocabulary = gwc_vt_activity_vocabulary();
-	$roster     = gwc_vt_shift_signup_ids( $shift_id );
-	$ended      = gwc_vt_shift_has_ended( $shift_id );
-	$logged_at  = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_RECONCILED, true );
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1><?php esc_html_e( 'Log the hours for this shift', 'groundwork-common-volunteer-tracker' ); ?></h1>
@@ -258,6 +362,37 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 
 		<h2><?php echo esc_html( get_the_title( $shift_id ) ); ?></h2>
 
+		<?php gwc_vt_render_shift_log_form( $shift_id ); ?>
+	</div>
+	<?php
+}
+
+/* ── The form, without the screen around it ──────────────────────────────────
+ * Split out so an event's roster can put it under the time it belongs to. The
+ * day of a four-time event used to be eight screens: read the roster, go to the
+ * log screen, come back, find the next time, and again. This is the same form,
+ * the same handler and the same rules — relocated, not rewritten — so there is
+ * no second write path to keep in step with the first.
+ *
+ * The guards come with it, and that is the point of moving the whole thing
+ * rather than just the table: the refusal to log a shift that has not finished,
+ * and the notice about a shift already logged, are the two things a coordinator
+ * most needs on the screen where they are typing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The log-a-shift form.
+ *
+ * @param int $shift_id   Shift post ID.
+ * @param int $back_event Event to return to after saving, or 0 for the usual place.
+ */
+function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): void {
+	$vocabulary = gwc_vt_activity_vocabulary();
+	$roster     = gwc_vt_shift_signup_ids( $shift_id );
+	$ended      = gwc_vt_shift_has_ended( $shift_id );
+	$logged_at  = (string) get_post_meta( $shift_id, GWC_VT_SHIFT_RECONCILED, true );
+
+	?>
 		<?php
 		/* ── Not yet ────────────────────────────────────────────────────────
 		 * Refused rather than allowed-with-a-warning, and the reason is the one
@@ -273,7 +408,6 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 					<strong><?php esc_html_e( 'This shift has not finished yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
 					<?php esc_html_e( 'Hours can be logged once it has. Recording them early would date them the day you typed them rather than the day they were worked, and that date is what a letter prints.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
-			</div>
 			</div>
 			<?php
 			return;
@@ -299,6 +433,17 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 			<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
 			<input type="hidden" name="gwc_vt_date" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_DATE, true ) ); ?>" />
 			<?php wp_nonce_field( 'gwc_vt_quick_add' ); ?>
+
+			<?php
+			/* An event ID rather than a URL. A URL in a form field is an open
+			 * redirect waiting to be found, and wp_safe_redirect() only catches
+			 * the off-site half of it — the redirect rebuilds a roster URL from
+			 * this instead. Same reasoning as the drawer's return in
+			 * inc/admin-shift.php. */
+			?>
+			<?php if ( $back_event > 0 ) : ?>
+				<input type="hidden" name="gwc_vt_back_event" value="<?php echo esc_attr( (string) $back_event ); ?>" />
+			<?php endif; ?>
 
 			<table class="form-table" role="presentation">
 				<tbody>
@@ -371,7 +516,6 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 
 			<?php submit_button( __( 'Log these hours', 'groundwork-common-volunteer-tracker' ) ); ?>
 		</form>
-	</div>
 	<?php
 }
 
@@ -718,6 +862,27 @@ function gwc_vt_quick_add_redirect( int $made, int $skipped, string $result, int
 	if ( $shift_id > 0 ) {
 		$args['gwc_vt_shift']    = $shift_id;
 		$args['gwc_vt_no_shows'] = $no_shows;
+	}
+
+	/* Somebody logging a time from an event's roster wanted to stay there: the
+	 * next time is on the same screen, and sending them to the standalone log
+	 * page is the round trip that made a four-time event eight of them.
+	 *
+	 * Rebuilt from an ID rather than from a URL the form carried — see the note
+	 * on the hidden field in gwc_vt_render_shift_log_form(). */
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- gwc_vt_handle_quick_add() checked its nonce before this runs; this only decides which screen to land on.
+	$back_event = isset( $_POST['gwc_vt_back_event'] ) ? absint( wp_unslash( $_POST['gwc_vt_back_event'] ) ) : 0;
+
+	if ( $back_event > 0 && GWC_VT_EVENT_TYPE === get_post_type( $back_event ) ) {
+		unset( $args['page'], $args['gwc_vt_shift'] );
+
+		wp_safe_redirect(
+			add_query_arg(
+				$args,
+				gwc_vt_event_roster_url( $back_event )
+			)
+		);
+		exit;
 	}
 
 	wp_safe_redirect( add_query_arg( $args, admin_url( 'edit.php' ) ) );

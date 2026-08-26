@@ -21,7 +21,7 @@ The two halves meet when the shift is over: the roster becomes the hours, everyb
 
 = What it does =
 
-* A dashboard showing what needs doing, what is coming up, what the year adds up to, and where to go next.
+* A dashboard showing the fortnight ahead as a week strip or a list, what needs doing, what the year adds up to, and a panel for checking a letter reference when somebody phones about one.
 * Plans shifts ahead of time — when, where, what the work is, how many people you need and how many you have room for. Repeat one weekly, fortnightly, monthly or every weekday, and every occurrence is a real shift you can edit or cancel on its own.
 * Optionally lets people sign up for shifts from a page on your site, with no account. They get a confirmation, a calendar link and a way to cancel. The public list shows how many places are left, never who is coming.
 * Optionally reminds them before the shift, tells them if it moves or is called off, and sends you a daily summary of what is short of people and what still needs its hours logged.
@@ -31,7 +31,7 @@ The two halves meet when the shift is over: the roster becomes the hours, everyb
 * Runs a day as an event when one occasion has several roles at several times — a festival, a meal service, a collection drive. Volunteers pick more than one time in a single go and get one email listing all of them.
 * Lets a staff member with the right permission mark a shift verified. Who attested and when is recorded and appears on the letter.
 * Produces a verification letter for any volunteer over any date range, itemized, on your letterhead, ready to print or email.
-* Gives every letter a reference code you can read back to anyone who phones to check it — and a screen that tells you whether it still matches your records.
+* Gives every letter a reference code you can read back to anyone who phones to check it — and a panel on the dashboard that tells you whether it still matches your records.
 * Logs every letter issued, printing included.
 * Optionally lets volunteers send in their own hours from a page on your site. Off until you switch it on; everything sent arrives unverified and waits for staff.
 * Tracks how many hours somebody working off court-ordered or school-required service still has to complete, and by when. For your planning only — it never appears on a letter.
@@ -56,7 +56,7 @@ Volunteer records here are more sensitive than most plugin data — in the manda
 4. On the **Permissions** tab, choose which roles may verify hours and which may issue letters. They are frequently different people, which is why they are separate.
 5. On the **Privacy** tab, decide how long records are kept. The plugin will not choose for you, and it will not quietly keep them forever either.
 
-Then log a shift under **Volunteer Hours → Log hours**, verify it, and produce a letter from **Letters**. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
+Then open **Volunteer Hours → All hours** and press **Log one shift**, verify what you logged, and produce a letter from the volunteer's own record. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
 
 Nothing here is public until you say so. The shift signup form and the volunteer self-log form are both switched off on a new install — they live under **Settings → Shifts** and **Settings → Logging**.
 
