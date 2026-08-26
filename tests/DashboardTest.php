@@ -542,4 +542,86 @@ final class DashboardTest extends TestCase {
 		$this->assertCount( 7, $weeks[0]['days'] );
 		$this->assertNotSame( '1970-01-01', $weeks[0]['days'][0]['date'] );
 	}
+
+	/* ── The widget's week block ─────────────────────────────────────────────
+	 * Two days with anything on them, not two shifts. The distinction only
+	 * showed up on real data: a Saturday with three shifts filled a three-shift
+	 * limit by itself, so the next day never appeared and a block headed "this
+	 * week" was showing one day.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * Put a shift on a date in the test's meta store.
+	 *
+	 * @param int    $shift_id The shift.
+	 * @param string $date     Y-m-d.
+	 */
+	private function on( int $shift_id, string $date ): void {
+		update_post_meta( $shift_id, GWC_VT_SHIFT_DATE, $date );
+	}
+
+	public function test_it_keeps_two_days_rather_than_two_shifts(): void {
+		$this->on( 1, '2026-08-29' );
+		$this->on( 2, '2026-08-29' );
+		$this->on( 3, '2026-08-29' );
+		$this->on( 4, '2026-09-02' );
+		$this->on( 5, '2026-09-05' );
+
+		$days = gwc_vt_widget_days( array( 1, 2, 3, 4, 5 ) );
+
+		$this->assertSame( array( '2026-08-29', '2026-09-02' ), array_keys( $days ) );
+	}
+
+	public function test_a_busy_day_does_not_crowd_out_the_next_one(): void {
+		/* The whole bug, in one assertion. Under a three-SHIFT limit this
+		 * returns Saturday and nothing else. */
+		$this->on( 1, '2026-08-29' );
+		$this->on( 2, '2026-08-29' );
+		$this->on( 3, '2026-08-29' );
+		$this->on( 4, '2026-09-02' );
+
+		$days = gwc_vt_widget_days( array( 1, 2, 3, 4 ) );
+
+		$this->assertArrayHasKey( '2026-09-02', $days );
+	}
+
+	public function test_every_shift_on_a_kept_day_is_kept(): void {
+		/* Including the ones past the render cap — the renderer needs the real
+		 * total to say how many it did not show. */
+		$this->on( 1, '2026-08-29' );
+		$this->on( 2, '2026-08-29' );
+		$this->on( 3, '2026-08-29' );
+		$this->on( 4, '2026-08-29' );
+		$this->on( 5, '2026-08-29' );
+
+		$days = gwc_vt_widget_days( array( 1, 2, 3, 4, 5 ) );
+
+		$this->assertCount( 5, $days['2026-08-29'] );
+	}
+
+	public function test_a_day_with_nothing_on_it_is_not_a_day(): void {
+		/* 30 and 31 August have nothing. "The next two days with shifts" is the
+		 * question; an empty Sunday is not an answer worth a heading. */
+		$this->on( 1, '2026-08-29' );
+		$this->on( 2, '2026-09-05' );
+
+		$this->assertSame(
+			array( '2026-08-29', '2026-09-05' ),
+			array_keys( gwc_vt_widget_days( array( 1, 2 ) ) )
+		);
+	}
+
+	public function test_a_shift_with_no_date_is_skipped(): void {
+		$this->on( 1, '2026-08-29' );
+		$this->on( 3, '2026-09-02' );
+
+		$days = gwc_vt_widget_days( array( 1, 2, 3 ) );
+
+		$this->assertSame( array( '2026-08-29', '2026-09-02' ), array_keys( $days ) );
+		$this->assertSame( array( 1 ), $days['2026-08-29'] );
+	}
+
+	public function test_nothing_upcoming_is_no_days(): void {
+		$this->assertSame( array(), gwc_vt_widget_days( array() ) );
+	}
 }

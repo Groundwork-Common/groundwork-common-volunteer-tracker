@@ -127,17 +127,21 @@ echo "\n── 2. It names the shift rather than counting it ──────�
  * can push a shift two days out past them. Naming the fixture and hoping it
  * lands in the top three is a test that passes on an empty database and fails
  * on a real one, which is the wrong way round. */
-$gwc_vt_dw_soonest = array_slice(
+$gwc_vt_dw_days = gwc_vt_widget_days(
 	gwc_vt_shifts_between(
 		array(
 			'from'  => gwc_vt_today(),
 			'to'    => gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +7 days' ) ),
-			'limit' => 20,
+			'limit' => 60,
 		)
-	),
-	0,
-	GWC_VT_WIDGET_SHIFTS
+	)
 );
+
+$gwc_vt_dw_soonest = array();
+
+foreach ( $gwc_vt_dw_days as $gwc_vt_dw_day ) {
+	$gwc_vt_dw_soonest = array_merge( $gwc_vt_dw_soonest, array_slice( $gwc_vt_dw_day, 0, GWC_VT_WIDGET_PER_DAY ) );
+}
 
 gwc_vt_dw_check(
 	'there is a shift this week to name',
@@ -170,12 +174,43 @@ gwc_vt_dw_check(
 	$gwc_vt_dw_unfilled . ' of ' . count( $gwc_vt_dw_soonest ) . ' shown without a fill'
 );
 
-/* And the count is a slice, not the lot — a widget that renders twenty rows is
- * one somebody collapses and never opens again. */
+/* ── What this file can and cannot prove about the grouping ──────────────────
+ * It cannot prove the two-days rule. Every expectation here is derived from
+ * gwc_vt_widget_days(), which is the function that would be wrong — so a
+ * sabotage of it moves the expectation with the result and the check passes.
+ * Both sabotages of that function did exactly that, and were caught only by
+ * DashboardTest, which asserts concrete dates against a fixture it controls.
+ *
+ * That rule lives there. What THIS file can prove is the relationship between
+ * the two halves: that the renderer draws every day the grouper returned, and
+ * no more. Stated rather than left implicit, because a check that looks
+ * stronger than it is, is worse than one that admits its scope.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 gwc_vt_dw_check(
-	'it shows no more than it promises',
-	substr_count( $gwc_vt_dw_html, 'gwcvt-widget__when' ) <= GWC_VT_WIDGET_SHIFTS,
-	substr_count( $gwc_vt_dw_html, 'gwcvt-widget__when' ) . ' shift rows'
+	'the renderer draws a heading for every day the grouper returned',
+	substr_count( $gwc_vt_dw_html, 'gwcvt-widget__when' ) === count( $gwc_vt_dw_days ),
+	substr_count( $gwc_vt_dw_html, 'gwcvt-widget__when' ) . ' headings for ' . count( $gwc_vt_dw_days ) . ' day(s)'
+);
+
+$gwc_vt_dw_missing_date = 0;
+
+foreach ( array_keys( $gwc_vt_dw_days ) as $gwc_vt_dw_date ) {
+	if ( false === strpos( $gwc_vt_dw_html, gwc_vt_shift_date_label_from( (string) $gwc_vt_dw_date ) ) ) {
+		++$gwc_vt_dw_missing_date;
+	}
+}
+
+gwc_vt_dw_check(
+	'and each of those days is named',
+	0 === $gwc_vt_dw_missing_date,
+	$gwc_vt_dw_missing_date . ' day(s) grouped but not drawn'
+);
+
+gwc_vt_dw_check(
+	'never more days than the widget promises',
+	count( $gwc_vt_dw_days ) <= GWC_VT_WIDGET_DAYS,
+	count( $gwc_vt_dw_days ) . ' day(s)'
 );
 
 /* And it really is the setting doing that, not an accident of the data. */

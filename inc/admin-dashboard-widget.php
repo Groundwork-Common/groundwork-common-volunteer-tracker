@@ -70,8 +70,26 @@ const GWC_VT_WIDGET_TTL = 2 * MINUTE_IN_SECONDS;
 /** Where the cached counts live. */
 const GWC_VT_WIDGET_KEY = 'gwc_vt_widget_counts';
 
-/** How many shifts the week block names before it stops. */
-const GWC_VT_WIDGET_SHIFTS = 3;
+/**
+ * How many DAYS with anything on them the week block covers.
+ *
+ * Days rather than shifts, and the difference showed up the moment this was
+ * looked at on real data: a busy Saturday with three shifts on it filled a
+ * three-shift limit by itself, so Wednesday never appeared and the block
+ * silently became "today" rather than "this week". Counting days is what makes
+ * the heading true.
+ */
+const GWC_VT_WIDGET_DAYS = 2;
+
+/**
+ * And how many shifts one of those days may list.
+ *
+ * A ceiling, not a page. An event's times are ordinary shifts hanging off it by
+ * post_parent, so a festival with twelve slots is twelve rows on one date — and
+ * a widget that renders twelve rows is one somebody collapses and never opens
+ * again. What is over the cap is counted rather than dropped silently.
+ */
+const GWC_VT_WIDGET_PER_DAY = 3;
 
 /** How many worklist lines get a row of their own before the rest collapse. */
 const GWC_VT_WIDGET_LINES = 3;
@@ -162,33 +180,90 @@ function gwc_vt_render_widget_week(): void {
 
 	$today = gwc_vt_today();
 
-	$shifts = gwc_vt_shifts_between(
-		array(
-			'from'  => $today,
-			'to'    => gmdate( 'Y-m-d', strtotime( $today . ' +7 days' ) ),
-			'limit' => 20,
+	$days = gwc_vt_widget_days(
+		gwc_vt_shifts_between(
+			array(
+				'from'  => $today,
+				'to'    => gmdate( 'Y-m-d', strtotime( $today . ' +7 days' ) ),
+				'limit' => 60,
+			)
 		)
 	);
 
-	if ( ! $shifts ) {
+	if ( ! $days ) {
 		return;
 	}
-
-	$shifts = array_slice( $shifts, 0, GWC_VT_WIDGET_SHIFTS );
 	?>
 	<p class="gwcvt-widget__heading"><?php esc_html_e( 'This week', 'groundwork-common-volunteer-tracker' ); ?></p>
 
-	<ul class="gwcvt-widget__week">
-		<?php foreach ( $shifts as $shift_id ) : ?>
-			<?php $shift_id = (int) $shift_id; ?>
-			<li>
-				<span class="gwcvt-widget__when"><?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?></span>
-				<span class="gwcvt-widget__what"><?php echo esc_html( gwc_vt_widget_shift_name( $shift_id ) ); ?></span>
-				<span class="gwcvt-widget__fill"><?php echo esc_html( gwc_vt_shift_fill_label( $shift_id ) ); ?></span>
-			</li>
-		<?php endforeach; ?>
-	</ul>
+	<?php foreach ( $days as $date => $shifts ) : ?>
+		<p class="gwcvt-widget__when"><?php echo esc_html( gwc_vt_shift_date_label_from( (string) $date ) ); ?></p>
+
+		<ul class="gwcvt-widget__week">
+			<?php foreach ( array_slice( $shifts, 0, GWC_VT_WIDGET_PER_DAY ) as $shift_id ) : ?>
+				<?php $shift_id = (int) $shift_id; ?>
+				<li>
+					<span class="gwcvt-widget__what"><?php echo esc_html( gwc_vt_widget_shift_name( $shift_id ) ); ?></span>
+					<span class="gwcvt-widget__fill"><?php echo esc_html( gwc_vt_shift_fill_label( $shift_id ) ); ?></span>
+				</li>
+			<?php endforeach; ?>
+
+			<?php if ( count( $shifts ) > GWC_VT_WIDGET_PER_DAY ) : ?>
+				<li class="gwcvt-widget__more">
+					<?php
+					$over = count( $shifts ) - GWC_VT_WIDGET_PER_DAY;
+
+					printf(
+						/* translators: %s: how many more shifts that day has, already formatted. */
+						esc_html( _n( 'and %s more that day', 'and %s more that day', $over, 'groundwork-common-volunteer-tracker' ) ),
+						esc_html( number_format_i18n( $over ) )
+					);
+					?>
+				</li>
+			<?php endif; ?>
+		</ul>
+	<?php endforeach; ?>
 	<?php
+}
+
+/**
+ * The next few days that have anything on them, each with its shifts.
+ *
+ * Pure, and separate from the rendering, so the rule that matters — that a busy
+ * day cannot crowd out the next one — can be asserted without a database.
+ *
+ * Days with nothing on them are not keys here at all. "The next two days with
+ * shifts" is the question a coordinator is asking; a Tuesday with nothing on it
+ * is not an answer worth a heading.
+ *
+ * @param int[] $shift_ids Shifts, already in date order.
+ * @param int   $days      How many days with anything on them to keep.
+ * @return array<string, int[]> Y-m-d => shift IDs, in the order they occur.
+ */
+function gwc_vt_widget_days( array $shift_ids, int $days = GWC_VT_WIDGET_DAYS ): array {
+	$by_day = array();
+
+	foreach ( $shift_ids as $shift_id ) {
+		$date = (string) get_post_meta( (int) $shift_id, GWC_VT_SHIFT_DATE, true );
+
+		if ( '' === $date ) {
+			continue;
+		}
+
+		/* Every shift on the day is kept, not just the ones inside the cap —
+		 * the renderer needs the real total to say how many it did not show. */
+		$by_day[ $date ][] = (int) $shift_id;
+
+		if ( count( $by_day ) > $days ) {
+			/* One day past the limit means the previous ones are complete.
+			 * Dropping it here rather than slicing at the end keeps the loop
+			 * from walking sixty shifts to build days nobody will see. */
+			array_pop( $by_day );
+			break;
+		}
+	}
+
+	return $by_day;
 }
 
 /**
