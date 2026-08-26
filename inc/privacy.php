@@ -228,6 +228,13 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_EMAIL );
 	delete_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_PHONE );
 
+	/* The photograph goes with them, and it is not a close call. Anonymizing
+	 * keeps the hours because a service record identifies nobody once the name
+	 * is gone — but a face identifies somebody whether or not there is a name
+	 * above it, which is exactly what makes it the one thing here that cannot
+	 * survive the name. Deletes the file, not only the meta. */
+	gwc_vt_delete_volunteer_photo( $volunteer_id );
+
 	/* The requirement goes too, and it is the most important thing in this list.
 	 * The hours survive anonymization because they are the organization's own
 	 * service record and identify nobody once the name is gone — but "120 hours
@@ -582,6 +589,20 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 					'name'  => __( 'Who requires it', 'groundwork-common-volunteer-tracker' ),
 					'value' => (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR, true ),
 				),
+
+				/* Said, not sent. WordPress's export format is name-and-value
+				 * text, so there is no way to put the image itself in the file —
+				 * and the URL that serves it needs a capability this person does
+				 * not have, so a link would be a broken promise. What the export
+				 * can honestly do is not pretend the photograph is not there,
+				 * which is what leaving it out would do on a request whose whole
+				 * point is "tell me what you hold about me". */
+				array(
+					'name'  => __( 'Photograph', 'groundwork-common-volunteer-tracker' ),
+					'value' => gwc_vt_volunteer_has_photo( $volunteer_id )
+						? __( 'A photograph is held on this record. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you.', 'groundwork-common-volunteer-tracker' )
+						: __( 'None held.', 'groundwork-common-volunteer-tracker' ),
+				),
 			),
 		);
 
@@ -821,6 +842,9 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 		$letters = gwc_vt_letters_for_volunteer( $volunteer_id );
 		$totals  = gwc_vt_compute_totals( $volunteer_id );
 
+		/* Asked before the anonymize, which is what removes it. */
+		$had_photo = gwc_vt_volunteer_has_photo( $volunteer_id );
+
 		if ( gwc_vt_anonymize_volunteer( $volunteer_id ) ) {
 			$removed  = true;
 			$retained = true;
@@ -830,6 +854,15 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 				__( 'The name, email address and phone number were removed. The volunteer hours themselves (%s) were kept — anonymized, they identify nobody, and the organization needs them for its own service reporting.', 'groundwork-common-volunteer-tracker' ),
 				gwc_vt_format_hours( $totals->verified_minutes + $totals->pending_minutes )
 			);
+
+			/* Named separately rather than folded into the sentence above. The
+			 * list there is of things this person told the organization; a
+			 * photograph is the one item somebody may not remember was taken,
+			 * and "we also had a picture of you, and it is gone" is worth its
+			 * own line on a reply to an erasure request. */
+			if ( $had_photo ) {
+				$messages[] = __( 'A photograph was held on this record. The image file was deleted.', 'groundwork-common-volunteer-tracker' );
+			}
 
 			/* Naming the affected letters, because silently destroying the record
 			 * behind a document a court is holding is precisely the failure this

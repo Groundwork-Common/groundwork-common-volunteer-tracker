@@ -156,6 +156,13 @@ if ( ! function_exists( 'gwc_vt_register_post_type' ) ) {
 if ( ! function_exists( 'gwc_vt_register_volunteer_type' ) ) {
 	require GWC_VT_DIR . 'inc/volunteer-cpt.php';
 }
+/* A volunteer's photograph, kept out of the media library. After
+ * volunteer-cpt.php, which defines the post type it guards on, and before
+ * privacy.php, which deletes the file when a record is anonymized, erased or
+ * swept. Not admin-only: the retention sweep runs on cron. */
+if ( ! function_exists( 'gwc_vt_volunteer_photo_path' ) ) {
+	require GWC_VT_DIR . 'inc/volunteer-photo.php';
+}
 if ( ! function_exists( 'gwc_vt_entry_ids_for_volunteer' ) ) {
 	require GWC_VT_DIR . 'inc/entries.php';
 }

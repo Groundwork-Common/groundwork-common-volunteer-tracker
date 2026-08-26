@@ -11,6 +11,12 @@ add_action( 'add_meta_boxes', 'gwc_vt_add_meta_boxes' );
 add_action( 'save_post_' . GWC_VT_ENTRY_TYPE, 'gwc_vt_save_entry', 10, 2 );
 add_action( 'save_post_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_save_volunteer', 10, 2 );
 add_action( 'admin_notices', 'gwc_vt_entry_saved_notice' );
+add_action( 'admin_notices', 'gwc_vt_photo_saved_notice' );
+
+/* Core's post form carries no enctype of its own, so a file input on it posts
+ * the filename and no bytes — silently, with $_FILES empty and the save looking
+ * like it worked. post_edit_form_tag is the only hook that can add it. */
+add_action( 'post_edit_form_tag', 'gwc_vt_volunteer_form_enctype' );
 
 /* ── Why every field wrapper here is a div ───────────────────────────────────
  * The obvious markup for a labeled field is a <p>, and it is what wp-admin's
@@ -520,6 +526,8 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 			<span class="description"><?php esc_html_e( 'For your own use — calling around when a shift is short. It is never printed on a letter and never shown publicly.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
+		<?php gwc_vt_render_volunteer_photo_field( $volunteer_id ); ?>
+
 		<?php
 		/* The retention hold. Courts do sometimes require an organization to
 		 * keep a record longer than its own policy, and a sweep that could not
@@ -680,6 +688,196 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 }
 
 /**
+ * Let the volunteer form carry a file.
+ *
+ * Only on this post type. Adding it everywhere would change the form tag on
+ * every editor on the site for a field that only exists on one of them.
+ *
+ * @param WP_Post|null $post The post being edited.
+ */
+function gwc_vt_volunteer_form_enctype( $post = null ): void {
+	if ( ! $post instanceof WP_Post || GWC_VT_VOLUNTEER_TYPE !== $post->post_type ) {
+		return;
+	}
+
+	echo ' enctype="multipart/form-data"';
+}
+
+/**
+ * Say when a photo was refused.
+ *
+ * Its own notice rather than a line in the field, because the save redirects —
+ * the rendered field is a fresh page load that has forgotten the attempt. And a
+ * refusal has to be said out loud: the rest of the record saved fine, so the
+ * screen otherwise reports success for an upload that did not happen, which is
+ * the "silent correction on save" this plugin has a rule about.
+ */
+function gwc_vt_photo_saved_notice(): void {
+	$screen = get_current_screen();
+
+	if ( ! $screen || GWC_VT_VOLUNTEER_TYPE !== $screen->post_type ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks a sentence after a redirect.
+	$slug = isset( $_GET['gwc_vt_photo'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_photo'] ) ) : '';
+
+	if ( '' === $slug ) {
+		return;
+	}
+
+	if ( 'saved' === $slug || 'removed' === $slug ) {
+		printf(
+			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+			esc_html(
+				'saved' === $slug
+					? __( 'Photo saved.', 'groundwork-common-volunteer-tracker' )
+					: __( 'Photo removed.', 'groundwork-common-volunteer-tracker' )
+			)
+		);
+
+		return;
+	}
+
+	$message = gwc_vt_photo_error( $slug );
+
+	if ( '' !== $message ) {
+		printf( '<div class="notice notice-error"><p>%s</p></div>', esc_html( $message ) );
+	}
+}
+
+/**
+ * The photograph, and what it is for.
+ *
+ * Rendered inside the contact-details box rather than as a box of its own: it is
+ * one more way of telling two records apart, which is what the rest of that box
+ * is for, and a panel by itself would give it a prominence the feature does not
+ * want.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ */
+function gwc_vt_render_volunteer_photo_field( int $volunteer_id ): void {
+	$url = gwc_vt_volunteer_photo_url( $volunteer_id );
+	?>
+	<div class="gwcvt-field gwcvt-photo">
+		<strong><?php esc_html_e( 'Photo', 'groundwork-common-volunteer-tracker' ); ?></strong>
+
+		<?php if ( '' !== $url ) : ?>
+			<p class="gwcvt-photo__current">
+				<?php
+				/* alt is empty on purpose. The picture is decoration beside a
+				 * record whose title is the person's name — a screen reader
+				 * announcing "photograph of Marcus Delacroix" beside a heading
+				 * already reading Marcus Delacroix says it twice, and there is
+				 * nothing else useful to say about a face. */
+				?>
+				<img src="<?php echo esc_url( $url ); ?>" alt="" width="120" height="120" class="gwcvt-photo__image" />
+			</p>
+
+			<label class="gwcvt-photo__remove">
+				<input type="checkbox" name="gwc_vt_photo_remove" value="1" />
+				<?php esc_html_e( 'Remove this photo when I save', 'groundwork-common-volunteer-tracker' ); ?>
+			</label>
+		<?php endif; ?>
+
+		<label class="screen-reader-text" for="gwcvt-photo">
+			<?php esc_html_e( 'Choose a photo', 'groundwork-common-volunteer-tracker' ); ?>
+		</label>
+		<input type="file" id="gwcvt-photo" name="gwc_vt_photo" accept="image/jpeg,image/png,image/webp" />
+
+		<span class="description">
+			<?php
+			printf(
+				/* translators: %s: a file size, such as "8 MB". */
+				esc_html__( 'For telling two records apart at the desk. JPEG, PNG or WebP, up to %s.', 'groundwork-common-volunteer-tracker' ),
+				esc_html( size_format( GWC_VT_PHOTO_MAX_BYTES ) )
+			);
+			?>
+		</span>
+
+		<span class="description">
+			<?php esc_html_e( 'It is kept out of the Media Library, is never given a public address, and is never printed on a letter. Only somebody who can open this record can see it. Location data the camera recorded is discarded.', 'groundwork-common-volunteer-tracker' ); ?>
+		</span>
+	</div>
+
+	<?php
+}
+
+/**
+ * Take the photo off the volunteer save, and say what happened to it.
+ *
+ * Split from gwc_vt_save_volunteer() because it is the only part of that save
+ * that can fail in a way the person needs telling about. Everything else there
+ * either writes or clears a scalar; this one decodes a file somebody chose on
+ * their phone, and "nothing appeared and nobody said why" is the outcome to
+ * avoid.
+ *
+ * The result rides back on a query argument rather than a transient. A
+ * transient keyed on the user would be read by whichever tab got there first,
+ * and somebody saving two volunteers in two tabs is not a rare thing to do on
+ * the screen where you tidy up records.
+ *
+ * @param int   $volunteer_id Volunteer post ID.
+ * @param array $posted       Unslashed POST.
+ */
+function gwc_vt_save_volunteer_photo( int $volunteer_id, array $posted ): void {
+	if ( ! empty( $posted['gwc_vt_photo_remove'] ) ) {
+		gwc_vt_delete_volunteer_photo( $volunteer_id );
+		gwc_vt_photo_result( 'removed' );
+
+		return;
+	}
+
+	/* $_FILES and not $posted: file uploads never appear in $_POST, and a
+	 * wp_unslash()ed copy of it would not have them either.
+	 *
+	 * Narrowed to the four keys that get used, each cast to what it is meant to
+	 * be, rather than passed through whole. The downstream checks are the ones
+	 * that matter — gwc_vt_store_volunteer_photo() calls is_uploaded_file(),
+	 * re-reads the bytes and decodes the image before believing any of this —
+	 * but handing an unfiltered superglobal to another function is how a later
+	 * caller ends up trusting a key nobody validated. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the nonce was verified by gwc_vt_should_save() in the caller; the array is never used as it stands, only the four keys unpacked and cast immediately below.
+	$raw = isset( $_FILES['gwc_vt_photo'] ) ? (array) $_FILES['gwc_vt_photo'] : array();
+
+	$file = array(
+		/* Not sanitize_text_field(): this is a filesystem path PHP wrote, and
+		 * is_uploaded_file() is what decides whether it is legitimate. Cleaning
+		 * it would corrupt a valid temp path on a host whose temp directory has
+		 * a character sanitize_text_field() strips. */
+		'tmp_name' => isset( $raw['tmp_name'] ) ? (string) $raw['tmp_name'] : '',
+		'error'    => isset( $raw['error'] ) ? (int) $raw['error'] : UPLOAD_ERR_NO_FILE,
+		'size'     => isset( $raw['size'] ) ? (int) $raw['size'] : 0,
+		'name'     => isset( $raw['name'] ) ? sanitize_file_name( (string) $raw['name'] ) : '',
+	);
+
+	if ( ! $file || ! isset( $file['error'] ) || UPLOAD_ERR_NO_FILE === (int) $file['error'] ) {
+		/* Saving the record without touching the photo field is the ordinary
+		 * case and says nothing. Notably it does NOT clear the photo — an empty
+		 * file input is what every save of every other field looks like. */
+		return;
+	}
+
+	$result = gwc_vt_store_volunteer_photo( $volunteer_id, $file );
+
+	gwc_vt_photo_result( '' === $result ? 'saved' : $result );
+}
+
+/**
+ * Carry one word about the photo through the save redirect.
+ *
+ * @param string $slug What to report.
+ */
+function gwc_vt_photo_result( string $slug ): void {
+	add_filter(
+		'redirect_post_location',
+		static function ( $location ) use ( $slug ) {
+			return add_query_arg( 'gwc_vt_photo', $slug, (string) $location );
+		}
+	);
+}
+
+/**
  * Save a volunteer.
  *
  * @param int     $post_id Volunteer post ID.
@@ -703,6 +901,8 @@ function gwc_vt_save_volunteer( $post_id, $post ): void {
 		GWC_VT_VOLUNTEER_PHONE,
 		mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_phone'] ?? '' ) ), 0, 40 )
 	);
+
+	gwc_vt_save_volunteer_photo( $post_id, $posted );
 
 	/* Zero means "nothing recorded" and is stored by deleting rather than by
 	 * writing 0, so gwc_vt_has_requirement() has one thing to ask and a record
