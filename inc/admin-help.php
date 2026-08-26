@@ -7,7 +7,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'gwc_vt_settings_screen_loaded', 'gwc_vt_add_settings_help' );
 add_action( 'current_screen', 'gwc_vt_add_screen_help' );
 
 /* ── Why the Help tab and not a notice ───────────────────────────────────────
@@ -99,13 +98,25 @@ function gwc_vt_add_help_sidebar( $screen ): void {
 /**
  * Help for the settings screen.
  *
- * Hooked to gwc_vt_settings_screen_loaded, which fires from the screen's own
- * `load-` hook — help tabs have to be added before anything is output, and
- * adding them from the renderer is the mistake that makes them silently not
- * appear.
+ * ── It used to be on its own hook, and that cost four special cases ──────────
+ * It was hooked to gwc_vt_settings_screen_loaded, on the reasoning that help
+ * tabs must be added before anything is output. True, and satisfied by
+ * `current_screen` as well — which is where the other twelve screens add
+ * theirs, and which fires during `load-{$hook}`, before any output.
+ *
+ * What the separate route actually bought was a screen that four different
+ * things had to know was special: the guard that checks every screen has help,
+ * the Help page that asks each screen what its tabs would say, the check that
+ * every sidebar links to the guide, and the check that the link lands on the
+ * right topic. Each needed two lines saying "and settings, differently". Each
+ * was written after somebody found the screen missing from something.
+ *
+ * The hook still exists and is still documented — it is a public extension
+ * point and removing it would break anybody using it. Help simply stopped
+ * being the thing that depends on it.
  *
  * @param WP_Screen|null $screen The screen to add help to, or null for the
- *                                current one — the hook this is on passes nothing.
+ *                                current one.
  */
 function gwc_vt_add_settings_help( $screen = null ): void {
 	/* Takes a screen, and falls back to the current one.
@@ -233,6 +244,11 @@ function gwc_vt_add_screen_help( $screen ): void {
 
 	if ( false !== strpos( (string) $screen->id, GWC_VT_QUICK_ADD_PAGE ) ) {
 		gwc_vt_add_quick_add_help( $screen );
+		return;
+	}
+
+	if ( false !== strpos( (string) $screen->id, GWC_VT_SETTINGS_PAGE ) ) {
+		gwc_vt_add_settings_help( $screen );
 		return;
 	}
 

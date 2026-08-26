@@ -69,15 +69,6 @@ function gwc_vt_help_tabs_for( string $screen_id ): array {
 
 	do_action( 'current_screen', $screen );
 
-	/* Settings adds its help from its own load- hook rather than from
-	 * current_screen — a legitimate second route, and one this file did not
-	 * follow when it was written, so Settings was the only registered screen
-	 * the guard did not actually guard. Firing it here means the test covers
-	 * the screen rather than one mechanism. */
-	if ( false !== strpos( $screen_id, GWC_VT_SETTINGS_PAGE ) ) {
-		do_action( 'gwc_vt_settings_screen_loaded' );
-	}
-
 	return $screen->get_help_tabs();
 }
 
@@ -123,6 +114,46 @@ foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_i
 	);
 }
 
+echo "\n── And it is the right screen’s help ────────────────────────────\n";
+
+/* Thirteen screens are routed by matching a page slug against a screen id, and
+ * a mis-route is a plausible edit: the branches look alike, and getting one
+ * wrong shows a reader the wrong instructions with nothing to indicate it.
+ *
+ * Checked as a PROPERTY rather than a list of expected tab ids per screen —
+ * no two screens may show the same set. That catches the whole class without
+ * another table for somebody to keep in step, and it is what a copy-paste
+ * mistake in the routing actually looks like. */
+$GLOBALS['gwc_vt_help_sets'] = array();
+
+foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {
+	$gwc_vt_help_ids_here = array_keys( gwc_vt_help_tabs_for( (string) $gwc_vt_help_id ) );
+
+	sort( $gwc_vt_help_ids_here );
+
+	$gwc_vt_help_key = implode( '|', $gwc_vt_help_ids_here );
+
+	if ( '' === $gwc_vt_help_key ) {
+		continue;
+	}
+
+	$GLOBALS['gwc_vt_help_sets'][ $gwc_vt_help_key ][] = (string) $gwc_vt_help_what;
+}
+
+$GLOBALS['gwc_vt_help_shared'] = array();
+
+foreach ( $GLOBALS['gwc_vt_help_sets'] as $gwc_vt_help_who ) {
+	if ( count( $gwc_vt_help_who ) > 1 ) {
+		$GLOBALS['gwc_vt_help_shared'][] = implode( ' = ', $gwc_vt_help_who );
+	}
+}
+
+gwc_vt_help_check(
+	'no two screens show the same help',
+	array() === $GLOBALS['gwc_vt_help_shared'],
+	implode( '; ', $GLOBALS['gwc_vt_help_shared'] )
+);
+
 echo "\n── The tabs say something ───────────────────────────────────────\n";
 
 /* A tab with an empty body is a tab somebody opens once and never again. */
@@ -162,10 +193,6 @@ foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_i
 	$gwc_vt_help_screen->set_help_sidebar( '' );
 
 	do_action( 'current_screen', $gwc_vt_help_screen );
-
-	if ( false !== strpos( (string) $gwc_vt_help_id, GWC_VT_SETTINGS_PAGE ) ) {
-		do_action( 'gwc_vt_settings_screen_loaded' );
-	}
 
 	$gwc_vt_help_bar = (string) $gwc_vt_help_screen->get_help_sidebar();
 
