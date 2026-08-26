@@ -16,9 +16,11 @@ name: Tests
 # nobody, ever. That job is the reason this file exists in the shape it does.
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
+  # CI runs locally now, not here. The `push` and `pull_request` triggers were
+  # removed deliberately — every check below still exists and still works, it is
+  # just started by hand from the Actions tab (or with `gh workflow run`) rather
+  # than by a commit. The local recipes are in CLAUDE.md and README.md.
+  workflow_dispatch:
 
 permissions:
   contents: read
