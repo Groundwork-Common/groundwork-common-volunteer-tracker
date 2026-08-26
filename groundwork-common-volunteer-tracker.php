@@ -412,6 +412,11 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	/* Contextual help. Last, because it describes what all of the above do —
 	 * which now includes the schedule and its rosters. */
 	require GWC_VT_DIR . 'inc/admin-help.php';
+
+	/* And the same help again on a page somebody can find, which asks the file
+	 * above what each screen would say rather than repeating any of it. After
+	 * it, because it calls into it. */
+	require GWC_VT_DIR . 'inc/admin-help-page.php';
 }
 
 /* ── Activation ──────────────────────────────────────────────────────────────

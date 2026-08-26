@@ -2196,3 +2196,36 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-roster__short {
 	margin-left: 6px;
 }
+
+/* ─── The Help page ─────────────────────────────────────────────────────────
+   Long by design — it is every screen's contextual help in one place — so it
+   is set narrow for reading rather than filling the width of a monitor. */
+.gwcvt-help h2 {
+	margin-top: 2em;
+	padding-top: .6em;
+	border-top: 1px solid #dcdcde;
+}
+
+.gwcvt-help h3 {
+	margin-bottom: .2em;
+	font-size: 14px;
+}
+
+.gwcvt-help p {
+	max-width: 44em;
+}
+
+.gwcvt-help__contents {
+	margin: 1em 0 0;
+	padding: 12px 16px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	max-width: 44em;
+	columns: 2;
+}
+
+.gwcvt-help__contents li {
+	margin: 0 0 4px;
+	break-inside: avoid;
+}

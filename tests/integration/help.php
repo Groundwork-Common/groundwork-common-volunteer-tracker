@@ -98,23 +98,19 @@ echo "\n── Every screen the plugin registers ──────────�
 
 /* The page slugs, read from the constants rather than typed out again, so a
  * renamed screen breaks this loudly instead of silently dropping out of it. */
-$GLOBALS['gwc_vt_help_screens'] = array(
-	'the dashboard'          => 'volunteer-tracker_page_' . GWC_VT_DASHBOARD_PAGE,
-	'the schedule'           => 'volunteer-tracker_page_' . GWC_VT_SCHEDULE_PAGE,
-	'the verify queue'       => 'volunteer-tracker_page_' . GWC_VT_VERIFY_PAGE,
-	'offers to volunteer'    => 'volunteer-tracker_page_' . GWC_VT_APPLICATIONS_PAGE,
-	'credentials'            => 'volunteer-tracker_page_' . GWC_VT_CREDENTIALS_PAGE,
-	'the repeat editor'      => 'volunteer-tracker_page_' . GWC_VT_REPEAT_PAGE,
-	'logging a day'          => 'volunteer-tracker_page_' . GWC_VT_QUICK_ADD_PAGE,
-	'the letters log'        => 'volunteer-tracker_page_' . GWC_VT_LETTERS_PAGE,
-	'producing a letter'     => 'volunteer-tracker_page_' . GWC_VT_PRODUCE_PAGE,
-	'settings'               => 'volunteer-tracker_page_' . GWC_VT_SETTINGS_PAGE,
-	'the hours list'         => 'edit-' . GWC_VT_ENTRY_TYPE,
-	'the volunteer list'     => 'edit-' . GWC_VT_VOLUNTEER_TYPE,
+/* Read from the plugin rather than listed again here. gwc_vt_help_screens() is
+ * what the Help page renders from, so a screen missing from it is a screen
+ * missing from the page AND from this guard — one omission with one symptom,
+ * rather than a list here that can quietly disagree with the one there. */
+$GLOBALS['gwc_vt_help_screens'] = gwc_vt_help_screens();
 
-	/* The record, not the list. This is the one the audit found missing, and
-	 * it is the screen where the most consequential per-person things happen. */
-	'a volunteer’s record'   => GWC_VT_VOLUNTEER_TYPE,
+/* Plus the two the page does not carry a heading for: producing a letter and
+ * the letters log are listed only when letters are switched on, and they are
+ * switched on above. Asserting the count keeps that honest. */
+gwc_vt_help_check(
+	'the page covers every screen with help',
+	count( $GLOBALS['gwc_vt_help_screens'] ) >= 13,
+	count( $GLOBALS['gwc_vt_help_screens'] ) . ' screen(s)'
 );
 
 foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {
@@ -144,6 +140,77 @@ gwc_vt_help_check(
 	'no tab is empty or nearly so',
 	array() === $gwc_vt_help_thin,
 	implode( ', ', $gwc_vt_help_thin )
+);
+
+echo "\n── The page carries the same text, and never a second copy ──────\n";
+
+/* The page is a second RENDERING of the tabs, not a second copy of the words.
+ * If it ever grows its own text, the two drift and the one nobody edited is
+ * the one somebody reads — so this asserts the page's content comes from the
+ * screens rather than from itself. */
+wp_set_current_user( 1 );
+require_once ABSPATH . 'wp-admin/includes/screen.php';
+
+ob_start();
+gwc_vt_render_help_page();
+$GLOBALS['gwc_vt_help_html'] = (string) ob_get_clean();
+
+gwc_vt_help_check(
+	'the page renders',
+	'' !== trim( $GLOBALS['gwc_vt_help_html'] ),
+	'' === trim( $GLOBALS['gwc_vt_help_html'] ) ? 'drew nothing' : strlen( $GLOBALS['gwc_vt_help_html'] ) . ' bytes'
+);
+
+$GLOBALS['gwc_vt_help_expected'] = 0;
+$GLOBALS['gwc_vt_help_absent']   = array();
+
+foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {
+	foreach ( gwc_vt_help_tabs_for_screen( (string) $gwc_vt_help_id ) as $gwc_vt_help_tab ) {
+		++$GLOBALS['gwc_vt_help_expected'];
+
+		/* The tab's title, and the first words of its body — enough that a page
+		 * printing headings with somebody else's text under them fails. */
+		$gwc_vt_help_body = wp_strip_all_tags( (string) ( $gwc_vt_help_tab['content'] ?? '' ) );
+		$gwc_vt_help_open = trim( substr( $gwc_vt_help_body, 0, 40 ) );
+
+		if ( false === strpos( $GLOBALS['gwc_vt_help_html'], (string) ( $gwc_vt_help_tab['title'] ?? '' ) )
+			|| ( '' !== $gwc_vt_help_open && false === strpos( wp_strip_all_tags( $GLOBALS['gwc_vt_help_html'] ), $gwc_vt_help_open ) ) ) {
+			$GLOBALS['gwc_vt_help_absent'][] = $gwc_vt_help_what . '/' . (string) ( $gwc_vt_help_tab['id'] ?? '?' );
+		}
+	}
+}
+
+gwc_vt_help_check(
+	'every tab on every screen appears on the page',
+	array() === $GLOBALS['gwc_vt_help_absent'],
+	implode( ', ', $GLOBALS['gwc_vt_help_absent'] )
+);
+
+gwc_vt_help_check(
+	'and the page has a heading for each screen',
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<h2 id=' ) === count( $GLOBALS['gwc_vt_help_screens'] ),
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<h2 id=' ) . ' of ' . count( $GLOBALS['gwc_vt_help_screens'] )
+);
+
+gwc_vt_help_check(
+	'with a contents entry for every one of them',
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<li><a href="#' ) === substr_count( $GLOBALS['gwc_vt_help_html'], '<h2 id=' ),
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<li><a href="#' ) . ' link(s)'
+);
+
+/* Reading the page must not change the screen the reader is on — the whole
+ * reason it uses WP_Screen::get() rather than set_current_screen(). */
+set_current_screen( 'edit-post' );
+$GLOBALS['gwc_vt_help_before'] = get_current_screen()->id;
+
+ob_start();
+gwc_vt_render_help_page();
+ob_end_clean();
+
+gwc_vt_help_check(
+	'and rendering it does not move the current screen',
+	$GLOBALS['gwc_vt_help_before'] === get_current_screen()->id,
+	$GLOBALS['gwc_vt_help_before'] . ' became ' . get_current_screen()->id
 );
 
 echo "\n── A screen that is not ours is left alone ──────────────────────\n";
