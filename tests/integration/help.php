@@ -213,6 +213,81 @@ gwc_vt_help_check(
 	$GLOBALS['gwc_vt_help_before'] . ' became ' . get_current_screen()->id
 );
 
+echo "\n── Anybody who can log in may read the page ─────────────────────\n";
+
+/* Every other screen in the plugin is behind the records capability, because
+ * every other screen shows somebody else's record. This one shows none — the
+ * tabs are static strings with nothing interpolated — so gating it on the
+ * capability to ACT would mean somebody deciding whether to ask for access
+ * cannot read what they would be asking for. */
+require_once ABSPATH . 'wp-admin/includes/user.php';
+
+foreach ( array( 'subscriber', 'contributor', 'author', 'editor' ) as $gwc_vt_help_role ) {
+	$gwc_vt_help_user = wp_insert_user(
+		array(
+			'user_login' => 'zzhelp_' . $gwc_vt_help_role,
+			'user_pass'  => wp_generate_password( 20, true ),
+			'role'       => $gwc_vt_help_role,
+		)
+	);
+
+	if ( is_wp_error( $gwc_vt_help_user ) ) {
+		continue;
+	}
+
+	wp_set_current_user( (int) $gwc_vt_help_user );
+
+	ob_start();
+	gwc_vt_render_help_page();
+	$gwc_vt_help_seen = (string) ob_get_clean();
+
+	gwc_vt_help_check(
+		( in_array( substr( $gwc_vt_help_role, 0, 1 ), array( 'a', 'e', 'i', 'o', 'u' ), true ) ? 'an ' : 'a ' ) . $gwc_vt_help_role . ' can read the help page',
+		substr_count( $gwc_vt_help_seen, '<h2 id=' ) === count( $GLOBALS['gwc_vt_help_screens'] ),
+		substr_count( $gwc_vt_help_seen, '<h2 id=' ) . ' of ' . count( $GLOBALS['gwc_vt_help_screens'] ) . ' sections'
+	);
+
+	wp_set_current_user( 1 );
+	wp_delete_user( (int) $gwc_vt_help_user );
+}
+
+/* And it still shows each reader what THEIR tabs would say. The reference
+ * checker's tab is gated on the capability to open the letters screen, so a
+ * subscriber does not get it — the page is the tabs, personalised, rather than
+ * a fixed document that happens to live near them. Asserted so that stays a
+ * decision: it is the property that makes the page impossible to drift from
+ * the tabs, and it would be easy to "fix" into a divergence. */
+$gwc_vt_help_reader = wp_insert_user(
+	array(
+		'user_login' => 'zzhelp_reader',
+		'user_pass'  => wp_generate_password( 20, true ),
+		'role'       => 'subscriber',
+	)
+);
+
+if ( ! is_wp_error( $gwc_vt_help_reader ) ) {
+	wp_set_current_user( (int) $gwc_vt_help_reader );
+
+	ob_start();
+	gwc_vt_render_help_page();
+	$gwc_vt_help_thin_page = (string) ob_get_clean();
+
+	wp_set_current_user( 1 );
+
+	ob_start();
+	gwc_vt_render_help_page();
+	$gwc_vt_help_full_page = (string) ob_get_clean();
+
+	gwc_vt_help_check(
+		'a subscriber gets fewer tabs than an administrator, not fewer sections',
+		substr_count( $gwc_vt_help_thin_page, '<h3>' ) < substr_count( $gwc_vt_help_full_page, '<h3>' )
+			&& substr_count( $gwc_vt_help_thin_page, '<h2 id=' ) === substr_count( $gwc_vt_help_full_page, '<h2 id=' ),
+		substr_count( $gwc_vt_help_thin_page, '<h3>' ) . ' vs ' . substr_count( $gwc_vt_help_full_page, '<h3>' ) . ' tabs'
+	);
+
+	wp_delete_user( (int) $gwc_vt_help_reader );
+}
+
 echo "\n── A screen that is not ours is left alone ──────────────────────\n";
 
 /* The hook runs on every admin screen on the site. Adding a tab to somebody

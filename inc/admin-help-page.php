@@ -17,6 +17,22 @@
  * explains. The page exists because a menu item is findable, and because
  * somebody reading before they start has nowhere to sit down otherwise.
  *
+ * ── Why `read` and not the capability every other screen uses ────────────────
+ * Every screen in this plugin is behind gwc_vt_records_cap(), because every one
+ * of them shows somebody else's record. This page shows none. Not one word here
+ * is site data: the tabs are static strings that describe how the plugin works,
+ * with nothing interpolated into them — no name, no total, no setting.
+ *
+ * Gating documentation on the capability to act would mean somebody deciding
+ * whether to ask for access cannot read what they would be asking for, and
+ * somebody who has just lost access cannot read why the screens went. Neither
+ * is worth protecting a page that says "verifying means a member of staff said
+ * the work happened".
+ *
+ * `read` is what WordPress gives everybody who can log in at all, subscribers
+ * included. On a site where volunteers have accounts for something else
+ * entirely, they can read this and reach nothing it describes.
+ *
  * ── Why this is not a copy of the text ───────────────────────────────────────
  * Not one word of help lives in this file. It asks each screen what its Help
  * tab would say and prints the answers — the same functions, the same routing,
@@ -121,7 +137,7 @@ function gwc_vt_register_help_page(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_help_page_title(),
 		gwc_vt_help_page_title(),
-		gwc_vt_records_cap(),
+		'read',
 		GWC_VT_HELP_PAGE,
 		'gwc_vt_render_help_page'
 	);
@@ -156,7 +172,7 @@ function gwc_vt_restore_help_title(): void {
  * The page.
  */
 function gwc_vt_render_help_page(): void {
-	if ( ! gwc_vt_can_see_records() ) {
+	if ( ! current_user_can( 'read' ) ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
