@@ -748,6 +748,25 @@ function gwc_vt_shifts_between( array $args = array() ): array {
 	return $ids;
 }
 
+/* ── How far each worklist line looks ────────────────────────────────────────
+ * Named, because the number is now in two places that have to agree: the
+ * counter below, and the link the dashboard builds to the screen that shows
+ * what it counted. They were 180 and 7 here against 120 and 400 on the
+ * schedule, so the count and the list were answering about different stretches
+ * of the calendar — a line reading "5 need their hours logged" over a list
+ * showing three of them, because the other two were four months back.
+ *
+ * A constant rather than a default argument for the same reason
+ * gwc_vt_schedule_url() lives in this file: dashboard.php builds the link, runs
+ * on cron, and cannot see anything in the admin bundle.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** How far back the unlogged-hours line looks. */
+const GWC_VT_UNRECONCILED_DAYS = 180;
+
+/** How far ahead the short-of-people line looks. */
+const GWC_VT_UNDERSTAFFED_DAYS = 7;
+
 /**
  * Shifts that have finished and whose hours have never been logged.
  *
@@ -756,13 +775,19 @@ function gwc_vt_shifts_between( array $args = array() ): array {
  * unreconciled a fortnight later is hours nobody will ever remember, and those
  * hours are what a letter is made of.
  *
+ * Counts an event's times individually — no `parent` argument — because the
+ * daily digest is built on this and an event whose Saturday morning was never
+ * written up is exactly what that email exists to mention. The schedule list
+ * collapses events to one row by default, which is why the link the dashboard
+ * builds to this asks it not to; see gwc_vt_schedule_slots().
+ *
  * @param int $limit How many to return.
  * @return int[]
  */
 function gwc_vt_unreconciled_shift_ids( int $limit = 50 ): array {
 	$candidates = gwc_vt_shifts_between(
 		array(
-			'from'  => gmdate( 'Y-m-d', time() - ( 180 * DAY_IN_SECONDS ) ),
+			'from'  => gmdate( 'Y-m-d', time() - ( GWC_VT_UNRECONCILED_DAYS * DAY_IN_SECONDS ) ),
 			'to'    => gwc_vt_today(),
 			'limit' => max( $limit * 4, 100 ),
 		)
@@ -802,7 +827,7 @@ function gwc_vt_unreconciled_shift_ids( int $limit = 50 ): array {
  * @param int $days How far ahead to look.
  * @return int[]
  */
-function gwc_vt_understaffed_shift_ids( int $days = 7 ): array {
+function gwc_vt_understaffed_shift_ids( int $days = GWC_VT_UNDERSTAFFED_DAYS ): array {
 	$candidates = gwc_vt_shifts_between(
 		array(
 			'from'  => gwc_vt_today(),
