@@ -208,6 +208,12 @@ if ( ! function_exists( 'gwc_vt_register_credential_types' ) ) {
 if ( ! function_exists( 'gwc_vt_volunteer_holds' ) ) {
 	require GWC_VT_DIR . 'inc/credentials.php';
 }
+/* What a shift asks people to hold. With the credential layer rather than with
+ * the schedule, because the public signup handler and the roster both ask it,
+ * and because before_delete_post has to be hooked whoever is deleting. */
+if ( ! function_exists( 'gwc_vt_required_credential_ids' ) ) {
+	require GWC_VT_DIR . 'inc/credential-shifts.php';
+}
 /* A photograph of a volunteer, or of somebody who has offered to become one,
  * kept out of the media library. After BOTH post types, because it decides who
  * may see a face from the type of the record the photo hangs off — moving it

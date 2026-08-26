@@ -869,7 +869,7 @@ function gwc_vt_understaffed_shift_ids( int $days = GWC_VT_UNDERSTAFFED_DAYS ): 
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /** The fields a repeat may change across every occurrence. */
-const GWC_VT_REPEAT_FIELDS = array( 'time', 'activity', 'location', 'supervisor', 'notes', 'places' );
+const GWC_VT_REPEAT_FIELDS = array( 'time', 'activity', 'location', 'supervisor', 'notes', 'places', 'credentials' );
 
 /**
  * Which occurrences a batch would change, and why it would leave the rest.
@@ -961,8 +961,9 @@ function gwc_vt_repeat_changes( array $posted, array $wanted ): array {
 
 		if ( gwc_vt_shift_duration( $start, $end, $overnight ) < 1 ) {
 			return array(
-				'fields' => array(),
-				'error'  => 'bad-time',
+				'fields'      => array(),
+				'credentials' => null,
+				'error'       => 'bad-time',
 			);
 		}
 
@@ -992,25 +993,44 @@ function gwc_vt_repeat_changes( array $posted, array $wanted ): array {
 		$fields[ GWC_VT_SHIFT_MAX ] = gwc_vt_shift_meta_value( GWC_VT_SHIFT_MAX, $posted['gwc_vt_max'] ?? 0 );
 	}
 
+	/* Beside $fields rather than in it, and null rather than an empty array
+	 * when it was not asked for.
+	 *
+	 * $fields is a map of meta key to one scalar, written with
+	 * update_post_meta(); credentials are many rows under one key. And clearing
+	 * every credential off a repeat is a thing somebody may legitimately want,
+	 * so "an empty list" has to be distinguishable from "leave them alone" —
+	 * which an empty array cannot do. */
+	$credentials = in_array( 'credentials', $wanted, true )
+		? gwc_vt_posted_credential_ids( $posted )
+		: null;
+
 	return array(
-		'fields' => $fields,
-		'error'  => '',
+		'fields'      => $fields,
+		'credentials' => $credentials,
+		'error'       => '',
 	);
 }
 
 /**
  * Write one set of values across a repeat's occurrences.
  *
- * @param int[] $shift_ids Occurrences to change.
- * @param array $fields    Meta key => value.
- * @param bool  $notify    Whether to tell the rosters of the ones still to come.
+ * @param int[]      $shift_ids   Occurrences to change.
+ * @param array      $fields      Meta key => value.
+ * @param bool       $notify      Whether to tell the rosters of the ones still to come.
+ * @param int[]|null $credentials What every occurrence should ask people to hold,
+ *                                or null to leave that alone. An empty array is
+ *                                a real instruction: ask for nothing.
  * @return array{changed:int, told:int}
  */
-function gwc_vt_apply_repeat_changes( array $shift_ids, array $fields, bool $notify ): array {
+function gwc_vt_apply_repeat_changes( array $shift_ids, array $fields, bool $notify, $credentials = null ): array {
 	$changed = 0;
 	$told    = 0;
 
-	if ( ! $fields ) {
+	/* Both, because credentials are not in $fields. Checking only $fields would
+	 * make "change the credentials across the whole repeat, and nothing else"
+	 * a no-op that reports success. */
+	if ( ! $fields && null === $credentials ) {
 		return array(
 			'changed' => 0,
 			'told'    => 0,
@@ -1033,6 +1053,10 @@ function gwc_vt_apply_repeat_changes( array $shift_ids, array $fields, bool $not
 
 		foreach ( $fields as $key => $value ) {
 			update_post_meta( $shift_id, $key, $value );
+		}
+
+		if ( null !== $credentials ) {
+			gwc_vt_set_shift_credentials( $shift_id, (array) $credentials );
 		}
 
 		gwc_vt_retitle_shift( $shift_id );

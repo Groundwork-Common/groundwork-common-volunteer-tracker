@@ -150,6 +150,44 @@ function gwc_vt_render_event_editor( int $event_id ): void {
 							<p class="description"><?php esc_html_e( 'Inherited by any role that does not name its own.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
+					<?php if ( gwc_vt_live_credential_ids() ) : ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Everybody has to hold', 'groundwork-common-volunteer-tracker' ); ?></th>
+							<td>
+								<div class="gwcvt-shift-credentials__list">
+									<?php foreach ( gwc_vt_live_credential_ids() as $gwc_vt_event_credential ) : ?>
+										<?php $gwc_vt_event_cred = gwc_vt_credential( (int) $gwc_vt_event_credential ); ?>
+										<?php if ( ! $gwc_vt_event_cred ) : ?>
+											<?php continue; ?>
+										<?php endif; ?>
+										<label class="gwcvt-shift-credentials__item">
+											<input
+												type="checkbox"
+												name="gwc_vt_credentials[]"
+												value="<?php echo esc_attr( (string) $gwc_vt_event_cred['id'] ); ?>"
+												<?php checked( in_array( $gwc_vt_event_cred['id'], gwc_vt_shift_credential_ids( $event_id ), true ) ); ?>
+											/>
+											<?php echo esc_html( $gwc_vt_event_cred['name'] ); ?>
+											<?php if ( 'block' === $gwc_vt_event_cred['mode'] ) : ?>
+												<span class="gwcvt-badge gwcvt-badge--cancelled"><?php esc_html_e( 'stops signup', 'groundwork-common-volunteer-tracker' ); ?></span>
+											<?php endif; ?>
+										</label>
+									<?php endforeach; ?>
+								</div>
+								<?php
+								/* "Added to" rather than "inherited by", and the difference is
+								 * the one place this feature departs from how the rest of an
+								 * event's fields work. Location and supervisor are inherited:
+								 * a role naming its own replaces the event's. Credentials add,
+								 * because the real case is a waiver for the whole day plus a
+								 * food handler card on the kitchen role, and replacing would
+								 * silently drop the waiver from the one role most likely to
+								 * need it. */
+								?>
+								<p class="description"><?php esc_html_e( 'Added to whatever each role asks for, rather than replacing it — so a waiver here plus a food handler card on the kitchen role means the kitchen needs both.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							</td>
+						</tr>
+					<?php endif; ?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Visible to the public', 'groundwork-common-volunteer-tracker' ); ?></th>
 						<td>
@@ -817,6 +855,13 @@ function gwc_vt_handle_save_event(): void {
 	update_post_meta( $event_id, GWC_VT_EVENT_DESCRIPTION, mb_substr( sanitize_textarea_field( (string) ( $posted['gwc_vt_description'] ?? '' ) ), 0, 2000 ) );
 	update_post_meta( $event_id, GWC_VT_EVENT_LOCATION, mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_location'] ?? '' ) ), 0, 200 ) );
 	update_post_meta( $event_id, GWC_VT_EVENT_SUPERVISOR, mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 ) );
+
+	/* On the event itself, not copied down to its slots. The union happens at
+	 * read time in gwc_vt_required_credential_ids(), so adding the day's waiver
+	 * after the grid exists reaches every slot without rewriting any of them —
+	 * and removing it later removes it from all of them, which copying could
+	 * not undo. */
+	gwc_vt_set_shift_credentials( $event_id, gwc_vt_posted_credential_ids( $posted ) );
 
 	$tally = gwc_vt_save_event_grid(
 		$event_id,

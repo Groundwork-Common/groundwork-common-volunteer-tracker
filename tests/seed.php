@@ -838,6 +838,38 @@ gwc_vt_seed_signup( $gwc_vt_serving_1, array( 'volunteer_id' => $gwc_vt_priya ) 
 gwc_vt_seed_signup( $gwc_vt_serving_1, array( 'volunteer_id' => $gwc_vt_fatima ) );
 gwc_vt_seed_signup( $gwc_vt_welcome, array( 'volunteer_id' => $gwc_vt_priya ) );
 
+/* ── What the day asks people to hold ────────────────────────────────────────
+ * The waiver on the whole event, the food handler card on the kitchen only.
+ * That pair is the case the union exists for: under "most specific wins" the
+ * kitchen would silently stop asking for the waiver, which is the role most
+ * likely to need it.
+ *
+ * The result on screen is worth looking at, because it is the whole of what
+ * report mode does. Priya is on Serving and on Welcome, and her class lapsed —
+ * but the class is not asked for here, so she is flagged for nothing. Tomás is
+ * in the kitchen holding only the waiver, so he is flagged for the food handler
+ * card on both kitchen times and not on anything else. Marcus holds all three
+ * and is flagged nowhere. Rosalind is not matched to a record at all, so her
+ * row says nothing and the roster counts her once above the table.
+ * ─────────────────────────────────────────────────────────────────────────── */
+gwc_vt_set_shift_credentials( $gwc_vt_event, array( $gwc_vt_waiver ) );
+gwc_vt_set_shift_credentials( $gwc_vt_kitchen_am, array( $gwc_vt_food ) );
+gwc_vt_set_shift_credentials( $gwc_vt_kitchen_pm, array( $gwc_vt_food ) );
+
+/* And one ordinary shift, because the event above is deliberately in the past —
+ * its hours are what the unlogged-hours line counts — and a shift that has
+ * already happened flags nobody. The credentials on it still show in the
+ * editor, which is what demonstrates the union; the flag needs a Saturday that
+ * has not happened yet.
+ *
+ * This Saturday, then, which is also the one already short of people — exactly
+ * where a coordinator is looking when it matters. Marcus and Priya are on it:
+ * both hold the waiver, only Marcus holds the food handler card. So the roster
+ * draws ONE flag on TWO rows, which is the restraint this feature is supposed
+ * to have, visible rather than described. The unmatched signup on the same
+ * shift makes the "nothing can be checked for them" sentence appear too. */
+gwc_vt_set_shift_credentials( $gwc_vt_short, array( $gwc_vt_waiver, $gwc_vt_food ) );
+
 /* Somebody who is not on file, on the event too — triage reaches here as well. */
 gwc_vt_seed_signup(
 	$gwc_vt_serving_2,
@@ -1075,6 +1107,8 @@ printf( "  %-22s %s\n", 'Inès Okonkwo', 'dormant since 2023 — due under the 2
 printf( "  %-22s %s\n", 'Wendell Achebe', 'dormant, but on a retention hold' );
 printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count() . ' waiting — one court-ordered, one three weeks old, two with a picture' );
 printf( "  %-22s %s\n", 'Credentials', count( gwc_vt_live_credential_ids() ) . ' asked for, 1 retired — ' . count( gwc_vt_lapsed_credential_ids() ) . ' volunteer with one that has lapsed' );
+printf( "  %-22s %s\n", 'Asked for on the day', 'a waiver across Thanksgiving, a food handler card in the kitchen' );
+printf( "  %-22s %s\n", 'Flagged this Saturday', 'one of the two people on it is short of the food handler card' );
 printf( "  %-22s %s\n", 'Awaiting verification', gwc_vt_unverified_count() );
 printf( "  %-22s %s\n", 'Self-logged, unmatched', '2' );
 

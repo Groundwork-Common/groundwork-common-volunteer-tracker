@@ -2167,3 +2167,32 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-record-credential label + label {
 	margin-left: 12px;
 }
+
+/* ─── What a shift asks people to hold ──────────────────────────────────────
+   A column of checkboxes rather than a multi-select. A coordinator picking two
+   things out of four should not have to know that ctrl-click exists. */
+.gwcvt-shift-credentials__label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.gwcvt-shift-credentials__list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 6px;
+}
+
+.gwcvt-shift-credentials__item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* Beside a name on the roster, not under it — a missing credential is a fact
+   about that person on that row, and putting it on its own line makes a
+   twelve-person roster twice as tall. */
+.gwcvt-roster__short {
+	margin-left: 6px;
+}

@@ -464,6 +464,15 @@ function gwc_vt_render_event_roster_row( int $signup_id, string $standing, bool 
 			<?php else : ?>
 				<?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?>
 			<?php endif; ?>
+			<?php
+			/* The same flag the shift roster draws, from the same function.
+			 * Two implementations of "is this person short of anything" would
+			 * be two chances to disagree on a screen where the answer decides
+			 * whether somebody works. The slot is this signup's parent, and it
+			 * is a slot rather than the event — which is what makes the union
+			 * in gwc_vt_required_credential_ids() the thing being asked. */
+			gwc_vt_render_roster_credential_flag( $signup_id, (int) wp_get_post_parent_id( $signup_id ) );
+			?>
 		</td>
 		<td><?php echo '' !== $email ? esc_html( $email ) : '<span class="description">—</span>'; ?></td>
 		<td>

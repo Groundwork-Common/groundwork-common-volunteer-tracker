@@ -363,6 +363,48 @@ function gwc_vt_render_repeat_fields( int $shift_id ): void {
 			<textarea name="gwc_vt_notes" rows="3" class="large-text"><?php echo esc_textarea( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_NOTES, true ) ); ?></textarea>
 		</p>
 	</div>
+
+	<?php
+	/* Credentials across the whole repeat. This is the natural fix for a
+	 * coordinator who set up a weekly series and then decided everybody on it
+	 * needs the waiver — without it, that is twenty visits to twenty
+	 * occurrences.
+	 *
+	 * Note what selecting the box with every credential clear does: it clears
+	 * them across the repeat. That is deliberate and is why the description
+	 * says so — a batch operation whose "empty" case silently means "do
+	 * nothing" is one that cannot undo itself. */
+	?>
+	<?php if ( gwc_vt_live_credential_ids() ) : ?>
+		<div class="gwcvt-field">
+			<label>
+				<input type="checkbox" name="gwc_vt_change[]" value="credentials" />
+				<strong><?php esc_html_e( 'What they have to hold', 'groundwork-common-volunteer-tracker' ); ?></strong>
+			</label>
+
+			<div class="gwcvt-shift-credentials__list">
+				<?php foreach ( gwc_vt_live_credential_ids() as $gwc_vt_repeat_credential ) : ?>
+					<?php $gwc_vt_repeat_cred = gwc_vt_credential( (int) $gwc_vt_repeat_credential ); ?>
+					<?php if ( ! $gwc_vt_repeat_cred ) : ?>
+						<?php continue; ?>
+					<?php endif; ?>
+					<label class="gwcvt-shift-credentials__item">
+						<input
+							type="checkbox"
+							name="gwc_vt_credentials[]"
+							value="<?php echo esc_attr( (string) $gwc_vt_repeat_cred['id'] ); ?>"
+							<?php checked( in_array( $gwc_vt_repeat_cred['id'], gwc_vt_shift_credential_ids( $shift_id ), true ) ); ?>
+						/>
+						<?php echo esc_html( $gwc_vt_repeat_cred['name'] ); ?>
+					</label>
+				<?php endforeach; ?>
+			</div>
+
+			<p class="description">
+				<?php esc_html_e( 'This replaces what each occurrence asks for rather than adding to it — so selecting the box with nothing chosen clears them across the whole repeat.', 'groundwork-common-volunteer-tracker' ); ?>
+			</p>
+		</div>
+	<?php endif; ?>
 	<?php
 }
 
@@ -488,7 +530,8 @@ function gwc_vt_handle_save_repeat(): void {
 	$done = gwc_vt_apply_repeat_changes(
 		$targets['change'],
 		$changes['fields'],
-		! empty( $posted['gwc_vt_notify'] )
+		! empty( $posted['gwc_vt_notify'] ),
+		$changes['credentials']
 	);
 
 	gwc_vt_shift_redirect(
