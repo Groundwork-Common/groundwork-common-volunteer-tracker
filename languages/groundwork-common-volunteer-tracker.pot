@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T13:40:41+00:00\n"
+"POT-Creation-Date: 2026-08-26T13:56:14+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -3805,7 +3805,7 @@ msgid "It is still waiting for somebody to look at it."
 msgstr ""
 
 #. translators: 1: an event's name, 2: when it is.
-#: inc/block.php:168
+#: inc/block.php:183
 #, php-format
 msgctxt "an event, in the block editor picker"
 msgid "%1$s — %2$s"
@@ -5430,6 +5430,26 @@ msgstr ""
 msgid "Lists the shifts you need help with and lets people put their name down. Visitors see what the work is and how many places are left — never who else is coming."
 msgstr ""
 
+#: blocks/volunteer-form/edit.js:29
+msgid "Nobody can offer to volunteer yet. Switch the form on under Volunteer Tracker → Settings → Logging, and pin it to this page."
+msgstr ""
+
+#: blocks/volunteer-form/edit.js:45
+msgid "The form is pinned to a different page, so this copy will not accept anything. Change the pinned page in Settings → Logging, or remove this block."
+msgstr ""
+
+#: blocks/volunteer-form/edit.js:61
+msgid "This form also asks whether somebody is completing court-ordered or school-required service, and stores the answer. Turn that question off under Settings → Logging if you would rather ask people in person."
+msgstr ""
+
+#: blocks/volunteer-form/edit.js:74
+msgid "Volunteer Offer Form"
+msgstr ""
+
+#: blocks/volunteer-form/edit.js:80
+msgid "People fill this in to offer their help. Nothing they send becomes a volunteer record — it waits under Volunteer Tracker → Offers to volunteer until a staff member accepts or discards it."
+msgstr ""
+
 #: blocks/event-grid/block.json
 msgctxt "block title"
 msgid "Volunteer Event"
@@ -5443,6 +5463,7 @@ msgstr ""
 #: blocks/event-grid/block.json
 #: blocks/hours-form/block.json
 #: blocks/shift-list/block.json
+#: blocks/volunteer-form/block.json
 msgctxt "block keyword"
 msgid "volunteer"
 msgstr ""
@@ -5459,6 +5480,7 @@ msgstr ""
 
 #: blocks/event-grid/block.json
 #: blocks/shift-list/block.json
+#: blocks/volunteer-form/block.json
 msgctxt "block keyword"
 msgid "signup"
 msgstr ""
@@ -5501,4 +5523,19 @@ msgstr ""
 #: blocks/shift-list/block.json
 msgctxt "block keyword"
 msgid "schedule"
+msgstr ""
+
+#: blocks/volunteer-form/block.json
+msgctxt "block title"
+msgid "Volunteer Offer Form"
+msgstr ""
+
+#: blocks/volunteer-form/block.json
+msgctxt "block description"
+msgid "Lets people offer to volunteer. Nothing they send becomes a volunteer record until a staff member accepts it."
+msgstr ""
+
+#: blocks/volunteer-form/block.json
+msgctxt "block keyword"
+msgid "register"
 msgstr ""

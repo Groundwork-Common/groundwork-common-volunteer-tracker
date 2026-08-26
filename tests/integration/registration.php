@@ -427,6 +427,145 @@ gwc_vt_rg_check(
 	'the offer survived an erasure that reported itself complete'
 );
 
+/* ── The block ───────────────────────────────────────────────────────────────
+ * Checked across every block this plugin ships rather than only the new one.
+ * Both rules below are ones CLAUDE.md says have already cost time, and both
+ * fail silently — the sort that a test written for one block would not stop
+ * happening to the fifth.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+gwc_vt_rg_settings(
+	array(
+		'registration_enabled' => true,
+		'registration_page'    => (int) $GLOBALS['gwc_vt_rg_page'],
+	)
+);
+
+gwc_vt_rg_check(
+	'the offer form is a registered block',
+	WP_Block_Type_Registry::get_instance()->is_registered( 'groundwork-common-volunteer-tracker/volunteer-form' ),
+	'it was never registered'
+);
+
+$GLOBALS['gwc_vt_rg_blocks'] = array();
+
+foreach ( WP_Block_Type_Registry::get_instance()->get_all_registered() as $gwc_vt_rg_name => $gwc_vt_rg_type ) {
+	if ( 0 === strpos( $gwc_vt_rg_name, 'groundwork-common-volunteer-tracker/' ) ) {
+		$GLOBALS['gwc_vt_rg_blocks'][ $gwc_vt_rg_name ] = $gwc_vt_rg_type;
+	}
+}
+
+gwc_vt_rg_check(
+	'every block this plugin ships was found',
+	4 === count( $GLOBALS['gwc_vt_rg_blocks'] ),
+	'found ' . count( $GLOBALS['gwc_vt_rg_blocks'] ) . ': ' . implode( ', ', array_keys( $GLOBALS['gwc_vt_rg_blocks'] ) )
+);
+
+/* Hard rule 9. A handle missing from the loop in inc/block.php has its strings
+ * extracted into the POT and rendered in English forever.
+ *
+ * Asserted on translations_path and NOT on textdomain, which is the whole
+ * point. register_block_type_from_metadata() reads "textdomain" out of
+ * block.json and calls wp_set_script_translations() itself — with no path — so
+ * the textdomain is set whether or not inc/block.php's loop ran, and the first
+ * version of this check passed happily with the new block removed from that
+ * loop. What core's call does not do is say WHERE the translations live, so it
+ * looks in WP_LANG_DIR/plugins and never at the .mo files this plugin ships in
+ * its own languages/ directory.
+ *
+ * The path is the thing the loop supplies, so the path is the thing to check.
+ * Found by deleting the loop entry and watching every assertion pass. */
+$GLOBALS['gwc_vt_rg_untranslated'] = array();
+$GLOBALS['gwc_vt_rg_langs']        = dirname( __DIR__, 2 ) . '/languages';
+
+foreach ( $GLOBALS['gwc_vt_rg_blocks'] as $gwc_vt_rg_name => $gwc_vt_rg_type ) {
+	$gwc_vt_rg_handle = $gwc_vt_rg_type->editor_script_handles[0] ?? '';
+	$gwc_vt_rg_script = '' !== $gwc_vt_rg_handle ? wp_scripts()->query( $gwc_vt_rg_handle ) : null;
+
+	if ( ! $gwc_vt_rg_script ) {
+		$GLOBALS['gwc_vt_rg_untranslated'][] = $gwc_vt_rg_name . ' (no script)';
+		continue;
+	}
+
+	if ( 'groundwork-common-volunteer-tracker' !== ( $gwc_vt_rg_script->textdomain ?? '' ) ) {
+		$GLOBALS['gwc_vt_rg_untranslated'][] = $gwc_vt_rg_name . ' (no textdomain)';
+		continue;
+	}
+
+	if ( '' === (string) ( $gwc_vt_rg_script->translations_path ?? '' ) ) {
+		$GLOBALS['gwc_vt_rg_untranslated'][] = $gwc_vt_rg_name . ' (no path — it will look in WP_LANG_DIR, not this plugin)';
+	}
+}
+
+gwc_vt_rg_check(
+	'every block editor script is pointed at this plugin\'s own translations',
+	array() === $GLOBALS['gwc_vt_rg_untranslated'],
+	implode( '; ', $GLOBALS['gwc_vt_rg_untranslated'] )
+);
+
+/* And the hand-written asset file matches what the hand-written script reaches
+ * for. There is no build step to derive one from the other, so they drift — and
+ * the symptom is a block that throws in the editor only on a site whose script
+ * loading order differs from the one it was written on. */
+$GLOBALS['gwc_vt_rg_deps'] = array();
+
+foreach ( array( 'hours-form', 'shift-list', 'event-grid', 'volunteer-form' ) as $gwc_vt_rg_block ) {
+	$gwc_vt_rg_dir = dirname( __DIR__, 2 ) . '/blocks/' . $gwc_vt_rg_block;
+	$gwc_vt_rg_js  = (string) file_get_contents( $gwc_vt_rg_dir . '/edit.js' );
+	$gwc_vt_rg_ast = include $gwc_vt_rg_dir . '/edit.asset.php';
+
+	$gwc_vt_rg_declared = (array) ( $gwc_vt_rg_ast['dependencies'] ?? array() );
+
+	/* [a-zA-Z0-9]+ and not [a-zA-Z]+: window.wp.i18n has digits in the middle,
+	 * so the letters-only pattern matched "i" and then reported every block as
+	 * using an undeclared "wp-i". */
+	preg_match_all( '/window\.wp\.([a-zA-Z0-9]+)/', $gwc_vt_rg_js, $gwc_vt_rg_found );
+
+	foreach ( array_unique( $gwc_vt_rg_found[1] ) as $gwc_vt_rg_global ) {
+		/* wp.blockEditor is the 'wp-block-editor' handle: camelCase to dashes. */
+		$gwc_vt_rg_handle = 'wp-' . strtolower( preg_replace( '/([a-z])([A-Z])/', '$1-$2', $gwc_vt_rg_global ) );
+
+		if ( ! in_array( $gwc_vt_rg_handle, $gwc_vt_rg_declared, true ) ) {
+			/* $GLOBALS and not a bare local. wp eval-file runs this inside a
+			 * function, so the two are different variables — the trap CLAUDE.md
+			 * names, walked into here by initialising the global and then
+			 * appending to the local. */
+			$GLOBALS['gwc_vt_rg_deps'][] = $gwc_vt_rg_block . ' uses ' . $gwc_vt_rg_global . ' without declaring ' . $gwc_vt_rg_handle;
+		}
+	}
+}
+
+gwc_vt_rg_check(
+	'every block declares the wp.* globals its script uses',
+	array() === $GLOBALS['gwc_vt_rg_deps'],
+	implode( '; ', $GLOBALS['gwc_vt_rg_deps'] )
+);
+
+/* The block renders the same form the shortcode does.
+ *
+ * The result global is cleared first. The submissions above left it at
+ * 'accepted', and an accepted form deliberately does NOT come back — so the
+ * render was correctly showing a thank-you with no fields in it, and the check
+ * below was reading that as a block that renders nothing. */
+unset( $GLOBALS['gwc_vt_registration_result'] );
+
+$GLOBALS['gwc_vt_rg_rendered'] = do_blocks( '<!-- wp:groundwork-common-volunteer-tracker/volunteer-form /-->' );
+
+gwc_vt_rg_check(
+	'the block renders the form',
+	false !== strpos( $GLOBALS['gwc_vt_rg_rendered'], 'gwc_vt_registration_nonce' )
+		&& false !== strpos( $GLOBALS['gwc_vt_rg_rendered'], 'gwcvt-form__hp' ),
+	'the block rendered no form'
+);
+
+gwc_vt_rg_settings( array( 'registration_enabled' => false ) );
+
+gwc_vt_rg_check(
+	'and renders nothing at all with the feature off',
+	'' === trim( wp_strip_all_tags( do_blocks( '<!-- wp:groundwork-common-volunteer-tracker/volunteer-form /-->' ) ) ),
+	'the block rendered something with the feature switched off'
+);
+
 /* ── The dispatcher only listens on its own page ─────────────────────────── */
 
 gwc_vt_rg_settings(
