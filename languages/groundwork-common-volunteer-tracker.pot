@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T11:46:40+00:00\n"
+"POT-Creation-Date: 2026-08-26T11:52:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -3561,8 +3561,7 @@ msgctxt "event status"
 msgid "Canceled"
 msgstr ""
 
-#. translators: %s: number of canceled events.
-#. translators: %s: number of canceled shifts.
+#. translators: %s: how many are canceled.
 #: inc/event-cpt.php:89
 #: inc/shift-cpt.php:95
 #, php-format
@@ -3683,15 +3682,14 @@ msgstr ""
 msgid "Volunteering"
 msgstr ""
 
-#. translators: 1: places taken, 2: places available.
-#. translators: 1: how many people have signed up, 2: how many the shift takes.
+#. translators: 1: how many places are taken, 2: how many places there are.
 #: inc/events.php:249
 #: inc/shifts.php:1082
 #, php-format
+msgctxt "places taken of places available"
 msgid "%1$d of %2$d"
 msgstr ""
 
-#. translators: %d: how many places are taken.
 #. translators: %d: how many people have signed up.
 #: inc/events.php:257
 #: inc/shifts.php:1090
@@ -4319,11 +4317,10 @@ msgstr ""
 msgid "%1$s: you are on the waiting list for %2$s"
 msgstr ""
 
-#. translators: 1: the organization's name, 2: a date.
-#. translators: 1: the organization's name, 2: the event's name.
+#. translators: 1: the organization's name, 2: the date of a shift.
 #: inc/schedule-emails.php:145
-#: inc/schedule-emails.php:707
 #, php-format
+msgctxt "email subject line; the second placeholder is a date"
 msgid "%1$s: you are signed up for %2$s"
 msgstr ""
 
@@ -4364,11 +4361,10 @@ msgstr ""
 msgid "If you cannot make it, please use that link to let us know — there is still time for us to ask somebody else."
 msgstr ""
 
-#. translators: 1: the organization's name, 2: a date.
-#. translators: 1: the organization's name, 2: the event's name.
+#. translators: 1: the organization's name, 2: the date of a shift.
 #: inc/schedule-emails.php:300
-#: inc/schedule-emails.php:835
 #, php-format
+msgctxt "email subject line; the second placeholder is a date"
 msgid "%1$s: a reminder about %2$s"
 msgstr ""
 
@@ -4436,6 +4432,13 @@ msgstr ""
 msgid "%s will be looking after the day."
 msgstr ""
 
+#. translators: 1: the organization's name, 2: the name of an event.
+#: inc/schedule-emails.php:707
+#, php-format
+msgctxt "email subject line; the second placeholder is an event name"
+msgid "%1$s: you are signed up for %2$s"
+msgstr ""
+
 #: inc/schedule-emails.php:750
 msgid "This one is full, so you are on the waiting list for it. We will be in touch if a place comes free."
 msgstr ""
@@ -4452,6 +4455,13 @@ msgstr ""
 
 #: inc/schedule-emails.php:826
 msgid "If you cannot make one of them, please use its own link to let us know — it takes you off that one only, and there is still time for us to ask somebody else."
+msgstr ""
+
+#. translators: 1: the organization's name, 2: the name of an event.
+#: inc/schedule-emails.php:835
+#, php-format
+msgctxt "email subject line; the second placeholder is an event name"
+msgid "%1$s: a reminder about %2$s"
 msgstr ""
 
 #: inc/self-log.php:301

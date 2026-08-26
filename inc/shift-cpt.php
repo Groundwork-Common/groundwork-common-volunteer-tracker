@@ -91,7 +91,7 @@ function gwc_vt_register_shift_type(): void {
 			'exclude_from_search'       => true,
 			'show_in_admin_all_list'    => true,
 			'show_in_admin_status_list' => true,
-			/* translators: %s: number of canceled shifts. */
+			/* translators: %s: how many are canceled. */
 			'label_count'               => _n_noop( 'Canceled <span class="count">(%s)</span>', 'Canceled <span class="count">(%s)</span>', 'groundwork-common-volunteer-tracker' ),
 		)
 	);

@@ -1078,8 +1078,8 @@ function gwc_vt_shift_fill_label( int $shift_id ): string {
 
 	if ( $max > 0 ) {
 		return sprintf(
-			/* translators: 1: how many people have signed up, 2: how many the shift takes. */
-			__( '%1$d of %2$d', 'groundwork-common-volunteer-tracker' ),
+			/* translators: 1: how many places are taken, 2: how many places there are. */
+			_x( '%1$d of %2$d', 'places taken of places available', 'groundwork-common-volunteer-tracker' ),
 			$filled,
 			$max
 		);
