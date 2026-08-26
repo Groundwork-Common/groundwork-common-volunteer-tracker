@@ -146,6 +146,16 @@ function gwc_vt_setting_defaults(): array {
 		 * discover it made by switching self-registration on. */
 		'registration_ask_required' => false,
 
+		/* Whether the public form invites a photograph. OFF, and for a reason
+		 * one step beyond the required-service question above.
+		 *
+		 * That question collects a sentence. This collects a face, from
+		 * somebody nobody has agreed to work with yet, who may be turned down
+		 * and whose picture then sits in a queue. It is also the only place in
+		 * this plugin where an anonymous stranger can put a FILE on the server,
+		 * which is a different class of thing to accept than a text field. */
+		'registration_ask_photo'    => false,
+
 		/* ── The letter ──────────────────────────────────────────────────────
 		 * ON, and the asymmetry with shifts_enabled below is deliberate rather
 		 * than an oversight. Scheduling is a second product surface and defaults

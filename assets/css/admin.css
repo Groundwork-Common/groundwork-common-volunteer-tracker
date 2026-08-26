@@ -2106,3 +2106,15 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	margin: 0 0 8px;
 	color: #3c434a;
 }
+
+/* A face on an offer to volunteer. Same treatment as the volunteer record's
+ * own photo, at the size a table row can carry. */
+.gwcvt-offers__photo {
+	width: 72px;
+	height: 72px;
+	object-fit: cover;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	background: #f0f0f1;
+	color: #3c434a;
+}

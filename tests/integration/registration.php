@@ -427,6 +427,263 @@ gwc_vt_rg_check(
 	'the offer survived an erasure that reported itself complete'
 );
 
+/* ── The photograph ──────────────────────────────────────────────────────────
+ * The one place in this plugin where an anonymous stranger can put a file on
+ * the server, so the questions are: is it gated, does it land somewhere the web
+ * cannot serve, who can see it, and does it go when the offer does.
+ *
+ * gwc_vt_store_photo() refuses anything is_uploaded_file() rejects — which is
+ * every file a test can make — so these drive the same helpers by hand, the way
+ * tests/integration/photo.php does. That guard is asserted there.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Store a photo against an offer, minus the is_uploaded_file() gate.
+ *
+ * @param int    $application_id The offer.
+ * @param string $source         Path to an image.
+ * @return string '' on success.
+ */
+function gwc_vt_rg_photo( int $application_id, string $source ): string {
+	$dir   = gwc_vt_photo_dir();
+	$sized = getimagesize( $source );
+	$types = gwc_vt_photo_types();
+	$mime  = is_array( $sized ) ? (string) ( $sized['mime'] ?? '' ) : '';
+
+	if ( '' === $dir || ! isset( $types[ $mime ] ) ) {
+		return 'wrong-type';
+	}
+
+	$editor = wp_get_image_editor( $source );
+
+	if ( is_wp_error( $editor ) ) {
+		return 'wrong-type';
+	}
+
+	$editor->resize( GWC_VT_PHOTO_MAX_EDGE, GWC_VT_PHOTO_MAX_EDGE, false );
+
+	$saved = $editor->save( $dir . wp_generate_password( 32, false ) . '.' . $types[ $mime ], $mime );
+
+	if ( is_wp_error( $saved ) ) {
+		return 'upload-failed';
+	}
+
+	update_post_meta( $application_id, GWC_VT_PHOTO_KEY, basename( (string) $saved['path'] ) );
+
+	return '';
+}
+
+$GLOBALS['gwc_vt_rg_jpeg'] = ( function () {
+	$image = imagecreatetruecolor( 900, 900 );
+
+	imagefilledrectangle( $image, 0, 0, 900, 900, imagecolorallocate( $image, 40, 90, 160 ) );
+	imagefilledellipse( $image, 450, 450, 400, 400, imagecolorallocate( $image, 230, 200, 120 ) );
+
+	$path = get_temp_dir() . 'zzrg-face.jpg';
+
+	imagejpeg( $image, $path, 90 );
+	imagedestroy( $image );
+
+	return $path;
+} )();
+
+/* The field is gated, and so is the write. A form that stopped inviting photos
+ * has to stop ACCEPTING them, or anybody with a copy of the old page can go on
+ * posting files at the server. */
+gwc_vt_rg_settings(
+	array(
+		'registration_enabled'   => true,
+		'registration_page'      => (int) $GLOBALS['gwc_vt_rg_page'],
+		'registration_ask_photo' => false,
+	)
+);
+
+gwc_vt_rg_check(
+	'with the photo question off, the form has no file field',
+	false === strpos( gwc_vt_render_registration_form(), 'name="gwc_vt_photo"' ),
+	'the form offered a file input the setting had switched off'
+);
+
+/* The real write path, refusing on the setting before it looks at $_FILES at
+ * all. Asserting gwc_vt_registration_asks_photo() instead — which the first
+ * version did — tests the getter and not the gate, and passed with the gate
+ * removed from the handler. */
+gwc_vt_rg_check(
+	'and the write path refuses before it even looks for a file',
+	'not-asked' === gwc_vt_store_offer_photo( gwc_vt_rg_newest() ),
+	'the write was still open with the field gone'
+);
+
+gwc_vt_rg_settings(
+	array(
+		'registration_enabled'   => true,
+		'registration_page'      => (int) $GLOBALS['gwc_vt_rg_page'],
+		'registration_ask_photo' => true,
+	)
+);
+
+unset( $GLOBALS['gwc_vt_registration_result'] );
+
+gwc_vt_rg_check(
+	'with it on, the form carries a file field and an enctype',
+	false !== strpos( gwc_vt_render_registration_form(), 'name="gwc_vt_photo"' )
+		&& false !== strpos( gwc_vt_render_registration_form(), 'enctype="multipart/form-data"' ),
+	'the field or the enctype was missing — a form without the enctype posts a filename and no bytes'
+);
+
+$GLOBALS['gwc_vt_rg_shot'] = gwc_vt_rg_submit(
+	array( 'gwc_vt_name' => 'Zzrg Face Person', 'gwc_vt_email' => 'zzrg-face@example.test' )
+);
+
+$GLOBALS['gwc_vt_rg_withphoto'] = gwc_vt_rg_newest();
+
+gwc_vt_rg_photo( $GLOBALS['gwc_vt_rg_withphoto'], $GLOBALS['gwc_vt_rg_jpeg'] );
+
+gwc_vt_rg_check(
+	'an offer can carry a photograph',
+	gwc_vt_has_photo( $GLOBALS['gwc_vt_rg_withphoto'] ),
+	'it was not stored'
+);
+
+$GLOBALS['gwc_vt_rg_file'] = gwc_vt_photo_path( $GLOBALS['gwc_vt_rg_withphoto'] );
+
+gwc_vt_rg_check(
+	'kept where the web server will not serve it, under a name that gives nothing away',
+	0 === strpos( $GLOBALS['gwc_vt_rg_file'], trailingslashit( wp_upload_dir()['basedir'] ) . 'gwc-vt-private/' )
+		&& false === strpos( basename( $GLOBALS['gwc_vt_rg_file'] ), (string) $GLOBALS['gwc_vt_rg_withphoto'] ),
+	$GLOBALS['gwc_vt_rg_file']
+);
+
+gwc_vt_rg_check(
+	'and re-encoded down, which is what drops the EXIF a phone puts in it',
+	( function () {
+		$sized = getimagesize( $GLOBALS['gwc_vt_rg_file'] );
+
+		return is_array( $sized ) && $sized[0] <= GWC_VT_PHOTO_MAX_EDGE && $sized[1] <= GWC_VT_PHOTO_MAX_EDGE;
+	} )(),
+	'it was stored at its original size'
+);
+
+gwc_vt_rg_check(
+	'it never reaches the Media Library',
+	0 === count( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any', 'numberposts' => -1, 's' => 'zzrg-face' ) ) ),
+	'a stranger put something in the Media Library'
+);
+
+/* Who may look at the face of somebody nobody has said yes to yet. The queue's
+ * capability, because that is the screen it appears on — and emphatically not
+ * "any logged-in user", which on a site that allows registration is the whole
+ * internet. */
+gwc_vt_rg_check(
+	'somebody who can work the queue may see it',
+	gwc_vt_can_see_photo( $GLOBALS['gwc_vt_rg_withphoto'], 1 ),
+	'an administrator was refused'
+);
+
+$GLOBALS['gwc_vt_rg_sub'] = ( function () {
+	$user = get_user_by( 'login', 'zzrg_subscriber' );
+
+	if ( $user ) {
+		return (int) $user->ID;
+	}
+
+	return (int) wp_insert_user(
+		array(
+			'user_login' => 'zzrg_subscriber',
+			'user_pass'  => wp_generate_password( 20 ),
+			'user_email' => 'zzrg_subscriber@example.test',
+			'role'       => 'subscriber',
+		)
+	);
+} )();
+
+gwc_vt_rg_check(
+	'a subscriber may not',
+	! gwc_vt_can_see_photo( $GLOBALS['gwc_vt_rg_withphoto'], $GLOBALS['gwc_vt_rg_sub'] ),
+	'a subscriber could see the face of somebody waiting on an answer'
+);
+
+/* Genuinely logged out, which means changing the CURRENT user and not passing
+ * zero. gwc_vt_can_see_photo()'s second argument falls back to whoever is
+ * asking when it is 0 — the same convention current_user_can() follows — so in
+ * a script that has set itself to the administrator, passing 0 asks about the
+ * administrator. The first version of this asserted exactly that and reported a
+ * logged-out visitor being allowed in. */
+wp_set_current_user( 0 );
+
+gwc_vt_rg_check(
+	'and nor may somebody logged out',
+	! gwc_vt_can_see_photo( $GLOBALS['gwc_vt_rg_withphoto'] ),
+	'a logged-out request was allowed'
+);
+
+wp_set_current_user( 1 );
+
+/* Approving MOVES it rather than copying. Two files of one face would be two
+ * things to delete on an erasure request and two chances to miss one. */
+$GLOBALS['gwc_vt_rg_moved'] = (int) wp_insert_post(
+	array( 'post_type' => GWC_VT_VOLUNTEER_TYPE, 'post_status' => 'publish', 'post_title' => 'Zzrg Face Person' )
+);
+
+$GLOBALS['gwc_vt_rg_made'][] = $GLOBALS['gwc_vt_rg_moved'];
+
+$GLOBALS['gwc_vt_rg_before_move'] = gwc_vt_photo_file( $GLOBALS['gwc_vt_rg_withphoto'] );
+
+update_post_meta( $GLOBALS['gwc_vt_rg_moved'], GWC_VT_PHOTO_KEY, $GLOBALS['gwc_vt_rg_before_move'] );
+delete_post_meta( $GLOBALS['gwc_vt_rg_withphoto'], GWC_VT_PHOTO_KEY );
+
+gwc_vt_rg_check(
+	'accepting an offer moves the photograph rather than copying it',
+	gwc_vt_has_photo( $GLOBALS['gwc_vt_rg_moved'] )
+		&& ! gwc_vt_has_photo( $GLOBALS['gwc_vt_rg_withphoto'] )
+		&& gwc_vt_photo_path( $GLOBALS['gwc_vt_rg_moved'] ) === $GLOBALS['gwc_vt_rg_file'],
+	'the offer and the record both claim a photograph'
+);
+
+/* Discarding keeps the row and drops the face. There is no version of "we said
+ * no" that needs a picture of the person it was said to. */
+$GLOBALS['gwc_vt_rg_refused'] = gwc_vt_rg_newest();
+
+gwc_vt_rg_photo( $GLOBALS['gwc_vt_rg_refused'], $GLOBALS['gwc_vt_rg_jpeg'] );
+
+$GLOBALS['gwc_vt_rg_refused_file'] = gwc_vt_photo_path( $GLOBALS['gwc_vt_rg_refused'] );
+
+/* gwc_vt_discard_application() and not gwc_vt_delete_photo() by hand. Calling
+ * the helper myself is what the first version did, and it passed with the
+ * discard's own call to it deleted — the test was performing the behaviour it
+ * was supposed to be checking. */
+gwc_vt_discard_application( $GLOBALS['gwc_vt_rg_refused'] );
+
+gwc_vt_rg_check(
+	'discarding an offer takes the photograph off disk',
+	'' !== $GLOBALS['gwc_vt_rg_refused_file'] && ! file_exists( $GLOBALS['gwc_vt_rg_refused_file'] ),
+	'the image outlived the refusal'
+);
+
+gwc_vt_rg_check(
+	'and keeps the row, which is the record of the decision',
+	GWC_VT_APPLICATION_DISCARDED === get_post_status( $GLOBALS['gwc_vt_rg_refused'] ),
+	'the row went too — status is ' . get_post_status( $GLOBALS['gwc_vt_rg_refused'] )
+);
+
+/* And deleting the offer outright — by the eraser or the sweep — takes it too,
+ * by the before_delete_post route rather than by anybody remembering. */
+$GLOBALS['gwc_vt_rg_doomed'] = (int) wp_insert_post(
+	array( 'post_type' => GWC_VT_APPLICATION_TYPE, 'post_status' => 'pending', 'post_title' => 'Zzrg Doomed Offer' )
+);
+
+gwc_vt_rg_photo( $GLOBALS['gwc_vt_rg_doomed'], $GLOBALS['gwc_vt_rg_jpeg'] );
+
+$GLOBALS['gwc_vt_rg_doomed_file'] = gwc_vt_photo_path( $GLOBALS['gwc_vt_rg_doomed'] );
+
+gwc_vt_delete_application( $GLOBALS['gwc_vt_rg_doomed'] );
+
+gwc_vt_rg_check(
+	'deleting an offer takes its photograph with it',
+	'' !== $GLOBALS['gwc_vt_rg_doomed_file'] && ! file_exists( $GLOBALS['gwc_vt_rg_doomed_file'] ),
+	'the image outlived the record it belonged to'
+);
+
 /* ── The block ───────────────────────────────────────────────────────────────
  * Checked across every block this plugin ships rather than only the new one.
  * Both rules below are ones CLAUDE.md says have already cost time, and both
@@ -628,6 +885,14 @@ foreach ( get_posts( array( 'post_type' => GWC_VT_VOLUNTEER_TYPE, 'post_status' 
 foreach ( array_unique( $GLOBALS['gwc_vt_rg_made'] ) as $gwc_vt_rg_id ) {
 	wp_delete_post( (int) $gwc_vt_rg_id, true );
 }
+
+if ( file_exists( $GLOBALS['gwc_vt_rg_jpeg'] ) ) {
+	unlink( $GLOBALS['gwc_vt_rg_jpeg'] );
+}
+
+require_once ABSPATH . 'wp-admin/includes/user.php';
+
+wp_delete_user( $GLOBALS['gwc_vt_rg_sub'] );
 
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 

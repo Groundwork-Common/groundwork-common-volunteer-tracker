@@ -55,7 +55,12 @@ wp_set_current_user( 1 );
 
 $gwc_vt_previous = get_posts(
 	array(
-		'post_type'      => array( GWC_VT_ENTRY_TYPE, GWC_VT_VOLUNTEER_TYPE, GWC_VT_LETTER_TYPE, GWC_VT_SHIFT_TYPE, GWC_VT_EVENT_TYPE, GWC_VT_SIGNUP_TYPE, 'page' ),
+		/* Every type this script writes. A type missing from this list is one
+		 * whose rows survive a re-run and accumulate — which would quietly
+		 * break the "re-runnable" promise at the top of this file, and does not
+		 * show up until somebody wonders why the offers queue has thirty
+		 * identical Rosalinds in it. */
+		'post_type'      => array( GWC_VT_ENTRY_TYPE, GWC_VT_VOLUNTEER_TYPE, GWC_VT_LETTER_TYPE, GWC_VT_SHIFT_TYPE, GWC_VT_EVENT_TYPE, GWC_VT_SIGNUP_TYPE, GWC_VT_APPLICATION_TYPE, 'page' ),
 		'post_status'    => 'any',
 		'posts_per_page' => -1,
 		'fields'         => 'ids',
@@ -197,6 +202,17 @@ $gwc_vt_shift_page = (int) wp_insert_post(
 );
 update_post_meta( $gwc_vt_shift_page, GWC_VT_SEED_MARK, 1 );
 
+$gwc_vt_offer_page = (int) wp_insert_post(
+	array(
+		'post_type'    => 'page',
+		'post_status'  => 'publish',
+		'post_title'   => 'Offer to volunteer',
+		'post_name'    => 'offer-to-volunteer',
+		'post_content' => "<!-- wp:paragraph --><p>Would you like to help? Tell us a little about yourself and somebody will be in touch.</p><!-- /wp:paragraph -->\n<!-- wp:groundwork-common-volunteer-tracker/volunteer-form /-->",
+	)
+);
+update_post_meta( $gwc_vt_offer_page, GWC_VT_SEED_MARK, 1 );
+
 update_option(
 	GWC_VT_SETTINGS_OPTION,
 	array(
@@ -220,6 +236,21 @@ update_option(
 
 		'self_log_enabled' => true,
 		'self_log_page'    => $gwc_vt_page,
+
+		/* Both switches on, which is NOT the shipped default for either — the
+		 * form is off on a new install and the required-service question is off
+		 * on top of that. Turned on here because this fixture exists to show the
+		 * plugin doing its job, and a demo of a queue with nothing that can
+		 * reach it is a demo of an empty screen.
+		 *
+		 * The question is on for the same reason the seed has a court-ordered
+		 * volunteer in it at all: mandated service is the case this plugin is
+		 * built around, and a fixture that quietly avoided the sensitive half
+		 * would be showing an easier product than the real one. */
+		'registration_enabled'      => true,
+		'registration_page'         => $gwc_vt_offer_page,
+		'registration_ask_required' => true,
+		'registration_ask_photo'    => true,
 
 		'shifts_enabled'   => true,
 		'shift_locations'  => "Main warehouse\nFront desk\nRiverbend Community Center\nThe collection van",
@@ -681,6 +712,178 @@ if ( $gwc_vt_letter instanceof GWC_VT_Letter ) {
 	update_post_meta( $gwc_vt_record, GWC_VT_SEED_MARK, 1 );
 }
 
+/* ── Offers to volunteer ─────────────────────────────────────────────────────
+ * Four, covering the states the queue actually draws rather than four
+ * variations of "somebody left their name". Written as applications and not as
+ * volunteers, which is the whole point of the feature: nothing here is a
+ * volunteer record until a person presses the button.
+ *
+ * Dated backwards so the queue's oldest-first order is visible — somebody who
+ * offered three weeks ago and heard nothing is who that ordering is for, and a
+ * fixture where everything arrived this morning cannot show it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A stand-in picture for an offer, and deliberately not a face.
+ *
+ * The note at the top of this file says the fixtures are obviously fictional,
+ * because a screenshot of a real volunteer beside their court-referral status
+ * is a disclosure nobody can take back. A synthesised photograph of a person
+ * who does not exist fails that test in a different direction: it looks exactly
+ * like a real disclosure, it is indistinguishable from one at a glance, and it
+ * puts a fabricated human face on a demo of a plugin about mandated service.
+ *
+ * So these are flat shapes in the plugin's own colours. They show that a
+ * picture is stored, that it is served through the endpoint and that it moves
+ * with the record — which is the whole of what the fixture needs to
+ * demonstrate — and nobody looking at one could mistake it for somebody.
+ *
+ * @param int    $application_id The offer.
+ * @param string $seed           Anything; picks the colour.
+ * @return bool Whether a picture was made and stored.
+ */
+function gwc_vt_seed_placeholder_photo( int $application_id, string $seed ): bool {
+	if ( ! function_exists( 'imagecreatetruecolor' ) ) {
+		/* No GD, no placeholder. The offer is still seeded and the feature is
+		 * still switched on; there is simply no picture on that row. */
+		return false;
+	}
+
+	$size  = 480;
+	$image = imagecreatetruecolor( $size, $size );
+	$tint  = hexdec( substr( md5( $seed ), 0, 2 ) ) % 3;
+
+	$backs = array( array( 44, 90, 160 ), array( 60, 67, 74 ), array( 34, 113, 177 ) );
+	$back  = $backs[ $tint ];
+
+	imagefilledrectangle( $image, 0, 0, $size, $size, imagecolorallocate( $image, $back[0], $back[1], $back[2] ) );
+
+	$fore = imagecolorallocate( $image, 230, 200, 120 );
+
+	/* A circle over a rounded block: the shape of an avatar placeholder, at no
+	 * point resembling a particular person. */
+	imagefilledellipse( $image, (int) ( $size / 2 ), (int) ( $size * 0.38 ), (int) ( $size * 0.34 ), (int) ( $size * 0.34 ), $fore );
+	imagefilledellipse( $image, (int) ( $size / 2 ), (int) ( $size * 1.05 ), (int) ( $size * 0.62 ), (int) ( $size * 0.62 ), $fore );
+
+	$path = get_temp_dir() . 'gwcvt-seed-' . wp_generate_password( 8, false ) . '.jpg';
+
+	imagejpeg( $image, $path, 88 );
+	imagedestroy( $image );
+
+	/* Written through the image editor and the meta key rather than through
+	 * gwc_vt_store_photo(), which refuses anything is_uploaded_file() rejects —
+	 * correctly, and that is every file a script can make. The bytes still go
+	 * through the same resize and re-encode the real path uses. */
+	$dir    = gwc_vt_photo_dir();
+	$editor = '' !== $dir ? wp_get_image_editor( $path ) : null;
+
+	if ( ! $editor || is_wp_error( $editor ) ) {
+		@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_unlink -- a temp file this function just made; nothing depends on the outcome.
+		return false;
+	}
+
+	$editor->resize( GWC_VT_PHOTO_MAX_EDGE, GWC_VT_PHOTO_MAX_EDGE, false );
+
+	$saved = $editor->save( $dir . wp_generate_password( 32, false ) . '.jpg', 'image/jpeg' );
+
+	@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_unlink -- as above.
+
+	if ( is_wp_error( $saved ) || empty( $saved['path'] ) ) {
+		return false;
+	}
+
+	update_post_meta( $application_id, GWC_VT_PHOTO_KEY, basename( (string) $saved['path'] ) );
+
+	return true;
+}
+
+/**
+ * One offer to volunteer.
+ *
+ * @param array $offer name, email, phone, note, days, required, by, for, status.
+ * @return int
+ */
+function gwc_vt_seed_offer( array $offer ): int {
+	$when = gmdate( 'Y-m-d H:i:s', strtotime( '-' . (int) ( $offer['days'] ?? 1 ) . ' days' ) );
+
+	$id = (int) wp_insert_post(
+		array(
+			'post_type'     => GWC_VT_APPLICATION_TYPE,
+			'post_status'   => (string) ( $offer['status'] ?? 'pending' ),
+			'post_title'    => (string) $offer['name'],
+			'post_date'     => $when,
+			'post_date_gmt' => $when,
+		)
+	);
+
+	update_post_meta( $id, GWC_VT_SEED_MARK, 1 );
+	update_post_meta( $id, GWC_VT_APPLICATION_NAME, (string) $offer['name'] );
+	update_post_meta( $id, GWC_VT_APPLICATION_EMAIL, (string) $offer['email'] );
+	update_post_meta( $id, GWC_VT_APPLICATION_PHONE, (string) ( $offer['phone'] ?? '' ) );
+	update_post_meta( $id, GWC_VT_APPLICATION_NOTE, (string) ( $offer['note'] ?? '' ) );
+	update_post_meta( $id, GWC_VT_APPLICATION_CREATED, $when );
+
+	if ( ! empty( $offer['required'] ) ) {
+		update_post_meta( $id, GWC_VT_APPLICATION_REQUIRED, (int) $offer['required'] );
+		update_post_meta( $id, GWC_VT_APPLICATION_REQUIRED_BY, (string) ( $offer['by'] ?? '' ) );
+		update_post_meta( $id, GWC_VT_APPLICATION_REQUIRED_FOR, (string) ( $offer['for'] ?? '' ) );
+	}
+
+	return $id;
+}
+
+// Three weeks old, and nobody has answered. The reason the queue is oldest-first.
+$gwc_vt_offer_rosalind = gwc_vt_seed_offer(
+	array(
+		'name'  => 'Rosalind Achebe',
+		'email' => 'rosalind@example.test',
+		'phone' => '(555) 0164',
+		'note'  => 'Recently retired, free most weekday mornings. I drove a delivery van for eleven years if that is any use.',
+		'days'  => 21,
+	)
+);
+
+gwc_vt_seed_placeholder_photo( $gwc_vt_offer_rosalind, 'rosalind' );
+
+// Court-ordered, which is the one that changes how the conversation goes.
+$gwc_vt_offer_teodoro = gwc_vt_seed_offer(
+	array(
+		'name'     => 'Teodoro Vasquez',
+		'email'    => 'teodoro@example.test',
+		'phone'    => '(555) 0198',
+		'note'     => 'Weekends are easiest for me. Happy to do anything.',
+		'days'     => 6,
+		'required' => 50 * 60,
+		'by'       => gmdate( 'Y-m-d', strtotime( '+4 months' ) ),
+		'for'      => 'Riverbend Municipal Court',
+	)
+);
+
+gwc_vt_seed_placeholder_photo( $gwc_vt_offer_teodoro, 'teodoro' );
+
+/* Yesterday, and nothing but a name and an address — no note, no requirement
+ * and no picture. The row the queue has to render without any of it. */
+gwc_vt_seed_offer(
+	array(
+		'name'  => 'Junie Halloran',
+		'email' => 'junie@example.test',
+		'days'  => 1,
+	)
+);
+
+/* Already dealt with, so the queue is not the only state anybody sees. Neither
+ * appears in the pending list; both are still findable by the privacy tools,
+ * which is the point of discarding rather than deleting. */
+gwc_vt_seed_offer(
+	array(
+		'name'   => 'Somebody Nobody Answered',
+		'email'  => 'noreply@example.test',
+		'note'   => 'aaaaa aaaaa buy followers aaaaa',
+		'days'   => 34,
+		'status' => GWC_VT_APPLICATION_DISCARDED,
+	)
+);
+
 /* ── What was made ───────────────────────────────────────────────────────── */
 
 echo "\nRiverbend Food Bank is seeded.\n\n";
@@ -702,6 +905,7 @@ printf( "  %-22s %s\n", 'Tomás Beaulieu', 'nothing verified yet — ' . gwc_vt_
 printf( "  %-22s %s\n", 'Fatima Sørensen', 'verified, but no email — print only' );
 printf( "  %-22s %s\n", 'Inès Okonkwo', 'dormant since 2023 — due under the 2-year policy' );
 printf( "  %-22s %s\n", 'Wendell Achebe', 'dormant, but on a retention hold' );
+printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count() . ' waiting — one court-ordered, one three weeks old, two with a picture' );
 printf( "  %-22s %s\n", 'Awaiting verification', gwc_vt_unverified_count() );
 printf( "  %-22s %s\n", 'Self-logged, unmatched', '2' );
 
@@ -721,5 +925,6 @@ echo "\n  Admin     ", admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ), "
 echo "  Letters   ", admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE . '&page=' . GWC_VT_LETTERS_PAGE ), "\n";
 echo "  Schedule  ", admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE . '&page=' . GWC_VT_SCHEDULE_PAGE ), "\n";
 echo "  Form      ", get_permalink( $gwc_vt_page ), "\n";
-echo "  Sign up   ", get_permalink( $gwc_vt_shift_page ), "\n\n";
+echo "  Sign up   ", get_permalink( $gwc_vt_shift_page ), "\n";
+echo "  Offer     ", get_permalink( $gwc_vt_offer_page ), "\n\n";
 echo "  Every name here is invented. See the note at the top of this file.\n";

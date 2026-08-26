@@ -52,8 +52,9 @@ function gwc_vt_render_registration_form(): string {
 		);
 	}
 
-	$keep = gwc_vt_registration_values();
-	$asks = gwc_vt_registration_asks_required();
+	$keep  = gwc_vt_registration_values();
+	$asks  = gwc_vt_registration_asks_required();
+	$photo = gwc_vt_registration_asks_photo();
 
 	ob_start();
 	?>
@@ -64,7 +65,13 @@ function gwc_vt_render_registration_form(): string {
 			</div>
 		<?php endif; ?>
 
-		<form method="post" class="gwcvt-form__fields">
+		<?php
+		/* enctype, or the file input posts a filename and no bytes — silently,
+		 * with $_FILES empty and the submission looking like it worked. The
+		 * volunteer record's own photo field hit exactly this on the admin form,
+		 * where core owns the <form> tag and it took a hook to add. */
+		?>
+		<form method="post" enctype="multipart/form-data" class="gwcvt-form__fields">
 			<?php wp_nonce_field( 'gwc_vt_registration', 'gwc_vt_registration_nonce' ); ?>
 			<input type="hidden" name="gwc_vt_t" value="<?php echo esc_attr( gwc_vt_form_stamp() ); ?>" />
 
@@ -150,6 +157,41 @@ function gwc_vt_render_registration_form(): string {
 				</fieldset>
 			<?php endif; ?>
 
+			<?php if ( $photo ) : ?>
+				<fieldset class="gwcvt-form__group gwcvt-photo-field" data-gwcvt-photo>
+					<legend><?php esc_html_e( 'A photo of you (optional)', 'groundwork-common-volunteer-tracker' ); ?></legend>
+
+					<p class="gwcvt-form__help">
+						<?php esc_html_e( 'It helps whoever meets you at the door know who you are. We keep it with your record, we never publish it, and only staff can see it. Skip it if you would rather not.', 'groundwork-common-volunteer-tracker' ); ?>
+					</p>
+
+					<p class="gwcvt-form__field">
+						<label for="gwcvt-reg-photo"><?php esc_html_e( 'Choose a photo', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<?php
+						/* accept="image/*" rather than a list of three types, and
+						 * that is the mobile camera story: a phone offers "Take
+						 * Photo" from this input natively, with no script at all.
+						 * The webcam button below is for desktops, which do not.
+						 *
+						 * The server takes JPEG, PNG and WebP; anything else is
+						 * refused there. A narrower accept would stop a phone
+						 * offering HEIC and then the camera at all. */
+						?>
+						<input type="file" id="gwcvt-reg-photo" name="gwc_vt_photo" accept="image/*" data-gwcvt-photo-input />
+					</p>
+
+					<?php
+					/* Everything below is written by assets/js/registration-photo.js
+					 * and stays empty without it. The file input above is the
+					 * whole feature when there is no script, no camera, or no
+					 * HTTPS — getUserMedia does not exist on an insecure origin,
+					 * so a site served over plain http gets the input and no
+					 * button, which is correct rather than broken. */
+					?>
+					<div class="gwcvt-photo-field__camera" data-gwcvt-photo-camera hidden></div>
+				</fieldset>
+			<?php endif; ?>
+
 			<?php if ( '' !== $code ) : ?>
 				<p class="gwcvt-form__field">
 					<label for="gwcvt-reg-code"><?php esc_html_e( 'The code you were given', 'groundwork-common-volunteer-tracker' ); ?></label>
@@ -221,7 +263,50 @@ function gwc_vt_registration_shortcode(): string {
 
 	if ( '' !== $form ) {
 		wp_enqueue_style( 'gwc-vt-form' );
+		gwc_vt_enqueue_photo_capture();
 	}
 
 	return $form;
+}
+
+/**
+ * The camera button, when there is a photo field for it to enhance.
+ *
+ * Enqueued from the shortcode and from the block's render, rather than on
+ * wp_enqueue_scripts, so a page that does not carry the form does not carry the
+ * script. Nothing here is required for the form to work.
+ */
+function gwc_vt_enqueue_photo_capture(): void {
+	if ( ! gwc_vt_registration_asks_photo() ) {
+		return;
+	}
+
+	wp_enqueue_script(
+		'gwc-vt-photo-capture',
+		GWC_VT_URL . 'assets/js/registration-photo.js',
+		array(),
+		GWC_VT_VERSION,
+		true
+	);
+
+	wp_set_script_translations( 'gwc-vt-photo-capture', 'groundwork-common-volunteer-tracker', GWC_VT_DIR . 'languages' );
+
+	/* The script writes buttons and status text, so its strings have to reach
+	 * it. wp_localize_script() rather than wp.i18n in the file: the front end
+	 * does not load wp-i18n by default, and pulling it in for four labels would
+	 * be a dependency on every page carrying this form. */
+	wp_localize_script(
+		'gwc-vt-photo-capture',
+		'GWC_VT_PHOTO_TEXT',
+		array(
+			'use'     => __( 'Use my camera instead', 'groundwork-common-volunteer-tracker' ),
+			'take'    => __( 'Take the photo', 'groundwork-common-volunteer-tracker' ),
+			'retake'  => __( 'Take another', 'groundwork-common-volunteer-tracker' ),
+			'stop'    => __( 'Turn the camera off', 'groundwork-common-volunteer-tracker' ),
+			'ready'   => __( 'Photo taken. Send the form to submit it, or take another.', 'groundwork-common-volunteer-tracker' ),
+			'denied'  => __( 'Your browser did not let us use the camera. You can still choose a photo from your device above.', 'groundwork-common-volunteer-tracker' ),
+			'preview' => __( 'Camera preview', 'groundwork-common-volunteer-tracker' ),
+			'taken'   => __( 'The photo you just took', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
 }

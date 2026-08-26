@@ -201,6 +201,20 @@ function gwc_vt_render_application_row( array $offer ): void {
 	?>
 	<tr>
 		<td>
+			<?php if ( gwc_vt_has_photo( $offer['id'] ) ) : ?>
+				<?php
+				/* alt is empty on purpose: the name is right beside it, and a
+				 * screen reader announcing "photograph of Rosalind Achebe" next
+				 * to a heading reading Rosalind Achebe says it twice. */
+				?>
+				<img
+					class="gwcvt-offers__photo"
+					src="<?php echo esc_url( gwc_vt_photo_url( $offer['id'] ) ); ?>"
+					alt=""
+					width="72"
+					height="72"
+				/><br />
+			<?php endif; ?>
 			<strong><?php echo esc_html( $offer['name'] ); ?></strong><br />
 			<?php if ( '' !== $offer['email'] ) : ?>
 				<a href="<?php echo esc_url( 'mailto:' . $offer['email'] ); ?>"><?php echo esc_html( $offer['email'] ); ?></a><br />
@@ -321,6 +335,18 @@ function gwc_vt_handle_approve_application(): void {
 		}
 	}
 
+	/* The photograph moves rather than being copied. Two files of the same face
+	 * would be two things to delete on an erasure request and two chances to
+	 * miss one — and the offer's copy has done its job the moment the record
+	 * exists. Moved by handing the record the filename and clearing the offer's,
+	 * so nothing is re-encoded and no second file is ever written. */
+	$photo = gwc_vt_photo_file( $application_id );
+
+	if ( '' !== $photo ) {
+		update_post_meta( $volunteer_id, GWC_VT_PHOTO_KEY, $photo );
+		delete_post_meta( $application_id, GWC_VT_PHOTO_KEY );
+	}
+
 	/* Approved rather than deleted. The organization can still say where a
 	 * volunteer came from and what they originally wrote, which is the answer to
 	 * "who added this person and on what basis". */
@@ -355,12 +381,40 @@ function gwc_vt_handle_discard_application(): void {
 		gwc_vt_applications_redirect( 'gone' );
 	}
 
+	gwc_vt_discard_application( $application_id );
+
+	gwc_vt_applications_redirect( 'discarded' );
+}
+
+/**
+ * Set an offer aside, without the redirect.
+ *
+ * Split from the handler because the handler ends in an exit and so cannot be
+ * called by anything that wants to see what it did. The first version of the
+ * discard test called gwc_vt_delete_photo() by hand and passed with this
+ * function's own call to it deleted.
+ *
+ * @param int $application_id The offer.
+ * @return bool
+ */
+function gwc_vt_discard_application( int $application_id ): bool {
+	if ( GWC_VT_APPLICATION_TYPE !== get_post_type( $application_id ) ) {
+		return false;
+	}
+
 	wp_update_post(
 		array(
 			'ID'          => $application_id,
 			'post_status' => GWC_VT_APPLICATION_DISCARDED,
 		)
 	);
+
+	/* The photograph goes, though the row stays. Discarding keeps what somebody
+	 * wrote because that is the organization's record of a decision it made —
+	 * but a face is not part of that decision, it is the most identifying thing
+	 * on the row, and there is no version of "we said no" that needs a picture
+	 * of the person it was said to. */
+	gwc_vt_delete_photo( $application_id );
 
 	/**
 	 * Fires after an offer has been set aside.
@@ -369,7 +423,7 @@ function gwc_vt_handle_discard_application(): void {
 	 */
 	do_action( 'gwc_vt_application_discarded', $application_id );
 
-	gwc_vt_applications_redirect( 'discarded' );
+	return true;
 }
 
 /**

@@ -94,3 +94,27 @@
 .gwcvt-form__message--problem {
 	font-weight: 600;
 }
+
+/* ── The camera, on the offer form ───────────────────────────────────────────
+ * Everything under .gwcvt-photo-field__camera is written by
+ * assets/js/registration-photo.js and is absent without it, so none of this
+ * paints anything on a page with no script.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+.gwcvt-photo-field__stage {
+	margin: 8px 0;
+}
+
+.gwcvt-photo-field__preview,
+.gwcvt-photo-field__shot {
+	display: block;
+	width: 100%;
+	max-width: 320px;
+	margin-bottom: 8px;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+}
+
+.gwcvt-photo-field__button {
+	margin: 0 8px 8px 0;
+}

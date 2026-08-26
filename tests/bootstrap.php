@@ -610,6 +610,7 @@ require GWC_VT_DIR . 'inc/shift-cpt.php';
 require GWC_VT_DIR . 'inc/signup-cpt.php';
 require GWC_VT_DIR . 'inc/event-cpt.php';
 require GWC_VT_DIR . 'inc/application-cpt.php';
+require GWC_VT_DIR . 'inc/photo.php';
 require GWC_VT_DIR . 'inc/shifts.php';
 require GWC_VT_DIR . 'inc/events.php';
 require GWC_VT_DIR . 'inc/signups.php';

@@ -757,7 +757,7 @@ function gwc_vt_photo_saved_notice(): void {
  * @param int $volunteer_id Volunteer post ID.
  */
 function gwc_vt_render_volunteer_photo_field( int $volunteer_id ): void {
-	$url = gwc_vt_volunteer_photo_url( $volunteer_id );
+	$url = gwc_vt_photo_url( $volunteer_id );
 	?>
 	<div class="gwcvt-field gwcvt-photo">
 		<strong><?php esc_html_e( 'Photo', 'groundwork-common-volunteer-tracker' ); ?></strong>
@@ -822,7 +822,7 @@ function gwc_vt_render_volunteer_photo_field( int $volunteer_id ): void {
  */
 function gwc_vt_save_volunteer_photo( int $volunteer_id, array $posted ): void {
 	if ( ! empty( $posted['gwc_vt_photo_remove'] ) ) {
-		gwc_vt_delete_volunteer_photo( $volunteer_id );
+		gwc_vt_delete_photo( $volunteer_id );
 		gwc_vt_photo_result( 'removed' );
 
 		return;
@@ -833,7 +833,7 @@ function gwc_vt_save_volunteer_photo( int $volunteer_id, array $posted ): void {
 	 *
 	 * Narrowed to the four keys that get used, each cast to what it is meant to
 	 * be, rather than passed through whole. The downstream checks are the ones
-	 * that matter — gwc_vt_store_volunteer_photo() calls is_uploaded_file(),
+	 * that matter — gwc_vt_store_photo() calls is_uploaded_file(),
 	 * re-reads the bytes and decodes the image before believing any of this —
 	 * but handing an unfiltered superglobal to another function is how a later
 	 * caller ends up trusting a key nobody validated. */
@@ -858,7 +858,7 @@ function gwc_vt_save_volunteer_photo( int $volunteer_id, array $posted ): void {
 		return;
 	}
 
-	$result = gwc_vt_store_volunteer_photo( $volunteer_id, $file );
+	$result = gwc_vt_store_photo( $volunteer_id, $file );
 
 	gwc_vt_photo_result( '' === $result ? 'saved' : $result );
 }

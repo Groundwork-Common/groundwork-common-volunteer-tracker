@@ -233,7 +233,7 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 	 * is gone — but a face identifies somebody whether or not there is a name
 	 * above it, which is exactly what makes it the one thing here that cannot
 	 * survive the name. Deletes the file, not only the meta. */
-	gwc_vt_delete_volunteer_photo( $volunteer_id );
+	gwc_vt_delete_photo( $volunteer_id );
 
 	/* The requirement goes too, and it is the most important thing in this list.
 	 * The hours survive anonymization because they are the organization's own
@@ -674,7 +674,7 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 				 * point is "tell me what you hold about me". */
 				array(
 					'name'  => __( 'Photograph', 'groundwork-common-volunteer-tracker' ),
-					'value' => gwc_vt_volunteer_has_photo( $volunteer_id )
+					'value' => gwc_vt_has_photo( $volunteer_id )
 						? __( 'A photograph is held on this record. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you.', 'groundwork-common-volunteer-tracker' )
 						: __( 'None held.', 'groundwork-common-volunteer-tracker' ),
 				),
@@ -849,6 +849,14 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 						'value' => $offer['created'],
 					),
 					array(
+						'name'  => __( 'Photograph', 'groundwork-common-volunteer-tracker' ),
+						/* Said, not sent — the same reasoning as the volunteer
+						 * record's photograph above. */
+						'value' => gwc_vt_has_photo( $offer['id'] )
+							? __( 'A photograph you sent with this offer is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you.', 'groundwork-common-volunteer-tracker' )
+							: __( 'None held.', 'groundwork-common-volunteer-tracker' ),
+					),
+					array(
 						'name'  => __( 'What happened to it', 'groundwork-common-volunteer-tracker' ),
 						'value' => gwc_vt_application_outcome_label( $offer ),
 					),
@@ -976,7 +984,7 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 		$totals  = gwc_vt_compute_totals( $volunteer_id );
 
 		/* Asked before the anonymize, which is what removes it. */
-		$had_photo = gwc_vt_volunteer_has_photo( $volunteer_id );
+		$had_photo = gwc_vt_has_photo( $volunteer_id );
 
 		if ( gwc_vt_anonymize_volunteer( $volunteer_id ) ) {
 			$removed  = true;
