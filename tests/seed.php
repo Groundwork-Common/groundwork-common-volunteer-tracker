@@ -580,10 +580,25 @@ function gwc_vt_seed_signup( int $shift_id, array $args ): int {
 	return $id;
 }
 
-/* The coming Saturday, and the ones either side of it. */
-$gwc_vt_saturday = gmdate( 'Y-m-d', strtotime( 'saturday this week', strtotime( gwc_vt_today() ) ) );
+/* The coming Saturday, and the ones either side of it.
+ *
+ * "next saturday" and "last saturday", NOT "saturday this week".
+ *
+ * PHP's week runs Monday to Sunday, so on a SUNDAY "saturday this week" is
+ * yesterday — and the shift below it, the one labelled "short of people, and
+ * soon" and written to be the row the schedule screen exists to surface, was a
+ * shift that had already happened. Seed the site on a Sunday and the whole
+ * fixture quietly described last week.
+ *
+ * The two relative formats used instead are strict in both directions on every
+ * day of the week, Saturday included: "last saturday" is always before today
+ * and "next saturday" always after, so the past one has always happened and the
+ * coming one never has. On a Saturday that means the coming one is a week out,
+ * which is right — a shift starting at nine this morning is not a shift anybody
+ * still needs people for. */
+$gwc_vt_saturday = gmdate( 'Y-m-d', strtotime( 'next saturday', strtotime( gwc_vt_today() ) ) );
 $gwc_vt_next_sat = gmdate( 'Y-m-d', strtotime( $gwc_vt_saturday . ' +7 days' ) );
-$gwc_vt_last_sat = gmdate( 'Y-m-d', strtotime( $gwc_vt_saturday . ' -7 days' ) );
+$gwc_vt_last_sat = gmdate( 'Y-m-d', strtotime( 'last saturday', strtotime( gwc_vt_today() ) ) );
 /* Two days out, and never the same day as that Saturday.
  *
  * This was "+3 days", which lands ON the Saturday whenever the seed is run on a
@@ -599,6 +614,49 @@ $gwc_vt_midweek = gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +2 days' ) );
 
 if ( $gwc_vt_midweek === $gwc_vt_saturday ) {
 	$gwc_vt_midweek = gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +1 day' ) );
+}
+
+/* ── The dates have to be true whatever day this is run on ───────────────────
+ * A fixture whose arithmetic is wrong one day in seven is worse than a wrong
+ * fixture, because six days out of seven it looks right. The Sunday bug above
+ * survived a long time on exactly that: nobody seeds on a Sunday.
+ *
+ * So the invariants are asserted here rather than trusted. This stops the run
+ * instead of building a site that describes last week — and it fires on the day
+ * it matters, which no test anybody runs on a Wednesday would.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_date_rules = array(
+	'last Saturday has already happened'      => $gwc_vt_last_sat < gwc_vt_today(),
+	'the coming Saturday has not'             => $gwc_vt_saturday > gwc_vt_today(),
+	'the one after that is after it'          => $gwc_vt_next_sat > $gwc_vt_saturday,
+	'the midweek shift is still to come'      => $gwc_vt_midweek > gwc_vt_today(),
+	'and is not the same day as the Saturday' => $gwc_vt_midweek !== $gwc_vt_saturday,
+	'and is inside the coming week'           => $gwc_vt_midweek <= gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' +7 days' ) ),
+);
+
+$gwc_vt_date_broken = array_keys( array_filter( $gwc_vt_date_rules, static function ( $gwc_vt_ok ) { return ! $gwc_vt_ok; } ) );
+
+if ( $gwc_vt_date_broken ) {
+	printf(
+		"\nThe seed's dates are wrong for a %s. Nothing was written.\n\n",
+		gmdate( 'l', strtotime( gwc_vt_today() ) )
+	);
+
+	foreach ( $gwc_vt_date_broken as $gwc_vt_rule ) {
+		echo '  not true: ', $gwc_vt_rule, "\n";
+	}
+
+	printf(
+		"\n  today %s   last %s   midweek %s   saturday %s   next %s\n\n",
+		gwc_vt_today(),
+		$gwc_vt_last_sat,
+		$gwc_vt_midweek,
+		$gwc_vt_saturday,
+		$gwc_vt_next_sat
+	);
+
+	exit( 1 );
 }
 
 /* Short of people, and soon. The row the whole screen exists to surface. */
