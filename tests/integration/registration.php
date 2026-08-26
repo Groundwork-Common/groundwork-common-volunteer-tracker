@@ -1,0 +1,497 @@
+<?php
+/**
+ * Offering to volunteer, end to end.
+ *
+ * ── Why this needs a database ────────────────────────────────────────────────
+ * The whole feature is a write path guarded by settings and a queue that turns
+ * one post type into another. tests/RegistrationTest.php covers the gate and
+ * the wording; everything here needs real posts: that a submission becomes a
+ * pending application and never a volunteer, that the honeypot and the timing
+ * check discard silently, that the requirement question is gated on the WRITE
+ * and not only the field, and that approving produces a volunteer record
+ * indistinguishable from a hand-typed one.
+ *
+ * ── The property that matters most ───────────────────────────────────────────
+ * No code path here may branch on whether the submitted address already belongs
+ * to a volunteer. That is hard rule 4's reasoning applied to the second public
+ * surface, and it is asserted by submitting the same address twice — once when
+ * a volunteer with it exists and once when none does — and checking the two
+ * runs are indistinguishable.
+ *
+ * Run under wp-env:
+ *
+ *   npx @wordpress/env run cli -- wp eval-file \
+ *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/registration.php
+ *
+ * @package VolunteerTracker
+ */
+
+/* $GLOBALS explicitly — see the note in tests/integration/events.php. */
+$GLOBALS['gwc_vt_failures'] = 0;
+$GLOBALS['gwc_vt_rg_made']  = array();
+$GLOBALS['gwc_vt_rg_post']  = $_POST;
+$GLOBALS['gwc_vt_rg_opts']  = get_option( GWC_VT_SETTINGS_OPTION, array() );
+
+/**
+ * Assert, tersely.
+ *
+ * @param string $label What is being checked.
+ * @param bool   $ok    Whether it passed.
+ * @param string $got   Optional. What was actually seen.
+ */
+function gwc_vt_rg_check( string $label, bool $ok, string $got = '' ): void {
+	if ( ! $ok ) {
+		++$GLOBALS['gwc_vt_failures'];
+	}
+
+	echo $ok ? 'PASS  ' : 'FAIL  ', $label, '' !== $got ? '  [' . $got . ']' : '', "\n";
+}
+
+/**
+ * Point the settings at a state.
+ *
+ * @param array $changes Settings to overlay on the defaults.
+ */
+function gwc_vt_rg_settings( array $changes ): void {
+	update_option( GWC_VT_SETTINGS_OPTION, array_merge( $GLOBALS['gwc_vt_rg_opts'], $changes ) );
+	gwc_vt_settings_cache( null, true );
+}
+
+/**
+ * Post an offer the way a browser would, and return what the visitor is told.
+ *
+ * Drives gwc_vt_handle_registration() directly rather than through
+ * template_redirect: the dispatcher's job is deciding whether a request is ours
+ * at all, and it is checked separately below.
+ *
+ * @param array $fields What was typed.
+ * @param array $tamper Optional. Overrides for the hidden fields.
+ * @return string The result key the visitor's message comes from.
+ */
+function gwc_vt_rg_submit( array $fields, array $tamper = array() ): string {
+	unset( $GLOBALS['gwc_vt_registration_result'] );
+
+	$_POST = array_merge(
+		array(
+			'gwc_vt_registration_nonce' => wp_create_nonce( 'gwc_vt_registration' ),
+			/* Aged past the minimum a human takes, so an ordinary submission is
+			 * not read as a script. gwc_vt_form_stamp() is HMAC'd over the
+			 * current second, so this is built the way the form builds it. */
+			'gwc_vt_t'                  => ( time() - 30 ) . '.' . hash_hmac( 'sha256', (string) ( time() - 30 ), wp_salt( 'gwc_vt_form' ) ),
+			'gwc_vt_website'            => '',
+		),
+		$fields,
+		$tamper
+	);
+
+	gwc_vt_handle_registration();
+
+	$_POST = array();
+
+	return (string) ( $GLOBALS['gwc_vt_registration_result'] ?? '' );
+}
+
+/**
+ * How many offers exist, in any state.
+ *
+ * @return int
+ */
+function gwc_vt_rg_count(): int {
+	return count(
+		get_posts(
+			array(
+				'post_type'      => GWC_VT_APPLICATION_TYPE,
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		)
+	);
+}
+
+/**
+ * The most recently written offer.
+ *
+ * @return int
+ */
+function gwc_vt_rg_newest(): int {
+	$waiting = gwc_vt_pending_application_ids();
+
+	return $waiting ? (int) end( $waiting ) : 0;
+}
+
+wp_set_current_user( 1 );
+
+/* ── Start from an empty rate limiter ────────────────────────────────────────
+ * The limiter counts by IP, by address and in total, and under WP-CLI the IP is
+ * the same every run — so the 'all' bucket fills up across repeated runs and
+ * every later submission comes back 'accepted' having written nothing. Which is
+ * the limiter working exactly as designed, and it makes this script pass on a
+ * cold database and fail on a warm one.
+ *
+ * Found by running the four sabotages back to back and watching the restored
+ * run report six failures with no code changed. Cleared here rather than worked
+ * around with unique addresses, because the 'all' scope is not per-address and
+ * no amount of fresh emails would have helped.
+ *
+ * Cleared at the END as well, and that is the part worth explaining. The first
+ * version of this politely put back whatever it found — which is right on a
+ * live site and wrong here, because what it found was a counter this script had
+ * already saturated. Restoring it handed the next scripts in the suite an 'all'
+ * bucket at 44 of 60, and tests/integration/public-signup.php and
+ * tests/integration/events.php both failed on a rate limiter doing exactly its
+ * job. The limiter is one option shared by all three public forms, so a script
+ * that posts to one of them is spending everybody's budget.
+ * ─────────────────────────────────────────────────────────────────────────── */
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
+
+$GLOBALS['gwc_vt_rg_page'] = wp_insert_post(
+	array(
+		'post_type'    => 'page',
+		'post_status'  => 'publish',
+		'post_title'   => 'Zzrg offers',
+		'post_content' => '[gwc_vt_volunteer_form]',
+	)
+);
+
+$GLOBALS['gwc_vt_rg_made'][] = (int) $GLOBALS['gwc_vt_rg_page'];
+
+gwc_vt_rg_settings(
+	array(
+		'registration_enabled'      => true,
+		'registration_page'         => (int) $GLOBALS['gwc_vt_rg_page'],
+		'registration_ask_required' => false,
+		'registration_code'         => '',
+	)
+);
+
+/* ── An ordinary offer ───────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_rg_before'] = gwc_vt_rg_count();
+
+$GLOBALS['gwc_vt_rg_result'] = gwc_vt_rg_submit(
+	array(
+		'gwc_vt_name'  => 'Zzrg Priya Ramanathan',
+		'gwc_vt_email' => 'zzrg-priya@example.test',
+		'gwc_vt_phone' => '555 0177',
+		'gwc_vt_note'  => 'Saturdays, can drive.',
+	)
+);
+
+gwc_vt_rg_check(
+	'an ordinary offer is accepted',
+	'accepted' === $GLOBALS['gwc_vt_rg_result'],
+	'it said "' . $GLOBALS['gwc_vt_rg_result'] . '"'
+);
+
+gwc_vt_rg_check(
+	'and one offer was written',
+	gwc_vt_rg_count() === $GLOBALS['gwc_vt_rg_before'] + 1,
+	'the count went from ' . $GLOBALS['gwc_vt_rg_before'] . ' to ' . gwc_vt_rg_count()
+);
+
+/* The whole design in one assertion. */
+gwc_vt_rg_check(
+	'and NO volunteer record was created',
+	0 === count( get_posts( array( 'post_type' => GWC_VT_VOLUNTEER_TYPE, 'post_status' => 'any', 'numberposts' => -1, 's' => 'Zzrg Priya' ) ) ),
+	'an anonymous form created an identity record'
+);
+
+/* end() takes its argument by reference, so it needs a variable and not a
+ * function's return value — passing one is a notice, and this suite fails on
+ * those. Named helper rather than a temporary at each site. */
+$GLOBALS['gwc_vt_rg_offer'] = gwc_vt_application_record( gwc_vt_rg_newest() );
+
+gwc_vt_rg_check(
+	'it holds what was typed, as claims',
+	'Zzrg Priya Ramanathan' === $GLOBALS['gwc_vt_rg_offer']['name']
+		&& 'zzrg-priya@example.test' === $GLOBALS['gwc_vt_rg_offer']['email']
+		&& '555 0177' === $GLOBALS['gwc_vt_rg_offer']['phone']
+		&& 'Saturdays, can drive.' === $GLOBALS['gwc_vt_rg_offer']['note'],
+	'what came back: ' . wp_json_encode( array_intersect_key( $GLOBALS['gwc_vt_rg_offer'], array_flip( array( 'name', 'email', 'phone', 'note' ) ) ) )
+);
+
+gwc_vt_rg_check(
+	'and it is pending, so it is nowhere else on the site',
+	'pending' === $GLOBALS['gwc_vt_rg_offer']['status'],
+	'status was ' . $GLOBALS['gwc_vt_rg_offer']['status']
+);
+
+/* ── What it refuses, and how quietly ────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_rg_before'] = gwc_vt_rg_count();
+
+gwc_vt_rg_check(
+	'an offer with no email is refused',
+	'incomplete' === gwc_vt_rg_submit( array( 'gwc_vt_name' => 'Zzrg Nobody' ) ),
+	'it was accepted without a reply address'
+);
+
+gwc_vt_rg_check(
+	'a filled honeypot is accepted and written nowhere',
+	'accepted' === gwc_vt_rg_submit(
+		array( 'gwc_vt_name' => 'Zzrg Spam', 'gwc_vt_email' => 'zzrg-spam@example.test' ),
+		array( 'gwc_vt_website' => 'http://example.test' )
+	),
+	'the honeypot answered differently from an accepted offer'
+);
+
+gwc_vt_rg_check(
+	'a submission faster than a person can type is accepted and written nowhere',
+	'accepted' === gwc_vt_rg_submit(
+		array( 'gwc_vt_name' => 'Zzrg Fast', 'gwc_vt_email' => 'zzrg-fast@example.test' ),
+		array( 'gwc_vt_t' => time() . '.' . hash_hmac( 'sha256', (string) time(), wp_salt( 'gwc_vt_form' ) ) )
+	),
+	'a three-second submission was told apart from a real one'
+);
+
+gwc_vt_rg_check(
+	'and none of the three wrote anything',
+	gwc_vt_rg_count() === $GLOBALS['gwc_vt_rg_before'],
+	'the count moved from ' . $GLOBALS['gwc_vt_rg_before'] . ' to ' . gwc_vt_rg_count()
+);
+
+gwc_vt_rg_check(
+	'a forged timing stamp is refused',
+	'expired' === gwc_vt_rg_submit(
+		array( 'gwc_vt_name' => 'Zzrg Forged', 'gwc_vt_email' => 'zzrg-forged@example.test' ),
+		array( 'gwc_vt_t' => ( time() - 30 ) . '.deadbeef' )
+	),
+	'a stamp this site did not sign was accepted'
+);
+
+/* ── There is no lookup, so there is no oracle ───────────────────────────────
+ * The same address submitted twice: once with a volunteer of that address on
+ * file and once without. If any code path branched on the answer, these two
+ * runs would differ. Hard rule 4's reasoning, on the second public surface.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_rg_known'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzrg Existing Volunteer',
+	)
+);
+
+$GLOBALS['gwc_vt_rg_made'][] = (int) $GLOBALS['gwc_vt_rg_known'];
+
+update_post_meta( (int) $GLOBALS['gwc_vt_rg_known'], GWC_VT_VOLUNTEER_EMAIL, 'zzrg-known@example.test' );
+
+$GLOBALS['gwc_vt_rg_a'] = gwc_vt_rg_submit(
+	array( 'gwc_vt_name' => 'Zzrg Known Person', 'gwc_vt_email' => 'zzrg-known@example.test' )
+);
+
+$GLOBALS['gwc_vt_rg_b'] = gwc_vt_rg_submit(
+	array( 'gwc_vt_name' => 'Zzrg Stranger', 'gwc_vt_email' => 'zzrg-nobody-at-all@example.test' )
+);
+
+gwc_vt_rg_check(
+	'a known address and an unknown one are answered identically',
+	$GLOBALS['gwc_vt_rg_a'] === $GLOBALS['gwc_vt_rg_b'],
+	'known said "' . $GLOBALS['gwc_vt_rg_a'] . '", unknown said "' . $GLOBALS['gwc_vt_rg_b'] . '"'
+);
+
+gwc_vt_rg_check(
+	'and the message a visitor sees is the same string',
+	gwc_vt_registration_message( $GLOBALS['gwc_vt_rg_a'] ) === gwc_vt_registration_message( $GLOBALS['gwc_vt_rg_b'] ),
+	'the two outcomes read differently'
+);
+
+/* ── The requirement question is gated on the write ──────────────────────────
+ * Not only on the field. A form that stopped asking would otherwise keep
+ * storing whatever a script kept posting — anybody with a copy of the old form
+ * could go on sending court-order information to a site that had switched the
+ * question off.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_rg_req'] = array(
+	'gwc_vt_name'         => 'Zzrg Required Person',
+	'gwc_vt_email'        => 'zzrg-required@example.test',
+	'gwc_vt_required'     => '40',
+	'gwc_vt_required_by'  => '2026-12-01',
+	'gwc_vt_required_for' => 'Franklin County Municipal Court',
+);
+
+gwc_vt_rg_submit( $GLOBALS['gwc_vt_rg_req'] );
+
+$GLOBALS['gwc_vt_rg_off'] = gwc_vt_application_record( gwc_vt_rg_newest() );
+
+gwc_vt_rg_check(
+	'with the question off, a posted requirement is not stored',
+	0 === $GLOBALS['gwc_vt_rg_off']['required']
+		&& '' === $GLOBALS['gwc_vt_rg_off']['required_for'],
+	'it stored ' . $GLOBALS['gwc_vt_rg_off']['required'] . ' minutes for "' . $GLOBALS['gwc_vt_rg_off']['required_for'] . '"'
+);
+
+gwc_vt_rg_settings(
+	array(
+		'registration_enabled'      => true,
+		'registration_page'         => (int) $GLOBALS['gwc_vt_rg_page'],
+		'registration_ask_required' => true,
+	)
+);
+
+gwc_vt_rg_submit( $GLOBALS['gwc_vt_rg_req'] );
+
+$GLOBALS['gwc_vt_rg_on'] = gwc_vt_application_record( gwc_vt_rg_newest() );
+
+gwc_vt_rg_check(
+	'with it on, the requirement is stored',
+	2400 === $GLOBALS['gwc_vt_rg_on']['required']
+		&& '2026-12-01' === $GLOBALS['gwc_vt_rg_on']['required_by']
+		&& 'Franklin County Municipal Court' === $GLOBALS['gwc_vt_rg_on']['required_for'],
+	'it stored ' . $GLOBALS['gwc_vt_rg_on']['required'] . ' minutes'
+);
+
+/* ── Approving it ────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_rg_approve'] = (int) $GLOBALS['gwc_vt_rg_on']['id'];
+
+$_GET = array( 'application' => $GLOBALS['gwc_vt_rg_approve'] );
+$_REQUEST = array_merge( $_GET, array( '_wpnonce' => wp_create_nonce( 'gwc_vt_approve_application_' . $GLOBALS['gwc_vt_rg_approve'] ) ) );
+$_GET['_wpnonce'] = $_REQUEST['_wpnonce'];
+
+/* gwc_vt_handle_approve_application() ends in a redirect and an exit, so the
+ * write is driven through its parts. The nonce and capability check are what
+ * the handler adds, and they are exercised by the browser rather than here. */
+$GLOBALS['gwc_vt_rg_offer_now'] = gwc_vt_application_record( $GLOBALS['gwc_vt_rg_approve'] );
+
+$GLOBALS['gwc_vt_rg_new'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => $GLOBALS['gwc_vt_rg_offer_now']['name'],
+	)
+);
+
+$GLOBALS['gwc_vt_rg_made'][] = (int) $GLOBALS['gwc_vt_rg_new'];
+
+/* ── What the retention sweep does with an old one ───────────────────────── */
+
+$GLOBALS['gwc_vt_rg_old'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_APPLICATION_TYPE,
+		'post_status' => 'pending',
+		'post_title'  => 'Zzrg Ancient Offer',
+		'post_date'   => gmdate( 'Y-m-d H:i:s', strtotime( '-40 months' ) ),
+		'post_date_gmt' => gmdate( 'Y-m-d H:i:s', strtotime( '-40 months' ) ),
+	)
+);
+
+update_post_meta( (int) $GLOBALS['gwc_vt_rg_old'], GWC_VT_APPLICATION_EMAIL, 'zzrg-ancient@example.test' );
+
+gwc_vt_rg_check(
+	'an offer older than the policy is found by the sweep',
+	in_array( (int) $GLOBALS['gwc_vt_rg_old'], gwc_vt_stale_application_ids( 24 ), true ),
+	'the sweep did not see it'
+);
+
+gwc_vt_rg_check(
+	'and a recent one is not',
+	! in_array( (int) $GLOBALS['gwc_vt_rg_offer']['id'], gwc_vt_stale_application_ids( 24 ), true ),
+	'the sweep would have deleted this week\'s offers'
+);
+
+gwc_vt_rg_check(
+	'sweeping it removes it',
+	gwc_vt_sweep_stale_applications( 24 ) > 0 && ! get_post( (int) $GLOBALS['gwc_vt_rg_old'] ),
+	'it survived the sweep'
+);
+
+/* ── The privacy tools reach it ──────────────────────────────────────────── */
+
+gwc_vt_rg_check(
+	'the exporter finds an offer by its address',
+	( function () {
+		$export = gwc_vt_export_personal_data( 'zzrg-priya@example.test', 1 );
+
+		foreach ( $export['data'] ?? array() as $item ) {
+			if ( 'gwc_vt_application' === ( $item['group_id'] ?? '' ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	} )(),
+	'an offer was invisible to a data request'
+);
+
+gwc_vt_rg_check(
+	'and the eraser deletes it',
+	( function () {
+		gwc_vt_erase_personal_data( 'zzrg-priya@example.test', 1 );
+
+		return 0 === count( gwc_vt_applications_by_email( 'zzrg-priya@example.test' ) );
+	} )(),
+	'the offer survived an erasure that reported itself complete'
+);
+
+/* ── The dispatcher only listens on its own page ─────────────────────────── */
+
+gwc_vt_rg_settings(
+	array(
+		'registration_enabled' => true,
+		/* Pinned somewhere else. */
+		'registration_page'    => (int) $GLOBALS['gwc_vt_rg_page'] + 99999,
+	)
+);
+
+/* gwc_vt_is_registration_page() answers true before template_redirect, on
+ * purpose: outside a main query — a widget, a REST render, WP-CLI — is_page()
+ * is not a meaningful question, and the hours form answers the same way for the
+ * same reason. Which means that under wp eval-file the pinned-page branch is
+ * unreachable, and the first version of this check asserted a refusal that
+ * could never happen.
+ *
+ * The counter is what did_action() reads, so setting it is the narrowest way to
+ * put the function on the branch it guards. Firing the action for real would
+ * run core's own template_redirect handlers, one of which can exit(). */
+$GLOBALS['wp_actions']['template_redirect'] = 1;
+
+gwc_vt_rg_check(
+	'the form refuses to render away from its pinned page',
+	false !== strpos( gwc_vt_render_registration_form(), 'set up on another page' ),
+	'it rendered a working-looking form somewhere it cannot accept posts'
+);
+
+unset( $GLOBALS['wp_actions']['template_redirect'] );
+
+gwc_vt_rg_settings( array( 'registration_enabled' => false ) );
+
+gwc_vt_rg_check(
+	'and renders nothing at all when the feature is off',
+	'' === gwc_vt_render_registration_form(),
+	'it rendered something with the feature switched off'
+);
+
+/* ── Clean up ────────────────────────────────────────────────────────────── */
+
+$_POST = $GLOBALS['gwc_vt_rg_post'];
+$_GET  = array();
+
+update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_rg_opts'] );
+gwc_vt_settings_cache( null, true );
+
+/* Left clean rather than restored — see the note at the top. */
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
+
+foreach ( get_posts( array( 'post_type' => GWC_VT_APPLICATION_TYPE, 'post_status' => 'any', 'numberposts' => -1 ) ) as $gwc_vt_rg_app ) {
+	if ( false !== strpos( (string) get_post_meta( $gwc_vt_rg_app->ID, GWC_VT_APPLICATION_EMAIL, true ), 'zzrg-' ) ) {
+		$GLOBALS['gwc_vt_rg_made'][] = (int) $gwc_vt_rg_app->ID;
+	}
+}
+
+foreach ( get_posts( array( 'post_type' => GWC_VT_VOLUNTEER_TYPE, 'post_status' => 'any', 'numberposts' => -1, 's' => 'Zzrg' ) ) as $gwc_vt_rg_vol ) {
+	$GLOBALS['gwc_vt_rg_made'][] = (int) $gwc_vt_rg_vol->ID;
+}
+
+foreach ( array_unique( $GLOBALS['gwc_vt_rg_made'] ) as $gwc_vt_rg_id ) {
+	wp_delete_post( (int) $gwc_vt_rg_id, true );
+}
+
+echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
+
+if ( $GLOBALS['gwc_vt_failures'] > 0 ) {
+	exit( 1 );
+}

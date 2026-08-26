@@ -117,6 +117,35 @@ function gwc_vt_setting_defaults(): array {
 		 * and one only people who were handed a card at the front desk can. */
 		'self_log_code'             => '',
 
+		/* ── Offering to volunteer ───────────────────────────────────────── */
+
+		/* Off, for the same reason self_log_enabled is off, and it is the same
+		 * kind of switch: on, this site accepts a stranger's name and address
+		 * from a public page. Nothing about installing a plugin should start
+		 * that happening. */
+		'registration_enabled'      => false,
+
+		/* Pinned by ID, like the self-log page, so renaming it changes nothing. */
+		'registration_page'         => 0,
+
+		/* The same front-desk code idea as the self-log form, and a separate
+		 * value: an organization that hands out a code for logging hours has not
+		 * thereby decided who may offer to volunteer. */
+		'registration_code'         => '',
+
+		/* Whether the public form asks about court-ordered or school-required
+		 * service. OFF, and this default deserves its own paragraph.
+		 *
+		 * With it on, a public web page asks a stranger whether they are under a
+		 * court order and this site stores the answer against their name. That
+		 * is the most sensitive thing this plugin holds, arriving through the
+		 * least trusted door it has. It is genuinely useful — a coordinator
+		 * planning around somebody's deadline wants to know on day one rather
+		 * than after the first shift — but it is a decision an organization has
+		 * to make deliberately, having read what it means, and not one it should
+		 * discover it made by switching self-registration on. */
+		'registration_ask_required' => false,
+
 		/* ── The letter ──────────────────────────────────────────────────────
 		 * ON, and the asymmetry with shifts_enabled below is deliberate rather
 		 * than an oversight. Scheduling is a second product surface and defaults

@@ -52,6 +52,7 @@ function gwc_vt_register_block(): void {
 	add_shortcode( 'gwc_vt_hours_form', 'gwc_vt_form_shortcode' );
 	add_shortcode( 'gwc_vt_shift_list', 'gwc_vt_shifts_shortcode' );
 	add_shortcode( 'gwc_vt_event_grid', 'gwc_vt_event_shortcode' );
+	add_shortcode( 'gwc_vt_volunteer_form', 'gwc_vt_registration_shortcode' );
 }
 
 /**

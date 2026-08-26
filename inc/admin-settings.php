@@ -251,6 +251,34 @@ function gwc_vt_settings_fields(): array {
 			'label'   => __( 'Require a code', 'groundwork-common-volunteer-tracker' ),
 			'help'    => __( 'Optional. A word you give people at the front desk, which the form then asks for. Not a security control — it is the difference between a form the whole internet can post to and one only people who have been handed a card will bother with.', 'groundwork-common-volunteer-tracker' ),
 		),
+		'registration_enabled'      => array(
+			'tab'     => 'logging',
+			'section' => 'registration',
+			'type'    => 'checkbox',
+			'label'   => __( 'Let people offer to volunteer from your site', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name and contact details from anonymous visitors. Nothing they send becomes a volunteer record — it waits in a queue for a staff member to accept or discard, and nothing they enter appears publicly.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'registration_page'         => array(
+			'tab'     => 'logging',
+			'section' => 'registration',
+			'type'    => 'page',
+			'label'   => __( 'The page the form is on', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Offer Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Offers are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'registration_code'         => array(
+			'tab'     => 'logging',
+			'section' => 'registration',
+			'type'    => 'text',
+			'label'   => __( 'Require a code', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Optional, and separate from the code on the hours form. A word you give people at an open day, which the form then asks for.', 'groundwork-common-volunteer-tracker' ),
+		),
+		'registration_ask_required' => array(
+			'tab'     => 'logging',
+			'section' => 'registration',
+			'type'    => 'checkbox',
+			'label'   => __( 'Ask whether they have required service hours', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off by default, and worth reading before you turn it on. With it on, a public page asks a stranger whether they are completing court-ordered or school-required service, and this site stores the answer against their name. It is useful — you can plan around a deadline from day one instead of finding out after the first shift — but it is the most sensitive thing this plugin holds, arriving through the least trusted door it has. Leave it off and a staff member can record the same thing on the volunteer record afterwards, having spoken to them.', 'groundwork-common-volunteer-tracker' ),
+		),
 		'retention_months'          => array(
 			'tab'     => 'privacy',
 			'section' => 'retention',
@@ -399,8 +427,9 @@ function gwc_vt_settings_sections(): array {
 			'email'      => __( 'Emailing it', 'groundwork-common-volunteer-tracker' ),
 		),
 		'logging' => array(
-			'hours'   => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
-			'selflog' => __( 'The public form', 'groundwork-common-volunteer-tracker' ),
+			'hours'        => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
+			'selflog'      => __( 'The public hours form', 'groundwork-common-volunteer-tracker' ),
+			'registration' => __( 'Offering to volunteer', 'groundwork-common-volunteer-tracker' ),
 		),
 		'shifts'  => array(
 			'schedule' => __( 'Planning ahead', 'groundwork-common-volunteer-tracker' ),
