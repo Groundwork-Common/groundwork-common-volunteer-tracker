@@ -165,6 +165,7 @@ function gwc_vt_render_credentials_screen(): void {
 						<th scope="col"><?php esc_html_e( 'Credential', 'groundwork-common-volunteer-tracker' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Renewed', 'groundwork-common-volunteer-tracker' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'If somebody has not got it', 'groundwork-common-volunteer-tracker' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Who holds it', 'groundwork-common-volunteer-tracker' ); ?></th>
 						<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'groundwork-common-volunteer-tracker' ); ?></span></th>
 					</tr>
 				</thead>
@@ -225,6 +226,7 @@ function gwc_vt_render_credential_row( array $credential ): void {
 			?>
 		</td>
 		<td><?php echo esc_html( $modes[ $credential['mode'] ] ?? '' ); ?></td>
+		<td><?php gwc_vt_render_credential_holders( $credential['id'] ); ?></td>
 		<td class="gwcvt-credentials__actions">
 			<?php if ( gwc_vt_can_define_credentials() ) : ?>
 				<?php if ( $credential['retired'] ) : ?>
@@ -490,4 +492,65 @@ function gwc_vt_credentials_notice(): void {
 	if ( isset( $done[ $result ] ) ) {
 		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $done[ $result ] ) );
 	}
+}
+
+/**
+ * Who holds one credential, as two numbers that are also the way to the names.
+ *
+ * The definitions screen is where somebody is already looking at a credential,
+ * so it is where "and who has it" belongs — rather than a report screen of its
+ * own that has to be found.
+ *
+ * Both numbers link, and both link through gwc_vt_credential_holders_url(), so
+ * the count and the list it opens are the same question asked once. A zero is
+ * not a link: there is nothing to open, and a link that lands on an empty list
+ * is a link that wasted somebody's click.
+ *
+ * @param int $credential_id Credential post ID.
+ */
+function gwc_vt_render_credential_holders( int $credential_id ): void {
+	$counts = gwc_vt_credential_holder_counts( $credential_id );
+
+	if ( 0 === $counts['current'] && 0 === $counts['expired'] ) {
+		printf( '<span class="description">%s</span>', esc_html__( 'Nobody yet', 'groundwork-common-volunteer-tracker' ) );
+		return;
+	}
+
+	$said = array();
+
+	if ( $counts['current'] > 0 ) {
+		$said[] = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( gwc_vt_credential_holders_url( $credential_id, GWC_VT_HOLDS_CURRENT ) ),
+			esc_html(
+				sprintf(
+					/* translators: %s: how many people hold it, already formatted. */
+					_n( '%s holds it', '%s hold it', $counts['current'], 'groundwork-common-volunteer-tracker' ),
+					number_format_i18n( $counts['current'] )
+				)
+			)
+		);
+	}
+
+	if ( $counts['expired'] > 0 ) {
+		$said[] = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( gwc_vt_credential_holders_url( $credential_id, GWC_VT_HOLDS_EXPIRED ) ),
+			esc_html(
+				sprintf(
+					/* translators: %s: how many people have let it lapse, already formatted. */
+					_n( '%s has let it lapse', '%s have let it lapse', $counts['expired'], 'groundwork-common-volunteer-tracker' ),
+					number_format_i18n( $counts['expired'] )
+				)
+			)
+		);
+	}
+
+	echo wp_kses(
+		implode( '<br />', $said ),
+		array(
+			'a'  => array( 'href' => array() ),
+			'br' => array(),
+		)
+	);
 }

@@ -45,6 +45,9 @@ add_action( 'pre_get_posts', 'gwc_vt_apply_credential_filter' );
  */
 const GWC_VT_CREDENTIAL_FILTER = 'gwc_vt_credential';
 
+/** Which standing the filter above is asking about, when it names one. */
+const GWC_VT_CREDENTIAL_STATE = 'gwc_vt_credential_state';
+
 /**
  * Whether this user may record that somebody holds a credential.
  *
@@ -473,10 +476,77 @@ function gwc_vt_credential_date( string $ymd ): string {
  * @return array<string, string>
  */
 function gwc_vt_credential_filter_options(): array {
-	return array(
+	$options = array(
 		''       => __( 'Any credential', 'groundwork-common-volunteer-tracker' ),
 		'lapsed' => __( 'Has one that has lapsed', 'groundwork-common-volunteer-tracker' ),
 	);
+
+	/* Then one entry per credential, so the question can be asked the other way
+	 * round: not "what is this person short of" but "who has a food handler
+	 * card". That is the question somebody staffing Saturday actually has, and
+	 * before this the only way to answer it was to open volunteers one at a
+	 * time.
+	 *
+	 * Retired credentials are included. The organization stopped asking for the
+	 * thing; the people who hold it still hold it, and "who did the forklift
+	 * training before we dropped it" is a real question with a real answer. */
+	foreach ( gwc_vt_all_credential_ids() as $credential_id ) {
+		$credential = gwc_vt_credential( (int) $credential_id );
+
+		if ( ! $credential ) {
+			continue;
+		}
+
+		$options[ (string) $credential['id'] ] = $credential['retired']
+			? sprintf(
+				/* translators: %s: the name of a credential that is no longer asked for. */
+				__( '%s (retired)', 'groundwork-common-volunteer-tracker' ),
+				$credential['name']
+			)
+			: $credential['name'];
+	}
+
+	return $options;
+}
+
+/**
+ * The standings the second dropdown offers.
+ *
+ * A function rather than a const — a const is evaluated at include time and
+ * freezes these in English for the request.
+ *
+ * @return array<string, string>
+ */
+function gwc_vt_credential_state_options(): array {
+	return array(
+		''                   => __( 'Held or lapsed', 'groundwork-common-volunteer-tracker' ),
+		GWC_VT_HOLDS_CURRENT => __( 'Held', 'groundwork-common-volunteer-tracker' ),
+		GWC_VT_HOLDS_EXPIRED => __( 'Lapsed', 'groundwork-common-volunteer-tracker' ),
+	);
+}
+
+/**
+ * A URL for the volunteer list, filtered to one credential.
+ *
+ * The one place this link is built, so the counts on the definitions screen and
+ * the screen they open cannot drift apart — the rule this plugin has about a
+ * number and what it links to.
+ *
+ * @param int    $credential_id Credential post ID.
+ * @param string $state         '', 'current' or 'expired'.
+ * @return string
+ */
+function gwc_vt_credential_holders_url( int $credential_id, string $state = '' ): string {
+	$args = array(
+		'post_type'              => GWC_VT_VOLUNTEER_TYPE,
+		GWC_VT_CREDENTIAL_FILTER => (string) $credential_id,
+	);
+
+	if ( '' !== $state ) {
+		$args[ GWC_VT_CREDENTIAL_STATE ] = $state;
+	}
+
+	return add_query_arg( $args, admin_url( 'edit.php' ) );
 }
 
 /**
@@ -492,7 +562,7 @@ function gwc_vt_credential_filter_dropdown(): void {
 		return;
 	}
 
-	if ( ! gwc_vt_live_credential_ids() ) {
+	if ( ! gwc_vt_all_credential_ids() ) {
 		return;
 	}
 
@@ -504,7 +574,31 @@ function gwc_vt_credential_filter_dropdown(): void {
 	</label>
 	<select name="<?php echo esc_attr( GWC_VT_CREDENTIAL_FILTER ); ?>" id="<?php echo esc_attr( GWC_VT_CREDENTIAL_FILTER ); ?>">
 		<?php foreach ( gwc_vt_credential_filter_options() as $value => $label ) : ?>
-			<option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( $current, $value ); ?>>
+			<option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( $current, (string) $value ); ?>>
+				<?php echo esc_html( $label ); ?>
+			</option>
+		<?php endforeach; ?>
+	</select>
+
+	<?php
+	/* A second select rather than doubling the first. One entry per credential
+	 * per standing would be "Food handler card — held", "Food handler card —
+	 * lapsed", and so on: two lines each, and a list that gets unreadable at
+	 * the fifth credential. Two selects is also how core's own list tables ask
+	 * two questions.
+	 *
+	 * It has no effect beside "Any credential" or "Has one that has lapsed" —
+	 * those already name a standing — so it says so rather than pretending. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only, and core does not nonce these.
+	$standing = isset( $_GET[ GWC_VT_CREDENTIAL_STATE ] ) ? sanitize_key( wp_unslash( $_GET[ GWC_VT_CREDENTIAL_STATE ] ) ) : '';
+	?>
+
+	<label class="screen-reader-text" for="<?php echo esc_attr( GWC_VT_CREDENTIAL_STATE ); ?>">
+		<?php esc_html_e( 'Held or lapsed', 'groundwork-common-volunteer-tracker' ); ?>
+	</label>
+	<select name="<?php echo esc_attr( GWC_VT_CREDENTIAL_STATE ); ?>" id="<?php echo esc_attr( GWC_VT_CREDENTIAL_STATE ); ?>">
+		<?php foreach ( gwc_vt_credential_state_options() as $value => $label ) : ?>
+			<option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( $standing, (string) $value ); ?>>
 				<?php echo esc_html( $label ); ?>
 			</option>
 		<?php endforeach; ?>
@@ -535,6 +629,35 @@ function gwc_vt_credential_query_vars( string $state, array $lapsed = array() ):
 }
 
 /**
+ * The query vars for "who holds this one".
+ *
+ * Separate from the function above rather than folded into it, because the two
+ * take different inputs — that one is given a set of volunteers, this one is
+ * given a credential and has to go and find them. Sharing a signature would
+ * mean one of them ignoring half its arguments.
+ *
+ * @param int    $credential_id Credential post ID.
+ * @param string $standing      '', 'current' or 'expired'.
+ * @param string $today         Y-m-d to judge against.
+ * @return array<string, mixed>
+ */
+function gwc_vt_credential_holder_query_vars( int $credential_id, string $standing = '', string $today = '' ): array {
+	if ( $credential_id < 1 ) {
+		return array();
+	}
+
+	$holders = gwc_vt_credential_holder_ids(
+		$credential_id,
+		isset( gwc_vt_credential_state_options()[ $standing ] ) && '' !== $standing ? $standing : 'any',
+		$today
+	);
+
+	/* array( 0 ) for the same reason as above: nobody holds it is an answer,
+	 * and it must not render as everybody. */
+	return array( 'post__in' => $holders ? array_values( $holders ) : array( 0 ) );
+}
+
+/**
  * Apply it.
  *
  * @param WP_Query $query The query.
@@ -552,6 +675,21 @@ function gwc_vt_apply_credential_filter( $query ): void {
 	$state = isset( $_GET[ GWC_VT_CREDENTIAL_FILTER ] ) ? sanitize_key( wp_unslash( $_GET[ GWC_VT_CREDENTIAL_FILTER ] ) ) : '';
 
 	if ( ! isset( gwc_vt_credential_filter_options()[ $state ] ) || '' === $state ) {
+		return;
+	}
+
+	/* A credential ID rather than a named state — "who holds this one". The
+	 * options array is what decides: an ID only reaches here if it is a key of
+	 * it, so a hand-edited URL naming a post that is not a credential falls
+	 * through to nothing rather than to everybody. */
+	if ( ctype_digit( $state ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only, and core does not nonce these.
+		$standing = isset( $_GET[ GWC_VT_CREDENTIAL_STATE ] ) ? sanitize_key( wp_unslash( $_GET[ GWC_VT_CREDENTIAL_STATE ] ) ) : '';
+
+		foreach ( gwc_vt_credential_holder_query_vars( (int) $state, $standing ) as $var => $value ) {
+			$query->set( $var, $value );
+		}
+
 		return;
 	}
 

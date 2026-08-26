@@ -255,6 +255,35 @@ function gwc_vt_live_credential_ids(): array {
 }
 
 /**
+ * Every credential, retired ones included.
+ *
+ * The live list answers "what does the organization ask for", which is the
+ * right question for a shift and the wrong one for a holder list:
+ * retiring a credential stops it being asked for and does not take it away from
+ * the people who did it. "Who did the forklift training before we dropped it"
+ * has a real answer, and this is the function that can give it.
+ *
+ * @return int[] Ordered by name, live before retired.
+ */
+function gwc_vt_all_credential_ids(): array {
+	$retired = get_posts(
+		array(
+			'post_type'              => GWC_VT_CREDENTIAL_TYPE,
+			'post_status'            => GWC_VT_CREDENTIAL_RETIRED,
+			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- definitions, not records; see the note on gwc_vt_live_credential_ids().
+			'posts_per_page'         => 200,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'orderby'                => 'title',
+			'order'                  => 'ASC',
+		)
+	);
+
+	return array_merge( gwc_vt_live_credential_ids(), array_map( 'intval', (array) $retired ) );
+}
+
+/**
  * When a credential granted on a date runs out.
  *
  * ── The end-of-month problem, decided ────────────────────────────────────────
