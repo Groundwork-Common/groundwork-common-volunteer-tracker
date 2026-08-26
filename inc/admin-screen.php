@@ -26,6 +26,16 @@ const GWC_VT_VERIFY_PAGE    = 'gwc-vt-verify';
 const GWC_VT_PRODUCE_PAGE   = 'gwc-vt-produce-letter';
 const GWC_VT_REPEAT_PAGE    = 'gwc-vt-repeat';
 
+/* The three that used to be declared in the files that render them, which put
+ * them out of reach of gwc_vt_menu_bands() below — that function has to be able
+ * to name every row in the menu, and admin-screen.php is required before all
+ * three. Moved here rather than worked around, because this is where the other
+ * seven already live and the split was an accident of the order the screens
+ * were written in. */
+const GWC_VT_APPLICATIONS_PAGE = 'gwc-vt-offers';
+const GWC_VT_CREDENTIALS_PAGE  = 'gwc-vt-credentials';
+const GWC_VT_HELP_PAGE         = 'gwc-vt-help';
+
 add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
 add_action( 'admin_init', 'gwc_vt_handle_colophon_toggle' );
 add_action( 'admin_menu', 'gwc_vt_register_menu' );
@@ -40,6 +50,7 @@ add_action( 'admin_menu', 'gwc_vt_register_menu' );
  * keys WordPress reads as positions. */
 add_action( 'admin_menu', 'gwc_vt_hide_menu_verbs', 98 );
 add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
+add_action( 'admin_head', 'gwc_vt_menu_rule_style' );
 
 /* ── Why the menu is reordered rather than registered in order ───────────────
  * Left alone, this menu came out as: All hours, Log hours, Volunteers,
@@ -65,6 +76,88 @@ add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
  * says what it means.
  * ─────────────────────────────────────────────────────────────────────────── */
 
+/* ── Four bands, three rules ─────────────────────────────────────────────────
+ * Nine rows is more than a person reads as a list. Grouped, it is four things:
+ * where you land, the work ahead and who will do it, the work already done and
+ * what it produces, and the setting up.
+ *
+ * The rule is drawn the way core separates its own menu — a hairline above the
+ * first row of a band — and nothing else changes. No headings: WordPress has no
+ * heading inside a submenu, and inventing one would make this menu the odd one
+ * in the sidebar rather than the legible one.
+ *
+ * The split that matters is the middle one. Schedule, Volunteers, Offers and
+ * Credentials are all about staffing something that has not happened yet — the
+ * shifts to cover, the people you have, the people asking to join, and what
+ * each of them has to hold before they can. All hours and Letter records are
+ * the other direction: what was done, and the document that comes out of it.
+ * Sorting by which way time runs is what lets somebody find Credentials without
+ * first deciding whether a credential is a property of a person or of a shift.
+ *
+ * Offers and Credentials moved to get here. Both were registered after this
+ * list was written and neither was named in it, so both landed in the "anything
+ * we have not heard of" remainder at the bottom, below Letter records and above
+ * Settings. Nobody chose that, which is the same complaint the block above
+ * makes about the order this whole pass exists to fix.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The bands the Volunteer Tracker submenu is grouped into, in order.
+ *
+ * Keyed by band, each holding the slugs in it. This is the one registry: the
+ * order the rows appear in is flattened out of it by gwc_vt_menu_order(), and
+ * the rules are drawn between bands by gwc_vt_order_menu(), so a row cannot be
+ * ordered as one thing and ruled off as another.
+ *
+ * Named in a function rather than a const because three of these slugs are
+ * declared in files that load after this one — and because gwc_vt_letters_
+ * enabled() has to be asked at call time, not at include time.
+ *
+ * @return array<string, string[]>
+ */
+function gwc_vt_menu_bands(): array {
+	$bands = array(
+		/* Where you land. Not part of the sequence below so much as the place
+		 * you start it from. */
+		'start'  => array( GWC_VT_DASHBOARD_PAGE ),
+
+		/* What is coming, who is coming, who is asking to, and what each of
+		 * them has to hold first. */
+		'ahead'  => array(
+			GWC_VT_SCHEDULE_PAGE,
+			'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE,
+			GWC_VT_APPLICATIONS_PAGE,
+			GWC_VT_CREDENTIALS_PAGE,
+		),
+
+		/* What they did, and what gets produced for them.
+		 *
+		 * Writing it up used to be two more entries here — Log a day, then the
+		 * single-entry way. Both are verbs, and gwc_vt_hide_menu_verbs() now
+		 * takes them off the menu and puts them on this screen as buttons, so
+		 * naming them here would be describing a menu that no longer exists. */
+		'record' => array( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+
+		// Reading about it, and setting it up.
+		'setup'  => array( GWC_VT_HELP_PAGE, GWC_VT_SETTINGS_PAGE ),
+	);
+
+	// Letters, when this organization produces them at all.
+	if ( gwc_vt_letters_enabled() ) {
+		$bands['record'][] = GWC_VT_LETTERS_PAGE;
+	}
+
+	/**
+	 * The bands the Volunteer Tracker submenu is grouped into.
+	 *
+	 * Filtering this moves rows and moves rules together, which is the point of
+	 * it being one array. A band with nothing left in it draws no rule.
+	 *
+	 * @param array<string, string[]> $bands Slugs, keyed by band, in order.
+	 */
+	return (array) apply_filters( 'gwc_vt_menu_bands', $bands );
+}
+
 /**
  * The order the Volunteer Tracker submenu appears in.
  *
@@ -72,42 +165,31 @@ add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
  * has added its own screen to this menu should not lose it because this list
  * had not heard of it.
  *
+ * ── Why the schedule is above the hours list ────────────────────────────────
+ * It means the first item is not what the top-level "Volunteer Tracker" link
+ * opens — that still goes to All hours. Worth knowing rather than worth
+ * avoiding: the top-level link has a destination either way, and a menu ordered
+ * by when things happen is easier to hold in your head than one ordered by
+ * which screen we thought got opened most.
+ *
  * @return string[]
  */
 function gwc_vt_menu_order(): array {
-	/* ── The order is a volunteer's life, not a screen's importance ───────────
-	 * What is coming, then who is coming, then what they did, then what gets
-	 * produced for them. It reads forwards.
-	 *
-	 * It puts the schedule above the hours list, which means the first item is
-	 * not what the top-level "Volunteer Tracker" link opens — that still goes to
-	 * All hours. Worth knowing rather than worth avoiding: the top-level link
-	 * has a destination either way, and a menu ordered by when things happen is
-	 * easier to hold in your head than one ordered by which screen we thought
-	 * got opened most. */
-	$order = array(
-		/* Where you land. Not part of the sequence below so much as the place
-		 * you start it from. */
-		GWC_VT_DASHBOARD_PAGE,
+	$order = array();
 
-		// What is coming.
-		GWC_VT_SCHEDULE_PAGE,
+	foreach ( gwc_vt_menu_bands() as $slugs ) {
+		foreach ( (array) $slugs as $slug ) {
+			/* Settings is in a band but not in the order. gwc_vt_order_menu()
+			 * appends it after everything else, including screens this plugin
+			 * has never heard of; naming it here would place it above those
+			 * instead. It stays in the band so the setup rule still lands if a
+			 * site takes Help off the menu. */
+			if ( GWC_VT_SETTINGS_PAGE === $slug ) {
+				continue;
+			}
 
-		// Who is coming, and what each of them still has to do.
-		'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE,
-
-		/* What they did, and the queue of what nobody has attested to yet.
-		 *
-		 * Writing it up used to be two more entries here — Log a day, then the
-		 * single-entry way. Both are verbs, and gwc_vt_hide_menu_verbs() now
-		 * takes them off the menu and puts them on this screen as buttons, so
-		 * naming them here would be describing a menu that no longer exists. */
-		'edit.php?post_type=' . GWC_VT_ENTRY_TYPE,
-	);
-
-	// What gets produced for them, when this organization produces it.
-	if ( gwc_vt_letters_enabled() ) {
-		$order[] = GWC_VT_LETTERS_PAGE;
+			$order[] = (string) $slug;
+		}
 	}
 
 	/**
@@ -121,6 +203,9 @@ function gwc_vt_menu_order(): array {
 	 * point of a filter — a site that has explicitly asked for Settings third
 	 * has said something, and overriding it would be this plugin arguing with
 	 * somebody about their own admin.
+	 *
+	 * A filter here moves rows without moving the rules, which is usually not
+	 * what somebody wants: gwc_vt_menu_bands() moves both.
 	 *
 	 * @param string[] $order Submenu slugs, in the order they should appear.
 	 */
@@ -238,7 +323,89 @@ function gwc_vt_order_menu(): void {
 	/* Re-keyed from zero. WordPress reads the keys as positions when it renders,
 	 * and leaving the originals would put everything back where it started. */
 	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $submenu is the documented way to order a menu; core exposes no API for it, and this writes one plugin's own branch of it rather than replacing the global.
-	$GLOBALS['submenu'][ $parent ] = array_values( $ordered );
+	$GLOBALS['submenu'][ $parent ] = gwc_vt_rule_off_bands( array_values( $ordered ) );
+}
+
+/**
+ * Mark the row that opens each band, so a rule is drawn above it.
+ *
+ * Index 4 of a submenu row is the class list core puts on the <li>. Appended to
+ * rather than replaced, because a row may already carry one.
+ *
+ * ── The first surviving row, not the first named one ─────────────────────────
+ * A band is a list of slugs and any of them can be missing: letters switched
+ * off, a capability the user does not hold, a screen a site has filtered away.
+ * So the rule goes on whichever row of the band actually turned up first,
+ * rather than on a named slug that may not be there — which would take the rule
+ * with it and silently merge two bands into one.
+ *
+ * Nothing is drawn above the row that opens the menu. A rule there is not a
+ * separator, it is a line hanging under the menu's own heading.
+ *
+ * @param array[] $ordered The submenu, in its final order.
+ * @return array[]
+ */
+function gwc_vt_rule_off_bands( array $ordered ): array {
+	$band_of = array();
+
+	foreach ( gwc_vt_menu_bands() as $band => $slugs ) {
+		foreach ( (array) $slugs as $slug ) {
+			$band_of[ (string) $slug ] = (string) $band;
+		}
+	}
+
+	$opened = array();
+
+	foreach ( $ordered as $position => $row ) {
+		$band = $band_of[ (string) ( $row[2] ?? '' ) ] ?? '';
+
+		// A screen this plugin has never heard of belongs to no band and is
+		// left where the ordering pass put it, without a rule of its own.
+		if ( '' === $band || isset( $opened[ $band ] ) ) {
+			continue;
+		}
+
+		$opened[ $band ] = true;
+
+		if ( 0 === $position ) {
+			continue;
+		}
+
+		$ordered[ $position ][4] = trim( (string) ( $row[4] ?? '' ) . ' gwc-vt-rule' );
+	}
+
+	return $ordered;
+}
+
+/**
+ * The one rule the banded menu needs, on every admin screen.
+ *
+ * ── Inline, and not in the admin stylesheet ──────────────────────────────────
+ * assets/css/admin.css is enqueued on this plugin's own screens, which is right
+ * for everything in it except this: the sidebar is drawn on every screen in
+ * wp-admin, so a rule that only loaded on ours would give a coordinator
+ * dividers that come and go as they move around. One line inline costs no
+ * request, and it is skipped entirely for anybody whose menu this is not.
+ *
+ * ── Grey rather than white ───────────────────────────────────────────────────
+ * White at low alpha is the usual way to draw a hairline on the admin menu, and
+ * it is invisible on one of the nine core colour schemes: Light draws its
+ * submenu #fff, where the other eight are between #0c0c0c and #6f2724. One
+ * exception is enough, because it is a whole scheme rather than a corner of one
+ * — somebody who picks Light gets no dividers at all and no way to tell why.
+ *
+ * Mid-grey darkens a light background and lightens a dark one, so a single
+ * declaration covers all nine. Measured rather than assumed: read the colors.css
+ * each scheme ships under wp-admin/css/colors before changing this.
+ */
+function gwc_vt_menu_rule_style(): void {
+	if ( empty( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ) ) {
+		return;
+	}
+
+	echo '<style id="gwc-vt-menu-rule">'
+		. '#adminmenu .wp-submenu li.gwc-vt-rule{border-top:1px solid rgba(128,128,128,.4);margin-top:6px;padding-top:6px}'
+		. '</style>';
 }
 
 /**

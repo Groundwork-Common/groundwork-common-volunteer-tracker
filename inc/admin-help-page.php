@@ -59,8 +59,6 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'gwc_vt_register_help_page', 90 );
 
-/** Where the help lives. */
-const GWC_VT_HELP_PAGE = 'gwc-vt-help';
 
 /**
  * Every screen with help, and what to call it here.

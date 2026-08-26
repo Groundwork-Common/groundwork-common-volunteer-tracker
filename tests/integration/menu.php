@@ -150,6 +150,87 @@ gwc_vt_menu_check(
 	array_keys( (array) $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ) === range( 0, count( $gwc_vt_slugs ) - 1 )
 );
 
+/* ── The bands, drawn against the menu core actually builds ──────────────────
+ * tests/MenuTest.php asserts this against a fixture. What it cannot assert is
+ * that the rows core adds itself — All hours and Volunteers, from the two post
+ * types, before any admin_menu callback runs — carry the slugs the bands name
+ * them by. Get one of those wrong and the band map is describing a menu nobody
+ * has, silently, because a slug that matches nothing simply takes no rule.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_ruled = array();
+
+foreach ( (array) $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] as $gwc_vt_row ) {
+	if ( false !== strpos( (string) ( $gwc_vt_row[4] ?? '' ), 'gwc-vt-rule' ) ) {
+		$gwc_vt_ruled[] = (string) ( $gwc_vt_row[2] ?? '' );
+	}
+}
+
+gwc_vt_menu_check(
+	'a rule opens each band after the first',
+	array( GWC_VT_SCHEDULE_PAGE, 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, GWC_VT_HELP_PAGE ) === $gwc_vt_ruled,
+	implode( ' · ', $gwc_vt_ruled )
+);
+
+gwc_vt_menu_check(
+	'the row that opens the menu carries none',
+	'' === (string) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ][0][4] ?? '' ),
+	(string) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ][0][2] ?? '' )
+);
+
+/* Both moved out of the "anything we have not heard of" remainder at the foot
+ * of the menu, which is where they landed for two releases because neither was
+ * named in the order. Asserted by position rather than by presence: they were
+ * always present, just at the bottom. */
+gwc_vt_menu_check(
+	'Offers and Credentials sit with the volunteers, not below Letter records',
+	array_search( GWC_VT_APPLICATIONS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
+		&& array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true ),
+	implode( ' · ', $gwc_vt_slugs )
+);
+
+/* Every band has to find something, or the grouping is describing screens that
+ * are not on this menu. */
+foreach ( gwc_vt_menu_bands() as $gwc_vt_band => $gwc_vt_band_slugs ) {
+	gwc_vt_menu_check(
+		'the ' . $gwc_vt_band . ' band matches rows that exist',
+		array() !== array_intersect( $gwc_vt_band_slugs, $gwc_vt_slugs ),
+		implode( ' · ', $gwc_vt_band_slugs )
+	);
+}
+
+/* ── The stylesheet the rule needs ───────────────────────────────────────────
+ * The class is inert without it, and it is printed inline on admin_head rather
+ * than enqueued on this plugin's screens, because the sidebar is drawn on every
+ * screen in wp-admin. Asserted from the output rather than from the hook, so a
+ * handler that returns early still fails this.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+ob_start();
+gwc_vt_menu_rule_style();
+$gwc_vt_style = (string) ob_get_clean();
+
+gwc_vt_menu_check(
+	'the rule’s stylesheet is printed where the menu is',
+	false !== strpos( $gwc_vt_style, '.gwc-vt-rule' ) && false !== strpos( $gwc_vt_style, 'border-top' ),
+	$gwc_vt_style
+);
+
+$gwc_vt_kept = $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ];
+unset( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] );
+
+ob_start();
+gwc_vt_menu_rule_style();
+$gwc_vt_quiet = (string) ob_get_clean();
+
+$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $gwc_vt_kept;
+
+gwc_vt_menu_check(
+	'and nothing at all where it is not',
+	'' === $gwc_vt_quiet,
+	$gwc_vt_quiet
+);
+
 /* ── But the pages are still there ───────────────────────────────────────────
  * The promise the button relocation rests on. remove_submenu_page() unsets the
  * menu entry and never touches $_registered_pages, so admin.php still serves

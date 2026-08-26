@@ -27,8 +27,6 @@ add_action( 'admin_menu', 'gwc_vt_register_applications_screen', 14 );
 add_action( 'admin_post_gwc_vt_approve_application', 'gwc_vt_handle_approve_application' );
 add_action( 'admin_post_gwc_vt_discard_application', 'gwc_vt_handle_discard_application' );
 
-/** Where offers are dealt with. */
-const GWC_VT_APPLICATIONS_PAGE = 'gwc-vt-offers';
 
 /**
  * Register the screen, and hide it when the feature is off.

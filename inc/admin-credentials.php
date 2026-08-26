@@ -35,8 +35,6 @@ add_action( 'admin_post_gwc_vt_save_credential', 'gwc_vt_handle_save_credential'
 add_action( 'admin_post_gwc_vt_retire_credential', 'gwc_vt_handle_retire_credential' );
 add_action( 'admin_post_gwc_vt_restore_credential', 'gwc_vt_handle_restore_credential' );
 
-/** Where credentials are defined. */
-const GWC_VT_CREDENTIALS_PAGE = 'gwc-vt-credentials';
 
 /**
  * Register the screen.

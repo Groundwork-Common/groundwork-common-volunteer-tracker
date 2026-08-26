@@ -33,13 +33,47 @@ final class MenuTest extends TestCase {
 			array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 			array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 
-			// Then this plugin's own, at 9, 10, 11, 12 and 13.
+			// Then this plugin's own, in the order the files load.
 			array( 'Dashboard', 'edit_posts', GWC_VT_DASHBOARD_PAGE ),
 			array( 'Settings', 'manage_options', GWC_VT_SETTINGS_PAGE ),
 			array( 'Letters', 'gwc_vt_issue_letters', GWC_VT_LETTERS_PAGE ),
 			array( 'Log a day', 'edit_posts', GWC_VT_QUICK_ADD_PAGE ),
 			array( 'Schedule', 'edit_posts', GWC_VT_SCHEDULE_PAGE ),
+			array( 'Offers to volunteer', 'edit_others_posts', GWC_VT_APPLICATIONS_PAGE ),
+			array( 'Credentials', 'edit_others_posts', GWC_VT_CREDENTIALS_PAGE ),
+			array( 'Help', 'read', GWC_VT_HELP_PAGE ),
 		);
+	}
+
+	/**
+	 * The classes on each row, in the order they would render.
+	 *
+	 * @return string[]
+	 */
+	private function classes(): array {
+		return array_map(
+			static function ( array $item ): string {
+				return (string) ( $item[4] ?? '' );
+			},
+			(array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() )
+		);
+	}
+
+	/**
+	 * The labels of the rows a rule is drawn above.
+	 *
+	 * @return string[]
+	 */
+	private function ruled(): array {
+		$ruled = array();
+
+		foreach ( (array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() ) as $item ) {
+			if ( false !== strpos( (string) ( $item[4] ?? '' ), 'gwc-vt-rule' ) ) {
+				$ruled[] = (string) $item[0];
+			}
+		}
+
+		return $ruled;
 	}
 
 	/**
@@ -77,7 +111,17 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Dashboard', 'Schedule', 'Volunteers', 'All hours', 'Letters', 'Settings' ),
+			array(
+				'Dashboard',
+				'Schedule',
+				'Volunteers',
+				'Offers to volunteer',
+				'Credentials',
+				'All hours',
+				'Letters',
+				'Help',
+				'Settings',
+			),
 			$this->labels()
 		);
 	}
@@ -101,17 +145,249 @@ final class MenuTest extends TestCase {
 	}
 
 	/**
-	 * Eight entries in, six out. The count is the point of the change, so it is
-	 * asserted as a count rather than left to be inferred from the order above.
+	 * Eleven entries in, nine out. The count is the point of the hiding pass, so
+	 * it is asserted as a count rather than left to be inferred from the order
+	 * above.
 	 */
-	public function test_the_menu_is_six_entries(): void {
+	public function test_the_menu_is_nine_entries(): void {
 		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
-		$this->assertCount( 8, $this->as_registered() );
+		$this->assertCount( 11, $this->as_registered() );
 
 		$this->build();
 
-		$this->assertCount( 6, $this->labels() );
+		$this->assertCount( 9, $this->labels() );
+	}
+
+	/* ── The bands, and the rules between them ───────────────────────────────
+	 * Nine rows read as four things: where you land, the work ahead and who
+	 * will do it, the work already done and what it produces, and the setting
+	 * up. What is asserted here is which rows OPEN a band, because that is what
+	 * a rule is drawn above — not that the class exists somewhere.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_a_rule_opens_each_band_after_the_first(): void {
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
+
+		$this->build();
+
+		$this->assertSame(
+			array( 'Schedule', 'All hours', 'Help' ),
+			$this->ruled(),
+			'three rules, above the row that opens each band after the first'
+		);
+	}
+
+	/**
+	 * Nothing above the row that opens the menu. A rule there is not a
+	 * separator, it is a line hanging under the menu's own heading.
+	 */
+	public function test_the_first_row_carries_no_rule(): void {
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
+
+		$this->build();
+
+		$classes = $this->classes();
+
+		$this->assertSame( 'Dashboard', $this->labels()[0] );
+		$this->assertSame( '', $classes[0] );
+	}
+
+	/**
+	 * The rule goes on whichever row of a band actually turned up, not on a
+	 * named slug that may not be there.
+	 *
+	 * Letters off is the case that ships: All hours is then the only row in the
+	 * record band, and it has to take the rule or the band merges into the one
+	 * above it with nothing to say so.
+	 */
+	public function test_a_band_missing_its_first_row_still_gets_its_rule(): void {
+		$items = array();
+
+		foreach ( $this->as_registered() as $item ) {
+			// Both rows of the setup band gone, and the schedule with them.
+			if ( in_array( (string) $item[2], array( GWC_VT_SCHEDULE_PAGE, GWC_VT_HELP_PAGE ), true ) ) {
+				continue;
+			}
+
+			$items[] = $item;
+		}
+
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $items;
+
+		$this->build();
+
+		$this->assertSame(
+			array( 'Volunteers', 'All hours', 'Settings' ),
+			$this->ruled(),
+			'the band opens on the first row it has left, not on the slug named first'
+		);
+	}
+
+	/**
+	 * A band with nothing left in it draws no rule, rather than moving its rule
+	 * onto the next band and reporting a grouping that is not there.
+	 */
+	public function test_an_empty_band_draws_no_rule(): void {
+		$items = array();
+
+		foreach ( $this->as_registered() as $item ) {
+			if ( in_array(
+				(string) $item[2],
+				array( GWC_VT_HELP_PAGE, GWC_VT_SETTINGS_PAGE ),
+				true
+			) ) {
+				continue;
+			}
+
+			$items[] = $item;
+		}
+
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $items;
+
+		$this->build();
+
+		$this->assertSame( array( 'Schedule', 'All hours' ), $this->ruled() );
+	}
+
+	/**
+	 * A class a row already carries is kept. Core builds the class attribute
+	 * from index 4, and replacing it rather than appending would drop whatever
+	 * put it there.
+	 */
+	public function test_an_existing_class_is_kept(): void {
+		$items = $this->as_registered();
+
+		foreach ( $items as $index => $item ) {
+			if ( GWC_VT_SCHEDULE_PAGE === (string) $item[2] ) {
+				$items[ $index ][3] = 'Schedule';
+				$items[ $index ][4] = 'acme-highlight';
+			}
+		}
+
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $items;
+
+		$this->build();
+
+		$classes = $this->classes();
+		$labels  = $this->labels();
+
+		$this->assertSame(
+			'acme-highlight gwc-vt-rule',
+			$classes[ array_search( 'Schedule', $labels, true ) ]
+		);
+	}
+
+	/**
+	 * Somebody else's screen belongs to no band, so it takes no rule — a line
+	 * above it would say it opens a group of ours, which it does not.
+	 */
+	public function test_an_unknown_screen_takes_no_rule(): void {
+		$items   = $this->as_registered();
+		$items[] = array( 'Grant report', 'edit_posts', 'acme-grant-report' );
+
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $items;
+
+		$this->build();
+
+		$this->assertNotContains( 'Grant report', $this->ruled() );
+	}
+
+	/**
+	 * One registry, so a row cannot be ordered as one thing and ruled off as
+	 * another: the order is flattened out of the bands.
+	 */
+	public function test_the_order_is_the_bands_flattened(): void {
+		$flattened = array();
+
+		foreach ( gwc_vt_menu_bands() as $slugs ) {
+			foreach ( $slugs as $slug ) {
+				if ( GWC_VT_SETTINGS_PAGE !== $slug ) {
+					$flattened[] = $slug;
+				}
+			}
+		}
+
+		$this->assertSame( $flattened, gwc_vt_menu_order() );
+	}
+
+	/**
+	 * Settings is in a band and out of the order, and both halves matter: the
+	 * band is what keeps the setup rule landing if Help is ever taken off the
+	 * menu, and staying out of the order is what keeps Settings below a screen
+	 * a site has added of its own.
+	 */
+	public function test_settings_is_banded_but_not_ordered(): void {
+		$banded = array();
+
+		foreach ( gwc_vt_menu_bands() as $slugs ) {
+			$banded = array_merge( $banded, $slugs );
+		}
+
+		$this->assertContains( GWC_VT_SETTINGS_PAGE, $banded );
+		$this->assertNotContains( GWC_VT_SETTINGS_PAGE, gwc_vt_menu_order() );
+	}
+
+	/**
+	 * Filtering the bands moves the rows and the rules together. That is the
+	 * point of it being one array, and it is the extension point a site should
+	 * reach for rather than gwc_vt_menu_order().
+	 */
+	public function test_a_filter_on_the_bands_moves_rows_and_rules_together(): void {
+		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
+
+		add_filter(
+			'gwc_vt_menu_bands',
+			static function (): array {
+				return array(
+					'mine'  => array( GWC_VT_DASHBOARD_PAGE, GWC_VT_CREDENTIALS_PAGE ),
+					'yours' => array( GWC_VT_SCHEDULE_PAGE, GWC_VT_SETTINGS_PAGE ),
+				);
+			}
+		);
+
+		$this->build();
+
+		$labels = $this->labels();
+
+		$this->assertSame( 'Dashboard', $labels[0] );
+		$this->assertSame( 'Credentials', $labels[1] );
+		$this->assertSame( 'Schedule', $labels[2] );
+		$this->assertSame( array( 'Schedule' ), $this->ruled() );
+
+		gwc_vt_test_reset_filters();
+	}
+
+	/**
+	 * Every screen this plugin puts on the menu is in a band or is deliberately
+	 * off the menu.
+	 *
+	 * Read out of the source rather than listed here, because the failure this
+	 * catches is somebody adding a screen and nobody noticing it has no band —
+	 * which is exactly how Offers and Credentials ended up at the bottom of the
+	 * menu below Letter records, and how they stayed there for two releases.
+	 */
+	public function test_every_page_slug_is_banded_or_deliberately_hidden(): void {
+		$source = (string) file_get_contents( GWC_VT_DIR . 'inc/admin-screen.php' );
+
+		preg_match_all( "/^const (GWC_VT_[A-Z_]+_PAGE)\s*=\s*'([a-z0-9-]+)';/m", $source, $found );
+
+		$this->assertNotEmpty( $found[2], 'the page slug constants moved out of admin-screen.php' );
+
+		$banded = array( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE );
+
+		foreach ( gwc_vt_menu_bands() as $slugs ) {
+			$banded = array_merge( $banded, $slugs );
+		}
+
+		$hidden = gwc_vt_hidden_menu_items();
+
+		foreach ( $found[2] as $index => $slug ) {
+			$this->assertTrue(
+				in_array( $slug, $banded, true ) || in_array( $slug, $hidden, true ),
+				$found[1][ $index ] . ' is neither in a band nor deliberately off the menu, so it would land in the remainder at the bottom'
+			);
+		}
 	}
 
 	/**
