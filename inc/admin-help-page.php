@@ -127,13 +127,6 @@ function gwc_vt_help_tabs_for_screen( string $screen_id ): array {
 	 * contextually is exactly what appears here. */
 	gwc_vt_add_screen_help( $screen );
 
-	/* Settings adds its help from its own load- hook rather than from
-	 * current_screen. Two routes, and this page has to follow both or it prints
-	 * a heading with nothing under it. */
-	if ( false !== strpos( $screen_id, GWC_VT_SETTINGS_PAGE ) ) {
-		gwc_vt_add_settings_help( $screen );
-	}
-
 	return array_values( $screen->get_help_tabs() );
 }
 
