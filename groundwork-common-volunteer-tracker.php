@@ -400,6 +400,15 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	// The screen somebody lands on.
 	require GWC_VT_DIR . 'inc/admin-dashboard.php';
 
+	/* The plugin's line on WordPress's own dashboard, and last of the three
+	 * because it is a window onto the other two. It defines no screen of its
+	 * own: the counts come from dashboard.php, the shifts from shifts.php, and
+	 * whether to draw the week block at all from admin-schedule.php's
+	 * gwc_vt_shifts_enabled(). Nothing here is a load-time dependency — every
+	 * one of those is called while rendering — but the order says what reads
+	 * from what, which is the only thing this list is for. */
+	require GWC_VT_DIR . 'inc/admin-dashboard-widget.php';
+
 	/* Contextual help. Last, because it describes what all of the above do —
 	 * which now includes the schedule and its rosters. */
 	require GWC_VT_DIR . 'inc/admin-help.php';

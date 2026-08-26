@@ -1,0 +1,121 @@
+/**
+ * The widget on WordPress's own dashboard.
+ *
+ * Its own file, and small, because of where it loads. assets/css/admin.css is
+ * 64KB and is deliberately scoped to this plugin's own screens — a plugin that
+ * puts its stylesheet on every wp-admin page is a plugin that eventually
+ * restyles somebody else's. wp-admin's dashboard is somebody else's screen: it
+ * belongs to every plugin at once. So the widget brings the two kilobytes it
+ * actually needs rather than the whole admin sheet.
+ *
+ * No colour scheme of its own either. Core's dashboard is light in every scheme
+ * WordPress ships, and prefers-color-scheme must never drive plugin admin CSS —
+ * a widget that painted its own background would be the one thing on that page
+ * that did not match the others.
+ */
+
+/* ─── The widget on WordPress's own dashboard ───────────────────────────────
+   Sized to sit beside four other plugins' widgets rather than to fill a screen.
+   No colour scheme of its own: core's dashboard is light in every scheme it
+   ships, and a widget that painted its own background would be the one thing on
+   that page that did not match the others. */
+.gwcvt-widget__heading {
+	margin: 0 0 4px;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	color: #646970;
+}
+
+.gwcvt-widget__heading + .gwcvt-widget__list,
+.gwcvt-widget__heading + .gwcvt-widget__week {
+	margin-top: 0;
+}
+
+.gwcvt-widget__week {
+	margin: 0 0 14px;
+}
+
+.gwcvt-widget__week li {
+	display: flex;
+	gap: 10px;
+	align-items: baseline;
+	margin: 0 0 4px;
+	font-size: 13px;
+}
+
+.gwcvt-widget__when {
+	flex: 0 0 auto;
+	min-width: 96px;
+	color: #646970;
+}
+
+.gwcvt-widget__what {
+	flex: 1 1 auto;
+}
+
+.gwcvt-widget__fill {
+	flex: 0 0 auto;
+	color: #646970;
+}
+
+.gwcvt-widget__list {
+	margin: 0 0 12px;
+}
+
+.gwcvt-widget__item {
+	display: flex;
+	gap: 10px;
+	align-items: baseline;
+	margin: 0 0 8px;
+	padding-left: 9px;
+	border-left: 3px solid #c3c4c7;
+}
+
+/* The two severities the worklist already carries. Not new states, and not a
+   third: a line is either losing something today or it is not. */
+.gwcvt-widget__item--critical {
+	border-left-color: #d63638;
+}
+
+.gwcvt-widget__item--waiting {
+	border-left-color: #dba617;
+}
+
+.gwcvt-widget__count {
+	flex: 0 0 auto;
+	min-width: 24px;
+	text-align: right;
+	font-size: 18px;
+	line-height: 1.2;
+}
+
+.gwcvt-widget__job {
+	flex: 1 1 auto;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.gwcvt-widget__why {
+	display: block;
+	color: #646970;
+	font-size: 12px;
+}
+
+.gwcvt-widget__rest,
+.gwcvt-widget__clear {
+	margin: 0 0 12px;
+	font-size: 12px;
+	color: #646970;
+}
+
+.gwcvt-widget__foot {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	margin: 0;
+	padding-top: 8px;
+	border-top: 1px solid #f0f0f1;
+	font-size: 12px;
+	color: #646970;
+}
