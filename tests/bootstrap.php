@@ -610,6 +610,8 @@ require GWC_VT_DIR . 'inc/shift-cpt.php';
 require GWC_VT_DIR . 'inc/signup-cpt.php';
 require GWC_VT_DIR . 'inc/event-cpt.php';
 require GWC_VT_DIR . 'inc/application-cpt.php';
+require GWC_VT_DIR . 'inc/credential-cpt.php';
+require GWC_VT_DIR . 'inc/credentials.php';
 require GWC_VT_DIR . 'inc/photo.php';
 require GWC_VT_DIR . 'inc/shifts.php';
 require GWC_VT_DIR . 'inc/events.php';
@@ -644,6 +646,12 @@ require GWC_VT_DIR . 'inc/admin-screen.php';
  * the same split as the dashboard's worklist — so it is unit-testable. The rest
  * of that file renders meta boxes and is covered by tests/integration. */
 require GWC_VT_DIR . 'inc/admin-volunteer.php';
+
+/* And the credential filter beside it, for exactly the same reason: which
+ * volunteers the list keeps is arithmetic over query vars, and the empty-set
+ * trap it guards against — post__in with nothing in it listing everybody — is
+ * the kind that is invisible until it is in front of a coordinator. */
+require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
 
 /* admin-schedule.php for the same reason. Four things in it decide what the
  * screen shows before any of it is drawn — which rows a filter keeps, how many

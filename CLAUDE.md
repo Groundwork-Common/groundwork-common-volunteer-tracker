@@ -55,6 +55,11 @@ tool this file used to describe, and the later half is easy to miss when scannin
   An event is a *container over shifts by `post_parent`*: every slot is an
   ordinary `gwc_vt_shift`, which is why waiting lists, reminders, rosters and
   reconciliation all work on one unchanged.
+- **Credentials** — `credential-cpt.php` (both post types), `credentials.php` (the
+  queries, plus the two functions that write), `admin-credentials.php` (defining
+  them) and `admin-volunteer-credentials.php` (recording who holds what, and the
+  volunteer-list filter). **Never the word "requirement"** — that means service
+  hours here, and `CredentialTest` asserts the separation over the source.
 - **The dashboard** — `dashboard.php` (counts, pure) and `admin-dashboard.php`
   (the screen). Split so the worklist's ordering can be asserted without a
   database.
@@ -365,7 +370,12 @@ log** the record that a letter went out; survives purges, holds no name ·
 **rollup** cached totals · **self-log** the optional anonymous front-end form ·
 **triage** attaching a self-logged entry to a volunteer · **hold** a per-volunteer
 block on the retention sweep · **anonymize vs delete** — anonymizing keeps the
-hours · **increment** rounding granularity, nearest and never up.
+hours · **increment** rounding granularity, nearest and never up ·
+**credential** a thing a volunteer must *hold* — a class, a waiver, a check;
+never a "requirement", which is court-ordered hours · **record** one grant of one
+credential to one volunteer, a child post; expiry is derived from it, never
+stored · **retire** stop asking for a credential without destroying the records
+of who held it.
 
 ## Where work is tracked
 
