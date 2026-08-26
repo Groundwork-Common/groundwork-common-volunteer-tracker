@@ -416,6 +416,8 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	/* And the same help again on a page somebody can find, which asks the file
 	 * above what each screen would say rather than repeating any of it. After
 	 * it, because it calls into it. */
+	/* The how-to guide, as data. Before the page that prints it. */
+	require GWC_VT_DIR . 'inc/help-content.php';
 	require GWC_VT_DIR . 'inc/admin-help-page.php';
 }
 
