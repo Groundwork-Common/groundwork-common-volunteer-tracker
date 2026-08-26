@@ -60,8 +60,23 @@ $gwc_vt_previous = get_posts(
 		 * break the "re-runnable" promise at the top of this file, and does not
 		 * show up until somebody wonders why the offers queue has thirty
 		 * identical Rosalinds in it. */
-		'post_type'      => array( GWC_VT_ENTRY_TYPE, GWC_VT_VOLUNTEER_TYPE, GWC_VT_LETTER_TYPE, GWC_VT_SHIFT_TYPE, GWC_VT_EVENT_TYPE, GWC_VT_SIGNUP_TYPE, GWC_VT_APPLICATION_TYPE, 'page' ),
-		'post_status'    => 'any',
+		'post_type'      => array( GWC_VT_ENTRY_TYPE, GWC_VT_VOLUNTEER_TYPE, GWC_VT_LETTER_TYPE, GWC_VT_SHIFT_TYPE, GWC_VT_EVENT_TYPE, GWC_VT_SIGNUP_TYPE, GWC_VT_APPLICATION_TYPE, GWC_VT_CREDENTIAL_TYPE, GWC_VT_RECORD_TYPE, 'page' ),
+		/* Every registered status, and NOT 'any'.
+		 *
+		 * 'any' means "every status that is not exclude_from_search", and all
+		 * six of this plugin's custom statuses set that flag — cancelled,
+		 * ev_cancelled, waitlist, withdrawn, discarded, cr_retired. So the
+		 * clear-out silently skipped them and this script's re-runnable promise
+		 * had been broken for as long as those statuses have existed: a run that
+		 * reported removing eighty-five records left twenty-three discarded
+		 * offers, twelve cancelled shifts and eleven waiting-list signups behind
+		 * it, and every re-run added more. The offers queue really did fill up
+		 * with identical Rosalinds; the comment above was describing something
+		 * that was already happening.
+		 *
+		 * Asked of the registry rather than listed, so a status added later is
+		 * covered without anybody having to remember this. */
+		'post_status'    => array_values( get_post_stati() ),
 		'posts_per_page' => -1,
 		'fields'         => 'ids',
 		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- a development fixture, run by hand.
@@ -366,6 +381,138 @@ update_post_meta( $gwc_vt_wendell, GWC_VT_VOLUNTEER_HOLD_REASON, 'Court has aske
  * volunteer on file, one does not. */
 gwc_vt_seed_entry( 0, '2026-08-02', '3', 'Sorting the produce delivery', false, array( 'name' => 'Priya Ramanathan', 'email' => 'priya@example.test' ) );
 gwc_vt_seed_entry( 0, '2026-08-03', '2:30', 'Front desk intake', false, array( 'name' => 'Joachim Whitfeather', 'email' => 'joachim@example.test' ) );
+
+/* ── Credentials ─────────────────────────────────────────────────────────────
+ * Three, covering the three shapes an organization actually has: one that never
+ * expires and is signed once, one that runs out and is the reason the feature
+ * exists, and one on a longer cycle. Plus a fourth that has been retired, so
+ * the screen shows what "we stopped asking for this, and we kept the records"
+ * looks like — the state that is impossible to picture from the form alone.
+ *
+ * Deliberately NOT everybody holding everything. The states worth looking at
+ * are the awkward ones: somebody lapsed, somebody who has renewed twice, and
+ * somebody who has never been recorded at all.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A credential.
+ *
+ * @param string $name   What it is.
+ * @param int    $months Renewal interval, 0 for never.
+ * @param string $mode   'report' or 'block'.
+ * @param string $note   A note for staff.
+ * @return int
+ */
+function gwc_vt_seed_credential( string $name, int $months, string $mode, string $note = '' ): int {
+	$id = (int) wp_insert_post(
+		array(
+			'post_type'   => GWC_VT_CREDENTIAL_TYPE,
+			'post_status' => 'publish',
+			'post_title'  => $name,
+			'meta_input'  => array(
+				GWC_VT_SEED_MARK           => 1,
+				GWC_VT_CREDENTIAL_MONTHS   => $months,
+				GWC_VT_CREDENTIAL_MODE     => $mode,
+				GWC_VT_CREDENTIAL_NOTE     => $note,
+			),
+		)
+	);
+
+	return $id;
+}
+
+/**
+ * A grant of one, dated relative to today.
+ *
+ * Relative, never absolute. A fixed date is a fixture that is correct the week
+ * it is written and quietly stops demonstrating anything a year later — a
+ * "lapsed" class that becomes lapsed by six years reads as broken data rather
+ * than as the state it is there to show.
+ *
+ * @param int    $volunteer_id  Who holds it.
+ * @param int    $credential_id What they hold.
+ * @param string $offset        A strtotime modifier from today, e.g. '-14 months'.
+ * @return int
+ */
+function gwc_vt_seed_record( int $volunteer_id, int $credential_id, string $offset ): int {
+	$record_id = gwc_vt_record_credential(
+		$volunteer_id,
+		$credential_id,
+		gmdate( 'Y-m-d', strtotime( gwc_vt_today() . ' ' . $offset ) ),
+		1
+	);
+
+	if ( is_wp_error( $record_id ) ) {
+		printf( "  ! could not record a credential: %s\n", $record_id->get_error_message() );
+		return 0;
+	}
+
+	update_post_meta( (int) $record_id, GWC_VT_SEED_MARK, 1 );
+
+	return (int) $record_id;
+}
+
+$gwc_vt_waiver = gwc_vt_seed_credential(
+	'Liability waiver',
+	0,
+	'block',
+	'Paper form in the blue folder at the front desk. Scan it before filing.'
+);
+
+$gwc_vt_safety = gwc_vt_seed_credential(
+	'Child safety class',
+	12,
+	'block',
+	'Booked through the county — Trudy has the schedule.'
+);
+
+$gwc_vt_food = gwc_vt_seed_credential(
+	'Food handler card',
+	24,
+	'report',
+	'Only needed for the kitchen and the meal service. Anyone can take it online.'
+);
+
+$gwc_vt_forklift = gwc_vt_seed_credential(
+	'Forklift certification',
+	36,
+	'block',
+	'We stopped running the pallet racking in 2025, so nobody is asked for this now.'
+);
+
+// Everything in order. The boring case, and the one most volunteers are in.
+gwc_vt_seed_record( $gwc_vt_marcus, $gwc_vt_waiver, '-8 months' );
+gwc_vt_seed_record( $gwc_vt_marcus, $gwc_vt_safety, '-5 months' );
+gwc_vt_seed_record( $gwc_vt_marcus, $gwc_vt_food, '-8 months' );
+
+/* Lapsed, and the reason the dashboard has a line. The waiver is fine, so this
+ * is one credential out of two — not a volunteer with nothing on file, which is
+ * a different and much less interesting problem. */
+gwc_vt_seed_record( $gwc_vt_priya, $gwc_vt_waiver, '-3 years' );
+gwc_vt_seed_record( $gwc_vt_priya, $gwc_vt_safety, '-14 months' );
+
+/* Renewed twice, so the history on her record reads as a history rather than a
+ * single row. The oldest two have both run out and neither is a problem — which
+ * is exactly what a coordinator has to be able to see at a glance. */
+gwc_vt_seed_record( $gwc_vt_fatima, $gwc_vt_waiver, '-4 years' );
+gwc_vt_seed_record( $gwc_vt_fatima, $gwc_vt_safety, '-38 months' );
+gwc_vt_seed_record( $gwc_vt_fatima, $gwc_vt_safety, '-25 months' );
+gwc_vt_seed_record( $gwc_vt_fatima, $gwc_vt_safety, '-2 months' );
+
+// Nothing recorded at all. Brand new, and nobody has got to it yet.
+gwc_vt_seed_record( $gwc_vt_tomas, $gwc_vt_waiver, '-6 days' );
+
+/* Held a credential the organization has since retired. Retiring it after the
+ * record is written is the order that matters — it is what proves the record
+ * survived, which is the whole point of retiring rather than deleting. */
+gwc_vt_seed_record( $gwc_vt_wendell, $gwc_vt_forklift, '-2 years' );
+
+wp_update_post(
+	array(
+		'ID'          => $gwc_vt_forklift,
+		'post_status' => GWC_VT_CREDENTIAL_RETIRED,
+	)
+);
 
 /* ── The schedule ────────────────────────────────────────────────────────────
  * Dated relative to whenever this is run, so the Schedule screen is never a list
@@ -927,6 +1074,7 @@ printf( "  %-22s %s\n", 'Fatima Sørensen', 'verified, but no email — print on
 printf( "  %-22s %s\n", 'Inès Okonkwo', 'dormant since 2023 — due under the 2-year policy' );
 printf( "  %-22s %s\n", 'Wendell Achebe', 'dormant, but on a retention hold' );
 printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count() . ' waiting — one court-ordered, one three weeks old, two with a picture' );
+printf( "  %-22s %s\n", 'Credentials', count( gwc_vt_live_credential_ids() ) . ' asked for, 1 retired — ' . count( gwc_vt_lapsed_credential_ids() ) . ' volunteer with one that has lapsed' );
 printf( "  %-22s %s\n", 'Awaiting verification', gwc_vt_unverified_count() );
 printf( "  %-22s %s\n", 'Self-logged, unmatched', '2' );
 

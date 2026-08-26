@@ -546,7 +546,9 @@ foreach ( array( $gwc_vt_cr_ada, $gwc_vt_cr_bo, $gwc_vt_cr_el, $gwc_vt_cr_fi ) a
 foreach ( get_posts(
 	array(
 		'post_type'   => array( GWC_VT_CREDENTIAL_TYPE, GWC_VT_RECORD_TYPE, GWC_VT_VOLUNTEER_TYPE ),
-		'post_status' => 'any',
+		/* Every registered status, not 'any' — which skips the retired
+		 * credential §4 makes. See tests/seed.php. */
+		'post_status' => array_values( get_post_stati() ),
 		'numberposts' => -1,
 		's'           => 'Zzcr',
 	)

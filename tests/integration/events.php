@@ -436,7 +436,9 @@ gwc_vt_ev_check( 'its slots keep their rosters', $gwc_vt_before === count( gwc_v
 remove_filter( 'pre_wp_mail', 'gwc_vt_ev_catch_mail', 10 );
 
 foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_post ) {
-	foreach ( get_posts( array( 'post_type' => GWC_VT_SIGNUP_TYPE, 'post_parent' => (int) $gwc_vt_post, 'post_status' => 'any', 'posts_per_page' => 200, 'fields' => 'ids' ) ) as $gwc_vt_signup ) {
+	/* Every registered status, not 'any' — which skips the waiting-list and
+	 * withdrawn signups this is here to collect. See tests/seed.php. */
+	foreach ( get_posts( array( 'post_type' => GWC_VT_SIGNUP_TYPE, 'post_parent' => (int) $gwc_vt_post, 'post_status' => array_values( get_post_stati() ), 'posts_per_page' => 200, 'fields' => 'ids' ) ) as $gwc_vt_signup ) {
 		wp_delete_post( (int) $gwc_vt_signup, true );
 	}
 
