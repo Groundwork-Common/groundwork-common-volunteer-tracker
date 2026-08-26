@@ -51,12 +51,12 @@ Volunteer records here are more sensitive than most plugin data — in the manda
 == Installation ==
 
 1. Install through **Plugins → Add New**, or upload the zip under **Plugins → Add New → Upload Plugin**.
-2. Activate it. A **Volunteer Hours** menu appears.
-3. Open **Volunteer Hours → Settings → Letter** and fill in the organization name, the contact a court or school should phone about a letter, and who signs. Each of those falls back to something reasonable on its own — the site title, the administrator's email address, an unlabeled line — and together those fallbacks produce a letter headed with your website's title over your webmaster's address. The letter screen warns you before you print one, but it is quicker to fill them in now.
+2. Activate it. A **Volunteer Tracker** menu appears.
+3. Open **Volunteer Tracker → Settings → Letter** and fill in the organization name, the contact a court or school should phone about a letter, and who signs. Each of those falls back to something reasonable on its own — the site title, the administrator's email address, an unlabeled line — and together those fallbacks produce a letter headed with your website's title over your webmaster's address. The letter screen warns you before you print one, but it is quicker to fill them in now.
 4. On the **Permissions** tab, choose which roles may verify hours and which may issue letters. They are frequently different people, which is why they are separate.
 5. On the **Privacy** tab, decide how long records are kept. The plugin will not choose for you, and it will not quietly keep them forever either.
 
-Then open **Volunteer Hours → All hours** and press **Log one shift**, verify what you logged, and produce a letter from the volunteer's own record. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
+Then open **Volunteer Tracker → All hours** and press **Log one shift**, verify what you logged, and produce a letter from the volunteer's own record. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
 
 Nothing here is public until you say so. The shift signup form and the volunteer self-log form are both switched off on a new install — they live under **Settings → Shifts** and **Settings → Logging**.
 

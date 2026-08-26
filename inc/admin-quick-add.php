@@ -60,7 +60,7 @@ function gwc_vt_quick_add_page_title(): string {
 }
 
 /**
- * Add the screen under Volunteer Hours.
+ * Add the screen under Volunteer Tracker.
  */
 function gwc_vt_register_quick_add_menu(): void {
 	$hook = add_submenu_page(

@@ -12,7 +12,7 @@ add_action( 'admin_post_gwc_vt_letter_print', 'gwc_vt_handle_letter_print' );
 add_action( 'admin_post_gwc_vt_letter_send', 'gwc_vt_handle_letter_send' );
 
 /**
- * Hang the Letters screen off the Volunteer Hours menu.
+ * Hang the Letters screen off the Volunteer Tracker menu.
  */
 function gwc_vt_register_letters_menu(): void {
 	if ( ! gwc_vt_letters_enabled() ) {
@@ -212,6 +212,19 @@ function gwc_vt_render_produce_letter_screen(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$to = isset( $_GET['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
+	/* An issued letter somebody has come back to look at. Read before the build
+	 * so its volunteer and period win over an empty query string — the link
+	 * carries all three, but a hand-edited URL that kept the reference and lost
+	 * the dates would otherwise rebuild a different period under a banner
+	 * claiming to be about this one. */
+	$reissue = gwc_vt_reissue_record();
+
+	if ( $reissue ) {
+		$volunteer_id = (int) $reissue['volunteer_id'];
+		$from         = (string) $reissue['from'];
+		$to           = (string) $reissue['to'];
+	}
+
 	$letter = $volunteer_id > 0
 		? gwc_vt_build_letter(
 			$volunteer_id,
@@ -226,7 +239,21 @@ function gwc_vt_render_produce_letter_screen(): void {
 		<h1><?php echo esc_html( gwc_vt_produce_page_title() ); ?></h1>
 
 		<?php gwc_vt_letters_notice(); ?>
-		<?php gwc_vt_render_letterhead_warning(); ?>
+		<?php gwc_vt_render_reissue_banner( $reissue ); ?>
+
+		<?php
+		/* Only when there is no preview below. gwc_vt_render_letter_preview()
+		 * draws the same warning immediately above the print and send buttons,
+		 * which is where it earns its place — it is the compounding-fallback
+		 * trap, and the moment to read it is the moment before the document
+		 * leaves. Both fired unconditionally, so the screen carried the warning
+		 * twice whenever a letter was on it. Kept here for the empty screen,
+		 * where somebody arriving to produce their first letter should see it
+		 * before they pick anybody. */
+		if ( ! $letter instanceof GWC_VT_Letter ) {
+			gwc_vt_render_letterhead_warning();
+		}
+		?>
 
 		<?php if ( $volunteer_id > 0 && $letter instanceof GWC_VT_Letter ) : ?>
 			<?php
@@ -492,6 +519,135 @@ function gwc_vt_render_letter_preview( $letter, int $volunteer_id, string $from,
 	</p>
 	<?php
 }
+
+/* ── Looking at a letter that has already gone out ───────────────────────────
+ * Somebody rings up: "can you send me that letter again". The plugin keeps no
+ * copy of what was sent — deliberately, and the issued-letter log holds no name
+ * — so there is nothing to re-open. What it can do is rebuild the letter from
+ * the same volunteer over the same period, which is exactly what the reference
+ * checker already does.
+ *
+ * The whole difficulty is that a rebuild is not necessarily the same document.
+ * Hours get corrected and shifts get verified after a letter goes out, and when
+ * that has happened the reprint says something different and carries a
+ * different reference. Handing that to a probation officer as "the letter we
+ * sent in March" is the failure this screen exists to prevent, so the state is
+ * worked out before anything is drawn and said at the top in the plainest words
+ * available.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The screen for looking at an issued letter again.
+ *
+ * The produce screen, with the volunteer and dates already filled in and the
+ * reference carried alongside so it can say whether the two still agree. A
+ * separate screen was considered and rejected: it would be the produce screen
+ * with one extra sentence, and two screens that render a letter is two places
+ * for the letterhead warning and the print button to drift apart.
+ *
+ * @param array $record From gwc_vt_letter_record().
+ * @return string
+ */
+function gwc_vt_letter_review_url( array $record ): string {
+	return add_query_arg(
+		'gwc_vt_reissue',
+		rawurlencode( (string) ( $record['reference'] ?? '' ) ),
+		gwc_vt_produce_letter_url(
+			(int) ( $record['volunteer_id'] ?? 0 ),
+			(string) ( $record['from'] ?? '' ),
+			(string) ( $record['to'] ?? '' )
+		)
+	);
+}
+
+/**
+ * The issued letter this screen was asked to look at again, if any.
+ *
+ * @return array Empty when there is none, or the reference names nothing.
+ */
+function gwc_vt_reissue_record(): array {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from it.
+	$reference = isset( $_GET['gwc_vt_reissue'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_reissue'] ) ) : '';
+
+	if ( '' === $reference ) {
+		return array();
+	}
+
+	$record = gwc_vt_find_letter_record( $reference );
+
+	return is_array( $record ) ? $record : array();
+}
+
+/**
+ * Say whether printing this again would produce the same document.
+ *
+ * Three answers, and the middle one is the reason the banner exists at all.
+ *
+ * Unchanged: reprint freely, it is the same letter and the same reference.
+ *
+ * Changed: the records have moved since. The reprint is a NEW letter with a NEW
+ * reference — it is not a copy of what was sent, and the old reference stays
+ * the one on the copy the volunteer is holding. Both facts have to be said,
+ * because somebody reprinting "the March letter" and posting it to a court is
+ * otherwise sending a document that disagrees with the one already on file
+ * there, with nothing on either page to explain why.
+ *
+ * Gone: the volunteer's record has been anonymized, erased or swept. There is
+ * nothing to rebuild from, so there is nothing to print, and the screen says
+ * that rather than rendering an empty letter.
+ *
+ * @param array $record From gwc_vt_letter_record().
+ */
+function gwc_vt_render_reissue_banner( array $record ): void {
+	if ( ! $record ) {
+		return;
+	}
+
+	$result = gwc_vt_verify_reference( (string) $record['reference'] );
+	$status = (string) ( $result['status'] ?? 'unknown' );
+
+	$issued = sprintf(
+		/* translators: 1: a date, 2: a reference code. */
+		__( 'Issued %1$s, reference %2$s.', 'groundwork-common-volunteer-tracker' ),
+		$record['issued_at'],
+		$record['reference']
+	);
+
+	if ( 'match' === $status ) {
+		printf(
+			'<div class="notice notice-success"><p><strong>%1$s</strong> %2$s</p></div>',
+			esc_html( $issued ),
+			esc_html__( 'Nothing on this volunteer’s record has changed since. Printing or emailing it again produces the same letter, with the same reference.', 'groundwork-common-volunteer-tracker' )
+		);
+
+		return;
+	}
+
+	if ( ! isset( $result['current']['minutes'] ) ) {
+		printf(
+			'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s</p></div>',
+			esc_html( $issued ),
+			esc_html__( 'This volunteer’s record has since been removed or anonymized, so there is nothing left to build a letter from. The log entry above is what remains, and it is enough to confirm that a letter was issued and what it stated.', 'groundwork-common-volunteer-tracker' )
+		);
+
+		return;
+	}
+
+	printf(
+		'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p><p>%3$s</p><p><strong>%4$s</strong></p></div>',
+		esc_html( $issued ),
+		esc_html__( 'This is not a copy of that letter — no copy is kept. It is the letter your records would produce today, and they have changed since.', 'groundwork-common-volunteer-tracker' ),
+		esc_html( gwc_vt_reference_difference_note( $result, $record ) ),
+		esc_html(
+			sprintf(
+				/* translators: %s: the reference code of the letter that was issued. */
+				__( 'If you print or send this, it goes out as a new letter with a new reference. %s stays the reference on the copy the volunteer already has, and will still check out as what you issued that day.', 'groundwork-common-volunteer-tracker' ),
+				$record['reference']
+			)
+		)
+	);
+}
+
 
 /**
  * A nonced URL for issuing a letter.
@@ -973,7 +1129,19 @@ function gwc_vt_render_letter_log(): void {
 				<tbody>
 					<?php foreach ( $records as $record ) : ?>
 						<tr>
-							<td><code><?php echo esc_html( $record['reference'] ); ?></code></td>
+							<td>
+								<?php
+								/* The reference is the link, because it is the
+								 * thing somebody is holding when they ring up.
+								 * A record whose volunteer has been purged is
+								 * still worth opening — the banner there says
+								 * what became of it, which is the answer to the
+								 * question that brought them. */
+								?>
+								<a href="<?php echo esc_url( gwc_vt_letter_review_url( $record ) ); ?>">
+									<code><?php echo esc_html( $record['reference'] ); ?></code>
+								</a>
+							</td>
 							<td>
 								<?php
 								$name = $record['volunteer_id'] > 0 ? get_the_title( $record['volunteer_id'] ) : '';

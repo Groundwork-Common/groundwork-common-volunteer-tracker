@@ -2080,3 +2080,29 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-event-progress__actions strong {
 	font-size: inherit;
 }
+
+/* ── A volunteer's photograph ────────────────────────────────────────────────
+ * Colours stated rather than inherited, per the note at the top of this file:
+ * wp-admin is a light interface and a rule that sets a background without
+ * restating the foreground is the invisible-heading bug waiting to happen.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+.gwcvt-photo__current {
+	margin: 8px 0;
+}
+
+.gwcvt-photo__image {
+	width: 120px;
+	height: 120px;
+	object-fit: cover;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	background: #f0f0f1;
+	color: #3c434a;
+}
+
+.gwcvt-photo__remove {
+	display: block;
+	margin: 0 0 8px;
+	color: #3c434a;
+}

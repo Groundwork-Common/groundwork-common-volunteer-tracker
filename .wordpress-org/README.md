@@ -118,12 +118,12 @@ Then, at 1280px wide, with the browser chrome out of frame:
 
 | File | Where | What should be on screen |
 | --- | --- | --- |
-| `screenshot-1.png` | Volunteer Hours → Dashboard | The worklist with several lines on it, so the ordering is visible. Not an empty one, and not the first-run "Nothing here yet" panel. |
-| `screenshot-2.png` | Volunteer Hours → All hours, filtered to **Not yet verified** | The queue: several shifts awaiting a staff member, including the two self-logged rows reading "— not yet matched". |
-| `screenshot-3.png` | Volunteer Hours → Log hours | The shift form with the volunteer picker open on "Mar", showing Marcus Delacroix. |
+| `screenshot-1.png` | Volunteer Tracker → Dashboard | The worklist with several lines on it, so the ordering is visible. Not an empty one, and not the first-run "Nothing here yet" panel. |
+| `screenshot-2.png` | Volunteer Tracker → All hours, filtered to **Not yet verified** | The queue: several shifts awaiting a staff member, including the two self-logged rows reading "— not yet matched". |
+| `screenshot-3.png` | Volunteer Tracker → Log hours | The shift form with the volunteer picker open on "Mar", showing Marcus Delacroix. |
 | `screenshot-4.png` | The print view for Marcus Delacroix | The letter itself: letterhead, the itemized table, the signature block and the disclaimer — all four, uncropped. It is the one shot taken at full document height rather than 900px; see below. |
-| `screenshot-5.png` | Volunteer Hours → Letters, with a reference pasted in | The checker answering "This letter matches our current records." |
-| `screenshot-6.png` | Volunteer Hours → Schedule, **Coming up** | Several shifts with their fill counts, including one full with somebody waiting, and a cancelled repeat struck through. |
+| `screenshot-5.png` | Volunteer Tracker → Letters, with a reference pasted in | The checker answering "This letter matches our current records." |
+| `screenshot-6.png` | Volunteer Tracker → Schedule, **Coming up** | Several shifts with their fill counts, including one full with somebody waiting, and a cancelled repeat struck through. |
 | `screenshot-7.png` | An event, in the editor | The role-major grid: a role named once with its times under it, and the "Where volunteers see this" row filled in. |
 | `screenshot-8.png` | An event → Roster | Grouped role then time, with a "Log the hours" link on a time that has passed. |
 

@@ -96,7 +96,16 @@ function gwc_vt_register_post_type(): void {
 	$labels = array(
 		'name'               => _x( 'Volunteer Hours', 'post type general name', 'groundwork-common-volunteer-tracker' ),
 		'singular_name'      => _x( 'Hour Entry', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
-		'menu_name'          => _x( 'Volunteer Hours', 'admin menu', 'groundwork-common-volunteer-tracker' ),
+		/* The sidebar says the plugin's name, not the name of one post type
+		 * inside it. "Volunteer Hours" was accurate when hours were the whole
+		 * product; the menu now carries the schedule, events, volunteers and
+		 * letters, and naming the lot after one of its six screens made the
+		 * other five look like they belonged to something else.
+		 *
+		 * Only menu_name moves. 'name' below is the post type's own plural and
+		 * is still exactly right — those records ARE volunteer hours, and it is
+		 * what "All hours" and the entry screens are titled from. */
+		'menu_name'          => _x( 'Volunteer Tracker', 'admin menu', 'groundwork-common-volunteer-tracker' ),
 		/* "Log one shift", because it now sits next to "Log a day" as one of the
 		 * two page-title-action buttons on All hours — the two ways of writing
 		 * up work, told apart by how much of it you are writing up. Both said

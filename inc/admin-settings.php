@@ -1200,6 +1200,17 @@ function gwc_vt_render_uninstall_section(): void {
 						<p class="description">
 							<?php esc_html_e( 'Off by default. With it on, deleting the plugin also removes its settings, its retention log and the record of what it had been asked to do. It still does not delete a single volunteer, shift, signup, hour entry or issued letter — nothing this plugin can do from this screen will.', 'groundwork-common-volunteer-tracker' ); ?>
 						</p>
+						<p class="description">
+							<?php
+							/* Named on this tab for the reason the rest of this
+							 * section exists: a policy nobody can find is one
+							 * people are surprised by. A photograph is a file
+							 * rather than a database row, so somebody who has
+							 * emptied the database and moved on would reasonably
+							 * assume the images went too. They do not. */
+							esc_html_e( 'Volunteer photographs are files rather than database records, and the same rule covers them: deleting the plugin leaves every one of them in place. They are removed when the volunteer is anonymized, erased or swept by the retention policy, or when the record is deleted outright.', 'groundwork-common-volunteer-tracker' );
+							?>
+						</p>
 						<?php if ( $armed ) : ?>
 							<p class="description">
 								<strong><?php esc_html_e( 'Currently armed.', 'groundwork-common-volunteer-tracker' ); ?></strong>

@@ -203,6 +203,30 @@ gwc_vt_menu_check(
 	$gwc_vt_labels_obj->add_new_item
 );
 
+/* ── The sidebar carries the plugin's name, not one post type's ──────────────
+ * "Volunteer Hours" was right when hours were the whole product. The menu now
+ * holds the schedule, events, volunteers and letters, and naming the lot after
+ * one of its six screens made the other five look like they belonged to
+ * something else.
+ *
+ * Only menu_name moved. The post type's own plural is still "Volunteer Hours",
+ * because those records are exactly that — it is what All hours and the entry
+ * screens are titled from, and changing it would rename the records rather than
+ * the menu.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+gwc_vt_menu_check(
+	'the sidebar says Volunteer Tracker',
+	'Volunteer Tracker' === $gwc_vt_labels_obj->menu_name,
+	$gwc_vt_labels_obj->menu_name
+);
+
+gwc_vt_menu_check(
+	'and the post type is still called what its records are',
+	'Volunteer Hours' === $gwc_vt_labels_obj->name,
+	$gwc_vt_labels_obj->name
+);
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
 
 /* Exit non-zero so a failure fails the job. Printing the count and returning 0
