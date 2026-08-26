@@ -313,6 +313,12 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	// Typing up a sign-in sheet in one pass.
 	require GWC_VT_DIR . 'inc/admin-quick-add.php';
 
+	/* Changing one thing across every occurrence of a repeat. After
+	 * admin-shift.php in spirit rather than by requirement — it reuses that
+	 * file's gwc_vt_require_shift_cap() and gwc_vt_shift_redirect() at request
+	 * time, not at load time, so the order here is for a reader. */
+	require GWC_VT_DIR . 'inc/admin-repeat.php';
+
 	/* Planning shifts, and who is coming to them. admin-schedule.php owns the
 	 * menu and routes between the screen's views; admin-shift.php renders one
 	 * shift and holds every handler that writes one.

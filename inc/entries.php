@@ -183,6 +183,28 @@ function gwc_vt_entry_is_verified( int $entry_id ): bool {
 }
 
 /**
+ * Whose hours these are, or 0 for an entry nobody has matched yet.
+ *
+ * Named rather than left as a get_post_meta() cast, because "has this entry got
+ * a volunteer on it" is now a question four screens ask and one write path
+ * refuses on. It reads a missing key and a stored 0 the same way: a self-logged
+ * entry arrives with the key set to '0', and one built by a route that never
+ * wrote the key has no key at all. Both mean nobody, and a caller that only
+ * tested one of them would let the other through.
+ *
+ * Note this is a wider test than gwc_vt_unmatched_count() in inc/admin-triage.php
+ * makes, which matches on the stored '0' exactly. That is a count over records
+ * this plugin wrote and it is right about them; this is a guard on a write path
+ * that anything may call.
+ *
+ * @param int $entry_id Entry post ID.
+ * @return int Volunteer post ID, or 0.
+ */
+function gwc_vt_entry_volunteer_id( int $entry_id ): int {
+	return max( 0, (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true ) );
+}
+
+/**
  * Strip the name and address somebody typed, keeping the hours.
  *
  * The mirror of gwc_vt_clear_signup_claims() in inc/signups.php, and for the

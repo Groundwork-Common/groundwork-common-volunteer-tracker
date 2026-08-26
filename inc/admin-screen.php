@@ -24,6 +24,7 @@ const GWC_VT_SCHEDULE_PAGE  = 'gwc-vt-schedule';
 const GWC_VT_DASHBOARD_PAGE = 'gwc-vt-dashboard';
 const GWC_VT_VERIFY_PAGE    = 'gwc-vt-verify';
 const GWC_VT_PRODUCE_PAGE   = 'gwc-vt-produce-letter';
+const GWC_VT_REPEAT_PAGE    = 'gwc-vt-repeat';
 
 add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
 add_action( 'admin_init', 'gwc_vt_handle_colophon_toggle' );
@@ -165,6 +166,11 @@ function gwc_vt_hidden_menu_items(): array {
 		 * be an invitation to start from a blank form and go looking for
 		 * somebody, which is the flow it replaced. */
 		GWC_VT_PRODUCE_PAGE,
+
+		/* Changing a whole repeat is reached from an occurrence of that repeat,
+		 * because "which repeat" is the one thing the screen cannot ask you. A
+		 * menu entry would land on a form with nothing to apply across. */
+		GWC_VT_REPEAT_PAGE,
 	);
 
 	/**

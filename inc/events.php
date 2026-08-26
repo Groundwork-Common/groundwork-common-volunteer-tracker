@@ -245,15 +245,15 @@ function gwc_vt_event_fill_label( int $event_id ): string {
 
 	if ( null !== $capacity ) {
 		return sprintf(
-			/* translators: 1: places taken, 2: places available. */
-			__( '%1$d of %2$d', 'groundwork-common-volunteer-tracker' ),
+			/* translators: 1: how many places are taken, 2: how many places there are. */
+			_x( '%1$d of %2$d', 'places taken of places available', 'groundwork-common-volunteer-tracker' ),
 			$filled,
 			$capacity
 		);
 	}
 
 	return sprintf(
-		/* translators: %d: how many places are taken. */
+		/* translators: %d: how many people have signed up. */
 		_n( '%d signed up', '%d signed up', $filled, 'groundwork-common-volunteer-tracker' ),
 		$filled
 	);

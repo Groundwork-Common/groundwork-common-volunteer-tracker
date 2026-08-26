@@ -285,6 +285,162 @@ gwc_vt_check(
 	false !== strpos( $gwc_vt_redirect, 'gwc_vt_result=verified' ) && gwc_vt_entry_is_verified( $gwc_vt_bulk[0] )
 );
 
+/* ── An entry nobody has matched cannot be attested to ─────────────────────
+ * Attesting is one named person saying that another named person did this
+ * work. With no volunteer on the record the sentence has no subject.
+ *
+ * Nothing reached a letter either way. What went wrong was that the record
+ * LEFT the waiting-to-verify count, keyed on GWC_VT_ENTRY_VERIFIED_AT, while
+ * staying in the waiting-to-match count, keyed on GWC_VT_ENTRY_VOLUNTEER —
+ * two dashboard lines describing one entry differently.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_nameless = gwc_vt_make_entry( 0, '2026-04-04', 90 );
+
+gwc_vt_check(
+	'an entry with no volunteer on it is refused',
+	false === gwc_vt_verify_entry( $gwc_vt_nameless, $gwc_vt_editor ),
+	'it was accepted'
+);
+
+gwc_vt_check(
+	'and nothing was written when it was refused',
+	'' === (string) get_post_meta( $gwc_vt_nameless, GWC_VT_ENTRY_VERIFIED_AT, true )
+		&& '' === (string) get_post_meta( $gwc_vt_nameless, GWC_VT_ENTRY_VERIFIED_BY, true ),
+	'a timestamp or an attester was stamped on it anyway'
+);
+
+/* The stored '0' and a missing key are the same fact said two ways: a
+ * self-logged entry arrives with the key set, one built by a route that never
+ * wrote it has no key at all. A guard testing only one lets the other past. */
+$gwc_vt_keyless = gwc_vt_make_entry( 0, '2026-04-05', 90 );
+delete_post_meta( $gwc_vt_keyless, GWC_VT_ENTRY_VOLUNTEER );
+
+gwc_vt_check(
+	'and so is one whose volunteer key was never written',
+	false === gwc_vt_verify_entry( $gwc_vt_keyless, $gwc_vt_editor ),
+	'a missing key read as a volunteer'
+);
+
+/* The point of the whole fix: it stays where it was rather than moving out of
+ * one count and not the other. */
+gwc_vt_forget_unverified_count();
+
+$gwc_vt_before = gwc_vt_unverified_count();
+
+gwc_vt_verify_entry( $gwc_vt_nameless, $gwc_vt_editor );
+gwc_vt_forget_unverified_count();
+
+gwc_vt_check(
+	'a refused entry stays in the waiting-to-verify count',
+	$gwc_vt_before === gwc_vt_unverified_count(),
+	'the count moved from ' . $gwc_vt_before . ' to ' . gwc_vt_unverified_count()
+);
+
+/* An unmoving count proves nothing unless the count moves for the right reason.
+ * Verify one that DOES name somebody and it must drop — otherwise the check
+ * above is satisfied by a number that never changes at all. */
+$gwc_vt_movable = gwc_vt_make_entry( $gwc_vt_volunteer, '2026-04-07', 30 );
+gwc_vt_forget_unverified_count();
+
+$gwc_vt_with = gwc_vt_unverified_count();
+
+gwc_vt_verify_entry( $gwc_vt_movable, $gwc_vt_editor );
+gwc_vt_forget_unverified_count();
+
+gwc_vt_check(
+	'and the count does move when a matched entry is verified',
+	gwc_vt_unverified_count() === $gwc_vt_with - 1,
+	'it went from ' . $gwc_vt_with . ' to ' . gwc_vt_unverified_count()
+);
+
+/* The screen must stop offering what the model refuses, and say what to do
+ * instead — matching is something a coordinator can do, so sending them away
+ * with "you cannot verify this" would be both wrong and unhelpful. */
+wp_set_current_user( $gwc_vt_editor );
+
+$gwc_vt_row = gwc_vt_entry_row_actions( array(), get_post( $gwc_vt_nameless ) );
+
+gwc_vt_check(
+	'the row offers matching rather than verifying',
+	! isset( $gwc_vt_row['gwc_vt_verify'] ) && isset( $gwc_vt_row['gwc_vt_match'] ),
+	'row actions were: ' . implode( ', ', array_keys( $gwc_vt_row ) )
+);
+
+/* And the refusal is about the missing volunteer and nothing else — attach one
+ * and the same call goes through. */
+update_post_meta( $gwc_vt_nameless, GWC_VT_ENTRY_VOLUNTEER, (string) $gwc_vt_volunteer );
+
+gwc_vt_check(
+	'matching it to somebody makes it verifiable',
+	true === gwc_vt_verify_entry( $gwc_vt_nameless, $gwc_vt_editor ),
+	'it was still refused after being matched'
+);
+
+/* The other direction of the same rule. Written first as a check on the KEYLESS
+ * entry, which still names nobody — so it asserted the state had not changed
+ * and would have passed with the row action deleted. */
+$gwc_vt_matched = gwc_vt_make_entry( $gwc_vt_volunteer, '2026-04-06', 90 );
+
+gwc_vt_check(
+	'and a row that does name somebody offers Verify',
+	isset( gwc_vt_entry_row_actions( array(), get_post( $gwc_vt_matched ) )['gwc_vt_verify'] )
+		&& ! isset( gwc_vt_entry_row_actions( array(), get_post( $gwc_vt_matched ) )['gwc_vt_match'] ),
+	'row actions were: ' . implode( ', ', array_keys( gwc_vt_entry_row_actions( array(), get_post( $gwc_vt_matched ) ) ) )
+);
+
+/* ── The bulk notice has to say WHICH thing went wrong ─────────────────────
+ * "You cannot verify it" is about this user's permissions and there is nothing
+ * they can do about it. "Nobody has said whose these are" is about the record
+ * and there is. Counting the second as the first sends a coordinator to an
+ * administrator over a record they could have matched themselves.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_mixed = array(
+	gwc_vt_make_entry( $gwc_vt_volunteer, '2026-04-11', 60 ),
+	gwc_vt_make_entry( 0, '2026-04-12', 60 ),
+	gwc_vt_make_entry( 0, '2026-04-13', 60 ),
+);
+
+$gwc_vt_redirect = gwc_vt_handle_bulk_actions(
+	admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+	'gwc_vt_verify',
+	$gwc_vt_mixed
+);
+
+$gwc_vt_args = array();
+wp_parse_str( (string) wp_parse_url( $gwc_vt_redirect, PHP_URL_QUERY ), $gwc_vt_args );
+
+gwc_vt_check(
+	'the bulk run verified only the one that names somebody',
+	1 === (int) ( $gwc_vt_args['gwc_vt_done'] ?? -1 ),
+	'it reported ' . ( $gwc_vt_args['gwc_vt_done'] ?? 'nothing' ) . ' done'
+);
+
+gwc_vt_check(
+	'and counted the other two as naming nobody, not as forbidden',
+	2 === (int) ( $gwc_vt_args['gwc_vt_nameless'] ?? -1 )
+		&& 0 === (int) ( $gwc_vt_args['gwc_vt_skipped'] ?? -1 ),
+	'nameless=' . ( $gwc_vt_args['gwc_vt_nameless'] ?? 'absent' )
+		. ' skipped=' . ( $gwc_vt_args['gwc_vt_skipped'] ?? 'absent' )
+);
+
+/* ── An already-verified nameless row still reports verified ───────────────
+ * Installs that ran before this guard have them. The function answers "is it
+ * verified after this call", and retroactively answering no about a timestamp
+ * that is really there would make the badge and the count disagree — which is
+ * this bug pointed the other way. Hence the idempotent check runs FIRST.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_legacy = gwc_vt_make_entry( 0, '2026-04-18', 60 );
+update_post_meta( $gwc_vt_legacy, GWC_VT_ENTRY_VERIFIED_AT, '2026-04-19 10:00:00' );
+
+gwc_vt_check(
+	'an entry verified before the guard still reports verified',
+	true === gwc_vt_verify_entry( $gwc_vt_legacy, $gwc_vt_editor ),
+	'the guard retroactively unverified an existing attestation'
+);
+
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
 foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {

@@ -141,8 +141,8 @@ function gwc_vt_send_signup_confirmation( int $signup_id ): bool {
 			gwc_vt_shift_date_label( $shift_id )
 		)
 		: sprintf(
-			/* translators: 1: the organization's name, 2: a date. */
-			__( '%1$s: you are signed up for %2$s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: 1: the organization's name, 2: the date of a shift. */
+			_x( '%1$s: you are signed up for %2$s', 'email subject line; the second placeholder is a date', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_shift_date_label( $shift_id )
 		);
@@ -296,8 +296,8 @@ function gwc_vt_send_shift_reminder( int $signup_id ): bool {
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organization's name, 2: a date. */
-			__( '%1$s: a reminder about %2$s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: 1: the organization's name, 2: the date of a shift. */
+			_x( '%1$s: a reminder about %2$s', 'email subject line; the second placeholder is a date', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_shift_date_label( $shift_id )
 		),
@@ -703,8 +703,8 @@ function gwc_vt_send_event_confirmation( int $event_id, array $signup_ids ): boo
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organization's name, 2: the event's name. */
-			__( '%1$s: you are signed up for %2$s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: 1: the organization's name, 2: the name of an event. */
+			_x( '%1$s: you are signed up for %2$s', 'email subject line; the second placeholder is an event name', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_event_name( $event_id )
 		),
@@ -831,8 +831,8 @@ function gwc_vt_send_event_reminder( int $event_id, array $signup_ids ): bool {
 	return gwc_vt_send_email(
 		$email,
 		sprintf(
-			/* translators: 1: the organization's name, 2: the event's name. */
-			__( '%1$s: a reminder about %2$s', 'groundwork-common-volunteer-tracker' ),
+			/* translators: 1: the organization's name, 2: the name of an event. */
+			_x( '%1$s: a reminder about %2$s', 'email subject line; the second placeholder is an event name', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_org_name(),
 			gwc_vt_event_name( $event_id )
 		),

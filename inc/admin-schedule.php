@@ -150,14 +150,99 @@ function gwc_vt_render_schedule_screen(): void {
 }
 
 /**
- * Everything coming up, soonest first.
+ * Say when the list has been narrowed to match a number somebody clicked.
+ *
+ * Both narrowings are invisible otherwise. Slots mode looks like an ordinary
+ * schedule that has mysteriously grown a festival's six times; a seven-day
+ * window looks like a site with nothing booked past Friday. A screen that has
+ * quietly stopped showing everything, without saying so, is how somebody
+ * concludes there is nothing there.
+ *
+ * @param bool   $slots  Whether event times are drawn as their own rows.
+ * @param int    $within How many days the window was narrowed to, or 0.
+ * @param string $when   'past' or 'upcoming'.
+ * @param string $base   The screen's own URL.
  */
-function gwc_vt_render_schedule_list(): void {
-	$when = gwc_vt_schedule_when();
-	$day  = gwc_vt_schedule_day();
+function gwc_vt_render_schedule_narrowing( bool $slots, int $within, string $when, string $base ): void {
+	if ( ! $slots && $within < 1 ) {
+		return;
+	}
 
-	$from = 'past' === $when ? gmdate( 'Y-m-d', time() - ( 120 * DAY_IN_SECONDS ) ) : gwc_vt_today();
-	$to   = 'past' === $when ? gwc_vt_today() : gmdate( 'Y-m-d', time() + ( 400 * DAY_IN_SECONDS ) );
+	$said = array();
+
+	if ( $slots ) {
+		$said[] = __( 'an event’s times are listed one by one rather than as a single row', 'groundwork-common-volunteer-tracker' );
+	}
+
+	if ( $within > 0 ) {
+		$said[] = 'past' === $when
+			? sprintf(
+				/* translators: %s: a number of days, already formatted. */
+				_n( 'only the last %s day is shown', 'only the last %s days are shown', $within, 'groundwork-common-volunteer-tracker' ),
+				number_format_i18n( $within )
+			)
+			: sprintf(
+				/* translators: %s: a number of days, already formatted. */
+				_n( 'only the next %s day is shown', 'only the next %s days are shown', $within, 'groundwork-common-volunteer-tracker' ),
+				number_format_i18n( $within )
+			);
+	}
+
+	/* Everything except the two narrowing arguments, so "show the rest" keeps
+	 * the state chip, the search and the past/upcoming half somebody is in.
+	 * Rebuilt from the current URL rather than from $base for that reason. */
+	$rest = remove_query_arg( array( 'gwc_vt_slots', 'gwc_vt_within' ), gwc_vt_current_admin_url() );
+	?>
+	<div class="notice notice-info gwcvt-schedule__narrowed">
+		<p>
+			<?php
+			printf(
+				/* translators: %s: a list of the ways the screen has been narrowed, already joined into a sentence. */
+				esc_html__( 'Narrowed to match the number you came from — %s.', 'groundwork-common-volunteer-tracker' ),
+				esc_html( implode( __( ', and ', 'groundwork-common-volunteer-tracker' ), $said ) )
+			);
+			?>
+			<a href="<?php echo esc_url( $rest ); ?>">
+				<?php esc_html_e( 'Show the whole schedule', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+		</p>
+	</div>
+	<?php
+}
+
+/**
+ * The rows this screen draws, and the chip counts over them.
+ *
+ * Split out of the renderer so that "what does the schedule show" is a question
+ * with an answer, rather than something only a browser can find out. Two
+ * dashboard lines link here claiming the screen shows what they counted;
+ * tests/integration/worklist-links.php holds them to it by reading the URL each
+ * one builds, setting it as the request, and calling this.
+ *
+ * That is the same rule CLAUDE.md states for the count itself — where a screen
+ * acts on a count, it filters by the same function that produced it. A test
+ * that re-implemented the query here would prove the test agrees with itself.
+ *
+ * Reads the request rather than taking arguments, because the renderer did and
+ * because every narrowing on this screen is a URL. The caller sets $_GET.
+ *
+ * @return array{rows: array[], counts: array<string, int>, when: string, slots: bool, within: int}
+ */
+function gwc_vt_schedule_list_state(): array {
+	$when   = gwc_vt_schedule_when();
+	$day    = gwc_vt_schedule_day();
+	$slots  = gwc_vt_schedule_slots();
+	$within = gwc_vt_schedule_within();
+
+	/* The window a worklist line counted, when one sent us here. Applied in the
+	 * direction the view is already facing, so the same parameter narrows "the
+	 * last 180 days" and "the next 7" without the caller having to know which
+	 * way round the screen is. */
+	$back    = 'past' === $when ? ( $within > 0 ? $within : 120 ) : 0;
+	$forward = 'past' === $when ? 0 : ( $within > 0 ? $within : 400 );
+
+	$from = 'past' === $when ? gmdate( 'Y-m-d', time() - ( $back * DAY_IN_SECONDS ) ) : gwc_vt_today();
+	$to   = 'past' === $when ? gwc_vt_today() : gmdate( 'Y-m-d', time() + ( $forward * DAY_IN_SECONDS ) );
 
 	/* One day, when the calendar's "+2 more" sent somebody here. It overrides
 	 * the half-of-the-calendar window rather than narrowing it: the day might be
@@ -173,24 +258,36 @@ function gwc_vt_render_schedule_list(): void {
 	 * Saturday's ordinary shifts buries both; leaving the event out entirely is
 	 * a list that lies by omission. A summary row that links through is the
 	 * middle, and gwc_vt_schedule_rows() below merges the two by date. */
-	$shifts = gwc_vt_shifts_between(
-		array(
-			'from'     => $from,
-			'to'       => $to,
-			'statuses' => array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ),
-			'limit'    => 200,
-			'parent'   => 0,
-		)
+	$shift_args = array(
+		'from'     => $from,
+		'to'       => $to,
+		'statuses' => array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ),
+		'limit'    => 200,
+		'parent'   => 0,
 	);
 
-	$events = gwc_vt_events_between(
-		array(
-			'from'     => $from,
-			'to'       => $to,
-			'statuses' => array( 'publish', 'draft', GWC_VT_EVENT_CANCELLED ),
-			'limit'    => 100,
-		)
-	);
+	/* Dropping the argument entirely rather than passing null: gwc_vt_shifts_between()
+	 * distinguishes "no parent" from "absent" on purpose, and 0 is the standalone-only
+	 * answer. See the note on $parent there. */
+	if ( $slots ) {
+		unset( $shift_args['parent'] );
+	}
+
+	$shifts = gwc_vt_shifts_between( $shift_args );
+
+	/* No event summary rows in slots mode. The times themselves are in $shifts
+	 * now, and drawing both would show a festival once as a whole and six more
+	 * times as its parts — over a count that only ever meant the parts. */
+	$events = $slots
+		? array()
+		: gwc_vt_events_between(
+			array(
+				'from'     => $from,
+				'to'       => $to,
+				'statuses' => array( 'publish', 'draft', GWC_VT_EVENT_CANCELLED ),
+				'limit'    => 100,
+			)
+		);
 
 	$rows = gwc_vt_schedule_rows( $shifts, $events );
 
@@ -216,6 +313,41 @@ function gwc_vt_render_schedule_list(): void {
 		$rows = gwc_vt_fold_cancelled_repeats( $rows );
 	}
 
+	return array(
+		'rows'   => $rows,
+		'counts' => $counts,
+		'when'   => $when,
+		'slots'  => $slots,
+		'within' => $within,
+		'term'   => $term,
+		'state'  => $state,
+		'day'    => $day,
+		'from'   => $from,
+		'to'     => $to,
+	);
+}
+
+/**
+ * Everything coming up, soonest first.
+ */
+function gwc_vt_render_schedule_list(): void {
+	/* Every local the markup below reads comes out of one call. Unpacked by hand
+	 * rather than extract()ed, so that a name the renderer uses and the state
+	 * function does not return is a fatal at the top of this function instead of
+	 * an "undefined variable" warning three hundred lines down — which is how
+	 * $term escaped the first time this was split. */
+	$drawn  = gwc_vt_schedule_list_state();
+	$rows   = $drawn['rows'];
+	$counts = $drawn['counts'];
+	$when   = $drawn['when'];
+	$slots  = $drawn['slots'];
+	$within = $drawn['within'];
+	$term   = $drawn['term'];
+	$state  = $drawn['state'];
+	$day    = $drawn['day'];
+	$from   = $drawn['from'];
+	$to     = $drawn['to'];
+
 	$base = add_query_arg(
 		array(
 			'post_type' => GWC_VT_ENTRY_TYPE,
@@ -236,6 +368,7 @@ function gwc_vt_render_schedule_list(): void {
 
 		<?php gwc_vt_schedule_notice(); ?>
 		<?php gwc_vt_event_notice(); ?>
+		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base ); ?>
 
 		<ul class="subsubsub">
 			<li>
@@ -817,12 +950,17 @@ function gwc_vt_schedule_notice(): void {
 	 * along. A screen that reports success for a refusal is worse than one that
 	 * says nothing: the coordinator leaves believing the shift is gone. */
 	$errors = array(
-		'bad-date'     => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'bad-time'     => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'no-dates'     => __( 'That repeat did not land on any dates. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'not-found'    => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
-		'has-roster'   => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
-		'no-volunteer' => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'bad-date'       => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'bad-time'       => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'no-dates'       => __( 'That repeat did not land on any dates. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'not-found'      => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
+		'has-roster'     => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
+		'no-volunteer'   => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+
+		/* Both from the change-a-whole-repeat screen, and both refusals rather
+		 * than failures: nothing was attempted, so nothing needs undoing. */
+		'not-a-repeat'   => __( 'That shift is not part of a repeat, so there was nothing to change across. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'nothing-chosen' => __( 'Tick at least one thing to change. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	if ( isset( $errors[ $result ] ) ) {
@@ -853,6 +991,32 @@ function gwc_vt_schedule_notice(): void {
 			_n( '%d shift added to the schedule.', '%d shifts added to the schedule.', $count, 'groundwork-common-volunteer-tracker' ),
 			$count
 		);
+	} elseif ( 'repeat-saved' === $result ) {
+		/* Both numbers, always. A batch that reports only what it changed leaves
+		 * the reader to work out whether the rest were skipped on purpose — and
+		 * the whole reason this has a confirmation screen is that a repeat edit
+		 * must not be a thing you discover the size of afterwards. */
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+		$skipped = isset( $_GET['gwc_vt_skipped'] ) ? absint( wp_unslash( $_GET['gwc_vt_skipped'] ) ) : 0;
+
+		$message = sprintf(
+			/* translators: %d: how many occurrences of the repeat were changed. */
+			_n( '%d occurrence of the repeat changed.', '%d occurrences of the repeat changed.', $count, 'groundwork-common-volunteer-tracker' ),
+			$count
+		);
+
+		if ( $skipped > 0 ) {
+			$message .= ' ' . sprintf(
+				/* translators: %d: how many occurrences were left as they were. */
+				_n(
+					'%d was left as it was — already past, or called off.',
+					'%d were left as they were — already past, or called off.',
+					$skipped,
+					'groundwork-common-volunteer-tracker'
+				),
+				$skipped
+			);
+		}
 	} elseif ( isset( $messages[ $result ] ) ) {
 		$message = $messages[ $result ];
 	} else {
@@ -1109,6 +1273,54 @@ function gwc_vt_schedule_filter(): string {
 	$wanted = isset( $_GET['gwc_vt_state'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_state'] ) ) : '';
 
 	return in_array( $wanted, GWC_VT_SCHEDULE_FILTERS, true ) ? $wanted : '';
+}
+
+/**
+ * Whether to show an event's times as their own rows.
+ *
+ * The list collapses an event to one summary row, for the reason spelled out in
+ * gwc_vt_render_schedule_list(): interleaving a festival's six times among next
+ * Saturday's ordinary shifts buries both. That is the right default and it is
+ * staying.
+ *
+ * It is also why two dashboard lines could not link here honestly. Both count
+ * an event's times INDIVIDUALLY — the daily digest is built on them, and an
+ * event's Saturday morning being short of people is exactly what that email
+ * exists to mention — so the number described slots while the screen drew
+ * events. "5 short of people" over two rows.
+ *
+ * So the collapsing becomes an opt-out rather than a fact. Arriving from a
+ * count of slots turns it off, and the screen says so with a way back. The
+ * alternative on the table was a per-event expansion; a URL was chosen because
+ * the state is then linkable, reloadable and scriptless, like the rest of this
+ * screen.
+ *
+ * @return bool
+ */
+function gwc_vt_schedule_slots(): bool {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; decides which rows are drawn.
+	return isset( $_GET['gwc_vt_slots'] ) && '1' === sanitize_key( wp_unslash( $_GET['gwc_vt_slots'] ) );
+}
+
+/**
+ * How many days out the list should reach, or 0 for its own default.
+ *
+ * The other half of making a count and its screen agree. "Short of people"
+ * looks seven days ahead; the schedule looks four hundred. Landing on the
+ * second under a number produced by the first shows everything short between
+ * now and next spring, which is a longer list than the one that was counted and
+ * a different set of things to worry about.
+ *
+ * Capped rather than trusted: this is a URL, and an unbounded number here is a
+ * query with no end date on a site with years of schedule in it.
+ *
+ * @return int Days, or 0.
+ */
+function gwc_vt_schedule_within(): int {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; narrows the date range drawn.
+	$wanted = isset( $_GET['gwc_vt_within'] ) ? absint( wp_unslash( $_GET['gwc_vt_within'] ) ) : 0;
+
+	return min( 400, $wanted );
 }
 
 /**

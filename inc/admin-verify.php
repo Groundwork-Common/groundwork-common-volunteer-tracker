@@ -142,6 +142,24 @@ function gwc_vt_entry_row_actions( $actions, $post ): array {
 		return $actions;
 	}
 
+	/* gwc_vt_verify_entry() refuses an entry nobody has matched, so offering
+	 * Verify here would be offering what the model will decline. Point at the
+	 * thing that has to happen first instead: matching is done on the entry's
+	 * own screen, where gwc_vt_render_triage_actions() puts the buttons. */
+	if ( gwc_vt_entry_volunteer_id( $entry_id ) < 1 ) {
+		$edit = get_edit_post_link( $entry_id );
+
+		if ( $edit ) {
+			$actions['gwc_vt_match'] = sprintf(
+				'<a href="%1$s">%2$s</a>',
+				esc_url( $edit ),
+				esc_html__( 'Match to a volunteer first', 'groundwork-common-volunteer-tracker' )
+			);
+		}
+
+		return $actions;
+	}
+
 	$actions['gwc_vt_verify'] = sprintf(
 		'<a href="%1$s"><strong>%2$s</strong></a>',
 		esc_url( gwc_vt_verify_action_url( 'gwc_vt_verify_entry', $entry_id ) ),
@@ -332,7 +350,7 @@ function gwc_vt_render_verify_queue(): void {
 	$unmatched = array();
 
 	foreach ( $entries as $entry_id ) {
-		$volunteer_id = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true );
+		$volunteer_id = gwc_vt_entry_volunteer_id( $entry_id );
 
 		if ( $volunteer_id < 1 ) {
 			$unmatched[] = $entry_id;
@@ -777,14 +795,27 @@ function gwc_vt_handle_bulk_actions( $redirect_to, $action, $post_ids ): string 
 		);
 	}
 
-	$done    = 0;
-	$skipped = 0;
+	$done     = 0;
+	$skipped  = 0;
+	$nameless = 0;
 
 	foreach ( (array) $post_ids as $post_id ) {
 		$post_id = (int) $post_id;
 
 		if ( ! gwc_vt_user_can_verify( $user_id, $post_id ) ) {
 			++$skipped;
+			continue;
+		}
+
+		/* Counted apart from $skipped, because the two are not the same news and
+		 * the notice has to be able to say which happened. "You cannot verify
+		 * it" is about this user's permissions and there is nothing they can do;
+		 * "nobody has said whose these are" is about the record and there is
+		 * something they can do about it. Reporting the second as the first
+		 * sends a coordinator to an administrator over a record they could have
+		 * matched themselves. */
+		if ( 'gwc_vt_verify' === $action && gwc_vt_entry_volunteer_id( $post_id ) < 1 ) {
+			++$nameless;
 			continue;
 		}
 
@@ -801,9 +832,10 @@ function gwc_vt_handle_bulk_actions( $redirect_to, $action, $post_ids ): string 
 
 	return add_query_arg(
 		array(
-			'gwc_vt_result'  => 'gwc_vt_verify' === $action ? 'verified' : 'unverified',
-			'gwc_vt_done'    => $done,
-			'gwc_vt_skipped' => $skipped,
+			'gwc_vt_result'   => 'gwc_vt_verify' === $action ? 'verified' : 'unverified',
+			'gwc_vt_done'     => $done,
+			'gwc_vt_skipped'  => $skipped,
+			'gwc_vt_nameless' => $nameless,
 		),
 		$redirect_to
 	);
@@ -1030,6 +1062,8 @@ function gwc_vt_bulk_action_notice(): void {
 	$done = isset( $_GET['gwc_vt_done'] ) ? absint( wp_unslash( $_GET['gwc_vt_done'] ) ) : 1;
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$skipped = isset( $_GET['gwc_vt_skipped'] ) ? absint( wp_unslash( $_GET['gwc_vt_skipped'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$nameless = isset( $_GET['gwc_vt_nameless'] ) ? absint( wp_unslash( $_GET['gwc_vt_nameless'] ) ) : 0;
 
 	$message = 'verified' === $result
 		? sprintf(
@@ -1048,6 +1082,19 @@ function gwc_vt_bulk_action_notice(): void {
 			/* translators: %d: number of hour entries that were skipped. */
 			_n( '%d was skipped — you cannot verify it.', '%d were skipped — you cannot verify them.', $skipped, 'groundwork-common-volunteer-tracker' ),
 			$skipped
+		);
+	}
+
+	if ( $nameless > 0 ) {
+		$message .= ' ' . sprintf(
+			/* translators: %d: number of hour entries that name no volunteer. */
+			_n(
+				'%d names no volunteer yet — match it to somebody and it can be verified.',
+				'%d name no volunteer yet — match them to somebody and they can be verified.',
+				$nameless,
+				'groundwork-common-volunteer-tracker'
+			),
+			$nameless
 		);
 	}
 

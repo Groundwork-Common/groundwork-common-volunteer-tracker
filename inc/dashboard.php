@@ -217,14 +217,39 @@ function gwc_vt_dashboard_items( array $counts ): array {
 function gwc_vt_dashboard_item_url( string $key ): string {
 	switch ( $key ) {
 		case 'unreconciled':
-			$waiting = gwc_vt_unreconciled_shift_ids( 1 );
-
-			return $waiting
-				? gwc_vt_shift_log_url( (int) $waiting[0] )
-				: gwc_vt_schedule_url( array( 'when' => 'past' ) );
+			/* The schedule, narrowed to exactly what this line counted: the same
+			 * 180 days, an event's times one by one the way the counter counts
+			 * them, and only the ones with hours waiting. 'awaiting' is not an
+			 * approximation of gwc_vt_unreconciled_shift_ids() — it is the same
+			 * three conditions, ended and unreconciled and somebody on it, in
+			 * gwc_vt_shift_state_from().
+			 *
+			 * This used to jump to the first waiting shift's log screen, which
+			 * was the better answer while the only alternative was an unfiltered
+			 * list — but a count of five over a screen showing one is still a
+			 * count and a screen disagreeing, and every row of the list carries
+			 * its own "Log the hours" link, so nothing is lost by landing on all
+			 * five. */
+			return gwc_vt_schedule_url(
+				array(
+					'when'          => 'past',
+					'gwc_vt_state'  => 'awaiting',
+					'gwc_vt_slots'  => 1,
+					'gwc_vt_within' => GWC_VT_UNRECONCILED_DAYS,
+				)
+			);
 
 		case 'understaffed':
-			return gwc_vt_schedule_url();
+			/* Same again forwards. Without gwc_vt_within the list reaches four
+			 * hundred days and shows everything short between now and next
+			 * spring, under a number that meant this week. */
+			return gwc_vt_schedule_url(
+				array(
+					'gwc_vt_state'  => 'short',
+					'gwc_vt_slots'  => 1,
+					'gwc_vt_within' => GWC_VT_UNDERSTAFFED_DAYS,
+				)
+			);
 
 		case 'overdue':
 			/* Filtered to the people this line counted. The bare list was every
