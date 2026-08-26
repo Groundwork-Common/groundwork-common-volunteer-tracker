@@ -69,6 +69,15 @@ function gwc_vt_help_tabs_for( string $screen_id ): array {
 
 	do_action( 'current_screen', $screen );
 
+	/* Settings adds its help from its own load- hook rather than from
+	 * current_screen — a legitimate second route, and one this file did not
+	 * follow when it was written, so Settings was the only registered screen
+	 * the guard did not actually guard. Firing it here means the test covers
+	 * the screen rather than one mechanism. */
+	if ( false !== strpos( $screen_id, GWC_VT_SETTINGS_PAGE ) ) {
+		do_action( 'gwc_vt_settings_screen_loaded' );
+	}
+
 	return $screen->get_help_tabs();
 }
 
@@ -99,6 +108,7 @@ $GLOBALS['gwc_vt_help_screens'] = array(
 	'logging a day'          => 'volunteer-tracker_page_' . GWC_VT_QUICK_ADD_PAGE,
 	'the letters log'        => 'volunteer-tracker_page_' . GWC_VT_LETTERS_PAGE,
 	'producing a letter'     => 'volunteer-tracker_page_' . GWC_VT_PRODUCE_PAGE,
+	'settings'               => 'volunteer-tracker_page_' . GWC_VT_SETTINGS_PAGE,
 	'the hours list'         => 'edit-' . GWC_VT_ENTRY_TYPE,
 	'the volunteer list'     => 'edit-' . GWC_VT_VOLUNTEER_TYPE,
 
