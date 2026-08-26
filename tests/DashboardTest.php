@@ -30,6 +30,8 @@ final class DashboardTest extends TestCase {
 			'unreconciled' => 1,
 			'understaffed' => 2,
 			'overdue'      => 1,
+			'lapsed'       => 1,
+			'offers'       => 4,
 		);
 	}
 
@@ -52,8 +54,52 @@ final class DashboardTest extends TestCase {
 
 	public function test_it_leads_with_what_is_lost_if_it_waits(): void {
 		$this->assertSame(
-			array( 'unreconciled', 'understaffed', 'overdue', 'unverified', 'unmatched' ),
+			array( 'unreconciled', 'understaffed', 'offers', 'overdue', 'lapsed', 'unverified', 'unmatched' ),
 			$this->keys( $this->everything() )
+		);
+	}
+
+	/**
+	 * The fixture above really is everything.
+	 *
+	 * This exists because the fixture was NOT everything, twice. 'lapsed' was
+	 * added to the worklist and 'offers' after it, and both times this file
+	 * stayed green — a key missing from the fixture counts as zero, a line at
+	 * zero is dropped, and the ordering assertion above happily described a
+	 * shorter list than the screen renders. The omission is invisible in
+	 * exactly the way that matters: the test still passes, so nobody looks.
+	 *
+	 * Read out of the source rather than from gwc_vt_dashboard_counts(), which
+	 * runs six queries and needs a database. What is being checked is that
+	 * somebody adding a seventh line has to come here and say where it belongs.
+	 */
+	public function test_the_fixture_covers_every_line_the_worklist_defines(): void {
+		$source = (string) file_get_contents( GWC_VT_DIR . 'inc/dashboard.php' );
+
+		$start = strpos( $source, '$defined = array(' );
+		$end   = strpos( $source, '$items = array();', (int) $start );
+
+		$this->assertIsInt( $start, 'the worklist definition moved' );
+		$this->assertIsInt( $end, 'the worklist definition moved' );
+
+		preg_match_all(
+			"/^\t\t'([a-z_]+)'\s*=> array\(/m",
+			substr( $source, (int) $start, (int) $end - (int) $start ),
+			$found
+		);
+
+		$defined = $found[1];
+
+		sort( $defined );
+
+		$fixture = array_keys( $this->everything() );
+
+		sort( $fixture );
+
+		$this->assertSame(
+			$defined,
+			$fixture,
+			'a worklist line is missing from the fixture, so the ordering test above is describing a shorter screen than the one that renders'
 		);
 	}
 
@@ -219,11 +265,34 @@ final class DashboardTest extends TestCase {
 	 * leave it?".
 	 */
 	public function test_every_line_opens_with_something_to_do(): void {
+		/* A rule rather than a list of approved verbs.
+		 *
+		 * This used to whitelist the five verbs the original five lines happened
+		 * to use, which made it a test that had to be edited every time a line
+		 * was added — and, because the fixture it iterated was also incomplete,
+		 * one that silently stopped covering the lines nobody had added to
+		 * either. Both 'lapsed' and 'offers' would have failed it and neither
+		 * ever reached it.
+		 *
+		 * What is actually being asserted is that the sentence is an
+		 * instruction, not a report. Two things give a report away: it opens
+		 * with a determiner or a noun rather than a verb, and it leans on a
+		 * linking verb — "A shift HAS happened and its hours ARE not logged". */
+		$reports = array( 'a', 'an', 'the', 'there', 'somebody', 'someone', 'people', 'volunteers', 'shifts', 'hours', 'credentials' );
+
 		foreach ( gwc_vt_dashboard_items( $this->everything() ) as $item ) {
-			$this->assertMatchesRegularExpression(
-				'/^(Write up|Find|Check on|Verify|Match)\b/',
+			$first = strtolower( strtok( $item['what'], ' ' ) );
+
+			$this->assertNotContains(
+				$first,
+				$reports,
+				$item['key'] . ' opens with "' . $first . '" — that is a description, not a job'
+			);
+
+			$this->assertDoesNotMatchRegularExpression(
+				'/\b(is|are|was|were)\b/i',
 				$item['what'],
-				$item['key'] . ' describes a state instead of naming the job'
+				$item['key'] . ' reports a state instead of naming the job'
 			);
 		}
 	}

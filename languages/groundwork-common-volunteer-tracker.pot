@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T18:31:41+00:00\n"
+"POT-Creation-Date: 2026-08-26T19:47:17+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -693,7 +693,7 @@ msgstr ""
 #: inc/admin-event-roster.php:383
 #: inc/admin-schedule.php:884
 #: inc/admin-shift.php:531
-#: inc/dashboard.php:137
+#: inc/dashboard.php:138
 msgid "Log the hours"
 msgstr ""
 
@@ -4316,80 +4316,94 @@ msgstr ""
 msgid "Give the date it was granted, as a real date on or before today."
 msgstr ""
 
-#: inc/dashboard.php:131
+#: inc/dashboard.php:132
 msgid "Write up a shift that has already happened"
 msgid_plural "Write up shifts that have already happened"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:136
+#: inc/dashboard.php:137
 msgid "Until somebody types them up, those hours are on nobody’s record and cannot reach a letter."
 msgstr ""
 
-#: inc/dashboard.php:141
+#: inc/dashboard.php:142
 msgid "Find people for a shift this week"
 msgid_plural "Find people for shifts this week"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:146
+#: inc/dashboard.php:147
 msgid "There is still time to call around. On Sunday there is nothing to be done about Saturday."
 msgstr ""
 
-#: inc/dashboard.php:147
+#: inc/dashboard.php:148
 msgid "Open the schedule"
 msgstr ""
 
-#: inc/dashboard.php:151
+#: inc/dashboard.php:165
+msgid "Answer somebody who offered to volunteer"
+msgid_plural "Answer people who offered to volunteer"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/dashboard.php:170
+msgid "They sent this through your own form and are waiting to hear. Accepting or setting one aside takes it off this list."
+msgstr ""
+
+#: inc/dashboard.php:171
+msgid "Read them"
+msgstr ""
+
+#: inc/dashboard.php:175
 msgid "Check on somebody past their deadline"
 msgid_plural "Check on people past their deadline"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:156
+#: inc/dashboard.php:180
 msgid "Hours of theirs may be logged and simply not verified yet — that may be all it is. The names are on the volunteer list."
 msgstr ""
 
-#: inc/dashboard.php:157
-#: inc/dashboard.php:167
+#: inc/dashboard.php:181
+#: inc/dashboard.php:191
 msgid "See who"
 msgstr ""
 
-#: inc/dashboard.php:161
+#: inc/dashboard.php:185
 msgid "Renew a credential that has lapsed"
 msgid_plural "Renew credentials that have lapsed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:166
+#: inc/dashboard.php:190
 msgid "A course or a check the organization asks for has run out for somebody on your list. Recording the renewal takes them off this line."
 msgstr ""
 
-#: inc/dashboard.php:171
+#: inc/dashboard.php:195
 msgid "Verify a shift somebody has logged"
 msgid_plural "Verify shifts somebody has logged"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:176
+#: inc/dashboard.php:200
 msgid "Only verified hours appear on a letter, so these count for nobody yet."
 msgstr ""
 
-#: inc/dashboard.php:177
+#: inc/dashboard.php:201
 msgid "Verify them"
 msgstr ""
 
-#: inc/dashboard.php:181
+#: inc/dashboard.php:205
 msgid "Match somebody who sent in hours"
 msgid_plural "Match people who sent in hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/dashboard.php:186
+#: inc/dashboard.php:210
 msgid "What somebody typed into the public form is a claim until a person says whose it is."
 msgstr ""
 
-#: inc/dashboard.php:187
+#: inc/dashboard.php:211
 msgid "Match them"
 msgstr ""
 

@@ -77,6 +77,7 @@ function gwc_vt_dashboard_counts(): array {
 	return array(
 		'unreconciled' => count( gwc_vt_unreconciled_shift_ids( 20 ) ),
 		'understaffed' => count( gwc_vt_understaffed_shift_ids( 7 ) ),
+		'offers'       => gwc_vt_pending_application_count(),
 		'overdue'      => count( gwc_vt_overdue_requirement_ids() ),
 		'lapsed'       => count( gwc_vt_lapsed_credential_ids() ),
 		'unverified'   => gwc_vt_unverified_count(),
@@ -145,6 +146,29 @@ function gwc_vt_dashboard_items( array $counts ): array {
 			),
 			'why'      => __( 'There is still time to call around. On Sunday there is nothing to be done about Saturday.', 'groundwork-common-volunteer-tracker' ),
 			'action'   => __( 'Open the schedule', 'groundwork-common-volunteer-tracker' ),
+		),
+		/* First among the waiting group, and above a missed deadline, which reads
+		 * wrong until you ask what each line loses.
+		 *
+		 * Everything below this point is a record that keeps. An unverified
+		 * shift is as verifiable in a fortnight; a missed deadline has already
+		 * been missed, and the line below says so. This one is a person who
+		 * offered to help and has heard nothing — and what it loses is them.
+		 * Three weeks of silence is somebody who has concluded the answer was
+		 * no and gone somewhere else, and no amount of dealing with it later
+		 * gets them back.
+		 *
+		 * It is the only line on this screen about somebody who is not yet a
+		 * volunteer, which is also why it was the easiest to leave off. */
+		'offers'       => array(
+			'severity' => 'waiting',
+			'what'     => _n_noop(
+				'Answer somebody who offered to volunteer',
+				'Answer people who offered to volunteer',
+				'groundwork-common-volunteer-tracker'
+			),
+			'why'      => __( 'They sent this through your own form and are waiting to hear. Accepting or setting one aside takes it off this list.', 'groundwork-common-volunteer-tracker' ),
+			'action'   => __( 'Read them', 'groundwork-common-volunteer-tracker' ),
 		),
 		'overdue'      => array(
 			'severity' => 'waiting',
@@ -272,6 +296,25 @@ function gwc_vt_dashboard_item_url( string $key ): string {
 				array(
 					'post_type'          => GWC_VT_VOLUNTEER_TYPE,
 					'gwc_vt_requirement' => 'overdue',
+				),
+				admin_url( 'edit.php' )
+			);
+
+		case 'offers':
+			/* The screen IS the pending list — gwc_vt_render_applications_screen()
+			 * renders gwc_vt_pending_application_ids(), which asks for the same
+			 * status gwc_vt_pending_application_count() counts. So there is no
+			 * filter to add: the count and the screen agree by construction
+			 * rather than by two functions being kept in step.
+			 *
+			 * The slug is spelled out rather than referenced through
+			 * GWC_VT_APPLICATIONS_PAGE for the reason the others here are: that
+			 * constant lives in the admin bundle, and this file is loaded for
+			 * cron and WP-CLI too. */
+			return add_query_arg(
+				array(
+					'post_type' => GWC_VT_ENTRY_TYPE,
+					'page'      => 'gwc-vt-offers',
 				),
 				admin_url( 'edit.php' )
 			);
