@@ -10,8 +10,11 @@
  *
  * Written when the WordPress.org plugin review team pointed out that the route
  * answered a contributor with the names of volunteer records that contributor
- * could not open. That is the last section here; everything above it is the
- * ground the fix stands on.
+ * could not open. The per-record filter that fixed it is still here and still
+ * asserted — but the gate itself has since been raised to edit_others_posts, so
+ * a contributor no longer reaches the route at all. Both layers are tested: the
+ * gate, and the filter behind it, the latter through an editor stripped of
+ * read_private_posts.
  *
  * Run under wp-env:
  *
@@ -188,6 +191,17 @@ $gwc_vt_pending = gwc_vt_make_volunteer( 'Zzytest Rosalind Baptiste', 'pending' 
 
 $gwc_vt_contributor = gwc_vt_make_user( 'zzytest_rest_contributor', 'contributor' );
 $gwc_vt_subscriber  = gwc_vt_make_user( 'zzytest_rest_subscriber', 'subscriber' );
+$gwc_vt_author      = gwc_vt_make_user( 'zzytest_rest_author', 'author' );
+$gwc_vt_editor      = gwc_vt_make_user( 'zzytest_rest_editor', 'editor' );
+
+/* An editor with read_private_posts taken away: the case the per-record filter
+ * still protects now that the gate itself excludes contributors. Without it,
+ * that filter would be untested and would look like dead code to the next
+ * person reading it. */
+$gwc_vt_limited = gwc_vt_make_user( 'zzytest_rest_limited', 'editor' );
+$gwc_vt_limited_user = new WP_User( $gwc_vt_limited );
+$gwc_vt_limited_user->remove_cap( 'read_private_posts' );
+$gwc_vt_limited_user->remove_cap( 'edit_private_posts' );
 
 /* ── Who may ask at all ──────────────────────────────────────────────────── */
 
@@ -205,9 +219,28 @@ gwc_vt_check(
 	'status ' . gwc_vt_search( 'Zzytest' )->get_status()
 );
 
+/* Was 200 — the route was gated on edit_posts, which a contributor has. That
+ * is the security fix this section now records: a role WordPress designed for
+ * "may draft a post, may not see anybody else's" has no business enumerating
+ * volunteer names, and the per-record filter below was mitigating a gate that
+ * should not have been open. */
 wp_set_current_user( $gwc_vt_contributor );
 gwc_vt_check(
-	'a contributor may search',
+	'a contributor is refused',
+	403 === gwc_vt_search( 'Zzytest' )->get_status(),
+	'status ' . gwc_vt_search( 'Zzytest' )->get_status()
+);
+
+wp_set_current_user( $gwc_vt_author );
+gwc_vt_check(
+	'so is an author — publishing your own posts is not seeing other people’s',
+	403 === gwc_vt_search( 'Zzytest' )->get_status(),
+	'status ' . gwc_vt_search( 'Zzytest' )->get_status()
+);
+
+wp_set_current_user( $gwc_vt_editor );
+gwc_vt_check(
+	'an editor may search',
 	200 === gwc_vt_search( 'Zzytest' )->get_status(),
 	'status ' . gwc_vt_search( 'Zzytest' )->get_status()
 );
@@ -226,6 +259,8 @@ gwc_vt_check(
  * away from returning any of them — which an assertion that only fails on a
  * MISSING key would never catch.
  * ─────────────────────────────────────────────────────────────────────────── */
+
+wp_set_current_user( $gwc_vt_editor );
 
 $gwc_vt_shape = gwc_vt_search( 'Zzytest Rosalind Achebe' )->get_data();
 
@@ -256,31 +291,35 @@ if ( ! empty( $gwc_vt_shape ) ) {
  * putting a name in the response.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-wp_set_current_user( $gwc_vt_contributor );
+wp_set_current_user( $gwc_vt_limited );
 
 $gwc_vt_seen = gwc_vt_labels( gwc_vt_search( 'Zzytest Rosalind' ) );
 
 gwc_vt_check(
-	'a contributor still sees the published volunteer',
+	'a limited editor still sees the published volunteer',
 	in_array( 'Zzytest Rosalind Achebe', $gwc_vt_seen, true ),
 	implode( ' | ', $gwc_vt_seen )
 );
 
 gwc_vt_check(
-	'a contributor is not shown the private one',
+	'a limited editor is not shown the private one',
 	! in_array( 'Zzytest Rosalind Vanterpool', $gwc_vt_seen, true ),
 	implode( ' | ', $gwc_vt_seen )
 );
 
+/* Drafts and pending records by other people ARE readable by anybody with
+ * edit_others_posts, and that is correct rather than a leak — it is what the
+ * capability means. Asserted so the line is deliberate: the per-record filter
+ * excludes what this user genuinely may not read, and nothing more. */
 gwc_vt_check(
-	'a contributor is not shown somebody else’s draft',
-	! in_array( 'Zzytest Rosalind Okonkwo', $gwc_vt_seen, true ),
+	'and still sees somebody else’s draft, which edit_others_posts covers',
+	in_array( 'Zzytest Rosalind Okonkwo', $gwc_vt_seen, true ),
 	implode( ' | ', $gwc_vt_seen )
 );
 
 gwc_vt_check(
-	'a contributor is not shown somebody else’s pending record',
-	! in_array( 'Zzytest Rosalind Baptiste', $gwc_vt_seen, true ),
+	'and somebody else’s pending record, likewise',
+	in_array( 'Zzytest Rosalind Baptiste', $gwc_vt_seen, true ),
 	implode( ' | ', $gwc_vt_seen )
 );
 

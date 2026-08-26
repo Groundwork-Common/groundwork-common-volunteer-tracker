@@ -161,7 +161,7 @@ function gwc_vt_register_rest_routes(): void {
  * @return bool
  */
 function gwc_vt_rest_can_open_shift_panel(): bool {
-	return current_user_can( 'edit_posts' );
+	return gwc_vt_can_see_records();
 }
 
 /**
@@ -217,7 +217,7 @@ function gwc_vt_rest_shift_panel( $request ) {
  * @return bool
  */
 function gwc_vt_rest_can_preview_recurrence(): bool {
-	return current_user_can( 'edit_posts' );
+	return gwc_vt_can_see_records();
 }
 
 /**
@@ -252,7 +252,7 @@ function gwc_vt_rest_recurrence_preview( $request ) {
  * @return bool
  */
 function gwc_vt_rest_can_search_volunteers(): bool {
-	return current_user_can( 'edit_posts' );
+	return gwc_vt_can_see_records();
 }
 
 /**

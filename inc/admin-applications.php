@@ -43,7 +43,7 @@ function gwc_vt_register_applications_screen(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_applications_title(),
 		gwc_vt_applications_menu_label(),
-		'edit_posts',
+		gwc_vt_records_cap(),
 		GWC_VT_APPLICATIONS_PAGE,
 		'gwc_vt_render_applications_screen'
 	);
@@ -133,7 +133,7 @@ function gwc_vt_application_action_url( string $action, int $application_id ): s
  * The queue.
  */
 function gwc_vt_render_applications_screen(): void {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see offers to volunteer.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
@@ -433,7 +433,7 @@ function gwc_vt_discard_application( int $application_id ): bool {
  * @return int
  */
 function gwc_vt_application_request( string $action ): int {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to do that.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),

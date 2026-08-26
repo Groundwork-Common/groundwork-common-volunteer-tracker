@@ -61,7 +61,7 @@ function gwc_vt_register_repeat_screen(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_repeat_page_title(),
 		gwc_vt_repeat_page_title(),
-		'edit_posts',
+		gwc_vt_records_cap(),
 		GWC_VT_REPEAT_PAGE,
 		'gwc_vt_render_repeat_screen'
 	);

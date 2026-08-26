@@ -288,7 +288,7 @@ function gwc_vt_widget_days( array $shift_ids, int $days = GWC_VT_WIDGET_DAYS ):
  * together — the thing a coordinator wants after reading "3 of 8".
  *
  * ── Why this can return nothing ─────────────────────────────────────────────
- * Both screens require edit_posts, and this widget is gated on
+ * Both screens require the records capability, and this widget is gated on
  * gwc_vt_cap( 'verify' ), which is a different capability that an administrator
  * may have granted to a role without the other. Every role that gets verify by
  * default also has edit_posts, so in practice this is always a link — but a
@@ -299,7 +299,7 @@ function gwc_vt_widget_days( array $shift_ids, int $days = GWC_VT_WIDGET_DAYS ):
  * @return string The URL, or '' when this user could not open it.
  */
 function gwc_vt_widget_shift_url( int $shift_id ): string {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		return '';
 	}
 

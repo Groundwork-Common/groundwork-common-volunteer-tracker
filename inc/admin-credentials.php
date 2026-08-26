@@ -50,7 +50,7 @@ function gwc_vt_register_credentials_screen(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_credentials_title(),
 		gwc_vt_credentials_title(),
-		'edit_posts',
+		gwc_vt_records_cap(),
 		GWC_VT_CREDENTIALS_PAGE,
 		'gwc_vt_render_credentials_screen'
 	);
@@ -120,7 +120,7 @@ function gwc_vt_credential_action_url( string $action, int $credential_id ): str
  * The screen.
  */
 function gwc_vt_render_credentials_screen(): void {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see credentials.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),

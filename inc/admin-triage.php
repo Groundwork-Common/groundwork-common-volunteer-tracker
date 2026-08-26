@@ -213,7 +213,7 @@ function gwc_vt_triage_queue_notice(): void {
 		return;
 	}
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		return;
 	}
 
