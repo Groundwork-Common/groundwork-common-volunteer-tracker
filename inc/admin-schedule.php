@@ -950,12 +950,17 @@ function gwc_vt_schedule_notice(): void {
 	 * along. A screen that reports success for a refusal is worse than one that
 	 * says nothing: the coordinator leaves believing the shift is gone. */
 	$errors = array(
-		'bad-date'     => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'bad-time'     => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'no-dates'     => __( 'That repeat did not land on any dates. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'not-found'    => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
-		'has-roster'   => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
-		'no-volunteer' => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'bad-date'       => __( 'Give the shift a date it can happen on. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'bad-time'       => __( 'Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'no-dates'       => __( 'That repeat did not land on any dates. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'not-found'      => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
+		'has-roster'     => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
+		'no-volunteer'   => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+
+		/* Both from the change-a-whole-repeat screen, and both refusals rather
+		 * than failures: nothing was attempted, so nothing needs undoing. */
+		'not-a-repeat'   => __( 'That shift is not part of a repeat, so there was nothing to change across. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'nothing-chosen' => __( 'Tick at least one thing to change. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	if ( isset( $errors[ $result ] ) ) {
@@ -986,6 +991,32 @@ function gwc_vt_schedule_notice(): void {
 			_n( '%d shift added to the schedule.', '%d shifts added to the schedule.', $count, 'groundwork-common-volunteer-tracker' ),
 			$count
 		);
+	} elseif ( 'repeat-saved' === $result ) {
+		/* Both numbers, always. A batch that reports only what it changed leaves
+		 * the reader to work out whether the rest were skipped on purpose — and
+		 * the whole reason this has a confirmation screen is that a repeat edit
+		 * must not be a thing you discover the size of afterwards. */
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+		$skipped = isset( $_GET['gwc_vt_skipped'] ) ? absint( wp_unslash( $_GET['gwc_vt_skipped'] ) ) : 0;
+
+		$message = sprintf(
+			/* translators: %d: how many occurrences of the repeat were changed. */
+			_n( '%d occurrence of the repeat changed.', '%d occurrences of the repeat changed.', $count, 'groundwork-common-volunteer-tracker' ),
+			$count
+		);
+
+		if ( $skipped > 0 ) {
+			$message .= ' ' . sprintf(
+				/* translators: %d: how many occurrences were left as they were. */
+				_n(
+					'%d was left as it was — already past, or called off.',
+					'%d were left as they were — already past, or called off.',
+					$skipped,
+					'groundwork-common-volunteer-tracker'
+				),
+				$skipped
+			);
+		}
 	} elseif ( isset( $messages[ $result ] ) ) {
 		$message = $messages[ $result ];
 	} else {

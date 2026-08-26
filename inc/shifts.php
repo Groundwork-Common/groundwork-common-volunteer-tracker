@@ -853,6 +853,212 @@ function gwc_vt_understaffed_shift_ids( int $days = GWC_VT_UNDERSTAFFED_DAYS ): 
 	return $short;
 }
 
+/* ── Editing a whole repeat ──────────────────────────────────────────────────
+ * The time moves an hour for the summer, the supervisor changes, the location
+ * moves to the annexe. Twenty occurrences, one decision.
+ *
+ * The data model already allows it: recurrence creates real rows and
+ * GWC_VT_SHIFT_SERIES links each to the first, so this is a loop over sibling
+ * IDs rather than a change to how anything is stored. What it needs is not
+ * storage but a screen, and this is the half of that which is not markup.
+ *
+ * Kept out of gwc_vt_handle_save_shift() deliberately. That handler is what
+ * every other screen posts to, and giving it a mode that multiplies its blast
+ * radius by twenty is how a save handler becomes something nobody can reason
+ * about. This is its own page, its own nonce and its own handler.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** The fields a repeat may change across every occurrence. */
+const GWC_VT_REPEAT_FIELDS = array( 'time', 'activity', 'location', 'supervisor', 'notes', 'places' );
+
+/**
+ * Which occurrences a batch would change, and why it would leave the rest.
+ *
+ * Pure over the database it reads: no writes, so the confirmation screen and
+ * the handler can call it with the same arguments and cannot disagree about
+ * what is about to happen. The screen states these numbers; the handler acts on
+ * them; the notice afterwards reports them. One function, per the rule in
+ * CLAUDE.md about a count and the screen it links to.
+ *
+ * @param int   $series_id The first occurrence's ID.
+ * @param array $opts      past: include occurrences that have happened.
+ *                         cancelled: include occurrences that were called off.
+ * @return array{change:int[], past:int[], cancelled:int[], people:int}
+ */
+function gwc_vt_repeat_targets( int $series_id, array $opts = array() ): array {
+	$take_past      = ! empty( $opts['past'] );
+	$take_cancelled = ! empty( $opts['cancelled'] );
+
+	$out = array(
+		'change'    => array(),
+		'past'      => array(),
+		'cancelled' => array(),
+		'people'    => 0,
+	);
+
+	foreach ( gwc_vt_shift_series_ids( $series_id ) as $shift_id ) {
+		$shift_id = (int) $shift_id;
+
+		/* Cancelled first, and tested before "has it happened", because a
+		 * called-off occurrence is a different kind of exclusion from a past
+		 * one and the report has to be able to say which. A shift that is both
+		 * is reported as cancelled: that is the answer this organization gave
+		 * whoever had signed up, and it is the more surprising thing to change.
+		 *
+		 * Off by default for that reason. A cancellation is an answer somebody
+		 * was given — "this is not happening" — and quietly rewriting its time
+		 * un-answers it while leaving the notice that was sent standing. */
+		if ( gwc_vt_shift_is_cancelled( $shift_id ) ) {
+			$out['cancelled'][] = $shift_id;
+
+			if ( ! $take_cancelled ) {
+				continue;
+			}
+		} elseif ( gwc_vt_shift_has_ended( $shift_id ) ) {
+			$out['past'][] = $shift_id;
+
+			if ( ! $take_past ) {
+				continue;
+			}
+		}
+
+		$out['change'][] = $shift_id;
+
+		/* Only the ones that could actually be told: a past occurrence's roster
+		 * is not going to be emailed about a change to a shift that is over, and
+		 * the handler will not send to it either. Counting them here would put a
+		 * number on the screen larger than the one the send would produce. */
+		if ( ! gwc_vt_shift_has_ended( $shift_id ) && ! gwc_vt_shift_is_cancelled( $shift_id ) ) {
+			$out['people'] += count( gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) ) );
+		}
+	}
+
+	return $out;
+}
+
+/**
+ * The values a repeat edit would write, for the fields it was asked to change.
+ *
+ * Date is not among them and cannot be: moving every occurrence by a day is a
+ * different repeat, not an edit to this one. GWC_VT_SHIFT_SERIES is not either
+ * — rewriting it would move occurrences between repeats, which is not what
+ * anybody pressing "change the whole repeat" is asking for.
+ *
+ * Reads the same POST names as the single-shift editor and sanitizes them the
+ * same way, so the two paths cannot drift about what a valid location is.
+ *
+ * @param array $posted Unslashed POST.
+ * @param array $wanted Which of GWC_VT_REPEAT_FIELDS to change.
+ * @return array{fields: array<string, string>, error: string}
+ */
+function gwc_vt_repeat_changes( array $posted, array $wanted ): array {
+	$fields = array();
+
+	if ( in_array( 'time', $wanted, true ) ) {
+		$start     = gwc_vt_sanitize_time( sanitize_text_field( (string) ( $posted['gwc_vt_start'] ?? '' ) ) );
+		$end       = gwc_vt_sanitize_time( sanitize_text_field( (string) ( $posted['gwc_vt_end'] ?? '' ) ) );
+		$overnight = ! empty( $posted['gwc_vt_overnight'] );
+
+		if ( gwc_vt_shift_duration( $start, $end, $overnight ) < 1 ) {
+			return array(
+				'fields' => array(),
+				'error'  => 'bad-time',
+			);
+		}
+
+		$fields[ GWC_VT_SHIFT_START ]     = $start;
+		$fields[ GWC_VT_SHIFT_END ]       = $end;
+		$fields[ GWC_VT_SHIFT_OVERNIGHT ] = gwc_vt_shift_meta_value( GWC_VT_SHIFT_OVERNIGHT, $overnight );
+	}
+
+	if ( in_array( 'activity', $wanted, true ) ) {
+		$fields[ GWC_VT_SHIFT_ACTIVITY ] = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_activity'] ?? '' ) ), 0, 200 );
+	}
+
+	if ( in_array( 'location', $wanted, true ) ) {
+		$fields[ GWC_VT_SHIFT_LOCATION ] = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_location'] ?? '' ) ), 0, 200 );
+	}
+
+	if ( in_array( 'supervisor', $wanted, true ) ) {
+		$fields[ GWC_VT_SHIFT_SUPERVISOR ] = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 );
+	}
+
+	if ( in_array( 'notes', $wanted, true ) ) {
+		$fields[ GWC_VT_SHIFT_NOTES ] = mb_substr( sanitize_textarea_field( (string) ( $posted['gwc_vt_notes'] ?? '' ) ), 0, 1000 );
+	}
+
+	if ( in_array( 'places', $wanted, true ) ) {
+		$fields[ GWC_VT_SHIFT_MIN ] = gwc_vt_shift_meta_value( GWC_VT_SHIFT_MIN, $posted['gwc_vt_min'] ?? 0 );
+		$fields[ GWC_VT_SHIFT_MAX ] = gwc_vt_shift_meta_value( GWC_VT_SHIFT_MAX, $posted['gwc_vt_max'] ?? 0 );
+	}
+
+	return array(
+		'fields' => $fields,
+		'error'  => '',
+	);
+}
+
+/**
+ * Write one set of values across a repeat's occurrences.
+ *
+ * @param int[] $shift_ids Occurrences to change.
+ * @param array $fields    Meta key => value.
+ * @param bool  $notify    Whether to tell the rosters of the ones still to come.
+ * @return array{changed:int, told:int}
+ */
+function gwc_vt_apply_repeat_changes( array $shift_ids, array $fields, bool $notify ): array {
+	$changed = 0;
+	$told    = 0;
+
+	if ( ! $fields ) {
+		return array(
+			'changed' => 0,
+			'told'    => 0,
+		);
+	}
+
+	foreach ( $shift_ids as $shift_id ) {
+		$shift_id = (int) $shift_id;
+
+		if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+			continue;
+		}
+
+		/* Snapshot per occurrence, because gwc_vt_shift_moved() asks whether
+		 * THIS shift moved. A repeat where somebody had already corrected one
+		 * Saturday's time by hand has an occurrence that is not changing, and
+		 * mailing its roster to say it did is the mass-mail-as-side-effect this
+		 * plugin refuses on the single-shift path too. */
+		$was = gwc_vt_shift_snapshot( $shift_id );
+
+		foreach ( $fields as $key => $value ) {
+			update_post_meta( $shift_id, $key, $value );
+		}
+
+		gwc_vt_retitle_shift( $shift_id );
+
+		++$changed;
+
+		if ( ! $notify || gwc_vt_shift_has_ended( $shift_id ) || gwc_vt_shift_is_cancelled( $shift_id ) ) {
+			continue;
+		}
+
+		if ( ! gwc_vt_shift_moved( $shift_id, $was ) ) {
+			continue;
+		}
+
+		foreach ( gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) ) as $signup_id ) {
+			gwc_vt_queue_signup_mail( 'changed', (int) $signup_id, array( 'was' => $was ) );
+			++$told;
+		}
+	}
+
+	return array(
+		'changed' => $changed,
+		'told'    => $told,
+	);
+}
+
 /* ── Where the admin screens live ────────────────────────────────────────────
  * URL builders rather than screens, and they sit here rather than beside the
  * screens they point at because the daily summary builds both — and the summary
@@ -933,9 +1139,62 @@ function gwc_vt_shift_series_dates( int $series_id ): array {
 		return $seen[ $series_id ];
 	}
 
-	/* Every status, including cancelled: a called-off Saturday is still one of
-	 * the dates the repeat created, and leaving it out would make a fully
-	 * cancelled fortnight read as a gap in the pattern. */
+	$dates = array();
+
+	foreach ( gwc_vt_shift_series_ids( $series_id ) as $id ) {
+		$date = (string) get_post_meta( $id, GWC_VT_SHIFT_DATE, true );
+
+		if ( '' !== $date ) {
+			$dates[] = $date;
+		}
+	}
+
+	sort( $dates );
+
+	$seen[ $series_id ] = $dates;
+
+	return $dates;
+}
+
+/**
+ * Which shift is the head of this one's repeat, or 0 for a one-off.
+ *
+ * The series is stored as the first occurrence's own ID, so the head's meta
+ * points at itself and reading it needs no special case. A shift with no series
+ * meta at all was made on its own and has no repeat to edit.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return int
+ */
+function gwc_vt_shift_series_id( int $shift_id ): int {
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+		return 0;
+	}
+
+	return max( 0, (int) get_post_meta( $shift_id, GWC_VT_SHIFT_SERIES, true ) );
+}
+
+/**
+ * Every occurrence one repeat made, oldest first.
+ *
+ * Split out of gwc_vt_shift_series_dates(), which used to do the query itself.
+ * Editing a whole repeat needs the rows rather than the dates, and two copies
+ * of "which shifts did this repeat make" is two places for the status list to
+ * drift — a batch write that missed cancelled occurrences while the note above
+ * it counted them would report a number it did not do.
+ *
+ * Every status, including cancelled: a called-off Saturday is still one of the
+ * dates the repeat created, and leaving it out would make a fully cancelled
+ * fortnight read as a gap in the pattern.
+ *
+ * @param int $series_id The first occurrence's ID.
+ * @return int[]
+ */
+function gwc_vt_shift_series_ids( int $series_id ): array {
+	if ( $series_id < 1 ) {
+		return array();
+	}
+
 	$ids = get_posts(
 		array(
 			'post_type'              => GWC_VT_SHIFT_TYPE,
@@ -959,21 +1218,17 @@ function gwc_vt_shift_series_dates( int $series_id ): array {
 		update_postmeta_cache( $ids );
 	}
 
-	$dates = array();
-
-	foreach ( $ids as $id ) {
-		$date = (string) get_post_meta( $id, GWC_VT_SHIFT_DATE, true );
-
-		if ( '' !== $date ) {
-			$dates[] = $date;
+	usort(
+		$ids,
+		static function ( int $a, int $b ): int {
+			return strcmp(
+				(string) get_post_meta( $a, GWC_VT_SHIFT_DATE, true ),
+				(string) get_post_meta( $b, GWC_VT_SHIFT_DATE, true )
+			);
 		}
-	}
+	);
 
-	sort( $dates );
-
-	$seen[ $series_id ] = $dates;
-
-	return $dates;
+	return $ids;
 }
 
 /**

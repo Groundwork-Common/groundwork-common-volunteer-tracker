@@ -258,6 +258,35 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 						aria-live="polite"
 						hidden
 					></div>
+				<?php else : ?>
+					<?php
+					/* An existing occurrence says which repeat it came from, and
+					 * offers the screen that changes all of them. The repeat
+					 * SELECT above is new-shift-only on purpose — changing the
+					 * pattern of a repeat that already made twenty rows is a
+					 * different operation from editing one of them, and it is
+					 * not this form's job. Saving here still touches only this
+					 * occurrence, which is what the sentence says. */
+					$series_note = gwc_vt_shift_repeat_note( $shift_id );
+					?>
+					<?php if ( '' !== $series_note ) : ?>
+						<hr class="gwcvt-shift-rule" />
+
+						<div class="gwcvt-shift-field gwcvt-shift-field--wide">
+							<p class="description">
+								<?php
+								printf(
+									/* translators: %s: a description of the repeat, such as "Repeats weekly until August 30". */
+									esc_html__( 'One occurrence of a repeat — %s. Saving here changes this one only.', 'groundwork-common-volunteer-tracker' ),
+									esc_html( $series_note )
+								);
+								?>
+								<a href="<?php echo esc_url( gwc_vt_repeat_url( $shift_id ) ); ?>">
+									<?php esc_html_e( 'Change the whole repeat instead', 'groundwork-common-volunteer-tracker' ); ?>
+								</a>
+							</p>
+						</div>
+					<?php endif; ?>
 				<?php endif; ?>
 
 				<hr class="gwcvt-shift-rule" />
@@ -399,16 +428,20 @@ function gwc_vt_render_shift_panel( int $shift_id, string $back = '', string $mo
 
 	<?php if ( '' !== $repeat ) : ?>
 		<?php
-		/* What repeat this came from, and the way into the one occurrence.
-		 * "Edit the whole repeat" is deliberately not here: editing a series is
-		 * a batch write over twenty rosters and needs a screen that says so
-		 * before it runs. Offering it as a link beside "edit this one" would be
-		 * the silent-correction bug this plugin has a rule about, dressed as a
-		 * convenience. */
+		/* What repeat this came from, and the two ways out of it.
+		 *
+		 * "Change the whole repeat" is a link to a confirmation screen and never
+		 * an action, which is the whole reason it can sit beside "edit only this
+		 * one" at all. The batch write is over twenty rosters; what makes it
+		 * safe to offer here is that pressing it shows you what it would touch
+		 * and how many people it would email, and changes nothing until you
+		 * agree. Wiring it to a handler directly would be the silent-correction
+		 * bug this plugin has a rule about, dressed as a convenience. */
 		?>
 		<div class="gwcvt-drawer__repeat">
 			<?php echo esc_html( $repeat ); ?>
 			<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Edit only this one', 'groundwork-common-volunteer-tracker' ); ?></a>
+			<a href="<?php echo esc_url( gwc_vt_repeat_url( $shift_id ) ); ?>"><?php esc_html_e( 'Change the whole repeat', 'groundwork-common-volunteer-tracker' ); ?></a>
 		</div>
 	<?php endif; ?>
 
