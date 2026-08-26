@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T22:15:19+00:00\n"
+"POT-Creation-Date: 2026-08-26T22:22:25+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -306,21 +306,17 @@ msgstr ""
 msgid "Nobody yet"
 msgstr ""
 
-#. translators: %s: how many people hold it, already formatted.
-#: inc/admin-credentials.php:528
+#. translators: %s: a count of people, already formatted. Reads "4 held" under a column headed "Who holds it".
+#: inc/admin-credentials.php:540
 #, php-format
-msgid "%s holds it"
-msgid_plural "%s hold it"
-msgstr[0] ""
-msgstr[1] ""
+msgid "%s held"
+msgstr ""
 
-#. translators: %s: how many people have let it lapse, already formatted.
-#: inc/admin-credentials.php:542
+#. translators: %s: a count of people, already formatted. Reads "1 lapsed".
+#: inc/admin-credentials.php:554
 #, php-format
-msgid "%s has let it lapse"
-msgid_plural "%s have let it lapse"
-msgstr[0] ""
-msgstr[1] ""
+msgid "%s lapsed"
+msgstr ""
 
 #: inc/admin-dashboard-widget.php:116
 #: inc/admin-dashboard.php:104

@@ -516,6 +516,18 @@ function gwc_vt_render_credential_holders( int $credential_id ): void {
 		return;
 	}
 
+	/* "Held" and "Lapsed" — the same two words the badges on the volunteer's own
+	 * record use, and the same two the filter dropdown offers. One vocabulary
+	 * across the three screens that talk about the same fact.
+	 *
+	 * This used to read "1 holds it" and "1 has let it lapse". The first is a
+	 * bare number doing the work of a subject, which reads as a fragment; the
+	 * second says somebody was careless about a class the organization may not
+	 * have run since. Neither is a thing to tell a coordinator scanning a
+	 * table, and the second is not the plugin's business to say.
+	 *
+	 * Counting nouns rather than conjugating verbs also means no singular and
+	 * plural forms to keep in step — "1 held" and "4 held" are both right. */
 	$said = array();
 
 	if ( $counts['current'] > 0 ) {
@@ -524,8 +536,8 @@ function gwc_vt_render_credential_holders( int $credential_id ): void {
 			esc_url( gwc_vt_credential_holders_url( $credential_id, GWC_VT_HOLDS_CURRENT ) ),
 			esc_html(
 				sprintf(
-					/* translators: %s: how many people hold it, already formatted. */
-					_n( '%s holds it', '%s hold it', $counts['current'], 'groundwork-common-volunteer-tracker' ),
+					/* translators: %s: a count of people, already formatted. Reads "4 held" under a column headed "Who holds it". */
+					__( '%s held', 'groundwork-common-volunteer-tracker' ),
 					number_format_i18n( $counts['current'] )
 				)
 			)
@@ -538,8 +550,8 @@ function gwc_vt_render_credential_holders( int $credential_id ): void {
 			esc_url( gwc_vt_credential_holders_url( $credential_id, GWC_VT_HOLDS_EXPIRED ) ),
 			esc_html(
 				sprintf(
-					/* translators: %s: how many people have let it lapse, already formatted. */
-					_n( '%s has let it lapse', '%s have let it lapse', $counts['expired'], 'groundwork-common-volunteer-tracker' ),
+					/* translators: %s: a count of people, already formatted. Reads "1 lapsed". */
+					__( '%s lapsed', 'groundwork-common-volunteer-tracker' ),
 					number_format_i18n( $counts['expired'] )
 				)
 			)
@@ -547,10 +559,7 @@ function gwc_vt_render_credential_holders( int $credential_id ): void {
 	}
 
 	echo wp_kses(
-		implode( '<br />', $said ),
-		array(
-			'a'  => array( 'href' => array() ),
-			'br' => array(),
-		)
+		implode( ' &middot; ', $said ),
+		array( 'a' => array( 'href' => array() ) )
 	);
 }
