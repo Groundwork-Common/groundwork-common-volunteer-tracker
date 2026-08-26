@@ -355,7 +355,10 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
 ## Vocabulary
 
 **entry** a `gwc_vt_entry` post, one occasion of work · **volunteer** a
-`gwc_vt_volunteer` post; never a WP user, never signs in · **attest / verify**
+`gwc_vt_volunteer` post; never a WP user, and has no account — see **pass** ·
+**pass** a short-lived, mailbox-proved capability to act as one volunteer on the
+public pages. Not an account: no password, no WP user, no role, and it expires ·
+**attest / verify**
 staff confirming an entry · **letter** the produced document · **issued-letter
 log** the record that a letter went out; survives purges, holds no name ·
 **reference code** a salted digest over every printed field, checkable by phone ·

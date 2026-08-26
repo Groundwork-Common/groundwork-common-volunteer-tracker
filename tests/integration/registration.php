@@ -714,7 +714,7 @@ foreach ( WP_Block_Type_Registry::get_instance()->get_all_registered() as $gwc_v
 
 gwc_vt_rg_check(
 	'every block this plugin ships was found',
-	4 === count( $GLOBALS['gwc_vt_rg_blocks'] ),
+	5 === count( $GLOBALS['gwc_vt_rg_blocks'] ),
 	'found ' . count( $GLOBALS['gwc_vt_rg_blocks'] ) . ': ' . implode( ', ', array_keys( $GLOBALS['gwc_vt_rg_blocks'] ) )
 );
 
@@ -766,7 +766,7 @@ gwc_vt_rg_check(
  * loading order differs from the one it was written on. */
 $GLOBALS['gwc_vt_rg_deps'] = array();
 
-foreach ( array( 'hours-form', 'shift-list', 'event-grid', 'volunteer-form' ) as $gwc_vt_rg_block ) {
+foreach ( array( 'hours-form', 'shift-list', 'event-grid', 'volunteer-form', 'volunteer-signin' ) as $gwc_vt_rg_block ) {
 	$gwc_vt_rg_dir = dirname( __DIR__, 2 ) . '/blocks/' . $gwc_vt_rg_block;
 	$gwc_vt_rg_js  = (string) file_get_contents( $gwc_vt_rg_dir . '/edit.js' );
 	$gwc_vt_rg_ast = include $gwc_vt_rg_dir . '/edit.asset.php';

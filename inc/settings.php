@@ -156,6 +156,22 @@ function gwc_vt_setting_defaults(): array {
 		 * which is a different class of thing to accept than a text field. */
 		'registration_ask_photo'    => false,
 
+		/* ── Volunteers signing in ───────────────────────────────────────── */
+
+		/* Off, like every other switch that opens a public surface. On, this
+		 * site will email a sign-in link to an address that matches a volunteer
+		 * record, and set a cookie for whoever follows it — the first cookie
+		 * this plugin has ever set.
+		 *
+		 * It also depends on mail actually leaving the site. A host that cannot
+		 * send, or a copy running with GWC_VT_MAIL_MODE off, cannot use this at
+		 * all: there is no second way in by design. The settings screen says so
+		 * rather than letting somebody switch it on into a dead end. */
+		'signin_enabled'            => false,
+
+		/* Pinned by ID, like the other two public pages. */
+		'signin_page'               => 0,
+
 		/* ── The letter ──────────────────────────────────────────────────────
 		 * ON, and the asymmetry with shifts_enabled below is deliberate rather
 		 * than an oversight. Scheduling is a second product surface and defaults
