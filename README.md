@@ -252,7 +252,10 @@ npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-
 
 ## Continuous integration
 
-`.github/workflows/test.yml` runs six jobs on every push and pull request:
+`.github/workflows/test.yml` holds six jobs. It has **no `push` or
+`pull_request` trigger** — CI is run locally here, and the workflow fires only
+when started by hand from the Actions tab. The recipes above are what to run
+before pushing; the table is what a hosted run would cover.
 
 | Job | What it answers |
 | --- | --- |

@@ -108,7 +108,11 @@ npx @wordpress/env run cli -- wp eval-file \
   wp-content/plugins/groundwork-common-volunteer-tracker/tests/seed.php
 ```
 
-**CI is real here** and runs on every push to `main` and every PR: `php -l` on
+**CI here is local.** `.github/workflows/test.yml` still holds every job — but
+its `push` and `pull_request` triggers were removed, so it fires only when
+somebody starts it from the Actions tab. Nothing checks a branch or a pull
+request for you; run the commands above before you push. What that workflow runs
+when you do start it: `php -l` on
 every shipping file under 7.4; the unit suite on 8.2/8.3/8.4; **every** script in
 `tests/integration/` — the workflow globs the directory, so a new one is picked
 up without being listed anywhere — on **both** 7.4 and 8.3, asserting the
