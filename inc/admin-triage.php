@@ -44,7 +44,7 @@ add_action( 'admin_notices', 'gwc_vt_triage_result_notice' );
  * @return array{volunteer_id:int, matched_on:string}
  */
 function gwc_vt_suggest_volunteer( int $entry_id ): array {
-	if ( (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true ) > 0 ) {
+	if ( gwc_vt_entry_volunteer_id( $entry_id ) > 0 ) {
 		return array(
 			'volunteer_id' => 0,
 			'matched_on'   => '',
@@ -467,7 +467,7 @@ function gwc_vt_triage_result_notice(): void {
  * @param int $entry_id Entry post ID.
  */
 function gwc_vt_render_triage_actions( int $entry_id ): void {
-	if ( (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true ) > 0 ) {
+	if ( gwc_vt_entry_volunteer_id( $entry_id ) > 0 ) {
 		return;
 	}
 

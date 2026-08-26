@@ -270,6 +270,26 @@ function gwc_vt_attestation_badge( int $entry_id ): string {
  * timestamp records when somebody first said this happened, and a double-click
  * on a Verify button must not rewrite that.
  *
+ * ── An entry nobody has matched cannot be attested to ────────────────────────
+ * Attesting is one named person saying that another named person did this work.
+ * An entry with no volunteer on it has only one of those names, so there is
+ * nothing to attest TO — the sentence has no subject.
+ *
+ * Nothing reaches a letter either way: gwc_vt_entry_ids_for_volunteer() cannot
+ * find such a row, because there is no volunteer to find it under. What went
+ * wrong was quieter. The record left the "waiting to verify" count, which is
+ * keyed on GWC_VT_ENTRY_VERIFIED_AT, while staying in the "waiting to match"
+ * count, which is keyed on GWC_VT_ENTRY_VOLUNTEER — two dashboard lines
+ * describing one entry differently, and a staff member's name stamped on an
+ * attestation about nobody.
+ *
+ * The order of the two guards matters. The idempotent check comes FIRST, so an
+ * entry that is already verified and has no volunteer still reports true. Those
+ * rows exist on installs that ran before this guard, and this function answers
+ * "is it verified after this call" — retroactively answering no about a
+ * timestamp that is really there would make the badge and the count disagree,
+ * which is the bug this guard exists to prevent, pointed the other way.
+ *
  * @param int    $entry_id Entry post ID.
  * @param int    $user_id  Who is attesting.
  * @param string $method   Attestation method slug.
@@ -282,6 +302,10 @@ function gwc_vt_verify_entry( int $entry_id, int $user_id, string $method = 'sta
 
 	if ( gwc_vt_entry_is_verified( $entry_id ) ) {
 		return true;
+	}
+
+	if ( gwc_vt_entry_volunteer_id( $entry_id ) < 1 ) {
+		return false;
 	}
 
 	$methods = gwc_vt_attestation_methods();
