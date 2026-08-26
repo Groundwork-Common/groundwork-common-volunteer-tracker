@@ -255,11 +255,15 @@ foreach ( array( 'unreconciled' => 'awaiting', 'understaffed' => 'short' ) as $g
 
 /* ── The three that already agreed, so they keep agreeing ─────────────────── */
 
-foreach ( array( 'overdue', 'unverified', 'unmatched' ) as $gwc_vt_wl_key ) {
+foreach ( array( 'overdue', 'offers', 'lapsed', 'unverified', 'unmatched' ) as $gwc_vt_wl_key ) {
 	$gwc_vt_wl_url = gwc_vt_dashboard_item_url( $gwc_vt_wl_key );
 
 	$gwc_vt_wl_expected = array(
 		'overdue'    => 'gwc_vt_requirement=overdue',
+		/* The offers screen IS the pending list, so there is no filter to
+		 * check — landing on it is the whole claim. */
+		'offers'     => 'page=gwc-vt-offers',
+		'lapsed'     => 'gwc_vt_credential=lapsed',
 		'unverified' => 'page=gwc-vt-verify',
 		'unmatched'  => 'page=gwc-vt-verify',
 	);
