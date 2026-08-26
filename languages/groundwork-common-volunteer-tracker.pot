@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T19:47:17+00:00\n"
+"POT-Creation-Date: 2026-08-26T19:58:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -297,10 +297,100 @@ msgstr ""
 msgid "Back in use."
 msgstr ""
 
+#: inc/admin-dashboard-widget.php:98
 #: inc/admin-dashboard.php:104
 #: inc/admin-help.php:64
 #: inc/admin-screen.php:333
 msgid "Volunteer Tracker"
+msgstr ""
+
+#: inc/admin-dashboard-widget.php:179
+#: inc/admin-dashboard.php:447
+#: inc/admin-schedule.php:1607
+msgid "This week"
+msgstr ""
+
+#: inc/admin-dashboard-widget.php:217
+msgid "A shift"
+msgstr ""
+
+#: inc/admin-dashboard-widget.php:234
+msgid "Nothing is waiting."
+msgstr ""
+
+#: inc/admin-dashboard-widget.php:242
+#: inc/admin-dashboard.php:240
+msgid "Needs you"
+msgstr ""
+
+#: inc/admin-dashboard-widget.php:258
+msgid "When you have a minute:"
+msgstr ""
+
+#. translators: %s is a count, already formatted.
+#: inc/admin-dashboard-widget.php:297
+#, php-format
+msgid "%s shift to write up"
+msgid_plural "%s shifts to write up"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s is a count, already formatted.
+#: inc/admin-dashboard-widget.php:299
+#, php-format
+msgid "%s shift short of people"
+msgid_plural "%s shifts short of people"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s is a count, already formatted.
+#: inc/admin-dashboard-widget.php:301
+#, php-format
+msgid "%s offer to answer"
+msgid_plural "%s offers to answer"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s is a count, already formatted.
+#: inc/admin-dashboard-widget.php:303
+#, php-format
+msgid "%s past a deadline"
+msgid_plural "%s past a deadline"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s is a count, already formatted.
+#: inc/admin-dashboard-widget.php:305
+#, php-format
+msgid "%s lapsed credential"
+msgid_plural "%s lapsed credentials"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s is a count, already formatted.
+#: inc/admin-dashboard-widget.php:307
+#, php-format
+msgid "%s shift to verify"
+msgid_plural "%s shifts to verify"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s is a count, already formatted.
+#: inc/admin-dashboard-widget.php:309
+#, php-format
+msgid "%s to match to a volunteer"
+msgid_plural "%s to match to a volunteer"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: a duration, already formatted — "418" or "418h 30m" depending on the site's setting, so the sentence must not add a unit of its own.
+#: inc/admin-dashboard-widget.php:343
+#, php-format
+msgid "%s verified this year"
+msgstr ""
+
+#: inc/admin-dashboard-widget.php:349
+msgid "Open the tracker"
 msgstr ""
 
 #: inc/admin-dashboard.php:105
@@ -311,10 +401,6 @@ msgstr ""
 #: inc/admin-letters.php:166
 #: inc/admin-verify.php:337
 msgid "You do not have permission to see this."
-msgstr ""
-
-#: inc/admin-dashboard.php:240
-msgid "Needs you"
 msgstr ""
 
 #: inc/admin-dashboard.php:259
@@ -385,11 +471,6 @@ msgstr ""
 
 #: inc/admin-dashboard.php:434
 msgid "Open the full calendar"
-msgstr ""
-
-#: inc/admin-dashboard.php:447
-#: inc/admin-schedule.php:1607
-msgid "This week"
 msgstr ""
 
 #: inc/admin-dashboard.php:448

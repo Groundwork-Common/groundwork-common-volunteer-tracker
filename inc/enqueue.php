@@ -106,6 +106,24 @@ function gwc_vt_print_document_styles( string $handle = 'gwc-vt-letter' ): void 
  * @param string $hook_suffix The current admin page.
  */
 function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
+	/* WordPress's own dashboard is not a plugin screen and must not become one.
+	 * The widget there gets its own two-kilobyte sheet rather than the 64KB
+	 * admin one — see the header of assets/css/widget.css. Gated on the same
+	 * capability that decides whether the widget is registered at all, so a
+	 * contributor who will never see it does not fetch its stylesheet. */
+	if ( 'index.php' === $hook_suffix ) {
+		if ( gwc_vt_can_see_dashboard_widget() ) {
+			wp_enqueue_style(
+				'gwc-vt-widget',
+				GWC_VT_URL . 'assets/css/widget.css',
+				array(),
+				GWC_VT_VERSION
+			);
+		}
+
+		return;
+	}
+
 	if ( ! gwc_vt_is_plugin_screen() ) {
 		return;
 	}

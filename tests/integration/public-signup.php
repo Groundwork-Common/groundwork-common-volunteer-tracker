@@ -667,6 +667,68 @@ gwc_vt_check(
 	(string) count( gwc_vt_all_signups( $gwc_vt_retry_shift ) )
 );
 
+/* ── The second clean-up, and why there are two ──────────────────────────────
+ * The block above runs two hundred lines from the end, because the retention
+ * sweep it precedes needs the shifts it makes gone. Everything created AFTER it
+ * — the retry shift, and the real-and-honeypot pair the file is named for — was
+ * therefore never collected by anything.
+ *
+ * That leaked one shift and two signups per run, and it was not harmless. The
+ * sweep asserted on above takes the oldest fifty unmatched signups; once fifty
+ * of these had piled up in a development database, the claim this file creates
+ * to be swept never entered the batch and three checks began failing — in a
+ * script that had passed the day before, on code nobody had touched. CI never
+ * saw it, because CI starts from an empty database every time.
+ *
+ * Collected by name rather than by remembering IDs, so anything added below
+ * this line is covered without a third clean-up being needed.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+foreach ( get_posts(
+	array(
+		'post_type'      => array( GWC_VT_SHIFT_TYPE, GWC_VT_VOLUNTEER_TYPE, GWC_VT_ENTRY_TYPE, 'page' ),
+		'post_status'    => array_values( get_post_stati() ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		's'              => 'Zzytest',
+	)
+) as $gwc_vt_late_id ) {
+	foreach ( gwc_vt_shift_signup_ids( (int) $gwc_vt_late_id, gwc_vt_signup_statuses() ) as $gwc_vt_late_signup ) {
+		wp_delete_post( (int) $gwc_vt_late_signup, true );
+	}
+
+	wp_delete_post( (int) $gwc_vt_late_id, true );
+}
+
+/* The limiter, left clean rather than restored — the rule this repository
+ * already has, and this file is where it was learned. The restore two hundred
+ * lines up puts back whatever was there when the script started, and then the
+ * section below it spends more of the budget and never tidies up. One option is
+ * shared by all three public forms, so a saturated counter left behind here is
+ * the next script's inexplicable refusal. */
+delete_option( GWC_VT_RATE_LIMIT_OPTION );
+
+/* And the signups themselves, which a search cannot reach: their claim name is
+ * meta, not post content, and the shift they hang off has just been deleted. */
+foreach ( get_posts(
+	array(
+		'post_type'      => GWC_VT_SIGNUP_TYPE,
+		'post_status'    => array_values( get_post_stati() ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- a development fixture's own clean-up, run by hand.
+		'meta_query'     => array(
+			array(
+				'key'     => GWC_VT_SIGNUP_CLAIM_NAME,
+				'value'   => 'Zzytest',
+				'compare' => 'LIKE',
+			),
+		),
+	)
+) as $gwc_vt_late_signup ) {
+	wp_delete_post( (int) $gwc_vt_late_signup, true );
+}
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
 if ( $GLOBALS['gwc_vt_failures'] > 0 ) {

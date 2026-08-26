@@ -72,7 +72,11 @@ tool this file used to describe, and the later half is easy to miss when scannin
   which act on somebody already accepted and would fail silently on cron.
 - **The dashboard** — `dashboard.php` (counts, pure) and `admin-dashboard.php`
   (the screen). Split so the worklist's ordering can be asserted without a
-  database.
+  database. `admin-dashboard-widget.php` puts a window onto it on **WordPress's
+  own** dashboard: narrower capability, cached counts, its own small stylesheet,
+  and it never names a volunteer. Adding a worklist line means adding it to
+  `DashboardTest`'s fixture — a guard there reads the keys out of the source and
+  fails if you do not.
 - **Three blocks**, not one: `hours-form`, `shift-list`, `event-grid`.
 
 **An event has no URL.** `gwc_vt_event` is `public => false`, so it is only ever
