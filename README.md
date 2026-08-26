@@ -425,7 +425,7 @@ Three things about that host are worth knowing before working on it:
 
 WP-CLI on that shared host takes roughly thirty seconds per invocation, because it bootstraps WordPress each time. Batch work into one `wp eval-file` rather than chaining several `wp` calls.
 
-## Still to come
+## How it got here, and what is left
 
 Milestones, in order: the data model and hour logging, staff verification, the letter and its reference verifier, the optional front-end self-log form, retention with WordPress's privacy exporter and eraser, and the schedule with its rosters.
 
@@ -438,6 +438,42 @@ Scheduling arrived in four parts and is complete: 0.8.0 built the schedule and i
 0.15.0 was a pass over the whole thing from a user's seat rather than a feature milestone, and most of what it found were gaps *between* screens rather than screens that were wrong: an event that could not be reached because it has no URL and nothing said so, event hours counted by a nag no screen could act on, three letterhead fallbacks that compound into a court letter headed with a website's title, a self-log form that submitted into nothing when placed on the wrong page, and two capabilities the code argues must be separable with no way to separate them. The Permissions tab, the first-run dashboard, the "Removing this plugin" section and the documented mail guard all come from that pass.
 
 **1.0.0 is the first release on WordPress.org**, and nothing about the plugin's behavior changed from 0.15.0 to reach it. What changed is what the directory needs and the plugin did not have: the page assets now exist — eight screenshots, an icon and two banners, drawn from `.wordpress-org/assets-source.html` and shot against `tests/seed.php` — and `readme.txt` gained the Installation section a listing is expected to carry. Publishing is a `git tag` and a GitHub release; `.github/workflows/deploy.yml` does the rest, and cannot run for real until the plugin is approved, because the SVN repository does not exist before then.
+
+**Everything after that is still 1.0.0**, and deliberately. The plugin was
+submitted 2026-08-21, pended on the 24th, corrected at the same version and
+approved on the 25th — approval grants commit access to a Subversion repository
+and publishes nothing. Nothing has been tagged or released, so no user has any
+of this installed, and the version does not move until something ships. What
+follows is therefore not a changelog; it is what the first release grew before
+it became one.
+
+**Volunteer sign-in.** A volunteer proves they control an email address by
+clicking a link sent to it, and gets a short-lived session — not an account, no
+password, no WP user, no role. It is the first cookie the plugin has ever set.
+The panel shows their hours and their upcoming shifts, and deliberately not
+what a court required of them.
+
+**Credentials**, in four parts: defining what volunteers must hold and
+recording who holds it, attaching them to shifts and events, reporting who is
+short on the roster, and blocking a signup where the organization means it —
+with an override that records who decided and why, because a block somebody can
+click past without a trace is not a block. The vocabulary is enforced against
+the source: a *credential* is a thing somebody holds, a *requirement* is
+court-ordered hours, and no file in the feature uses the second word.
+
+**A dashboard widget** on WordPress's own dashboard, showing the next two days
+that have shifts and what is waiting. Narrower capability than the tracker's
+own screen, cached counts, its own small stylesheet — the reasoning for each is
+in the ledger above, and all three go the opposite way to the screen it is a
+window onto.
+
+**Offers to volunteer reached the worklist.** The queue existed and only the
+menu bubble said so.
+
+**And a security pass** that moved every screen showing somebody else's record
+from `edit_posts` — which a contributor has — to `edit_others_posts`. That one
+is worth reading in the ledger above: the reasoning it replaced was correct
+about list tables and wrong about every screen that queries for itself.
 
 Then a decision rather than a feature: the field schema from the original plan — `schema.php`, the Fields tab, the "Court-ordered service" preset — was never built, and `GWC_VT_SCHEMA_VERSION` still has no migration runner behind it. Hours-required covered part of what that preset was for, so it is worth settling whether the rest is still wanted before building anything else that might have belonged there.
 
