@@ -872,7 +872,13 @@ gwc_vt_settings_cache( null, true );
 /* Left clean rather than restored — see the note at the top. */
 delete_option( GWC_VT_RATE_LIMIT_OPTION );
 
-foreach ( get_posts( array( 'post_type' => GWC_VT_APPLICATION_TYPE, 'post_status' => 'any', 'numberposts' => -1 ) ) as $gwc_vt_rg_app ) {
+/* Every registered status, not 'any'. 'any' means "not exclude_from_search",
+ * and every custom status this plugin registers sets that flag — so a sweep
+ * asking for 'any' silently skips the discarded, cancelled, waitlisted,
+ * withdrawn and retired rows it was written to collect, and they pile up in the
+ * development database one run at a time. tests/seed.php carries the long
+ * version of this note. */
+foreach ( get_posts( array( 'post_type' => GWC_VT_APPLICATION_TYPE, 'post_status' => array_values( get_post_stati() ), 'numberposts' => -1 ) ) as $gwc_vt_rg_app ) {
 	if ( false !== strpos( (string) get_post_meta( $gwc_vt_rg_app->ID, GWC_VT_APPLICATION_EMAIL, true ), 'zzrg-' ) ) {
 		$GLOBALS['gwc_vt_rg_made'][] = (int) $gwc_vt_rg_app->ID;
 	}

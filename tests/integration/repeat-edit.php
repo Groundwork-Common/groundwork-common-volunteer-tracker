@@ -352,7 +352,9 @@ gwc_vt_re_check(
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
-foreach ( get_posts( array( 'post_type' => GWC_VT_SHIFT_TYPE, 'post_status' => 'any', 'numberposts' => -1, 's' => 'Zzrp' ) ) as $gwc_vt_re_post ) {
+/* Every registered status, not 'any' — which skips the cancelled occurrences
+ * this file spends most of its length creating. See tests/seed.php. */
+foreach ( get_posts( array( 'post_type' => GWC_VT_SHIFT_TYPE, 'post_status' => array_values( get_post_stati() ), 'numberposts' => -1, 's' => 'Zzrp' ) ) as $gwc_vt_re_post ) {
 	$GLOBALS['gwc_vt_re_made'][] = (int) $gwc_vt_re_post->ID;
 }
 
