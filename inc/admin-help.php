@@ -74,11 +74,20 @@ function gwc_vt_add_help_sidebar( $screen ): void {
  * `load-` hook — help tabs have to be added before anything is output, and
  * adding them from the renderer is the mistake that makes them silently not
  * appear.
+ *
+ * @param WP_Screen|null $screen The screen to add help to, or null for the
+ *                                current one — the hook this is on passes nothing.
  */
-function gwc_vt_add_settings_help(): void {
-	$screen = get_current_screen();
+function gwc_vt_add_settings_help( $screen = null ): void {
+	/* Takes a screen, and falls back to the current one.
+	 *
+	 * It used to only ever ask get_current_screen(), which is right for the
+	 * hook it is on and useless to anything that wants to know what this screen
+	 * WOULD say — the Help page asks every screen exactly that, and got an
+	 * empty section back. */
+	$screen = $screen instanceof WP_Screen ? $screen : get_current_screen();
 
-	if ( ! $screen ) {
+	if ( ! $screen instanceof WP_Screen ) {
 		return;
 	}
 
