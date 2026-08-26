@@ -118,3 +118,12 @@
 .gwcvt-photo-field__button {
 	margin: 0 8px 8px 0;
 }
+
+/* A shift only signed-in volunteers can take. Beside the places-left line and
+   in the same register — it is a fact about the shift, not a warning to the
+   reader, and styling it as an alert would suggest they had done something. */
+.gwcvt-shift__gated {
+	display: block;
+	font-size: .9em;
+	opacity: .85;
+}

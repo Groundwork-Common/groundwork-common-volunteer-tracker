@@ -585,13 +585,48 @@ function gwc_vt_handle_event_roster_add(): void {
 		gwc_vt_event_roster_redirect( $event_id, 'wrong-slot' );
 	}
 
-	gwc_vt_add_signup(
+	/* The same gate the standalone roster uses, from the same function. Two
+	 * implementations of "may this person work this shift" would be two chances
+	 * to disagree on the question that decides whether somebody works. */
+	$refused = gwc_vt_signup_credential_refusal( $volunteer_id, $shift_id );
+
+	$reason = mb_substr(
+		trim( sanitize_text_field( (string) ( $posted['gwc_vt_override_reason'] ?? '' ) ) ),
+		0,
+		GWC_VT_OVERRIDE_REASON_MAX
+	);
+
+	if ( $refused && '' === $reason ) {
+		gwc_vt_event_roster_redirect(
+			$event_id,
+			'credential-blocked',
+			array(
+				'gwc_vt_shift'     => $shift_id,
+				'gwc_vt_volunteer' => $volunteer_id,
+				'gwc_vt_short'     => implode( ',', $refused ),
+			)
+		);
+	}
+
+	$signup_id = gwc_vt_add_signup(
 		$shift_id,
 		array(
 			'volunteer_id' => $volunteer_id,
 			'source'       => 'staff',
 		)
 	);
+
+	/* As on the standalone roster: this used to report 'rostered' whatever came
+	 * back, so a refused add rendered a success notice over an unchanged list. */
+	if ( $signup_id < 1 ) {
+		gwc_vt_event_roster_redirect( $event_id, 'not-rostered' );
+	}
+
+	if ( $refused ) {
+		gwc_vt_record_override( $signup_id, get_current_user_id(), $reason );
+
+		gwc_vt_event_roster_redirect( $event_id, 'rostered-override' );
+	}
 
 	gwc_vt_event_roster_redirect( $event_id, 'rostered' );
 }
@@ -658,8 +693,10 @@ function gwc_vt_handle_signup_promote(): void {
  *
  * @param int    $event_id Event post ID, or 0 for the list.
  * @param string $result   What to say.
+ * @param array  $extra    Extra query arguments, for a result that has to name
+ *                         which shift and which person it is about.
  */
-function gwc_vt_event_roster_redirect( int $event_id, string $result ): void {
+function gwc_vt_event_roster_redirect( int $event_id, string $result, array $extra = array() ): void {
 	if ( $event_id < 1 ) {
 		wp_safe_redirect( gwc_vt_schedule_url( array( 'view' => 'events' ) ) );
 		exit;
@@ -667,10 +704,13 @@ function gwc_vt_event_roster_redirect( int $event_id, string $result ): void {
 
 	wp_safe_redirect(
 		gwc_vt_schedule_url(
-			array(
-				'gwc_vt_event'        => $event_id,
-				'view'                => 'roster',
-				'gwc_vt_event_result' => $result,
+			array_merge(
+				array(
+					'gwc_vt_event'        => $event_id,
+					'view'                => 'roster',
+					'gwc_vt_event_result' => $result,
+				),
+				$extra
 			)
 		)
 	);

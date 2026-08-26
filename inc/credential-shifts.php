@@ -308,3 +308,153 @@ function gwc_vt_detach_deleted_credential( $post_id, $post = null ): void {
 
 	gwc_vt_detach_credential( (int) $post_id );
 }
+
+/* ── Turning somebody away ───────────────────────────────────────────────────
+ * Phase 4: the half of a blocking credential that actually blocks.
+ *
+ * ── Why this is NOT inside gwc_vt_add_signup() ───────────────────────────────
+ * That function looks like the choke point and is the wrong place, for three
+ * reasons that only became visible once the enforcement paths were listed out.
+ *
+ * It is not the only way somebody ends up on a roster. gwc_vt_settle_signups()
+ * moves a person from the waiting list to a place by writing post_status, and
+ * gwc_vt_handle_signup_promote() does the same by hand. Neither goes through
+ * gwc_vt_add_signup(), so a check inside it would announce a guarantee it does
+ * not give.
+ *
+ * It is called by things that are not somebody joining a shift — the reconcile
+ * path, the seed, and a test fixture that wants a roster to exist. A refusal
+ * there is a refusal in the middle of an unrelated job, reported by a return
+ * value most of those callers already ignore.
+ *
+ * And it cannot ask for an override. The override is a decision a named person
+ * makes with a reason, on a screen; a function that takes a shift and an array
+ * has nowhere to put "Dana said it was fine, the certificate is in the post".
+ *
+ * So: the four places where a human is putting a person on a shift ask this
+ * function first, and gwc_vt_add_signup() stays what it is.
+ *
+ * ── And why settling and promoting are deliberately NOT gated ────────────────
+ * Both act on somebody who was already accepted. Being promoted off a waiting
+ * list is not a new decision by that person — it is the organization honouring
+ * one it already made, and the thing that triggers it is usually somebody else
+ * withdrawing at nine in the evening.
+ *
+ * A gate there would fail silently on cron, leaving a place empty and a person
+ * on a list, with the only record in a log nobody reads. The screen that can
+ * say something about it is the roster, which flags them; the person who can
+ * act on it is the coordinator, who is looking at that roster. That is the
+ * right division, and it is the same one the plugin already applies to a
+ * requirement: nothing about a volunteer's standing has ever silently removed
+ * them from a shift.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/** Who overrode a blocking credential to put somebody on a shift. */
+const GWC_VT_SIGNUP_OVERRIDE_BY = '_gwc_vt_signup_override_by';
+
+/** Why they did. Never empty when the above is set. */
+const GWC_VT_SIGNUP_OVERRIDE_REASON = '_gwc_vt_signup_override_reason';
+
+/** As long a reason as anybody needs, and no longer. */
+const GWC_VT_OVERRIDE_REASON_MAX = 300;
+
+/**
+ * Why this person may not be put on this shift, or ''.
+ *
+ * Only blocking credentials. A reporting one is missing, said so on the roster,
+ * and never a refusal — that distinction is the entire difference between the
+ * two modes, and collapsing it here would make the setting a lie.
+ *
+ * @param int    $volunteer_id Volunteer post ID. 0 for somebody not identified.
+ * @param int    $shift_id     Shift post ID.
+ * @param string $today        Y-m-d to judge against. Defaults to the site's today.
+ * @return int[] The blocking credentials they are short of. Empty means go ahead.
+ */
+function gwc_vt_signup_credential_refusal( int $volunteer_id, int $shift_id, string $today = '' ): array {
+	return gwc_vt_missing_credentials( $volunteer_id, $shift_id, $today )['block'];
+}
+
+/**
+ * Whether this shift can be signed up for by somebody we cannot identify.
+ *
+ * A shift asking for a blocking credential cannot: there is nobody to check.
+ * The public form therefore asks such a person to sign in first — which leaks
+ * nothing, because this is a fact about the SHIFT and not about them. Every
+ * visitor sees the same answer for the same shift whether or not they have ever
+ * volunteered here, so it cannot be made to say whether a named person is on
+ * file. Hard rules 3 and 4 are about not answering questions about a person;
+ * this answers one about a Saturday.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwc_vt_shift_needs_signin( int $shift_id ): bool {
+	foreach ( gwc_vt_required_credential_ids( $shift_id ) as $credential_id ) {
+		$credential = gwc_vt_credential( $credential_id );
+
+		if ( $credential && 'block' === $credential['mode'] ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Record that somebody was put on a shift anyway.
+ *
+ * Both meta rows or neither. An override with no reason is a click somebody can
+ * make without thinking, which is the same as no block at all — the reason is
+ * what makes it a decision rather than a dismissal.
+ *
+ * @param int    $signup_id The signup.
+ * @param int    $user_id   Who decided. 0 for the current user.
+ * @param string $reason    Why. Refused when empty.
+ * @return bool Whether it was recorded.
+ */
+function gwc_vt_record_override( int $signup_id, int $user_id, string $reason ): bool {
+	$reason = mb_substr( trim( sanitize_text_field( $reason ) ), 0, GWC_VT_OVERRIDE_REASON_MAX );
+
+	if ( $signup_id < 1 || '' === $reason ) {
+		return false;
+	}
+
+	$user_id = $user_id > 0 ? $user_id : get_current_user_id();
+
+	if ( $user_id < 1 ) {
+		return false;
+	}
+
+	update_post_meta( $signup_id, GWC_VT_SIGNUP_OVERRIDE_BY, $user_id );
+	update_post_meta( $signup_id, GWC_VT_SIGNUP_OVERRIDE_REASON, $reason );
+
+	/**
+	 * Fires after a blocking credential was overridden.
+	 *
+	 * @param int    $signup_id The signup it was overridden for.
+	 * @param int    $user_id   Who decided.
+	 * @param string $reason    What they said.
+	 */
+	do_action( 'gwc_vt_credential_overridden', $signup_id, $user_id, $reason );
+
+	return true;
+}
+
+/**
+ * The override on a signup, if there is one.
+ *
+ * @param int $signup_id The signup.
+ * @return array{by:int, reason:string} Reason is '' when there is none.
+ */
+function gwc_vt_signup_override( int $signup_id ): array {
+	$reason = (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_OVERRIDE_REASON, true );
+
+	/* Keyed off the reason, not the user. A row with a user and no reason is not
+	 * an override — see gwc_vt_record_override(), which will not write one — and
+	 * treating it as one would show an empty explanation on the roster under a
+	 * heading saying somebody explained. */
+	return array(
+		'by'     => '' !== $reason ? (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_OVERRIDE_BY, true ) : 0,
+		'reason' => $reason,
+	);
+}

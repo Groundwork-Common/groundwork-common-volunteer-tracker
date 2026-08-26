@@ -942,6 +942,15 @@ function gwc_vt_schedule_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$count = isset( $_GET['gwc_vt_count'] ) ? absint( wp_unslash( $_GET['gwc_vt_count'] ) ) : 0;
 
+	/* The credential refusal is its own renderer rather than a line in the map
+	 * below, because it is the only one that has to offer a way past itself. A
+	 * refusal a coordinator cannot act on is a refusal they will route around by
+	 * some other means — and then nothing records that they did. */
+	if ( 'credential-blocked' === $result ) {
+		gwc_vt_render_credential_refusal_notice();
+		return;
+	}
+
 	/* Refusals belong here and not in $messages below, because everything below
 	 * reads as something having happened. Three handlers used to redirect a
 	 * refusal with 'saved', so a delete that was declined because somebody had
@@ -956,6 +965,12 @@ function gwc_vt_schedule_notice(): void {
 		'not-found'      => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
 		'has-roster'     => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
 		'no-volunteer'   => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+
+		/* Said out loud rather than swallowed. This handler used to discard
+		 * gwc_vt_add_signup()'s return value and report success whatever it
+		 * gave back, so an add that did not happen rendered "Added to the
+		 * shift." over an unchanged roster. */
+		'not-rostered'   => __( 'They were not added — they may already be on this shift, or it may have been called off. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
 
 		/* Both from the change-a-whole-repeat screen, and both refusals rather
 		 * than failures: nothing was attempted, so nothing needs undoing. */
@@ -974,12 +989,17 @@ function gwc_vt_schedule_notice(): void {
 	 * so promoting somebody on a standalone shift fell through the lookup below
 	 * and the page rendered with no confirmation at all. */
 	$messages = array(
-		'saved'     => __( 'Shift saved.', 'groundwork-common-volunteer-tracker' ),
-		'cancelled' => __( 'Shift canceled. It stays on the schedule so everybody can see it was called off.', 'groundwork-common-volunteer-tracker' ),
-		'deleted'   => __( 'Shift deleted.', 'groundwork-common-volunteer-tracker' ),
-		'rostered'  => __( 'Added to the shift.', 'groundwork-common-volunteer-tracker' ),
-		'removed'   => __( 'Taken off the shift.', 'groundwork-common-volunteer-tracker' ),
-		'promoted'  => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
+		'saved'             => __( 'Shift saved.', 'groundwork-common-volunteer-tracker' ),
+		'cancelled'         => __( 'Shift canceled. It stays on the schedule so everybody can see it was called off.', 'groundwork-common-volunteer-tracker' ),
+		'deleted'           => __( 'Shift deleted.', 'groundwork-common-volunteer-tracker' ),
+		'rostered'          => __( 'Added to the shift.', 'groundwork-common-volunteer-tracker' ),
+		'removed'           => __( 'Taken off the shift.', 'groundwork-common-volunteer-tracker' ),
+		'promoted'          => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
+
+		/* Not a success message with a footnote. Somebody was put on a shift
+		 * they are not qualified for, on purpose, and the confirmation says so
+		 * plainly — the roster shows who decided and why from here on. */
+		'rostered-override' => __( 'Added, over a credential they do not hold. Who decided and why is recorded on the roster.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
@@ -2153,51 +2173,61 @@ function gwc_vt_event_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$slot = isset( $_GET['gwc_vt_slot'] ) ? absint( wp_unslash( $_GET['gwc_vt_slot'] ) ) : 0;
 
+	/* The same renderer the standalone roster uses. Its form posts back to
+	 * gwc_vt_handle_roster_add(), which is the handler for both screens, so one
+	 * override form serves both without either knowing about the other. */
+	if ( 'credential-blocked' === $result ) {
+		gwc_vt_render_credential_refusal_notice();
+		return;
+	}
+
 	$messages = array(
-		'saved'           => __( 'Saved.', 'groundwork-common-volunteer-tracker' ),
+		'saved'             => __( 'Saved.', 'groundwork-common-volunteer-tracker' ),
 
 		/* An action says what it did, in the past tense, naming the thing it did
 		 * it to. That sentence is the whole reason these moved off the form: a
 		 * deferred checkbox could only describe a future, and the screen it came
 		 * back to looked identical whether or not it had happened. */
-		'called-off-slot' => $slot > 0
+		'called-off-slot'   => $slot > 0
 			? sprintf(
 				/* translators: %s: a role and a time. */
 				__( '%s was called off. It stays on the schedule rather than being deleted.', 'groundwork-common-volunteer-tracker' ),
 				gwc_vt_slot_label( $slot )
 			)
 			: __( 'That time was called off.', 'groundwork-common-volunteer-tracker' ),
-		'restored-slot'   => $slot > 0
+		'restored-slot'     => $slot > 0
 			? sprintf(
 				/* translators: %s: a role and a time. */
 				__( '%s is back on.', 'groundwork-common-volunteer-tracker' ),
 				gwc_vt_slot_label( $slot )
 			)
 			: __( 'That time is back on.', 'groundwork-common-volunteer-tracker' ),
-		'deleted-slot'    => __( 'That time was deleted. Nobody was on it.', 'groundwork-common-volunteer-tracker' ),
-		'dropped-role'    => __( 'The role is gone.', 'groundwork-common-volunteer-tracker' ),
-		'unknown-role'    => __( 'That role has no times left on it.', 'groundwork-common-volunteer-tracker' ),
-		'copied'          => __( 'Copied. This is the new one, saved as a draft — check the dates before you publish it.', 'groundwork-common-volunteer-tracker' ),
-		'called-off'      => __( 'The event was called off, and every time on it with it.', 'groundwork-common-volunteer-tracker' ),
-		'deleted'         => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
-		'promoted'        => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
-		'rostered'        => __( 'They are on the list.', 'groundwork-common-volunteer-tracker' ),
-		'no-title'        => __( 'An event needs a name — it is what volunteers will recognize it by.', 'groundwork-common-volunteer-tracker' ),
-		'no-role'         => __( 'A role with times under it needs a name. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
-		'bad-time'        => __( 'One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight.', 'groundwork-common-volunteer-tracker' ),
-		'has-roster'      => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
-		'no-volunteer'    => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
-		'wrong-slot'      => __( 'That time is not on this event. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
-		'bad-date'        => __( 'That date could not be read.', 'groundwork-common-volunteer-tracker' ),
-		'unknown'         => __( 'That event no longer exists.', 'groundwork-common-volunteer-tracker' ),
-		'failed'          => __( 'That could not be saved. Please try again.', 'groundwork-common-volunteer-tracker' ),
+		'deleted-slot'      => __( 'That time was deleted. Nobody was on it.', 'groundwork-common-volunteer-tracker' ),
+		'dropped-role'      => __( 'The role is gone.', 'groundwork-common-volunteer-tracker' ),
+		'unknown-role'      => __( 'That role has no times left on it.', 'groundwork-common-volunteer-tracker' ),
+		'copied'            => __( 'Copied. This is the new one, saved as a draft — check the dates before you publish it.', 'groundwork-common-volunteer-tracker' ),
+		'called-off'        => __( 'The event was called off, and every time on it with it.', 'groundwork-common-volunteer-tracker' ),
+		'deleted'           => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
+		'promoted'          => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
+		'rostered'          => __( 'They are on the list.', 'groundwork-common-volunteer-tracker' ),
+		'rostered-override' => __( 'Added, over a credential they do not hold. Who decided and why is recorded on the roster.', 'groundwork-common-volunteer-tracker' ),
+		'no-title'          => __( 'An event needs a name — it is what volunteers will recognize it by.', 'groundwork-common-volunteer-tracker' ),
+		'no-role'           => __( 'A role with times under it needs a name. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
+		'bad-time'          => __( 'One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight.', 'groundwork-common-volunteer-tracker' ),
+		'has-roster'        => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
+		'no-volunteer'      => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'not-rostered'      => __( 'They were not added — they may already be on that time, or it may have been called off. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'wrong-slot'        => __( 'That time is not on this event. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'bad-date'          => __( 'That date could not be read.', 'groundwork-common-volunteer-tracker' ),
+		'unknown'           => __( 'That event no longer exists.', 'groundwork-common-volunteer-tracker' ),
+		'failed'            => __( 'That could not be saved. Please try again.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	if ( ! isset( $messages[ $result ] ) ) {
 		return;
 	}
 
-	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'unknown-role', 'failed', 'no-volunteer', 'wrong-slot' );
+	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'unknown-role', 'failed', 'no-volunteer', 'wrong-slot', 'not-rostered' );
 	$detail = array();
 
 	if ( $made > 0 ) {
@@ -2237,4 +2267,128 @@ function gwc_vt_event_notice(): void {
 		esc_attr( in_array( $result, $errors, true ) ? 'error' : 'success' ),
 		esc_html( trim( $messages[ $result ] . ' ' . implode( ' ', $detail ) ) )
 	);
+}
+
+/**
+ * A blocking credential, and the way past it.
+ *
+ * ── Why the refusal offers an override at all ────────────────────────────────
+ * Because the alternative is worse. A coordinator standing in front of somebody
+ * who drove across town, holding a certificate that has not been entered yet,
+ * will get them onto that shift somehow — by recording a credential they have
+ * not actually verified, by adding them under a different name, or by giving up
+ * on the plugin for that Saturday. All three are invisible afterwards.
+ *
+ * An override that names who decided and why is the only one of those outcomes
+ * that leaves a record. It is not a weakening of the block; it is the block
+ * being honest about what happens next.
+ *
+ * ── Why the reason is required and not optional ──────────────────────────────
+ * A button somebody can click without typing is a button they click without
+ * thinking, and a field nobody has to fill in is a field everybody leaves
+ * empty. gwc_vt_record_override() refuses to write one half of the pair, so
+ * this form cannot produce an override with no explanation even if the markup
+ * changed.
+ */
+function gwc_vt_render_credential_refusal_notice(): void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; names what is missing after a redirect. The override below carries its own nonce.
+	$shift_id = isset( $_GET['gwc_vt_shift'] ) ? absint( wp_unslash( $_GET['gwc_vt_shift'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$volunteer_id = isset( $_GET['gwc_vt_volunteer'] ) ? absint( wp_unslash( $_GET['gwc_vt_volunteer'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$short = isset( $_GET['gwc_vt_short'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_short'] ) ) : '';
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above; decides which screen's handler the override posts back to.
+	$event_id = isset( $_GET['gwc_vt_event'] ) ? absint( wp_unslash( $_GET['gwc_vt_event'] ) ) : 0;
+
+	$credential_ids = array_filter( array_map( 'absint', explode( ',', $short ) ) );
+
+	/* Re-derived rather than trusted from the URL. The list in the query string
+	 * is what to SAY; what is actually still missing is asked of the database,
+	 * so a stale tab, an edited URL or a credential recorded in another window
+	 * in the meantime cannot make this screen name the wrong thing. */
+	if ( $volunteer_id > 0 && $shift_id > 0 ) {
+		$credential_ids = gwc_vt_signup_credential_refusal( $volunteer_id, $shift_id );
+	}
+
+	if ( ! $credential_ids ) {
+		printf(
+			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+			esc_html__( 'Nothing is missing any more — they can be added.', 'groundwork-common-volunteer-tracker' )
+		);
+		return;
+	}
+	?>
+	<div class="notice notice-error">
+		<p>
+			<?php
+			printf(
+				esc_html(
+					/* translators: 1: a person's name. 2: a list of credential names, already joined with commas. */
+					_n(
+						'%1$s was not added. This shift asks for %2$s, and there is no current record of it.',
+						'%1$s was not added. This shift asks for %2$s, and there is no current record of them.',
+						count( $credential_ids ),
+						'groundwork-common-volunteer-tracker'
+					)
+				),
+				esc_html( get_the_title( $volunteer_id ) ),
+				esc_html( gwc_vt_credential_names( $credential_ids ) )
+			);
+			?>
+		</p>
+
+		<p>
+			<a href="<?php echo esc_url( (string) get_edit_post_link( $volunteer_id ) ); ?>">
+				<?php esc_html_e( 'Record it on their volunteer record', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+		</p>
+
+		<?php
+		/* A div, never a p — the wrapper rule. And the whole override is behind
+		 * <details>, so the default state of this screen is the refusal rather
+		 * than the refusal plus an inviting text box. */
+		?>
+		<details class="gwcvt-override">
+			<summary><?php esc_html_e( 'Add them anyway', 'groundwork-common-volunteer-tracker' ); ?></summary>
+
+			<?php
+			/* Two screens, two handlers, one form. An event's roster posts to
+			 * gwc_vt_event_roster_add with the event, a standalone shift's to
+			 * gwc_vt_roster_add without it — and each nonce is the one its own
+			 * handler checks, so an override minted on one screen cannot be
+			 * replayed against the other. */
+			$is_event = $event_id > 0;
+			?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="<?php echo esc_attr( $is_event ? 'gwc_vt_event_roster_add' : 'gwc_vt_roster_add' ); ?>" />
+				<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
+				<input type="hidden" name="gwc_vt_volunteer" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
+				<?php if ( $is_event ) : ?>
+					<input type="hidden" name="gwc_vt_event" value="<?php echo esc_attr( (string) $event_id ); ?>" />
+				<?php endif; ?>
+				<?php wp_nonce_field( $is_event ? 'gwc_vt_event_roster_add_' . $event_id : 'gwc_vt_roster_add_' . $shift_id ); ?>
+
+				<div class="gwcvt-field">
+					<label for="gwcvt-override-reason">
+						<?php esc_html_e( 'Why they can work this shift without it', 'groundwork-common-volunteer-tracker' ); ?>
+					</label>
+					<input
+						type="text"
+						id="gwcvt-override-reason"
+						name="gwc_vt_override_reason"
+						class="regular-text"
+						maxlength="<?php echo esc_attr( (string) GWC_VT_OVERRIDE_REASON_MAX ); ?>"
+						required
+					/>
+					<p class="description">
+						<?php esc_html_e( 'Recorded against this signup with your name, and shown on the roster. “Certificate seen, being entered Monday” is the kind of thing that belongs here.', 'groundwork-common-volunteer-tracker' ); ?>
+					</p>
+				</div>
+
+				<?php submit_button( __( 'Add them anyway', 'groundwork-common-volunteer-tracker' ), 'secondary' ); ?>
+			</form>
+		</details>
+	</div>
+	<?php
 }

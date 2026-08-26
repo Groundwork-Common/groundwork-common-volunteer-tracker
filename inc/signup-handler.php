@@ -264,6 +264,60 @@ function gwc_vt_handle_public_signup(): void {
 		return;
 	}
 
+	/* ── A shift that asks for a blocking credential ─────────────────────
+	 * Two answers, and which one somebody gets depends on whether they have
+	 * proved a mailbox — never on what this site knows about the address they
+	 * typed.
+	 *
+	 * NOT SIGNED IN: told to sign in first. This is safe, and the reason is
+	 * worth stating because it looks like the oracle hard rules 3 and 4 exist
+	 * to prevent and is not one. Every visitor gets the identical answer for
+	 * the identical shift. It is a fact about a Saturday — this one needs a
+	 * waiver — and the public shift list already says so. Nothing about it
+	 * varies with the person, so it cannot be made to answer whether a named
+	 * person is on file, which is the question those rules protect.
+	 *
+	 * SIGNED IN: we know who they are because they clicked a link in their own
+	 * mailbox, so telling them what they are missing tells them about
+	 * themselves. That is the whole point of building sign-in first.
+	 *
+	 * Before the rate limiter deliberately. Both answers below are about the
+	 * shift or about somebody who has authenticated, so neither is a thing
+	 * worth spending the limiter's budget to protect — and a volunteer told to
+	 * sign in should not be told that only after four tries. */
+	$volunteer_id = gwc_vt_signed_in_volunteer();
+
+	if ( gwc_vt_shift_needs_signin( $shift_id ) && $volunteer_id < 1 ) {
+		gwc_vt_signup_result(
+			'needs-signin',
+			$started,
+			array(
+				'shift' => $shift_id,
+				'name'  => $name,
+				'email' => (string) ( $posted['gwc_vt_email'] ?? '' ),
+			)
+		);
+		return;
+	}
+
+	if ( $volunteer_id > 0 ) {
+		$refused = gwc_vt_signup_credential_refusal( $volunteer_id, $shift_id );
+
+		if ( $refused ) {
+			gwc_vt_signup_result(
+				'credential-missing',
+				$started,
+				array(
+					'shift'       => $shift_id,
+					'name'        => $name,
+					'email'       => (string) ( $posted['gwc_vt_email'] ?? '' ),
+					'credentials' => gwc_vt_credential_names( $refused ),
+				)
+			);
+			return;
+		}
+	}
+
 	/* Counted before it is reported, so a refused attempt still counts against
 	 * the limit — otherwise the limiter is a speed bump somebody can sit on. */
 	if ( gwc_vt_rate_limited( gwc_vt_client_ip(), $email ) ) {
@@ -271,13 +325,21 @@ function gwc_vt_handle_public_signup(): void {
 		return;
 	}
 
+	/* Signed in means a real volunteer_id rather than a claim, which is what
+	 * keeps these out of the triage queue entirely — and it is what made the
+	 * refusal above possible in the first place. */
 	$signup_id = gwc_vt_add_signup(
 		$shift_id,
-		array(
-			'claim_name'  => $name,
-			'claim_email' => $email,
-			'source'      => 'self',
-		)
+		$volunteer_id > 0
+			? array(
+				'volunteer_id' => $volunteer_id,
+				'source'       => 'self',
+			)
+			: array(
+				'claim_name'  => $name,
+				'claim_email' => $email,
+				'source'      => 'self',
+			)
 	);
 
 	if ( $signup_id > 0 ) {
@@ -419,6 +481,42 @@ function gwc_vt_handle_public_event_signup(): void {
 		return;
 	}
 
+	/* ── The credential gate, over the whole selection at once ───────────
+	 * Never slot by slot, and that is the important part on this handler.
+	 *
+	 * The comment at the top of this function explains why the response may not
+	 * tell the selected slots apart: doing so would say which of them the typed
+	 * address was already on. The same reasoning applies here, so a refusal
+	 * names the CREDENTIALS and never the times — one union across everything
+	 * they picked, one answer.
+	 *
+	 * The not-signed-in answer is a fact about the slots, which are public. */
+	$volunteer_id = gwc_vt_signed_in_volunteer();
+
+	if ( $volunteer_id < 1 ) {
+		foreach ( $open as $shift_id ) {
+			if ( gwc_vt_shift_needs_signin( (int) $shift_id ) ) {
+				gwc_vt_signup_result( 'needs-signin', $started );
+				return;
+			}
+		}
+	} else {
+		$refused = array();
+
+		foreach ( $open as $shift_id ) {
+			$refused = array_merge( $refused, gwc_vt_signup_credential_refusal( $volunteer_id, (int) $shift_id ) );
+		}
+
+		if ( $refused ) {
+			gwc_vt_signup_result(
+				'credential-missing',
+				$started,
+				array( 'credentials' => gwc_vt_credential_names( array_values( array_unique( $refused ) ) ) )
+			);
+			return;
+		}
+	}
+
 	/* Counted once. It is one person pressing one button, whatever they selected —
 	 * and counted before it is reported, so a refused attempt still counts. */
 	if ( gwc_vt_rate_limited( gwc_vt_client_ip(), $GLOBALS['gwc_vt_signup_email'] ) ) {
@@ -431,11 +529,16 @@ function gwc_vt_handle_public_event_signup(): void {
 	foreach ( $open as $shift_id ) {
 		$signup_id = gwc_vt_add_signup(
 			$shift_id,
-			array(
-				'claim_name'  => $GLOBALS['gwc_vt_signup_name'],
-				'claim_email' => $GLOBALS['gwc_vt_signup_email'],
-				'source'      => 'self',
-			)
+			$volunteer_id > 0
+				? array(
+					'volunteer_id' => $volunteer_id,
+					'source'       => 'self',
+				)
+				: array(
+					'claim_name'  => $GLOBALS['gwc_vt_signup_name'],
+					'claim_email' => $GLOBALS['gwc_vt_signup_email'],
+					'source'      => 'self',
+				)
 		);
 
 		if ( $signup_id > 0 ) {
@@ -663,7 +766,29 @@ function gwc_vt_signup_message( string $result ): string {
 		 * without that being true of it as well. */
 		'too-many'       => __( 'That is more times than we can take in one go. Please pick a few, send them, and come back for the rest.', 'groundwork-common-volunteer-tracker' ),
 		'clash'          => __( 'Two of the times you picked overlap. Change one, or select the checkbox below to say you meant both.', 'groundwork-common-volunteer-tracker' ),
+
+		/* Safe by the same test, and worth spelling out because this one looks
+		 * least like it. It depends on the SHIFT, not on the address typed
+		 * above it: every visitor sees the same sentence for the same shift,
+		 * whether or not they have ever volunteered here. Nothing the site
+		 * knows about a person reaches it. */
+		'needs-signin'   => __( 'This shift is only open to volunteers who have signed in, because of what it asks people to hold. Sign in with your email address and then come back.', 'groundwork-common-volunteer-tracker' ),
 	);
+
+	/* Named separately because it carries what is missing, and because it is
+	 * the one message here that IS about the person reading it — which is only
+	 * safe because they got here by clicking a link in their own mailbox. */
+	if ( 'credential-missing' === $result ) {
+		$short = (string) ( gwc_vt_signup_retry()['credentials'] ?? '' );
+
+		return '' !== $short
+			? sprintf(
+				/* translators: %s: a list of things they need, already joined with commas. */
+				__( 'This shift needs %s, and we have no current record of yours. Please get in touch — if you have it already, we may just not have it on file yet.', 'groundwork-common-volunteer-tracker' ),
+				$short
+			)
+			: __( 'This shift asks for something we have no current record of for you. Please get in touch.', 'groundwork-common-volunteer-tracker' );
+	}
 
 	return $messages[ $result ] ?? '';
 }

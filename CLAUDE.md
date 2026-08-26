@@ -65,6 +65,11 @@ tool this file used to describe, and the later half is easy to miss when scannin
   `gwc_vt_set_shift_credentials()`; putting them in the save handler's `$fields`
   array stores the literal string `Array`, because `gwc_vt_shift_meta_value()`
   casts anything it does not recognise.
+  The block lives in `gwc_vt_signup_credential_refusal()`, called by the four
+  handlers where a human puts a person on a shift — **never inside
+  `gwc_vt_add_signup()`**, which the reconciler and every fixture also call, and
+  **never** on `gwc_vt_settle_signups()` or `gwc_vt_handle_signup_promote()`,
+  which act on somebody already accepted and would fail silently on cron.
 - **The dashboard** — `dashboard.php` (counts, pure) and `admin-dashboard.php`
   (the screen). Split so the worklist's ordering can be asserted without a
   database.

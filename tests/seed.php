@@ -856,6 +856,20 @@ gwc_vt_set_shift_credentials( $gwc_vt_event, array( $gwc_vt_waiver ) );
 gwc_vt_set_shift_credentials( $gwc_vt_kitchen_am, array( $gwc_vt_food ) );
 gwc_vt_set_shift_credentials( $gwc_vt_kitchen_pm, array( $gwc_vt_food ) );
 
+/* ── And what the blocking mode does ─────────────────────────────────────────
+ * The waiver blocks, so any shift asking for it is closed to anybody who has
+ * not signed in — that is phase 4's whole point, and it is why the two Saturdays
+ * below ask for different things.
+ *
+ * THIS Saturday asks only for the food handler card, which reports. The plain
+ * signup form still works on it, and one of the two people on it is flagged.
+ * That keeps the ordinary path — no account, no sign-in — visible, because it
+ * is still how most of this plugin's signups happen.
+ *
+ * NEXT Saturday asks for the waiver, which blocks. The public list says so on
+ * the row before anybody types anything, and the form sends them to sign in.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 /* And one ordinary shift, because the event above is deliberately in the past —
  * its hours are what the unlogged-hours line counts — and a shift that has
  * already happened flags nobody. The credentials on it still show in the
@@ -868,7 +882,24 @@ gwc_vt_set_shift_credentials( $gwc_vt_kitchen_pm, array( $gwc_vt_food ) );
  * draws ONE flag on TWO rows, which is the restraint this feature is supposed
  * to have, visible rather than described. The unmatched signup on the same
  * shift makes the "nothing can be checked for them" sentence appear too. */
-gwc_vt_set_shift_credentials( $gwc_vt_short, array( $gwc_vt_waiver, $gwc_vt_food ) );
+gwc_vt_set_shift_credentials( $gwc_vt_short, array( $gwc_vt_food ) );
+
+/* The gated one. Marcus and Fatima hold the waiver and Tomás does not, so his
+ * row carries the override rather than a flag — recorded by a real person with
+ * a real sentence, which is the only form of override this plugin has. */
+gwc_vt_set_shift_credentials( $gwc_vt_full, array( $gwc_vt_waiver ) );
+
+foreach ( gwc_vt_shift_signup_ids( $gwc_vt_full, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) ) as $gwc_vt_seed_signup_id ) {
+	$gwc_vt_seed_who = (int) get_post_meta( (int) $gwc_vt_seed_signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
+
+	if ( $gwc_vt_seed_who === $gwc_vt_tomas ) {
+		gwc_vt_record_override(
+			(int) $gwc_vt_seed_signup_id,
+			1,
+			'Waiver signed on paper at the desk — scanning it Monday'
+		);
+	}
+}
 
 /* Somebody who is not on file, on the event too — triage reaches here as well. */
 gwc_vt_seed_signup(
@@ -1109,6 +1140,8 @@ printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count(
 printf( "  %-22s %s\n", 'Credentials', count( gwc_vt_live_credential_ids() ) . ' asked for, 1 retired — ' . count( gwc_vt_lapsed_credential_ids() ) . ' volunteer with one that has lapsed' );
 printf( "  %-22s %s\n", 'Asked for on the day', 'a waiver across Thanksgiving, a food handler card in the kitchen' );
 printf( "  %-22s %s\n", 'Flagged this Saturday', 'one of the two people on it is short of the food handler card' );
+printf( "  %-22s %s\n", 'Next Saturday', 'asks for the waiver, which blocks — signed-in volunteers only' );
+printf( "  %-22s %s\n", 'One override on it', 'Tomás, put on anyway, with the reason recorded' );
 printf( "  %-22s %s\n", 'Awaiting verification', gwc_vt_unverified_count() );
 printf( "  %-22s %s\n", 'Self-logged, unmatched', '2' );
 

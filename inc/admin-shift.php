@@ -1048,13 +1048,50 @@ function gwc_vt_handle_roster_add(): void {
 		gwc_vt_shift_redirect( $shift_id, 'no-volunteer' );
 	}
 
-	gwc_vt_add_signup(
+	/* Asked before the write, and asked here rather than inside
+	 * gwc_vt_add_signup() — the reasoning is in inc/credential-shifts.php. */
+	$refused = gwc_vt_signup_credential_refusal( $volunteer_id, $shift_id );
+
+	$reason = mb_substr(
+		trim( sanitize_text_field( (string) wp_unslash( $_POST['gwc_vt_override_reason'] ?? '' ) ) ),
+		0,
+		GWC_VT_OVERRIDE_REASON_MAX
+	);
+
+	if ( $refused && '' === $reason ) {
+		/* The names travel in the URL so the screen can say what is missing.
+		 * A refusal that says only "they cannot be added" sends a coordinator
+		 * to the volunteer's record to work out which of four things it was. */
+		gwc_vt_shift_redirect(
+			$shift_id,
+			'credential-blocked',
+			array(
+				'gwc_vt_volunteer' => $volunteer_id,
+				'gwc_vt_short'     => implode( ',', $refused ),
+			)
+		);
+	}
+
+	$signup_id = gwc_vt_add_signup(
 		$shift_id,
 		array(
 			'volunteer_id' => $volunteer_id,
 			'source'       => 'staff',
 		)
 	);
+
+	/* The return value used to be discarded and 'rostered' reported regardless,
+	 * so a refused add — a shift that had gone, a volunteer who was already on
+	 * it — rendered "Added." over a roster that had not changed. */
+	if ( $signup_id < 1 ) {
+		gwc_vt_shift_redirect( $shift_id, 'not-rostered' );
+	}
+
+	if ( $refused ) {
+		gwc_vt_record_override( $signup_id, get_current_user_id(), $reason );
+
+		gwc_vt_shift_redirect( $shift_id, 'rostered-override' );
+	}
 
 	gwc_vt_shift_redirect( $shift_id, 'rostered' );
 }
@@ -1430,6 +1467,37 @@ function gwc_vt_render_roster_credential_flag( int $signup_id, int $shift_id ): 
 	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
 
 	if ( $volunteer_id < 1 ) {
+		return;
+	}
+
+	/* An override first, because it changes what the row means. Somebody put on
+	 * a shift over a blocking credential is still short of it — the flag would
+	 * be true — but "missing a waiver" and "Dana put them on anyway, and here
+	 * is why" are different facts, and showing the first alone reads as nobody
+	 * having noticed. */
+	$override = gwc_vt_signup_override( $signup_id );
+
+	if ( '' !== $override['reason'] ) {
+		$who = $override['by'] > 0 ? get_the_author_meta( 'display_name', $override['by'] ) : '';
+
+		printf(
+			'<span class="gwcvt-badge gwcvt-badge--cancelled gwcvt-roster__short">%s</span>',
+			esc_html(
+				'' !== $who
+					? sprintf(
+						/* translators: 1: a staff member's name. 2: the reason they gave. */
+						__( 'Added by %1$s over a credential: %2$s', 'groundwork-common-volunteer-tracker' ),
+						$who,
+						$override['reason']
+					)
+					: sprintf(
+						/* translators: %s: the reason given. */
+						__( 'Added over a credential: %s', 'groundwork-common-volunteer-tracker' ),
+						$override['reason']
+					)
+			)
+		);
+
 		return;
 	}
 
