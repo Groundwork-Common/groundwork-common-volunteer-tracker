@@ -147,7 +147,8 @@ echo "\n── Every help tab points at the guide ──────────
 /* The tab is where WordPress trained people to look; the guide is where the
  * how-tos are. Without a link between them the only route is knowing the page
  * exists — which is the thing that made somebody ask where the help was. */
-$GLOBALS['gwc_vt_help_unlinked'] = array();
+$GLOBALS['gwc_vt_help_unlinked']    = array();
+$GLOBALS['gwc_vt_help_wrong_topic'] = array();
 
 foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {
 	set_current_screen( (string) $gwc_vt_help_id );
@@ -166,10 +167,29 @@ foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_i
 		do_action( 'gwc_vt_settings_screen_loaded' );
 	}
 
-	if ( false === strpos( (string) $gwc_vt_help_screen->get_help_sidebar(), GWC_VT_HELP_PAGE ) ) {
+	$gwc_vt_help_bar = (string) $gwc_vt_help_screen->get_help_sidebar();
+
+	if ( false === strpos( $gwc_vt_help_bar, GWC_VT_HELP_PAGE ) ) {
 		$GLOBALS['gwc_vt_help_unlinked'][] = (string) $gwc_vt_help_what;
+		continue;
+	}
+
+	/* And it lands on the topic for THIS screen, not the guide's front.
+	 * Checking only that the link exists passed a sabotage that sent all
+	 * thirteen screens to the same place — which is the behaviour the deep
+	 * link was built to replace. */
+	$gwc_vt_help_want = gwc_vt_help_topic_for_screen( (string) $gwc_vt_help_id );
+
+	if ( '' !== $gwc_vt_help_want && false === strpos( $gwc_vt_help_bar, 'topic=' . $gwc_vt_help_want ) ) {
+		$GLOBALS['gwc_vt_help_wrong_topic'][] = (string) $gwc_vt_help_what . ' → ' . $gwc_vt_help_want;
 	}
 }
+
+gwc_vt_help_check(
+	'and lands on the topic for the screen it is on',
+	array() === $GLOBALS['gwc_vt_help_wrong_topic'],
+	implode( ', ', $GLOBALS['gwc_vt_help_wrong_topic'] )
+);
 
 gwc_vt_help_check(
 	'every screen with help links to the guide',
@@ -186,9 +206,39 @@ echo "\n── The page is a how-to guide ────────────�
 wp_set_current_user( 1 );
 require_once ABSPATH . 'wp-admin/includes/screen.php';
 
-ob_start();
-gwc_vt_render_help_page();
-$GLOBALS['gwc_vt_help_html'] = (string) ob_get_clean();
+/* Every topic, because the guide is one topic at a time now — twenty how-tos
+ * and ninety-two steps in a single scroll was a document nobody reads twice.
+ * A check that rendered once would cover a sixth of it and say so in the
+ * past tense. */
+$GLOBALS['gwc_vt_help_views'] = array();
+
+foreach ( gwc_vt_help_topics() as $gwc_vt_help_t ) {
+	$_GET['topic'] = (string) $gwc_vt_help_t['id'];
+
+	ob_start();
+	gwc_vt_render_help_page();
+	$GLOBALS['gwc_vt_help_views'][ (string) $gwc_vt_help_t['id'] ] = (string) ob_get_clean();
+}
+
+unset( $_GET['topic'] );
+
+$GLOBALS['gwc_vt_help_html'] = implode( '', $GLOBALS['gwc_vt_help_views'] );
+
+gwc_vt_help_check(
+	'every topic renders',
+	count( $GLOBALS['gwc_vt_help_views'] ) === count( gwc_vt_help_topics() )
+		&& ! in_array( '', array_map( 'trim', $GLOBALS['gwc_vt_help_views'] ), true ),
+	count( $GLOBALS['gwc_vt_help_views'] ) . ' view(s)'
+);
+
+/* The point of the change: no single view is a wall. */
+$GLOBALS['gwc_vt_help_longest'] = max( array_map( 'strlen', $GLOBALS['gwc_vt_help_views'] ) );
+
+gwc_vt_help_check(
+	'and no one view is longer than the whole guide used to be',
+	$GLOBALS['gwc_vt_help_longest'] < 9000,
+	$GLOBALS['gwc_vt_help_longest'] . ' bytes'
+);
 
 gwc_vt_help_check(
 	'the page renders',
@@ -251,6 +301,48 @@ gwc_vt_help_check(
 	substr_count( $GLOBALS['gwc_vt_help_html'], '<ol>' ) . ' list(s) for ' . substr_count( $GLOBALS['gwc_vt_help_html'], '<h3>' ) . ' how-to(s)'
 );
 
+/* Every view carries the whole tab bar, so a reader can reach any topic from
+ * any other. A view that dropped the bar would be a page with no way out. */
+$GLOBALS['gwc_vt_help_barless'] = array();
+
+foreach ( $GLOBALS['gwc_vt_help_views'] as $gwc_vt_help_id => $gwc_vt_help_view ) {
+	if ( substr_count( $gwc_vt_help_view, 'class="nav-tab ' ) !== count( gwc_vt_help_topics() ) ) {
+		$GLOBALS['gwc_vt_help_barless'][] = (string) $gwc_vt_help_id;
+	}
+}
+
+gwc_vt_help_check(
+	'every view can reach every other topic',
+	array() === $GLOBALS['gwc_vt_help_barless'],
+	implode( ', ', $GLOBALS['gwc_vt_help_barless'] )
+);
+
+/* A topic names itself as the one being read. */
+gwc_vt_help_check(
+	'exactly one tab is marked current, in every view',
+	1 === count( array_unique( array_map( static function ( $gwc_vt_help_view ) {
+		return substr_count( (string) $gwc_vt_help_view, 'nav-tab-active' );
+	}, $GLOBALS['gwc_vt_help_views'] ) ) )
+		&& 1 === substr_count( (string) reset( $GLOBALS['gwc_vt_help_views'] ), 'nav-tab-active' ),
+	'one per view'
+);
+
+/* An unknown topic lands on the guide rather than on an empty page — the same
+ * fallback the settings screen makes for a stale bookmark. */
+$_GET['topic'] = 'zznot-a-topic';
+
+ob_start();
+gwc_vt_render_help_page();
+$GLOBALS['gwc_vt_help_unknown'] = (string) ob_get_clean();
+
+unset( $_GET['topic'] );
+
+gwc_vt_help_check(
+	'an unknown topic falls back to the first, not to nothing',
+	substr_count( $GLOBALS['gwc_vt_help_unknown'], '<h3>' ) > 0,
+	substr_count( $GLOBALS['gwc_vt_help_unknown'], '<h3>' ) . ' how-to(s)'
+);
+
 /* ── The house style it says it is written in ────────────────────────────────
  * The Microsoft Writing Style Guide, which this repository does not otherwise
  * use. Asserted rather than trusted: a guide drifts one contributed paragraph
@@ -300,8 +392,8 @@ foreach ( array( 'subscriber', 'contributor', 'author', 'editor' ) as $gwc_vt_he
 
 	gwc_vt_help_check(
 		( in_array( substr( $gwc_vt_help_role, 0, 1 ), array( 'a', 'e', 'i', 'o', 'u' ), true ) ? 'an ' : 'a ' ) . $gwc_vt_help_role . ' can read the help page',
-		substr_count( $gwc_vt_help_seen, '<h2 id=' ) === count( $GLOBALS['gwc_vt_help_topics'] ),
-		substr_count( $gwc_vt_help_seen, '<h2 id=' ) . ' of ' . count( $GLOBALS['gwc_vt_help_topics'] ) . ' topics'
+		substr_count( $gwc_vt_help_seen, 'class="nav-tab ' ) === count( $GLOBALS['gwc_vt_help_topics'] ),
+		substr_count( $gwc_vt_help_seen, 'class="nav-tab ' ) . ' of ' . count( $GLOBALS['gwc_vt_help_topics'] ) . ' topics reachable'
 	);
 
 	wp_set_current_user( 1 );

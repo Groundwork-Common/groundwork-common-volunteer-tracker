@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T23:05:11+00:00\n"
+"POT-Creation-Date: 2026-08-26T23:12:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -196,7 +196,7 @@ msgstr ""
 
 #: inc/admin-credentials.php:167
 #: inc/admin-credentials.php:281
-#: inc/admin-help.php:287
+#: inc/admin-help.php:299
 msgid "If somebody has not got it"
 msgstr ""
 
@@ -324,7 +324,7 @@ msgstr ""
 
 #: inc/admin-dashboard-widget.php:116
 #: inc/admin-dashboard.php:104
-#: inc/admin-help.php:80
+#: inc/admin-help.php:92
 #: inc/admin-screen.php:333
 msgid "Volunteer Tracker"
 msgstr ""
@@ -1262,12 +1262,12 @@ msgid "Hours"
 msgstr ""
 
 #: inc/admin-help-page.php:82
-#: inc/admin-help.php:669
+#: inc/admin-help.php:681
 msgid "Logging a day"
 msgstr ""
 
 #: inc/admin-help-page.php:83
-#: inc/admin-help.php:553
+#: inc/admin-help.php:565
 msgid "Verifying hours"
 msgstr ""
 
@@ -1286,13 +1286,13 @@ msgid "Changing a whole repeat"
 msgstr ""
 
 #: inc/admin-help-page.php:89
-#: inc/admin-help.php:82
+#: inc/admin-help.php:94
 #: inc/admin-screen.php:255
 msgid "Settings"
 msgstr ""
 
 #: inc/admin-help-page.php:96
-#: inc/admin-help.php:625
+#: inc/admin-help.php:637
 #: inc/help-content.php:149
 msgid "Producing a letter"
 msgstr ""
@@ -1306,353 +1306,357 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
-#: inc/admin-help-page.php:197
+#: inc/admin-help-page.php:198
 msgid "How to do the things this plugin is for. Every screen also has a Help tab at the top right, which explains what the screen means rather than how to use it."
 msgstr ""
 
-#: inc/admin-help.php:76
+#: inc/admin-help-page.php:209
+msgid "Help topics"
+msgstr ""
+
+#: inc/admin-help.php:87
 msgid "How-to guide"
 msgstr ""
 
-#: inc/admin-help.php:83
+#: inc/admin-help.php:95
 #: inc/admin-screen.php:666
 msgid "Report a problem"
 msgstr ""
 
-#: inc/admin-help.php:116
+#: inc/admin-help.php:128
 msgid "The letter"
 msgstr ""
 
-#: inc/admin-help.php:118
+#: inc/admin-help.php:130
 msgid "Everything the letter says about your organization comes from this screen: the letterhead, who signs it, and the wording of the opening paragraph."
 msgstr ""
 
-#: inc/admin-help.php:119
+#: inc/admin-help.php:131
 msgid "The wording accepts placeholders — <code>{name}</code>, <code>{hours}</code>, <code>{period}</code>, <code>{org}</code> and others listed above the fields — which are filled in for each volunteer when the letter is produced."
 msgstr ""
 
-#: inc/admin-help.php:120
+#: inc/admin-help.php:132
 msgid "The disclaimer and the note about the reference code cannot be emptied. Saving either one blank restores the built-in wording. They are what tell a reader that <strong>your organization</strong>, not this plugin, is the authoritative record-keeper — and a letter without them has quietly started implying something nobody can stand behind."
 msgstr ""
 
-#: inc/admin-help.php:128
+#: inc/admin-help.php:140
 #: inc/admin-settings.php:451
 #: inc/help-content.php:89
 msgid "Recording hours"
 msgstr ""
 
-#: inc/admin-help.php:130
+#: inc/admin-help.php:142
 msgid "Durations are stored as whole minutes and can be typed however you think of them: <code>3.5</code>, <code>3:30</code>, <code>3h 30m</code> or <code>210m</code> all record three and a half hours."
 msgstr ""
 
-#: inc/admin-help.php:131
+#: inc/admin-help.php:143
 msgid "A bare number over 24 is refused rather than guessed at. Typing <code>210</code> means two hundred and ten hours, which is nobody’s shift — it is almost always minutes typed into an hours field, so the form asks rather than recording a quarter of a year."
 msgstr ""
 
-#: inc/admin-help.php:132
+#: inc/admin-help.php:144
 msgid "Rounding is always to the nearest increment, never up. Rounding up would mean the organization crediting hours nobody worked, which on this document is the one direction of error that matters."
 msgstr ""
 
-#: inc/admin-help.php:133
+#: inc/admin-help.php:145
 msgid "The public form is switched off until you switch it on and choose a page for it. With it on, this site accepts a name, an email address and a date from anonymous visitors. Everything sent arrives unverified and attached to nobody until a member of staff matches it."
 msgstr ""
 
-#: inc/admin-help.php:140
+#: inc/admin-help.php:152
 #: inc/admin-screen.php:298
 #: inc/render.php:132
 msgid "Shifts"
 msgstr ""
 
-#: inc/admin-help.php:142
+#: inc/admin-help.php:154
 msgid "Off until you switch it on. With it on, a Schedule screen appears where you can plan shifts ahead of time, put volunteers on them and print a roster. Nothing about it touches hours: a scheduled shift is a plan, and hours are still logged afterwards and still have to be verified."
 msgstr ""
 
-#: inc/admin-help.php:143
+#: inc/admin-help.php:155
 msgid "Letting people sign up from your site is a second switch, because taking names on the phone and accepting them from strangers are different decisions. With it on, this site accepts a name and an email address from anonymous visitors, and the page it is on must be chosen here."
 msgstr ""
 
-#: inc/admin-help.php:144
+#: inc/admin-help.php:156
 msgid "Reminders and the daily summary are the only mail this plugin sends without somebody pressing a button, and both are off until you turn them on. A confirmation when somebody signs up is not optional — a booking nobody can be told about is one they have no record of and no way out of."
 msgstr ""
 
-#: inc/admin-help.php:145
+#: inc/admin-help.php:157
 msgid "The daily summary lists shifts in the next week that are short of people, and shifts that have happened without their hours being logged. Nothing is sent on a day when there is nothing to report."
 msgstr ""
 
-#: inc/admin-help.php:152
+#: inc/admin-help.php:164
 msgid "Keeping and removing records"
 msgstr ""
 
-#: inc/admin-help.php:154
+#: inc/admin-help.php:166
 msgid "Nothing is ever deleted while records are kept indefinitely, which is the default. That default is deliberate: a plugin that deleted on a schedule it chose would eventually destroy the weeks of Saturdays somebody needs for a court date they have not reached yet."
 msgstr ""
 
-#: inc/admin-help.php:155
+#: inc/admin-help.php:167
 msgid "Anonymizing is usually the right action rather than deleting. Your grant reporting and your Form 990 need the hours; they do not need the name, and the hours identify nobody once it is gone."
 msgstr ""
 
-#: inc/admin-help.php:156
+#: inc/admin-help.php:168
 msgid "A volunteer’s record can be held back from the sweep individually, with a reason — for when a court requires you to keep something longer than your own policy. A hold also blocks an erasure request from WordPress’s privacy tools, and the reason you record is shown to whoever handles it."
 msgstr ""
 
-#: inc/admin-help.php:157
+#: inc/admin-help.php:169
 msgid "Requests under Tools → Export Personal Data and Erase Personal Data include volunteer records, shifts, issued letters, and any shifts somebody signed up for — including a signup from a person who never became a volunteer, which nothing else in the plugin would find. They work whether or not you have set a retention period."
 msgstr ""
 
-#: inc/admin-help.php:158
+#: inc/admin-help.php:170
 msgid "Deleting the plugin removes none of it. Every volunteer, shift, signup, hour entry and issued letter stays exactly where it is, and so do the two permissions this plugin adds to your roles. Deactivating does the same. That means deleting the plugin is not a way to remove somebody's data — use the retention policy or the Erase Personal Data tool first."
 msgstr ""
 
-#: inc/admin-help.php:159
+#: inc/admin-help.php:171
 msgid "The one thing you can ask it to clean up on deletion is its own configuration, with the checkbox under <strong>Removing this plugin</strong>. Even armed, it deletes no records of any kind."
 msgstr ""
 
-#: inc/admin-help.php:166
+#: inc/admin-help.php:178
 msgid "Staging and copies of this site"
 msgstr ""
 
-#: inc/admin-help.php:168
+#: inc/admin-help.php:180
 msgid "A copy of this site restored from a backup — a staging server, a developer's machine, a clone made to try an upgrade — has the real volunteers and the real email addresses in it. Left running, it will send reminders, confirmations and verification letters to those people, about court-ordered service, from a site nobody is watching."
 msgstr ""
 
-#: inc/admin-help.php:169
+#: inc/admin-help.php:181
 msgid "Two constants stop it, and they go in <code>wp-config.php</code> on the copy rather than on the live site, because the copy is what you control when you make one."
 msgstr ""
 
-#: inc/admin-help.php:170
+#: inc/admin-help.php:182
 msgid "Set <code>GWC_VT_MAIL_MODE</code> to <code>off</code> and this plugin sends nothing at all. Set it to <code>trap</code>, and also set <code>GWC_VT_MAIL_ALLOW</code> to your own address, and every message is redirected there instead, with the site's name in the subject and a line saying who it was really addressed to."
 msgstr ""
 
-#: inc/admin-help.php:171
+#: inc/admin-help.php:183
 msgid "Neither constant needs to exist on the live site. Unset means normal delivery, so a site that has never heard of them behaves exactly as you would expect. Trap mode with no address to trap to sends nothing rather than falling through to the real recipient."
 msgstr ""
 
-#: inc/admin-help.php:265
+#: inc/admin-help.php:277
 msgid "What a credential is"
 msgstr ""
 
-#: inc/admin-help.php:267
+#: inc/admin-help.php:279
 msgid "Something a volunteer has to <strong>hold</strong> before doing certain work — a training course, a signed waiver, a background check."
 msgstr ""
 
-#: inc/admin-help.php:268
+#: inc/admin-help.php:280
 msgid "This is not the same as the hours a court or a school required of somebody. Those live on the volunteer’s own record and never appear here."
 msgstr ""
 
-#: inc/admin-help.php:269
+#: inc/admin-help.php:281
 msgid "You define each one here. You record who holds it on each volunteer’s own record, which is also where you can see what somebody is missing."
 msgstr ""
 
-#: inc/admin-help.php:276
+#: inc/admin-help.php:288
 msgid "Renewing"
 msgstr ""
 
-#: inc/admin-help.php:278
+#: inc/admin-help.php:290
 msgid "When something expires is worked out from the day it was granted, and is never stored. Change a credential from twelve months to twenty-four and everybody who holds it is re-dated — there are no old dates left behind."
 msgstr ""
 
-#: inc/admin-help.php:279
+#: inc/admin-help.php:291
 msgid "Somebody who did it on the 31st renews on the 31st, or on the last day of a month that is shorter."
 msgstr ""
 
-#: inc/admin-help.php:280
+#: inc/admin-help.php:292
 msgid "Recording a renewal does not replace what came before it. Every grant is kept, so “renewed every year since 2019” is still there to read."
 msgstr ""
 
-#: inc/admin-help.php:289
+#: inc/admin-help.php:301
 msgid "<strong>Reporting</strong> is the safer default and what most organizations want: whoever is short of it is flagged on the roster, and a person decides what to do."
 msgstr ""
 
-#: inc/admin-help.php:290
+#: inc/admin-help.php:302
 msgid "<strong>Stopping a signup</strong> is for the things nobody may work without. A staff member can still put somebody on, but only by giving a reason — which is recorded with their name and shown on the roster from then on."
 msgstr ""
 
-#: inc/admin-help.php:291
+#: inc/admin-help.php:303
 msgid "Nobody is ever taken off a roster automatically. Somebody already accepted for a shift stays accepted, and the roster tells you rather than deciding for you."
 msgstr ""
 
-#: inc/admin-help.php:298
+#: inc/admin-help.php:310
 msgid "Retiring one"
 msgstr ""
 
-#: inc/admin-help.php:300
+#: inc/admin-help.php:312
 msgid "Retiring a credential stops it being asked for. It does not take it away from the people who hold it, and it does not delete anything."
 msgstr ""
 
-#: inc/admin-help.php:301
+#: inc/admin-help.php:313
 msgid "Every record of who held it is kept, and you can still see who they were. Put it back into use and every shift that asked for it asks again."
 msgstr ""
 
-#: inc/admin-help.php:317
+#: inc/admin-help.php:329
 msgid "What is waiting here"
 msgstr ""
 
-#: inc/admin-help.php:319
+#: inc/admin-help.php:331
 msgid "What somebody typed into the form on your site. Nothing here is a volunteer record yet, and nothing here counts toward anything."
 msgstr ""
 
-#: inc/admin-help.php:320
+#: inc/admin-help.php:332
 msgid "That is deliberate: a public form cannot create a volunteer record, so spam and mistakes reach a queue somebody empties rather than your volunteer list."
 msgstr ""
 
-#: inc/admin-help.php:321
+#: inc/admin-help.php:333
 msgid "Accepting one makes a volunteer record from what they wrote. Setting one aside keeps what they sent and takes it off this list."
 msgstr ""
 
-#: inc/admin-help.php:328
+#: inc/admin-help.php:340
 msgid "Nobody is told they are waiting"
 msgstr ""
 
-#: inc/admin-help.php:330
+#: inc/admin-help.php:342
 msgid "The plugin sends nothing when an offer arrives and nothing while it sits here. Somebody who offered to help and hears nothing for three weeks has usually concluded the answer was no."
 msgstr ""
 
-#: inc/admin-help.php:331
+#: inc/admin-help.php:343
 msgid "The count beside this screen’s name in the menu, and the line on the dashboard, are how you find out one is waiting."
 msgstr ""
 
-#: inc/admin-help.php:347
+#: inc/admin-help.php:359
 msgid "What verifying means"
 msgstr ""
 
-#: inc/admin-help.php:349
+#: inc/admin-help.php:361
 msgid "A member of your staff saying the work happened. Who did it and when is recorded, and it appears on any letter that includes those hours."
 msgstr ""
 
-#: inc/admin-help.php:350
+#: inc/admin-help.php:362
 msgid "Only verified hours reach a letter. Everything waiting here counts toward nothing until somebody says it happened."
 msgstr ""
 
-#: inc/admin-help.php:357
+#: inc/admin-help.php:369
 msgid "Hours attached to nobody"
 msgstr ""
 
-#: inc/admin-help.php:359
+#: inc/admin-help.php:371
 msgid "Anything sent through the public form arrives as a claim — a name and an address somebody typed, attached to no volunteer record."
 msgstr ""
 
-#: inc/admin-help.php:360
+#: inc/admin-help.php:372
 msgid "They are held apart here until a person says whose they are. The form never looks anybody up, so what it recorded is what was typed and nothing more."
 msgstr ""
 
-#: inc/admin-help.php:376
+#: inc/admin-help.php:388
 msgid "Changing every occurrence"
 msgstr ""
 
-#: inc/admin-help.php:378
+#: inc/admin-help.php:390
 msgid "Every occurrence of a repeat is a real shift you can edit or call off on its own. This screen changes the ones you choose, all at once."
 msgstr ""
 
-#: inc/admin-help.php:379
+#: inc/admin-help.php:391
 msgid "It tells you how many it will touch and how many it will leave, before it does anything. Occurrences that have already happened, and ones that were called off, are left alone unless you say otherwise."
 msgstr ""
 
-#: inc/admin-help.php:380
+#: inc/admin-help.php:392
 msgid "Changing what a shift asks people to hold <strong>replaces</strong> what each occurrence asks for rather than adding to it — so selecting that box with nothing chosen clears them across the repeat."
 msgstr ""
 
-#: inc/admin-help.php:396
+#: inc/admin-help.php:408
 msgid "What this record holds"
 msgstr ""
 
-#: inc/admin-help.php:398
+#: inc/admin-help.php:410
 msgid "Who somebody is, how to reach them, what they have done, and what they hold. A volunteer is not a WordPress user: there is no account here and no password."
 msgstr ""
 
-#: inc/admin-help.php:399
+#: inc/admin-help.php:411
 msgid "Hours and letters below are shown for reading, not editing. Hours are corrected on the entry itself, and a letter that has been issued is not editable at all."
 msgstr ""
 
-#: inc/admin-help.php:406
+#: inc/admin-help.php:418
 msgid "Recording a credential"
 msgstr ""
 
-#: inc/admin-help.php:408
+#: inc/admin-help.php:420
 msgid "Every credential your organization asks for is listed, including the ones this person has never held — the box answers “what are they missing” as well as “what do they hold”."
 msgstr ""
 
-#: inc/admin-help.php:409
+#: inc/admin-help.php:421
 msgid "Give the date they actually did it, not today’s date. Anything that expires counts from that day, so a class taken in March and entered in June expires in March."
 msgstr ""
 
-#: inc/admin-help.php:410
+#: inc/admin-help.php:422
 msgid "It is saved when you press Update, along with the rest of the record."
 msgstr ""
 
-#: inc/admin-help.php:417
+#: inc/admin-help.php:429
 msgid "Hours somebody has to complete"
 msgstr ""
 
-#: inc/admin-help.php:419
+#: inc/admin-help.php:431
 msgid "How many hours a court or a school required, by when, and for whom. It is for your planning only and never appears on a letter."
 msgstr ""
 
-#: inc/admin-help.php:420
+#: inc/admin-help.php:432
 msgid "It is also kept off every screen a volunteer can see. What somebody was ordered to do is a fact about another organization’s document."
 msgstr ""
 
-#: inc/admin-help.php:436
+#: inc/admin-help.php:448
 msgid "What this screen shows"
 msgstr ""
 
-#: inc/admin-help.php:438
+#: inc/admin-help.php:450
 msgid "Information on the left, action on the right. The fortnight ahead and the year’s one figure are what is true; the rail beside them — the verbs, what is waiting, and the reference checker — is what you might do about it. Nothing on it is a number for its own sake: each line in <strong>Needs you</strong> is something to do, and the count is what tells you whether to do it now."
 msgstr ""
 
-#: inc/admin-help.php:439
+#: inc/admin-help.php:451
 msgid "The order is not by size. It runs by what is lost if it waits: hours from a shift that happened and was never typed up come first, because every week takes them further from anybody remembering them. Shifts still short of people come next, because on Sunday there is nothing to be done about Saturday. Verifying and matching sit at the bottom — both keep."
 msgstr ""
 
-#: inc/admin-help.php:440
+#: inc/admin-help.php:452
 msgid "A queue with nothing in it does not appear at all. A screen that says “none waiting” five times over is one people stop reading, and then the line that matters gets skimmed with it."
 msgstr ""
 
-#: inc/admin-help.php:441
+#: inc/admin-help.php:453
 msgid "Nobody is named here. Every line is a count and a link, and the names are on the screen the link goes to — which is somewhere you have gone deliberately."
 msgstr ""
 
-#: inc/admin-help.php:448
+#: inc/admin-help.php:460
 msgid "The year’s figure"
 msgstr ""
 
-#: inc/admin-help.php:450
+#: inc/admin-help.php:462
 msgid "Verified hours only, for the same reason a letter states only those: nobody has attested to the rest. Hours still waiting are counted beside it rather than folded in."
 msgstr ""
 
-#: inc/admin-help.php:451
+#: inc/admin-help.php:463
 msgid "It is the number your Form 990 and your grant reports want, and it is the only thing on this screen that leaves the building. Everything else is a prompt to do something."
 msgstr ""
 
-#: inc/admin-help.php:452
+#: inc/admin-help.php:464
 msgid "The year runs from 1 January. If yours does not, a developer can set the start date with the <code>gwc_vt_reporting_year_start</code> filter — it is not a setting, because a wrong answer here quietly misstates a figure that goes to a funder."
 msgstr ""
 
-#: inc/admin-help.php:476
+#: inc/admin-help.php:488
 #: inc/help-content.php:178
 msgid "Planning shifts"
 msgstr ""
 
-#: inc/admin-help.php:478
+#: inc/admin-help.php:490
 msgid "A shift here is a plan, not a record. Nobody accrues hours by being on a shift — hours are logged afterwards, by somebody who was there, and still have to be verified like any others."
 msgstr ""
 
-#: inc/admin-help.php:479
+#: inc/admin-help.php:491
 msgid "A repeat creates real shifts, one per date, each of which you can edit or cancel on its own. Closing the Saturday after Thanksgiving does not disturb the rest of the season."
 msgstr ""
 
-#: inc/admin-help.php:480
+#: inc/admin-help.php:492
 msgid "Times are the times you would write on a noticeboard. A nine o’clock shift is at nine o’clock all year, including the weekend the clocks change. For a shift that runs past midnight, select <strong>ends the next day</strong> — an end time before the start is otherwise treated as a typo and refused."
 msgstr ""
 
-#: inc/admin-help.php:481
+#: inc/admin-help.php:493
 msgid "The minimum is what flags a shift on this screen as short of people. The maximum is not a limit on who may sign up: once it is reached, later signups go on a waiting list rather than being turned away, and you decide what to do with them."
 msgstr ""
 
-#: inc/admin-help.php:482
+#: inc/admin-help.php:494
 msgid "Canceling and deleting are different things. A canceled shift stays on the schedule marked as canceled, so it is clear it was called off rather than never planned; deleting is only offered while nobody is signed up."
 msgstr ""
 
-#: inc/admin-help.php:492
+#: inc/admin-help.php:504
 #: inc/admin-schedule.php:386
 #: inc/admin-schedule.php:2112
 #: inc/admin-schedule.php:2125
@@ -1660,226 +1664,226 @@ msgstr ""
 msgid "Events"
 msgstr ""
 
-#: inc/admin-help.php:494
+#: inc/admin-help.php:506
 msgid "An event is one occasion with several roles, each offered at several times — a festival, a meal service, a collection drive. Underneath it there is nothing new: every time on an event is an ordinary shift, so waiting lists, reminders, rosters and hours all behave exactly as they do for a shift you scheduled on its own."
 msgstr ""
 
-#: inc/admin-help.php:495
+#: inc/admin-help.php:507
 msgid "You build the day as a grid. Name a role once and hang its times underneath it; the role’s supervisor, address and what-to-know are typed once and carried down to every time in it. Anything a single time names for itself wins over the role, and anything the role names wins over the event — most specific wins, and nothing is ever appended to anything else."
 msgstr ""
 
-#: inc/admin-help.php:496
+#: inc/admin-help.php:508
 msgid "The date is not something you fill in. It is read from the times in the grid, because a second date field is a second answer and it disagrees with the first the moment somebody moves one time."
 msgstr ""
 
-#: inc/admin-help.php:497
+#: inc/admin-help.php:509
 msgid "Calling off a time and dropping a role are buttons rather than something you do by clearing a field, and each asks first. Removing a time cancels it when people are on it and deletes it only when nobody is — the row tells you which before you save."
 msgstr ""
 
-#: inc/admin-help.php:498
+#: inc/admin-help.php:510
 msgid "<strong>Copy</strong> puts the whole day on a new date, roles and times and all, saved as a draft so you can check the dates before anybody sees it."
 msgstr ""
 
-#: inc/admin-help.php:505
+#: inc/admin-help.php:517
 msgid "Where volunteers see an event"
 msgstr ""
 
-#: inc/admin-help.php:507
+#: inc/admin-help.php:519
 msgid "An event has no web address of its own, and publishing one does not give it one. It is seen only where you put it: add the <strong>Volunteer Event</strong> block to a page or a post and pick the event, or paste the <code>[gwc_vt_event_grid]</code> shortcode with the event’s id into one. If you put the same event in more than one place, links back to it use whichever you published first."
 msgstr ""
 
-#: inc/admin-help.php:508
+#: inc/admin-help.php:520
 msgid "The event editor tells you which page currently shows it, and says so plainly when no page does. That is the fastest way to check, because the answer is found by looking for the block rather than stored anywhere."
 msgstr ""
 
-#: inc/admin-help.php:509
+#: inc/admin-help.php:521
 msgid "Three things have to be true before anybody can sign up: signing up from your site is switched on, a shifts page is pinned under Settings → Shifts, and the event is published. The pinned shifts page is needed even though the event sits somewhere of its own — every public signup goes through it."
 msgstr ""
 
-#: inc/admin-help.php:510
+#: inc/admin-help.php:522
 msgid "An event’s times never appear on the general shifts page. That page lists shifts you scheduled on their own; an event is shown whole, on its own page, or not at all."
 msgstr ""
 
-#: inc/admin-help.php:511
+#: inc/admin-help.php:523
 msgid "What a visitor sees is each role, each time, and how many places are left. Never who else is coming — the same rule as the shift list, and for the same reason."
 msgstr ""
 
-#: inc/admin-help.php:518
+#: inc/admin-help.php:530
 #: inc/admin-schedule.php:415
 #: inc/admin-shift.php:455
 #: inc/admin-shift.php:570
 msgid "Who is coming"
 msgstr ""
 
-#: inc/admin-help.php:520
+#: inc/admin-help.php:532
 msgid "You can put anybody on a shift yourself, which is how most offers of help at this size arrive — somebody rings up. They need a volunteer record first."
 msgstr ""
 
-#: inc/admin-help.php:521
+#: inc/admin-help.php:533
 msgid "Taking somebody off records that they withdrew rather than removing them, so a glance at the shift shows that two people dropped instead of leaving you wondering. Whoever is next on the waiting list takes the free place right away."
 msgstr ""
 
-#: inc/admin-help.php:522
+#: inc/admin-help.php:534
 msgid "<strong>Print the roster</strong> gives you the sheet for the clipboard, with contact details and blank columns for in and out times, plus spare rows for people who turn up without having signed up."
 msgstr ""
 
-#: inc/admin-help.php:523
+#: inc/admin-help.php:535
 msgid "If you let people sign up from your own site, what they see is what each shift is and how many places are left — never who else is coming. There is no setting that changes that, because a roster can say more about the people on it than they agreed to make public."
 msgstr ""
 
-#: inc/admin-help.php:524
+#: inc/admin-help.php:536
 msgid "Somebody who signs up from your site is not added to your volunteer records. Their name and email are stored as claims until a member of staff matches them, exactly as with hours sent through the public form."
 msgstr ""
 
-#: inc/admin-help.php:531
+#: inc/admin-help.php:543
 msgid "Turning a shift into hours"
 msgstr ""
 
-#: inc/admin-help.php:533
+#: inc/admin-help.php:545
 msgid "Once a shift has finished, <strong>Log the hours</strong> opens it with everybody who signed up already selected and the hours it was scheduled for filled in. Clear the checkbox for whoever did not turn up, change the hours for anybody who left early, add the people who walked in, and save once."
 msgstr ""
 
-#: inc/admin-help.php:534
+#: inc/admin-help.php:546
 msgid "Hours cannot be logged before a shift has ended. Recorded early they would be dated the day you typed them rather than the day they were worked, and that date is what a letter prints."
 msgstr ""
 
-#: inc/admin-help.php:535
+#: inc/admin-help.php:547
 msgid "Nothing at all is recorded for somebody who did not come. There is no absence marked anywhere — the shift simply produces no hours for them."
 msgstr ""
 
-#: inc/admin-help.php:536
+#: inc/admin-help.php:548
 msgid "You can come back to a shift you have already logged to add somebody who was missed. Anybody who already has an entry is shown as logged and cannot be recorded twice."
 msgstr ""
 
-#: inc/admin-help.php:537
+#: inc/admin-help.php:549
 msgid "An event works the same way, one time at a time. Open its roster and each time that has finished carries its own <strong>Log the hours</strong> link, with the people who signed up for that time already selected. The event’s row on the schedule says how many times are still waiting."
 msgstr ""
 
-#: inc/admin-help.php:555
+#: inc/admin-help.php:567
 msgid "Click the <strong>Not yet verified</strong> badge to verify a shift. Your name and the date are recorded and appear on any letter that includes it, so verifying is you attesting, as a member of staff, that these hours were worked."
 msgstr ""
 
-#: inc/admin-help.php:556
+#: inc/admin-help.php:568
 msgid "To do several at once, select them and choose Verify from the Bulk actions menu. To undo one, use <strong>Withdraw verification</strong> in the row’s hover menu — it is kept out of the way on purpose, so a quick click cannot undo somebody’s attestation by accident."
 msgstr ""
 
-#: inc/admin-help.php:557
+#: inc/admin-help.php:569
 msgid "Only verified hours are counted on a letter. Unverified ones can be listed and marked as such if you turn that on, but they are never added to the total the letter states."
 msgstr ""
 
-#: inc/admin-help.php:564
+#: inc/admin-help.php:576
 msgid "Hours sent in by volunteers"
 msgstr ""
 
-#: inc/admin-help.php:566
+#: inc/admin-help.php:578
 msgid "Shifts sent through the public form arrive attached to nobody, shown in italics as <em>not yet matched</em>. The name and email on them are what somebody typed into a form — treat them as claims until you have checked."
 msgstr ""
 
-#: inc/admin-help.php:567
+#: inc/admin-help.php:579
 msgid "Open one and it will offer to attach it to a volunteer whose email or name matches exactly, or to create a record from what was submitted. Choose <strong>Awaiting matching</strong> in the filter above to see only these."
 msgstr ""
 
-#: inc/admin-help.php:568
+#: inc/admin-help.php:580
 msgid "Matching and verifying are separate on purpose. Attaching says whose hours these are; verifying says they happened. Doing the first does not do the second."
 msgstr ""
 
-#: inc/admin-help.php:584
+#: inc/admin-help.php:596
 msgid "Volunteer records"
 msgstr ""
 
-#: inc/admin-help.php:586
+#: inc/admin-help.php:598
 msgid "One record per person, which is what makes a letter possible — forty shifts typed as “Jane Doe”, “jane doe” and “J. Doe” cannot be added together."
 msgstr ""
 
-#: inc/admin-help.php:587
+#: inc/admin-help.php:599
 msgid "Opening a volunteer shows every shift they have logged and every letter already issued for them, with a link to check any of those references against your current records."
 msgstr ""
 
-#: inc/admin-help.php:588
+#: inc/admin-help.php:600
 msgid "An email address is optional, but a letter can only be emailed to somebody who has one on file. Without it the letter can still be printed."
 msgstr ""
 
-#: inc/admin-help.php:589
+#: inc/admin-help.php:601
 msgid "Volunteers never sign in and never receive an account. Nothing here is visible to the public or through the site’s search."
 msgstr ""
 
-#: inc/admin-help.php:605
+#: inc/admin-help.php:617
 msgid "What this log is"
 msgstr ""
 
-#: inc/admin-help.php:607
+#: inc/admin-help.php:619
 msgid "Every letter that has left the building, printed or emailed. A printed letter has left the building just as much as an emailed one, so both are recorded."
 msgstr ""
 
-#: inc/admin-help.php:608
+#: inc/admin-help.php:620
 msgid "Rows reading <strong>record removed</strong> are letters produced for somebody whose volunteer record has since been erased or anonymized. They stay, deliberately: the log holds no name and no hours of its own, and it is the receipt of this organization’s own conduct. Losing it when a record goes would be losing it exactly when it starts to matter."
 msgstr ""
 
-#: inc/admin-help.php:609
+#: inc/admin-help.php:621
 msgid "To produce a letter, start from the volunteer’s own record. To check a reference somebody has phoned in, use the panel on the Dashboard."
 msgstr ""
 
-#: inc/admin-help.php:627
+#: inc/admin-help.php:639
 msgid "Choose a volunteer and, if you need one, a date range. Leaving both dates empty covers their whole time volunteering."
 msgstr ""
 
-#: inc/admin-help.php:628
+#: inc/admin-help.php:640
 msgid "Printing opens the letter in a new tab; use your browser’s print dialog and choose “Save as PDF” if you need a file. Both printing and emailing are recorded in the log — a printed letter has left the building just as much as an emailed one."
 msgstr ""
 
-#: inc/admin-help.php:629
+#: inc/admin-help.php:641
 msgid "The letter is built fresh from your records every time it is produced. It is never a stored copy, so it always states what you currently have on file."
 msgstr ""
 
-#: inc/admin-help.php:630
+#: inc/admin-help.php:642
 msgid "The line above Preview says what the letter will state and whether anything of theirs is still waiting to be verified. Unverified hours are never on a letter, so a total that is about to change is worth knowing before you send one."
 msgstr ""
 
-#: inc/admin-help.php:650
+#: inc/admin-help.php:662
 msgid "Checking a reference"
 msgstr ""
 
-#: inc/admin-help.php:652
+#: inc/admin-help.php:664
 msgid "Every letter carries a reference code. Somebody who has been sent one — a court, a school, an employer — can phone and read it out, and the panel on this screen will tell you whether the letter still matches your records."
 msgstr ""
 
-#: inc/admin-help.php:653
+#: inc/admin-help.php:665
 msgid "The code covers every detail the letter prints, not just the total: the dates, the activities, the supervisors and each shift’s hours. Two shifts swapped so the total came out the same will still show as changed."
 msgstr ""
 
-#: inc/admin-help.php:654
+#: inc/admin-help.php:666
 msgid "<strong>Records have changed</strong> is not an accusation. Hours get corrected and shifts get verified after a letter goes out, and all of that is ordinary. The whole letter is shown as your records stand now so you can compare it against the copy somebody was sent."
 msgstr ""
 
-#: inc/admin-help.php:655
+#: inc/admin-help.php:667
 msgid "What the code proves is that a document matches your records. It does not prove the hours were worked — that is what your staff attested to, and it is stated on the letter itself."
 msgstr ""
 
-#: inc/admin-help.php:671
+#: inc/admin-help.php:683
 msgid "For typing up a sign-in sheet. Whatever the shift had in common — the date, what people were doing, who supervised — goes in once at the top, and each volunteer and their hours go in the list below."
 msgstr ""
 
-#: inc/admin-help.php:672
+#: inc/admin-help.php:684
 msgid "Leave any row empty to skip it. A row with only half of it filled in is reported rather than silently ignored, so nobody’s hours go missing quietly."
 msgstr ""
 
-#: inc/admin-help.php:673
+#: inc/admin-help.php:685
 msgid "Everything logged here arrives unverified, the same as any other entry. Use the link in the confirmation to go and verify the lot."
 msgstr ""
 
-#: inc/admin-help.php:685
+#: inc/admin-help.php:697
 msgid "Logging from a shift"
 msgstr ""
 
-#: inc/admin-help.php:687
+#: inc/admin-help.php:699
 msgid "Opened from a shift on the schedule, this screen fills itself in: the date, the activity and the supervisor come from the shift, and everybody who signed up is already listed and selected with the hours it was scheduled for."
 msgstr ""
 
-#: inc/admin-help.php:688
+#: inc/admin-help.php:700
 msgid "That leaves you the parts that actually differ — clear the checkbox for whoever did not turn up, trim anybody who left early, and use the blank rows at the bottom for people who came without signing up."
 msgstr ""
 
-#: inc/admin-help.php:689
+#: inc/admin-help.php:701
 msgid "Somebody who signed up through your site and has not been matched to a volunteer record yet is shown with a suggestion. Choosing who they are logs their hours and matches their signup at the same time."
 msgstr ""
 

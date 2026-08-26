@@ -72,9 +72,21 @@ function gwc_vt_add_help_sidebar( $screen ): void {
 	 * function_exists() because inc/admin-help-page.php is required after this
 	 * file — and because a site that has somehow loaded one without the other
 	 * should lose a link, not fatal on every admin screen. */
-	$guide = function_exists( 'gwc_vt_help_page_url' )
-		? '<p><a href="' . esc_url( gwc_vt_help_page_url() ) . '">' . esc_html__( 'How-to guide', 'groundwork-common-volunteer-tracker' ) . '</a></p>'
-		: '';
+	$guide = '';
+
+	if ( function_exists( 'gwc_vt_help_page_url' ) ) {
+		/* Landing on the topic for THIS screen rather than at the guide's
+		 * front. Somebody reading the Credentials help wants the four how-tos
+		 * for credentials, not the top of a page with ninety-two steps below
+		 * it. */
+		$topic = function_exists( 'gwc_vt_help_topic_for_screen' )
+			? gwc_vt_help_topic_for_screen( (string) $screen->id )
+			: '';
+
+		$guide = '<p><a href="' . esc_url( gwc_vt_help_page_url( $topic ) ) . '">'
+			. esc_html__( 'How-to guide', 'groundwork-common-volunteer-tracker' )
+			. '</a></p>';
+	}
 
 	$screen->set_help_sidebar(
 		'<p><strong>' . esc_html__( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ) . '</strong></p>' .
