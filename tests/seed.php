@@ -250,6 +250,7 @@ update_option(
 		'registration_enabled'      => true,
 		'registration_page'         => $gwc_vt_offer_page,
 		'registration_ask_required' => true,
+		'registration_ask_photo'    => true,
 
 		'shifts_enabled'   => true,
 		'shift_locations'  => "Main warehouse\nFront desk\nRiverbend Community Center\nThe collection van",
@@ -723,6 +724,80 @@ if ( $gwc_vt_letter instanceof GWC_VT_Letter ) {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
+ * A stand-in picture for an offer, and deliberately not a face.
+ *
+ * The note at the top of this file says the fixtures are obviously fictional,
+ * because a screenshot of a real volunteer beside their court-referral status
+ * is a disclosure nobody can take back. A synthesised photograph of a person
+ * who does not exist fails that test in a different direction: it looks exactly
+ * like a real disclosure, it is indistinguishable from one at a glance, and it
+ * puts a fabricated human face on a demo of a plugin about mandated service.
+ *
+ * So these are flat shapes in the plugin's own colours. They show that a
+ * picture is stored, that it is served through the endpoint and that it moves
+ * with the record — which is the whole of what the fixture needs to
+ * demonstrate — and nobody looking at one could mistake it for somebody.
+ *
+ * @param int    $application_id The offer.
+ * @param string $seed           Anything; picks the colour.
+ * @return bool Whether a picture was made and stored.
+ */
+function gwc_vt_seed_placeholder_photo( int $application_id, string $seed ): bool {
+	if ( ! function_exists( 'imagecreatetruecolor' ) ) {
+		/* No GD, no placeholder. The offer is still seeded and the feature is
+		 * still switched on; there is simply no picture on that row. */
+		return false;
+	}
+
+	$size  = 480;
+	$image = imagecreatetruecolor( $size, $size );
+	$tint  = hexdec( substr( md5( $seed ), 0, 2 ) ) % 3;
+
+	$backs = array( array( 44, 90, 160 ), array( 60, 67, 74 ), array( 34, 113, 177 ) );
+	$back  = $backs[ $tint ];
+
+	imagefilledrectangle( $image, 0, 0, $size, $size, imagecolorallocate( $image, $back[0], $back[1], $back[2] ) );
+
+	$fore = imagecolorallocate( $image, 230, 200, 120 );
+
+	/* A circle over a rounded block: the shape of an avatar placeholder, at no
+	 * point resembling a particular person. */
+	imagefilledellipse( $image, (int) ( $size / 2 ), (int) ( $size * 0.38 ), (int) ( $size * 0.34 ), (int) ( $size * 0.34 ), $fore );
+	imagefilledellipse( $image, (int) ( $size / 2 ), (int) ( $size * 1.05 ), (int) ( $size * 0.62 ), (int) ( $size * 0.62 ), $fore );
+
+	$path = get_temp_dir() . 'gwcvt-seed-' . wp_generate_password( 8, false ) . '.jpg';
+
+	imagejpeg( $image, $path, 88 );
+	imagedestroy( $image );
+
+	/* Written through the image editor and the meta key rather than through
+	 * gwc_vt_store_photo(), which refuses anything is_uploaded_file() rejects —
+	 * correctly, and that is every file a script can make. The bytes still go
+	 * through the same resize and re-encode the real path uses. */
+	$dir    = gwc_vt_photo_dir();
+	$editor = '' !== $dir ? wp_get_image_editor( $path ) : null;
+
+	if ( ! $editor || is_wp_error( $editor ) ) {
+		@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_unlink -- a temp file this function just made; nothing depends on the outcome.
+		return false;
+	}
+
+	$editor->resize( GWC_VT_PHOTO_MAX_EDGE, GWC_VT_PHOTO_MAX_EDGE, false );
+
+	$saved = $editor->save( $dir . wp_generate_password( 32, false ) . '.jpg', 'image/jpeg' );
+
+	@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_unlink -- as above.
+
+	if ( is_wp_error( $saved ) || empty( $saved['path'] ) ) {
+		return false;
+	}
+
+	update_post_meta( $application_id, GWC_VT_PHOTO_KEY, basename( (string) $saved['path'] ) );
+
+	return true;
+}
+
+/**
  * One offer to volunteer.
  *
  * @param array $offer name, email, phone, note, days, required, by, for, status.
@@ -758,7 +833,7 @@ function gwc_vt_seed_offer( array $offer ): int {
 }
 
 // Three weeks old, and nobody has answered. The reason the queue is oldest-first.
-gwc_vt_seed_offer(
+$gwc_vt_offer_rosalind = gwc_vt_seed_offer(
 	array(
 		'name'  => 'Rosalind Achebe',
 		'email' => 'rosalind@example.test',
@@ -768,8 +843,10 @@ gwc_vt_seed_offer(
 	)
 );
 
+gwc_vt_seed_placeholder_photo( $gwc_vt_offer_rosalind, 'rosalind' );
+
 // Court-ordered, which is the one that changes how the conversation goes.
-gwc_vt_seed_offer(
+$gwc_vt_offer_teodoro = gwc_vt_seed_offer(
 	array(
 		'name'     => 'Teodoro Vasquez',
 		'email'    => 'teodoro@example.test',
@@ -782,7 +859,10 @@ gwc_vt_seed_offer(
 	)
 );
 
-// Yesterday, and nothing but a name and an address. Also a valid offer.
+gwc_vt_seed_placeholder_photo( $gwc_vt_offer_teodoro, 'teodoro' );
+
+/* Yesterday, and nothing but a name and an address — no note, no requirement
+ * and no picture. The row the queue has to render without any of it. */
 gwc_vt_seed_offer(
 	array(
 		'name'  => 'Junie Halloran',
@@ -825,7 +905,7 @@ printf( "  %-22s %s\n", 'Tomás Beaulieu', 'nothing verified yet — ' . gwc_vt_
 printf( "  %-22s %s\n", 'Fatima Sørensen', 'verified, but no email — print only' );
 printf( "  %-22s %s\n", 'Inès Okonkwo', 'dormant since 2023 — due under the 2-year policy' );
 printf( "  %-22s %s\n", 'Wendell Achebe', 'dormant, but on a retention hold' );
-printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count() . ' waiting — one of them court-ordered, one three weeks old' );
+printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count() . ' waiting — one court-ordered, one three weeks old, two with a picture' );
 printf( "  %-22s %s\n", 'Awaiting verification', gwc_vt_unverified_count() );
 printf( "  %-22s %s\n", 'Self-logged, unmatched', '2' );
 
