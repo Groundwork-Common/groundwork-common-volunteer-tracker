@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T21:20:28+00:00\n"
+"POT-Creation-Date: 2026-08-26T21:57:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -40,12 +40,12 @@ msgstr ""
 msgid "https://www.groundworkcommon.com/"
 msgstr ""
 
-#: inc/access.php:267
+#: inc/access.php:341
 #: inc/admin-applications.php:438
 msgid "You do not have permission to do that."
 msgstr ""
 
-#: inc/access.php:268
+#: inc/access.php:342
 #: inc/admin-applications.php:139
 #: inc/admin-applications.php:439
 #: inc/admin-credentials.php:126
@@ -56,7 +56,8 @@ msgstr ""
 #: inc/admin-quick-add.php:177
 #: inc/admin-quick-add.php:676
 #: inc/admin-schedule.php:68
-#: inc/admin-shift.php:1265
+#: inc/admin-shift.php:1267
+#: inc/admin-shift.php:1282
 #: inc/admin-triage.php:297
 #: inc/admin-triage.php:339
 #: inc/admin-verify.php:338
@@ -942,7 +943,7 @@ msgid "Everybody has to hold"
 msgstr ""
 
 #: inc/admin-event.php:172
-#: inc/admin-shift.php:1411
+#: inc/admin-shift.php:1428
 msgid "stops signup"
 msgstr ""
 
@@ -2343,7 +2344,8 @@ msgid "Schedule"
 msgstr ""
 
 #: inc/admin-schedule.php:67
-#: inc/admin-shift.php:1264
+#: inc/admin-shift.php:1266
+#: inc/admin-shift.php:1281
 msgid "You do not have permission to manage the schedule."
 msgstr ""
 
@@ -3749,32 +3751,32 @@ msgstr ""
 msgid "Only offered while nobody is signed up. A shift people committed to is canceled, not erased."
 msgstr ""
 
-#: inc/admin-shift.php:1387
+#: inc/admin-shift.php:1404
 msgid "They have to hold"
 msgstr ""
 
-#: inc/admin-shift.php:1414
+#: inc/admin-shift.php:1431
 msgid "— asked for by the whole event"
 msgstr ""
 
-#: inc/admin-shift.php:1421
+#: inc/admin-shift.php:1438
 msgid "Leave everything clear and this shift asks for nothing. What is missing is flagged on the roster; only the ones marked “stops signup” actually turn anybody away."
 msgstr ""
 
 #. translators: 1: a staff member's name. 2: the reason they gave.
-#: inc/admin-shift.php:1489
+#: inc/admin-shift.php:1506
 #, php-format
 msgid "Added by %1$s over a credential: %2$s"
 msgstr ""
 
 #. translators: %s: the reason given.
-#: inc/admin-shift.php:1495
+#: inc/admin-shift.php:1512
 #, php-format
 msgid "Added over a credential: %s"
 msgstr ""
 
 #. translators: %s: a list of credential names, already joined with commas.
-#: inc/admin-shift.php:1516
+#: inc/admin-shift.php:1533
 #, php-format
 msgid "No %s on file"
 msgid_plural "Not on file: %s"
@@ -3782,13 +3784,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: a list of credential names, already joined with commas.
-#: inc/admin-shift.php:1570
+#: inc/admin-shift.php:1587
 #, php-format
 msgid "This shift asks for: %s"
 msgstr ""
 
 #. translators: %s: how many people, already formatted.
-#: inc/admin-shift.php:1587
+#: inc/admin-shift.php:1604
 #, php-format
 msgid "%s person here has not been matched to a volunteer record, so nothing can be checked for them."
 msgid_plural "%s people here have not been matched to volunteer records, so nothing can be checked for them."

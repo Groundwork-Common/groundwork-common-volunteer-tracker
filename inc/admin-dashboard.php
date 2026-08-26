@@ -49,7 +49,7 @@ function gwc_vt_handle_dashboard_view_toggle(): void {
 		return;
 	}
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		return;
 	}
 
@@ -103,7 +103,7 @@ function gwc_vt_register_dashboard_menu(): void {
 		GWC_VT_MENU_SLUG,
 		__( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ),
 		__( 'Dashboard', 'groundwork-common-volunteer-tracker' ),
-		'edit_posts',
+		gwc_vt_records_cap(),
 		GWC_VT_DASHBOARD_PAGE,
 		'gwc_vt_render_dashboard'
 	);
@@ -113,7 +113,7 @@ function gwc_vt_register_dashboard_menu(): void {
  * The dashboard.
  */
 function gwc_vt_render_dashboard(): void {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
@@ -701,7 +701,7 @@ function gwc_vt_render_dashboard_year(): void {
 function gwc_vt_dashboard_actions(): array {
 	$actions = array();
 
-	if ( gwc_vt_shifts_enabled() && current_user_can( 'edit_posts' ) ) {
+	if ( gwc_vt_shifts_enabled() && gwc_vt_can_see_records() ) {
 		$actions[] = array(
 			'label' => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
 			'url'   => gwc_vt_schedule_url( array( 'shift' => 'new' ) ),
@@ -713,7 +713,7 @@ function gwc_vt_dashboard_actions(): array {
 		);
 	}
 
-	if ( current_user_can( 'edit_posts' ) ) {
+	if ( gwc_vt_can_see_records() ) {
 		$actions[] = array(
 			'label' => __( 'Log a day’s sign-in sheet', 'groundwork-common-volunteer-tracker' ),
 			'url'   => gwc_vt_quick_add_url(),

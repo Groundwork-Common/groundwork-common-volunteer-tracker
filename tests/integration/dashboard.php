@@ -323,6 +323,44 @@ gwc_vt_check(
 
 gwc_vt_check( 'and the verbs they use every week', in_array( 'Add a volunteer', $gwc_vt_admin_sees, true ) );
 
+/* An EDITOR, where this used to use an author.
+ *
+ * The point of the check is unchanged — somebody who cannot export personal
+ * data is not offered it, and still gets the verbs they use every week — but
+ * the role that fits it moved. Every screen here is now gated on
+ * edit_others_posts, which an author does not have: they may publish their own
+ * posts and have no business reading a list of people working off a court
+ * order. So an editor is the role that lacks the export capability and has the
+ * everyday ones, and the author becomes the boundary asserted below it. */
+$gwc_vt_editor = wp_insert_user(
+	array(
+		'user_login' => 'zzytest_editor',
+		'user_pass'  => wp_generate_password(),
+		'user_email' => 'zzytest-editor@example.test',
+		'role'       => 'editor',
+	)
+);
+
+if ( ! is_wp_error( $gwc_vt_editor ) ) {
+	wp_set_current_user( (int) $gwc_vt_editor );
+
+	$gwc_vt_editor_sees = gwc_vt_action_labels();
+
+	gwc_vt_check(
+		'somebody who cannot export personal data is not offered it',
+		! in_array( 'Export or erase a record', $gwc_vt_editor_sees, true ),
+		implode( ', ', $gwc_vt_editor_sees )
+	);
+
+	gwc_vt_check( 'but they still get the hours they can log', in_array( 'Log a day’s sign-in sheet', $gwc_vt_editor_sees, true ) );
+	gwc_vt_check( 'and the volunteers they can add', in_array( 'Add a volunteer', $gwc_vt_editor_sees, true ) );
+
+	wp_set_current_user( 1 );
+	wp_delete_user( (int) $gwc_vt_editor );
+}
+
+/* And the boundary itself. An author has publish_posts and edit_posts and is
+ * still not somebody this plugin shows records to. */
 $gwc_vt_author = wp_insert_user(
 	array(
 		'user_login' => 'zzytest_author',
@@ -335,16 +373,13 @@ $gwc_vt_author = wp_insert_user(
 if ( ! is_wp_error( $gwc_vt_author ) ) {
 	wp_set_current_user( (int) $gwc_vt_author );
 
-	$gwc_vt_author_sees = gwc_vt_action_labels();
-
 	gwc_vt_check(
-		'somebody who cannot export personal data is not offered it',
-		! in_array( 'Export or erase a record', $gwc_vt_author_sees, true ),
-		implode( ', ', $gwc_vt_author_sees )
+		'an author is offered nothing at all',
+		array() === gwc_vt_action_labels(),
+		implode( ', ', gwc_vt_action_labels() )
 	);
 
-	gwc_vt_check( 'but they still get the hours they can log', in_array( 'Log a day’s sign-in sheet', $gwc_vt_author_sees, true ) );
-	gwc_vt_check( 'and the volunteers they can add', in_array( 'Add a volunteer', $gwc_vt_author_sees, true ) );
+	gwc_vt_check( 'and cannot see records', ! gwc_vt_can_see_records() );
 
 	wp_set_current_user( 1 );
 	wp_delete_user( (int) $gwc_vt_author );

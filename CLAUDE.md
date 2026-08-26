@@ -284,6 +284,11 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
 - **`meta_query` beside an `orderby` meta key is not redundant.** Ordering by meta
   uses an INNER JOIN, so an entry missing that key vanishes silently. The
   EXISTS-or-NOT-EXISTS pair keeps those rows, sorted last.
+- **`edit_posts` is contributor-level, and is not the gate for seeing records.**
+  The list tables are safe on their own — WordPress filters them by author for
+  anybody without `edit_others_posts` — but every custom screen queries for
+  itself and bypasses that. Use `gwc_vt_can_see_records()` / `gwc_vt_records_cap()`
+  for anything that shows or acts on somebody else's record.
 - **Capabilities use `isset()`, not truthiness.** `isset()` is true for "an
   administrator decided no" and false for "this role never heard of it". Getting
   it wrong means staff silently cannot verify hours after a migration, with

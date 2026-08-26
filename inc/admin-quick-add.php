@@ -67,7 +67,7 @@ function gwc_vt_register_quick_add_menu(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_quick_add_page_title(),
 		__( 'Log a day', 'groundwork-common-volunteer-tracker' ),
-		'edit_posts',
+		gwc_vt_records_cap(),
 		GWC_VT_QUICK_ADD_PAGE,
 		'gwc_vt_render_quick_add_screen'
 	);
@@ -154,7 +154,7 @@ function gwc_vt_render_log_a_day_button(): void {
 		return;
 	}
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		return;
 	}
 
@@ -171,7 +171,7 @@ function gwc_vt_render_log_a_day_button(): void {
  * The screen, against a shift or against a blank day.
  */
 function gwc_vt_render_quick_add_screen(): void {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to log hours.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
@@ -670,7 +670,7 @@ function gwc_vt_render_roster_log_row( int $index, int $signup_id, int $shift_id
  * Create one entry per filled row.
  */
 function gwc_vt_handle_quick_add(): void {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to log hours.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),

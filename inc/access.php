@@ -35,6 +35,80 @@ defined( 'ABSPATH' ) || exit;
 const GWC_VT_CAP_VERIFY = 'gwc_vt_verify_hours';
 const GWC_VT_CAP_ISSUE  = 'gwc_vt_issue_letters';
 
+/* ── Seeing records about other people ───────────────────────────────────────
+ * A third gate, and NOT a third capability — it maps onto one WordPress already
+ * has, for a reason worth writing down.
+ *
+ * The comment above says the post types use capability_type 'post' so that "a
+ * site's existing editorial roles already mean something sensible". For the
+ * list tables that is exactly true: WordPress adds an author restriction for
+ * anybody without edit_others_posts, so a contributor opening Volunteers sees
+ * zero rows without this plugin doing anything.
+ *
+ * It stops being true the moment a screen queries for itself. Every custom
+ * screen here does — the schedule drawer, the offers queue, the verify queue,
+ * the REST routes behind them — and each was gated on edit_posts, which a
+ * CONTRIBUTOR has. So a role WordPress designed for "may draft a post, may not
+ * see anybody else's" could read volunteer names off a roster, and read a
+ * stranger's name, email, phone, photograph and the court that ordered their
+ * service off the offers queue.
+ *
+ * edit_others_posts is the line WordPress already draws for "may see other
+ * people's records", and it is held by editor and administrator — which is
+ * exactly GWC_VT_DEFAULT_CAP_ROLES below. The plugin's own idea of who runs it
+ * and WordPress's own idea of who may see other people's work turn out to be
+ * the same two roles, so no new capability is needed and no site has to be
+ * migrated onto one.
+ *
+ * Author is excluded deliberately. An author may publish their own posts and
+ * still has no business reading a list of people working off a court order.
+ *
+ * A site whose roles genuinely differ can remap the whole gate through the
+ * gwc_vt_records_cap filter, which the menu and the screens both read.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The capability that means "may see records about other people".
+ *
+ * The string, not the answer, because add_submenu_page() takes a capability
+ * name and current_user_can() takes one too — deriving the boolean from this
+ * rather than filtering both separately is what stops a site's override
+ * applying to the screens and not the menu that reaches them.
+ *
+ * @return string
+ */
+function gwc_vt_records_cap(): string {
+	/**
+	 * The capability gating every screen that shows somebody else's record.
+	 *
+	 * For a site whose roles do not follow WordPress's own shape — a custom
+	 * "coordinator" role, say, built without edit_others_posts.
+	 *
+	 * @param string $capability Defaults to edit_others_posts.
+	 */
+	$capability = (string) apply_filters( 'gwc_vt_records_cap', 'edit_others_posts' );
+
+	/* Falling back rather than trusting an empty string, for the reason
+	 * gwc_vt_cap() gives: a filter that returns nothing must not open a door. */
+	return '' !== trim( $capability ) ? $capability : 'edit_others_posts';
+}
+
+/**
+ * Whether this user may see the plugin's records at all.
+ *
+ * One definition, used by every screen and every REST route that shows or acts
+ * on somebody else's record — so raising or lowering the bar is one edit rather
+ * than a sweep somebody has to get complete.
+ *
+ * @param int $user_id User to test, or 0 for the current one.
+ * @return bool
+ */
+function gwc_vt_can_see_records( int $user_id = 0 ): bool {
+	return $user_id > 0
+		? user_can( $user_id, gwc_vt_records_cap() )
+		: current_user_can( gwc_vt_records_cap() );
+}
+
 /* The roles that get both capabilities when the plugin cannot ask. Editor is
  * included because at the scale this plugin is built for — a food bank with one
  * administrator and three staff logins — an editor IS the volunteer

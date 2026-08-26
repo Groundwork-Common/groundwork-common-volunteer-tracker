@@ -38,7 +38,7 @@ function gwc_vt_register_schedule_menu(): void {
 		GWC_VT_MENU_SLUG,
 		__( 'Schedule', 'groundwork-common-volunteer-tracker' ),
 		__( 'Schedule', 'groundwork-common-volunteer-tracker' ),
-		'edit_posts',
+		gwc_vt_records_cap(),
 		GWC_VT_SCHEDULE_PAGE,
 		'gwc_vt_render_schedule_screen'
 	);
@@ -62,7 +62,7 @@ function gwc_vt_shifts_enabled(): bool {
  * The screen, in whichever of its three views was asked for.
  */
 function gwc_vt_render_schedule_screen(): void {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to manage the schedule.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
@@ -1094,7 +1094,7 @@ function gwc_vt_schedule_notice(): void {
  * Say plainly that hours are waiting to be typed up.
  */
 function gwc_vt_unreconciled_notice(): void {
-	if ( ! gwc_vt_shifts_enabled() || ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_shifts_enabled() || ! gwc_vt_can_see_records() ) {
 		return;
 	}
 

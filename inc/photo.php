@@ -297,7 +297,7 @@ function gwc_vt_can_see_photo( int $post_id, int $user_id = 0 ): bool {
 	 * with; this one belongs to somebody who may be turned down, and whose face
 	 * is sitting in a queue while they wait to find out. */
 	if ( GWC_VT_APPLICATION_TYPE === $type ) {
-		return user_can( $user_id, 'edit_posts' );
+		return gwc_vt_can_see_records( $user_id );
 	}
 
 	return false;

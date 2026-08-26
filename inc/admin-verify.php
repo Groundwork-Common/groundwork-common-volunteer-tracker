@@ -241,7 +241,7 @@ function gwc_vt_register_verify_queue(): void {
 		GWC_VT_MENU_SLUG,
 		gwc_vt_verify_queue_title(),
 		gwc_vt_verify_queue_title(),
-		'edit_posts',
+		gwc_vt_records_cap(),
 		GWC_VT_VERIFY_PAGE,
 		'gwc_vt_render_verify_queue'
 	);
@@ -305,7 +305,7 @@ function gwc_vt_verify_queue_url(): string {
 function gwc_vt_verify_queue_view( $views ): array {
 	$views = (array) $views;
 
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		return $views;
 	}
 
@@ -332,7 +332,7 @@ function gwc_vt_verify_queue_view( $views ): array {
  * The queue.
  */
 function gwc_vt_render_verify_queue(): void {
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
 			esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),

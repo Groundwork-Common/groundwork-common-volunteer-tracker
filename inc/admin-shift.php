@@ -483,7 +483,7 @@ function gwc_vt_render_shift_panel( int $shift_id, string $back = '', string $mo
 		<?php endforeach; ?>
 	</ul>
 
-	<?php if ( ! $cancelled && ! $ended && current_user_can( 'edit_posts' ) ) : ?>
+	<?php if ( ! $cancelled && ! $ended && gwc_vt_can_see_records() ) : ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-drawer__add">
 			<input type="hidden" name="action" value="gwc_vt_roster_add" />
 			<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
@@ -1255,7 +1255,24 @@ function gwc_vt_render_roster_document( int $shift_id ): void {
  *
  * @param string $capability Which capability to insist on.
  */
-function gwc_vt_require_shift_cap( string $capability = 'edit_posts' ): void {
+function gwc_vt_require_shift_cap( string $capability = '' ): void {
+	/* Defaults to the records capability rather than edit_posts. Callers that
+	 * pass 'publish_posts' are asking for something STRICTER about writing, and
+	 * still have to clear the reading bar first — otherwise a role with
+	 * publish_posts and no edit_others_posts would reach a roster through a
+	 * handler that only checked the stricter-sounding one. */
+	if ( ! gwc_vt_can_see_records() ) {
+		wp_die(
+			esc_html__( 'You do not have permission to manage the schedule.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
+	}
+
+	if ( '' === $capability ) {
+		return;
+	}
+
 	if ( current_user_can( $capability ) ) {
 		return;
 	}
