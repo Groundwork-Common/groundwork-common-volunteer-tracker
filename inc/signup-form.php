@@ -264,6 +264,27 @@ function gwc_vt_render_shift_choice( int $shift_id, int $selected, bool $with_zo
 			<?php if ( '' !== $notes ) : ?>
 				<span class="gwcvt-shift__notes"><?php echo esc_html( $notes ); ?></span>
 			<?php endif; ?>
+
+			<?php
+			/* Said on the row rather than discovered on submission. A shift that
+			 * will refuse everybody who has not signed in should say so before
+			 * somebody types their name into a form that cannot accept it.
+			 *
+			 * Every visitor sees this on the same shifts, so it says nothing
+			 * about anybody — it is the same fact as "3 places left", about the
+			 * Saturday and not about the reader. */
+			if ( gwc_vt_shift_needs_signin( $shift_id ) ) :
+				?>
+				<span class="gwcvt-shift__gated">
+					<?php
+					printf(
+						/* translators: %s: a list of credential names, already joined with commas. */
+						esc_html__( 'Needs %s — sign in to take this one', 'groundwork-common-volunteer-tracker' ),
+						esc_html( gwc_vt_credential_names( gwc_vt_required_credential_ids( $shift_id ) ) )
+					);
+					?>
+				</span>
+			<?php endif; ?>
 		</label>
 	</div>
 	<?php
