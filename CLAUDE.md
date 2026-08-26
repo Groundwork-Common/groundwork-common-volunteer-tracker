@@ -56,10 +56,15 @@ tool this file used to describe, and the later half is easy to miss when scannin
   ordinary `gwc_vt_shift`, which is why waiting lists, reminders, rosters and
   reconciliation all work on one unchanged.
 - **Credentials** — `credential-cpt.php` (both post types), `credentials.php` (the
-  queries, plus the two functions that write), `admin-credentials.php` (defining
+  queries, plus the two functions that write), `credential-shifts.php` (what a
+  shift asks for, and who is short of it), `admin-credentials.php` (defining
   them) and `admin-volunteer-credentials.php` (recording who holds what, and the
   volunteer-list filter). **Never the word "requirement"** — that means service
   hours here, and `CredentialTest` asserts the separation over the source.
+  A shift's credentials are **one meta row each** and are written only by
+  `gwc_vt_set_shift_credentials()`; putting them in the save handler's `$fields`
+  array stores the literal string `Array`, because `gwc_vt_shift_meta_value()`
+  casts anything it does not recognise.
 - **The dashboard** — `dashboard.php` (counts, pure) and `admin-dashboard.php`
   (the screen). Split so the worklist's ordering can be asserted without a
   database.

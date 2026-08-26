@@ -612,6 +612,7 @@ require GWC_VT_DIR . 'inc/event-cpt.php';
 require GWC_VT_DIR . 'inc/application-cpt.php';
 require GWC_VT_DIR . 'inc/credential-cpt.php';
 require GWC_VT_DIR . 'inc/credentials.php';
+require GWC_VT_DIR . 'inc/credential-shifts.php';
 require GWC_VT_DIR . 'inc/photo.php';
 require GWC_VT_DIR . 'inc/shifts.php';
 require GWC_VT_DIR . 'inc/events.php';

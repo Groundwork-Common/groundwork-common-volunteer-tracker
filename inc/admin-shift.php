@@ -205,6 +205,8 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 					<p class="description"><?php esc_html_e( 'Closed shoes, park around the back, ask for Dana at the desk. Shown to whoever signs up.', 'groundwork-common-volunteer-tracker' ); ?></p>
 				</div>
 
+				<?php gwc_vt_render_shift_credentials_field( $shift_id ); ?>
+
 				<?php if ( $is_new ) : ?>
 					<hr class="gwcvt-shift-rule" />
 
@@ -567,6 +569,8 @@ function gwc_vt_render_shift_roster( int $shift_id ): void {
 	?>
 	<h2 id="gwcvt-roster"><?php esc_html_e( 'Who is coming', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
+	<?php gwc_vt_render_roster_credential_notice( $shift_id ); ?>
+
 	<table class="widefat striped gwcvt-roster">
 		<thead>
 			<tr>
@@ -666,6 +670,7 @@ function gwc_vt_render_roster_row( int $signup_id, string $standing, bool $remov
 			<?php else : ?>
 				<?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?>
 			<?php endif; ?>
+			<?php gwc_vt_render_roster_credential_flag( $signup_id, (int) wp_get_post_parent_id( $signup_id ) ); ?>
 		</td>
 		<td>
 			<?php if ( '' !== $email ) : ?>
@@ -830,6 +835,11 @@ function gwc_vt_handle_save_shift(): void {
 		GWC_VT_SHIFT_MAX        => gwc_vt_shift_meta_value( GWC_VT_SHIFT_MAX, $posted['gwc_vt_max'] ?? 0 ),
 	);
 
+	/* Read here and written separately at both points below. NOT a member of
+	 * $fields — see gwc_vt_posted_credential_ids() for why that would put the
+	 * word "Array" in the database. */
+	$credentials = gwc_vt_posted_credential_ids( $posted );
+
 	$status = empty( $posted['gwc_vt_published'] ) ? 'draft' : 'publish';
 
 	/* Editing an existing shift. One occurrence, whatever series it belongs to —
@@ -862,6 +872,8 @@ function gwc_vt_handle_save_shift(): void {
 		foreach ( $fields as $key => $value ) {
 			update_post_meta( $shift_id, $key, $value );
 		}
+
+		gwc_vt_set_shift_credentials( $shift_id, $credentials );
 
 		gwc_vt_retitle_shift( $shift_id );
 
@@ -925,6 +937,13 @@ function gwc_vt_handle_save_shift(): void {
 		}
 
 		update_post_meta( $new_id, GWC_VT_SHIFT_SERIES, $series );
+
+		/* Inside the loop, and that is the whole point. $fields is copied to
+		 * every occurrence; credentials are not in it, so writing them once
+		 * after the loop would give a weekly series twenty Saturdays asking for
+		 * nothing and one asking for the waiver. */
+		gwc_vt_set_shift_credentials( $new_id, $credentials );
+
 		gwc_vt_retitle_shift( $new_id );
 
 		/**
@@ -1295,4 +1314,216 @@ function gwc_vt_location_vocabulary(): array {
 	$lines = array_filter( array_map( 'trim', preg_split( '/\R/', $raw ) ?: array() ), 'strlen' );
 
 	return array_values( $lines );
+}
+
+/* ── What this shift asks people to hold ─────────────────────────────────────
+ * Drawn only when the organization has defined something to ask for. A field
+ * offering an empty list of credentials is a field that teaches a coordinator
+ * this plugin has a section they can ignore.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The credentials field on the shift form.
+ *
+ * @param int $shift_id Shift post ID, 0 for a new one.
+ */
+function gwc_vt_render_shift_credentials_field( int $shift_id ): void {
+	$live = gwc_vt_live_credential_ids();
+
+	if ( ! $live ) {
+		return;
+	}
+
+	$chosen = gwc_vt_shift_credential_ids( $shift_id );
+
+	/* An event's own credentials, shown but not editable here. A slot that
+	 * inherits the day's waiver must say so, or a coordinator looking at a
+	 * kitchen role with one box selected reads it as the only thing asked for
+	 * and is wrong. Editing them belongs on the event, which is where they were
+	 * set. */
+	$event_id  = $shift_id > 0 ? (int) wp_get_post_parent_id( $shift_id ) : 0;
+	$inherited = $event_id > 0 && GWC_VT_EVENT_TYPE === get_post_type( $event_id )
+		? gwc_vt_shift_credential_ids( $event_id )
+		: array();
+	?>
+	<div class="gwcvt-shift-field gwcvt-shift-field--wide gwcvt-shift-credentials">
+		<span class="gwcvt-shift-credentials__label"><?php esc_html_e( 'They have to hold', 'groundwork-common-volunteer-tracker' ); ?></span>
+
+		<?php
+		/* A fieldset, and a div around the boxes rather than a p — the wrapper
+		 * rule this plugin has, and for the usual reason: a list inside a
+		 * paragraph closes it, silently. */
+		?>
+		<div class="gwcvt-shift-credentials__list">
+			<?php foreach ( $live as $credential_id ) : ?>
+				<?php $credential = gwc_vt_credential( (int) $credential_id ); ?>
+				<?php if ( ! $credential ) : ?>
+					<?php continue; ?>
+				<?php endif; ?>
+				<?php $is_inherited = in_array( $credential['id'], $inherited, true ); ?>
+				<label class="gwcvt-shift-credentials__item">
+					<input
+						type="checkbox"
+						name="gwc_vt_credentials[]"
+						value="<?php echo esc_attr( (string) $credential['id'] ); ?>"
+						<?php checked( in_array( $credential['id'], $chosen, true ) ); ?>
+						<?php disabled( $is_inherited ); ?>
+					/>
+					<?php echo esc_html( $credential['name'] ); ?>
+					<?php if ( 'block' === $credential['mode'] ) : ?>
+						<span class="gwcvt-badge gwcvt-badge--cancelled"><?php esc_html_e( 'stops signup', 'groundwork-common-volunteer-tracker' ); ?></span>
+					<?php endif; ?>
+					<?php if ( $is_inherited ) : ?>
+						<span class="description"><?php esc_html_e( '— asked for by the whole event', 'groundwork-common-volunteer-tracker' ); ?></span>
+					<?php endif; ?>
+				</label>
+			<?php endforeach; ?>
+		</div>
+
+		<p class="description">
+			<?php esc_html_e( 'Leave everything clear and this shift asks for nothing. What is missing is flagged on the roster; only the ones marked “stops signup” actually turn anybody away.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+	</div>
+	<?php
+}
+
+/* ── Saying somebody is short of something ───────────────────────────────────
+ * Drawn beside a name on a roster, in the same place and shape as a
+ * double-booking clash — and under the same restraint, which is the harder
+ * half. gwc_vt_event_clashes() carries the reasoning in its own comment:
+ * reporting a thing too freely trains coordinators to ignore the flag that
+ * matters.
+ *
+ * So three things are deliberately NOT flagged.
+ *
+ * A shift that has already happened. There is nothing to be done about
+ * Saturday's missing waiver on Monday, and a roster of past shifts covered in
+ * amber is a screen nobody reads twice.
+ *
+ * A signup nobody has matched to a volunteer record. We do not know who they
+ * are, and hard rule 4 forbids finding out by looking the address up. A row
+ * saying "we cannot check this" against every unmatched name is noise; the
+ * roster says it once, above the table, and only when it is true.
+ *
+ * A credential in report mode is drawn exactly as loudly as one in block mode.
+ * The difference between them is what happens at signup, not how alarming the
+ * fact is once somebody is on the roster — and dimming one of them would be
+ * telling a coordinator that a missing waiver matters less than a missing class
+ * because of a setting they chose for an unrelated reason.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * What one person on one roster is short of.
+ *
+ * Shared by both rosters. Lives here because this file owns the roster row it
+ * is drawn into; inc/admin-event-roster.php calls it for the same reason it
+ * calls this file's promote fallback.
+ *
+ * @param int $signup_id Signup post ID.
+ * @param int $shift_id  The shift they are on.
+ */
+function gwc_vt_render_roster_credential_flag( int $signup_id, int $shift_id ): void {
+	if ( gwc_vt_shift_has_ended( $shift_id ) ) {
+		return;
+	}
+
+	$volunteer_id = (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true );
+
+	if ( $volunteer_id < 1 ) {
+		return;
+	}
+
+	$missing = gwc_vt_missing_credentials( $volunteer_id, $shift_id );
+	$short   = array_merge( $missing['block'], $missing['report'] );
+
+	if ( ! $short ) {
+		return;
+	}
+
+	printf(
+		'<span class="gwcvt-badge gwcvt-badge--waiting gwcvt-roster__short">%s</span>',
+		esc_html(
+			sprintf(
+				/* translators: %s: a list of credential names, already joined with commas. */
+				_n(
+					'No %s on file',
+					'Not on file: %s',
+					count( $short ),
+					'groundwork-common-volunteer-tracker'
+				),
+				gwc_vt_credential_names( $short )
+			)
+		)
+	);
+}
+
+/**
+ * How many people on a roster cannot be checked at all.
+ *
+ * Said once above the table rather than on every row. Zero when the shift asks
+ * for nothing, so a site not using credentials never sees the sentence.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return int
+ */
+function gwc_vt_roster_unmatched_count( int $shift_id ): int {
+	if ( ! gwc_vt_shift_asks_for_credentials( $shift_id ) || gwc_vt_shift_has_ended( $shift_id ) ) {
+		return 0;
+	}
+
+	$unmatched = 0;
+
+	foreach ( gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) ) as $signup_id ) {
+		if ( (int) get_post_meta( (int) $signup_id, GWC_VT_SIGNUP_VOLUNTEER, true ) < 1 ) {
+			++$unmatched;
+		}
+	}
+
+	return $unmatched;
+}
+
+/**
+ * The sentence that count deserves.
+ *
+ * @param int $shift_id Shift post ID.
+ */
+function gwc_vt_render_roster_credential_notice( int $shift_id ): void {
+	$required = gwc_vt_required_credential_ids( $shift_id );
+
+	if ( ! $required || gwc_vt_shift_has_ended( $shift_id ) ) {
+		return;
+	}
+
+	printf(
+		'<p class="description">%s</p>',
+		esc_html(
+			sprintf(
+				/* translators: %s: a list of credential names, already joined with commas. */
+				__( 'This shift asks for: %s', 'groundwork-common-volunteer-tracker' ),
+				gwc_vt_credential_names( $required )
+			)
+		)
+	);
+
+	$unmatched = gwc_vt_roster_unmatched_count( $shift_id );
+
+	if ( $unmatched < 1 ) {
+		return;
+	}
+
+	printf(
+		'<p class="description">%s</p>',
+		esc_html(
+			sprintf(
+				/* translators: %s: how many people, already formatted. */
+				_n(
+					'%s person here has not been matched to a volunteer record, so nothing can be checked for them.',
+					'%s people here have not been matched to volunteer records, so nothing can be checked for them.',
+					$unmatched,
+					'groundwork-common-volunteer-tracker'
+				),
+				number_format_i18n( $unmatched )
+			)
+		)
+	);
 }
