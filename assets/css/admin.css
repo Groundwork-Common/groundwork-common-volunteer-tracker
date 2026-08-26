@@ -2229,3 +2229,36 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	margin: 0 0 4px;
 	break-inside: avoid;
 }
+
+/* ─── The how-to guide ──────────────────────────────────────────────────────
+   Set narrow for reading. A procedure read at 1600px wide is a procedure whose
+   step 4 is nowhere near step 3. */
+.gwcvt-help__lede,
+.gwcvt-help__intro {
+	max-width: 44em;
+	font-size: 14px;
+}
+
+.gwcvt-help__task {
+	max-width: 44em;
+	margin: 0 0 1.6em;
+}
+
+.gwcvt-help__task ol {
+	margin: .2em 0 .4em 1.6em;
+	list-style: decimal;
+}
+
+.gwcvt-help__task ol li {
+	margin: 0 0 .35em;
+}
+
+/* The aside a step cannot carry: why the step matters, or what it costs to get
+   wrong. Quiet, because it is not an instruction. */
+.gwcvt-help__note {
+	margin: .3em 0 0;
+	padding-left: 10px;
+	border-left: 3px solid #dcdcde;
+	color: #50575e;
+	font-size: 13px;
+}
