@@ -29,6 +29,9 @@ The two halves meet when the shift is over: the roster becomes the hours, everyb
 * Turns that roster into hours once the shift is over — everybody who signed up, already selected, with the scheduled hours filled in. Clear the no-shows, add the walk-ins, save once.
 * Records volunteer hours as individual shifts — who, when, how long, doing what, supervised by whom. Type 3.5, 3:30, 3h 30m or 210m; whichever you use, the figure stored is rounded to an increment you choose — always to the nearest, never up, and the screen tells you when it has.
 * Runs a day as an event when one occasion has several roles at several times — a festival, a meal service, a collection drive. Volunteers pick more than one time in a single go and get one email listing all of them.
+* Tracks credentials — a training course, a signed waiver, a background check — with their own renewal interval. A shift or a whole event can ask for one; whoever is short of it is flagged on the roster, and the ones you mark as blocking stop a signup instead. See at a glance who holds each one and whose has lapsed.
+* Optionally lets volunteers sign in with a link emailed to them, so they can see their own hours and shifts without an account, a password or a role. Off until you switch it on.
+* Puts what needs doing on your WordPress dashboard as well as its own, so you see it without going looking.
 * Lets a staff member with the right permission mark a shift verified. Who attested and when is recorded and appears on the letter.
 * Produces a verification letter for any volunteer over any date range, itemized, on your letterhead, ready to print or email.
 * Gives every letter a reference code you can read back to anyone who phones to check it — and a panel on the dashboard that tells you whether it still matches your records.
@@ -91,7 +94,29 @@ No, and deliberately not. A scheduled shift is a plan; hours are a record of wha
 
 = Can supervisors sign off without an account? =
 
-Not yet. In this version a staff member with the right permission attests to hours, which is how the paper forms this replaces already work. Emailed supervisor confirmation is planned.
+Not yet. A staff member with the right permission attests to hours, which is how the paper forms this replaces already work.
+
+The piece that was missing has since been built for volunteers: somebody can prove they control an email address by clicking a link sent to it, and act as themselves without an account. Extending the same thing to a supervisor signing off a shift is the next step rather than a new idea.
+
+= What is a credential, and how is it different from required hours? =
+
+They are unrelated, and the plugin keeps the words apart. **Required hours** are what a court or a school ordered somebody to complete. A **credential** is something a volunteer has to hold before doing certain work — a child safety class, a signed liability waiver, a food handler card.
+
+You define each one once, with how often it needs renewing, and record who holds it on their own record. Expiry is worked out from the date it was granted, so changing an interval re-dates everybody rather than leaving old dates behind.
+
+= What happens if somebody has not got a credential a shift asks for? =
+
+That is a choice you make per credential. Most should **report**: the person is flagged on the roster so a coordinator can see it and decide. A credential set to **block** turns a signup away instead, and is for the things nobody may work without.
+
+A staff member can still put somebody on a blocking shift, but only by giving a reason, which is recorded with their name and shown on the roster from then on. A block you can click past without a trace is not a block.
+
+Nothing is ever removed from a roster automatically. Somebody already accepted for a shift stays accepted; the roster tells you, and you decide.
+
+= Can volunteers see their own hours? =
+
+Yes, if you switch sign-in on under Settings. They give their email address, get a link, and clicking it shows their verified hours, what is still waiting to be verified, and the shifts they are down for.
+
+It is not an account: there is no password, no user is created, no role is granted, and it expires. What a court or school required of them is deliberately not shown — that is a fact about somebody else's document, and it stays off every outward-facing screen.
 
 = Does it produce a PDF? =
 

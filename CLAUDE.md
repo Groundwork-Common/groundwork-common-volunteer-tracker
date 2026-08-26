@@ -299,7 +299,10 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   reads the other, and the script prints ALL PASS under a list of failures. That
   happened.
 - **Help tabs are added on `load-`, not in the renderer** — from the renderer they
-  silently do not appear.
+  silently do not appear. `inc/admin-help.php` puts them all on one
+  `current_screen` hook instead, and **`tests/integration/help.php` fails when a
+  screen has none**: six of ten had drifted, because the hook table has a rule
+  forcing it and help text had nothing. A new screen means a new help tab.
 - **Reference codes are keyed with `wp_salt()`, so they cannot be forged without
   database access** — but not with any authentication constant. This entry used
   to say codes "do not survive a salt rotation", and that is wrong in the
