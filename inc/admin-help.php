@@ -303,7 +303,7 @@ function gwc_vt_add_credentials_help( $screen ): void {
 		'gwc-vt-credentials-expiry',
 		__( 'Renewing', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'An expiry date is worked out from the day the credential was granted, and is never stored. Change a credential from twelve months to twenty-four and everybody who holds it is re-dated — there are no old dates left behind.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An expiry date is worked out from the day the credential was granted, and is never stored. Change a credential from twelve months to twenty-four — <strong>Edit</strong>, on its row — and everybody who holds it is re-dated. There are no old dates left behind, and nothing is emailed. A shorter interval works the same way in the other direction: somebody can be lapsed the moment you save, so the form says how many people hold it before that field.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Somebody who did it on the 31st renews on the 31st, or on the last day of a month that is shorter.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Recording a renewal does not replace what came before it. Every grant is kept, so “renewed every year since 2019” is still there to read.', 'groundwork-common-volunteer-tracker' ),
 		)

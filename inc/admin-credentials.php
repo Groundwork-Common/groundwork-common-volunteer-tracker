@@ -159,11 +159,27 @@ function gwc_vt_render_credentials_screen(): void {
 	 * view is gated as well as the button that reaches it — a URL typed by
 	 * somebody without the capability lands on the list rather than on a form
 	 * whose submission would be refused. */
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation between this screen's two views; the form it draws carries its own nonce.
+	/* 'new', or the id of the one being edited. sanitize_key() keeps digits, so
+	 * one value carries both and absint() below tells them apart. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation between this screen's views; the form it draws carries its own nonce.
 	$asked = isset( $_GET['credential'] ) ? sanitize_key( wp_unslash( $_GET['credential'] ) ) : '';
 
 	if ( 'new' === $asked && gwc_vt_can_define_credentials() ) {
-		gwc_vt_render_credential_form();
+		gwc_vt_render_credential_form( 0 );
+		return;
+	}
+
+	/* An id opens the same form with the credential in it. Gated the same way as
+	 * adding, and on the credential existing: a stale bookmark lands on the list
+	 * saying so rather than on a form that would write to nothing. */
+	$editing = absint( $asked );
+
+	if ( $editing > 0 && gwc_vt_can_define_credentials() ) {
+		if ( GWC_VT_CREDENTIAL_TYPE !== get_post_type( $editing ) ) {
+			gwc_vt_credentials_redirect( 'gone' );
+		}
+
+		gwc_vt_render_credential_form( $editing );
 		return;
 	}
 
@@ -378,6 +394,11 @@ function gwc_vt_render_credential_row( array $credential ): void {
 
 			<?php if ( gwc_vt_can_define_credentials() ) : ?>
 				<div class="row-actions">
+					<span class="edit">
+						<a href="<?php echo esc_url( gwc_vt_credentials_url( array( 'credential' => $credential['id'] ) ) ); ?>">
+							<?php esc_html_e( 'Edit', 'groundwork-common-volunteer-tracker' ); ?>
+						</a> |
+					</span>
 					<span class="gwcvt-retire">
 						<?php if ( $credential['retired'] ) : ?>
 							<a href="<?php echo esc_url( gwc_vt_credential_action_url( 'gwc_vt_restore_credential', $credential['id'] ) ); ?>">
@@ -426,43 +447,113 @@ function gwc_vt_render_credential_row( array $credential ): void {
 }
 
 /**
- * The add form, as a view of its own.
+ * The form, for a new credential or one that already exists.
  *
- * Four fields and no editing of an existing one in this version. Renaming a
- * credential is the change somebody will want and it is not free: every record
- * of somebody holding it points here by ID, so a rename is safe, but changing
- * the interval silently re-dates every expiry on the site. That deserves its
- * own screen saying so, rather than a pencil icon.
+ * ── Why editing exists now ───────────────────────────────────────────────────
+ * This screen was add-only, and said so: renaming is the change somebody will
+ * want, changing the interval silently re-dates every expiry on the site, and
+ * "that deserves its own screen saying so, rather than a pencil icon."
  *
- * The heading is the ordinary `<h1>` a WordPress add screen has, and the way
- * back is a link under the button rather than only the browser's own — a form
- * somebody opened by mistake should have a marked exit.
+ * The screen is this one, and the saying-so is the point rather than a nicety.
+ * An expiry is derived from the interval every time it is asked for — nothing is
+ * stored — so moving a class from twelve months to six does not schedule a
+ * change, it makes everybody who did it seven months ago lapsed as soon as the
+ * page reloads. The form says how many people hold it before the field that does
+ * that, in the same shape the repeat editor states what it will touch.
+ *
+ * Renaming is free, which is the other half of why this can be one form: every
+ * record points at the credential by ID, so the word can change under them all
+ * without a single record moving.
+ *
+ * @param int $credential_id The credential to edit, or 0 to add one.
  */
-function gwc_vt_render_credential_form(): void {
+function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
+	$editing = $credential_id > 0;
+	$holds   = $editing ? gwc_vt_credential_holder_counts( $credential_id ) : array();
+	$held_by = $editing ? (int) ( $holds['current'] ?? 0 ) + (int) ( $holds['expired'] ?? 0 ) : 0;
+
+	$credential = $editing
+		? gwc_vt_credential( $credential_id )
+		: array(
+			'name'    => '',
+			'months'  => 0,
+			'mode'    => 'report',
+			'note'    => '',
+			'retired' => false,
+		);
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php esc_html_e( 'Add a credential', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1>
+			<?php
+			echo $editing
+				? esc_html__( 'Edit a credential', 'groundwork-common-volunteer-tracker' )
+				: esc_html__( 'Add a credential', 'groundwork-common-volunteer-tracker' );
+			?>
+		</h1>
 
 		<?php gwc_vt_credentials_notice(); ?>
 
+		<?php if ( $editing && $credential['retired'] ) : ?>
+			<div class="notice notice-warning inline">
+				<p>
+					<?php esc_html_e( 'This one is retired. Nobody is being asked for it, and the records of who holds it are still here — editing it changes what those records are records of.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
+			</div>
+		<?php endif; ?>
+
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="gwc_vt_save_credential" />
-			<?php wp_nonce_field( 'gwc_vt_save_credential_0' ); ?>
+			<input type="hidden" name="gwc_vt_credential" value="<?php echo esc_attr( (string) $credential_id ); ?>" />
+			<?php wp_nonce_field( 'gwc_vt_save_credential_' . $credential_id ); ?>
 
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row"><label for="gwcvt-credential-name"><?php esc_html_e( 'What it is', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 					<td>
-						<input type="text" id="gwcvt-credential-name" name="gwc_vt_name" class="regular-text" maxlength="120" required />
+						<input type="text" id="gwcvt-credential-name" name="gwc_vt_name" class="regular-text" maxlength="120" value="<?php echo esc_attr( (string) $credential['name'] ); ?>" required />
 						<p class="description"><?php esc_html_e( 'What you would call it out loud — “Child safety class”, “Liability waiver”.', 'groundwork-common-volunteer-tracker' ); ?></p>
+						<?php if ( $editing && $held_by > 0 ) : ?>
+							<p class="description">
+								<?php esc_html_e( 'Renaming is safe: every record points at this credential itself, so the word changes everywhere at once and no record moves.', 'groundwork-common-volunteer-tracker' ); ?>
+							</p>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="gwcvt-credential-months"><?php esc_html_e( 'Renewed every', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 					<td>
-						<input type="number" id="gwcvt-credential-months" name="gwc_vt_months" min="0" max="<?php echo esc_attr( (string) GWC_VT_CREDENTIAL_MAX_MONTHS ); ?>" step="1" value="0" />
+						<input type="number" id="gwcvt-credential-months" name="gwc_vt_months" min="0" max="<?php echo esc_attr( (string) GWC_VT_CREDENTIAL_MAX_MONTHS ); ?>" step="1" value="<?php echo esc_attr( (string) $credential['months'] ); ?>" />
 						<?php esc_html_e( 'months', 'groundwork-common-volunteer-tracker' ); ?>
 						<p class="description"><?php esc_html_e( 'Zero means it never expires. Somebody who did it on the 31st of a month renews on the 31st, or on the last day of a month that is shorter.', 'groundwork-common-volunteer-tracker' ); ?></p>
+
+						<?php if ( $editing && $held_by > 0 ) : ?>
+							<?php
+							/* The consequence, stated before the field that has
+							 * it and with the number of people it reaches. An
+							 * expiry is worked out from this every time it is
+							 * asked for, so a shorter interval does not schedule
+							 * anything — it changes who is lapsed, now. */
+							?>
+							<p class="description gwcvt-credential-warning">
+								<strong>
+									<?php
+									printf(
+										esc_html(
+											/* translators: %d: how many volunteers hold this credential. */
+											_n(
+												'%d volunteer holds this. Changing the interval re-dates their renewal.',
+												'%d volunteers hold this. Changing the interval re-dates every one of their renewals.',
+												$held_by,
+												'groundwork-common-volunteer-tracker'
+											)
+										),
+										(int) $held_by
+									);
+									?>
+								</strong>
+								<?php esc_html_e( 'Expiry is worked out from this number each time it is asked for and is never stored, so a shorter interval takes effect the moment you save — somebody who did it eleven months ago is lapsed as soon as the page reloads. Nothing is emailed either way.', 'groundwork-common-volunteer-tracker' ); ?>
+							</p>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>
@@ -470,22 +561,33 @@ function gwc_vt_render_credential_form(): void {
 					<td>
 						<select id="gwcvt-credential-mode" name="gwc_vt_mode">
 							<?php foreach ( gwc_vt_credential_modes() as $slug => $label ) : ?>
-								<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( $label ); ?></option>
+								<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $slug, (string) $credential['mode'] ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
 						<p class="description"><?php esc_html_e( 'Reporting is the safer default and the one most organizations want: you find out who is short, and decide. Stopping somebody is for the things nobody may work without.', 'groundwork-common-volunteer-tracker' ); ?></p>
+						<?php if ( $editing ) : ?>
+							<p class="description">
+								<?php esc_html_e( 'Changing this to stopping people applies to signups made from now on. Nobody already on a shift is taken off it.', 'groundwork-common-volunteer-tracker' ); ?>
+							</p>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="gwcvt-credential-note"><?php esc_html_e( 'A note', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 					<td>
-						<input type="text" id="gwcvt-credential-note" name="gwc_vt_note" class="regular-text" maxlength="200" />
+						<input type="text" id="gwcvt-credential-note" name="gwc_vt_note" class="regular-text" maxlength="200" value="<?php echo esc_attr( (string) $credential['note'] ); ?>" />
 						<p class="description"><?php esc_html_e( 'Optional, and for staff. Where the course is booked, who countersigns the form — whatever the person recording it needs to know.', 'groundwork-common-volunteer-tracker' ); ?></p>
 					</td>
 				</tr>
 			</table>
 
-			<?php submit_button( __( 'Add it', 'groundwork-common-volunteer-tracker' ) ); ?>
+			<?php
+			submit_button(
+				$editing
+					? __( 'Save this credential', 'groundwork-common-volunteer-tracker' )
+					: __( 'Add it', 'groundwork-common-volunteer-tracker' )
+			);
+			?>
 		</form>
 
 		<p>
@@ -498,35 +600,64 @@ function gwc_vt_render_credential_form(): void {
 }
 
 /**
- * Write a new credential.
+ * Write a credential, new or existing.
+ *
+ * One handler for both, because everything that makes a credential is the same
+ * either way and a second one would be a second place for the mode fallback to
+ * be got wrong. The nonce carries the ID, so one minted for the add form cannot
+ * be replayed against an existing credential.
  */
 function gwc_vt_handle_save_credential(): void {
 	gwc_vt_require_credential_cap();
 
-	check_admin_referer( 'gwc_vt_save_credential_0' );
+	$credential_id = isset( $_POST['gwc_vt_credential'] ) ? absint( wp_unslash( $_POST['gwc_vt_credential'] ) ) : 0;
+
+	check_admin_referer( 'gwc_vt_save_credential_' . $credential_id );
+
+	if ( $credential_id > 0 && GWC_VT_CREDENTIAL_TYPE !== get_post_type( $credential_id ) ) {
+		gwc_vt_credentials_redirect( 'gone' );
+	}
 
 	$posted = wp_unslash( $_POST );
 
 	$name = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 120 );
 
 	if ( '' === trim( $name ) ) {
-		gwc_vt_credentials_redirect( 'no-name' );
+		gwc_vt_credentials_redirect( 'no-name', $credential_id );
 	}
 
-	$credential_id = wp_insert_post(
-		array(
-			'post_type'   => GWC_VT_CREDENTIAL_TYPE,
-			'post_status' => 'publish',
-			'post_title'  => $name,
-		)
-	);
+	if ( $credential_id > 0 ) {
+		/* The status is not touched. A retired credential stays retired through
+		 * an edit — putting it back is its own action, with its own sentence
+		 * about what it means, and a rename must not quietly undo it. */
+		$saved = wp_update_post(
+			array(
+				'ID'         => $credential_id,
+				'post_title' => $name,
+			),
+			true
+		);
 
-	if ( is_wp_error( $credential_id ) || ! $credential_id ) {
-		gwc_vt_credentials_redirect( 'failed' );
+		if ( is_wp_error( $saved ) ) {
+			gwc_vt_credentials_redirect( 'failed', $credential_id );
+		}
+	} else {
+		$credential_id = wp_insert_post(
+			array(
+				'post_type'   => GWC_VT_CREDENTIAL_TYPE,
+				'post_status' => 'publish',
+				'post_title'  => $name,
+			)
+		);
+
+		if ( is_wp_error( $credential_id ) || ! $credential_id ) {
+			gwc_vt_credentials_redirect( 'failed' );
+		}
+
+		$credential_id = (int) $credential_id;
 	}
 
-	$credential_id = (int) $credential_id;
-	$mode          = sanitize_key( (string) ( $posted['gwc_vt_mode'] ?? '' ) );
+	$mode = sanitize_key( (string) ( $posted['gwc_vt_mode'] ?? '' ) );
 
 	update_post_meta(
 		$credential_id,
@@ -547,6 +678,17 @@ function gwc_vt_handle_save_credential(): void {
 		GWC_VT_CREDENTIAL_NOTE,
 		mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_note'] ?? '' ) ), 0, 200 )
 	);
+
+	if ( ! empty( $posted['gwc_vt_credential'] ) ) {
+		/**
+		 * Fires after an existing credential has been edited.
+		 *
+		 * @param int $credential_id The credential.
+		 */
+		do_action( 'gwc_vt_credential_edited', $credential_id );
+
+		gwc_vt_credentials_redirect( 'saved' );
+	}
 
 	/**
 	 * Fires after a credential has been defined.
@@ -644,16 +786,24 @@ function gwc_vt_require_credential_cap(): void {
  * caller that can choose wrong, and "we could not save that" over a table
  * somebody was not looking at is the way it would go wrong.
  *
- * @param string $result What happened.
+ * @param string $result        What happened.
+ * @param int    $credential_id Which credential's form to come back to, or 0
+ *                              for the blank one.
  */
-function gwc_vt_credentials_redirect( string $result ): void {
+function gwc_vt_credentials_redirect( string $result, int $credential_id = 0 ): void {
 	$to_form = in_array( $result, array( 'no-name', 'failed' ), true );
+
+	/* Back to the form somebody was filling in, which for an edit is that
+	 * credential's own: "that could not be saved" belongs over the fields it
+	 * could not save, and sending an edit to the blank add form would offer to
+	 * make a second credential out of the mistake. */
+	$form = $credential_id > 0 ? (string) $credential_id : 'new';
 
 	wp_safe_redirect(
 		gwc_vt_credentials_url(
 			array_merge(
 				array( 'gwc_vt_credential_did' => $result ),
-				$to_form ? array( 'credential' => 'new' ) : array()
+				$to_form ? array( 'credential' => $form ) : array()
 			)
 		)
 	);
@@ -684,6 +834,10 @@ function gwc_vt_credentials_notice(): void {
 
 	$done = array(
 		'added'    => __( 'Credential added. Record who holds it on each volunteer’s own record.', 'groundwork-common-volunteer-tracker' ),
+		/* No count of who was re-dated: the number would be right and the
+		 * sentence would read as though something had been done to those people,
+		 * where what changed is the question being asked about them. */
+		'saved'    => __( 'Saved. Any expiry is worked out from the new interval from now on.', 'groundwork-common-volunteer-tracker' ),
 		/* Said in full, because retiring is the action whose consequences are
 		 * least obvious: it stops the credential being asked for, and leaves
 		 * every record of somebody holding it exactly where it is. */

@@ -244,6 +244,16 @@ function gwc_vt_help_topics(): array {
 					'note'  => __( 'Reporting is the safer choice and what most organizations want. Stopping a signup is for the things nobody may work without.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
+					'title' => __( 'Change a credential you already defined', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Hover the one you want and select <strong>Edit</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Change the name, the renewal interval, what happens when somebody has not got it, or the note.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save this credential</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Renaming is safe — every record points at the credential itself. Changing the interval is not the same kind of change: expiry is worked out from it every time it is asked for, so a shorter interval can make somebody lapsed the moment you save. The form says how many people hold it before you change that field.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
 					'title' => __( 'Mark somebody inactive who has stopped volunteering', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>.', 'groundwork-common-volunteer-tracker' ),

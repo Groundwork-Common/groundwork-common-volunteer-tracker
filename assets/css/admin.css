@@ -2172,6 +2172,16 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	color: #3c434a;
 }
 
+/* The one sentence on the credential form that is about consequences rather
+   than about a field. Not a notice — it belongs beside the control it is about,
+   where somebody is looking when they change it. */
+.gwcvt-credential-warning {
+	max-width: 44em;
+	padding: 8px 12px;
+	border-left: 4px solid #dba617;
+	background: #fcf9e8;
+}
+
 /* ─── Credentials ───────────────────────────────────────────────────────────
    Two tables that look alike and are not: the definitions screen lists what the
    organization asks for, the box on a volunteer's record lists where one person
