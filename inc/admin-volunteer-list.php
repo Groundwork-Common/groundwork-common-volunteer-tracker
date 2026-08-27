@@ -37,8 +37,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** The query var that picks a view. */
-const GWC_VT_LIST_VIEW = 'gwc_vt_view';
+/* The query var that picks a view.
+ *
+ * NOT 'gwc_vt_view', which the dashboard's list-and-grid toggle already owns —
+ * and owns with a nonce on it, so a link carrying that name reaches
+ * gwc_vt_handle_dashboard_view_toggle(), fails its check_admin_referer() and
+ * dies with "The link you followed has expired." on a link that never needed a
+ * nonce at all. Every view here was broken by that until somebody clicked one.
+ *
+ * A query var is a name in a namespace shared by the whole admin. This one says
+ * which list, so that it cannot be mistaken for a view of something else. */
+const GWC_VT_LIST_VIEW = 'gwc_vt_people';
 
 /** Its value for the applications view. */
 const GWC_VT_VIEW_APPLIED = 'applied';
