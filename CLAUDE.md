@@ -112,6 +112,12 @@ bin/wpenv --floor run cli -- wp eval-file \
 through, so the only difference is which environment you get — and that
 difference is the whole point. See the trap below.
 
+**`run cli`, never `run tests-cli`.** Both config files set
+`"testsEnvironment": false`, so there is one WordPress per environment rather
+than two and the tests containers are not built at all. Asking for one is an
+error — "Cannot run commands on tests-cli because the tests environment is
+disabled" — not a no-op. See the trap below for why it is off.
+
 **CI here is local.** `.github/workflows/test.yml` still holds every job — but
 its `push` and `pull_request` triggers were removed, so it fires only when
 somebody starts it from the Actions tab. Nothing checks a branch or a pull
@@ -191,10 +197,10 @@ wrong three times.
 The second is that a worktree gets a *whole new environment*. wp-env names its
 Compose project and its `~/.wp-env/` directory from the config file's absolute
 path — `basename( dirname( path ) )` plus `md5( path )[0..8]` — so every
-worktree builds its own six containers, WordPress download and pair of database
-volumes, about 460 MB each. Nothing is wrong with any of them, which is why they
-accumulate: four plugins had reached thirty-four instances and thirteen
-gigabytes, ten of them orphaned by worktrees that no longer existed.
+worktree builds its own four containers, WordPress download and database
+volume. Nothing is wrong with any of them, which is why they accumulate: four
+plugins had reached thirty-four instances and thirteen gigabytes, ten of them
+orphaned by worktrees that no longer existed.
 
 `bin/wpenv` runs wp-env from the **main checkout** — one fixed path, so one
 fixed instance per plugin — and mounts the worktree you are standing in at the
@@ -202,6 +208,17 @@ real slug. It writes the mount and the pinned ports into `.wp-env.override.json`
 there, and into `.wp-env.php74.override.json` for `--floor`, because wp-env
 derives an override's name from the `--config` it was given. Both are gitignored
 and both are named in `.distignore`.
+
+**The config it reads is the main checkout's, not the worktree's.** That falls
+out of the same design: the wrapper `cd`s to the main checkout before invoking
+wp-env, so `.wp-env.json` and `.wp-env.php74.json` are read from *there*. They
+are tracked files, so a branch that edits either one has no effect on your
+environment until that branch is the one checked out in the main checkout — the
+wrapper mounts the worktree's **code** while using the main checkout's
+**config**, and says nothing about the split. If you change wp-env config on a
+branch, the way to see it work is to check that branch out in the main checkout;
+pointing `--config` at the worktree's copy instead would build a second instance
+keyed to that path, which is the thing being avoided.
 
 Keep any scratch config **out of the repository root** regardless: `.distignore`
 names those four files literally, so a `.wp-env.php74.local.json` sitting beside
@@ -240,8 +257,9 @@ reason. Do not re-enable it.
 
 Ports are pinned by `bin/wpenv` into `.wp-env.override.json`, which is
 gitignored — a fresh clone gets wp-env defaults until the wrapper is run once.
-Move them with `GWC_WPENV_PORT` and friends rather than by editing the generated
-file, which is rewritten on every invocation.
+Move them with `GWC_WPENV_PORT` and `GWC_WPENV_FLOOR_PORT` rather than by
+editing the generated file, which is rewritten on every invocation. One port
+per environment, not two: there is no tests site to give a second one to.
 
 ## The beta site
 
@@ -346,6 +364,21 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   dropped — all correct, all invisible, on the numbers a letter prints.
 - Screenshot captions are matched to files **by number alone**. Reordering the
   captions without renaming the files silently mislabels every one.
+- **The wp-env tests environment is off, and turning it back on is a step
+  backwards.** `"testsEnvironment": false` is set in `.wp-env.json` and
+  `.wp-env.php74.json`. wp-env 11.14 deprecates starting two sites by default
+  along with `env`, `testsPort` and `testsEnvironment`, and asks for a separate
+  config file per environment instead — but the second site here was never used
+  by anything. `tests/bootstrap.php` stubs WordPress outright, so the unit suite
+  touches no container, and every script in `tests/integration/` runs through
+  `run cli`, which is the *development* one. The tests containers were
+  downloaded, installed and started on every `start` and nothing ever connected
+  to them. Off, each instance is four containers and one database volume instead
+  of eight and two — which is the same argument `bin/wpenv` is built on. A
+  separate `.wp-env.tests.json` would instead add a *third* instance per plugin,
+  because the instance name is derived from the config file's path. If you need
+  a real WordPress test database here one day, that is the moment to add the
+  file — not before.
 - **Trapping mail belongs on `pre_wp_mail`, never `phpmailer_init`.** The latter
   is the usual place to redirect mail and it cannot stop a send — only change
   where it goes. If PHPMailer then throws, because the host has no MTA or rejects

@@ -271,8 +271,9 @@ wp-env names its Docker Compose project and its `~/.wp-env/` instance directory
 after the config file's absolute path — `load-config.js` builds
 `basename( dirname( path ) )` plus the first eight characters of `md5( path )`.
 Every git worktree is a different path, so `npx @wordpress/env start` inside one
-does not reuse the plugin's environment. It builds a new one: six containers,
-its own WordPress download, two database volumes, about 460 MB. Nothing warns
+does not reuse the plugin's environment. It builds a new one: four containers,
+its own WordPress download and a database volume — eight and two before the
+tests environment was switched off, which is the next section. Nothing warns
 you, because nothing is wrong — each environment works perfectly. They just
 accumulate. Across four plugins they reached thirty-four instances and thirteen
 gigabytes, ten of them pointing at directories that had since been deleted.
@@ -284,13 +285,19 @@ mounts whichever worktree you are standing in at
 worktrees remounts the same environment rather than building another, and the
 site keeps its address and its database.
 
-Two consequences worth knowing before you rely on it. The mount is what makes
+Three consequences worth knowing before you rely on it. The mount is what makes
 the slug right, so `make-pot` run through this wrapper cannot produce the
-worktree-named template described under **Releasing** below. And one environment
-per plugin means exactly that: two worktrees cannot serve WordPress at the same
-time, which is the trade being bought. The wrapper prints the worktree it just
-mounted on every invocation, because the environment now outlives the branch and
-what is behind the URL is no longer obvious.
+worktree-named template described under **Releasing** below. One environment per
+plugin means exactly that: two worktrees cannot serve WordPress at the same
+time, which is the trade being bought. And because wp-env is invoked from the
+main checkout, the config it reads is the main checkout's copy of
+`.wp-env.json` — those are tracked files, so a branch that edits wp-env config
+does not change your environment until that branch is checked out there. The
+worktree supplies the code; the main checkout supplies the configuration.
+
+The wrapper prints the worktree it just mounted on every invocation, because the
+environment now outlives the branch and what is behind the URL is no longer
+obvious.
 
 `--floor` selects the PHP 7.4 configuration, which is a second instance by
 design — the two PHP versions cannot share a container:
@@ -299,13 +306,43 @@ design — the two PHP versions cannot share a container:
 bin/wpenv --floor start
 ```
 
-Ports are pinned at 8898/8899 (8896/8897 for the floor) and can be moved with
-`GWC_WPENV_PORT`, `GWC_WPENV_TESTS_PORT`, `GWC_WPENV_FLOOR_PORT` and
-`GWC_WPENV_FLOOR_TESTS_PORT`. The wrapper writes the mount and the ports into
+Ports are pinned at 8898 (8896 for the floor) and can be moved with
+`GWC_WPENV_PORT` and `GWC_WPENV_FLOOR_PORT` — one apiece, not two, for the
+reason below. The wrapper writes the mount and the port into
 `.wp-env.override.json` in the main checkout — and, for the floor, into
 `.wp-env.php74.override.json`, since wp-env derives an override's name from the
 `--config` it was given. Both are gitignored and both are named in
 `.distignore`.
+
+### There is no tests environment
+
+Both config files set `"testsEnvironment": false`, so each environment is one
+WordPress rather than two.
+
+wp-env has always started a development site and a tests site side by side, each
+with its own database and its own containers. 11.14 deprecates that: starting
+both by default is going away, and `env`, `testsPort` and `testsEnvironment` are
+all deprecated options. What it asks for instead is a separate config file per
+environment, started with `--config`.
+
+This plugin needs no such file, because it never used the second environment.
+The PHPUnit suite stubs WordPress outright — no database and no checkout, see
+`tests/bootstrap.php` — and every script under `tests/integration/` runs through
+`run cli`, which is the *development* container. The tests containers were
+downloaded, installed and started on every `start`, and nothing ever connected
+to them.
+
+Switching them off halves each instance — four containers instead of eight, one
+database volume instead of two. Given that the entire argument for `bin/wpenv`
+is that these accumulate unnoticed, that is worth more here than a config file
+for an environment nobody would open.
+
+Two things follow. `run tests-cli` is now an **error** rather than a command
+that quietly works — wp-env answers "Cannot run commands on tests-cli because
+the tests environment is disabled" — so use `run cli`; the wrapper's own
+post-start activation was narrowed to match. And `.github/workflows/test.yml`
+and the Plugin Check recipe under **The directory's own checker** already write
+`"testsEnvironment": false` into the configs they generate, so neither changes.
 
 ## Continuous integration
 

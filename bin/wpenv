@@ -18,10 +18,11 @@
 #   basename( dirname( configFilePath ) ) + [ config basename ] + md5( configFilePath )[0..8]
 #
 # Every git worktree is a different path, so `npx @wordpress/env start` inside
-# one builds an entirely new stack: six containers, its own WordPress download,
-# two database volumes, about 460 MB. Four plugins had accumulated thirty-four
-# of them, thirteen gigabytes, ten of which pointed at directories that no
-# longer existed. Nothing warns you; each one simply works.
+# one builds an entirely new stack: four containers, its own WordPress download
+# and a database volume — eight and two before the tests environment was
+# switched off. Four plugins had accumulated thirty-four of them, thirteen
+# gigabytes, ten of which pointed at directories that no longer existed.
+# Nothing warns you; each one simply works.
 #
 # So this script never runs wp-env from a worktree. It runs it from the
 # repository's *main* checkout — one fixed path, therefore one fixed instance
@@ -53,10 +54,12 @@ set -euo pipefail
 # bookmarking, and because wp-env's default 8888 is contended by every other
 # plugin on this machine. Override in the environment to move them.
 #
+# One port per environment rather than two: both config files set
+# `"testsEnvironment": false`, so wp-env no longer stands a second WordPress up
+# beside each one. See the block above the override for why that is safe.
+#
 PORT="${GWC_WPENV_PORT:-8898}"
-TESTS_PORT="${GWC_WPENV_TESTS_PORT:-8899}"
 FLOOR_PORT="${GWC_WPENV_FLOOR_PORT:-8896}"
-FLOOR_TESTS_PORT="${GWC_WPENV_FLOOR_TESTS_PORT:-8897}"
 
 FLOOR=0
 if [ "${1:-}" = "--floor" ]; then
@@ -92,17 +95,23 @@ fi
 # main checkout alongside the worktree and leave two copies of the same plugin
 # fighting over one slug. The mapping is the only mount.
 #
+# No "testsPort" here, and no "testsEnvironment" either. Both are deprecated in
+# wp-env 11.14, and the environment they size is one this plugin has never
+# used: tests/bootstrap.php stubs WordPress outright — no database, no checkout
+# — and every script under tests/integration/ runs through `run cli`, which is
+# the *development* container. So the switch is set in .wp-env.json and
+# .wp-env.php74.json, where it is inherited from, rather than restated in a
+# file this script overwrites on every invocation.
+#
 if [ "$FLOOR" -eq 1 ]; then
 	OVERRIDE="$MAIN/.wp-env.php74.override.json"
 	USE_PORT="$FLOOR_PORT"
-	USE_TESTS_PORT="$FLOOR_TESTS_PORT"
 	CONFIG_ARG=( --config "$MAIN/.wp-env.php74.json" )
 	FLOOR_FLAG=" --floor"
 	LABEL="PHP 7.4 floor"
 else
 	OVERRIDE="$MAIN/.wp-env.override.json"
 	USE_PORT="$PORT"
-	USE_TESTS_PORT="$TESTS_PORT"
 	CONFIG_ARG=()
 	FLOOR_FLAG=""
 	LABEL="development"
@@ -111,7 +120,6 @@ fi
 cat > "$OVERRIDE" <<JSON
 {
 	"port": $USE_PORT,
-	"testsPort": $USE_TESTS_PORT,
 	"plugins": [],
 	"mappings": {
 		"wp-content/plugins/$SLUG": "$HERE"
@@ -161,17 +169,24 @@ npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" "$@"
 # failures and exited zero. So the activation is best-effort and the *report*
 # comes from `is-active`, which is the thing anybody actually cares about.
 #
+# `cli` and nothing else. This used to run over `cli tests-cli`, and with the
+# tests environment switched off that second pass does not quietly do nothing —
+# wp-env raises "Cannot run commands on tests-cli because the tests environment
+# is disabled", the activation swallows it under `|| true`, and the is-active
+# check behind it then reports NOT active on every single start. A permanent
+# false alarm is the same failure as a silent pass, printed the other way up.
+#
 if [ "${1:-}" = "start" ]; then
-	for CONTAINER in cli tests-cli; do
-		npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" run "$CONTAINER" \
-			-- wp plugin activate "$SLUG" >/dev/null 2>&1 || true
+	CONTAINER=cli
 
-		if npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" run "$CONTAINER" \
-			-- wp plugin is-active "$SLUG" >/dev/null 2>&1; then
-			echo "wpenv:   active in $CONTAINER"
-		else
-			echo "wpenv:   NOT active in $CONTAINER. Activate it by hand:" >&2
-			echo "wpenv:     bin/wpenv$FLOOR_FLAG run $CONTAINER -- wp plugin activate $SLUG" >&2
-		fi
-	done
+	npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" run "$CONTAINER" \
+		-- wp plugin activate "$SLUG" >/dev/null 2>&1 || true
+
+	if npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" run "$CONTAINER" \
+		-- wp plugin is-active "$SLUG" >/dev/null 2>&1; then
+		echo "wpenv:   active in $CONTAINER"
+	else
+		echo "wpenv:   NOT active in $CONTAINER. Activate it by hand:" >&2
+		echo "wpenv:     bin/wpenv$FLOOR_FLAG run $CONTAINER -- wp plugin activate $SLUG" >&2
+	fi
 fi
