@@ -386,14 +386,52 @@ foreach ( array( 'the schedule', 'the month', 'the events list' ) as $gwc_vt_sc_
 			)
 	);
 
-	/* And the same two buttons beside the heading, in the same order. */
+	/* And one way to add, the same on all three. The two buttons this replaced
+	 * asked somebody to choose between two words before they had been told what
+	 * either means; the screen behind this one asks the question instead. */
 	gwc_vt_sc_check(
-		'and offers both of the things this screen adds',
-		strpos( $gwc_vt_sc_html, 'Add a shift' ) < strpos( $gwc_vt_sc_html, 'Add an event' )
-			&& false !== strpos( $gwc_vt_sc_html, 'Add a shift' ),
-		false === strpos( $gwc_vt_sc_html, 'Add a shift' ) ? 'no shift button' : 'both'
+		'and offers one way to add, not a choice of vocabulary',
+		1 === substr_count( $gwc_vt_sc_html, 'class="page-title-action"' )
+			&& false !== strpos( $gwc_vt_sc_html, 'add=new' ),
+		substr_count( $gwc_vt_sc_html, 'class="page-title-action"' ) . ' title action(s)'
 	);
 }
+
+/* The screen that button leads to, which is the whole point of there being one
+ * button: it asks the question in the reader's terms rather than making them
+ * know the vocabulary first. Both routes out of it still exist, because the
+ * dashboard and the how-to guide link straight at them. */
+$GLOBALS['gwc_vt_sc_add'] = gwc_vt_sc_render( 'the add chooser', function () {
+	$_GET['add'] = 'new';
+	gwc_vt_render_schedule_screen();
+	unset( $_GET['add'] );
+} );
+
+gwc_vt_sc_check(
+	'the chooser offers both, and says what each is for',
+	false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'shift=new' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'gwc_vt_event=new' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Several roles on one occasion' )
+);
+
+gwc_vt_sc_check(
+	'and keeps the words the buttons it replaced used',
+	false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add a shift' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add an event' )
+);
+
+/* Knowing which you want is still allowed. */
+$GLOBALS['gwc_vt_sc_direct'] = gwc_vt_sc_render( 'the direct route to a new event', function () {
+	$_GET['gwc_vt_event'] = 'new';
+	gwc_vt_render_schedule_screen();
+	unset( $_GET['gwc_vt_event'] );
+} );
+
+gwc_vt_sc_check(
+	'the direct address still opens the editor rather than the chooser',
+	false !== strpos( $GLOBALS['gwc_vt_sc_direct'], 'gwc_vt_save_event' )
+		&& false === strpos( $GLOBALS['gwc_vt_sc_direct'], 'Several roles on one occasion' )
+);
 
 /* ── A result in the URL is a result on the screen ───────────────────────── */
 

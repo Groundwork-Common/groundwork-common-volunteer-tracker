@@ -183,7 +183,7 @@ function gwc_vt_help_topics(): array {
 					'title' => __( 'Schedule a shift', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Schedule</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add a shift</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add</strong>, then <strong>Add a shift</strong> — the other choice is for an occasion with several roles on it.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter the date, the start and end times, and what the work is.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter how many people you need and how many you have room for.', 'groundwork-common-volunteer-tracker' ),
 						__( 'To repeat it, choose a pattern and a date to repeat until.', 'groundwork-common-volunteer-tracker' ),

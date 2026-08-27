@@ -75,6 +75,22 @@ function gwc_vt_render_schedule_screen(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : '';
 
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation between views.
+	$adding = isset( $_GET['add'] ) ? sanitize_key( wp_unslash( $_GET['add'] ) ) : '';
+
+	if ( 'new' === $adding ) {
+		gwc_vt_render_schedule_chooser(
+			add_query_arg(
+				array(
+					'post_type' => GWC_VT_ENTRY_TYPE,
+					'page'      => GWC_VT_SCHEDULE_PAGE,
+				),
+				admin_url( 'edit.php' )
+			)
+		);
+		return;
+	}
+
 	if ( 'new' === $event ) {
 		gwc_vt_render_event_editor( 0 );
 		return;
@@ -401,11 +417,8 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 				: esc_html__( 'Schedule', 'groundwork-common-volunteer-tracker' );
 			?>
 		</h1>
-		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
-			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
-		</a>
-		<a href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>" class="page-title-action">
-			<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
+		<a href="<?php echo esc_url( add_query_arg( 'add', 'new', $base ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Add', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
 		<hr class="wp-header-end" />
 
@@ -580,11 +593,8 @@ function gwc_vt_render_schedule_month(): void {
 				: esc_html__( 'Schedule', 'groundwork-common-volunteer-tracker' );
 			?>
 		</h1>
-		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
-			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
-		</a>
-		<a href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>" class="page-title-action">
-			<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
+		<a href="<?php echo esc_url( add_query_arg( 'add', 'new', $base ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Add', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
 		<hr class="wp-header-end" />
 
@@ -1779,6 +1789,79 @@ function gwc_vt_render_schedule_back( string $href, string $label ): void {
 }
 
 /**
+ * Which of the two things somebody is adding.
+ *
+ * ── Why this screen exists ───────────────────────────────────────────────────
+ * The header used to carry two buttons, and choosing between them meant already
+ * knowing what this plugin means by each word. They are not obvious: a shift can
+ * happen twenty times and an event happens once, so "one thing or many" — the
+ * intuition the two nouns invite — is exactly the wrong one. What actually
+ * differs is whether the occasion has several ROLES that people pick between:
+ * greeters, a kitchen, a clean-up crew.
+ *
+ * A screen that asks costs one click and puts the question in the reader's own
+ * terms. Its two buttons keep the words the header's did, so a help topic that
+ * says "select Add a shift" still finds one.
+ *
+ * The direct addresses still work — ?shift=new and ?gwc_vt_event=new are what
+ * the dashboard's own actions link to, and somebody who already knows which they
+ * want should not be asked.
+ *
+ * @param string $base The screen's own URL.
+ */
+function gwc_vt_render_schedule_chooser( string $base ): void {
+	?>
+	<div class="wrap gwcvt-wrap">
+		<h1><?php esc_html_e( 'Add to the schedule', 'groundwork-common-volunteer-tracker' ); ?></h1>
+
+		<?php gwc_vt_render_schedule_back( $base, __( 'Back to the schedule', 'groundwork-common-volunteer-tracker' ) ); ?>
+		<hr class="wp-header-end" />
+
+		<?php gwc_vt_schedule_notice(); ?>
+		<?php gwc_vt_event_notice(); ?>
+
+		<div class="gwcvt-choose">
+			<div class="gwcvt-choose__option">
+				<h2><?php esc_html_e( 'One job', 'groundwork-common-volunteer-tracker' ); ?></h2>
+
+				<p>
+					<?php esc_html_e( 'Somebody sorting produce on Saturday morning. One activity, one stretch of time, however many people you need.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
+
+				<p class="description">
+					<?php esc_html_e( 'It can repeat — every Saturday until December — and each occurrence is a real shift you can move or call off on its own.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
+
+				<p>
+					<a class="button button-primary" href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>">
+						<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
+					</a>
+				</p>
+			</div>
+
+			<div class="gwcvt-choose__option">
+				<h2><?php esc_html_e( 'Several roles on one occasion', 'groundwork-common-volunteer-tracker' ); ?></h2>
+
+				<p>
+					<?php esc_html_e( 'A festival with greeters, a kitchen and a clean-up crew, each offered at several times. Volunteers see the whole day and pick the role they want.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
+
+				<p class="description">
+					<?php esc_html_e( 'Every time on it is an ordinary shift underneath, so rosters, reminders and hours work exactly as they do for one you scheduled on its own.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
+
+				<p>
+					<a class="button button-primary" href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>">
+						<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
+					</a>
+				</p>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
+/**
  * The navigation row every view of this screen carries.
  *
  * Two controls answering two questions, and they are not interchangeable: on the
@@ -2381,16 +2464,12 @@ function gwc_vt_render_events_list(): void {
 	<div class="wrap gwcvt-wrap">
 		<h1 class="wp-heading-inline"><?php esc_html_e( 'Events', 'groundwork-common-volunteer-tracker' ); ?></h1>
 		<?php
-		/* Both, in the order the other two views put them. A header that gains
-		 * and loses a button as you move between three views of one screen is
-		 * the kind of thing that makes somebody hunt for the button they used
-		 * last time. */
+		/* The same one button as the other two views. A header that gains and
+		 * loses controls as you move between three views of one screen is what
+		 * makes somebody hunt for the one they used last time. */
 		?>
-		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
-			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
-		</a>
-		<a href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>" class="page-title-action">
-			<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
+		<a href="<?php echo esc_url( add_query_arg( 'add', 'new', $base ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Add', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
 		<hr class="wp-header-end" />
 

@@ -604,6 +604,32 @@ a.gwcvt-badge--action:focus-visible {
 	margin: 0;
 }
 
+/* ─── Choosing what to add ──────────────────────────────────────────────────
+   Two options side by side and equal in weight, because the screen exists to
+   ask a question rather than to steer: a coordinator who does not know which
+   word this plugin wants is not helped by one of them being louder. They stack
+   under core's touch breakpoint, where side-by-side is two narrow columns of
+   wrapped prose. */
+.gwcvt-choose {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin: 16px 0 0;
+}
+
+.gwcvt-choose__option {
+	flex: 1 1 22em;
+	max-width: 34em;
+	padding: 4px 20px 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.gwcvt-choose__option h2 {
+	font-size: 15px;
+}
+
 /* ─── The way back off a sub-screen ─────────────────────────────────────────
    One shape everywhere: a link under the heading, above the rule core hangs its
    notices from. Sized down a little because it is a way out and not an
