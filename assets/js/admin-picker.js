@@ -104,9 +104,14 @@
 			search.setAttribute( 'aria-expanded', 'true' );
 		}
 
+		/* Pickers that are about work already done say so on the element, and
+		 * only those get volunteers who have retired. A roster must not: see the
+		 * note on the route in inc/rest.php. */
+		var retired = root.hasAttribute( 'data-gwcvt-retired' ) ? '&retired=1' : '';
+
 		function lookup( term ) {
 			wp.apiFetch( {
-				path: '/gwc-vt/v1/volunteers?search=' + encodeURIComponent( term )
+				path: '/gwc-vt/v1/volunteers?search=' + encodeURIComponent( term ) + retired
 			} ).then( function ( results ) {
 				// The field may have moved on while the request was in flight.
 				if ( search.value.trim() === term ) {

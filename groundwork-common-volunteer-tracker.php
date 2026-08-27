@@ -373,6 +373,9 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	// Recording that a named volunteer holds one.
 	require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
 
+	// Retiring somebody who has stopped, which is neither anonymizing nor deleting.
+	require GWC_VT_DIR . 'inc/admin-volunteer-retire.php';
+
 	// Typing up a sign-in sheet in one pass.
 	require GWC_VT_DIR . 'inc/admin-quick-add.php';
 

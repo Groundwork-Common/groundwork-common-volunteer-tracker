@@ -112,8 +112,8 @@ function gwc_vt_register_credential_types(): void {
 			'exclude_from_search'       => true,
 			'show_in_admin_all_list'    => false,
 			'show_in_admin_status_list' => true,
-			/* translators: %s: how many are retired. */
-			'label_count'               => _n_noop( 'Retired <span class="count">(%s)</span>', 'Retired <span class="count">(%s)</span>', 'groundwork-common-volunteer-tracker' ),
+			/* translators: %s: how many credentials are retired. */
+			'label_count'               => _nx_noop( 'Retired <span class="count">(%s)</span>', 'Retired <span class="count">(%s)</span>', 'credential status', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 

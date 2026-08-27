@@ -568,6 +568,10 @@ function gwc_vt_overdue_requirement_ids(): array {
 	gwc_vt_walk_matching_ids(
 		array(
 			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
+			/* Retired deliberately absent, and this is the one place that difference
+			 * is the whole point: a nag about court-ordered hours aimed at somebody
+			 * who has stopped volunteering is a queue item nobody can ever clear.
+			 * Not gwc_vt_volunteer_statuses(). */
 			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
 			'update_post_term_cache' => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- two indexed keys, once per dashboard load.

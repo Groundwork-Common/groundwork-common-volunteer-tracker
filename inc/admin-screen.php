@@ -144,7 +144,6 @@ function gwc_vt_menu_bands(): array {
 		 * is the person who finds out the county changed a renewal period. */
 		'people' => array(
 			'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE,
-			GWC_VT_APPLICATIONS_PAGE,
 			GWC_VT_CREDENTIALS_PAGE,
 		),
 
@@ -274,6 +273,14 @@ function gwc_vt_hidden_menu_items(): array {
 		 * because "which repeat" is the one thing the screen cannot ask you. A
 		 * menu entry would land on a form with nothing to apply across. */
 		GWC_VT_REPEAT_PAGE,
+
+		/* Applications are the first step of a volunteer's life here, so they
+		 * are offered where the rest of that life is: as a view above the
+		 * volunteer list, beside All, Approved and Retired. See
+		 * gwc_vt_volunteer_views(). The screen keeps its own page and its count
+		 * bubble moves to that view, which is the only place the number now
+		 * needs to be. */
+		GWC_VT_APPLICATIONS_PAGE,
 	);
 
 	/**

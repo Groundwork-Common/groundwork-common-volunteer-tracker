@@ -115,7 +115,6 @@ final class MenuTest extends TestCase {
 				'Dashboard',
 				'Schedule',
 				'Volunteers',
-				'Applications',
 				'Credentials',
 				'Hours',
 				'Letters',
@@ -145,18 +144,23 @@ final class MenuTest extends TestCase {
 	}
 
 	/**
-	 * Eleven entries in, nine out. The count is the point of the hiding pass, so
-	 * it is asserted as a count rather than left to be inferred from the order
-	 * above.
+	 * Eleven entries in, eight out. The count is the point of the hiding pass,
+	 * so it is asserted as a count rather than left to be inferred from the
+	 * order above.
+	 *
+	 * Applications is the eleventh-to-eighth step: it is a real screen that is
+	 * deliberately not a row, offered instead as a view above the volunteer
+	 * list, where the rest of a volunteer's life already is.
 	 */
-	public function test_the_menu_is_nine_entries(): void {
+	public function test_the_menu_is_eight_entries(): void {
 		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
 		$this->assertCount( 11, $this->as_registered() );
 
 		$this->build();
 
-		$this->assertCount( 9, $this->labels() );
+		$this->assertCount( 8, $this->labels() );
+		$this->assertNotContains( 'Applications', $this->labels() );
 	}
 
 	/* ── The bands, and the rules between them ───────────────────────────────
@@ -221,7 +225,7 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Applications', 'Hours', 'Settings' ),
+			array( 'Credentials', 'Hours', 'Settings' ),
 			$this->ruled(),
 			'the band opens on the first row it has left, not on the slug named first'
 		);

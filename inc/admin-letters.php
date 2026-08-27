@@ -359,7 +359,7 @@ function gwc_vt_render_produce_letter_screen(): void {
 					<label for="gwcvt-letter-volunteer">
 						<strong><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></strong>
 					</label>
-					<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
+					<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-retired data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
 						<input
 							type="text"
 							id="gwcvt-letter-volunteer"

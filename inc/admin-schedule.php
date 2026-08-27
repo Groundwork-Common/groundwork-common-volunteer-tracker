@@ -1393,7 +1393,9 @@ function gwc_vt_schedule_shift_ids_for_person( string $term ): array {
 	$volunteers = get_posts(
 		array(
 			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
-			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			/* Retired included: "which shift is that person on" is a question about
+			 * what happened, not an offer to book them onto another one. */
+			'post_status'            => gwc_vt_volunteer_statuses(),
 			// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- the volunteers whose name matches one search term. 200 is a ceiling on how many people one word can put on the schedule, not a page; the query is ids-only with no_found_rows and both caches off.
 			'posts_per_page'         => 200,
 			'fields'                 => 'ids',

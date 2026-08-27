@@ -242,6 +242,15 @@ function gwc_vt_help_topics(): array {
 					'note'  => __( 'Reporting is the safer choice and what most organizations want. Stopping a signup is for the things nobody may work without.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
+					'title' => __( 'Retire somebody who has stopped volunteering', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Hover the row for the person who has stopped.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Retire</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Retiring keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Retired</strong> above the list to see them, and <strong>Put back</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
 					'title' => __( 'Record that somebody holds one', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
@@ -293,7 +302,7 @@ function gwc_vt_help_topics(): array {
 				array(
 					'title' => __( 'Answer somebody who applied to volunteer', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Applications</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>, then <strong>Applied</strong> above the list.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Read what they sent.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Add as a volunteer</strong> to make a record from it, or <strong>Discard</strong> to take it off the list.', 'groundwork-common-volunteer-tracker' ),
 					),
