@@ -422,10 +422,13 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	 * which now includes the schedule and its rosters. */
 	require GWC_VT_DIR . 'inc/admin-help.php';
 
-	/* And the same help again on a page somebody can find, which asks the file
-	 * above what each screen would say rather than repeating any of it. After
-	 * it, because it calls into it. */
-	/* The how-to guide, as data. Before the page that prints it. */
+	/* And the other half of the help: a how-to guide on a page somebody can
+	 * find, because a Help tab has to be known about before it can be opened.
+	 * Not a second copy of the tabs — the tabs say what a screen means, the
+	 * guide says how to do the thing — so the two files share no text.
+	 *
+	 * The guide as data first, then the page that prints it. After
+	 * inc/admin-help.php, whose tabs each link into a topic of it. */
 	require GWC_VT_DIR . 'inc/help-content.php';
 	require GWC_VT_DIR . 'inc/admin-help-page.php';
 }

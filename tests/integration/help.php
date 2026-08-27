@@ -74,32 +74,40 @@ function gwc_vt_help_tabs_for( string $screen_id ): array {
 
 wp_set_current_user( 1 );
 
-/* Letters help is gated on the feature being switched on, so switch it on —
- * otherwise those two screens are skipped for a reason that has nothing to do
- * with whether anybody wrote their help. */
+/* Both optional features on. gwc_vt_help_screens() lists a screen only when the
+ * feature that registers it is switched on — the schedule under shifts, the two
+ * letter screens under letters — so on a default install those three drop out of
+ * the walk below for a reason that has nothing to do with whether anybody wrote
+ * their help. Switched on here, everything the plugin can register is checked. */
 $GLOBALS['gwc_vt_help_opts'] = get_option( GWC_VT_SETTINGS_OPTION, array() );
 
 update_option(
 	GWC_VT_SETTINGS_OPTION,
-	array_merge( $GLOBALS['gwc_vt_help_opts'], array( 'letters_enabled' => 1 ) )
+	array_merge(
+		$GLOBALS['gwc_vt_help_opts'],
+		array(
+			'letters_enabled' => 1,
+			'shifts_enabled'  => 1,
+		)
+	)
 );
 gwc_vt_settings_cache( null, true );
 
 echo "\n── Every screen the plugin registers ────────────────────────────\n";
 
-/* The page slugs, read from the constants rather than typed out again, so a
- * renamed screen breaks this loudly instead of silently dropping out of it. */
-/* Read from the plugin rather than listed again here. gwc_vt_help_screens() is
- * what the Help page renders from, so a screen missing from it is a screen
- * missing from the page AND from this guard — one omission with one symptom,
- * rather than a list here that can quietly disagree with the one there. */
+/* Read from the plugin rather than listed again here, and from the constants
+ * rather than typed out, so a renamed screen breaks this loudly instead of
+ * silently dropping out of it. gwc_vt_help_screens() is the plugin's own list of
+ * the screens that must have help — a list kept here instead could quietly
+ * disagree with it, which is the same drift this whole script exists to stop. */
 $GLOBALS['gwc_vt_help_screens'] = gwc_vt_help_screens();
 
-/* Plus the two the page does not carry a heading for: producing a letter and
- * the letters log are listed only when letters are switched on, and they are
- * switched on above. Asserting the count keeps that honest. */
+/* Including the three that are listed only when their feature is on — the
+ * schedule, producing a letter, the letters log — which are switched on above.
+ * Asserting the count keeps that honest: a failed switch would otherwise show
+ * up as three screens quietly not being checked. */
 gwc_vt_help_check(
-	'the page covers every screen with help',
+	'every screen the plugin can register is being checked',
 	count( $GLOBALS['gwc_vt_help_screens'] ) >= 13,
 	count( $GLOBALS['gwc_vt_help_screens'] ) . ' screen(s)'
 );
