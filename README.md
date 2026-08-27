@@ -285,15 +285,20 @@ mounts whichever worktree you are standing in at
 worktrees remounts the same environment rather than building another, and the
 site keeps its address and its database.
 
-Three consequences worth knowing before you rely on it. The mount is what makes
+Two consequences worth knowing before you rely on it. The mount is what makes
 the slug right, so `make-pot` run through this wrapper cannot produce the
-worktree-named template described under **Releasing** below. One environment per
-plugin means exactly that: two worktrees cannot serve WordPress at the same
-time, which is the trade being bought. And because wp-env is invoked from the
-main checkout, the config it reads is the main checkout's copy of
-`.wp-env.json` — those are tracked files, so a branch that edits wp-env config
-does not change your environment until that branch is checked out there. The
-worktree supplies the code; the main checkout supplies the configuration.
+worktree-named template described under **Releasing** below. And one environment
+per plugin means exactly that: two worktrees cannot serve WordPress at the same
+time, which is the trade being bought.
+
+Configuration follows the branch. The wrapper reads the worktree's own
+`.wp-env.json`, folds it into the override it generates, and stamps the port, an
+emptied `plugins` and the mount on top — so a branch that edits wp-env config
+changes the environment it is editing. That is not free: wp-env is invoked from
+the main checkout, so the naive version reads whatever branch is checked out
+*there*, and this wrapper did exactly that for its first day. What deliberately
+does not follow the branch is the config file's *path*, because `md5( path )` is
+the instance identity and pinning it is the whole mechanism.
 
 The wrapper prints the worktree it just mounted on every invocation, because the
 environment now outlives the branch and what is behind the URL is no longer
@@ -306,9 +311,11 @@ design — the two PHP versions cannot share a container:
 bin/wpenv --floor start
 ```
 
-Ports are pinned at 8898 (8896 for the floor) and can be moved with
-`GWC_WPENV_PORT` and `GWC_WPENV_FLOOR_PORT` — one apiece, not two, for the
-reason below. The wrapper writes the mount and the port into
+Ports resolve in three tiers: `GWC_WPENV_PORT` (or `GWC_WPENV_FLOOR_PORT`) wins
+outright if set; otherwise a `port` in the branch's own `.wp-env.json` is
+honoured, since configuration follows the branch; otherwise the pinned default,
+8898 and 8896 for the floor. One variable apiece, not two, for the reason
+below. The wrapper writes the mount and the port into
 `.wp-env.override.json` in the main checkout — and, for the floor, into
 `.wp-env.php74.override.json`, since wp-env derives an override's name from the
 `--config` it was given. Both are gitignored and both are named in

@@ -58,8 +58,12 @@ set -euo pipefail
 # `"testsEnvironment": false`, so wp-env no longer stands a second WordPress up
 # beside each one. See the block above the override for why that is safe.
 #
-PORT="${GWC_WPENV_PORT:-8898}"
-FLOOR_PORT="${GWC_WPENV_FLOOR_PORT:-8896}"
+# An unset variable means "take whatever the branch's config says, and fall back
+# to this" — see the merge below. Set one and it wins outright.
+PORT_FORCED="${GWC_WPENV_PORT:-}"
+FLOOR_PORT_FORCED="${GWC_WPENV_FLOOR_PORT:-}"
+PORT_DEFAULT=8898
+FLOOR_PORT_DEFAULT=8896
 
 FLOOR=0
 if [ "${1:-}" = "--floor" ]; then
@@ -91,41 +95,116 @@ if [ ! -f "$MAIN/.wp-env.json" ]; then
 fi
 
 # ── Write the override ───────────────────────────────────────────────────────
-# "plugins": [] empties the inherited `[ "." ]`, which would otherwise mount the
-# main checkout alongside the worktree and leave two copies of the same plugin
-# fighting over one slug. The mapping is the only mount.
+# The override is the whole of the environment's configuration, not a patch on
+# top of the main checkout's. That is deliberate, and it is the answer to a
+# design fault this wrapper had until it was written.
 #
-# No "testsPort" here, and no "testsEnvironment" either. Both are deprecated in
-# wp-env 11.14, and the environment they size is one this plugin has never
-# used: tests/bootstrap.php stubs WordPress outright — no database, no checkout
-# — and every script under tests/integration/ runs through `run cli`, which is
-# the *development* container. So the switch is set in .wp-env.json and
-# .wp-env.php74.json, where it is inherited from, rather than restated in a
-# file this script overwrites on every invocation.
+# wp-env is invoked from the main checkout, so it reads the main checkout's
+# .wp-env.json — which is on whatever branch happens to be checked out there,
+# usually not yours. The wrapper mounted the worktree's *code* while using
+# another branch's *config*, and nothing said so. A branch that changed
+# .wp-env.json had no effect on the environment it was changing, and the way you
+# found out was that the change appeared not to work.
+#
+# So the worktree's own config file is read here and folded in, and the wrapper's
+# three keys are stamped on top of it. Config follows the branch, the same as the
+# code does. What cannot follow the branch is the config *path*, because
+# `md5( configFilePath )` is the instance identity — that has to stay pinned to
+# the main checkout or there is one environment per worktree again, which is the
+# thing this script exists to prevent.
+#
+# Precedence, in order:
+#
+#   the worktree's .wp-env.json      the branch's intent
+#   port                             GWC_WPENV_PORT if set, else the branch's
+#                                    own "port", else the pinned default
+#   plugins: []                      empties the inherited [ "." ], which would
+#                                    otherwise mount the main checkout beside
+#                                    the worktree, two copies fighting over one
+#                                    slug
+#   mappings                         the mount, applied last so it always wins
+#
+# Root-only options — testsEnvironment, testsPort, autoPort, lifecycleScripts,
+# env — are carried across at the root, which is where they are legal:
+# parse-config.js:474-486 throws on any of them nested inside an environment.
+# `$schema` is carried too; it is allowed by name at :467.
 #
 if [ "$FLOOR" -eq 1 ]; then
+	CONFIG_NAME=".wp-env.php74.json"
 	OVERRIDE="$MAIN/.wp-env.php74.override.json"
-	USE_PORT="$FLOOR_PORT"
+	USE_FORCED="$FLOOR_PORT_FORCED"
+	USE_DEFAULT="$FLOOR_PORT_DEFAULT"
 	CONFIG_ARG=( --config "$MAIN/.wp-env.php74.json" )
 	FLOOR_FLAG=" --floor"
 	LABEL="PHP 7.4 floor"
 else
+	CONFIG_NAME=".wp-env.json"
 	OVERRIDE="$MAIN/.wp-env.override.json"
-	USE_PORT="$PORT"
+	USE_FORCED="$PORT_FORCED"
+	USE_DEFAULT="$PORT_DEFAULT"
 	CONFIG_ARG=()
 	FLOOR_FLAG=""
 	LABEL="development"
 fi
 
-cat > "$OVERRIDE" <<JSON
-{
-	"port": $USE_PORT,
-	"plugins": [],
-	"mappings": {
-		"wp-content/plugins/$SLUG": "$HERE"
-	}
+if [ ! -f "$HERE/$CONFIG_NAME" ]; then
+	echo "wpenv: no $CONFIG_NAME in $HERE." >&2
+	exit 1
+fi
+
+# PHP rather than a shell JSON fabrication, because "core": null is meaningful
+# here and has to survive the round trip as a null rather than being dropped as
+# empty. php is a given in this repository — it is what runs the test suite.
+#
+MERGE_PHP=$( cat <<'PHP'
+list( , $source, $target, $slug, $mount, $forced, $fallback ) = $argv;
+
+$raw = file_get_contents( $source );
+$config = json_decode( $raw, true );
+
+// A config file that does not parse is a stop, not something to route around.
+// Carrying on would build an environment from the defaults and look like it
+// had worked.
+if ( ! is_array( $config ) ) {
+	fwrite( STDERR, "wpenv: $source is not valid JSON: " . json_last_error_msg() . "
+" );
+	exit( 1 );
 }
-JSON
+
+// array_key_exists rather than isset: "port": null is a set key.
+if ( '' !== $forced ) {
+	$port = (int) $forced;
+} elseif ( array_key_exists( 'port', $config ) && null !== $config['port'] ) {
+	$port = (int) $config['port'];
+} else {
+	$port = (int) $fallback;
+}
+
+$config['port']     = $port;
+$config['plugins']  = array();
+$config['mappings'] = array( "wp-content/plugins/$slug" => $mount );
+
+$json = json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+if ( false === $json ) {
+	fwrite( STDERR, "wpenv: could not encode the merged config.
+" );
+	exit( 1 );
+}
+
+if ( false === file_put_contents( $target, $json . "
+" ) ) {
+	fwrite( STDERR, "wpenv: could not write $target
+" );
+	exit( 1 );
+}
+
+// The chosen port goes back to the shell, which has to print it.
+echo $port;
+PHP
+)
+
+USE_PORT=$( php -r "$MERGE_PHP" -- \
+	"$HERE/$CONFIG_NAME" "$OVERRIDE" "$SLUG" "$HERE" "$USE_FORCED" "$USE_DEFAULT" )
 
 # ── Say what is mounted ──────────────────────────────────────────────────────
 # The whole point is that the environment outlives the worktree, which means the

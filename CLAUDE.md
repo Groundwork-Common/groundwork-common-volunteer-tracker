@@ -209,16 +209,26 @@ there, and into `.wp-env.php74.override.json` for `--floor`, because wp-env
 derives an override's name from the `--config` it was given. Both are gitignored
 and both are named in `.distignore`.
 
-**The config it reads is the main checkout's, not the worktree's.** That falls
-out of the same design: the wrapper `cd`s to the main checkout before invoking
-wp-env, so `.wp-env.json` and `.wp-env.php74.json` are read from *there*. They
-are tracked files, so a branch that edits either one has no effect on your
-environment until that branch is the one checked out in the main checkout — the
-wrapper mounts the worktree's **code** while using the main checkout's
-**config**, and says nothing about the split. If you change wp-env config on a
-branch, the way to see it work is to check that branch out in the main checkout;
-pointing `--config` at the worktree's copy instead would build a second instance
-keyed to that path, which is the thing being avoided.
+**The override is the whole configuration, not a patch.** The wrapper reads the
+*worktree's* `.wp-env.json` and folds it into the file it generates, then stamps
+`port`, `plugins: []` and `mappings` on top. So config follows the branch exactly
+as the code does, and a branch that edits wp-env config changes the environment
+it is editing.
+
+This is worth knowing because the obvious implementation is wrong. wp-env is
+invoked from the main checkout, so left alone it reads the main checkout's
+config — whatever branch happens to be checked out there. The wrapper spent its
+first day mounting the worktree's **code** while using another branch's
+**config**, silently: a branch that set `testsEnvironment` had no effect, and the
+symptom was that the change appeared not to work. What cannot follow the branch
+is the config *path*, because `md5( configFilePath )` is the instance identity —
+that stays pinned to the main checkout, or there is one environment per worktree
+again.
+
+Root-only options survive the fold because they are written at the root, which is
+the only place they are legal: `parse-config.js:474-486` throws on `testsPort`,
+`autoPort`, `testsEnvironment`, `lifecycleScripts` or `env` nested inside an
+environment.
 
 Keep any scratch config **out of the repository root** regardless: `.distignore`
 names those four files literally, so a `.wp-env.php74.local.json` sitting beside
