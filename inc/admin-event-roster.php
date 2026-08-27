@@ -42,6 +42,18 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 	<div class="wrap gwcvt-wrap">
 		<h1><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></h1>
 
+		<?php gwc_vt_render_schedule_back( gwc_vt_event_edit_url( $event_id ), __( 'Back to the event', 'groundwork-common-volunteer-tracker' ) ); ?>
+		<hr class="wp-header-end" />
+
+		<?php
+		/* gwc_vt_event_roster_redirect() comes back here with the result of
+		 * every add, removal and promotion — "rostered", "not on this shift",
+		 * "no volunteer chosen" — and none of it was printed, because only the
+		 * logging notice below was. A refusal nothing draws is a button that
+		 * appears to do nothing. */
+		?>
+		<?php gwc_vt_event_notice(); ?>
+
 		<p class="description">
 			<?php
 			echo esc_html( gwc_vt_event_date_label( $event_id ) );

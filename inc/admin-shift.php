@@ -58,13 +58,11 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 			?>
 		</h1>
 
-		<p>
-			<a href="<?php echo esc_url( gwc_vt_schedule_url() ); ?>">
-				&larr; <?php esc_html_e( 'Back to the schedule', 'groundwork-common-volunteer-tracker' ); ?>
-			</a>
-		</p>
+		<?php gwc_vt_render_schedule_back( gwc_vt_schedule_url(), __( 'Back to the schedule', 'groundwork-common-volunteer-tracker' ) ); ?>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_schedule_notice(); ?>
+		<?php gwc_vt_event_notice(); ?>
 
 		<?php if ( $cancelled ) : ?>
 			<div class="notice notice-warning inline">

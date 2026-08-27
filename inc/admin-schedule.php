@@ -82,7 +82,12 @@ function gwc_vt_render_schedule_screen(): void {
 
 	$event_id = absint( $event );
 
-	if ( $event_id > 0 && GWC_VT_EVENT_TYPE === get_post_type( $event_id ) ) {
+	if ( $event_id > 0 && GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) ) {
+		gwc_vt_render_schedule_list( 'event' );
+		return;
+	}
+
+	if ( $event_id > 0 ) {
 		if ( 'roster' === $view ) {
 			gwc_vt_render_event_roster( $event_id );
 			return;
@@ -99,6 +104,12 @@ function gwc_vt_render_schedule_screen(): void {
 				gwc_vt_render_call_off_slot( $slot );
 				return;
 			}
+
+			/* A time that is not on this event, rather than one this event does
+			 * not have: both end up here, and the event is what somebody came
+			 * from either way. */
+			gwc_vt_render_event_editor( $event_id, 'slot' );
+			return;
 		}
 
 		if ( 'drop-role' === $view ) {
@@ -112,9 +123,14 @@ function gwc_vt_render_schedule_screen(): void {
 			$role = isset( $_GET['role'] ) ? sanitize_text_field( rawurldecode( wp_unslash( $_GET['role'] ) ) ) : '';
 
 			if ( '' !== $role ) {
+				/* A role with nothing left on it is answered by the screen
+				 * itself, which knows what it looked for. */
 				gwc_vt_render_drop_role( $event_id, $role );
 				return;
 			}
+
+			gwc_vt_render_event_editor( $event_id, 'role' );
+			return;
 		}
 
 		gwc_vt_render_event_editor( $event_id );
@@ -146,7 +162,7 @@ function gwc_vt_render_schedule_screen(): void {
 		return;
 	}
 
-	gwc_vt_render_schedule_list();
+	gwc_vt_render_schedule_list( $shift_id > 0 ? 'shift' : '' );
 }
 
 /**
@@ -329,8 +345,12 @@ function gwc_vt_schedule_list_state(): array {
 
 /**
  * Everything coming up, soonest first.
+ *
+ * @param string $missing What the URL asked for and is not there, if anything —
+ *                        the router hands this over rather than falling back to
+ *                        the schedule without a word.
  */
-function gwc_vt_render_schedule_list(): void {
+function gwc_vt_render_schedule_list( string $missing = '' ): void {
 	/* Every local the markup below reads comes out of one call. Unpacked by hand
 	 * rather than extract()ed, so that a name the renderer uses and the state
 	 * function does not return is a fatal at the top of this function instead of
@@ -366,27 +386,12 @@ function gwc_vt_render_schedule_list(): void {
 		</a>
 		<hr class="wp-header-end" />
 
+		<?php gwc_vt_render_schedule_missing( $missing ); ?>
 		<?php gwc_vt_schedule_notice(); ?>
 		<?php gwc_vt_event_notice(); ?>
 		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base ); ?>
 
-		<ul class="subsubsub">
-			<li>
-				<a href="<?php echo esc_url( $base ); ?>" <?php echo 'upcoming' === $when ? 'class="current" aria-current="page"' : ''; ?>>
-					<?php esc_html_e( 'Coming up', 'groundwork-common-volunteer-tracker' ); ?>
-				</a> |
-			</li>
-			<li>
-				<a href="<?php echo esc_url( add_query_arg( 'when', 'past', $base ) ); ?>" <?php echo 'past' === $when ? 'class="current" aria-current="page"' : ''; ?>>
-					<?php esc_html_e( 'Already happened', 'groundwork-common-volunteer-tracker' ); ?>
-				</a> |
-			</li>
-			<li>
-				<a href="<?php echo esc_url( add_query_arg( 'view', 'events', $base ) ); ?>">
-					<?php esc_html_e( 'Events', 'groundwork-common-volunteer-tracker' ); ?>
-				</a>
-			</li>
-		</ul>
+		<?php gwc_vt_render_schedule_status_links( $base, $when ); ?>
 
 		<?php gwc_vt_render_schedule_view_tabs( $base, 'list' ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when ); ?>
@@ -542,6 +547,13 @@ function gwc_vt_render_schedule_month(): void {
 
 		<?php gwc_vt_schedule_notice(); ?>
 		<?php gwc_vt_event_notice(); ?>
+
+		<?php
+		/* Nothing marked current: a calendar is neither half of the list, and
+		 * saying it is "Coming up" would be false of the four December rows it
+		 * is showing in January. These are the way out of it. */
+		?>
+		<?php gwc_vt_render_schedule_status_links( $base, '' ); ?>
 
 		<?php gwc_vt_render_schedule_view_tabs( $base, 'month' ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'month' ); ?>
@@ -1641,6 +1653,106 @@ function gwc_vt_render_shift_drawer( string $view, string $month = '' ): void {
 }
 
 /**
+ * Why the screen somebody asked for is not the screen they got.
+ *
+ * A URL naming a shift, an event, one of its times or one of its roles that is
+ * not there used to fall through to the schedule without a word — the same
+ * answer as typing the address of the screen you are now looking at, which is
+ * why it reads as a screen that has lost something rather than a link that has.
+ * The repeat editor already said so for its own case; this is that, everywhere.
+ *
+ * Deleted is the usual reason and it is usually somebody else who did it, so the
+ * sentence says the thing is gone rather than guessing at how.
+ *
+ * @param string $what 'shift', 'event', 'slot' or 'role'.
+ */
+function gwc_vt_render_schedule_missing( string $what ): void {
+	$said = array(
+		'shift' => __( 'That shift is not there — it may have been deleted. Here is the schedule instead.', 'groundwork-common-volunteer-tracker' ),
+		'event' => __( 'That event is not there — it may have been deleted. Here is the schedule instead.', 'groundwork-common-volunteer-tracker' ),
+		'slot'  => __( 'That time is not part of this event any more. Here is the event instead.', 'groundwork-common-volunteer-tracker' ),
+		'role'  => __( 'That role is not on this event any more. Here is the event instead.', 'groundwork-common-volunteer-tracker' ),
+	);
+
+	if ( ! isset( $said[ $what ] ) ) {
+		return;
+	}
+
+	printf(
+		'<div class="notice notice-warning"><p>%s</p></div>',
+		esc_html( $said[ $what ] )
+	);
+}
+
+/**
+ * The way back, in one shape wherever it appears.
+ *
+ * Every sub-view of the schedule is arrived at from somewhere and has to offer
+ * the way out. They had three shapes between them — a "← Back to the schedule"
+ * link, a "Back to the event" button, and on the event editor and the roster,
+ * nothing at all — so the answer to "how do I leave this" depended on which one
+ * you were standing in. It is a link and not a button because it navigates and
+ * decides nothing; the buttons on these screens all commit something.
+ *
+ * Directly under the heading and above `wp-header-end`, so it stays with the
+ * title and a notice never lands between the two.
+ *
+ * @param string $href  Where back is.
+ * @param string $label What to call it.
+ */
+function gwc_vt_render_schedule_back( string $href, string $label ): void {
+	?>
+	<p class="gwcvt-back">
+		<a href="<?php echo esc_url( $href ); ?>">
+			&larr; <?php echo esc_html( $label ); ?>
+		</a>
+	</p>
+	<?php
+}
+
+/**
+ * Coming up | Already happened | Events, on every list this screen has.
+ *
+ * One function rather than the two hand-written bars it replaces. They had
+ * drifted into different lists: the events view offered only "Coming up" and
+ * itself, so arriving there took the past and the calendar off the screen with
+ * no way back to either but the browser's own button, and the month offered
+ * none of the three at all.
+ *
+ * Separate from gwc_vt_render_schedule_view_tabs(), which is a different
+ * question — this chooses WHICH things are listed, that chooses whether they are
+ * drawn as a list or a calendar, and the calendar exists for both halves.
+ *
+ * @param string $base    The screen's own URL.
+ * @param string $current 'upcoming', 'past', 'events', or '' for a view that is
+ *                        none of them.
+ */
+function gwc_vt_render_schedule_status_links( string $base, string $current ): void {
+	$links = array(
+		'upcoming' => array( __( 'Coming up', 'groundwork-common-volunteer-tracker' ), $base ),
+		'past'     => array( __( 'Already happened', 'groundwork-common-volunteer-tracker' ), add_query_arg( 'when', 'past', $base ) ),
+		'events'   => array( __( 'Events', 'groundwork-common-volunteer-tracker' ), add_query_arg( 'view', 'events', $base ) ),
+	);
+
+	$last = array_key_last( $links );
+	?>
+	<ul class="subsubsub">
+		<?php foreach ( $links as $key => $link ) : ?>
+			<li class="<?php echo esc_attr( $key ); ?>">
+				<a
+					href="<?php echo esc_url( (string) $link[1] ); ?>"
+					<?php echo $key === $current ? 'class="current" aria-current="page"' : ''; ?>
+				>
+					<?php echo esc_html( (string) $link[0] ); ?>
+				</a>
+				<?php echo $key === $last ? '' : ' |'; ?>
+			</li>
+		<?php endforeach; ?>
+	</ul>
+	<?php
+}
+
+/**
  * Month | List, as two links.
  *
  * A GET parameter rather than a stored preference, unlike the dashboard's
@@ -2117,16 +2229,10 @@ function gwc_vt_render_events_list(): void {
 		</a>
 		<hr class="wp-header-end" />
 
+		<?php gwc_vt_schedule_notice(); ?>
 		<?php gwc_vt_event_notice(); ?>
 
-		<ul class="subsubsub">
-			<li>
-				<a href="<?php echo esc_url( $base ); ?>"><?php esc_html_e( 'Coming up', 'groundwork-common-volunteer-tracker' ); ?></a> |
-			</li>
-			<li>
-				<span class="current" aria-current="page"><?php esc_html_e( 'Events', 'groundwork-common-volunteer-tracker' ); ?></span>
-			</li>
-		</ul>
+		<?php gwc_vt_render_schedule_status_links( $base, 'events' ); ?>
 
 		<table class="widefat striped gwcvt-schedule">
 			<thead>

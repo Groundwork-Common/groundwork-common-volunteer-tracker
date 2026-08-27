@@ -51,9 +51,10 @@ const GWC_VT_EVENT_BLANK_SLOTS = 1;
 /**
  * The add/edit screen for one event.
  *
- * @param int $event_id Event post ID, or 0 for a new one.
+ * @param int    $event_id Event post ID, or 0 for a new one.
+ * @param string $missing  What the URL asked for and this event has not got.
  */
-function gwc_vt_render_event_editor( int $event_id ): void {
+function gwc_vt_render_event_editor( int $event_id, string $missing = '' ): void {
 	$is_new = $event_id < 1;
 
 	$title       = $is_new ? '' : (string) get_the_title( $event_id );
@@ -78,6 +79,19 @@ function gwc_vt_render_event_editor( int $event_id ): void {
 				: esc_html( gwc_vt_event_name( $event_id ) );
 			?>
 		</h1>
+
+		<?php gwc_vt_render_schedule_back( gwc_vt_schedule_url(), __( 'Back to the schedule', 'groundwork-common-volunteer-tracker' ) ); ?>
+		<hr class="wp-header-end" />
+
+		<?php
+		/* Both, and not only the event's own. gwc_vt_event_redirect() lands here
+		 * with the result of every save, cancel and duplicate — and until this
+		 * was here, nothing on the screen printed it: the message was in the URL
+		 * and the screen said nothing at all. */
+		?>
+		<?php gwc_vt_render_schedule_missing( $missing ); ?>
+		<?php gwc_vt_schedule_notice(); ?>
+		<?php gwc_vt_event_notice(); ?>
 
 		<?php if ( $cancelled ) : ?>
 			<div class="notice notice-warning inline">
