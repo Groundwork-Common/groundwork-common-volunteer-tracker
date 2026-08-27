@@ -2172,6 +2172,21 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	color: #3c434a;
 }
 
+/* Save and the retire link on one line, the spacing core uses between Update
+   and Move to Trash. The link is pushed away from the button rather than sitting
+   next to it: they are different kinds of act, and a destructive one within a
+   thumb's width of the save is how somebody presses the wrong one. */
+.gwcvt-credential-submit {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	margin: 16px 0 0;
+}
+
+.gwcvt-credential-aside {
+	font-size: 13px;
+}
+
 /* The one sentence on the credential form that is about consequences rather
    than about a field. Not a notice — it belongs beside the control it is about,
    where somebody is looking when they change it. */

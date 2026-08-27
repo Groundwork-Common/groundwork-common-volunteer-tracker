@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T19:48:16+00:00\n"
+"POT-Creation-Date: 2026-08-27T19:58:02+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -49,8 +49,8 @@ msgstr ""
 #: inc/access.php:342
 #: inc/admin-applications.php:137
 #: inc/admin-applications.php:433
-#: inc/admin-credentials.php:153
-#: inc/admin-credentials.php:773
+#: inc/admin-credentials.php:171
+#: inc/admin-credentials.php:861
 #: inc/admin-dashboard.php:119
 #: inc/admin-help-page.php:160
 #: inc/admin-letters.php:241
@@ -97,18 +97,18 @@ msgid "Nobody is waiting. Applications sent through the form on your site appear
 msgstr ""
 
 #: inc/admin-applications.php:169
-#: inc/admin-volunteer-list.php:230
+#: inc/admin-volunteer-list.php:170
 msgid "Who"
 msgstr ""
 
 #: inc/admin-applications.php:170
-#: inc/admin-volunteer-list.php:231
+#: inc/admin-volunteer-list.php:171
 msgid "What they said"
 msgstr ""
 
 #: inc/admin-applications.php:171
-#: inc/admin-volunteer-list.php:232
-#: inc/admin-volunteer-list.php:398
+#: inc/admin-volunteer-list.php:172
+#: inc/admin-volunteer-list.php:338
 #: inc/privacy.php:915
 msgid "Applied"
 msgstr ""
@@ -132,17 +132,17 @@ msgid "Says they have required service:"
 msgstr ""
 
 #: inc/admin-applications.php:260
-#: inc/admin-volunteer-list.php:255
+#: inc/admin-volunteer-list.php:195
 msgid "Nothing else."
 msgstr ""
 
 #: inc/admin-applications.php:266
-#: inc/admin-volunteer-list.php:309
+#: inc/admin-volunteer-list.php:249
 msgid "Add as a volunteer"
 msgstr ""
 
 #: inc/admin-applications.php:269
-#: inc/admin-volunteer-list.php:314
+#: inc/admin-volunteer-list.php:254
 msgid "Discard"
 msgstr ""
 
@@ -177,213 +177,230 @@ msgstr ""
 msgid "Credentials"
 msgstr ""
 
-#: inc/admin-credentials.php:152
+#: inc/admin-credentials.php:99
+#: inc/admin-credentials.php:332
+#: inc/admin-credentials.php:538
+#: inc/admin-credentials.php:548
+msgid "Add a credential"
+msgstr ""
+
+#: inc/admin-credentials.php:105
+#: inc/admin-credentials.php:537
+msgid "Edit a credential"
+msgstr ""
+
+#: inc/admin-credentials.php:170
 msgid "You do not have permission to see credentials."
 msgstr ""
 
-#: inc/admin-credentials.php:224
+#: inc/admin-credentials.php:242
 msgid "All"
 msgstr ""
 
-#: inc/admin-credentials.php:235
+#: inc/admin-credentials.php:253
 msgid "Retired"
 msgstr ""
 
-#: inc/admin-credentials.php:255
+#: inc/admin-credentials.php:273
 #: inc/privacy.php:729
 msgid "Credential"
 msgstr ""
 
-#: inc/admin-credentials.php:256
+#: inc/admin-credentials.php:274
 msgid "Renewed"
 msgstr ""
 
-#: inc/admin-credentials.php:257
-#: inc/admin-credentials.php:560
+#: inc/admin-credentials.php:275
+#: inc/admin-credentials.php:621
 #: inc/admin-help.php:315
 msgid "If somebody has not got it"
 msgstr ""
 
-#: inc/admin-credentials.php:258
+#: inc/admin-credentials.php:276
 msgid "Who holds it"
 msgstr ""
 
-#: inc/admin-credentials.php:314
-#: inc/admin-credentials.php:490
-msgid "Add a credential"
-msgstr ""
-
 #. translators: %s: a number of credentials, already formatted.
-#: inc/admin-credentials.php:329
+#: inc/admin-credentials.php:347
 #, php-format
 msgid "%s item"
 msgid_plural "%s items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-credentials.php:351
+#: inc/admin-credentials.php:369
 msgid "Nothing has been retired."
 msgstr ""
 
-#: inc/admin-credentials.php:353
+#: inc/admin-credentials.php:371
 msgid "Nothing defined yet. Select “Add a credential” to define the first one."
 msgstr ""
 
-#: inc/admin-credentials.php:355
+#: inc/admin-credentials.php:373
 msgid "Nothing defined yet."
 msgstr ""
 
-#: inc/admin-credentials.php:368
+#: inc/admin-credentials.php:386
 msgid "Defining a credential changes what your organization asks of everybody, so it needs a site administrator. Recording that somebody holds one does not — that is on each volunteer’s record."
 msgstr ""
 
-#: inc/admin-credentials.php:399
+#. translators: %s: a credential's name.
+#: inc/admin-credentials.php:411
+#, php-format
+msgid "%s (Edit)"
+msgstr ""
+
+#: inc/admin-credentials.php:447
 #: inc/admin-schedule.php:2383
 msgid "Edit"
 msgstr ""
 
-#: inc/admin-credentials.php:405
+#: inc/admin-credentials.php:453
 msgid "Put it back"
 msgstr ""
 
-#: inc/admin-credentials.php:409
+#: inc/admin-credentials.php:457
 msgid "Retire"
 msgstr ""
 
-#: inc/admin-credentials.php:422
+#: inc/admin-credentials.php:470
 msgid "Show more details"
 msgstr ""
 
 #. translators: %s: a number of months, already formatted.
-#: inc/admin-credentials.php:432
+#: inc/admin-credentials.php:480
 #, php-format
 msgid "Every %s month"
 msgid_plural "Every %s months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-credentials.php:435
+#: inc/admin-credentials.php:483
 msgid "Never expires"
 msgstr ""
 
-#: inc/admin-credentials.php:489
-msgid "Edit a credential"
-msgstr ""
-
-#: inc/admin-credentials.php:499
+#: inc/admin-credentials.php:560
 msgid "This one is retired. Nobody is being asked for it, and the records of who holds it are still here — editing it changes what those records are records of."
 msgstr ""
 
-#: inc/admin-credentials.php:511
+#: inc/admin-credentials.php:572
 #: inc/admin-event.php:126
 msgid "What it is"
 msgstr ""
 
-#: inc/admin-credentials.php:514
+#: inc/admin-credentials.php:575
 msgid "What you would call it out loud — “Child safety class”, “Liability waiver”."
 msgstr ""
 
-#: inc/admin-credentials.php:517
+#: inc/admin-credentials.php:578
 msgid "Renaming is safe: every record points at this credential itself, so the word changes everywhere at once and no record moves."
 msgstr ""
 
-#: inc/admin-credentials.php:523
+#: inc/admin-credentials.php:584
 msgid "Renewed every"
 msgstr ""
 
-#: inc/admin-credentials.php:526
+#: inc/admin-credentials.php:587
 msgid "months"
 msgstr ""
 
-#: inc/admin-credentials.php:527
+#: inc/admin-credentials.php:588
 msgid "Zero means it never expires. Somebody who did it on the 31st of a month renews on the 31st, or on the last day of a month that is shorter."
 msgstr ""
 
 #. translators: %d: how many volunteers hold this credential.
-#: inc/admin-credentials.php:543
+#: inc/admin-credentials.php:604
 #, php-format
 msgid "%d volunteer holds this. Changing the interval re-dates their renewal."
 msgid_plural "%d volunteers hold this. Changing the interval re-dates every one of their renewals."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-credentials.php:554
+#: inc/admin-credentials.php:615
 msgid "Expiry is worked out from this number each time it is asked for and is never stored, so a shorter interval takes effect the moment you save — somebody who did it eleven months ago is lapsed as soon as the page reloads. Nothing is emailed either way."
 msgstr ""
 
-#: inc/admin-credentials.php:567
+#: inc/admin-credentials.php:628
 msgid "Reporting is the safer default and the one most organizations want: you find out who is short, and decide. Stopping somebody is for the things nobody may work without."
 msgstr ""
 
-#: inc/admin-credentials.php:570
+#: inc/admin-credentials.php:631
 msgid "Changing this to stopping people applies to signups made from now on. Nobody already on a shift is taken off it."
 msgstr ""
 
-#: inc/admin-credentials.php:576
+#: inc/admin-credentials.php:637
 msgid "A note"
 msgstr ""
 
-#: inc/admin-credentials.php:579
+#: inc/admin-credentials.php:640
 msgid "Optional, and for staff. Where the course is booked, who countersigns the form — whatever the person recording it needs to know."
 msgstr ""
 
-#: inc/admin-credentials.php:587
+#: inc/admin-credentials.php:649
 msgid "Save this credential"
 msgstr ""
 
-#: inc/admin-credentials.php:588
+#: inc/admin-credentials.php:650
 msgid "Add it"
 msgstr ""
 
-#: inc/admin-credentials.php:595
+#: inc/admin-credentials.php:670
+msgid "Put it back into use"
+msgstr ""
+
+#: inc/admin-credentials.php:674
+msgid "Retire it"
+msgstr ""
+
+#: inc/admin-credentials.php:683
 msgid "← Back to credentials"
 msgstr ""
 
-#: inc/admin-credentials.php:772
+#: inc/admin-credentials.php:860
 msgid "You do not have permission to define credentials."
 msgstr ""
 
-#: inc/admin-credentials.php:825
+#: inc/admin-credentials.php:913
 msgid "Give the credential a name. Nothing was added."
 msgstr ""
 
-#: inc/admin-credentials.php:826
+#: inc/admin-credentials.php:914
 msgid "That could not be saved. Nothing was added."
 msgstr ""
 
-#: inc/admin-credentials.php:827
+#: inc/admin-credentials.php:915
 #: inc/credentials.php:294
 msgid "That credential no longer exists."
 msgstr ""
 
-#: inc/admin-credentials.php:836
+#: inc/admin-credentials.php:924
 msgid "Credential added. Record who holds it on each volunteer’s own record."
 msgstr ""
 
-#: inc/admin-credentials.php:840
+#: inc/admin-credentials.php:928
 msgid "Saved. Any expiry is worked out from the new interval from now on."
 msgstr ""
 
-#: inc/admin-credentials.php:844
+#: inc/admin-credentials.php:932
 msgid "Retired. Nobody will be asked for it again, and every record of somebody holding it is kept."
 msgstr ""
 
-#: inc/admin-credentials.php:845
+#: inc/admin-credentials.php:933
 msgid "Back in use."
 msgstr ""
 
-#: inc/admin-credentials.php:871
+#: inc/admin-credentials.php:959
 msgid "Nobody yet"
 msgstr ""
 
 #. translators: %s: a count of people, already formatted. Reads "4 held" under a column headed "Who holds it".
-#: inc/admin-credentials.php:896
+#: inc/admin-credentials.php:984
 #, php-format
 msgid "%s held"
 msgstr ""
 
 #. translators: %s: a count of people, already formatted. Reads "1 lapsed".
-#: inc/admin-credentials.php:910
+#: inc/admin-credentials.php:998
 #, php-format
 msgid "%s lapsed"
 msgstr ""
@@ -391,7 +408,7 @@ msgstr ""
 #: inc/admin-dashboard-widget.php:116
 #: inc/admin-dashboard.php:104
 #: inc/admin-help.php:91
-#: inc/admin-screen.php:526
+#: inc/admin-screen.php:527
 msgid "Volunteer Tracker"
 msgstr ""
 
@@ -1370,7 +1387,7 @@ msgstr ""
 
 #: inc/admin-help-page.php:87
 #: inc/admin-help.php:93
-#: inc/admin-screen.php:448
+#: inc/admin-screen.php:449
 msgid "Settings"
 msgstr ""
 
@@ -1407,7 +1424,7 @@ msgid "How-to guide"
 msgstr ""
 
 #: inc/admin-help.php:94
-#: inc/admin-screen.php:910
+#: inc/admin-screen.php:1030
 msgid "Report a problem"
 msgstr ""
 
@@ -1450,7 +1467,7 @@ msgid "The public form is switched off until you switch it on and choose a page 
 msgstr ""
 
 #: inc/admin-help.php:163
-#: inc/admin-screen.php:491
+#: inc/admin-screen.php:492
 #: inc/admin-volunteer-status.php:218
 #: inc/render.php:132
 msgid "Shifts"
@@ -3312,84 +3329,84 @@ msgstr ""
 msgid "Recorded against this signup with your name, and shown on the roster. “Certificate seen, being entered Monday” is the kind of thing that belongs here."
 msgstr ""
 
-#: inc/admin-screen.php:447
+#: inc/admin-screen.php:448
 msgid "Volunteer Tracker Settings"
 msgstr ""
 
-#: inc/admin-screen.php:487
+#: inc/admin-screen.php:488
 msgid "Letter"
 msgstr ""
 
-#: inc/admin-screen.php:490
+#: inc/admin-screen.php:491
 msgid "Logging"
 msgstr ""
 
-#: inc/admin-screen.php:492
+#: inc/admin-screen.php:493
 msgid "Privacy"
 msgstr ""
 
-#: inc/admin-screen.php:530
+#: inc/admin-screen.php:531
 msgid "Settings sections"
 msgstr ""
 
 #. translators: %s: the name of a settings tab.
-#: inc/admin-screen.php:564
+#: inc/admin-screen.php:565
 #, php-format
 msgid "The %s settings are not built yet. Hours logging works without them."
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:639
+#: inc/admin-screen.php:640
 #, php-format
 msgid "Built by %s — technology leadership and support for nonprofits."
 msgstr ""
 
-#: inc/admin-screen.php:643
-#: inc/admin-screen.php:826
-#: inc/admin-screen.php:856
-#: inc/admin-screen.php:870
+#: inc/admin-screen.php:644
+#: inc/admin-screen.php:946
+#: inc/admin-screen.php:976
+#: inc/admin-screen.php:990
 msgid "Groundwork Common"
 msgstr ""
 
 #. translators: %s: this plugin's version number.
-#: inc/admin-screen.php:683
+#: inc/admin-screen.php:684
 #, php-format
 msgid "Volunteer Tracker %s"
 msgstr ""
 
 #. translators: %s: the version of WordPress this site runs.
-#: inc/admin-screen.php:694
+#: inc/admin-screen.php:695
 #, php-format
 msgid "WordPress %s"
 msgstr ""
 
-#: inc/admin-screen.php:828
+#: inc/admin-screen.php:948
 msgid "Show"
 msgstr ""
 
-#: inc/admin-screen.php:836
+#: inc/admin-screen.php:956
 msgid "Hide for 30 days"
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:875
+#: inc/admin-screen.php:995
 #, php-format
 msgid "%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it."
 msgstr ""
 
-#: inc/admin-screen.php:883
+#: inc/admin-screen.php:1003
 msgid "If you find this plugin useful, the most valuable thing you can do for us is mention us to a nonprofit who might benefit from our services. Referrals are how our business continues to grow its impact and reach."
 msgstr ""
 
-#: inc/admin-screen.php:889
+#: inc/admin-screen.php:1009
 msgid "Learn about Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:898
+#: inc/admin-screen.php:1018
 msgid "You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give."
 msgstr ""
 
-#: inc/admin-screen.php:903
+#: inc/admin-screen.php:1023
 msgid "Support our work"
 msgstr ""
 
@@ -4678,12 +4695,12 @@ msgstr ""
 msgid "Filter by credential"
 msgstr ""
 
-#: inc/admin-volunteer-list.php:327
+#: inc/admin-volunteer-list.php:267
 #: inc/admin-volunteer.php:344
 msgid "Open"
 msgstr ""
 
-#: inc/admin-volunteer-list.php:391
+#: inc/admin-volunteer-list.php:331
 msgid "Active"
 msgstr ""
 
