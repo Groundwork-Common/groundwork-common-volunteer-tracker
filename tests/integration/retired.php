@@ -182,6 +182,69 @@ gwc_vt_ret_check(
 		)
 );
 
+/* ── Quick Edit must not move somebody between statuses ──────────────────────
+ * Core's inline editor posts a status from a <select> built out of a fixed
+ * list, and wp_ajax_inline_save() assigns it verbatim. A custom status is not
+ * in that list, so without the guard, quick-editing a retired volunteer to fix
+ * a typo publishes them on the way past and says nothing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+wp_update_post(
+	array(
+		'ID'          => $GLOBALS['gwc_vt_ret_id'],
+		'post_status' => GWC_VT_VOLUNTEER_RETIRED,
+	)
+);
+
+$_POST['_inline_edit'] = 'pretend-nonce';
+
+$gwc_vt_ret_quick = apply_filters(
+	'wp_insert_post_data',
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+	),
+	array( 'ID' => $GLOBALS['gwc_vt_ret_id'] )
+);
+
+gwc_vt_ret_check(
+	'a quick edit cannot un-retire somebody',
+	GWC_VT_VOLUNTEER_RETIRED === $gwc_vt_ret_quick['post_status'],
+	(string) $gwc_vt_ret_quick['post_status']
+);
+
+$gwc_vt_ret_trash = apply_filters(
+	'wp_insert_post_data',
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'trash',
+	),
+	array( 'ID' => $GLOBALS['gwc_vt_ret_id'] )
+);
+
+gwc_vt_ret_check(
+	'but a bulk move to the trash is still a real thing somebody can do',
+	'trash' === $gwc_vt_ret_trash['post_status'],
+	(string) $gwc_vt_ret_trash['post_status']
+);
+
+unset( $_POST['_inline_edit'] );
+
+$gwc_vt_ret_ours = apply_filters(
+	'wp_insert_post_data',
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+	),
+	array( 'ID' => $GLOBALS['gwc_vt_ret_id'] )
+);
+
+gwc_vt_ret_check(
+	'and Put back, which is not an inline edit, still works',
+	'publish' === $gwc_vt_ret_ours['post_status'],
+	(string) $gwc_vt_ret_ours['post_status']
+);
+
 /* ── And back ────────────────────────────────────────────────────────────── */
 
 wp_update_post(
