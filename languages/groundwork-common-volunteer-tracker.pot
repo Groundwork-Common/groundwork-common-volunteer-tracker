@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T18:58:43+00:00\n"
+"POT-Creation-Date: 2026-08-27T19:05:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -356,7 +356,7 @@ msgstr ""
 
 #: inc/admin-dashboard-widget.php:197
 #: inc/admin-dashboard.php:447
-#: inc/admin-schedule.php:1621
+#: inc/admin-schedule.php:1617
 msgid "This week"
 msgstr ""
 
@@ -523,7 +523,7 @@ msgid "Start"
 msgstr ""
 
 #: inc/admin-dashboard.php:409
-#: inc/admin-schedule.php:1732
+#: inc/admin-schedule.php:1753
 msgid "Coming up"
 msgstr ""
 
@@ -532,7 +532,7 @@ msgid "Open the full calendar"
 msgstr ""
 
 #: inc/admin-dashboard.php:448
-#: inc/admin-schedule.php:1625
+#: inc/admin-schedule.php:1621
 msgid "Next week"
 msgstr ""
 
@@ -541,12 +541,12 @@ msgid "Week"
 msgstr ""
 
 #: inc/admin-dashboard.php:460
-#: inc/admin-schedule.php:1769
+#: inc/admin-schedule.php:1790
 msgid "List"
 msgstr ""
 
 #: inc/admin-dashboard.php:531
-#: inc/admin-schedule.php:634
+#: inc/admin-schedule.php:630
 msgid "(today)"
 msgstr ""
 
@@ -580,7 +580,8 @@ msgstr ""
 
 #: inc/admin-dashboard.php:706
 #: inc/admin-schedule.php:382
-#: inc/admin-schedule.php:541
+#: inc/admin-schedule.php:539
+#: inc/admin-schedule.php:2288
 #: inc/admin-shift.php:56
 #: inc/shift-cpt.php:103
 msgid "Add a shift"
@@ -589,8 +590,8 @@ msgstr ""
 #: inc/admin-dashboard.php:711
 #: inc/admin-event.php:78
 #: inc/admin-schedule.php:385
-#: inc/admin-schedule.php:544
-#: inc/admin-schedule.php:2261
+#: inc/admin-schedule.php:542
+#: inc/admin-schedule.php:2291
 #: inc/event-cpt.php:97
 msgid "Add an event"
 msgstr ""
@@ -682,7 +683,7 @@ msgid "Drop a role"
 msgstr ""
 
 #: inc/admin-event-actions.php:216
-#: inc/admin-schedule.php:2360
+#: inc/admin-schedule.php:2395
 msgid "That role has no times left on it."
 msgstr ""
 
@@ -809,7 +810,7 @@ msgid "Edit the event"
 msgstr ""
 
 #: inc/admin-event-roster.php:314
-#: inc/admin-schedule.php:905
+#: inc/admin-schedule.php:901
 #: inc/admin-shift.php:540
 #: inc/admin-shift.php:604
 msgid "Print the roster"
@@ -834,7 +835,7 @@ msgid "Hours logged ✓ — log more"
 msgstr ""
 
 #: inc/admin-event-roster.php:395
-#: inc/admin-schedule.php:896
+#: inc/admin-schedule.php:892
 #: inc/admin-shift.php:529
 #: inc/dashboard.php:138
 msgid "Log the hours"
@@ -896,7 +897,7 @@ msgid "Give them a place"
 msgstr ""
 
 #: inc/admin-event-roster.php:766
-#: inc/admin-schedule.php:2375
+#: inc/admin-schedule.php:2410
 msgid "That event no longer exists."
 msgstr ""
 
@@ -960,8 +961,8 @@ msgstr ""
 
 #: inc/admin-event.php:133
 #: inc/admin-letters.php:1198
-#: inc/admin-schedule.php:417
-#: inc/admin-schedule.php:2274
+#: inc/admin-schedule.php:415
+#: inc/admin-schedule.php:2309
 #: inc/admin-settings.php:1316
 #: inc/schedule-emails.php:478
 msgid "When"
@@ -977,8 +978,8 @@ msgid "Taken from the times below."
 msgstr ""
 
 #: inc/admin-event.php:147
-#: inc/admin-schedule.php:419
-#: inc/admin-schedule.php:2276
+#: inc/admin-schedule.php:417
+#: inc/admin-schedule.php:2311
 #: inc/admin-shift.php:147
 #: inc/schedule-emails.php:479
 msgid "Where"
@@ -1211,7 +1212,7 @@ msgstr ""
 
 #. translators: %d: how many people are on the waiting list.
 #: inc/admin-event.php:623
-#: inc/admin-schedule.php:932
+#: inc/admin-schedule.php:928
 #, php-format
 msgid "%d waiting"
 msgid_plural "%d waiting"
@@ -1223,7 +1224,7 @@ msgid "Delete"
 msgstr ""
 
 #: inc/admin-event.php:703
-#: inc/admin-schedule.php:2195
+#: inc/admin-schedule.php:2216
 #: inc/shifts.php:594
 msgid "Called off"
 msgstr ""
@@ -1693,8 +1694,8 @@ msgid "Canceling and deleting are different things. A canceled shift stays on th
 msgstr ""
 
 #: inc/admin-help.php:520
-#: inc/admin-schedule.php:1734
-#: inc/admin-schedule.php:2259
+#: inc/admin-schedule.php:1755
+#: inc/admin-schedule.php:2280
 #: inc/event-cpt.php:100
 msgid "Events"
 msgstr ""
@@ -1744,7 +1745,7 @@ msgid "What a visitor sees is each role, each time, and how many places are left
 msgstr ""
 
 #: inc/admin-help.php:546
-#: inc/admin-schedule.php:420
+#: inc/admin-schedule.php:418
 #: inc/admin-shift.php:453
 #: inc/admin-shift.php:568
 msgid "Who is coming"
@@ -2671,7 +2672,7 @@ msgstr ""
 #: inc/admin-schedule.php:39
 #: inc/admin-schedule.php:40
 #: inc/admin-schedule.php:380
-#: inc/admin-schedule.php:539
+#: inc/admin-schedule.php:537
 #: inc/shift-cpt.php:106
 msgid "Schedule"
 msgstr ""
@@ -2709,185 +2710,185 @@ msgid "Narrowed to match the number you came from — %s."
 msgstr ""
 
 #: inc/admin-schedule.php:222
-#: inc/admin-schedule.php:409
+#: inc/admin-schedule.php:407
 msgid "Show the whole schedule"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/admin-schedule.php:404
+#: inc/admin-schedule.php:402
 #, php-format
 msgid "One day only: %s."
 msgstr ""
 
-#: inc/admin-schedule.php:418
+#: inc/admin-schedule.php:416
 #: inc/admin-settings.php:1317
 #: inc/schedule-emails.php:477
 msgid "What"
 msgstr ""
 
-#: inc/admin-schedule.php:429
+#: inc/admin-schedule.php:427
 msgid "Nothing on the schedule matches that."
 msgstr ""
 
-#: inc/admin-schedule.php:432
+#: inc/admin-schedule.php:430
 msgid "Nothing in the last few months."
 msgstr ""
 
-#: inc/admin-schedule.php:433
+#: inc/admin-schedule.php:431
 msgid "Nothing scheduled yet. Add a shift to get started."
 msgstr ""
 
-#: inc/admin-schedule.php:590
+#: inc/admin-schedule.php:586
 msgid "The month before"
 msgstr ""
 
-#: inc/admin-schedule.php:603
+#: inc/admin-schedule.php:599
 msgid "The month after"
 msgstr ""
 
-#: inc/admin-schedule.php:608
+#: inc/admin-schedule.php:604
 msgid "Back to this month"
 msgstr ""
 
 #. translators: %d: how many more shifts are on that day.
-#: inc/admin-schedule.php:661
+#: inc/admin-schedule.php:657
 #, php-format
 msgid "+%d more"
 msgid_plural "+%d more"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-schedule.php:711
+#: inc/admin-schedule.php:707
 msgid "Untitled"
 msgstr ""
 
-#: inc/admin-schedule.php:744
+#: inc/admin-schedule.php:740
 msgid "Full, or hours logged"
 msgstr ""
 
 #. translators: %s: the last date of the run this row stands for.
-#: inc/admin-schedule.php:810
+#: inc/admin-schedule.php:806
 #, php-format
 msgid "through %s"
 msgstr ""
 
-#: inc/admin-schedule.php:825
+#: inc/admin-schedule.php:821
 msgid "Canceled"
 msgstr ""
 
-#: inc/admin-schedule.php:827
+#: inc/admin-schedule.php:823
 msgid "Not published"
 msgstr ""
 
-#: inc/admin-schedule.php:830
+#: inc/admin-schedule.php:826
 msgid "Hours not logged"
 msgstr ""
 
-#: inc/admin-schedule.php:833
+#: inc/admin-schedule.php:829
 #: inc/admin-volunteer.php:235
 #: inc/shifts.php:592
 msgid "Hours logged"
 msgstr ""
 
 #. translators: %d: how many adjacent cancelled occurrences are drawn as this one row.
-#: inc/admin-schedule.php:851
+#: inc/admin-schedule.php:847
 #, php-format
 msgid "Called off %d time in a row · folded here"
 msgid_plural "Called off %d times in a row · folded here"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-schedule.php:873
+#: inc/admin-schedule.php:869
 #: inc/admin-shift.php:535
 msgid "Edit and roster"
 msgstr ""
 
-#: inc/admin-schedule.php:885
+#: inc/admin-schedule.php:881
 msgid "Show them separately"
 msgstr ""
 
-#: inc/admin-schedule.php:895
+#: inc/admin-schedule.php:891
 #: inc/admin-shift.php:95
 #: inc/admin-shift.php:528
 msgid "Log more hours"
 msgstr ""
 
-#: inc/admin-schedule.php:917
+#: inc/admin-schedule.php:913
 #: inc/shifts.php:589
 msgid "Short of people"
 msgstr ""
 
-#: inc/admin-schedule.php:974
+#: inc/admin-schedule.php:970
 msgid "Give the shift a date it can happen on. Nothing was saved."
 msgstr ""
 
-#: inc/admin-schedule.php:975
+#: inc/admin-schedule.php:971
 msgid "Give a start and an end time, with the end after the start. For a shift that runs past midnight, select “ends the next day”. Nothing was saved."
 msgstr ""
 
-#: inc/admin-schedule.php:976
+#: inc/admin-schedule.php:972
 msgid "That repeat did not land on any dates. Nothing was saved."
 msgstr ""
 
-#: inc/admin-schedule.php:977
+#: inc/admin-schedule.php:973
 #: inc/admin-shift.php:1148
 msgid "That shift no longer exists."
 msgstr ""
 
-#: inc/admin-schedule.php:978
-#: inc/admin-schedule.php:2370
+#: inc/admin-schedule.php:974
+#: inc/admin-schedule.php:2405
 msgid "People have signed up, so this can be called off but not deleted."
 msgstr ""
 
-#: inc/admin-schedule.php:979
-#: inc/admin-schedule.php:2371
+#: inc/admin-schedule.php:975
+#: inc/admin-schedule.php:2406
 msgid "Choose somebody to add. Nothing was changed."
 msgstr ""
 
-#: inc/admin-schedule.php:985
+#: inc/admin-schedule.php:981
 msgid "They were not added — they may already be on this shift, or it may have been called off. Nothing was changed."
 msgstr ""
 
-#: inc/admin-schedule.php:989
+#: inc/admin-schedule.php:985
 msgid "That shift is not part of a repeat, so there was nothing to change across. Nothing was saved."
 msgstr ""
 
-#: inc/admin-schedule.php:990
+#: inc/admin-schedule.php:986
 msgid "Tick at least one thing to change. Nothing was saved."
 msgstr ""
 
-#: inc/admin-schedule.php:1004
+#: inc/admin-schedule.php:1000
 msgid "Shift saved."
 msgstr ""
 
-#: inc/admin-schedule.php:1005
+#: inc/admin-schedule.php:1001
 msgid "Shift canceled. It stays on the schedule so everybody can see it was called off."
 msgstr ""
 
-#: inc/admin-schedule.php:1006
+#: inc/admin-schedule.php:1002
 msgid "Shift deleted."
 msgstr ""
 
-#: inc/admin-schedule.php:1007
+#: inc/admin-schedule.php:1003
 msgid "Added to the shift."
 msgstr ""
 
-#: inc/admin-schedule.php:1008
+#: inc/admin-schedule.php:1004
 msgid "Taken off the shift."
 msgstr ""
 
-#: inc/admin-schedule.php:1009
-#: inc/admin-schedule.php:2364
+#: inc/admin-schedule.php:1005
+#: inc/admin-schedule.php:2399
 msgid "They have a place now."
 msgstr ""
 
-#: inc/admin-schedule.php:1014
-#: inc/admin-schedule.php:2366
+#: inc/admin-schedule.php:1010
+#: inc/admin-schedule.php:2401
 msgid "Added, over a credential they do not hold. The roster records who decided, and why."
 msgstr ""
 
 #. translators: %d: how many shifts were created.
-#: inc/admin-schedule.php:1023
+#: inc/admin-schedule.php:1019
 #, php-format
 msgid "%d shift added to the schedule."
 msgid_plural "%d shifts added to the schedule."
@@ -2895,7 +2896,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many occurrences of the repeat were changed.
-#: inc/admin-schedule.php:1036
+#: inc/admin-schedule.php:1032
 #, php-format
 msgid "%d occurrence of the repeat changed."
 msgid_plural "%d occurrences of the repeat changed."
@@ -2903,7 +2904,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many occurrences were left as they were.
-#: inc/admin-schedule.php:1043
+#: inc/admin-schedule.php:1039
 #, php-format
 msgid "%d was left as it was — already past, or called off."
 msgid_plural "%d were left as they were — already past, or called off."
@@ -2911,7 +2912,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many people were emailed.
-#: inc/admin-schedule.php:1063
+#: inc/admin-schedule.php:1059
 #, php-format
 msgid "%d person was emailed."
 msgid_plural "%d people were emailed."
@@ -2919,106 +2920,106 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of shifts.
-#: inc/admin-schedule.php:1130
+#: inc/admin-schedule.php:1126
 #, php-format
 msgid "%d shift has happened and its hours have not been logged yet."
 msgid_plural "%d shifts have happened and their hours have not been logged yet."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-schedule.php:1140
+#: inc/admin-schedule.php:1136
 msgid "Log them now"
 msgstr ""
 
-#: inc/admin-schedule.php:1606
+#: inc/admin-schedule.php:1602
 msgid "Undated"
 msgstr ""
 
-#: inc/admin-schedule.php:1649
+#: inc/admin-schedule.php:1645
 msgid "Shift details"
 msgstr ""
 
-#: inc/admin-schedule.php:1671
+#: inc/admin-schedule.php:1667
 msgid "That shift is not there — it may have been deleted. Here is the schedule instead."
 msgstr ""
 
-#: inc/admin-schedule.php:1672
+#: inc/admin-schedule.php:1668
 msgid "That event is not there — it may have been deleted. Here is the schedule instead."
 msgstr ""
 
-#: inc/admin-schedule.php:1673
+#: inc/admin-schedule.php:1669
 msgid "That time is not part of this event any more. Here is the event instead."
 msgstr ""
 
-#: inc/admin-schedule.php:1674
+#: inc/admin-schedule.php:1670
 msgid "That role is not on this event any more. Here is the event instead."
 msgstr ""
 
-#: inc/admin-schedule.php:1733
+#: inc/admin-schedule.php:1754
 msgid "Already happened"
 msgstr ""
 
-#: inc/admin-schedule.php:1770
+#: inc/admin-schedule.php:1791
 msgid "Month"
 msgstr ""
 
-#: inc/admin-schedule.php:1869
+#: inc/admin-schedule.php:1890
 msgid "Find an event"
 msgstr ""
 
-#: inc/admin-schedule.php:1870
+#: inc/admin-schedule.php:1891
 msgid "Find a shift"
 msgstr ""
 
-#: inc/admin-schedule.php:1873
+#: inc/admin-schedule.php:1894
 msgid "Find an event — name, place, or person"
 msgstr ""
 
-#: inc/admin-schedule.php:1874
+#: inc/admin-schedule.php:1895
 msgid "Find a shift — activity, place, or person"
 msgstr ""
 
-#: inc/admin-schedule.php:1886
+#: inc/admin-schedule.php:1907
 msgid "Find"
 msgstr ""
 
-#: inc/admin-schedule.php:1890
+#: inc/admin-schedule.php:1911
 msgid "Clear"
 msgstr ""
 
 #. translators: 1: the state, such as "Short of people". 2: how many.
-#: inc/admin-schedule.php:1920
+#: inc/admin-schedule.php:1941
 #, php-format
 msgid "%1$s · %2$d"
 msgstr ""
 
-#: inc/admin-schedule.php:1927
+#: inc/admin-schedule.php:1948
 msgid "— clear this filter"
 msgstr ""
 
-#: inc/admin-schedule.php:2150
+#: inc/admin-schedule.php:2171
 msgctxt "a row on the schedule"
 msgid "Event"
 msgstr ""
 
 #. translators: %d: how many times still need their hours logged.
-#: inc/admin-schedule.php:2167
+#: inc/admin-schedule.php:2188
 #, php-format
 msgid "%d time needs its hours"
 msgid_plural "%d times need their hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-schedule.php:2176
+#: inc/admin-schedule.php:2197
 msgid "Roster"
 msgstr ""
 
-#: inc/admin-schedule.php:2177
+#: inc/admin-schedule.php:2198
 msgid "Edit"
 msgstr ""
 
 #. translators: 1: how many roles, 2: how many times.
-#: inc/admin-schedule.php:2184
+#: inc/admin-schedule.php:2205
 #, php-format
 msgid "%1$d role, %2$d time"
 msgid_plural "%1$d roles, %2$d times"
@@ -3026,108 +3027,108 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many times are short of people.
-#: inc/admin-schedule.php:2204
+#: inc/admin-schedule.php:2225
 #, php-format
 msgid "%d time is short"
 msgid_plural "%d times are short"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-schedule.php:2275
+#: inc/admin-schedule.php:2310
 #: inc/events.php:605
 msgid "Event"
 msgstr ""
 
-#: inc/admin-schedule.php:2277
+#: inc/admin-schedule.php:2312
 msgid "Places filled"
 msgstr ""
 
-#: inc/admin-schedule.php:2289
+#: inc/admin-schedule.php:2324
 msgid "No event matches that."
 msgstr ""
 
-#: inc/admin-schedule.php:2291
+#: inc/admin-schedule.php:2326
 msgid "No events yet. An event is one occasion with several roles — a festival, a meal service, a collection drive."
 msgstr ""
 
-#: inc/admin-schedule.php:2338
+#: inc/admin-schedule.php:2373
 msgid "Saved."
 msgstr ""
 
 #. translators: %s: a role and a time.
-#: inc/admin-schedule.php:2347
+#: inc/admin-schedule.php:2382
 #, php-format
 msgid "%s was called off. It stays on the schedule rather than being deleted."
 msgstr ""
 
-#: inc/admin-schedule.php:2350
+#: inc/admin-schedule.php:2385
 msgid "That time was called off."
 msgstr ""
 
 #. translators: %s: a role and a time.
-#: inc/admin-schedule.php:2354
+#: inc/admin-schedule.php:2389
 #, php-format
 msgid "%s is back on."
 msgstr ""
 
-#: inc/admin-schedule.php:2357
+#: inc/admin-schedule.php:2392
 msgid "That time is back on."
 msgstr ""
 
-#: inc/admin-schedule.php:2358
+#: inc/admin-schedule.php:2393
 msgid "That time was deleted. Nobody was on it."
 msgstr ""
 
-#: inc/admin-schedule.php:2359
+#: inc/admin-schedule.php:2394
 msgid "The role is gone."
 msgstr ""
 
-#: inc/admin-schedule.php:2361
+#: inc/admin-schedule.php:2396
 msgid "Copied. This is the new one, saved as a draft — check the dates before you publish it."
 msgstr ""
 
-#: inc/admin-schedule.php:2362
+#: inc/admin-schedule.php:2397
 msgid "The event was called off, and every time on it with it."
 msgstr ""
 
-#: inc/admin-schedule.php:2363
+#: inc/admin-schedule.php:2398
 msgid "The event was deleted."
 msgstr ""
 
-#: inc/admin-schedule.php:2365
+#: inc/admin-schedule.php:2400
 msgid "They are on the list."
 msgstr ""
 
-#: inc/admin-schedule.php:2367
+#: inc/admin-schedule.php:2402
 msgid "An event needs a name — it is what volunteers will recognize it by."
 msgstr ""
 
-#: inc/admin-schedule.php:2368
+#: inc/admin-schedule.php:2403
 msgid "A role with times under it needs a name. Nothing was saved."
 msgstr ""
 
-#: inc/admin-schedule.php:2369
+#: inc/admin-schedule.php:2404
 msgid "One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight."
 msgstr ""
 
-#: inc/admin-schedule.php:2372
+#: inc/admin-schedule.php:2407
 msgid "They were not added — they may already be on that time, or it may have been called off. Nothing was changed."
 msgstr ""
 
-#: inc/admin-schedule.php:2373
+#: inc/admin-schedule.php:2408
 msgid "That time is not on this event. Nothing was changed."
 msgstr ""
 
-#: inc/admin-schedule.php:2374
+#: inc/admin-schedule.php:2409
 msgid "That date could not be read."
 msgstr ""
 
-#: inc/admin-schedule.php:2376
+#: inc/admin-schedule.php:2411
 msgid "That could not be saved. Please try again."
 msgstr ""
 
 #. translators: %d: how many times were added.
-#: inc/admin-schedule.php:2389
+#: inc/admin-schedule.php:2424
 #, php-format
 msgid "%d time added."
 msgid_plural "%d times added."
@@ -3135,7 +3136,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many times were canceled.
-#: inc/admin-schedule.php:2397
+#: inc/admin-schedule.php:2432
 #, php-format
 msgid "%d time canceled — it stays on the schedule so everybody can see it was called off."
 msgid_plural "%d times canceled — they stay on the schedule so everybody can see they were called off."
@@ -3143,7 +3144,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many empty times were deleted.
-#: inc/admin-schedule.php:2405
+#: inc/admin-schedule.php:2440
 #, php-format
 msgid "%d empty time deleted."
 msgid_plural "%d empty times deleted."
@@ -3151,39 +3152,39 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: how many people were emailed.
-#: inc/admin-schedule.php:2413
+#: inc/admin-schedule.php:2448
 #, php-format
 msgid "%d person was told."
 msgid_plural "%d people were told."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-schedule.php:2470
+#: inc/admin-schedule.php:2505
 msgid "Nothing is missing any more — they can be added."
 msgstr ""
 
 #. translators: 1: a person's name. 2: a list of credential names, already joined with commas.
-#: inc/admin-schedule.php:2481
+#: inc/admin-schedule.php:2516
 #, php-format
 msgid "%1$s was not added. This shift asks for %2$s, and there is no current record of it."
 msgid_plural "%1$s was not added. This shift asks for %2$s, and there is no current record of them."
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-schedule.php:2496
+#: inc/admin-schedule.php:2531
 msgid "Record it on their volunteer record"
 msgstr ""
 
-#: inc/admin-schedule.php:2506
-#: inc/admin-schedule.php:2542
+#: inc/admin-schedule.php:2541
+#: inc/admin-schedule.php:2577
 msgid "Add them anyway"
 msgstr ""
 
-#: inc/admin-schedule.php:2527
+#: inc/admin-schedule.php:2562
 msgid "Why they can work this shift without it"
 msgstr ""
 
-#: inc/admin-schedule.php:2538
+#: inc/admin-schedule.php:2573
 msgid "Recorded against this signup with your name, and shown on the roster. “Certificate seen, being entered Monday” is the kind of thing that belongs here."
 msgstr ""
 

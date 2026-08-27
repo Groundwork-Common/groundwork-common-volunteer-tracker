@@ -1674,10 +1674,23 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-month__swatch--awaiting  { background: #dba617; }
 .gwcvt-month__swatch--cancelled { background: #8c8f94; }
 
-/* The Month | List control sits on its own line above the filters, and the
-   day-only notice under them. */
+/* Far right, on the same line as the list links — which float left, so this
+   floats right and the row ends with core's own <br class="clear">. It is the
+   control that redraws the whole screen rather than one that narrows it, and
+   putting it beside the chips would read as a third filter. The top margin is
+   core's own on .subsubsub, so the two sit on one line rather than nearly. */
 .gwcvt-schedule__views {
-	margin: 12px 0 0;
+	float: right;
+	margin: 8px 0 0;
+}
+
+/* Under core's touch breakpoint there is no room for two controls on one line,
+   and the wp-admin list screens stack everything here anyway. */
+@media ( max-width: 782px ) {
+	.gwcvt-schedule__views {
+		float: none;
+		margin: 12px 0 0;
+	}
 }
 
 .gwcvt-schedule__day {

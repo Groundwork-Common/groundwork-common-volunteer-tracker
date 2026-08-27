@@ -391,9 +391,7 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 		<?php gwc_vt_event_notice(); ?>
 		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base ); ?>
 
-		<?php gwc_vt_render_schedule_status_links( $base, $when ); ?>
-
-		<?php gwc_vt_render_schedule_view_tabs( $base, 'list' ); ?>
+		<?php gwc_vt_render_schedule_nav( $base, $when, 'list' ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when ); ?>
 
 		<?php if ( '' !== $day ) : ?>
@@ -553,9 +551,7 @@ function gwc_vt_render_schedule_month(): void {
 		 * saying it is "Coming up" would be false of the four December rows it
 		 * is showing in January. These are the way out of it. */
 		?>
-		<?php gwc_vt_render_schedule_status_links( $base, '' ); ?>
-
-		<?php gwc_vt_render_schedule_view_tabs( $base, 'month' ); ?>
+		<?php gwc_vt_render_schedule_nav( $base, '', 'month' ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'month' ); ?>
 
 		<?php
@@ -1711,6 +1707,31 @@ function gwc_vt_render_schedule_back( string $href, string $label ): void {
 }
 
 /**
+ * The navigation row every view of this screen carries.
+ *
+ * Two controls answering two questions, and they are not interchangeable: on the
+ * left, which things are listed; on the right, whether they are drawn as a list
+ * or a calendar. The row is one function so the three views cannot drift apart
+ * again — the events list used to carry the left half and not the right, so the
+ * calendar was unreachable from it, and the month carried the right half and not
+ * the left.
+ *
+ * The list/calendar control is far right, where a control that changes how the
+ * whole screen is drawn belongs and where core puts the same kind of thing. It
+ * floats, so the row ends with core's own clear.
+ *
+ * @param string $base  The screen's own URL.
+ * @param string $lists Which of the three lists is being read, or ''.
+ * @param string $view  'list', 'month', or 'events' for the one that is neither.
+ */
+function gwc_vt_render_schedule_nav( string $base, string $lists, string $view ): void {
+	gwc_vt_render_schedule_status_links( $base, $lists );
+	gwc_vt_render_schedule_view_tabs( $base, $view );
+
+	echo '<br class="clear" />';
+}
+
+/**
  * Coming up | Already happened | Events, on every list this screen has.
  *
  * One function rather than the two hand-written bars it replaces. They had
@@ -2257,6 +2278,15 @@ function gwc_vt_render_events_list(): void {
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1 class="wp-heading-inline"><?php esc_html_e( 'Events', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<?php
+		/* Both, in the order the other two views put them. A header that gains
+		 * and loses a button as you move between three views of one screen is
+		 * the kind of thing that makes somebody hunt for the button they used
+		 * last time. */
+		?>
+		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
+			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
 		<a href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
@@ -2265,7 +2295,12 @@ function gwc_vt_render_events_list(): void {
 		<?php gwc_vt_schedule_notice(); ?>
 		<?php gwc_vt_event_notice(); ?>
 
-		<?php gwc_vt_render_schedule_status_links( $base, 'events' ); ?>
+		<?php
+		/* 'events' marks neither half of the toggle, because this list is
+		 * neither: both are somewhere else to go, and marking "List" current
+		 * would leave the flat schedule with no link to it from here. */
+		?>
+		<?php gwc_vt_render_schedule_nav( $base, 'events', 'events' ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'events' ); ?>
 
 		<table class="widefat striped gwcvt-schedule">
