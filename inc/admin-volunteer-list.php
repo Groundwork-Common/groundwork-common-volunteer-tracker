@@ -301,6 +301,15 @@ function gwc_vt_volunteer_views( $views ) {
 		unset( $views[ $noise ] );
 	}
 
+	/* ── And "Mine", which is a claim nobody here can make ───────────────────
+	 * Core offers it because every post has an author, and on a blog that
+	 * author wrote the thing. A volunteer record has one because WordPress
+	 * insists, and it means "the account that happened to type this in" —
+	 * usually whoever was on the front desk that morning. Nobody owns a
+	 * volunteer, and a view that sorts people by which member of staff entered
+	 * them is answering a question no coordinator has. */
+	unset( $views['mine'] );
+
 	$view = gwc_vt_list_view();
 
 	$views['gwc_vt_active'] = gwc_vt_volunteer_view_link(
@@ -319,11 +328,9 @@ function gwc_vt_volunteer_views( $views ) {
 
 	/* Read as the life it describes, whatever order core assembled them in:
 	 * everybody, then the ones still coming, then the ones who stopped, then
-	 * the ones asking to start, then the bin. "Mine" keeps the place core gives
-	 * it, second, because moving a view somebody already knows the position of
-	 * is its own small tax. Anything a site has added of its own keeps its
-	 * place at the end rather than being dropped. */
-	$order  = array( 'all', 'mine', 'gwc_vt_active', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' );
+	 * the ones asking to start, then the bin. Anything a site has added of its
+	 * own keeps its place at the end rather than being dropped. */
+	$order  = array( 'all', 'gwc_vt_active', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' );
 	$sorted = array();
 
 	foreach ( $order as $key ) {

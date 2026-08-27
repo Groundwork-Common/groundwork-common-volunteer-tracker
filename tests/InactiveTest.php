@@ -226,9 +226,15 @@ final class InactiveTest extends TestCase {
 	 */
 	public function test_the_strip_reads_as_a_lifecycle(): void {
 		$this->assertSame(
-			array( 'all', 'mine', 'gwc_vt_active', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' ),
+			array( 'all', 'gwc_vt_active', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' ),
 			array_keys( gwc_vt_volunteer_views( $this->core_views() ) ),
 			'everybody, then the ones still coming, then the ones who stopped, then the ones asking to start, then the bin'
+		);
+
+		$this->assertArrayNotHasKey(
+			'mine',
+			gwc_vt_volunteer_views( $this->core_views() ),
+			'nobody owns a volunteer; the author is whoever typed them in'
 		);
 	}
 
