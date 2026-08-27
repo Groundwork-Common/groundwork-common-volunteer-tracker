@@ -327,6 +327,166 @@ gwc_vt_sfl_check(
 	'' !== gwc_vt_shift_state_label( gwc_vt_event_state( (int) $gwc_vt_sfl_event ) )
 );
 
+/* ── And the events list offers them, like the other two lists ───────────────
+ * It was the one list on this screen with no chips and no find box: a site with
+ * forty events in a year had a screen with no way to ask which of them is short
+ * of people, while the two lists beside it both did.
+ *
+ * The rows come from gwc_vt_schedule_rows() and go through
+ * gwc_vt_filter_schedule_rows() — the same two functions, which have always
+ * handled events — so what is asserted here is that the SCREEN uses them, and
+ * that its links stay on the events list rather than answering with shifts.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_sfl_parade = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_EVENT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest lantern parade',
+	)
+);
+
+$GLOBALS['gwc_vt_sfl_made'][] = (int) $gwc_vt_sfl_parade;
+
+update_post_meta( (int) $gwc_vt_sfl_parade, GWC_VT_EVENT_DATE, $gwc_vt_sfl_soon );
+update_post_meta( (int) $gwc_vt_sfl_parade, GWC_VT_EVENT_LOCATION, 'Zzytest north hall' );
+
+/* One time on it, short of people, with Priya on it — so the person search has
+ * something to find through an event, which is the branch that exists because
+ * an event has no roster of its own. */
+$gwc_vt_sfl_parade_slot = gwc_vt_sfl_shift(
+	$gwc_vt_sfl_soon,
+	'Zzytest lantern carrying',
+	'Zzytest north hall',
+	array(
+		GWC_VT_SHIFT_MIN => 4,
+		GWC_VT_SHIFT_MAX => 8,
+	),
+	array( (int) $gwc_vt_sfl_priya )
+);
+
+wp_update_post(
+	array(
+		'ID'          => $gwc_vt_sfl_parade_slot,
+		'post_parent' => (int) $gwc_vt_sfl_parade,
+	)
+);
+
+/* Both events, because gwc_vt_events_between() reads the pair of dates an event
+ * derives from its times — the last day as well as the first, so a festival is
+ * still "coming up" on its second morning. Setting only GWC_VT_EVENT_DATE by
+ * hand leaves an event every query on this screen steps over. */
+gwc_vt_event_refresh_dates( (int) $gwc_vt_sfl_parade );
+gwc_vt_event_refresh_dates( (int) $gwc_vt_sfl_event );
+
+/**
+ * The events list as somebody arrives at it, with whatever is in the URL.
+ *
+ * @param string $term  What is in the find box.
+ * @param string $state Which chip is on.
+ * @return string
+ */
+function gwc_vt_sfl_events_screen( string $term = '', string $state = '' ): string {
+	unset( $_GET['s'], $_GET['gwc_vt_state'] );
+
+	if ( '' !== $term ) {
+		$_GET['s'] = $term;
+	}
+
+	if ( '' !== $state ) {
+		$_GET['gwc_vt_state'] = $state;
+	}
+
+	ob_start();
+	gwc_vt_render_events_list();
+	$html = (string) ob_get_clean();
+
+	unset( $_GET['s'], $_GET['gwc_vt_state'] );
+
+	return $html;
+}
+
+$GLOBALS['gwc_vt_sfl_ev_all'] = gwc_vt_sfl_events_screen();
+
+gwc_vt_sfl_check(
+	'the events list has a find box and chips at all',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-schedule__find' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter' )
+);
+
+/* The box says what it searches. "Find a shift" over a list of events is the
+ * kind of wrong nobody reports and everybody notices. */
+gwc_vt_sfl_check(
+	'and the box says it searches events',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'Find an event' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'Find a shift' )
+);
+
+/* Every way out of the chips and the form keeps view=events. Without it a chip
+ * on this screen answers with the shifts, which is the failure that looks like
+ * the filter working. */
+gwc_vt_sfl_check(
+	'the find box posts back to this list',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], '<input type="hidden" name="view" value="events" />' )
+);
+
+gwc_vt_sfl_check(
+	'and every chip stays on it',
+	substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter' )
+		=== substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'view=events&#038;gwc_vt_state=' )
+			+ substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter--on' ),
+	substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter' ) . ' chip(s)'
+);
+
+gwc_vt_sfl_check(
+	'both events are there before anything is asked',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'Zzytest lantern parade' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'Zzytest meal service' )
+);
+
+$GLOBALS['gwc_vt_sfl_ev_named'] = gwc_vt_sfl_events_screen( 'lantern' );
+
+gwc_vt_sfl_check(
+	'a name leaves the event it names and drops the other',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_named'], 'Zzytest lantern parade' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_named'], 'Zzytest meal service' )
+);
+
+/* An event has no roster of its own — somebody is on one of its TIMES. */
+$GLOBALS['gwc_vt_sfl_ev_person'] = gwc_vt_sfl_events_screen( 'Zzytest Priya' );
+
+gwc_vt_sfl_check(
+	'a person’s name finds the event they are on a time of',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_person'], 'Zzytest lantern parade' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_person'], 'Zzytest meal service' )
+);
+
+/* The parade is short of people; the meal service was called off above. */
+$GLOBALS['gwc_vt_sfl_ev_short'] = gwc_vt_sfl_events_screen( '', 'short' );
+$GLOBALS['gwc_vt_sfl_ev_off']   = gwc_vt_sfl_events_screen( '', 'cancelled' );
+
+gwc_vt_sfl_check(
+	'the short chip answers with the short event',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_short'], 'Zzytest lantern parade' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_short'], 'Zzytest meal service' )
+);
+
+gwc_vt_sfl_check(
+	'and the called-off chip with the called-off one',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_off'], 'Zzytest meal service' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_off'], 'Zzytest lantern parade' )
+);
+
+/* Two different facts, and the wrong one tells somebody with a full calendar
+ * that they have no events. */
+$GLOBALS['gwc_vt_sfl_ev_none'] = gwc_vt_sfl_events_screen( 'Zzytest nothing is called this' );
+
+gwc_vt_sfl_check(
+	'nothing matching says so, and does not say there are no events',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_none'], 'No event matches that' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_none'], 'No events yet' )
+);
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
 
 /* Exit non-zero so a failure fails the job. Printing the count and returning 0
