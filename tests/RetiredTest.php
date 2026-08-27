@@ -1,0 +1,212 @@
+<?php
+/**
+ * Which surfaces a retired volunteer disappears from, and which they do not.
+ *
+ * The whole feature is one status plus a decision, taken seven times, about
+ * whether a given query is asking a question about work still to come or about
+ * what already happened. That decision is what these tests hold: the status
+ * itself is four lines and cannot really be wrong.
+ *
+ * @package VolunteerTracker
+ */
+
+use PHPUnit\Framework\TestCase;
+
+final class RetiredTest extends TestCase {
+
+	protected function setUp(): void {
+		gwc_vt_test_reset();
+	}
+
+	/**
+	 * Every file that queries volunteers, and the statuses it asks for.
+	 *
+	 * Read out of the source, because the failure this catches is somebody
+	 * adding a query and copying the four-status literal that was right before
+	 * this status existed.
+	 *
+	 * @return array<string, string[]>
+	 */
+	private function volunteer_queries(): array {
+		$found = array();
+
+		foreach ( (array) glob( GWC_VT_DIR . 'inc/*.php' ) as $file ) {
+			$source = (string) file_get_contents( (string) $file );
+
+			/* The assignment itself, not the words anywhere near it. A comment
+			 * saying which of the two a query deliberately does NOT use names
+			 * the function, and a looser search counts that comment as a query
+			 * and reports the opposite of the truth. */
+			preg_match_all(
+				"/'post_status'\s*=>\s*(gwc_vt_volunteer_statuses\(\)|array\( 'publish', 'draft', 'pending', 'private' \))/",
+				$source,
+				$hits,
+				PREG_OFFSET_CAPTURE
+			);
+
+			foreach ( $hits[1] as $hit ) {
+				$window = substr( $source, max( 0, (int) $hit[1] - 700 ), 1400 );
+
+				if ( false === strpos( $window, 'GWC_VT_VOLUNTEER_TYPE' ) ) {
+					continue;
+				}
+
+				$found[ basename( (string) $file ) ][] = (string) $hit[0];
+			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * The parse found something, so the assertions below mean something.
+	 */
+	public function test_the_volunteer_queries_were_found(): void {
+		$queries = $this->volunteer_queries();
+
+		/* Four files decide this statically. The fifth, inc/rest.php, decides it
+		 * per request and is covered on its own below. */
+		$this->assertSame(
+			array( 'admin-schedule.php', 'admin-triage.php', 'dashboard.php', 'privacy.php' ),
+			array_keys( $queries ),
+			'the set of files that query volunteers by status changed'
+		);
+	}
+
+	/**
+	 * The picker takes it as a parameter, and says no unless asked.
+	 *
+	 * One route feeds four pickers and they are not asking the same question. A
+	 * roster offering somebody who has left puts them on a shift; a letter that
+	 * cannot name them makes the record unfinishable. The default is the roster
+	 * answer, because that is the direction where being wrong does damage.
+	 */
+	public function test_the_rest_picker_excludes_retired_unless_asked(): void {
+		$source = (string) file_get_contents( GWC_VT_DIR . 'inc/rest.php' );
+
+		$this->assertStringContainsString(
+			"'retired'",
+			$source,
+			'the volunteers route stopped offering retired as a parameter'
+		);
+
+		$this->assertStringContainsString(
+			"'default'     => false",
+			$source,
+			'the volunteers route now offers retired volunteers to every picker, including the rosters'
+		);
+
+		$this->assertStringContainsString(
+			"\$request['retired'] ? gwc_vt_volunteer_statuses()",
+			$source,
+			'the volunteers route no longer branches on the parameter'
+		);
+	}
+
+	/**
+	 * And exactly one picker asks for them: producing a letter.
+	 */
+	public function test_only_the_letter_picker_asks_for_retired(): void {
+		$asking = array();
+
+		foreach ( (array) glob( GWC_VT_DIR . 'inc/*.php' ) as $file ) {
+			if ( false !== strpos( (string) file_get_contents( (string) $file ), 'data-gwcvt-retired' ) ) {
+				$asking[] = basename( (string) $file );
+			}
+		}
+
+		$this->assertSame( array( 'admin-letters.php' ), $asking );
+	}
+
+	/**
+	 * A retired volunteer is still a person the law can ask about.
+	 *
+	 * The retention sweep and the email lookup behind the exporter and the
+	 * eraser all have to see them. A record the sweep cannot see is one it can
+	 * never purge, which turns retiring into a way of accidentally keeping
+	 * somebody's data forever.
+	 */
+	public function test_the_privacy_surfaces_see_retired_volunteers(): void {
+		$queries = $this->volunteer_queries();
+
+		$this->assertNotEmpty( $queries['privacy.php'] ?? array(), 'privacy.php stopped querying volunteers' );
+
+		foreach ( (array) ( $queries['privacy.php'] ?? array() ) as $shape ) {
+			$this->assertSame(
+				'gwc_vt_volunteer_statuses()',
+				$shape,
+				'a volunteer query in privacy.php cannot see retired records, so the retention sweep and the eraser will both miss them'
+			);
+		}
+	}
+
+	/**
+	 * Hours arrive after somebody leaves, and a letter is asked for later still.
+	 */
+	public function test_the_record_keeping_surfaces_see_them(): void {
+		$queries = $this->volunteer_queries();
+
+		foreach ( array( 'admin-triage.php', 'admin-schedule.php' ) as $file ) {
+			$this->assertNotEmpty( $queries[ $file ] ?? array(), $file . ' stopped querying volunteers' );
+
+			foreach ( (array) $queries[ $file ] as $shape ) {
+				$this->assertSame(
+					'gwc_vt_volunteer_statuses()',
+					$shape,
+					$file . ' cannot see retired volunteers, so work they did before leaving cannot be attributed to them'
+				);
+			}
+		}
+	}
+
+	/**
+	 * And the one that must not.
+	 *
+	 * A nag about court-ordered hours, aimed at somebody who has stopped
+	 * volunteering, is a worklist line nobody can ever clear.
+	 */
+	public function test_the_overdue_nag_does_not(): void {
+		$queries = $this->volunteer_queries();
+
+		$this->assertNotEmpty( $queries['dashboard.php'] ?? array(), 'dashboard.php stopped querying volunteers' );
+
+		foreach ( (array) $queries['dashboard.php'] as $shape ) {
+			$this->assertNotSame(
+				'gwc_vt_volunteer_statuses()',
+				$shape,
+				'the overdue count now includes people who have left, and they can never come off it'
+			);
+		}
+	}
+
+	/**
+	 * The status list is the four that were there plus retired, and nothing
+	 * else — a status silently dropped from it disappears from six queries.
+	 */
+	public function test_the_status_list_is_what_it_was_plus_retired(): void {
+		$this->assertSame(
+			array( 'publish', 'draft', 'pending', 'private', GWC_VT_VOLUNTEER_RETIRED ),
+			gwc_vt_volunteer_statuses()
+		);
+	}
+
+	/**
+	 * post_status is a varchar(20). A longer name is silently truncated on
+	 * write and then matches nothing on read, which looks like the feature
+	 * simply not working.
+	 */
+	public function test_the_status_name_fits_the_column(): void {
+		$this->assertLessThanOrEqual( 20, strlen( GWC_VT_VOLUNTEER_RETIRED ) );
+	}
+
+	/**
+	 * Not 'draft', and the reason is the six queries that already name it.
+	 */
+	public function test_retired_is_not_a_core_status(): void {
+		$this->assertNotContains(
+			GWC_VT_VOLUNTEER_RETIRED,
+			array( 'publish', 'draft', 'pending', 'private', 'trash', 'auto-draft', 'future', 'inherit' ),
+			'a core status is included by the four-status literal these queries already use, and its label is global'
+		);
+	}
+}

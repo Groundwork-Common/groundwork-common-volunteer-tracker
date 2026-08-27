@@ -202,6 +202,24 @@ function gwc_vt_handle_signin_request(): void {
 
 	$volunteers = gwc_vt_volunteers_by_email( $email );
 
+	/* ── Retired records cannot be signed in to ──────────────────────────────
+	 * gwc_vt_volunteers_by_email() answers "whose record is this address on",
+	 * which the privacy exporter and the eraser both need to be true of retired
+	 * people as much as anybody. Signing in is a different question — may this
+	 * person act here now — and the answer for somebody who has left is no.
+	 *
+	 * Filtered here rather than in the lookup, so that one function keeps one
+	 * meaning. A stranger sees no difference either way: the response below is
+	 * byte-identical whether this list empties or not, which is hard rule 3. */
+	$volunteers = array_values(
+		array_filter(
+			$volunteers,
+			static function ( $volunteer_id ): bool {
+				return GWC_VT_VOLUNTEER_RETIRED !== get_post_status( (int) $volunteer_id );
+			}
+		)
+	);
+
 	/* Exactly one, or nothing happens.
 	 *
 	 * Zero is the ordinary case for a stranger and needs no explanation. TWO is

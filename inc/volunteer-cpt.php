@@ -14,6 +14,45 @@ const GWC_VT_VOLUNTEER_PHONE  = '_gwc_vt_phone';
 const GWC_VT_VOLUNTEER_TOTALS = '_gwc_vt_totals';
 const GWC_VT_VOLUNTEER_HOLD   = '_gwc_vt_retention_hold';
 
+/* ── Retired: somebody who used to volunteer here ────────────────────────────
+ * The gap this fills: the only two ways to end a relationship were anonymize
+ * and delete, and both are answers to a PRIVACY question. Neither says the
+ * ordinary thing, which is that a person stopped coming and their record should
+ * stop being offered — while every hour they worked, and their name on the
+ * letters that report those hours, stay exactly where they are.
+ *
+ * ── Why a status of our own rather than 'draft' ──────────────────────────────
+ * Seven queries in this plugin already ask for
+ * array( 'publish', 'draft', 'pending', 'private' ) — the REST picker, the
+ * privacy exporter and eraser, the retention sweep, the triage suggester, the
+ * schedule's person search and the dashboard's overdue count. A retired
+ * volunteer parked in 'draft' would keep turning up in every one of them, which
+ * is the opposite of retiring. A name of our own is excluded from all seven by
+ * default, so the safe behaviour is what happens when somebody forgets — and
+ * the places that SHOULD still see a retired person name this status
+ * deliberately.
+ *
+ * 'draft' is also a core label. Renaming it would rename it on posts and pages
+ * as well, for every plugin on the site.
+ *
+ * Under twenty characters because post_status is a varchar(20), which is the
+ * same reason GWC_VT_CREDENTIAL_RETIRED is abbreviated. */
+const GWC_VT_VOLUNTEER_RETIRED = 'gwc_vt_vol_retired';
+
+/**
+ * Every status a volunteer record that still belongs to somebody can be in.
+ *
+ * The list the seven queries above should have been sharing all along. A screen
+ * that is about record-keeping — what happened, who it happened to, and what
+ * the law says you must hand over — asks for this. A screen that is about work
+ * still to come asks for 'publish' on its own.
+ *
+ * @return string[]
+ */
+function gwc_vt_volunteer_statuses(): array {
+	return array( 'publish', 'draft', 'pending', 'private', GWC_VT_VOLUNTEER_RETIRED );
+}
+
 /* ── What somebody has to complete, and for whom ─────────────────────────────
  * The one question both sides of a mandated placement ask constantly, and the
  * only one this plugin could not answer: how many are left.
@@ -81,6 +120,20 @@ add_action( 'manage_' . GWC_VT_VOLUNTEER_TYPE . '_posts_custom_column', 'gwc_vt_
  * and put their name in a user list that half a dozen plugins enumerate.
  */
 function gwc_vt_register_volunteer_type(): void {
+	register_post_status(
+		GWC_VT_VOLUNTEER_RETIRED,
+		array(
+			'label'                     => _x( 'Retired', 'volunteer status', 'groundwork-common-volunteer-tracker' ),
+			'public'                    => false,
+			'internal'                  => false,
+			'exclude_from_search'       => true,
+			'show_in_admin_all_list'    => false,
+			'show_in_admin_status_list' => true,
+			/* translators: %s: how many volunteers are retired. */
+			'label_count'               => _nx_noop( 'Retired <span class="count">(%s)</span>', 'Retired <span class="count">(%s)</span>', 'volunteer status', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
 	$labels = array(
 		'name'               => _x( 'Volunteers', 'post type general name', 'groundwork-common-volunteer-tracker' ),
 		'singular_name'      => _x( 'Volunteer', 'post type singular name', 'groundwork-common-volunteer-tracker' ),

@@ -124,7 +124,9 @@ function gwc_vt_suggest_volunteer_for( string $email, string $name ): array {
 	$by_name = get_posts(
 		array(
 			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
-			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			/* Retired included. Hours worked before somebody left still arrive after
+			 * they have, and an entry nobody can attach is an entry nobody can verify. */
+			'post_status'            => gwc_vt_volunteer_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 2,
 			'no_found_rows'          => true,

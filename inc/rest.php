@@ -139,7 +139,13 @@ function gwc_vt_register_rest_routes(): void {
 			'callback'            => 'gwc_vt_rest_find_volunteers',
 			'permission_callback' => 'gwc_vt_rest_can_search_volunteers',
 			'args'                => array(
-				'search' => array(
+				'retired' => array(
+					'type'        => 'boolean',
+					'required'    => false,
+					'default'     => false,
+					'description' => __( 'Include volunteers who have retired.', 'groundwork-common-volunteer-tracker' ),
+				),
+				'search'  => array(
 					'type'              => 'string',
 					'required'          => true,
 					'sanitize_callback' => 'sanitize_text_field',
@@ -301,7 +307,19 @@ function gwc_vt_rest_find_volunteers( $request ) {
 	$ids = get_posts(
 		array(
 			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
-			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			/* ── Retired is the caller's decision, and defaults to no ────────────
+			 * Four pickers share this one route and they are not asking the same
+			 * question. A roster is booking somebody onto work that has not
+			 * happened, and offering a person who has left is offering a mistake.
+			 * A letter, and a sign-in sheet being typed up weeks late, are both
+			 * about work that already happened, and refusing to name the person
+			 * it happened to would make the record unfinishable.
+			 *
+			 * Defaulting to false rather than true because the roster is the
+			 * dangerous direction: a picker that quietly stops offering somebody
+			 * is a small confusion, and one that quietly offers somebody who left
+			 * puts them on a shift. */
+			'post_status'            => $request['retired'] ? gwc_vt_volunteer_statuses() : array( 'publish', 'draft', 'pending', 'private' ),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 100,
 			'no_found_rows'          => true,

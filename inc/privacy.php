@@ -346,7 +346,9 @@ function gwc_vt_run_retention(): void {
 	$candidates = get_posts(
 		array(
 			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
-			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			/* Retired included: leaving does not put somebody outside the law, and a
+			 * record the sweep cannot see is a record it can never purge. */
+			'post_status'            => gwc_vt_volunteer_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => GWC_VT_RETENTION_BATCH,
 			'no_found_rows'          => true,
@@ -555,7 +557,9 @@ function gwc_vt_volunteers_by_email( string $email ): array {
 	$ids = get_posts(
 		array(
 			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
-			'post_status'            => array( 'publish', 'draft', 'pending', 'private' ),
+			/* Retired included: leaving does not put somebody outside the law, and a
+			 * record the sweep cannot see is a record it can never purge. */
+			'post_status'            => gwc_vt_volunteer_statuses(),
 			'fields'                 => 'ids',
 			'posts_per_page'         => -1,
 			'no_found_rows'          => true,

@@ -401,7 +401,8 @@ hours · **increment** rounding granularity, nearest and never up ·
 never a "requirement", which is court-ordered hours · **record** one grant of one
 credential to one volunteer, a child post; expiry is derived from it, never
 stored · **retire** stop asking for a credential without destroying the records
-of who held it.
+of who held it; of a **volunteer**, that they stopped coming — their hours, name
+and issued letters all stay, and it is neither anonymize nor delete
 
 ## Where work is tracked
 
