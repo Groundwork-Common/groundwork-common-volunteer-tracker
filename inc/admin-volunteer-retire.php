@@ -269,6 +269,25 @@ function gwc_vt_volunteer_views( $views ) {
 		return $views;
 	}
 
+	/* ── The core statuses carry no meaning on this list ─────────────────────
+	 * WP_Posts_List_Table::get_views() offers one view per status, which is
+	 * right for posts, where a draft and a published post are different kinds
+	 * of thing. A volunteer is a person the organization knows; there is no
+	 * such thing as a draft one, and "Published (24)" beside "All (24)" is a
+	 * filter that never narrows anything.
+	 *
+	 * Removed from the strip rather than from the type. A record that somehow
+	 * ends up in one of these is still queried, still counted and still
+	 * editable — gwc_vt_volunteer_statuses() names all four deliberately — it
+	 * simply has no tab of its own. Hiding a filter is safe in a way that
+	 * refusing a status would not be.
+	 *
+	 * Trash stays: deleting a volunteer is real, reversible, and somebody has
+	 * to be able to find what they deleted. */
+	foreach ( array( 'publish', 'draft', 'pending', 'future', 'private' ) as $noise ) {
+		unset( $views[ $noise ] );
+	}
+
 	$waiting = gwc_vt_pending_application_count();
 
 	$label = __( 'Applied', 'groundwork-common-volunteer-tracker' );
@@ -286,5 +305,20 @@ function gwc_vt_volunteer_views( $views ) {
 		$label
 	);
 
-	return $views;
+	/* Read as the life it describes, whatever order core assembled them in:
+	 * everybody, then the ones who stopped, then the ones asking to start, then
+	 * the bin. "Mine" keeps the place core gives it, second, because moving a
+	 * view somebody already knows the position of is its own small tax. Anything a site has added of its own keeps its place at the end
+	 * rather than being dropped. */
+	$order  = array( 'all', 'mine', GWC_VT_VOLUNTEER_RETIRED, 'gwc_vt_applied', 'trash' );
+	$sorted = array();
+
+	foreach ( $order as $key ) {
+		if ( isset( $views[ $key ] ) ) {
+			$sorted[ $key ] = $views[ $key ];
+			unset( $views[ $key ] );
+		}
+	}
+
+	return array_merge( $sorted, $views );
 }

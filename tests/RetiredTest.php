@@ -179,6 +179,79 @@ final class RetiredTest extends TestCase {
 		}
 	}
 
+	/* ── The views above the volunteer list ──────────────────────────────────
+	 * One view per status is right for posts, where a draft and a published
+	 * post are different kinds of thing. There is no such thing as a draft
+	 * volunteer, so "Published (24)" beside "All (24)" is a filter that never
+	 * narrows anything.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * What core would offer on this screen, before the filter sees it.
+	 *
+	 * @return array<string, string>
+	 */
+	private function core_views(): array {
+		return array(
+			'all'                      => '<a>All (24)</a>',
+			'mine'                     => '<a>Mine (2)</a>',
+			'publish'                  => '<a>Published (21)</a>',
+			'future'                   => '<a>Scheduled (0)</a>',
+			'draft'                    => '<a>Draft (1)</a>',
+			'pending'                  => '<a>Pending (0)</a>',
+			'private'                  => '<a>Private (0)</a>',
+			'trash'                    => '<a>Trash (1)</a>',
+			GWC_VT_VOLUNTEER_RETIRED   => '<a>Retired (3)</a>',
+		);
+	}
+
+	public function test_the_core_status_views_are_suppressed(): void {
+		$views = gwc_vt_volunteer_views( $this->core_views() );
+
+		foreach ( array( 'publish', 'future', 'draft', 'pending', 'private' ) as $noise ) {
+			$this->assertArrayNotHasKey( $noise, $views, $noise . ' is a filter that never narrows this list' );
+		}
+	}
+
+	/**
+	 * Trash is not noise. Deleting a volunteer is real and reversible, and
+	 * somebody has to be able to find what they deleted.
+	 */
+	public function test_trash_survives(): void {
+		$this->assertArrayHasKey( 'trash', gwc_vt_volunteer_views( $this->core_views() ) );
+	}
+
+	/**
+	 * And what is left reads as the life it describes.
+	 */
+	public function test_the_strip_reads_as_a_lifecycle(): void {
+		$this->assertSame(
+			array( 'all', 'mine', GWC_VT_VOLUNTEER_RETIRED, 'gwc_vt_applied', 'trash' ),
+			array_keys( gwc_vt_volunteer_views( $this->core_views() ) )
+		);
+	}
+
+	/**
+	 * A view a site added of its own is kept, at the end rather than dropped.
+	 */
+	public function test_somebody_elses_view_is_kept(): void {
+		$views = $this->core_views();
+
+		$views['acme_lapsed'] = '<a>Lapsed (4)</a>';
+
+		$this->assertArrayHasKey( 'acme_lapsed', gwc_vt_volunteer_views( $views ) );
+	}
+
+	/**
+	 * Suppressing a filter is not the same as refusing a status. A record that
+	 * somehow ends up as a draft is still queried, counted and editable — it
+	 * simply has no tab of its own.
+	 */
+	public function test_hiding_the_view_does_not_narrow_the_queries(): void {
+		$this->assertContains( 'draft', gwc_vt_volunteer_statuses() );
+		$this->assertContains( 'pending', gwc_vt_volunteer_statuses() );
+	}
+
 	/**
 	 * The status list is the four that were there plus retired, and nothing
 	 * else — a status silently dropped from it disappears from six queries.
