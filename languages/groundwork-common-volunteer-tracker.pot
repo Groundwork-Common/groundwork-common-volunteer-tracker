@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T19:38:23+00:00\n"
+"POT-Creation-Date: 2026-08-27T19:43:29+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -5006,7 +5006,7 @@ msgid "Open the schedule"
 msgstr ""
 
 #: inc/dashboard.php:165
-#: inc/help-content.php:315
+#: inc/help-content.php:376
 msgid "Answer somebody who applied to volunteer"
 msgid_plural "Answer people who applied to volunteer"
 msgstr[0] ""
@@ -5325,7 +5325,7 @@ msgstr ""
 #: inc/help-content.php:59
 #: inc/help-content.php:70
 #: inc/help-content.php:81
-#: inc/help-content.php:310
+#: inc/help-content.php:371
 msgid "Select <strong>Save Changes</strong>."
 msgstr ""
 
@@ -5378,7 +5378,7 @@ msgid "Hours reach a letter only after somebody on your staff says the work happ
 msgstr ""
 
 #: inc/help-content.php:96
-#: inc/help-content.php:259
+#: inc/help-content.php:320
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>."
 msgstr ""
 
@@ -5499,7 +5499,7 @@ msgid "Produce a verification letter"
 msgstr ""
 
 #: inc/help-content.php:157
-#: inc/help-content.php:268
+#: inc/help-content.php:329
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record."
 msgstr ""
 
@@ -5552,6 +5552,7 @@ msgid "Schedule a shift"
 msgstr ""
 
 #: inc/help-content.php:185
+#: inc/help-content.php:237
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Schedule</strong>."
 msgstr ""
 
@@ -5612,7 +5613,7 @@ msgid "Put somebody on a shift"
 msgstr ""
 
 #: inc/help-content.php:208
-#: inc/help-content.php:279
+#: inc/help-content.php:340
 msgid "Open the shift from the schedule."
 msgstr ""
 
@@ -5657,188 +5658,324 @@ msgid "Everybody who signed up is already selected, with the scheduled times fil
 msgstr ""
 
 #: inc/help-content.php:231
-msgid "Tracking credentials"
+msgid "Running an event"
 msgstr ""
 
 #: inc/help-content.php:232
-msgid "A credential is something a volunteer has to hold — a training course, a signed waiver, a background check. It is not the same as hours a court required, which live on the volunteer’s own record."
+msgid "An event is one occasion with several roles on it — a festival, a meal service, a collection drive. A shift is one job, which may come round again. Everything under an event is an ordinary shift, so rosters, reminders, waiting lists and hours behave exactly as they do for a shift you scheduled on its own."
 msgstr ""
 
 #: inc/help-content.php:235
-msgid "Define a credential"
-msgstr ""
-
-#: inc/help-content.php:237
-#: inc/help-content.php:249
-#: inc/help-content.php:289
-msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>."
+msgid "Set up an event"
 msgstr ""
 
 #: inc/help-content.php:238
-msgid "Select <strong>Add a credential</strong>, beside the heading."
+msgid "Select <strong>Add</strong>, then <strong>Add an event</strong>."
 msgstr ""
 
 #: inc/help-content.php:239
-msgid "Enter what it is called, as you would say it out loud."
+msgid "Enter the name volunteers will recognize it by, and where it is."
 msgstr ""
 
 #: inc/help-content.php:240
-msgid "Enter how many months it lasts, or 0 if it never expires."
+msgid "Name the first role — greeters, kitchen, clean-up — and enter its times, with how many people each one needs and has room for."
 msgstr ""
 
 #: inc/help-content.php:241
-msgid "Choose what happens when somebody has not got it: report it, or stop them signing up."
+msgid "Select <strong>+ Add another time</strong> for each further time in that role, and <strong>+ Add another role</strong> for the next role."
 msgstr ""
 
 #: inc/help-content.php:242
-msgid "Select <strong>Add it</strong>."
+msgid "Select <strong>Create the event</strong>."
 msgstr ""
 
 #: inc/help-content.php:244
-msgid "Reporting is the safer choice and what most organizations want. Stopping a signup is for the things nobody may work without."
+msgid "There is no date field on the event itself. The dates come from the times in the grid, so an event that spans two days needs no telling. A supervisor, address or note typed on the event carries down to every role that does not name its own."
 msgstr ""
 
 #: inc/help-content.php:247
-msgid "Change a credential you already defined"
+msgid "Put an event where volunteers can see it"
+msgstr ""
+
+#: inc/help-content.php:249
+msgid "Publish the event, and switch signing up on under <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong> if it is not on already."
 msgstr ""
 
 #: inc/help-content.php:250
-msgid "Hover the one you want and select <strong>Edit</strong>."
+msgid "Edit the page or post you want the event to appear on."
 msgstr ""
 
 #: inc/help-content.php:251
-msgid "Change the name, the renewal interval, what happens when somebody has not got it, or the note."
+msgid "Add the <strong>Volunteer Event</strong> block and choose this event."
 msgstr ""
 
 #: inc/help-content.php:252
-msgid "Select <strong>Save this credential</strong>."
+msgid "Update the page and read it as a visitor would."
 msgstr ""
 
 #: inc/help-content.php:254
-msgid "Renaming is safe — every record points at the credential itself. Changing the interval is not the same kind of change: expiry is worked out from it every time it is asked for, so a shorter interval can make somebody lapsed the moment you save. The form says how many people hold it before you change that field."
+msgid "Publishing an event does not give it a web address. It is seen only where you place it, which is why a page has to be chosen. Volunteers see the roles, the times and how many places are left — never who else signed up."
 msgstr ""
 
 #: inc/help-content.php:257
-msgid "Mark somebody inactive who has stopped volunteering"
+msgid "Put somebody on one of an event’s times"
+msgstr ""
+
+#: inc/help-content.php:259
+msgid "Open the event’s <strong>Roster</strong> from the schedule."
 msgstr ""
 
 #: inc/help-content.php:260
-msgid "Hover the row for the person who has stopped."
+msgid "Find the role and the time you are filling."
 msgstr ""
 
 #: inc/help-content.php:261
-msgid "Select <strong>Make inactive</strong>."
+msgid "Under <strong>Put somebody on</strong>, start typing a name and select the volunteer."
 msgstr ""
 
-#: inc/help-content.php:263
-msgid "It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead."
+#: inc/help-content.php:262
+msgid "Select <strong>Give them a place</strong>."
 msgstr ""
 
-#: inc/help-content.php:266
-msgid "Record that somebody holds one"
+#: inc/help-content.php:264
+msgid "The roster flags anybody down for two times that overlap, and anybody short of a credential the role asks for. Neither stops you — they are things to know before the day, not refusals."
+msgstr ""
+
+#: inc/help-content.php:267
+msgid "Turn an event into hours"
 msgstr ""
 
 #: inc/help-content.php:269
-msgid "Find <strong>Credentials</strong>."
+msgid "Open the event’s <strong>Roster</strong> after the day."
 msgstr ""
 
 #: inc/help-content.php:270
-msgid "Choose the credential from the list."
+msgid "Select <strong>Log the hours</strong> beside the first time that has finished."
 msgstr ""
 
 #: inc/help-content.php:271
-msgid "Enter the date they actually did it, which may not be today."
+msgid "Clear the checkbox beside anybody who did not turn up, and add a row for anybody who came without signing up."
 msgstr ""
 
 #: inc/help-content.php:272
-msgid "Select <strong>Update</strong>."
+msgid "Select <strong>Log these hours</strong>, and repeat for each remaining time."
 msgstr ""
 
 #: inc/help-content.php:274
-msgid "Anything that expires counts from the date you enter, so a class taken in March and recorded in June expires in March."
+msgid "One time at a time, because a festival’s kitchen and its clean-up crew worked different hours. The event’s row says how many of its times still need writing up, and the hours still have to be verified, like any others."
 msgstr ""
 
 #: inc/help-content.php:277
-msgid "Ask for a credential on a shift"
+msgid "Run the same event again"
+msgstr ""
+
+#: inc/help-content.php:279
+msgid "Open the event and find <strong>Other things you can do</strong>."
 msgstr ""
 
 #: inc/help-content.php:280
-msgid "Find <strong>They have to hold</strong>."
+msgid "Under <strong>Run it again on</strong>, enter the date it happens next."
 msgstr ""
 
 #: inc/help-content.php:281
-msgid "Select each credential this shift needs."
+msgid "For a series, choose a rhythm and a date to stop. Leave the rhythm as you found it for a single copy."
 msgstr ""
 
 #: inc/help-content.php:282
-msgid "Select <strong>Save this shift</strong>."
+msgid "Select <strong>Copy this event</strong>."
 msgstr ""
 
-#: inc/help-content.php:284
-msgid "For an event, set it on the event instead and every role on the day asks for it, in addition to anything a role asks for itself."
+#: inc/help-content.php:283
+msgid "Open each copy, check the dates, and publish it."
 msgstr ""
 
-#: inc/help-content.php:287
-msgid "See who holds a credential"
+#: inc/help-content.php:285
+msgid "Copies carry the roles, the times, the numbers and the credentials each one asks for, and nobody who signed up. They arrive as drafts, so nothing is public until you have read it. Each run is a whole event of its own — calling off October leaves November alone."
 msgstr ""
 
-#: inc/help-content.php:290
-msgid "Find the credential in the list."
-msgstr ""
-
-#: inc/help-content.php:291
-msgid "In <strong>Who holds it</strong>, select the number of people who hold it, or the number whose has lapsed."
+#: inc/help-content.php:292
+msgid "Tracking credentials"
 msgstr ""
 
 #: inc/help-content.php:293
-msgid "The volunteer list opens, showing only those people. You can also filter that list yourself with the two dropdowns above it."
+msgid "A credential is something a volunteer has to hold — a training course, a signed waiver, a background check. It is not the same as hours a court required, which live on the volunteer’s own record."
+msgstr ""
+
+#: inc/help-content.php:296
+msgid "Define a credential"
+msgstr ""
+
+#: inc/help-content.php:298
+#: inc/help-content.php:310
+#: inc/help-content.php:350
+msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>."
+msgstr ""
+
+#: inc/help-content.php:299
+msgid "Select <strong>Add a credential</strong>, beside the heading."
 msgstr ""
 
 #: inc/help-content.php:300
-msgid "Taking signups and applications from your site"
+msgid "Enter what it is called, as you would say it out loud."
 msgstr ""
 
 #: inc/help-content.php:301
-msgid "Three public forms, each switched off until you switch it on. None of them creates a volunteer record on its own."
+msgid "Enter how many months it lasts, or 0 if it never expires."
 msgstr ""
 
-#: inc/help-content.php:304
-msgid "Let people sign up for shifts"
+#: inc/help-content.php:302
+msgid "Choose what happens when somebody has not got it: report it, or stop them signing up."
 msgstr ""
 
-#: inc/help-content.php:306
-msgid "Create or choose the page you want the list to appear on."
+#: inc/help-content.php:303
+msgid "Select <strong>Add it</strong>."
 msgstr ""
 
-#: inc/help-content.php:307
-msgid "Add the <strong>Volunteer Shifts</strong> block to it, and publish the page."
+#: inc/help-content.php:305
+msgid "Reporting is the safer choice and what most organizations want. Stopping a signup is for the things nobody may work without."
 msgstr ""
 
 #: inc/help-content.php:308
-msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong> and select the <strong>Shifts</strong> tab."
+msgid "Change a credential you already defined"
 msgstr ""
 
-#: inc/help-content.php:309
-msgid "Turn on signups, and choose the page you added the block to."
+#: inc/help-content.php:311
+msgid "Hover the one you want and select <strong>Edit</strong>."
 msgstr ""
 
 #: inc/help-content.php:312
-msgid "Visitors see what each shift is and how many places are left. They never see who is coming."
+msgid "Change the name, the renewal interval, what happens when somebody has not got it, or the note."
 msgstr ""
 
-#: inc/help-content.php:317
-msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>, then <strong>Applied</strong> above the list."
+#: inc/help-content.php:313
+msgid "Select <strong>Save this credential</strong>."
+msgstr ""
+
+#: inc/help-content.php:315
+msgid "Renaming is safe — every record points at the credential itself. Changing the interval is not the same kind of change: expiry is worked out from it every time it is asked for, so a shorter interval can make somebody lapsed the moment you save. The form says how many people hold it before you change that field."
 msgstr ""
 
 #: inc/help-content.php:318
-msgid "Read what they sent."
-msgstr ""
-
-#: inc/help-content.php:319
-msgid "Select <strong>Add as a volunteer</strong> to make a record from it, or <strong>Discard</strong> to take it off the list."
+msgid "Mark somebody inactive who has stopped volunteering"
 msgstr ""
 
 #: inc/help-content.php:321
+msgid "Hover the row for the person who has stopped."
+msgstr ""
+
+#: inc/help-content.php:322
+msgid "Select <strong>Make inactive</strong>."
+msgstr ""
+
+#: inc/help-content.php:324
+msgid "It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead."
+msgstr ""
+
+#: inc/help-content.php:327
+msgid "Record that somebody holds one"
+msgstr ""
+
+#: inc/help-content.php:330
+msgid "Find <strong>Credentials</strong>."
+msgstr ""
+
+#: inc/help-content.php:331
+msgid "Choose the credential from the list."
+msgstr ""
+
+#: inc/help-content.php:332
+msgid "Enter the date they actually did it, which may not be today."
+msgstr ""
+
+#: inc/help-content.php:333
+msgid "Select <strong>Update</strong>."
+msgstr ""
+
+#: inc/help-content.php:335
+msgid "Anything that expires counts from the date you enter, so a class taken in March and recorded in June expires in March."
+msgstr ""
+
+#: inc/help-content.php:338
+msgid "Ask for a credential on a shift"
+msgstr ""
+
+#: inc/help-content.php:341
+msgid "Find <strong>They have to hold</strong>."
+msgstr ""
+
+#: inc/help-content.php:342
+msgid "Select each credential this shift needs."
+msgstr ""
+
+#: inc/help-content.php:343
+msgid "Select <strong>Save this shift</strong>."
+msgstr ""
+
+#: inc/help-content.php:345
+msgid "For an event, set it on the event instead and every role on the day asks for it, in addition to anything a role asks for itself."
+msgstr ""
+
+#: inc/help-content.php:348
+msgid "See who holds a credential"
+msgstr ""
+
+#: inc/help-content.php:351
+msgid "Find the credential in the list."
+msgstr ""
+
+#: inc/help-content.php:352
+msgid "In <strong>Who holds it</strong>, select the number of people who hold it, or the number whose has lapsed."
+msgstr ""
+
+#: inc/help-content.php:354
+msgid "The volunteer list opens, showing only those people. You can also filter that list yourself with the two dropdowns above it."
+msgstr ""
+
+#: inc/help-content.php:361
+msgid "Taking signups and applications from your site"
+msgstr ""
+
+#: inc/help-content.php:362
+msgid "Three public forms, each switched off until you switch it on. None of them creates a volunteer record on its own."
+msgstr ""
+
+#: inc/help-content.php:365
+msgid "Let people sign up for shifts"
+msgstr ""
+
+#: inc/help-content.php:367
+msgid "Create or choose the page you want the list to appear on."
+msgstr ""
+
+#: inc/help-content.php:368
+msgid "Add the <strong>Volunteer Shifts</strong> block to it, and publish the page."
+msgstr ""
+
+#: inc/help-content.php:369
+msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong> and select the <strong>Shifts</strong> tab."
+msgstr ""
+
+#: inc/help-content.php:370
+msgid "Turn on signups, and choose the page you added the block to."
+msgstr ""
+
+#: inc/help-content.php:373
+msgid "Visitors see what each shift is and how many places are left. They never see who is coming."
+msgstr ""
+
+#: inc/help-content.php:378
+msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>, then <strong>Applied</strong> above the list."
+msgstr ""
+
+#: inc/help-content.php:379
+msgid "Read what they sent."
+msgstr ""
+
+#: inc/help-content.php:380
+msgid "Select <strong>Add as a volunteer</strong> to make a record from it, or <strong>Discard</strong> to take it off the list."
+msgstr ""
+
+#: inc/help-content.php:382
 msgid "Nothing is sent to them when an application arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here."
 msgstr ""
 

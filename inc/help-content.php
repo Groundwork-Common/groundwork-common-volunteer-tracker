@@ -227,6 +227,67 @@ function gwc_vt_help_topics(): array {
 		),
 
 		array(
+			'id'    => 'events',
+			'title' => __( 'Running an event', 'groundwork-common-volunteer-tracker' ),
+			'intro' => __( 'An event is one occasion with several roles on it — a festival, a meal service, a collection drive. A shift is one job, which may come round again. Everything under an event is an ordinary shift, so rosters, reminders, waiting lists and hours behave exactly as they do for a shift you scheduled on its own.', 'groundwork-common-volunteer-tracker' ),
+			'tasks' => array(
+				array(
+					'title' => __( 'Set up an event', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Schedule</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add</strong>, then <strong>Add an event</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter the name volunteers will recognize it by, and where it is.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Name the first role — greeters, kitchen, clean-up — and enter its times, with how many people each one needs and has room for.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>+ Add another time</strong> for each further time in that role, and <strong>+ Add another role</strong> for the next role.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Create the event</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'There is no date field on the event itself. The dates come from the times in the grid, so an event that spans two days needs no telling. A supervisor, address or note typed on the event carries down to every role that does not name its own.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Put an event where volunteers can see it', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Publish the event, and switch signing up on under <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong> if it is not on already.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Edit the page or post you want the event to appear on.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Add the <strong>Volunteer Event</strong> block and choose this event.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Update the page and read it as a visitor would.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Publishing an event does not give it a web address. It is seen only where you place it, which is why a page has to be chosen. Volunteers see the roles, the times and how many places are left — never who else signed up.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Put somebody on one of an event’s times', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Open the event’s <strong>Roster</strong> from the schedule.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find the role and the time you are filling.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Under <strong>Put somebody on</strong>, start typing a name and select the volunteer.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Give them a place</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'The roster flags anybody down for two times that overlap, and anybody short of a credential the role asks for. Neither stops you — they are things to know before the day, not refusals.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Turn an event into hours', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Open the event’s <strong>Roster</strong> after the day.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Log the hours</strong> beside the first time that has finished.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Clear the checkbox beside anybody who did not turn up, and add a row for anybody who came without signing up.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Log these hours</strong>, and repeat for each remaining time.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'One time at a time, because a festival’s kitchen and its clean-up crew worked different hours. The event’s row says how many of its times still need writing up, and the hours still have to be verified, like any others.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Run the same event again', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Open the event and find <strong>Other things you can do</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Under <strong>Run it again on</strong>, enter the date it happens next.', 'groundwork-common-volunteer-tracker' ),
+						__( 'For a series, choose a rhythm and a date to stop. Leave the rhythm as you found it for a single copy.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Copy this event</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Open each copy, check the dates, and publish it.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Copies carry the roles, the times, the numbers and the credentials each one asks for, and nobody who signed up. They arrive as drafts, so nothing is public until you have read it. Each run is a whole event of its own — calling off October leaves November alone.', 'groundwork-common-volunteer-tracker' ),
+				),
+			),
+		),
+
+		array(
 			'id'    => 'credentials',
 			'title' => __( 'Tracking credentials', 'groundwork-common-volunteer-tracker' ),
 			'intro' => __( 'A credential is something a volunteer has to hold — a training course, a signed waiver, a background check. It is not the same as hours a court required, which live on the volunteer’s own record.', 'groundwork-common-volunteer-tracker' ),
@@ -349,6 +410,10 @@ function gwc_vt_help_topics(): array {
 
 	if ( ! gwc_vt_shifts_enabled() ) {
 		$hidden[] = 'schedule';
+
+		/* Events go with it. Every screen this topic names is behind the same
+		 * switch, and an event cannot exist without times, which are shifts. */
+		$hidden[] = 'events';
 	}
 
 	if ( array() === $hidden ) {

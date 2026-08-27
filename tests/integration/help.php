@@ -394,7 +394,7 @@ sort( $GLOBALS['gwc_vt_help_ids'] );
 
 gwc_vt_help_check(
 	'the guide covers every part of the plugin it is meant to',
-	array( 'credentials', 'hours', 'letters', 'public', 'schedule', 'start' ) === $GLOBALS['gwc_vt_help_ids'],
+	array( 'credentials', 'events', 'hours', 'letters', 'public', 'schedule', 'start' ) === $GLOBALS['gwc_vt_help_ids'],
 	implode( ', ', $GLOBALS['gwc_vt_help_ids'] )
 );
 
