@@ -1288,7 +1288,7 @@ function gwc_vt_shift_repeat_note( int $shift_id ): string {
 	 * is, because the useful half of the sentence is "this is one of several and
 	 * they were made together" rather than the name of the rhythm. */
 	return sprintf(
-		/* translators: 1: how many shifts the repeat made. 2: the last date in it. */
+		/* translators: 1: how many were made together. 2: the last date in the run. */
 		__( 'One of %1$d made together, through %2$s', 'groundwork-common-volunteer-tracker' ),
 		count( $dates ),
 		$last

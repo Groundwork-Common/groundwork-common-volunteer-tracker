@@ -566,6 +566,228 @@ gwc_vt_ed_check( 'an end before its start is refused', 'bad-time' === (string) (
 $gwc_vt_landed = gwc_vt_ed_save( $gwc_vt_event, array(), array( 'gwc_vt_title' => '' ) );
 gwc_vt_ed_check( 'an event with no name is refused', 'no-title' === (string) ( $gwc_vt_landed['gwc_vt_event_result'] ?? '' ), (string) ( $gwc_vt_landed['gwc_vt_event_result'] ?? '-' ) );
 
+/* ── Running it again, once and on a pattern ─────────────────────────────────
+ * The repeat lived on the shift, so a monthly meal service was twelve events
+ * typed in twelve times. inc/event-cpt.php always said a container and a series
+ * compose; nothing in the interface let anybody do it, which is a claim about
+ * the schema rather than about the product.
+ *
+ * Driven through the real handler, and the credentials are the reason this is
+ * worth the fixtures: they are one meta row each and a copy walked straight past
+ * them, so a copied festival stopped asking for the food handler card — silently,
+ * and twelve times over once repeating existed.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_ed_card'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_CREDENTIAL_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzed food handler card',
+	)
+);
+
+$GLOBALS['gwc_vt_ed_waiver'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_CREDENTIAL_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzed day waiver',
+	)
+);
+
+$GLOBALS['gwc_vt_ed_run'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_EVENT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzed meal service',
+	)
+);
+
+update_post_meta( (int) $GLOBALS['gwc_vt_ed_run'], GWC_VT_EVENT_LOCATION, 'Zzed community center' );
+
+gwc_vt_save_event_grid(
+	(int) $GLOBALS['gwc_vt_ed_run'],
+	array(
+		array(
+			'name'  => 'Kitchen',
+			'slots' => array(
+				array( 'id' => 0, 'date' => $gwc_vt_when, 'start' => '09:00', 'end' => '12:00', 'min' => 2, 'max' => 4 ),
+				array( 'id' => 0, 'date' => $gwc_vt_when, 'start' => '13:00', 'end' => '16:00', 'min' => 2, 'max' => 4 ),
+			),
+		),
+		array(
+			'name'  => 'Serving',
+			'slots' => array(
+				array( 'id' => 0, 'date' => $gwc_vt_when, 'start' => '12:00', 'end' => '14:00', 'min' => 3, 'max' => 6 ),
+			),
+		),
+	),
+	array( 'status' => 'publish', 'notify' => false, 'reason' => '', 'location' => 'Zzed community center', 'super' => 'Marcus Webb' )
+);
+
+gwc_vt_event_refresh_dates( (int) $GLOBALS['gwc_vt_ed_run'] );
+
+/* The whole day asks for the waiver; one role asks for the card as well. */
+gwc_vt_set_shift_credentials( (int) $GLOBALS['gwc_vt_ed_run'], array( (int) $GLOBALS['gwc_vt_ed_waiver'] ) );
+
+$GLOBALS['gwc_vt_ed_slots'] = gwc_vt_event_slot_ids( (int) $GLOBALS['gwc_vt_ed_run'] );
+gwc_vt_set_shift_credentials( (int) $GLOBALS['gwc_vt_ed_slots'][0], array( (int) $GLOBALS['gwc_vt_ed_card'] ) );
+
+/* ── Once, which is what the button always did ───────────────────────────── */
+
+$GLOBALS['gwc_vt_ed_next'] = gmdate( 'Y-m-d', strtotime( $gwc_vt_when . ' +7 days' ) );
+
+$gwc_vt_landed = gwc_vt_ed_confirm(
+	'gwc_vt_copy_event',
+	array(
+		'gwc_vt_event'     => (string) $GLOBALS['gwc_vt_ed_run'],
+		'gwc_vt_copy_date' => $GLOBALS['gwc_vt_ed_next'],
+		'gwc_vt_repeat'    => 'once',
+	),
+	'gwc_vt_copy_event_' . $GLOBALS['gwc_vt_ed_run']
+);
+
+gwc_vt_ed_check(
+	'one copy still says it copied',
+	'copied' === (string) ( $gwc_vt_landed['gwc_vt_event_result'] ?? '' ),
+	(string) ( $gwc_vt_landed['gwc_vt_event_result'] ?? '-' )
+);
+
+$GLOBALS['gwc_vt_ed_copy'] = (int) ( $gwc_vt_landed['gwc_vt_event'] ?? 0 );
+
+gwc_vt_ed_check(
+	'and the copy is a draft on the date asked for',
+	'draft' === get_post_status( $GLOBALS['gwc_vt_ed_copy'] )
+		&& $GLOBALS['gwc_vt_ed_next'] === (string) get_post_meta( $GLOBALS['gwc_vt_ed_copy'], GWC_VT_EVENT_DATE, true ),
+	get_post_status( $GLOBALS['gwc_vt_ed_copy'] ) . ' on ' . (string) get_post_meta( $GLOBALS['gwc_vt_ed_copy'], GWC_VT_EVENT_DATE, true )
+);
+
+/* The bug this found. A copy carried the times and dropped what they ask for. */
+gwc_vt_ed_check(
+	'the copy still asks for what the whole day asked for',
+	array( (int) $GLOBALS['gwc_vt_ed_waiver'] ) === gwc_vt_shift_credential_ids( $GLOBALS['gwc_vt_ed_copy'] ),
+	implode( ', ', gwc_vt_shift_credential_ids( $GLOBALS['gwc_vt_ed_copy'] ) )
+);
+
+$GLOBALS['gwc_vt_ed_copy_slots'] = gwc_vt_event_slot_ids( $GLOBALS['gwc_vt_ed_copy'], array( 'publish', 'draft' ) );
+
+$GLOBALS['gwc_vt_ed_asked'] = array();
+
+foreach ( $GLOBALS['gwc_vt_ed_copy_slots'] as $gwc_vt_ed_slot ) {
+	foreach ( gwc_vt_shift_credential_ids( (int) $gwc_vt_ed_slot ) as $gwc_vt_ed_cred ) {
+		$GLOBALS['gwc_vt_ed_asked'][] = (int) $gwc_vt_ed_cred;
+	}
+}
+
+gwc_vt_ed_check(
+	'and the role that asked for a card still asks for it',
+	in_array( (int) $GLOBALS['gwc_vt_ed_card'], $GLOBALS['gwc_vt_ed_asked'], true ),
+	implode( ', ', $GLOBALS['gwc_vt_ed_asked'] )
+);
+
+gwc_vt_ed_check(
+	'a lone copy belongs to no run',
+	'' === (string) get_post_meta( $GLOBALS['gwc_vt_ed_copy'], GWC_VT_EVENT_SERIES, true )
+);
+
+/* ── And on a pattern ────────────────────────────────────────────────────── */
+
+$gwc_vt_landed = gwc_vt_ed_confirm(
+	'gwc_vt_copy_event',
+	array(
+		'gwc_vt_event'     => (string) $GLOBALS['gwc_vt_ed_run'],
+		'gwc_vt_copy_date' => $GLOBALS['gwc_vt_ed_next'],
+		'gwc_vt_repeat'    => 'weekly',
+		'gwc_vt_until'     => gmdate( 'Y-m-d', strtotime( $gwc_vt_when . ' +28 days' ) ),
+	),
+	'gwc_vt_copy_event_' . $GLOBALS['gwc_vt_ed_run']
+);
+
+gwc_vt_ed_check(
+	'a pattern says how many it made',
+	'repeated' === (string) ( $gwc_vt_landed['gwc_vt_event_result'] ?? '' )
+		&& 4 === (int) ( $gwc_vt_landed['gwc_vt_made'] ?? 0 ),
+	(string) ( $gwc_vt_landed['gwc_vt_event_result'] ?? '-' ) . ' × ' . (string) ( $gwc_vt_landed['gwc_vt_made'] ?? '0' )
+);
+
+/* Back to the event it was run from, not to the last of four drafts. */
+gwc_vt_ed_check(
+	'and lands back on the event it was run from',
+	(int) $GLOBALS['gwc_vt_ed_run'] === (int) ( $gwc_vt_landed['gwc_vt_event'] ?? 0 )
+);
+
+$GLOBALS['gwc_vt_ed_series'] = gwc_vt_event_series_ids( (int) $GLOBALS['gwc_vt_ed_run'] );
+
+gwc_vt_ed_check(
+	'the run holds the original and its four',
+	5 === count( $GLOBALS['gwc_vt_ed_series'] )
+		&& in_array( (int) $GLOBALS['gwc_vt_ed_run'], $GLOBALS['gwc_vt_ed_series'], true ),
+	count( $GLOBALS['gwc_vt_ed_series'] ) . ' event(s)'
+);
+
+/* Every run is a whole event: three times, both credentials, its own date. */
+$GLOBALS['gwc_vt_ed_thin'] = array();
+
+foreach ( $GLOBALS['gwc_vt_ed_series'] as $gwc_vt_ed_one ) {
+	if ( (int) $gwc_vt_ed_one === (int) $GLOBALS['gwc_vt_ed_run'] ) {
+		continue;
+	}
+
+	$gwc_vt_ed_has = gwc_vt_event_slot_ids( (int) $gwc_vt_ed_one, array( 'publish', 'draft' ) );
+
+	if ( 3 !== count( $gwc_vt_ed_has )
+		|| array( (int) $GLOBALS['gwc_vt_ed_waiver'] ) !== gwc_vt_shift_credential_ids( (int) $gwc_vt_ed_one )
+		|| 'draft' !== get_post_status( (int) $gwc_vt_ed_one )
+	) {
+		$GLOBALS['gwc_vt_ed_thin'][] = $gwc_vt_ed_one . ': ' . count( $gwc_vt_ed_has ) . ' time(s), ' . get_post_status( (int) $gwc_vt_ed_one );
+	}
+}
+
+gwc_vt_ed_check(
+	'every run is a whole event of its own, and a draft',
+	array() === $GLOBALS['gwc_vt_ed_thin'],
+	implode( ' | ', $GLOBALS['gwc_vt_ed_thin'] )
+);
+
+/* A week apart, which is what "every week" meant on the other screen. */
+$GLOBALS['gwc_vt_ed_dates'] = gwc_vt_event_series_dates( (int) $GLOBALS['gwc_vt_ed_run'] );
+$GLOBALS['gwc_vt_ed_gaps']  = array();
+
+foreach ( $GLOBALS['gwc_vt_ed_dates'] as $gwc_vt_ed_i => $gwc_vt_ed_date ) {
+	if ( 0 === $gwc_vt_ed_i ) {
+		continue;
+	}
+
+	$GLOBALS['gwc_vt_ed_gaps'][] = (int) round(
+		( strtotime( $gwc_vt_ed_date ) - strtotime( $GLOBALS['gwc_vt_ed_dates'][ $gwc_vt_ed_i - 1 ] ) ) / DAY_IN_SECONDS
+	);
+}
+
+gwc_vt_ed_check(
+	'and they are a week apart',
+	array( 7, 7, 7, 7 ) === $GLOBALS['gwc_vt_ed_gaps'],
+	implode( ', ', $GLOBALS['gwc_vt_ed_gaps'] )
+);
+
+/* And a row says which run it is one of. */
+gwc_vt_ed_check(
+	'a row says it is one of a run',
+	'' !== gwc_vt_event_repeat_note( (int) $GLOBALS['gwc_vt_ed_run'] ),
+	gwc_vt_event_repeat_note( (int) $GLOBALS['gwc_vt_ed_run'] )
+);
+
+/* ── Clean up the run ────────────────────────────────────────────────────── */
+
+foreach ( array_merge( $GLOBALS['gwc_vt_ed_series'], array( $GLOBALS['gwc_vt_ed_copy'] ) ) as $gwc_vt_ed_gone ) {
+	foreach ( gwc_vt_event_slot_ids( (int) $gwc_vt_ed_gone, array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ) ) as $gwc_vt_ed_slot ) {
+		wp_delete_post( (int) $gwc_vt_ed_slot, true );
+	}
+
+	wp_delete_post( (int) $gwc_vt_ed_gone, true );
+}
+
+wp_delete_post( (int) $GLOBALS['gwc_vt_ed_card'], true );
+wp_delete_post( (int) $GLOBALS['gwc_vt_ed_waiver'], true );
+
 /* ── Teardown ────────────────────────────────────────────────────────────── */
 
 remove_filter( 'wp_redirect', 'gwc_vt_ed_catch_redirect', 1 );
