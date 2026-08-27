@@ -3,7 +3,7 @@
  * Defining what volunteers have to hold.
  *
  * One screen, listing every credential with the interval it renews on and what
- * it does when somebody has not got it, and an **Add a credential** button
+ * it does when somebody has not got it, and an **Add New Credential** button
  * beside the heading — where WordPress puts one on every list it ships. The
  * form used to sit under the table, on the argument that four fields do not
  * justify a page load. What that actually bought was a screen whose bottom half
@@ -96,7 +96,7 @@ function gwc_vt_restore_credentials_title(): void {
 
 	if ( 'new' === $asked ) {
 		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $title is how core carries an admin page's title into admin-header.php, and there is no API for setting it; this writes it only for this plugin's own screen, and only when nothing else has.
-		$GLOBALS['title'] = __( 'Add a credential', 'groundwork-common-volunteer-tracker' );
+		$GLOBALS['title'] = __( 'Add New Credential', 'groundwork-common-volunteer-tracker' );
 		return;
 	}
 
@@ -329,7 +329,7 @@ function gwc_vt_render_credentials_list(): void {
 		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_credentials_title() ); ?></h1>
 		<?php if ( gwc_vt_can_define_credentials() ) : ?>
 			<a class="page-title-action" href="<?php echo esc_url( gwc_vt_credentials_url( array( 'credential' => 'new' ) ) ); ?>">
-				<?php esc_html_e( 'Add a credential', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Add New Credential', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		<?php endif; ?>
 		<hr class="wp-header-end" />
@@ -368,7 +368,7 @@ function gwc_vt_render_credentials_list(): void {
 							<?php if ( 'retired' === $status ) : ?>
 								<?php esc_html_e( 'Nothing has been retired.', 'groundwork-common-volunteer-tracker' ); ?>
 							<?php elseif ( gwc_vt_can_define_credentials() ) : ?>
-								<?php esc_html_e( 'Nothing defined yet. Select “Add a credential” to define the first one.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php esc_html_e( 'Nothing defined yet. Select “Add New Credential” to define the first one.', 'groundwork-common-volunteer-tracker' ); ?>
 							<?php else : ?>
 								<?php esc_html_e( 'Nothing defined yet.', 'groundwork-common-volunteer-tracker' ); ?>
 							<?php endif; ?>
@@ -535,7 +535,7 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 			<?php
 			echo $editing
 				? esc_html__( 'Edit a credential', 'groundwork-common-volunteer-tracker' )
-				: esc_html__( 'Add a credential', 'groundwork-common-volunteer-tracker' );
+				: esc_html__( 'Add New Credential', 'groundwork-common-volunteer-tracker' );
 			?>
 		</h1>
 
@@ -545,7 +545,7 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 			 * this one, the next thing somebody does is define another. */
 			?>
 			<a class="page-title-action" href="<?php echo esc_url( gwc_vt_credentials_url( array( 'credential' => 'new' ) ) ); ?>">
-				<?php esc_html_e( 'Add a credential', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Add New Credential', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		<?php endif; ?>
 

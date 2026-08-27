@@ -42,7 +42,7 @@ const GWC_VT_YEAR_TOTALS_KEY = 'gwc_vt_year_totals';
 /**
  * Does this site have any volunteer records at all yet?
  *
- * Deliberately not counting auto-drafts. Opening "Add volunteer" and wandering
+ * Deliberately not counting auto-drafts. Opening "Add New Volunteer" and wandering
  * off creates one, and a site that looked started because somebody opened a
  * screen would lose the guidance at exactly the moment it was needed.
  *

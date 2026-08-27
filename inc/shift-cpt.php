@@ -100,7 +100,7 @@ function gwc_vt_register_shift_type(): void {
 		'name'          => _x( 'Shifts', 'post type general name', 'groundwork-common-volunteer-tracker' ),
 		'singular_name' => _x( 'Shift', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
 		'menu_name'     => _x( 'Schedule', 'admin menu', 'groundwork-common-volunteer-tracker' ),
-		'add_new_item'  => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
+		'add_new_item'  => __( 'Add New Shift', 'groundwork-common-volunteer-tracker' ),
 		'edit_item'     => __( 'Edit shift', 'groundwork-common-volunteer-tracker' ),
 		'not_found'     => __( 'Nothing scheduled yet.', 'groundwork-common-volunteer-tracker' ),
 		'all_items'     => __( 'Schedule', 'groundwork-common-volunteer-tracker' ),

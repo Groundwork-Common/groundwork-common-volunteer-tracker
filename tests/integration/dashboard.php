@@ -321,7 +321,7 @@ gwc_vt_check(
 	implode( ', ', $gwc_vt_admin_sees )
 );
 
-gwc_vt_check( 'and the verbs they use every week', in_array( 'Add a volunteer', $gwc_vt_admin_sees, true ) );
+gwc_vt_check( 'and the verbs they use every week', in_array( 'Add New Volunteer', $gwc_vt_admin_sees, true ) );
 
 /* An EDITOR, where this used to use an author.
  *
@@ -353,7 +353,7 @@ if ( ! is_wp_error( $gwc_vt_editor ) ) {
 	);
 
 	gwc_vt_check( 'but they still get the hours they can log', in_array( 'Log a day’s sign-in sheet', $gwc_vt_editor_sees, true ) );
-	gwc_vt_check( 'and the volunteers they can add', in_array( 'Add a volunteer', $gwc_vt_editor_sees, true ) );
+	gwc_vt_check( 'and the volunteers they can add', in_array( 'Add New Volunteer', $gwc_vt_editor_sees, true ) );
 
 	wp_set_current_user( 1 );
 	wp_delete_user( (int) $gwc_vt_editor );
@@ -394,11 +394,11 @@ gwc_vt_settings_cache( null, true );
 
 gwc_vt_check(
 	'with shifts off, adding one is not offered',
-	! in_array( 'Add a shift', gwc_vt_action_labels(), true ),
+	! in_array( 'Add New Shift', gwc_vt_action_labels(), true ),
 	implode( ', ', gwc_vt_action_labels() )
 );
 
-gwc_vt_check( 'nor adding an event', ! in_array( 'Add an event', gwc_vt_action_labels(), true ) );
+gwc_vt_check( 'nor adding an event', ! in_array( 'Add New Event', gwc_vt_action_labels(), true ) );
 gwc_vt_check( 'and logging hours is still there', in_array( 'Log a day’s sign-in sheet', gwc_vt_action_labels(), true ) );
 
 $gwc_vt_settings['shifts_enabled'] = true;

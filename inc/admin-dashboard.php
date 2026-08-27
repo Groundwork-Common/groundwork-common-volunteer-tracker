@@ -703,12 +703,12 @@ function gwc_vt_dashboard_actions(): array {
 
 	if ( gwc_vt_shifts_enabled() && gwc_vt_can_see_records() ) {
 		$actions[] = array(
-			'label' => __( 'Add a shift', 'groundwork-common-volunteer-tracker' ),
+			'label' => __( 'Add New Shift', 'groundwork-common-volunteer-tracker' ),
 			'url'   => gwc_vt_schedule_url( array( 'shift' => 'new' ) ),
 		);
 
 		$actions[] = array(
-			'label' => __( 'Add an event', 'groundwork-common-volunteer-tracker' ),
+			'label' => __( 'Add New Event', 'groundwork-common-volunteer-tracker' ),
 			'url'   => gwc_vt_schedule_url( array( 'gwc_vt_event' => 'new' ) ),
 		);
 	}
@@ -720,7 +720,7 @@ function gwc_vt_dashboard_actions(): array {
 		);
 
 		$actions[] = array(
-			'label' => __( 'Add a volunteer', 'groundwork-common-volunteer-tracker' ),
+			'label' => __( 'Add New Volunteer', 'groundwork-common-volunteer-tracker' ),
 			'url'   => admin_url( 'post-new.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 		);
 

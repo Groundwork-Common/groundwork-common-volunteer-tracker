@@ -75,7 +75,7 @@ function gwc_vt_render_event_editor( int $event_id, string $missing = '' ): void
 		<h1>
 			<?php
 			echo $is_new
-				? esc_html__( 'Add an event', 'groundwork-common-volunteer-tracker' )
+				? esc_html__( 'Add New Event', 'groundwork-common-volunteer-tracker' )
 				: esc_html( gwc_vt_event_name( $event_id ) );
 			?>
 		</h1>

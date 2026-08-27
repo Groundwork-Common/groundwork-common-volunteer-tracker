@@ -53,7 +53,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 		<h1>
 			<?php
 			echo $is_new
-				? esc_html__( 'Add a shift', 'groundwork-common-volunteer-tracker' )
+				? esc_html__( 'Add New Shift', 'groundwork-common-volunteer-tracker' )
 				: esc_html( get_the_title( $shift_id ) );
 			?>
 		</h1>
