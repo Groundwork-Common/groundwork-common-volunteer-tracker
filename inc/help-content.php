@@ -234,6 +234,7 @@ function gwc_vt_help_topics(): array {
 					'title' => __( 'Define a credential', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add a credential</strong>, beside the heading.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter what it is called, as you would say it out loud.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter how many months it lasts, or 0 if it never expires.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Choose what happens when somebody has not got it: report it, or stop them signing up.', 'groundwork-common-volunteer-tracker' ),
