@@ -23,7 +23,7 @@ WordPress 6.3, PHP 7.4. No build step and no npm: every file that runs on a user
 The PHP 7.4 floor is tested, not assumed. PHPUnit 11 needs PHP 8.2, so the unit suite *cannot* run on 7.4 — which means without a deliberate job the compatibility claim in the plugin header would be verified by nobody. The Tests workflow runs the integration scripts against a real 7.4 site, and parses every shipping file with 7.4's own parser. To check it yourself:
 
 ```bash
-npx @wordpress/env start --config=.wp-env.php74.json
+bin/wpenv --floor start
 ```
 
 ## Things that are deliberate
@@ -253,14 +253,59 @@ curl -sLO https://phar.phpunit.de/phpunit-11.phar && php phpunit-11.phar
 Anything that genuinely needs WordPress runs under wp-env:
 
 ```bash
-npx @wordpress/env start
+bin/wpenv start
 ```
 
 Then the integration scripts, each of which creates and removes its own fixtures:
 
 ```bash
-npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
+bin/wpenv run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
 ```
+
+### Why that is `bin/wpenv` and not `npx @wordpress/env`
+
+Everything after the wrapper is passed through untouched, so the two are
+interchangeable except in one respect: **which environment you get.**
+
+wp-env names its Docker Compose project and its `~/.wp-env/` instance directory
+after the config file's absolute path — `load-config.js` builds
+`basename( dirname( path ) )` plus the first eight characters of `md5( path )`.
+Every git worktree is a different path, so `npx @wordpress/env start` inside one
+does not reuse the plugin's environment. It builds a new one: six containers,
+its own WordPress download, two database volumes, about 460 MB. Nothing warns
+you, because nothing is wrong — each environment works perfectly. They just
+accumulate. Across four plugins they reached thirty-four instances and thirteen
+gigabytes, ten of them pointing at directories that had since been deleted.
+
+`bin/wpenv` never runs wp-env from a worktree. It runs it from the repository's
+**main checkout** — one fixed path, so one fixed instance per plugin — and
+mounts whichever worktree you are standing in at
+`wp-content/plugins/groundwork-common-volunteer-tracker`. Moving between
+worktrees remounts the same environment rather than building another, and the
+site keeps its address and its database.
+
+Two consequences worth knowing before you rely on it. The mount is what makes
+the slug right, so `make-pot` run through this wrapper cannot produce the
+worktree-named template described under **Releasing** below. And one environment
+per plugin means exactly that: two worktrees cannot serve WordPress at the same
+time, which is the trade being bought. The wrapper prints the worktree it just
+mounted on every invocation, because the environment now outlives the branch and
+what is behind the URL is no longer obvious.
+
+`--floor` selects the PHP 7.4 configuration, which is a second instance by
+design — the two PHP versions cannot share a container:
+
+```bash
+bin/wpenv --floor start
+```
+
+Ports are pinned at 8898/8899 (8896/8897 for the floor) and can be moved with
+`GWC_WPENV_PORT`, `GWC_WPENV_TESTS_PORT`, `GWC_WPENV_FLOOR_PORT` and
+`GWC_WPENV_FLOOR_TESTS_PORT`. The wrapper writes the mount and the ports into
+`.wp-env.override.json` in the main checkout — and, for the floor, into
+`.wp-env.php74.override.json`, since wp-env derives an override's name from the
+`--config` it was given. Both are gitignored and both are named in
+`.distignore`.
 
 ## Continuous integration
 
@@ -330,7 +375,7 @@ reads the version out of the plugin header, so running it first stamps the old
 number and `VersionTest` will say so.
 
 ```bash
-npx @wordpress/env run cli -- wp i18n make-pot \
+bin/wpenv run cli -- wp i18n make-pot \
   wp-content/plugins/groundwork-common-volunteer-tracker \
   wp-content/plugins/groundwork-common-volunteer-tracker/languages/groundwork-common-volunteer-tracker.pot \
   --exclude=tests,vendor,node_modules,bin,.claude
@@ -339,7 +384,9 @@ npx @wordpress/env run cli -- wp i18n make-pot \
 Then look at the two headers it wrote. `make-pot` derives `Report-Msgid-Bugs-To`
 and `X-Domain` from the name of the **directory** it was pointed at rather than
 from the plugin header, so generating from a git worktree produces a template
-that names a support forum which does not exist — and it is well-formed,
+that names a support forum which does not exist — which is the failure
+`bin/wpenv` was written to make structurally impossible, since its mount is
+always the real slug — and it is well-formed,
 correctly named and complete while doing it, so nothing about the file looks
 wrong. It was corrected by hand at three consecutive releases before it was
 written down here.

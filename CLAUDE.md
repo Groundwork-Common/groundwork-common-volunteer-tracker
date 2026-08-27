@@ -97,16 +97,20 @@ php phpunit-11.phar --filter VersionTest
 `failOnPhpunitDeprecation`.
 
 ```bash
-npx @wordpress/env start
+bin/wpenv start
 for f in tests/integration/*.php; do
-  npx @wordpress/env run cli -- wp eval-file \
+  bin/wpenv run cli -- wp eval-file \
     "wp-content/plugins/groundwork-common-volunteer-tracker/$f"
 done
 
-npx @wordpress/env start --config=.wp-env.php74.json   # the 7.4 floor
-npx @wordpress/env run cli -- wp eval-file \
+bin/wpenv --floor start                                # the 7.4 floor
+bin/wpenv --floor run cli -- wp eval-file \
   wp-content/plugins/groundwork-common-volunteer-tracker/tests/seed.php
 ```
+
+**Use `bin/wpenv`, not `npx @wordpress/env` directly.** Arguments pass straight
+through, so the only difference is which environment you get — and that
+difference is the whole point. See the trap below.
 
 **CI here is local.** `.github/workflows/test.yml` still holds every job — but
 its `push` and `pull_request` triggers were removed, so it fires only when
@@ -160,7 +164,7 @@ places move and not before — `make-pot` reads the version out of the plugin
 header, so doing it first stamps the old number:
 
 ```bash
-npx @wordpress/env run cli -- wp i18n make-pot \
+bin/wpenv run cli -- wp i18n make-pot \
   wp-content/plugins/groundwork-common-volunteer-tracker \
   wp-content/plugins/groundwork-common-volunteer-tracker/languages/groundwork-common-volunteer-tracker.pot \
   --exclude=tests,vendor,node_modules,bin,.claude
@@ -175,31 +179,34 @@ wrote it down. `VersionTest` now fails on both that and a template left
 un-regenerated, so this is a step you are reminded about rather than one you
 have to remember.
 
-**From a worktree, fix the mount rather than the file.** `.wp-env.json` says
-`"plugins": [ "." ]`, and wp-env mounts that under the directory's **basename**
-— inside a worktree, something like `plugin-dry-review-5ae647`, which is exactly
-the name `make-pot` then stamps into both headers. Correcting the output by hand
-afterwards is what went wrong three times. Put this in `.wp-env.override.json`,
-which is gitignored, and the container gets the real slug so the generated file
-is right the first time:
+**From a worktree, run `bin/wpenv` — never `npx @wordpress/env`.** Two separate
+failures live here, and the wrapper exists because both are silent.
 
-```json
-{
-	"port": 8971,
-	"testsPort": 8972,
-	"plugins": [],
-	"mappings": {
-		"wp-content/plugins/groundwork-common-volunteer-tracker": "."
-	}
-}
-```
+The first is the slug. `.wp-env.json` says `"plugins": [ "." ]`, and wp-env
+mounts that under the directory's **basename** — inside a worktree, something
+like `plugin-dry-review-5ae647`, which is exactly the name `make-pot` then
+stamps into both headers. Correcting the output by hand afterwards is what went
+wrong three times.
 
-Pick ports nothing else is on while you are there — the override is also where
-they are pinned, so a fresh worktree collides with whatever is already using
-wp-env's default 8888. And keep any scratch config **out of the repository
-root**: `.distignore` names `.wp-env.override.json` and `.wp-env.php74.json`
-literally, so a `.wp-env.php74.local.json` sitting beside them is not excluded
-and rsyncs straight into the release payload.
+The second is that a worktree gets a *whole new environment*. wp-env names its
+Compose project and its `~/.wp-env/` directory from the config file's absolute
+path — `basename( dirname( path ) )` plus `md5( path )[0..8]` — so every
+worktree builds its own six containers, WordPress download and pair of database
+volumes, about 460 MB each. Nothing is wrong with any of them, which is why they
+accumulate: four plugins had reached thirty-four instances and thirteen
+gigabytes, ten of them orphaned by worktrees that no longer existed.
+
+`bin/wpenv` runs wp-env from the **main checkout** — one fixed path, so one
+fixed instance per plugin — and mounts the worktree you are standing in at the
+real slug. It writes the mount and the pinned ports into `.wp-env.override.json`
+there, and into `.wp-env.php74.override.json` for `--floor`, because wp-env
+derives an override's name from the `--config` it was given. Both are gitignored
+and both are named in `.distignore`.
+
+Keep any scratch config **out of the repository root** regardless: `.distignore`
+names those four files literally, so a `.wp-env.php74.local.json` sitting beside
+them is not excluded and rsyncs straight into the release payload. That is also
+why the wrapper generates fixed names rather than a new file per experiment.
 
 **Before a release, also run the directory's own scanner** — phpcs is not the
 whole of what a reviewer runs. Plugin Check reads the readme's headers, the file
@@ -231,8 +238,10 @@ run turns 144 findings into 566 and destroys the comment style. The long version
 is in `phpcs.xml.dist`; the location finder overrules the same sniff for the same
 reason. Do not re-enable it.
 
-Ports are pinned in `.wp-env.override.json`, which is gitignored — a fresh clone
-gets wp-env defaults.
+Ports are pinned by `bin/wpenv` into `.wp-env.override.json`, which is
+gitignored — a fresh clone gets wp-env defaults until the wrapper is run once.
+Move them with `GWC_WPENV_PORT` and friends rather than by editing the generated
+file, which is rewritten on every invocation.
 
 ## The beta site
 

@@ -2,7 +2,7 @@
 /**
  * A demo organization, for working on the plugin and taking screenshots.
  *
- *   npx @wordpress/env run cli -- wp eval-file \
+ *   bin/wpenv run cli -- wp eval-file \
  *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/seed.php
  *
  * Re-runnable: it removes what a previous run created and builds it again.

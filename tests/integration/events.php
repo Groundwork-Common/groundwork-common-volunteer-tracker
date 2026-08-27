@@ -10,7 +10,7 @@
  *
  * Run under wp-env:
  *
- *   npx @wordpress/env run cli -- wp eval-file \
+ *   bin/wpenv run cli -- wp eval-file \
  *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/events.php
  *
  * It creates its own fixtures and deletes them again, and puts back every
