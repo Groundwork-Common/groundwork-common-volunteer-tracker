@@ -922,6 +922,81 @@ gwc_vt_cr_check(
 );
 
 /* The list offers the way in. */
+/* ── The same header block every other list on this plugin wears ─────────── */
+
+$GLOBALS['gwc_vt_cr_head'] = gwc_vt_cr_draw_credentials();
+
+gwc_vt_cr_check(
+	'the header block is core\'s, in core\'s order',
+	strpos( $GLOBALS['gwc_vt_cr_head'], 'subsubsub' ) < strpos( $GLOBALS['gwc_vt_cr_head'], 'class="search-box"' )
+		&& strpos( $GLOBALS['gwc_vt_cr_head'], 'class="search-box"' ) < strpos( $GLOBALS['gwc_vt_cr_head'], 'tablenav top' )
+		&& strpos( $GLOBALS['gwc_vt_cr_head'], 'tablenav top' ) < strpos( $GLOBALS['gwc_vt_cr_head'], '<table' )
+);
+
+/* Searching narrows the rows and leaves the view counts alone: those counts are
+ * how somebody leaves a search, and "Retired (0)" meaning "none match this
+ * word" would be the screen telling them something untrue. */
+$_GET['s'] = 'waiver';
+
+ob_start();
+gwc_vt_render_credentials_screen();
+$GLOBALS['gwc_vt_cr_found'] = (string) ob_get_clean();
+
+unset( $_GET['s'] );
+
+gwc_vt_cr_check(
+	'a search leaves what matches and drops what does not',
+	false !== strpos( $GLOBALS['gwc_vt_cr_found'], 'Zzcr liability waiver' )
+		&& false === strpos( $GLOBALS['gwc_vt_cr_found'], 'Zzcr child safety class' )
+);
+
+gwc_vt_cr_check(
+	'and the view counts still count everything',
+	false !== strpos(
+		$GLOBALS['gwc_vt_cr_found'],
+		'(' . number_format_i18n( count( gwc_vt_live_credential_ids() ) ) . ')'
+	),
+	count( gwc_vt_live_credential_ids() ) . ' live'
+);
+
+/* The note is searched too: it is where a site records what the thing is to
+ * them, and that is what somebody types. */
+$_GET['s'] = 'county office';
+
+ob_start();
+gwc_vt_render_credentials_screen();
+$GLOBALS['gwc_vt_cr_note'] = (string) ob_get_clean();
+
+unset( $_GET['s'] );
+
+$_GET['s'] = 'zznothing is called this';
+
+ob_start();
+gwc_vt_render_credentials_screen();
+$GLOBALS['gwc_vt_cr_nothing'] = (string) ob_get_clean();
+
+unset( $_GET['s'] );
+
+gwc_vt_cr_check(
+	'nothing matching says so, rather than saying nothing is defined',
+	false !== strpos( $GLOBALS['gwc_vt_cr_nothing'], 'No credential matches that' )
+		&& false === strpos( $GLOBALS['gwc_vt_cr_nothing'], 'Nothing defined yet' )
+);
+
+/* And the box posts back to the list somebody is on, not to the other one. */
+$_GET['gwc_vt_status'] = 'retired';
+
+ob_start();
+gwc_vt_render_credentials_screen();
+$GLOBALS['gwc_vt_cr_retired_head'] = (string) ob_get_clean();
+
+unset( $_GET['gwc_vt_status'] );
+
+gwc_vt_cr_check(
+	'searching the retired list stays on the retired list',
+	false !== strpos( $GLOBALS['gwc_vt_cr_retired_head'], '<input type="hidden" name="gwc_vt_status" value="retired" />' )
+);
+
 /* ── And it behaves the way a list in wp-admin behaves ───────────────────── */
 
 $GLOBALS['gwc_vt_cr_list'] = gwc_vt_cr_draw_credentials();
