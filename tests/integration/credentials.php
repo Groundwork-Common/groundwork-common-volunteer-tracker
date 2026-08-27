@@ -679,6 +679,158 @@ foreach ( array_unique( $GLOBALS['gwc_vt_cr_made'] ) as $gwc_vt_cr_id ) {
 	wp_delete_post( (int) $gwc_vt_cr_id, true );
 }
 
+/* ── A volunteer's panel shows what they hold, not what the org asks for ─────
+ * It listed every credential defined anywhere and said "not recorded" against
+ * most of them, so a volunteer who held one of six read as five pieces of bad
+ * news and one fact. The list of what the organization asks for is a screen of
+ * its own.
+ *
+ * The same change fixes the opposite miss: the old loop walked the DEFINITIONS,
+ * so a credential the organization has since retired never appeared on the
+ * record of somebody who still holds it. Retiring stops asking; it does not
+ * un-hold.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_cr_panel_vol'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzy Panel Tester',
+	)
+);
+
+$GLOBALS['gwc_vt_cr_panel_live'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_CREDENTIAL_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzy Panel Live Class',
+	)
+);
+
+$GLOBALS['gwc_vt_cr_panel_gone'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_CREDENTIAL_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzy Panel Retired Class',
+	)
+);
+
+/**
+ * The credentials panel for the test volunteer.
+ *
+ * @return string
+ */
+function gwc_vt_cr_panel(): string {
+	ob_start();
+	gwc_vt_render_volunteer_credentials_box( get_post( (int) $GLOBALS['gwc_vt_cr_panel_vol'] ) );
+
+	return (string) ob_get_clean();
+}
+
+/**
+ * Just the table of what they hold.
+ *
+ * Scoped deliberately: the "Record one" select below the table lists every LIVE
+ * credential, because that is how one is granted. A check over the whole panel
+ * therefore finds the name of a credential nobody holds and calls it a row —
+ * which is what the first draft of these checks did, and it failed the code for
+ * being right.
+ *
+ * @return string
+ */
+function gwc_vt_cr_panel_table(): string {
+	$panel = gwc_vt_cr_panel();
+	$open  = strpos( $panel, '<table' );
+
+	if ( false === $open ) {
+		return '';
+	}
+
+	$close = strpos( $panel, '</table>', $open );
+
+	return false === $close ? '' : substr( $panel, $open, $close - $open );
+}
+
+gwc_vt_cr_check(
+	'holding nothing says so rather than listing every credential as missing',
+	false !== strpos( gwc_vt_cr_panel(), 'Nothing recorded' )
+		&& '' === gwc_vt_cr_panel_table()
+);
+
+gwc_vt_record_credential(
+	(int) $GLOBALS['gwc_vt_cr_panel_vol'],
+	(int) $GLOBALS['gwc_vt_cr_panel_live'],
+	gmdate( 'Y-m-d' )
+);
+
+$gwc_vt_cr_panel_html = gwc_vt_cr_panel_table();
+
+gwc_vt_cr_check(
+	'one grant shows one row',
+	1 === substr_count( $gwc_vt_cr_panel_html, '<tr>' )
+		&& false !== strpos( $gwc_vt_cr_panel_html, 'Zzy Panel Live Class' ),
+	substr_count( $gwc_vt_cr_panel_html, '<tr>' ) . ' row(s)'
+);
+
+gwc_vt_cr_check(
+	'and the ones they do not hold stay off the table',
+	false === strpos( $gwc_vt_cr_panel_html, 'Zzy Panel Retired Class' )
+);
+
+/* Grant the second, then retire it underneath them. */
+gwc_vt_record_credential(
+	(int) $GLOBALS['gwc_vt_cr_panel_vol'],
+	(int) $GLOBALS['gwc_vt_cr_panel_gone'],
+	gmdate( 'Y-m-d' )
+);
+
+wp_update_post(
+	array(
+		'ID'          => (int) $GLOBALS['gwc_vt_cr_panel_gone'],
+		'post_status' => GWC_VT_CREDENTIAL_RETIRED,
+	)
+);
+
+$gwc_vt_cr_panel_html = gwc_vt_cr_panel_table();
+
+gwc_vt_cr_check(
+	'a credential retired underneath them is still on their record',
+	false !== strpos( $gwc_vt_cr_panel_html, 'Zzy Panel Retired Class' )
+);
+
+gwc_vt_cr_check(
+	'and is marked, so it does not read as something still asked for',
+	false !== strpos( $gwc_vt_cr_panel_html, 'gwcvt-held__retired' )
+);
+
+/**
+ * Take the panel fixtures away again.
+ */
+function gwc_vt_cr_panel_cleanup(): void {
+	foreach ( array( 'gwc_vt_cr_panel_vol', 'gwc_vt_cr_panel_live', 'gwc_vt_cr_panel_gone' ) as $key ) {
+		if ( empty( $GLOBALS[ $key ] ) ) {
+			continue;
+		}
+
+		/* Grants are child posts and WordPress does not cascade. */
+		foreach ( (array) get_posts(
+			array(
+				'post_type'   => GWC_VT_RECORD_TYPE,
+				'post_parent' => (int) $GLOBALS[ $key ],
+				'post_status' => array_values( get_post_stati() ),
+				'numberposts' => -1,
+				'fields'      => 'ids',
+			)
+		) as $record_id ) {
+			wp_delete_post( (int) $record_id, true );
+		}
+
+		wp_delete_post( (int) $GLOBALS[ $key ], true );
+	}
+}
+
+register_shutdown_function( 'gwc_vt_cr_panel_cleanup' );
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
 if ( $GLOBALS['gwc_vt_failures'] > 0 ) {

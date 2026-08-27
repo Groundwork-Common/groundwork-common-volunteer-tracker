@@ -307,7 +307,6 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 
 	usort( $rows, static fn( array $a, array $b ): int => strcmp( $b['date'], $a['date'] ) );
 
-	$totals = gwc_vt_volunteer_totals( $volunteer_id );
 	?>
 	<table class="widefat striped gwcvt-history">
 		<thead>
@@ -350,13 +349,6 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 		</tbody>
 	</table>
 
-	<?php if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) && $totals->verified_minutes > 0 ) : ?>
-		<p>
-			<a class="button" href="<?php echo esc_url( gwc_vt_produce_letter_url( $volunteer_id ) ); ?>">
-				<?php esc_html_e( 'Produce a letter for this volunteer', 'groundwork-common-volunteer-tracker' ); ?>
-			</a>
-		</p>
-	<?php endif; ?>
 	<?php
 }
 
@@ -379,6 +371,13 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 			'<p class="description">%s</p>',
 			esc_html__( 'No verification letter has been issued for this volunteer.', 'groundwork-common-volunteer-tracker' )
 		);
+
+		/* And then the button, rather than returning here. This branch is the
+		 * volunteer nobody has written a letter for yet, which is precisely the
+		 * one somebody opening this panel is most likely to want to write one
+		 * for. An early return would have hidden it from them. */
+		gwc_vt_produce_letter_button( $volunteer_id );
+
 		return;
 	}
 
@@ -450,6 +449,40 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 
 	<p class="description">
 		<?php esc_html_e( 'What each letter stated when it went out. Checking one compares it against the records as they stand now.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+	<?php
+	gwc_vt_produce_letter_button( $volunteer_id );
+}
+
+/**
+ * The way to write one, under the list of the ones already written.
+ *
+ * ── Why it is here and not under Hours logged ────────────────────────────────
+ * It sat below the shifts table, which is where the hours are, and a letter is
+ * not an hour. Somebody who has come to this record to produce a letter looks
+ * at the panel with letters in it.
+ *
+ * ── Why the guard is only about hours ────────────────────────────────────────
+ * The other two conditions it used to carry — that this organization issues
+ * letters at all, and that this user may — are already true of anybody seeing
+ * this panel: gwc_vt_add_volunteer_history_boxes() does not register it
+ * otherwise. Repeating them here would be two more places for the answer to
+ * drift from the one that decides whether the panel exists.
+ *
+ * What is left is the one thing the panel cannot know: a letter reports
+ * verified time, so there is nothing to write about somebody who has none yet.
+ *
+ * @param int $volunteer_id The volunteer.
+ */
+function gwc_vt_produce_letter_button( int $volunteer_id ): void {
+	if ( gwc_vt_volunteer_totals( $volunteer_id )->verified_minutes < 1 ) {
+		return;
+	}
+	?>
+	<p>
+		<a class="button" href="<?php echo esc_url( gwc_vt_produce_letter_url( $volunteer_id ) ); ?>">
+			<?php esc_html_e( 'Produce a letter for this volunteer', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
 	</p>
 	<?php
 }

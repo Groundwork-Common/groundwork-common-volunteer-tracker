@@ -2297,3 +2297,16 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	text-align: right;
 	color: #1d2327;
 }
+
+/* A credential somebody still holds after the organization stopped asking for
+   it. Marked so the row does not read as a live requirement. */
+.gwcvt-held__retired {
+	margin-left: .4em;
+	padding: 1px 6px;
+	border-radius: 9px;
+	background: #f0f0f1;
+	color: #50575e;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: .3px;
+}
