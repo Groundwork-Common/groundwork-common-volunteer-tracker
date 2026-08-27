@@ -191,7 +191,9 @@ gwc_vt_add_signup( (int) $gwc_vt_slots[1], array( 'volunteer_id' => $gwc_vt_volu
 /* ── The screens ─────────────────────────────────────────────────────────── */
 
 gwc_vt_sc_render( 'the events list', function () {
-	gwc_vt_render_events_list();
+	$_GET['gwc_vt_only'] = 'events';
+	gwc_vt_render_schedule_screen();
+	unset( $_GET['gwc_vt_only'] );
 } );
 
 gwc_vt_sc_render( 'the flat schedule', function () {
@@ -296,7 +298,9 @@ $GLOBALS['gwc_vt_sc_views'] = array(
 		gwc_vt_render_schedule_month();
 	} ), 'back' => false ),
 	'the events list'  => array( 'html' => gwc_vt_sc_render( 'the events list, again', function () {
-		gwc_vt_render_events_list();
+		$_GET['gwc_vt_only'] = 'events';
+		gwc_vt_render_schedule_screen();
+		unset( $_GET['gwc_vt_only'] );
 	} ), 'back' => false ),
 	'the event editor' => array( 'html' => $gwc_vt_editor, 'back' => true ),
 	'the roster'       => array( 'html' => $gwc_vt_roster, 'back' => true ),
@@ -327,133 +331,43 @@ foreach ( $GLOBALS['gwc_vt_sc_views'] as $gwc_vt_sc_what => $gwc_vt_sc_view ) {
 	);
 }
 
-/* The three lists offer the same three lists. The events view used to offer
- * "Coming up" and itself, so arriving there took the past and the calendar off
- * the screen, with the browser's own back button as the only way to either. */
+/* The bar is one axis now: which side of today. "Events" used to sit on it as a
+ * third link, which made it look like three peers when it was time, time and
+ * kind — it is a filter chip beside the states, so it composes with the two
+ * rather than replacing them. What every list must still agree on is those two
+ * links, whatever else is narrowing the screen.
+ * ─────────────────────────────────────────────────────────────────────────── */
 $GLOBALS['gwc_vt_sc_bars'] = array();
 
 foreach ( array( 'the schedule', 'the month', 'the events list' ) as $gwc_vt_sc_list ) {
-	preg_match(
-		'~<ul class="subsubsub">.*?</ul>~s',
+	preg_match_all(
+		'~<li class="([a-z]+)">~',
 		(string) $GLOBALS['gwc_vt_sc_views'][ $gwc_vt_sc_list ]['html'],
 		$gwc_vt_sc_hit
 	);
 
-	/* Compared on the links themselves, not the markup: which one is marked
-	 * current is the only difference the three are allowed. Whitespace is
-	 * collapsed after the attribute goes, because the view that marks nothing
-	 * still prints the space the attribute would have sat in. */
-	$GLOBALS['gwc_vt_sc_bars'][ $gwc_vt_sc_list ] = trim(
-		(string) preg_replace(
-			'~\s+~',
-			' ',
-			(string) preg_replace(
-				'~class="current" aria-current="page"~',
-				'',
-				(string) ( $gwc_vt_sc_hit[0] ?? '' )
-			)
-		)
-	);
+	$GLOBALS['gwc_vt_sc_bars'][ $gwc_vt_sc_list ] = implode( ',', $gwc_vt_sc_hit[1] );
 }
 
 gwc_vt_sc_check(
-	'all three lists carry the same three links',
+	'all three lists carry the same two time links',
 	1 === count( array_unique( $GLOBALS['gwc_vt_sc_bars'] ) )
-		&& '' !== reset( $GLOBALS['gwc_vt_sc_bars'] ),
-	implode( ' / ', array_map( 'strlen', $GLOBALS['gwc_vt_sc_bars'] ) ) . ' bytes'
+		&& 'upcoming,past' === reset( $GLOBALS['gwc_vt_sc_bars'] ),
+	implode( ' / ', $GLOBALS['gwc_vt_sc_bars'] )
 );
 
-/* Every list offers the calendar, and offers it in the same place: the right of
- * the tablenav, beside the count, where core keeps the Media library's own
- * list-or-grid switch. The events list had no toggle at all, so the calendar
- * was unreachable from it without going back to the schedule first. */
-foreach ( array( 'the schedule', 'the month', 'the events list' ) as $gwc_vt_sc_list ) {
-	$gwc_vt_sc_html = (string) $GLOBALS['gwc_vt_sc_views'][ $gwc_vt_sc_list ]['html'];
-
-	gwc_vt_sc_check(
-		$gwc_vt_sc_list . ' offers the list/calendar toggle',
-		1 === substr_count( $gwc_vt_sc_html, 'gwcvt-schedule__views' ),
-		substr_count( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) . ' toggle(s)'
-	);
-
-	gwc_vt_sc_check(
-		'and puts it in the tablenav, on the right with the count',
-		strpos( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) > strpos( $gwc_vt_sc_html, 'tablenav top' )
-			&& strpos( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) < strpos( $gwc_vt_sc_html, 'displaying-num' )
-	);
-
-	/* And the header block above it is the one core builds on every list: the
-	 * view links, then the search floated right, then the tablenav. */
-	/* The rows the block is made of, in core's order. The table is checked only
-	 * where there is one: the month draws a calendar of divs, and the header
-	 * above it is the same header. */
-	$gwc_vt_sc_order = array( 'subsubsub', 'class="search-box"', 'tablenav top' );
-
-	if ( false !== strpos( $gwc_vt_sc_html, '<table' ) ) {
-		$gwc_vt_sc_order[] = '<table';
-	}
-
-	$gwc_vt_sc_at = array();
-
-	foreach ( $gwc_vt_sc_order as $gwc_vt_sc_part ) {
-		$gwc_vt_sc_at[ $gwc_vt_sc_part ] = strpos( $gwc_vt_sc_html, $gwc_vt_sc_part );
-	}
-
-	$gwc_vt_sc_sorted = $gwc_vt_sc_at;
-	asort( $gwc_vt_sc_sorted );
-
-	gwc_vt_sc_check(
-		'and wears the header block core builds on every list',
-		! in_array( false, $gwc_vt_sc_at, true )
-			&& array_keys( $gwc_vt_sc_sorted ) === $gwc_vt_sc_order,
-		implode( ' → ', array_keys( $gwc_vt_sc_sorted ) )
-	);
-
-	/* And one way to add, the same on all three. The two buttons this replaced
-	 * asked somebody to choose between two words before they had been told what
-	 * either means; the screen behind this one asks the question instead. */
-	gwc_vt_sc_check(
-		'and offers one way to add, not a choice of vocabulary',
-		1 === substr_count( $gwc_vt_sc_html, 'class="page-title-action"' )
-			&& false !== strpos( $gwc_vt_sc_html, 'add=new' ),
-		substr_count( $gwc_vt_sc_html, 'class="page-title-action"' ) . ' title action(s)'
-	);
-}
-
-/* The screen that button leads to, which is the whole point of there being one
- * button: it asks the question in the reader's terms rather than making them
- * know the vocabulary first. Both routes out of it still exist, because the
- * dashboard and the how-to guide link straight at them. */
-$GLOBALS['gwc_vt_sc_add'] = gwc_vt_sc_render( 'the add chooser', function () {
-	$_GET['add'] = 'new';
-	gwc_vt_render_schedule_screen();
-	unset( $_GET['add'] );
-} );
-
-gwc_vt_sc_check(
-	'the chooser offers both, and says what each is for',
-	false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'shift=new' )
-		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'gwc_vt_event=new' )
-		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Several roles on one occasion' )
+/* And on the narrowed one they keep the narrowing, so choosing a side of today
+ * does not quietly put the shifts back. */
+preg_match(
+	'~<ul class="subsubsub">.*?</ul>~s',
+	(string) $GLOBALS['gwc_vt_sc_views']['the events list']['html'],
+	$gwc_vt_sc_narrowed_bar
 );
 
 gwc_vt_sc_check(
-	'and keeps the words the buttons it replaced used',
-	false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add New Shift' )
-		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add New Event' )
-);
-
-/* Knowing which you want is still allowed. */
-$GLOBALS['gwc_vt_sc_direct'] = gwc_vt_sc_render( 'the direct route to a new event', function () {
-	$_GET['gwc_vt_event'] = 'new';
-	gwc_vt_render_schedule_screen();
-	unset( $_GET['gwc_vt_event'] );
-} );
-
-gwc_vt_sc_check(
-	'the direct address still opens the editor rather than the chooser',
-	false !== strpos( $GLOBALS['gwc_vt_sc_direct'], 'gwc_vt_save_event' )
-		&& false === strpos( $GLOBALS['gwc_vt_sc_direct'], 'Several roles on one occasion' )
+	'and on a narrowed screen both of them carry the narrowing',
+	2 === substr_count( (string) ( $gwc_vt_sc_narrowed_bar[0] ?? '' ), 'gwc_vt_only=events' ),
+	substr_count( (string) ( $gwc_vt_sc_narrowed_bar[0] ?? '' ), 'gwc_vt_only=events' ) . ' of 2'
 );
 
 /* ── A result in the URL is a result on the screen ───────────────────────── */
@@ -468,7 +382,9 @@ $GLOBALS['gwc_vt_sc_said'] = array(
 		gwc_vt_render_event_roster( $gwc_vt_event );
 	} ),
 	'the events list'  => gwc_vt_sc_render( 'the events list, arrived at from a save', function () {
-		gwc_vt_render_events_list();
+		$_GET['gwc_vt_only'] = 'events';
+		gwc_vt_render_schedule_screen();
+		unset( $_GET['gwc_vt_only'] );
 	} ),
 );
 

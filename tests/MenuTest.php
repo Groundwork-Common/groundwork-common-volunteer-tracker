@@ -102,8 +102,9 @@ final class MenuTest extends TestCase {
 	}
 
 	/**
-	 * What is coming, then who is coming, then what they did, then what gets
-	 * produced for them. It reads forwards, and every entry is a place.
+	 * Where you land, then what is coming, then the record — a volunteer, their
+	 * hours, the letter those hours become — then setting it up. It reads
+	 * forwards, and every entry is a place.
 	 */
 	public function test_it_puts_the_screens_in_the_order_things_happen(): void {
 		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
@@ -115,11 +116,11 @@ final class MenuTest extends TestCase {
 				'Dashboard',
 				'Schedule',
 				'Volunteers',
-				'Credentials',
 				'Hours',
 				'Letters',
-				'Help',
 				'Settings',
+				'Credentials',
+				'Help',
 			),
 			$this->labels()
 		);
@@ -164,9 +165,10 @@ final class MenuTest extends TestCase {
 	}
 
 	/* ── The bands, and the rules between them ───────────────────────────────
-	 * Nine rows read as four things: what is happening, your people, the record,
-	 * setting up. What is asserted here is which rows OPEN a band, because that
-	 * is what a rule is drawn above — not that the class exists somewhere.
+	 * Eight rows read as four things: where you land, what is coming, the
+	 * record, setting up. What is asserted here is which rows OPEN a band,
+	 * because that is what a rule is drawn above — not that the class exists
+	 * somewhere.
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_a_rule_opens_each_band_after_the_first(): void {
@@ -175,7 +177,7 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Volunteers', 'Hours', 'Help' ),
+			array( 'Schedule', 'Volunteers', 'Settings' ),
 			$this->ruled(),
 			'three rules, above the row that opens each band after the first'
 		);
@@ -211,7 +213,7 @@ final class MenuTest extends TestCase {
 			// The row each of two bands names first, gone.
 			if ( in_array(
 				(string) $item[2],
-				array( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, GWC_VT_HELP_PAGE ),
+				array( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, GWC_VT_SETTINGS_PAGE ),
 				true
 			) ) {
 				continue;
@@ -225,7 +227,7 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Credentials', 'Hours', 'Settings' ),
+			array( 'Schedule', 'Hours', 'Credentials' ),
 			$this->ruled(),
 			'the band opens on the first row it has left, not on the slug named first'
 		);
@@ -241,7 +243,7 @@ final class MenuTest extends TestCase {
 		foreach ( $this->as_registered() as $item ) {
 			if ( in_array(
 				(string) $item[2],
-				array( GWC_VT_HELP_PAGE, GWC_VT_SETTINGS_PAGE ),
+				array( GWC_VT_HELP_PAGE, GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE ),
 				true
 			) ) {
 				continue;
@@ -254,7 +256,7 @@ final class MenuTest extends TestCase {
 
 		$this->build();
 
-		$this->assertSame( array( 'Volunteers', 'Hours' ), $this->ruled() );
+		$this->assertSame( array( 'Schedule', 'Volunteers' ), $this->ruled() );
 	}
 
 	/**
@@ -309,9 +311,7 @@ final class MenuTest extends TestCase {
 
 		foreach ( gwc_vt_menu_bands() as $slugs ) {
 			foreach ( $slugs as $slug ) {
-				if ( GWC_VT_SETTINGS_PAGE !== $slug ) {
-					$flattened[] = $slug;
-				}
+				$flattened[] = $slug;
 			}
 		}
 
@@ -319,20 +319,20 @@ final class MenuTest extends TestCase {
 	}
 
 	/**
-	 * Settings is in a band and out of the order, and both halves matter: the
-	 * band is what keeps the setup rule landing if Help is ever taken off the
-	 * menu, and staying out of the order is what keeps Settings below a screen
-	 * a site has added of its own.
+	 * Settings opens the setting-up band, so it is in both the bands and the
+	 * order — it used to be held out of the order to keep it at the very bottom,
+	 * and the owner asked for it at the top of that band instead.
 	 */
-	public function test_settings_is_banded_but_not_ordered(): void {
-		$banded = array();
+	public function test_settings_opens_the_setting_up_band(): void {
+		$bands = gwc_vt_menu_bands();
 
-		foreach ( gwc_vt_menu_bands() as $slugs ) {
-			$banded = array_merge( $banded, $slugs );
-		}
+		$this->assertSame(
+			array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_HELP_PAGE ),
+			$bands['setup'],
+			'the band the owner asked for, in the order they asked for it'
+		);
 
-		$this->assertContains( GWC_VT_SETTINGS_PAGE, $banded );
-		$this->assertNotContains( GWC_VT_SETTINGS_PAGE, gwc_vt_menu_order() );
+		$this->assertContains( GWC_VT_SETTINGS_PAGE, gwc_vt_menu_order() );
 	}
 
 	/**
@@ -436,18 +436,31 @@ final class MenuTest extends TestCase {
 	}
 
 	/**
-	 * The one that was unambiguously wrong. Settings sat fourth because
-	 * admin-screen.php registers at the default priority and the screens added
-	 * in later releases registered at 11, 12 and 13.
+	 * Settings sits where the band puts it, and Help ends the menu.
+	 *
+	 * It sat fourth once by accident — admin-screen.php registers at the default
+	 * priority and the screens added in later releases registered at 11, 12 and
+	 * 13 — which is why any of this is ordered at all. Where it sits now is a
+	 * decision rather than an accident: the setting-up band reads Settings,
+	 * Credentials, Help.
 	 */
-	public function test_settings_is_last(): void {
+	public function test_settings_opens_the_last_band_and_help_ends_it(): void {
 		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = $this->as_registered();
 
-		gwc_vt_order_menu();
+		/* Through both passes, because that is the menu somebody sees: hiding
+		 * runs at 98 and takes Applications off, ordering runs at 99. Ordering
+		 * alone leaves Applications appended as an unknown row, which is right
+		 * and is not the finished menu. */
+		$this->build();
 
 		$labels = $this->labels();
 
-		$this->assertSame( 'Settings', end( $labels ) );
+		$this->assertSame( 'Help', end( $labels ) );
+		$this->assertSame(
+			array( 'Settings', 'Credentials', 'Help' ),
+			array_slice( $labels, -3 ),
+			'the setting-up band, in the order it was asked for'
+		);
 	}
 
 	/**
@@ -491,7 +504,16 @@ final class MenuTest extends TestCase {
 		$this->assertContains( 'Grant report', $this->labels() );
 	}
 
-	public function test_an_unknown_screen_sits_above_settings(): void {
+	/**
+	 * Settings has a place in the band now, so it is not the bottom any more.
+	 *
+	 * It used to be held back and appended after everything, so a screen another
+	 * plugin added landed above it. The setting-up band is Settings, Credentials,
+	 * Help by the owner's own arrangement, and "last" is a place only one row
+	 * can have: a screen this plugin has never heard of keeps its registered
+	 * position at the end, which is now below Settings rather than above it.
+	 */
+	public function test_an_unknown_screen_keeps_its_place_at_the_end(): void {
 		$items   = $this->as_registered();
 		$items[] = array( 'Grant report', 'edit_posts', 'acme-grant-report' );
 
@@ -501,10 +523,16 @@ final class MenuTest extends TestCase {
 
 		$labels = $this->labels();
 
-		$this->assertLessThan(
+		$this->assertSame(
+			count( $labels ) - 1,
+			array_search( 'Grant report', $labels, true ),
+			'a screen this plugin does not know about is appended, not dropped or hoisted'
+		);
+
+		$this->assertGreaterThan(
 			array_search( 'Settings', $labels, true ),
 			array_search( 'Grant report', $labels, true ),
-			'settings has to stay at the bottom however many screens a site adds'
+			'settings is placed by the band now, so the appended screen follows it'
 		);
 	}
 
