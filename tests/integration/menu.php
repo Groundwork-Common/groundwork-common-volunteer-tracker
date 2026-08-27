@@ -168,7 +168,7 @@ foreach ( (array) $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] as $gwc_vt_row ) {
 
 gwc_vt_menu_check(
 	'a rule opens each band after the first',
-	array( GWC_VT_SCHEDULE_PAGE, 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, GWC_VT_HELP_PAGE ) === $gwc_vt_ruled,
+	array( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, GWC_VT_HELP_PAGE ) === $gwc_vt_ruled,
 	implode( ' · ', $gwc_vt_ruled )
 );
 

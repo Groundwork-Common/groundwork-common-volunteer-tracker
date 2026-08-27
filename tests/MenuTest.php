@@ -160,10 +160,9 @@ final class MenuTest extends TestCase {
 	}
 
 	/* ── The bands, and the rules between them ───────────────────────────────
-	 * Nine rows read as four things: where you land, the work ahead and who
-	 * will do it, the work already done and what it produces, and the setting
-	 * up. What is asserted here is which rows OPEN a band, because that is what
-	 * a rule is drawn above — not that the class exists somewhere.
+	 * Nine rows read as four things: what is happening, your people, the record,
+	 * setting up. What is asserted here is which rows OPEN a band, because that
+	 * is what a rule is drawn above — not that the class exists somewhere.
 	 * ─────────────────────────────────────────────────────────────────────── */
 
 	public function test_a_rule_opens_each_band_after_the_first(): void {
@@ -172,7 +171,7 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Schedule', 'All hours', 'Help' ),
+			array( 'Volunteers', 'All hours', 'Help' ),
 			$this->ruled(),
 			'three rules, above the row that opens each band after the first'
 		);
@@ -205,8 +204,12 @@ final class MenuTest extends TestCase {
 		$items = array();
 
 		foreach ( $this->as_registered() as $item ) {
-			// Both rows of the setup band gone, and the schedule with them.
-			if ( in_array( (string) $item[2], array( GWC_VT_SCHEDULE_PAGE, GWC_VT_HELP_PAGE ), true ) ) {
+			// The row each of two bands names first, gone.
+			if ( in_array(
+				(string) $item[2],
+				array( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, GWC_VT_HELP_PAGE ),
+				true
+			) ) {
 				continue;
 			}
 
@@ -218,7 +221,7 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Volunteers', 'All hours', 'Settings' ),
+			array( 'Offers to volunteer', 'All hours', 'Settings' ),
 			$this->ruled(),
 			'the band opens on the first row it has left, not on the slug named first'
 		);
@@ -247,7 +250,7 @@ final class MenuTest extends TestCase {
 
 		$this->build();
 
-		$this->assertSame( array( 'Schedule', 'All hours' ), $this->ruled() );
+		$this->assertSame( array( 'Volunteers', 'All hours' ), $this->ruled() );
 	}
 
 	/**
@@ -259,8 +262,8 @@ final class MenuTest extends TestCase {
 		$items = $this->as_registered();
 
 		foreach ( $items as $index => $item ) {
-			if ( GWC_VT_SCHEDULE_PAGE === (string) $item[2] ) {
-				$items[ $index ][3] = 'Schedule';
+			if ( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE === (string) $item[2] ) {
+				$items[ $index ][3] = 'Volunteers';
 				$items[ $index ][4] = 'acme-highlight';
 			}
 		}
@@ -274,7 +277,7 @@ final class MenuTest extends TestCase {
 
 		$this->assertSame(
 			'acme-highlight gwc-vt-rule',
-			$classes[ array_search( 'Schedule', $labels, true ) ]
+			$classes[ array_search( 'Volunteers', $labels, true ) ]
 		);
 	}
 

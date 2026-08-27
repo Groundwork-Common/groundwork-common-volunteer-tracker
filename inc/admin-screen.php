@@ -86,19 +86,30 @@ add_action( 'admin_head', 'gwc_vt_menu_rule_style' );
  * heading inside a submenu, and inventing one would make this menu the odd one
  * in the sidebar rather than the legible one.
  *
- * The split that matters is the middle one. Schedule, Volunteers, Offers and
- * Credentials are all about staffing something that has not happened yet — the
- * shifts to cover, the people you have, the people asking to join, and what
- * each of them has to hold before they can. All hours and Letter records are
- * the other direction: what was done, and the document that comes out of it.
- * Sorting by which way time runs is what lets somebody find Credentials without
- * first deciding whether a credential is a property of a person or of a shift.
+ * Said out loud, the four are: what is happening · your people · the record ·
+ * setting up. That test — whether a band can be named in two words without
+ * defending it — is what settled the one joint this had a real choice about.
  *
- * Offers and Credentials moved to get here. Both were registered after this
- * list was written and neither was named in it, so both landed in the "anything
- * we have not heard of" remainder at the bottom, below Letter records and above
- * Settings. Nobody chose that, which is the same complaint the block above
- * makes about the order this whole pass exists to fix.
+ * ── Why the schedule sits with the dashboard, not with the people ────────────
+ * The first version of this filed Schedule with Volunteers, Applications and
+ * Credentials, on the argument that all four are about staffing work that has
+ * not happened yet, against All hours and Letter records which run the other
+ * way. That argument is sound and it needed two paragraphs, which is the tell:
+ * a grouping a sidebar has to explain is one nobody reads.
+ *
+ * A calendar is not a person. Dashboard and Schedule are the two screens you
+ * open to find out what is going on; Volunteers, Applications and Credentials
+ * are the three that answer who your people are, who is asking to be, and what
+ * each of them holds. That splits 2 · 3 · 2 · 2, so every rule separates
+ * something plural from something plural, which is the other half of why this
+ * version won: the alternative left Schedule alone between two rules, and a
+ * rule between two single rows stops reading as "these belong together".
+ *
+ * Applications and Credentials moved to get here at all. Both were registered
+ * after this list was written and neither was named in it, so both landed in
+ * the "anything we have not heard of" remainder at the bottom, below Letter
+ * records and above Settings. Nobody chose that, which is the same complaint
+ * the block above makes about the order this whole pass exists to fix.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -117,14 +128,21 @@ add_action( 'admin_head', 'gwc_vt_menu_rule_style' );
  */
 function gwc_vt_menu_bands(): array {
 	$bands = array(
-		/* Where you land. Not part of the sequence below so much as the place
-		 * you start it from. */
-		'start'  => array( GWC_VT_DASHBOARD_PAGE ),
+		/* What is happening: where you land, and what is coming. */
+		'ahead'  => array( GWC_VT_DASHBOARD_PAGE, GWC_VT_SCHEDULE_PAGE ),
 
-		/* What is coming, who is coming, who is asking to, and what each of
-		 * them has to hold first. */
-		'ahead'  => array(
-			GWC_VT_SCHEDULE_PAGE,
+		/* Your people: who you have, who is asking to be, and what each of them
+		 * has to hold first.
+		 *
+		 * Credentials belongs here rather than under Settings, which is the
+		 * other place it is repeatedly proposed for. Defining one is
+		 * configuration and you do it once — but the screen's fourth column is
+		 * "Who holds it", live counts linking into filtered volunteer lists, and
+		 * Settings is not where you look at people. The capability settles it
+		 * either way: this screen is gwc_vt_records_cap(), Settings is
+		 * manage_options, and moving it would take it off the coordinator, who
+		 * is the person who finds out the county changed a renewal period. */
+		'people' => array(
 			'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE,
 			GWC_VT_APPLICATIONS_PAGE,
 			GWC_VT_CREDENTIALS_PAGE,
