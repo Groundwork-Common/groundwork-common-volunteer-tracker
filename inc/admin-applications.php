@@ -169,7 +169,7 @@ function gwc_vt_render_applications_screen(): void {
 
 		<table class="widefat striped gwcvt-offers">
 			<thead>
-				<tr>
+				<tr id="gwcvt-application-<?php echo esc_attr( (string) $application_id ); ?>">
 					<th scope="col"><?php esc_html_e( 'Who', 'groundwork-common-volunteer-tracker' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'What they said', 'groundwork-common-volunteer-tracker' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Applied', 'groundwork-common-volunteer-tracker' ); ?></th>

@@ -226,8 +226,136 @@ final class InactiveTest extends TestCase {
 	 */
 	public function test_the_strip_reads_as_a_lifecycle(): void {
 		$this->assertSame(
-			array( 'all', 'mine', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' ),
-			array_keys( gwc_vt_volunteer_views( $this->core_views() ) )
+			array( 'all', 'mine', 'gwc_vt_active', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' ),
+			array_keys( gwc_vt_volunteer_views( $this->core_views() ) ),
+			'everybody, then the ones still coming, then the ones who stopped, then the ones asking to start, then the bin'
+		);
+	}
+
+	/* ── Applied is a view of this screen, not a screen of its own ───────────
+	 * Somebody who applies, is approved, volunteers and then stops is one
+	 * person the whole way through. What is asserted here is that picking the
+	 * view changes what the SAME list holds — and that it changes nothing
+	 * anywhere else, because the records are still two post types and seven
+	 * queries already include 'pending'.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_the_applied_view_points_at_this_same_screen(): void {
+		$views = gwc_vt_volunteer_views( $this->core_views() );
+
+		$this->assertStringContainsString(
+			'post_type=' . GWC_VT_VOLUNTEER_TYPE,
+			$views['gwc_vt_applied'],
+			'Applied navigated away instead of filtering the list'
+		);
+
+		$this->assertStringContainsString( GWC_VT_LIST_VIEW . '=' . GWC_VT_VIEW_APPLIED, $views['gwc_vt_applied'] );
+	}
+
+	public function test_active_is_a_view_of_the_same_screen_too(): void {
+		$views = gwc_vt_volunteer_views( $this->core_views() );
+
+		$this->assertStringContainsString( 'post_type=' . GWC_VT_VOLUNTEER_TYPE, $views['gwc_vt_active'] );
+		$this->assertStringContainsString( GWC_VT_LIST_VIEW . '=' . GWC_VT_VIEW_ACTIVE, $views['gwc_vt_active'] );
+	}
+
+	/**
+	 * The columns follow what the view is holding.
+	 *
+	 * "Verified hours" and "Last shift" of somebody nobody has accepted yet are
+	 * empty cells pretending to be information.
+	 */
+	public function test_the_applied_view_swaps_the_columns(): void {
+		$people = array(
+			'cb'              => '',
+			'title'           => 'Title',
+			'gwc_vt_verified' => 'Verified hours',
+			'gwc_vt_last'     => 'Last shift',
+		);
+
+		$this->assertSame( $people, gwc_vt_volunteer_list_columns( $people ), 'the default view must keep its own columns' );
+
+		$_GET[ GWC_VT_LIST_VIEW ] = GWC_VT_VIEW_APPLIED;
+
+		$applied = gwc_vt_volunteer_list_columns( $people );
+
+		$this->assertSame(
+			array( 'cb', 'title', 'gwc_vt_said', 'gwc_vt_applied_on' ),
+			array_keys( $applied )
+		);
+
+		$this->assertArrayNotHasKey( 'gwc_vt_verified', $applied );
+
+		unset( $_GET[ GWC_VT_LIST_VIEW ] );
+	}
+
+	/**
+	 * A view name this plugin does not know is not a view.
+	 *
+	 * The value reaches a query that changes which post type is listed, so
+	 * anything not on the list has to mean "the default".
+	 */
+	public function test_an_unknown_view_is_ignored(): void {
+		$_GET[ GWC_VT_LIST_VIEW ] = 'something-else';
+
+		$this->assertSame( '', gwc_vt_list_view() );
+		$this->assertFalse( gwc_vt_applied_view() );
+
+		unset( $_GET[ GWC_VT_LIST_VIEW ] );
+	}
+
+	/* ── What a view does to the query ───────────────────────────────────────
+	 * Asked of gwc_vt_volunteer_list_args() rather than of the hook, because
+	 * the hook starts with is_admin() and would hand back an early return and a
+	 * green result that proves nothing.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	public function test_the_default_view_changes_nothing(): void {
+		$this->assertSame( array(), gwc_vt_volunteer_list_args( '', true ) );
+	}
+
+	public function test_the_active_view_narrows_to_published_volunteers(): void {
+		$this->assertSame(
+			array( 'post_status' => 'publish' ),
+			gwc_vt_volunteer_list_args( GWC_VT_VIEW_ACTIVE, true )
+		);
+	}
+
+	/**
+	 * The one branch that changes which post type is listed.
+	 */
+	public function test_the_applied_view_lists_applications_oldest_first(): void {
+		$args = gwc_vt_volunteer_list_args( GWC_VT_VIEW_APPLIED, true );
+
+		$this->assertSame( GWC_VT_APPLICATION_TYPE, $args['post_type'] );
+		$this->assertSame( 'pending', $args['post_status'] );
+		$this->assertSame( 'ASC', $args['order'], 'the queue is for the person who has waited longest' );
+	}
+
+	/**
+	 * And it is gated, because a query string is not a permission.
+	 *
+	 * An application is a stranger's name, email and phone number. Somebody who
+	 * may not see other people's records must not get a list of them by typing
+	 * a view into the address bar.
+	 */
+	public function test_the_applied_view_is_refused_without_the_capability(): void {
+		$this->assertSame(
+			array(),
+			gwc_vt_volunteer_list_args( GWC_VT_VIEW_APPLIED, false ),
+			'the applications view is reachable by anybody who can open the volunteer list'
+		);
+	}
+
+	/**
+	 * Active is not gated the same way, and does not need to be: it narrows a
+	 * list of volunteers to a subset of the same list, and WordPress has
+	 * already decided who may see that.
+	 */
+	public function test_the_active_view_needs_no_extra_capability(): void {
+		$this->assertSame(
+			array( 'post_status' => 'publish' ),
+			gwc_vt_volunteer_list_args( GWC_VT_VIEW_ACTIVE, false )
 		);
 	}
 

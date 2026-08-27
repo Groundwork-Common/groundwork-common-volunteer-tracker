@@ -376,6 +376,9 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	// Retiring somebody who has stopped, which is neither anonymizing nor deleting.
 	require GWC_VT_DIR . 'inc/admin-volunteer-status.php';
 
+	// One list, three views: the applications queue is a view on it, not a screen.
+	require GWC_VT_DIR . 'inc/admin-volunteer-list.php';
+
 	// Typing up a sign-in sheet in one pass.
 	require GWC_VT_DIR . 'inc/admin-quick-add.php';
 

@@ -28,7 +28,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'admin_post_gwc_vt_deactivate_volunteer', 'gwc_vt_handle_deactivate_volunteer' );
 add_action( 'admin_post_gwc_vt_activate_volunteer', 'gwc_vt_handle_activate_volunteer' );
 add_filter( 'post_row_actions', 'gwc_vt_volunteer_row_actions', 10, 2 );
-add_filter( 'views_edit-' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_volunteer_views' );
 add_action( 'admin_notices', 'gwc_vt_volunteer_status_notice' );
 add_filter( 'wp_insert_post_data', 'gwc_vt_keep_volunteer_status', 10, 2 );
 add_action( 'add_meta_boxes_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_rename_volunteer_submit_box' );
@@ -362,81 +361,3 @@ function gwc_vt_volunteer_row_actions( $actions, $post ) {
 	return $actions;
 }
 
-/**
- * The lifecycle, as one strip of views above the list.
- *
- * ── Why applications are a view here rather than a menu row ──────────────────
- * Somebody who applies, is approved, volunteers for two years and then stops is
- * one person the whole way through, and the menu used to present the first step
- * of that as an unrelated screen in a different band. This reads it as what it
- * is.
- *
- * The records stay two post types underneath, and that is not a compromise —
- * see the block comment in inc/application-cpt.php. A stranger's typed name is
- * a claim, and a claim that lives in the volunteer table is one forgotten query
- * away from being listed, counted, emailed or put on a shift. Seven queries in
- * this plugin already ask for 'pending', so "one forgotten query" is not a
- * hypothetical. The interface can tell the truth about the lifecycle without
- * the tables having to.
- *
- * @param array<string, string> $views What WordPress offers.
- * @return array<string, string>
- */
-function gwc_vt_volunteer_views( $views ) {
-	if ( ! is_array( $views ) ) {
-		return $views;
-	}
-
-	/* ── The core statuses carry no meaning on this list ─────────────────────
-	 * WP_Posts_List_Table::get_views() offers one view per status, which is
-	 * right for posts, where a draft and a published post are different kinds
-	 * of thing. A volunteer is a person the organization knows; there is no
-	 * such thing as a draft one, and "Published (24)" beside "All (24)" is a
-	 * filter that never narrows anything.
-	 *
-	 * Removed from the strip rather than from the type. A record that somehow
-	 * ends up in one of these is still queried, still counted and still
-	 * editable — gwc_vt_volunteer_statuses() names all four deliberately — it
-	 * simply has no tab of its own. Hiding a filter is safe in a way that
-	 * refusing a status would not be.
-	 *
-	 * Trash stays: deleting a volunteer is real, reversible, and somebody has
-	 * to be able to find what they deleted. */
-	foreach ( array( 'publish', 'draft', 'pending', 'future', 'private' ) as $noise ) {
-		unset( $views[ $noise ] );
-	}
-
-	$waiting = gwc_vt_pending_application_count();
-
-	$label = __( 'Applied', 'groundwork-common-volunteer-tracker' );
-
-	if ( $waiting > 0 ) {
-		$label .= sprintf(
-			' <span class="count">(%s)</span>',
-			esc_html( number_format_i18n( $waiting ) )
-		);
-	}
-
-	$views['gwc_vt_applied'] = sprintf(
-		'<a href="%s">%s</a>',
-		esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE . '&page=' . GWC_VT_APPLICATIONS_PAGE ) ),
-		$label
-	);
-
-	/* Read as the life it describes, whatever order core assembled them in:
-	 * everybody, then the ones who stopped, then the ones asking to start, then
-	 * the bin. "Mine" keeps the place core gives it, second, because moving a
-	 * view somebody already knows the position of is its own small tax. Anything a site has added of its own keeps its place at the end
-	 * rather than being dropped. */
-	$order  = array( 'all', 'mine', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' );
-	$sorted = array();
-
-	foreach ( $order as $key ) {
-		if ( isset( $views[ $key ] ) ) {
-			$sorted[ $key ] = $views[ $key ];
-			unset( $views[ $key ] );
-		}
-	}
-
-	return array_merge( $sorted, $views );
-}
