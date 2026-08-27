@@ -334,7 +334,7 @@ function gwc_vt_add_credentials_help( $screen ): void {
 }
 
 /**
- * Offers to volunteer.
+ * Applications.
  *
  * @param WP_Screen $screen The screen.
  */

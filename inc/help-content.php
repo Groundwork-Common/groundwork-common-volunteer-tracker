@@ -103,7 +103,7 @@ function gwc_vt_help_topics(): array {
 				array(
 					'title' => __( 'Log one shift', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>All hours</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Log one shift</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Start typing the volunteer’s name and select them from the list.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter the date, how long they worked, and what they did.', 'groundwork-common-volunteer-tracker' ),
@@ -114,7 +114,7 @@ function gwc_vt_help_topics(): array {
 				array(
 					'title' => __( 'Log a whole day from a sign-in sheet', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>All hours</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Log a day</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter the date, the times, and what the work was. These are used for every row.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Add a row for each person on the sheet.', 'groundwork-common-volunteer-tracker' ),

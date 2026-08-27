@@ -104,10 +104,10 @@ function gwc_vt_register_post_type(): void {
 		 *
 		 * Only menu_name moves. 'name' below is the post type's own plural and
 		 * is still exactly right — those records ARE volunteer hours, and it is
-		 * what "All hours" and the entry screens are titled from. */
+		 * what "Hours" and the entry screens are titled from. */
 		'menu_name'          => _x( 'Volunteer Tracker', 'admin menu', 'groundwork-common-volunteer-tracker' ),
 		/* "Log one shift", because it now sits next to "Log a day" as one of the
-		 * two page-title-action buttons on All hours — the two ways of writing
+		 * two page-title-action buttons on Hours — the two ways of writing
 		 * up work, told apart by how much of it you are writing up. Both said
 		 * "Log hours" when they were menu entries, which is most of why that
 		 * menu was unreadable.
@@ -131,7 +131,7 @@ function gwc_vt_register_post_type(): void {
 		'search_items'       => __( 'Search entries', 'groundwork-common-volunteer-tracker' ),
 		'not_found'          => __( 'No hours logged yet.', 'groundwork-common-volunteer-tracker' ),
 		'not_found_in_trash' => __( 'No entries in the trash.', 'groundwork-common-volunteer-tracker' ),
-		'all_items'          => __( 'All hours', 'groundwork-common-volunteer-tracker' ),
+		'all_items'          => __( 'Hours', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	$args = array(

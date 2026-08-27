@@ -47,14 +47,19 @@ function gwc_vt_register_letters_menu(): void {
 /**
  * The records screen's name.
  *
- * "Letter records", not "Letters": what is on it is the log of what has left
+ * "Letters issued", not "Letters": what is on it is the log of what has left
  * the building, and the thing somebody means when they say "letters" — writing
- * one — is somewhere else now.
+ * one — is somewhere else now. The past tense is doing that work, so it has to
+ * survive any future edit to this string.
+ *
+ * It was "Letter records" for the same reason and lost the second word because
+ * "record" already means two specific things here — a volunteer record, and one
+ * grant of one credential — and neither of them is this.
  *
  * @return string
  */
 function gwc_vt_letters_page_title(): string {
-	return __( 'Letter records', 'groundwork-common-volunteer-tracker' );
+	return __( 'Letters issued', 'groundwork-common-volunteer-tracker' );
 }
 
 /**

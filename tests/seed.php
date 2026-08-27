@@ -1016,7 +1016,7 @@ if ( $gwc_vt_letter instanceof GWC_VT_Letter ) {
 	update_post_meta( $gwc_vt_record, GWC_VT_SEED_MARK, 1 );
 }
 
-/* ── Offers to volunteer ─────────────────────────────────────────────────────
+/* ── Applications ────────────────────────────────────────────────────────────
  * Four, covering the states the queue actually draws rather than four
  * variations of "somebody left their name". Written as applications and not as
  * volunteers, which is the whole point of the feature: nothing here is a
@@ -1209,7 +1209,7 @@ printf( "  %-22s %s\n", 'Tomás Beaulieu', 'nothing verified yet — ' . gwc_vt_
 printf( "  %-22s %s\n", 'Fatima Sørensen', 'verified, but no email — print only' );
 printf( "  %-22s %s\n", 'Inès Okonkwo', 'dormant since 2023 — due under the 2-year policy' );
 printf( "  %-22s %s\n", 'Wendell Achebe', 'dormant, but on a retention hold' );
-printf( "  %-22s %s\n", 'Offers to volunteer', gwc_vt_pending_application_count() . ' waiting — one court-ordered, one three weeks old, two with a picture' );
+printf( "  %-22s %s\n", 'Applications', gwc_vt_pending_application_count() . ' waiting — one court-ordered, one three weeks old, two with a picture' );
 printf( "  %-22s %s\n", 'Credentials', count( gwc_vt_live_credential_ids() ) . ' asked for, 1 retired — ' . count( gwc_vt_lapsed_credential_ids() ) . ' volunteer with one that has lapsed' );
 printf( "  %-22s %s\n", 'Asked for on the day', 'a waiver across Thanksgiving, a food handler card in the kitchen' );
 printf( "  %-22s %s\n", 'Flagged this Saturday', 'one of the two people on it is short of the food handler card' );

@@ -29,7 +29,7 @@ final class MenuTest extends TestCase {
 			/* The two WordPress adds for the post type, and Volunteers, which it
 			 * adds for that one — all three from wp-admin/menu.php, before any
 			 * admin_menu callback runs. */
-			array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+			array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 			array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 			array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 
@@ -39,7 +39,7 @@ final class MenuTest extends TestCase {
 			array( 'Letters', 'gwc_vt_issue_letters', GWC_VT_LETTERS_PAGE ),
 			array( 'Log a day', 'edit_posts', GWC_VT_QUICK_ADD_PAGE ),
 			array( 'Schedule', 'edit_posts', GWC_VT_SCHEDULE_PAGE ),
-			array( 'Offers to volunteer', 'edit_others_posts', GWC_VT_APPLICATIONS_PAGE ),
+			array( 'Applications', 'edit_others_posts', GWC_VT_APPLICATIONS_PAGE ),
 			array( 'Credentials', 'edit_others_posts', GWC_VT_CREDENTIALS_PAGE ),
 			array( 'Help', 'read', GWC_VT_HELP_PAGE ),
 		);
@@ -115,9 +115,9 @@ final class MenuTest extends TestCase {
 				'Dashboard',
 				'Schedule',
 				'Volunteers',
-				'Offers to volunteer',
+				'Applications',
 				'Credentials',
-				'All hours',
+				'Hours',
 				'Letters',
 				'Help',
 				'Settings',
@@ -171,7 +171,7 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Volunteers', 'All hours', 'Help' ),
+			array( 'Volunteers', 'Hours', 'Help' ),
 			$this->ruled(),
 			'three rules, above the row that opens each band after the first'
 		);
@@ -196,7 +196,7 @@ final class MenuTest extends TestCase {
 	 * The rule goes on whichever row of a band actually turned up, not on a
 	 * named slug that may not be there.
 	 *
-	 * Letters off is the case that ships: All hours is then the only row in the
+	 * Letters off is the case that ships: Hours is then the only row in the
 	 * record band, and it has to take the rule or the band merges into the one
 	 * above it with nothing to say so.
 	 */
@@ -221,7 +221,7 @@ final class MenuTest extends TestCase {
 		$this->build();
 
 		$this->assertSame(
-			array( 'Offers to volunteer', 'All hours', 'Settings' ),
+			array( 'Applications', 'Hours', 'Settings' ),
 			$this->ruled(),
 			'the band opens on the first row it has left, not on the slug named first'
 		);
@@ -250,7 +250,7 @@ final class MenuTest extends TestCase {
 
 		$this->build();
 
-		$this->assertSame( array( 'Volunteers', 'All hours' ), $this->ruled() );
+		$this->assertSame( array( 'Volunteers', 'Hours' ), $this->ruled() );
 	}
 
 	/**
@@ -368,7 +368,7 @@ final class MenuTest extends TestCase {
 	 * Read out of the source rather than listed here, because the failure this
 	 * catches is somebody adding a screen and nobody noticing it has no band —
 	 * which is exactly how Offers and Credentials ended up at the bottom of the
-	 * menu below Letter records, and how they stayed there for two releases.
+	 * menu below Letters issued, and how they stayed there for two releases.
 	 */
 	public function test_every_page_slug_is_banded_or_deliberately_hidden(): void {
 		$source = (string) file_get_contents( GWC_VT_DIR . 'inc/admin-screen.php' );
@@ -450,7 +450,7 @@ final class MenuTest extends TestCase {
 	 * The parent's own screen is still in the menu, just not first.
 	 *
 	 * Worth asserting because it is the one thing this ordering gives up: the
-	 * top-level "Volunteer Hours" link opens All hours, which is now third. The
+	 * top-level "Volunteer Hours" link opens Hours, which is now third. The
 	 * link still has a destination, and a menu ordered by when things happen is
 	 * easier to hold in your head than one ordered by which screen we guessed
 	 * got opened most — but losing the screen entirely would be a different
@@ -538,7 +538,7 @@ final class MenuTest extends TestCase {
 	 */
 	public function test_the_result_is_a_list_not_a_sparse_array(): void {
 		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
-			5  => array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+			5  => array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 			10 => array( 'Settings', 'manage_options', GWC_VT_SETTINGS_PAGE ),
 			15 => array( 'Schedule', 'edit_posts', GWC_VT_SCHEDULE_PAGE ),
 		);
@@ -566,13 +566,13 @@ final class MenuTest extends TestCase {
 	 */
 	public function test_a_screen_the_user_cannot_see_is_simply_absent(): void {
 		$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
-			array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+			array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 			array( 'Log a day', 'edit_posts', GWC_VT_QUICK_ADD_PAGE ),
 		);
 
 		gwc_vt_order_menu();
 
-		$this->assertSame( array( 'All hours', 'Log a day' ), $this->labels() );
+		$this->assertSame( array( 'Hours', 'Log a day' ), $this->labels() );
 		$this->assertCount( 2, $this->labels(), 'a screen that was never added must not appear' );
 	}
 

@@ -99,7 +99,7 @@ $GLOBALS['submenu'] = array();
  * a screen, $parent_file, $self and a dozen other request globals that do not
  * exist under WP-CLI. */
 $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
-	array( 'All hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+	array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 	array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 	array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
 );
@@ -135,7 +135,7 @@ gwc_vt_menu_check(
 );
 
 gwc_vt_menu_check(
-	'All hours is still on it',
+	'Hours is still on it',
 	in_array( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
 );
 
@@ -152,7 +152,7 @@ gwc_vt_menu_check(
 
 /* ── The bands, drawn against the menu core actually builds ──────────────────
  * tests/MenuTest.php asserts this against a fixture. What it cannot assert is
- * that the rows core adds itself — All hours and Volunteers, from the two post
+ * that the rows core adds itself — Hours and Volunteers, from the two post
  * types, before any admin_menu callback runs — carry the slugs the bands name
  * them by. Get one of those wrong and the band map is describing a menu nobody
  * has, silently, because a slug that matches nothing simply takes no rule.
@@ -183,7 +183,7 @@ gwc_vt_menu_check(
  * named in the order. Asserted by position rather than by presence: they were
  * always present, just at the bottom. */
 gwc_vt_menu_check(
-	'Offers and Credentials sit with the volunteers, not below Letter records',
+	'Offers and Credentials sit with the volunteers, not below Letters issued',
 	array_search( GWC_VT_APPLICATIONS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
 		&& array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true ),
 	implode( ' · ', $gwc_vt_slugs )
@@ -264,7 +264,7 @@ gwc_vt_menu_check(
 );
 
 /* ── The button that replaced the entry ──────────────────────────────────────
- * WordPress renders the All hours page-title-action from 'add_new' up to 6.3
+ * WordPress renders the Hours page-title-action from 'add_new' up to 6.3
  * and from 'add_new_item' from 6.4 on, and this plugin's floor is 6.3. Setting
  * one and not the other reads correctly on the version you happen to develop
  * against and says the old name on the other, silently. So: they must agree.
@@ -291,7 +291,7 @@ gwc_vt_menu_check(
  * something else.
  *
  * Only menu_name moved. The post type's own plural is still "Volunteer Hours",
- * because those records are exactly that — it is what All hours and the entry
+ * because those records are exactly that — it is what Hours and the entry
  * screens are titled from, and changing it would rename the records rather than
  * the menu.
  * ─────────────────────────────────────────────────────────────────────────── */

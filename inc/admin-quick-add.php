@@ -115,7 +115,7 @@ function gwc_vt_quick_add_url(): string {
 }
 
 /* ── The button that replaced the menu entry ─────────────────────────────────
- * gwc_vt_hide_menu_verbs() takes Log a day off the submenu, so All hours has to
+ * gwc_vt_hide_menu_verbs() takes Log a day off the submenu, so Hours has to
  * offer it instead. WordPress renders its own page-title-action there for the
  * post type — that is the "Log one shift" button, and it comes from the
  * add_new label in inc/cpt.php — but core has no hook between the <h1> and the
@@ -145,7 +145,7 @@ function gwc_vt_quick_add_url(): string {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * "Log a day", on the All hours screen.
+ * "Log a day", on the Hours screen.
  */
 function gwc_vt_render_log_a_day_button(): void {
 	$screen = get_current_screen();

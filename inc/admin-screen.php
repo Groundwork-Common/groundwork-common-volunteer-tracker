@@ -43,7 +43,7 @@ add_action( 'admin_menu', 'gwc_vt_register_menu' );
 /* Priority 98, and 99 for the ordering: both after every screen has registered
  * itself, including any a site has added of its own. Neither can be done at
  * registration time because the two screens WordPress adds for the post type —
- * All hours and Log hours — are not added by this plugin at all.
+ * Hours and Log hours — are not added by this plugin at all.
  *
  * Hiding runs first so that gwc_vt_order_menu() re-keys a menu that is already
  * the right length. Removing afterwards would leave a hole in an array whose
@@ -53,7 +53,7 @@ add_action( 'admin_menu', 'gwc_vt_order_menu', 99 );
 add_action( 'admin_head', 'gwc_vt_menu_rule_style' );
 
 /* ── Why the menu is reordered rather than registered in order ───────────────
- * Left alone, this menu came out as: All hours, Log hours, Volunteers,
+ * Left alone, this menu came out as: Hours, Log hours, Volunteers,
  * Settings, Letters, Log a day, Schedule.
  *
  * Settings fourth, in the middle of the working screens, because admin-screen
@@ -93,7 +93,7 @@ add_action( 'admin_head', 'gwc_vt_menu_rule_style' );
  * ── Why the schedule sits with the dashboard, not with the people ────────────
  * The first version of this filed Schedule with Volunteers, Applications and
  * Credentials, on the argument that all four are about staffing work that has
- * not happened yet, against All hours and Letter records which run the other
+ * not happened yet, against Hours and Letters issued which run the other
  * way. That argument is sound and it needed two paragraphs, which is the tell:
  * a grouping a sidebar has to explain is one nobody reads.
  *
@@ -185,7 +185,7 @@ function gwc_vt_menu_bands(): array {
  *
  * ── Why the schedule is above the hours list ────────────────────────────────
  * It means the first item is not what the top-level "Volunteer Tracker" link
- * opens — that still goes to All hours. Worth knowing rather than worth
+ * opens — that still goes to Hours. Worth knowing rather than worth
  * avoiding: the top-level link has a destination either way, and a menu ordered
  * by when things happen is easier to hold in your head than one ordered by
  * which screen we thought got opened most.
@@ -237,7 +237,7 @@ function gwc_vt_menu_order(): array {
  * screens to hold in your head, between Volunteers and Letters, and they took
  * the submenu to eight entries when six of them are nouns.
  *
- * So they come off the menu and go on All hours as page-title-action buttons —
+ * So they come off the menu and go on Hours as page-title-action buttons —
  * "Log a day" and "Log one shift" — which is where the work they do begins.
  *
  * Neither page is deregistered. remove_submenu_page() unsets the menu entry and
@@ -258,7 +258,7 @@ function gwc_vt_hidden_menu_items(): array {
 		GWC_VT_QUICK_ADD_PAGE,
 		'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE,
 
-		/* Not a verb, but not a place either: the verify queue is All hours
+		/* Not a verb, but not a place either: the verify queue is Hours
 		 * narrowed to what is waiting, and it is offered where WordPress offers
 		 * a narrowed list — beside "All" on that screen's own views. */
 		GWC_VT_VERIFY_PAGE,

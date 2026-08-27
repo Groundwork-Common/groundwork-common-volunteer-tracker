@@ -232,7 +232,7 @@ function gwc_vt_current_admin_url(): string {
  * Add the screen, and take it straight off the menu.
  *
  * The menu lists six nouns and this is a view of one of them. It is reached
- * from the dashboard's worklist line and from the All hours screen's own list
+ * from the dashboard's worklist line and from the Hours screen's own list
  * of views, which is where WordPress puts "the same list, narrowed".
  */
 function gwc_vt_register_verify_queue(): void {
@@ -256,7 +256,7 @@ function gwc_vt_register_verify_queue(): void {
  * @return string
  */
 function gwc_vt_verify_queue_title(): string {
-	return __( 'All hours — verify', 'groundwork-common-volunteer-tracker' );
+	return __( 'Hours — verify', 'groundwork-common-volunteer-tracker' );
 }
 
 /**
