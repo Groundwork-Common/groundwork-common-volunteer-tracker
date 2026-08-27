@@ -34,7 +34,8 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Every how-to, grouped the way somebody's work is.
+ * Every how-to, grouped the way somebody's work is, for the features this site
+ * actually has.
  *
  * A function rather than a const: a const is evaluated at include time, which
  * freezes every string in English for the request.
@@ -42,7 +43,7 @@ defined( 'ABSPATH' ) || exit;
  * @return array<int, array{id:string, title:string, intro:string, tasks:array}>
  */
 function gwc_vt_help_topics(): array {
-	return array(
+	$topics = array(
 		array(
 			'id'    => 'start',
 			'title' => __( 'Setting up', 'groundwork-common-volunteer-tracker' ),
@@ -312,4 +313,44 @@ function gwc_vt_help_topics(): array {
 			),
 		),
 	);
+
+	/* ── Two of them only when the site has the feature ──────────────────────
+	 * Letters and the schedule are off until an organization turns them on, and
+	 * their screens and controls are registered only when they are. So on a site
+	 * that has scheduling off, "Schedule a shift" opens by telling somebody to
+	 * go to a menu row that is not there, and says nothing about why — and the
+	 * letters topic names a button the volunteer record does not carry. The same
+	 * rule the rest of the help follows: gwc_vt_help_screens() lists the two
+	 * letter screens only when letters are on, and the Log a day tab offers
+	 * "Logging from a shift" only where a shift can exist.
+	 *
+	 * Neither becomes unfindable. Both are switched on from Settings, whose tabs
+	 * are all present whatever a site uses, and the guide's own "Let people sign
+	 * up for shifts" says where the Shifts tab is.
+	 *
+	 * Filtered rather than assembled conditionally so the guide above stays one
+	 * literal somebody can read top to bottom. */
+	$hidden = array();
+
+	if ( ! gwc_vt_letters_enabled() ) {
+		$hidden[] = 'letters';
+	}
+
+	if ( ! gwc_vt_shifts_enabled() ) {
+		$hidden[] = 'schedule';
+	}
+
+	if ( array() === $hidden ) {
+		return $topics;
+	}
+
+	$shown = array();
+
+	foreach ( $topics as $topic ) {
+		if ( ! in_array( (string) $topic['id'], $hidden, true ) ) {
+			$shown[] = $topic;
+		}
+	}
+
+	return $shown;
 }
