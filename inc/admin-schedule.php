@@ -470,7 +470,7 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 							} else {
 								echo 'past' === $when
 									? esc_html__( 'Nothing in the last few months.', 'groundwork-common-volunteer-tracker' )
-									: esc_html__( 'Nothing scheduled yet. Add a shift to get started.', 'groundwork-common-volunteer-tracker' );
+									: esc_html__( 'Nothing scheduled yet. Select “Add” to get started.', 'groundwork-common-volunteer-tracker' );
 							}
 							?>
 						</td>
@@ -1801,7 +1801,7 @@ function gwc_vt_render_schedule_back( string $href, string $label ): void {
  *
  * A screen that asks costs one click and puts the question in the reader's own
  * terms. Its two buttons keep the words the header's did, so a help topic that
- * says "select Add a shift" still finds one.
+ * says "select Add New Shift" still finds one.
  *
  * The direct addresses still work — ?shift=new and ?gwc_vt_event=new are what
  * the dashboard's own actions link to, and somebody who already knows which they
@@ -1834,7 +1834,7 @@ function gwc_vt_render_schedule_chooser( string $base ): void {
 
 				<p>
 					<a class="button button-primary" href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>">
-						<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Add New Shift', 'groundwork-common-volunteer-tracker' ); ?>
 					</a>
 				</p>
 			</div>
@@ -1852,7 +1852,7 @@ function gwc_vt_render_schedule_chooser( string $base ): void {
 
 				<p>
 					<a class="button button-primary" href="<?php echo esc_url( add_query_arg( 'gwc_vt_event', 'new', $base ) ); ?>">
-						<?php esc_html_e( 'Add an event', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Add New Event', 'groundwork-common-volunteer-tracker' ); ?>
 					</a>
 				</p>
 			</div>

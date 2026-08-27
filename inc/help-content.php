@@ -91,10 +91,10 @@ function gwc_vt_help_topics(): array {
 			'intro' => __( 'Hours reach a letter only after somebody on your staff says the work happened. That is two steps, and they are deliberately separate.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
-					'title' => __( 'Add a volunteer', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Add New Volunteer', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add volunteer</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add New Volunteer</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter their name, and their email address if you have one.', 'groundwork-common-volunteer-tracker' ),
 						__( 'If a court or school required a number of hours, enter how many, by when, and who required them.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Publish</strong>.', 'groundwork-common-volunteer-tracker' ),
@@ -183,7 +183,7 @@ function gwc_vt_help_topics(): array {
 					'title' => __( 'Schedule a shift', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Schedule</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add</strong>, then <strong>Add a shift</strong> — the other choice is for an occasion with several roles on it.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add</strong>, then <strong>Add New Shift</strong> — the other choice is for an occasion with several roles on it.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter the date, the start and end times, and what the work is.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter how many people you need and how many you have room for.', 'groundwork-common-volunteer-tracker' ),
 						__( 'To repeat it, choose a pattern and a date to repeat until.', 'groundwork-common-volunteer-tracker' ),
@@ -235,7 +235,7 @@ function gwc_vt_help_topics(): array {
 					'title' => __( 'Set up an event', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Schedule</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add</strong>, then <strong>Add an event</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add</strong>, then <strong>Add New Event</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter the name volunteers will recognize it by, and where it is.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Name the first role — greeters, kitchen, clean-up — and enter its times, with how many people each one needs and has room for.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>+ Add another time</strong> for each further time in that role, and <strong>+ Add another role</strong> for the next role.', 'groundwork-common-volunteer-tracker' ),
@@ -296,7 +296,7 @@ function gwc_vt_help_topics(): array {
 					'title' => __( 'Define a credential', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add a credential</strong>, beside the heading.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add New Credential</strong>, beside the heading.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter what it is called, as you would say it out loud.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Enter how many months it lasts, or 0 if it never expires.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Choose what happens when somebody has not got it: report it, or stop them signing up.', 'groundwork-common-volunteer-tracker' ),

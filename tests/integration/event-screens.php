@@ -416,8 +416,8 @@ gwc_vt_sc_check(
 
 gwc_vt_sc_check(
 	'and keeps the words the buttons it replaced used',
-	false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add a shift' )
-		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add an event' )
+	false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add New Shift' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sc_add'], 'Add New Event' )
 );
 
 /* Knowing which you want is still allowed. */

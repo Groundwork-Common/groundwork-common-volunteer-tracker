@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T19:58:02+00:00\n"
+"POT-Creation-Date: 2026-08-27T20:07:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -181,7 +181,7 @@ msgstr ""
 #: inc/admin-credentials.php:332
 #: inc/admin-credentials.php:538
 #: inc/admin-credentials.php:548
-msgid "Add a credential"
+msgid "Add New Credential"
 msgstr ""
 
 #: inc/admin-credentials.php:105
@@ -233,7 +233,7 @@ msgid "Nothing has been retired."
 msgstr ""
 
 #: inc/admin-credentials.php:371
-msgid "Nothing defined yet. Select “Add a credential” to define the first one."
+msgid "Nothing defined yet. Select “Add New Credential” to define the first one."
 msgstr ""
 
 #: inc/admin-credentials.php:373
@@ -640,14 +640,14 @@ msgstr ""
 #: inc/admin-schedule.php:1837
 #: inc/admin-shift.php:56
 #: inc/shift-cpt.php:103
-msgid "Add a shift"
+msgid "Add New Shift"
 msgstr ""
 
 #: inc/admin-dashboard.php:711
 #: inc/admin-event.php:78
 #: inc/admin-schedule.php:1855
 #: inc/event-cpt.php:109
-msgid "Add an event"
+msgid "Add New Event"
 msgstr ""
 
 #: inc/admin-dashboard.php:718
@@ -656,7 +656,9 @@ msgstr ""
 
 #: inc/admin-dashboard.php:723
 #: inc/help-content.php:94
-msgid "Add a volunteer"
+#: inc/volunteer-cpt.php:146
+#: inc/volunteer-cpt.php:147
+msgid "Add New Volunteer"
 msgstr ""
 
 #: inc/admin-dashboard.php:728
@@ -2828,7 +2830,7 @@ msgid "Nothing in the last few months."
 msgstr ""
 
 #: inc/admin-schedule.php:473
-msgid "Nothing scheduled yet. Add a shift to get started."
+msgid "Nothing scheduled yet. Select “Add” to get started."
 msgstr ""
 
 #: inc/admin-schedule.php:646
@@ -5412,7 +5414,7 @@ msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</str
 msgstr ""
 
 #: inc/help-content.php:97
-msgid "Select <strong>Add volunteer</strong>."
+msgid "Select <strong>Add New Volunteer</strong>."
 msgstr ""
 
 #: inc/help-content.php:98
@@ -5586,7 +5588,7 @@ msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Schedule</stron
 msgstr ""
 
 #: inc/help-content.php:186
-msgid "Select <strong>Add</strong>, then <strong>Add a shift</strong> — the other choice is for an occasion with several roles on it."
+msgid "Select <strong>Add</strong>, then <strong>Add New Shift</strong> — the other choice is for an occasion with several roles on it."
 msgstr ""
 
 #: inc/help-content.php:187
@@ -5699,7 +5701,7 @@ msgid "Set up an event"
 msgstr ""
 
 #: inc/help-content.php:238
-msgid "Select <strong>Add</strong>, then <strong>Add an event</strong>."
+msgid "Select <strong>Add</strong>, then <strong>Add New Event</strong>."
 msgstr ""
 
 #: inc/help-content.php:239
@@ -5841,7 +5843,7 @@ msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</st
 msgstr ""
 
 #: inc/help-content.php:299
-msgid "Select <strong>Add a credential</strong>, beside the heading."
+msgid "Select <strong>Add New Credential</strong>, beside the heading."
 msgstr ""
 
 #: inc/help-content.php:300
@@ -7378,11 +7380,6 @@ msgstr ""
 #: inc/volunteer-cpt.php:145
 msgctxt "admin menu"
 msgid "Volunteers"
-msgstr ""
-
-#: inc/volunteer-cpt.php:146
-#: inc/volunteer-cpt.php:147
-msgid "Add volunteer"
 msgstr ""
 
 #: inc/volunteer-cpt.php:148
