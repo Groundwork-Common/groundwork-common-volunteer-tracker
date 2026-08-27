@@ -710,7 +710,7 @@ function gwc_vt_handle_signup_promote(): void {
  */
 function gwc_vt_event_roster_redirect( int $event_id, string $result, array $extra = array() ): void {
 	if ( $event_id < 1 ) {
-		wp_safe_redirect( gwc_vt_schedule_url( array( 'view' => 'events' ) ) );
+		wp_safe_redirect( gwc_vt_schedule_url( array( 'gwc_vt_only' => 'events' ) ) );
 		exit;
 	}
 

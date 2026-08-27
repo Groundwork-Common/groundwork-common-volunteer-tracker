@@ -1126,7 +1126,7 @@ function gwc_vt_event_redirect( int $event_id, string $result, array $extra = ar
 	if ( $event_id > 0 ) {
 		$args['gwc_vt_event'] = $event_id;
 	} else {
-		$args['view'] = 'events';
+		$args['gwc_vt_only'] = 'events';
 	}
 
 	/* Dropped by hand rather than with array_filter( …, 'strlen' ): the counts

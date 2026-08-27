@@ -379,6 +379,11 @@ wp_update_post(
 gwc_vt_event_refresh_dates( (int) $gwc_vt_sfl_parade );
 gwc_vt_event_refresh_dates( (int) $gwc_vt_sfl_event );
 
+/* Everything above this point works on data and needed nobody; these render the
+ * real screen, which is behind gwc_vt_can_see_records(). */
+$gwc_vt_sfl_admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
+wp_set_current_user( $gwc_vt_sfl_admins ? (int) $gwc_vt_sfl_admins[0]->ID : 1 );
+
 /**
  * The events list as somebody arrives at it, with whatever is in the URL.
  *
@@ -397,9 +402,13 @@ function gwc_vt_sfl_events_screen( string $term = '', string $state = '' ): stri
 		$_GET['gwc_vt_state'] = $state;
 	}
 
+	$_GET['gwc_vt_only'] = 'events';
+
 	ob_start();
-	gwc_vt_render_events_list();
+	gwc_vt_render_schedule_screen();
 	$html = (string) ob_get_clean();
+
+	unset( $_GET['gwc_vt_only'] );
 
 	unset( $_GET['s'], $_GET['gwc_vt_state'] );
 
@@ -427,15 +436,26 @@ gwc_vt_sfl_check(
  * the filter working. */
 gwc_vt_sfl_check(
 	'the find box posts back to this list',
-	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], '<input type="hidden" name="view" value="events" />' )
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], '<input type="hidden" name="gwc_vt_only" value="events" />' )
 );
 
+/* Every STATE chip keeps the narrowing; the Events chip is the one that lets go
+ * of it, because it is the way back to the shifts. Counted as "all but one",
+ * which is what that sentence looks like in markup. */
+$GLOBALS['gwc_vt_sfl_chips'] = substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter"' )
+	+ substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter ' );
+
 gwc_vt_sfl_check(
-	'and every chip stays on it',
-	substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter' )
-		=== substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'view=events&#038;gwc_vt_state=' )
-			+ substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter--on' ),
-	substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter' ) . ' chip(s)'
+	'and every chip but the one that undoes it stays on this list',
+	substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwc_vt_only=events' ) >= $GLOBALS['gwc_vt_sfl_chips'] - 1,
+	substr_count( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwc_vt_only=events' ) . ' of ' . $GLOBALS['gwc_vt_sfl_chips'] . ' chip(s)'
+);
+
+/* And that one is offered, marked as on, and points at the whole schedule. */
+gwc_vt_sfl_check(
+	'the Events chip is the narrowing, and is marked on',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter--events' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'show the shifts as well' )
 );
 
 gwc_vt_sfl_check(
@@ -482,9 +502,9 @@ gwc_vt_sfl_check(
 $GLOBALS['gwc_vt_sfl_ev_none'] = gwc_vt_sfl_events_screen( 'Zzytest nothing is called this' );
 
 gwc_vt_sfl_check(
-	'nothing matching says so, and does not say there are no events',
-	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_none'], 'No event matches that' )
-		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_none'], 'No events yet' )
+	'nothing matching says so, and does not say the schedule is empty',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_none'], 'Nothing on the schedule matches that' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_none'], 'Nothing scheduled yet' )
 );
 
 /* ── Changing HOW a screen is drawn must not change WHAT is on it ────────────
@@ -498,11 +518,6 @@ gwc_vt_sfl_check(
  * link on both carries it, because a chip that widens the screen it is narrowing
  * is the same bug wearing a different hat.
  * ─────────────────────────────────────────────────────────────────────────── */
-
-/* Everything above this point works on data and needed nobody; these render the
- * real screen, which is behind gwc_vt_can_see_records(). */
-$gwc_vt_sfl_admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
-wp_set_current_user( $gwc_vt_sfl_admins ? (int) $gwc_vt_sfl_admins[0]->ID : 1 );
 
 /**
  * One view of the schedule, as somebody arrives at it.
@@ -589,8 +604,11 @@ gwc_vt_sfl_check(
 
 /* And back again, so the trip is a round one rather than a one-way door. */
 gwc_vt_sfl_check(
-	'List on that calendar goes back to the events list',
-	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'view=events' )
+	'List on that calendar goes back to those events as a list',
+	1 === preg_match(
+		'~gwcvt-segmented__on[^<]*<[^>]*>\s*Month|gwcvt-schedule__views.*?href="[^"]*gwc_vt_only=events~s',
+		$GLOBALS['gwc_vt_sfl_ev_month']
+	)
 );
 
 gwc_vt_sfl_check(
@@ -620,10 +638,14 @@ foreach ( array( 'gwcvt-chip-filter', 'gwcvt-month__step' ) as $gwc_vt_sfl_kind 
 	$gwc_vt_sfl_all  = implode( ' ', $gwc_vt_sfl_links[0] );
 	$gwc_vt_sfl_have = substr_count( $gwc_vt_sfl_all, 'gwc_vt_only=events' );
 
+	/* All of them, less the Events chip itself, which exists to let go of it. */
+	$gwc_vt_sfl_want = count( $gwc_vt_sfl_links[0] )
+		- ( 'gwcvt-chip-filter' === $gwc_vt_sfl_kind ? 1 : 0 );
+
 	gwc_vt_sfl_check(
 		'every ' . $gwc_vt_sfl_kind . ' on it keeps the narrowing',
-		count( $gwc_vt_sfl_links[0] ) > 0 && $gwc_vt_sfl_have === count( $gwc_vt_sfl_links[0] ),
-		$gwc_vt_sfl_have . ' of ' . count( $gwc_vt_sfl_links[0] ) . ' link(s)'
+		count( $gwc_vt_sfl_links[0] ) > 0 && $gwc_vt_sfl_have === $gwc_vt_sfl_want,
+		$gwc_vt_sfl_have . ' of ' . $gwc_vt_sfl_want . ' link(s)'
 	);
 }
 

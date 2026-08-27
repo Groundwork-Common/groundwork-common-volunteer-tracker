@@ -130,38 +130,47 @@ add_action( 'admin_head', 'gwc_vt_menu_rule_style' );
  */
 function gwc_vt_menu_bands(): array {
 	$bands = array(
-		/* What is happening: where you land, and what is coming. */
-		'ahead'  => array( GWC_VT_DASHBOARD_PAGE, GWC_VT_SCHEDULE_PAGE ),
+		/* Where you land. On its own, because it is the answer to "what needs me
+		 * today" and every other row is somewhere you go once it has told you. */
+		'ahead'  => array( GWC_VT_DASHBOARD_PAGE ),
 
-		/* Your people: who you have, who is asking to be, and what each of them
-		 * has to hold first.
-		 *
-		 * Credentials belongs here rather than under Settings, which is the
-		 * other place it is repeatedly proposed for. Defining one is
-		 * configuration and you do it once — but the screen's fourth column is
-		 * "Who holds it", live counts linking into filtered volunteer lists, and
-		 * Settings is not where you look at people. The capability settles it
-		 * either way: this screen is gwc_vt_records_cap(), Settings is
-		 * manage_options, and moving it would take it off the coordinator, who
-		 * is the person who finds out the county changed a renewal period. */
-		'people' => array(
+		/* What is coming. Also on its own: planning the weeks ahead and looking
+		 * up what has already happened are different halves of the day, and the
+		 * rule between them says so. */
+		'plan'   => array( GWC_VT_SCHEDULE_PAGE ),
+
+		/* The record: who they are, what they did, and what gets produced from
+		 * it. Read top to bottom this band is one sentence — a volunteer, their
+		 * hours, the letter those hours become. */
+		'record' => array(
 			'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE,
-			GWC_VT_CREDENTIALS_PAGE,
+			'edit.php?post_type=' . GWC_VT_ENTRY_TYPE,
 		),
 
-		/* What they did, and what gets produced for them.
+		/* Setting it up, and reading about it.
 		 *
-		 * Writing it up used to be two more entries here — Log a day, then the
-		 * single-entry way. Both are verbs, and gwc_vt_hide_menu_verbs() now
-		 * takes them off the menu and puts them on this screen as buttons, so
-		 * naming them here would be describing a menu that no longer exists. */
-		'record' => array( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-
-		// Reading about it, and setting it up.
-		'setup'  => array( GWC_VT_HELP_PAGE, GWC_VT_SETTINGS_PAGE ),
+		 * Credentials sits here now, and this comment used to argue at length
+		 * for the band above: the screen's fourth column is "Who holds it", live
+		 * counts linking into filtered volunteer lists, and Settings is not
+		 * where you look at people. That is still true of the screen, and it
+		 * lost to the thing a menu is for. Defining a credential is a decision
+		 * an organization makes once and revisits when a county changes a
+		 * renewal period; it is not work anybody does on a Tuesday, and it was
+		 * sitting between the two lists that are. Who holds what is still asked
+		 * from the volunteer list, which is where somebody stands when they ask.
+		 *
+		 * The capability point survives the move: this screen is
+		 * gwc_vt_records_cap() and Settings is manage_options, so a coordinator
+		 * still reaches it. Being near Settings is not being behind it. */
+		'setup'  => array(
+			GWC_VT_SETTINGS_PAGE,
+			GWC_VT_CREDENTIALS_PAGE,
+			GWC_VT_HELP_PAGE,
+		),
 	);
 
-	// Letters, when this organization produces them at all.
+	/* Letters, when this organization produces them at all — last in the record
+	 * band, because it is the end of that sentence. */
 	if ( gwc_vt_letters_enabled() ) {
 		$bands['record'][] = GWC_VT_LETTERS_PAGE;
 	}
@@ -196,17 +205,19 @@ function gwc_vt_menu_bands(): array {
 function gwc_vt_menu_order(): array {
 	$order = array();
 
+	/* Settings is named here like everything else, which it was not until the
+	 * last band was arranged as Settings, Credentials, Help. It used to be held
+	 * back and appended after every row — including ones this plugin has never
+	 * heard of — so that it always came last.
+	 *
+	 * That is a good default and it is not a rule: this menu's owner asked for
+	 * the setting-up band in that order, and the filter's own docblock already
+	 * said that naming Settings is how somebody says where they want it. The
+	 * consequence is the honest one — a screen another plugin adds to this menu
+	 * now lands below Settings rather than above it, because "last" is a place
+	 * and only one row can have it. */
 	foreach ( gwc_vt_menu_bands() as $slugs ) {
 		foreach ( (array) $slugs as $slug ) {
-			/* Settings is in a band but not in the order. gwc_vt_order_menu()
-			 * appends it after everything else, including screens this plugin
-			 * has never heard of; naming it here would place it above those
-			 * instead. It stays in the band so the setup rule still lands if a
-			 * site takes Help off the menu. */
-			if ( GWC_VT_SETTINGS_PAGE === $slug ) {
-				continue;
-			}
-
 			$order[] = (string) $slug;
 		}
 	}
@@ -214,14 +225,9 @@ function gwc_vt_menu_order(): array {
 	/**
 	 * The order of the Volunteer Tracker submenu, by slug.
 	 *
-	 * Settings is deliberately absent from this list: anything not named here
-	 * is appended, and Settings is appended after that, so it lands at the
-	 * bottom however many screens a site adds.
-	 *
-	 * Naming it here anyway will place it wherever you put it. That is the
-	 * point of a filter — a site that has explicitly asked for Settings third
-	 * has said something, and overriding it would be this plugin arguing with
-	 * somebody about their own admin.
+	 * Anything not named here is appended after everything that is, keeping the
+	 * place it was registered in. Settings IS named, so it sits where the band
+	 * puts it rather than at the very bottom — see the note above.
 	 *
 	 * A filter here moves rows without moving the rules, which is usually not
 	 * what somebody wants: gwc_vt_menu_bands() moves both.
@@ -333,9 +339,13 @@ function gwc_vt_order_menu(): void {
 	}
 
 	/* Whatever is left, in the order it was registered — a screen this plugin
-	 * has never heard of keeps its place rather than vanishing. Settings is
-	 * pulled out of that remainder so it stays at the bottom however many
-	 * screens a site adds. */
+	 * has never heard of keeps its place rather than vanishing.
+	 *
+	 * Settings is still pulled out of that remainder, which does nothing while
+	 * gwc_vt_menu_order() names it: it is already placed by then. It matters
+	 * only for a site that filters Settings out of that list, where the old
+	 * behaviour — last, below anything anybody adds — is the right thing to fall
+	 * back to. */
 	$settings = $by_slug[ GWC_VT_SETTINGS_PAGE ] ?? null;
 	unset( $by_slug[ GWC_VT_SETTINGS_PAGE ] );
 

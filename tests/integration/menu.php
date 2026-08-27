@@ -139,10 +139,12 @@ gwc_vt_menu_check(
 	in_array( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
 );
 
+/* Settings opens the setting-up band rather than ending the menu — the owner's
+ * own arrangement, Settings then Credentials then Help. */
 gwc_vt_menu_check(
-	'Settings is last',
-	GWC_VT_SETTINGS_PAGE === end( $gwc_vt_slugs ),
-	(string) end( $gwc_vt_slugs )
+	'the menu ends with the setting-up band, in that order',
+	array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_HELP_PAGE ) === array_slice( $gwc_vt_slugs, -3 ),
+	implode( ' · ', array_slice( $gwc_vt_slugs, -3 ) )
 );
 
 gwc_vt_menu_check(
@@ -168,7 +170,7 @@ foreach ( (array) $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] as $gwc_vt_row ) {
 
 gwc_vt_menu_check(
 	'a rule opens each band after the first',
-	array( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, GWC_VT_HELP_PAGE ) === $gwc_vt_ruled,
+	array( GWC_VT_SCHEDULE_PAGE, 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, GWC_VT_SETTINGS_PAGE ) === $gwc_vt_ruled,
 	implode( ' · ', $gwc_vt_ruled )
 );
 
@@ -178,14 +180,14 @@ gwc_vt_menu_check(
 	(string) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ][0][2] ?? '' )
 );
 
-/* Both moved out of the "anything we have not heard of" remainder at the foot
- * of the menu, which is where they landed for two releases because neither was
- * named in the order. Asserted by position rather than by presence: they were
- * always present, just at the bottom. */
+/* Credentials is named in the order rather than left in the "anything we have
+ * not heard of" remainder, which is where it sat for two releases. It is in the
+ * setting-up band now rather than beside the volunteers — asserted by position,
+ * because it was always present and the question is only where. */
 gwc_vt_menu_check(
-	'Offers and Credentials sit with the volunteers, not below Verification letters',
-	array_search( GWC_VT_APPLICATIONS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
-		&& array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true ),
+	'Credentials sits in the setting-up band, below the record',
+	array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) > array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
+		&& array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) > array_search( GWC_VT_SETTINGS_PAGE, $gwc_vt_slugs, true ),
 	implode( ' · ', $gwc_vt_slugs )
 );
 
