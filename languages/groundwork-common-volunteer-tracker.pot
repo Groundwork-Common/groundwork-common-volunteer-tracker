@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T17:27:33+00:00\n"
+"POT-Creation-Date: 2026-08-27T17:33:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -722,7 +722,7 @@ msgstr ""
 #: inc/admin-shift.php:505
 #: inc/admin-shift.php:619
 #: inc/cpt.php:253
-#: inc/meta-box.php:119
+#: inc/meta-box.php:131
 #: inc/render.php:129
 msgid "Volunteer"
 msgstr ""
@@ -733,7 +733,7 @@ msgstr ""
 #: inc/admin-quick-add.php:609
 #: inc/admin-shift.php:506
 #: inc/admin-shift.php:620
-#: inc/meta-box.php:127
+#: inc/meta-box.php:139
 msgid "No volunteer of that name"
 msgstr ""
 
@@ -743,7 +743,7 @@ msgstr ""
 #: inc/admin-quick-add.php:620
 #: inc/admin-shift.php:515
 #: inc/admin-shift.php:630
-#: inc/meta-box.php:137
+#: inc/meta-box.php:149
 msgid "Start typing a name…"
 msgstr ""
 
@@ -2194,6 +2194,78 @@ msgstr ""
 msgid "Printed"
 msgstr ""
 
+#. translators: %s: the name of a kind of record, such as "Volunteer".
+#: inc/admin-messages.php:68
+#, php-format
+msgid "%s updated."
+msgstr ""
+
+#. translators: %s: the name of a kind of record, such as "Volunteer".
+#: inc/admin-messages.php:71
+#, php-format
+msgid "%s saved."
+msgstr ""
+
+#: inc/admin-messages.php:76
+msgid "Custom field updated."
+msgstr ""
+
+#: inc/admin-messages.php:77
+msgid "Custom field deleted."
+msgstr ""
+
+#. translators: 1: the name of a kind of record. 2: a date and time.
+#: inc/admin-messages.php:86
+#, php-format
+msgid "%1$s restored to the revision from %2$s."
+msgstr ""
+
+#. translators: %s: the name of a kind of record, such as "Volunteer".
+#: inc/admin-messages.php:98
+#, php-format
+msgid "%s added."
+msgstr ""
+
+#. translators: 1: how many. 2: the name of the records, such as "Volunteers".
+#: inc/admin-messages.php:144
+#, php-format
+msgid "%1$s %2$s updated."
+msgid_plural "%1$s %2$s updated."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: how many. 2: the name of the records.
+#: inc/admin-messages.php:151
+#, php-format
+msgid "%1$s %2$s not updated, somebody is editing it."
+msgid_plural "%1$s %2$s not updated, somebody is editing them."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: how many. 2: the name of the records.
+#: inc/admin-messages.php:158
+#, php-format
+msgid "%1$s %2$s permanently deleted."
+msgid_plural "%1$s %2$s permanently deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: how many. 2: the name of the records.
+#: inc/admin-messages.php:165
+#, php-format
+msgid "%1$s %2$s moved to the trash."
+msgid_plural "%1$s %2$s moved to the trash."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: how many. 2: the name of the records.
+#: inc/admin-messages.php:172
+#, php-format
+msgid "%1$s %2$s restored from the trash."
+msgid_plural "%1$s %2$s restored from the trash."
+msgstr[0] ""
+msgstr[1] ""
+
 #: inc/admin-quick-add.php:59
 #: inc/admin-quick-add.php:201
 msgid "Log a day’s shifts"
@@ -2220,7 +2292,7 @@ msgstr ""
 
 #: inc/admin-quick-add.php:231
 #: inc/admin-quick-add.php:459
-#: inc/meta-box.php:210
+#: inc/meta-box.php:222
 msgid "What they did"
 msgstr ""
 
@@ -2231,7 +2303,7 @@ msgstr ""
 #: inc/admin-quick-add.php:245
 #: inc/admin-quick-add.php:473
 #: inc/admin-shift.php:197
-#: inc/meta-box.php:233
+#: inc/meta-box.php:245
 #: inc/privacy.php:778
 #: inc/render.php:136
 msgid "Supervised by"
@@ -4643,7 +4715,7 @@ msgstr ""
 
 #: inc/cpt.php:98
 msgctxt "post type singular name"
-msgid "Hour Entry"
+msgid "Entry"
 msgstr ""
 
 #: inc/cpt.php:108
@@ -5633,189 +5705,193 @@ msgstr ""
 msgid "Contact details"
 msgstr ""
 
-#: inc/meta-box.php:102
+#: inc/meta-box.php:68
+msgid "Required service"
+msgstr ""
+
+#: inc/meta-box.php:114
 msgid "Logged from the public form and not yet matched to a volunteer."
 msgstr ""
 
 #. translators: 1: the name typed into the public form, 2: the email address typed into it.
-#: inc/meta-box.php:107
+#: inc/meta-box.php:119
 #, php-format
 msgid "Submitted as %1$s (%2$s). These are claims made by whoever filled in the form — check them before choosing a volunteer."
 msgstr ""
 
-#: inc/meta-box.php:108
+#: inc/meta-box.php:120
 msgid "no name given"
 msgstr ""
 
-#: inc/meta-box.php:109
+#: inc/meta-box.php:121
 msgid "no email given"
 msgstr ""
 
 #. translators: %s: a link to the new-volunteer screen.
-#: inc/meta-box.php:147
+#: inc/meta-box.php:159
 #, php-format
 msgid "No record yet? %s first."
 msgstr ""
 
-#: inc/meta-box.php:149
+#: inc/meta-box.php:161
 msgid "Add the volunteer"
 msgstr ""
 
-#: inc/meta-box.php:158
+#: inc/meta-box.php:170
 msgid "Date of the shift"
 msgstr ""
 
-#: inc/meta-box.php:175
+#: inc/meta-box.php:187
 msgid "Future dates are switched off in Settings → Logging."
 msgstr ""
 
-#: inc/meta-box.php:181
+#: inc/meta-box.php:193
 msgid "Hours worked"
 msgstr ""
 
-#: inc/meta-box.php:194
+#: inc/meta-box.php:206
 msgid "Accepts 3.5, 3:30, 3h 30m or 210m."
 msgstr ""
 
 #. translators: %d: a number of minutes.
-#: inc/meta-box.php:200
+#: inc/meta-box.php:212
 #, php-format
 msgid "Rounded to the nearest %d minutes."
 msgstr ""
 
-#: inc/meta-box.php:228
+#: inc/meta-box.php:240
 msgid "Appears on the verification letter."
 msgstr ""
 
-#: inc/meta-box.php:243
+#: inc/meta-box.php:255
 msgid "The person who was there. Not necessarily whoever verifies the entry."
 msgstr ""
 
-#: inc/meta-box.php:404
+#: inc/meta-box.php:416
 msgid "This shift was saved with no hours on it, because what was typed could not be read as a duration. Hours can be written as 3.5, 3:30, 3h 30m or 210m — a bare number means hours, so anything longer than a single day is refused rather than recorded."
 msgstr ""
 
-#: inc/meta-box.php:405
+#: inc/meta-box.php:417
 msgid "The date was in the future, so it was changed to today. Hours dated ahead would be dated the day they were typed rather than the day they were worked, and that date is what a letter prints. Future dates can be allowed under Settings → Logging."
 msgstr ""
 
-#: inc/meta-box.php:406
+#: inc/meta-box.php:418
 msgid "The volunteer could not be attached, so these hours are on nobody's record and will not appear on any letter. Choose somebody with the picker and save again."
 msgstr ""
 
 #. translators: 1: a duration as the site formats them, 2: a number of minutes.
-#: inc/meta-box.php:452
+#: inc/meta-box.php:464
 #, php-format
 msgid "Recorded as %1$s. Hours are rounded to the nearest %2$d minutes — to the nearest, never up, so the organization never credits time nobody worked. The increment is on the Logging tab."
 msgstr ""
 
-#: inc/meta-box.php:514
+#: inc/meta-box.php:526
 #: inc/privacy.php:666
 msgid "Email"
 msgstr ""
 
-#: inc/meta-box.php:517
+#: inc/meta-box.php:529
 msgid "Where a verification letter is sent, and how the privacy tools find this record."
 msgstr ""
 
-#: inc/meta-box.php:522
+#: inc/meta-box.php:534
 #: inc/privacy.php:670
 msgid "Phone"
 msgstr ""
 
-#: inc/meta-box.php:525
+#: inc/meta-box.php:537
 msgid "For your own use — calling around when a shift is short. It is never printed on a letter and never shown publicly."
 msgstr ""
 
-#: inc/meta-box.php:541
+#: inc/meta-box.php:553
 msgid "Keep this record regardless of the retention policy"
 msgstr ""
 
-#: inc/meta-box.php:551
+#: inc/meta-box.php:563
 msgid "Why it is held"
 msgstr ""
 
-#: inc/meta-box.php:559
+#: inc/meta-box.php:571
 msgid "Why — e.g. court order, open case"
 msgstr ""
 
-#: inc/meta-box.php:563
+#: inc/meta-box.php:575
 msgid "Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal."
 msgstr ""
 
-#: inc/meta-box.php:579
+#: inc/meta-box.php:621
 msgid "Hours they have to complete"
 msgstr ""
 
-#: inc/meta-box.php:588
+#: inc/meta-box.php:630
 msgid "e.g. 40"
 msgstr ""
 
-#: inc/meta-box.php:591
+#: inc/meta-box.php:633
 msgid "For somebody working off court-ordered or school-required service. Leave empty for everybody else. This is for your own planning and never appears on a letter — how many hours were ordered is a fact about somebody else’s document, not about anything you observed."
 msgstr ""
 
-#: inc/meta-box.php:597
+#: inc/meta-box.php:639
 msgid "By when"
 msgstr ""
 
-#: inc/meta-box.php:605
+#: inc/meta-box.php:647
 msgid "Optional. Shown as a countdown on their record and on the volunteer list."
 msgstr ""
 
-#: inc/meta-box.php:610
+#: inc/meta-box.php:652
 #: inc/privacy.php:690
 msgid "Who requires it"
 msgstr ""
 
-#: inc/meta-box.php:619
+#: inc/meta-box.php:661
 msgid "e.g. a court, a school, a scouting group"
 msgstr ""
 
-#: inc/meta-box.php:622
+#: inc/meta-box.php:664
 msgid "For your own records, so you know which program this person is here under. Like the rest of this section it never reaches a letter — what a court asked for is a fact about the court's document, not about anything you observed."
 msgstr ""
 
 #. translators: %s: a number of hours, already formatted.
-#: inc/meta-box.php:636
+#: inc/meta-box.php:678
 #, php-format
 msgid "%s to go"
 msgstr ""
 
 #. translators: %s: a number of hours, already formatted.
-#: inc/meta-box.php:651
+#: inc/meta-box.php:693
 #, php-format
 msgid "%s more is logged but not verified yet, so it does not count toward this."
 msgstr ""
 
-#: inc/meta-box.php:714
+#: inc/meta-box.php:755
 msgid "Photo saved."
 msgstr ""
 
-#: inc/meta-box.php:715
+#: inc/meta-box.php:756
 msgid "Photo removed."
 msgstr ""
 
-#: inc/meta-box.php:743
+#: inc/meta-box.php:784
 msgid "Photo"
 msgstr ""
 
-#: inc/meta-box.php:759
+#: inc/meta-box.php:800
 msgid "Remove this photo when I save"
 msgstr ""
 
-#: inc/meta-box.php:764
+#: inc/meta-box.php:805
 #: inc/registration-form.php:169
 msgid "Choose a photo"
 msgstr ""
 
 #. translators: %s: a file size, such as "8 MB".
-#: inc/meta-box.php:772
+#: inc/meta-box.php:813
 #, php-format
 msgid "For telling two records apart at the desk. JPEG, PNG or WebP, up to %s."
 msgstr ""
 
-#: inc/meta-box.php:779
+#: inc/meta-box.php:820
 msgid "It is kept out of the Media Library, is never given a public address, and is never printed on a letter. Only somebody who can open this record can see it. Location data the camera recorded is discarded."
 msgstr ""
 

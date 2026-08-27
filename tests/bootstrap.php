@@ -730,6 +730,9 @@ require GWC_VT_DIR . 'inc/signin-form.php';
 require GWC_VT_DIR . 'inc/admin-settings.php';
 require GWC_VT_DIR . 'inc/admin-screen.php';
 
+// What the screen says after saving one of these, in this plugin's own nouns.
+require GWC_VT_DIR . 'inc/admin-messages.php';
+
 /* admin-volunteer.php's list-table filter is pure arithmetic over query vars —
  * the same split as the dashboard's worklist — so it is unit-testable. The rest
  * of that file renders meta boxes and is covered by tests/integration. */
