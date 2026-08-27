@@ -2394,6 +2394,18 @@ function gwc_vt_render_event_summary_row( int $event_id ): void {
 				);
 				?>
 			</div>
+
+			<?php
+			/* Which run this is one of, said where a shift row says the same
+			 * thing about its own repeat. */
+			$repeat = gwc_vt_event_repeat_note( $event_id );
+
+			if ( '' !== $repeat ) :
+				?>
+				<div class="gwcvt-schedule__repeat"><?php echo esc_html( $repeat ); ?></div>
+				<?php
+			endif;
+			?>
 		</td>
 		<td><?php echo esc_html( (string) get_post_meta( $event_id, GWC_VT_EVENT_LOCATION, true ) ); ?></td>
 		<td>
@@ -2575,6 +2587,20 @@ function gwc_vt_event_notice(): void {
 		'dropped-role'      => __( 'The role is gone.', 'groundwork-common-volunteer-tracker' ),
 		'unknown-role'      => __( 'That role has no times left on it.', 'groundwork-common-volunteer-tracker' ),
 		'copied'            => __( 'Copied. This is the new one, saved as a draft — check the dates before you publish it.', 'groundwork-common-volunteer-tracker' ),
+		'repeated'          => $made > 0
+			? sprintf(
+				/* translators: %d: how many copies of the event were made. */
+				_n( 'Set to run %d more time, saved as a draft with nobody on it. Check it, then publish it.', 'Set to run %d more times, each saved as a draft with nobody on it. Check them, then publish them.', $made, 'groundwork-common-volunteer-tracker' ),
+				$made
+			)
+			: __( 'Set to run again.', 'groundwork-common-volunteer-tracker' ),
+		'repeated-capped'   => sprintf(
+			/* translators: 1: how many copies were made. 2: the most one run may make. */
+			__( 'Set to run %1$d more times, saved as drafts. That is the most one run makes at a time (%2$d), so repeat the last of them to carry on.', 'groundwork-common-volunteer-tracker' ),
+			$made,
+			(int) GWC_VT_EVENT_REPEAT_MAX
+		),
+		'no-dates'          => __( 'That repeat did not land on any dates. Nothing was copied.', 'groundwork-common-volunteer-tracker' ),
 		'called-off'        => __( 'The event was called off, and every time on it with it.', 'groundwork-common-volunteer-tracker' ),
 		'deleted'           => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
 		'promoted'          => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),

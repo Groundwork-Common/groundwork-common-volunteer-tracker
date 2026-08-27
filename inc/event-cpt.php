@@ -38,6 +38,18 @@ const GWC_VT_EVENT_DESCRIPTION = '_gwc_vt_event_description';
 const GWC_VT_EVENT_SUPERVISOR  = '_gwc_vt_event_supervisor';
 const GWC_VT_EVENT_REASON      = '_gwc_vt_event_cancelled_reason';
 
+/* Which run of the same event this one is, holding the ID of the first of them.
+ *
+ * The same convention as GWC_VT_SHIFT_SERIES and for the same reason: the row
+ * that started it is already unique and already means something when you see it,
+ * where a generated identifier is one more thing to keep unique.
+ *
+ * A monthly meal service is twelve real events, each with its own roles, its own
+ * roster and its own cancellation — materialised for exactly the reasons
+ * inc/recurrence.php gives for shifts. This meta is what lets a row say "one of
+ * twelve" without any of them depending on the others to exist. */
+const GWC_VT_EVENT_SERIES = '_gwc_vt_event_series';
+
 add_action( 'init', 'gwc_vt_register_event_type' );
 
 /**

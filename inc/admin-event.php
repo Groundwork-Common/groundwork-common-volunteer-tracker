@@ -749,9 +749,31 @@ function gwc_vt_render_event_danger_zone( int $event_id ): void {
 
 		<label for="gwcvt-copy-date"><?php esc_html_e( 'Run it again on', 'groundwork-common-volunteer-tracker' ); ?></label>
 		<input type="date" id="gwcvt-copy-date" name="gwc_vt_copy_date" required />
+
+		<label for="gwcvt-event-repeat"><?php esc_html_e( 'and then', 'groundwork-common-volunteer-tracker' ); ?></label>
+		<select id="gwcvt-event-repeat" name="gwc_vt_repeat">
+			<?php foreach ( gwc_vt_recurrence_patterns() as $gwc_vt_ev_key => $gwc_vt_ev_label ) : ?>
+				<option value="<?php echo esc_attr( $gwc_vt_ev_key ); ?>"><?php echo esc_html( $gwc_vt_ev_label ); ?></option>
+			<?php endforeach; ?>
+		</select>
+
+		<label for="gwcvt-event-until"><?php esc_html_e( 'until', 'groundwork-common-volunteer-tracker' ); ?></label>
+		<input type="date" id="gwcvt-event-until" name="gwc_vt_until" value="" />
+
 		<?php submit_button( __( 'Copy this event', 'groundwork-common-volunteer-tracker' ), 'secondary', 'submit', false ); ?>
+
 		<p class="description">
-			<?php esc_html_e( 'The same roles, times and numbers against a new date, saved as a draft with nobody on it.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'The same roles, times, numbers and credentials against a new date, saved as a draft with nobody on it.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+
+		<p class="description">
+			<?php
+			printf(
+				/* translators: %d: the most copies one run can make. */
+				esc_html__( 'Leave the pattern on “Just this once” for a single copy. On a pattern, every run is a whole event of its own — call off October and November is untouched. Up to %d at a time.', 'groundwork-common-volunteer-tracker' ),
+				(int) GWC_VT_EVENT_REPEAT_MAX
+			);
+			?>
 		</p>
 	</form>
 
@@ -1202,40 +1224,32 @@ function gwc_vt_handle_delete_event(): void {
 	gwc_vt_event_redirect( 0, 'deleted' );
 }
 
+/** No single run may make more copies of one event than this. */
+const GWC_VT_EVENT_REPEAT_MAX = 24;
+
 /**
- * Run the same event again on another date.
+ * Copy one event onto a date, whole.
  *
- * Every slot moves by the same number of days, so a two-day event stays two
- * days and the gap between a set-up time and the shift it prepares for survives.
+ * Every slot moves by the same number of days, so a two-day event stays two days
+ * and the gap between a set-up time and the shift it prepares for survives.
  *
  * The copy is a DRAFT. An event that went live because somebody clicked Copy is
  * a public page nobody has read.
+ *
+ * ── What it carries, and the one thing it used to drop ───────────────────────
+ * The event's own three fields, every slot that has not been called off, and —
+ * since this — the credentials. Both kinds: an event's own, which every role
+ * under it inherits, and each slot's own. They are one meta row each, written
+ * only by gwc_vt_set_shift_credentials(), so a loop over gwc_vt_shift_meta_keys()
+ * walks straight past them: a copied festival silently stopped asking for the
+ * food handler card, and repeating one would have done it twelve times.
+ *
+ * @param int $event_id The event to copy.
+ * @param int $offset   How many days later the copy runs. May be negative.
+ * @param int $series   The run this copy belongs to, or 0 for a lone copy.
+ * @return int The new event's ID, or 0.
  */
-function gwc_vt_handle_copy_event(): void {
-	gwc_vt_require_shift_cap();
-
-	$event_id = isset( $_POST['gwc_vt_event'] ) ? absint( wp_unslash( $_POST['gwc_vt_event'] ) ) : 0;
-
-	check_admin_referer( 'gwc_vt_copy_event_' . $event_id );
-
-	if ( GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) ) {
-		gwc_vt_event_redirect( 0, 'unknown' );
-	}
-
-	$posted = wp_unslash( $_POST );
-
-	$wanted = gwc_vt_sanitize_date( sanitize_text_field( (string) ( $posted['gwc_vt_copy_date'] ?? '' ) ) );
-	$first  = (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true );
-
-	$to   = gwc_vt_recurrence_date( $wanted );
-	$from = gwc_vt_recurrence_date( $first );
-
-	if ( null === $to || null === $from ) {
-		gwc_vt_event_redirect( $event_id, 'bad-date' );
-	}
-
-	$offset = (int) $from->diff( $to )->format( '%r%a' );
-
+function gwc_vt_duplicate_event( int $event_id, int $offset, int $series = 0 ): int {
 	$copy_id = wp_insert_post(
 		array(
 			'post_type'   => GWC_VT_EVENT_TYPE,
@@ -1245,13 +1259,20 @@ function gwc_vt_handle_copy_event(): void {
 	);
 
 	if ( is_wp_error( $copy_id ) || ! $copy_id ) {
-		gwc_vt_event_redirect( $event_id, 'failed' );
+		return 0;
 	}
 
 	$copy_id = (int) $copy_id;
 
 	foreach ( array( GWC_VT_EVENT_DESCRIPTION, GWC_VT_EVENT_LOCATION, GWC_VT_EVENT_SUPERVISOR ) as $key ) {
 		update_post_meta( $copy_id, $key, (string) get_post_meta( $event_id, $key, true ) );
+	}
+
+	/* What the whole day asks for, which every role under it is added to. */
+	gwc_vt_set_shift_credentials( $copy_id, gwc_vt_shift_credential_ids( $event_id ) );
+
+	if ( $series > 0 ) {
+		update_post_meta( $copy_id, GWC_VT_EVENT_SERIES, $series );
 	}
 
 	/* Cancelled times are not copied. They are a record of what happened to THIS
@@ -1294,6 +1315,11 @@ function gwc_vt_handle_copy_event(): void {
 			update_post_meta( $new_id, $key, gwc_vt_shift_meta_value( $key, get_post_meta( $shift_id, $key, true ) ) );
 		}
 
+		/* Inside the loop, for the reason gwc_vt_handle_save_shift() gives about
+		 * a series: written once afterwards, one role would ask for the waiver
+		 * and the other five for nothing. */
+		gwc_vt_set_shift_credentials( $new_id, gwc_vt_shift_credential_ids( $shift_id ) );
+
 		gwc_vt_retitle_shift( $new_id );
 
 		/** This action is documented in inc/admin-shift.php */
@@ -1310,5 +1336,124 @@ function gwc_vt_handle_copy_event(): void {
 	 */
 	do_action( 'gwc_vt_event_created', $copy_id, $event_id );
 
-	gwc_vt_event_redirect( $copy_id, 'copied' );
+	return $copy_id;
+}
+
+/**
+ * Run the same event again — once, or on a pattern.
+ *
+ * ── Why an event repeats at all ──────────────────────────────────────────────
+ * A monthly meal service was twelve events typed in twelve times, because the
+ * repeat lived on the shift and an event is not a shift. The data model always
+ * allowed it — inc/event-cpt.php says a series and a container "compose" — and
+ * nothing in the interface let anybody do it, which is a claim about the schema
+ * rather than about the product.
+ *
+ * Materialised, like everything else here: each run is a real event with its own
+ * roles, roster and cancellation, and calling off October leaves November alone.
+ *
+ * ── Why the copies are drafts and empty ──────────────────────────────────────
+ * Unchanged from the single copy, and more so at twelve: nobody is carried over,
+ * and nothing goes live until somebody has read it.
+ *
+ * The cap is this file's own rather than gwc_vt_recurrence_dates()'s 200,
+ * because each copy is a whole grid — a festival with twenty times repeated
+ * weekly for a year is four thousand posts from one button.
+ */
+function gwc_vt_handle_copy_event(): void {
+	gwc_vt_require_shift_cap();
+
+	$event_id = isset( $_POST['gwc_vt_event'] ) ? absint( wp_unslash( $_POST['gwc_vt_event'] ) ) : 0;
+
+	check_admin_referer( 'gwc_vt_copy_event_' . $event_id );
+
+	if ( GWC_VT_EVENT_TYPE !== get_post_type( $event_id ) ) {
+		gwc_vt_event_redirect( 0, 'unknown' );
+	}
+
+	$posted = wp_unslash( $_POST );
+
+	$wanted  = gwc_vt_sanitize_date( sanitize_text_field( (string) ( $posted['gwc_vt_copy_date'] ?? '' ) ) );
+	$pattern = sanitize_key( (string) ( $posted['gwc_vt_repeat'] ?? 'once' ) );
+	$until   = gwc_vt_sanitize_date( sanitize_text_field( (string) ( $posted['gwc_vt_until'] ?? '' ) ) );
+	$first   = (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true );
+
+	$to   = gwc_vt_recurrence_date( $wanted );
+	$from = gwc_vt_recurrence_date( $first );
+
+	if ( null === $to || null === $from ) {
+		gwc_vt_event_redirect( $event_id, 'bad-date' );
+	}
+
+	if ( ! isset( gwc_vt_recurrence_patterns()[ $pattern ] ) ) {
+		$pattern = 'once';
+	}
+
+	/* One copy, or a run of them from the date somebody named. The dates come
+	 * from the same function the shift editor uses, so "every other week" means
+	 * the same thing on both screens. */
+	$dates = array( $wanted );
+
+	if ( 'once' !== $pattern ) {
+		$occurrences = gwc_vt_recurrence_dates( $wanted, $pattern, $until );
+		$dates       = $occurrences['dates'];
+	}
+
+	if ( ! $dates ) {
+		gwc_vt_event_redirect( $event_id, 'no-dates' );
+	}
+
+	$capped = count( $dates ) > GWC_VT_EVENT_REPEAT_MAX;
+	$dates  = array_slice( $dates, 0, GWC_VT_EVENT_REPEAT_MAX );
+
+	/* The event this was run from joins the run rather than standing outside it:
+	 * "one of twelve" is true of the first one too, and a row that said it of
+	 * eleven and not of the twelfth would be describing the copying rather than
+	 * the arrangement. An event that already belongs to a run keeps its own. */
+	$series = (int) get_post_meta( $event_id, GWC_VT_EVENT_SERIES, true );
+
+	if ( 'once' !== $pattern && $series < 1 ) {
+		$series = $event_id;
+		update_post_meta( $event_id, GWC_VT_EVENT_SERIES, $series );
+	}
+
+	$made    = 0;
+	$last_id = 0;
+
+	foreach ( $dates as $date ) {
+		$moment = gwc_vt_recurrence_date( $date );
+
+		if ( null === $moment ) {
+			continue;
+		}
+
+		$copy_id = gwc_vt_duplicate_event(
+			$event_id,
+			(int) $from->diff( $moment )->format( '%r%a' ),
+			'once' === $pattern ? 0 : $series
+		);
+
+		if ( $copy_id < 1 ) {
+			continue;
+		}
+
+		$last_id = $copy_id;
+		++$made;
+	}
+
+	if ( 0 === $made ) {
+		gwc_vt_event_redirect( $event_id, 'failed' );
+	}
+
+	if ( 'once' === $pattern ) {
+		gwc_vt_event_redirect( $last_id, 'copied' );
+	}
+
+	/* Back to the event it was run from, not to the last copy: twelve drafts
+	 * were just made and the twelfth is no more the answer than the third. */
+	gwc_vt_event_redirect(
+		$event_id,
+		$capped ? 'repeated-capped' : 'repeated',
+		array( 'gwc_vt_made' => $made )
+	);
 }

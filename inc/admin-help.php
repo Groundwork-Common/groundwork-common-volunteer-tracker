@@ -523,7 +523,8 @@ function gwc_vt_add_schedule_help( $screen ): void {
 			__( 'You build the day as a grid. Name a role once and hang its times underneath it; the role’s supervisor, address and <strong>What to know</strong> are typed once and carried down to every time in it. Anything a single time names for itself wins over the role, and anything the role names wins over the event — most specific wins, and nothing is ever appended to anything else.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The date is not something you fill in. It is read from the times in the grid, because a second date field is a second answer and it disagrees with the first the moment somebody moves one time.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Calling off a time and dropping a role are buttons rather than something you do by clearing a field, and each asks first. Removing a time cancels it when people are on it and deletes it only when nobody is — the row tells you which before you save.', 'groundwork-common-volunteer-tracker' ),
-			__( '<strong>Copy</strong> puts the whole day on a new date, roles and times and all, saved as a draft so you can check the dates before anybody sees it.', 'groundwork-common-volunteer-tracker' ),
+			__( '<strong>Copy</strong> puts the whole day on a new date — roles, times, numbers and the credentials each one asks for — saved as a draft so you can check the dates before anybody sees it. Nobody is carried over.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An event can also run on a pattern: pick a date to run it again, then a rhythm and a date to stop. A monthly meal service is one event set to repeat rather than twelve typed in. Each run is a whole event of its own — its own roster, its own times, its own cancellation — so calling off October leaves November alone.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 

@@ -622,3 +622,106 @@ function gwc_vt_event_fill_summary( int $event_id ): string {
 
 	return $summary;
 }
+
+/* ── One event, run again ───────────────────────────────────────────────────
+ * A repeat is materialised, exactly as a shift's is, and inc/recurrence.php
+ * argues the case in full: a stored rule needs an exception list the moment
+ * somebody calls off the December one, and then a signup has to attach to
+ * something that is not a row.
+ *
+ * The reading side is three functions that mirror the shift ones — which of
+ * them there are, when they happen, and the sentence a row says about it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Every event made in one run, oldest first.
+ *
+ * Cancelled ones included: a called-off December still happened to the people
+ * who had signed up for it, and leaving it out would make "one of twelve" read
+ * as eleven for no reason anybody could see.
+ *
+ * @param int $series The first event's ID.
+ * @return int[]
+ */
+function gwc_vt_event_series_ids( int $series ): array {
+	if ( $series < 1 ) {
+		return array();
+	}
+
+	$ids = get_posts(
+		array(
+			'post_type'      => GWC_VT_EVENT_TYPE,
+			'post_status'    => array( 'publish', 'draft', GWC_VT_EVENT_CANCELLED ),
+			'posts_per_page' => GWC_VT_EVENT_REPEAT_MAX + 1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'meta_key'       => GWC_VT_EVENT_SERIES, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- indexed by meta_key/meta_value; the alternative is asking every event on the site.
+			'meta_value'     => (string) $series, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
+			'orderby'        => 'ID',
+			'order'          => 'ASC',
+		)
+	);
+
+	return array_map( 'intval', (array) $ids );
+}
+
+/**
+ * When each event in a run happens, in order.
+ *
+ * @param int $series The first event's ID.
+ * @return string[] Y-m-d, oldest first.
+ */
+function gwc_vt_event_series_dates( int $series ): array {
+	$dates = array();
+
+	foreach ( gwc_vt_event_series_ids( $series ) as $event_id ) {
+		$date = (string) get_post_meta( $event_id, GWC_VT_EVENT_DATE, true );
+
+		if ( '' !== $date ) {
+			$dates[] = $date;
+		}
+	}
+
+	sort( $dates );
+
+	return $dates;
+}
+
+/**
+ * What a row says about the run this event is part of.
+ *
+ * The event answer to gwc_vt_shift_repeat_note(), and the same rule about one
+ * date: what is left of a repeat after the rest were deleted is not a repeat,
+ * and there is nothing useful to say about it.
+ *
+ * @param int $event_id Event post ID.
+ * @return string
+ */
+function gwc_vt_event_repeat_note( int $event_id ): string {
+	$series = (int) get_post_meta( $event_id, GWC_VT_EVENT_SERIES, true );
+
+	if ( $series < 1 ) {
+		return '';
+	}
+
+	$dates = gwc_vt_event_series_dates( $series );
+
+	if ( count( $dates ) < 2 ) {
+		return '';
+	}
+
+	$pattern = gwc_vt_recurrence_pattern_of( $dates );
+	$last    = gwc_vt_shift_date_label_from( (string) end( $dates ) );
+	$notes   = gwc_vt_recurrence_repeat_notes();
+
+	if ( isset( $notes[ $pattern ] ) ) {
+		return sprintf( $notes[ $pattern ], $last );
+	}
+
+	return sprintf(
+		/* translators: 1: how many were made together. 2: the last date in the run. */
+		__( 'One of %1$d made together, through %2$s', 'groundwork-common-volunteer-tracker' ),
+		count( $dates ),
+		$last
+	);
+}
