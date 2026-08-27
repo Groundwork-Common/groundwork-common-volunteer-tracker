@@ -38,6 +38,7 @@ const GWC_VT_HELP_PAGE         = 'gwc-vt-help';
 
 add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
 add_filter( 'update_footer', 'gwc_vt_admin_footer_version', 20 );
+add_action( 'admin_init', 'gwc_vt_suppress_inline_editing' );
 add_action( 'admin_init', 'gwc_vt_handle_colophon_toggle' );
 add_action( 'admin_menu', 'gwc_vt_register_menu' );
 
@@ -694,6 +695,125 @@ function gwc_vt_admin_footer_version( $content ) {
 		esc_html__( 'WordPress %s', 'groundwork-common-volunteer-tracker' ),
 		esc_html( (string) get_bloginfo( 'version' ) )
 	);
+}
+
+/**
+ * Every post type this plugin registers.
+ *
+ * Named here rather than derived from a query, so a type that has not been
+ * registered yet — which on an `admin_init` this early is all of them on some
+ * requests — is still covered.
+ *
+ * @return string[]
+ */
+function gwc_vt_post_types(): array {
+	return array(
+		GWC_VT_ENTRY_TYPE,
+		GWC_VT_VOLUNTEER_TYPE,
+		GWC_VT_SHIFT_TYPE,
+		GWC_VT_SIGNUP_TYPE,
+		GWC_VT_EVENT_TYPE,
+		GWC_VT_LETTER_TYPE,
+		GWC_VT_APPLICATION_TYPE,
+		GWC_VT_CREDENTIAL_TYPE,
+		GWC_VT_RECORD_TYPE,
+	);
+}
+
+/* ── Quick Edit and Bulk Edit do not belong on any of these records ──────────
+ * What they offer is a post's furniture: slug, date, author, password, status.
+ * None of these records has those in any sense that means anything, and the
+ * fields that ARE theirs — the hours, the volunteer an entry belongs to, a
+ * shift's times and capacity, whether an attestation stands — are meta, which
+ * neither editor can touch. So between them they present a form that looks like
+ * editing a record and edits the shell around it.
+ *
+ * Two of the fields do damage rather than nothing. Titles here are GENERATED:
+ * gwc_vt_retitle_shift() and its siblings write them from the record, so a
+ * title typed by hand is a lie until the next save overwrites it without a
+ * word. And status is how this plugin spells the things that are not
+ * "published" — a cancelled shift, a retired credential, a withdrawn signup.
+ * Quick Edit's status <select> is built from a fixed list that cannot contain a
+ * custom status, and wp_ajax_inline_save() assigns whatever it posts: on the
+ * volunteer list, editing a typo in an inactive volunteer's name published them
+ * on the way past. Bulk Edit does the same thing twenty rows at a time.
+ *
+ * This was the volunteer list's rule alone, in inc/admin-volunteer-list.php,
+ * and every argument in it was about being one of this plugin's records rather
+ * than about being a person. It applies to all nine types now, from one place,
+ * so a type added later is covered by having been added.
+ *
+ * ── Taking the link away is not the fix, and does not replace it ─────────────
+ * wp_ajax_inline_save is still registered and still answers. Removing a link
+ * removes the ordinary way in, not the endpoint, so
+ * gwc_vt_keep_volunteer_status() in inc/admin-volunteer-status.php stays
+ * exactly as it is. This makes the interface honest; that keeps the data right.
+ *
+ * The verify queue's own bulk actions stay, and so does Move to Trash: they act
+ * on the record rather than on the post's furniture, and `edit` is the only one
+ * taken away.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Register the two suppressions, for every type this plugin has.
+ */
+function gwc_vt_suppress_inline_editing(): void {
+	foreach ( gwc_vt_post_types() as $type ) {
+		add_filter( 'bulk_actions-edit-' . $type, 'gwc_vt_no_bulk_edit' );
+	}
+
+	/* Priority 20, after this plugin's own row actions are added: they are ours
+	 * to keep, and running first would only mean running before there was
+	 * anything to remove. */
+	add_filter( 'post_row_actions', 'gwc_vt_no_quick_edit', 20, 2 );
+	add_filter( 'page_row_actions', 'gwc_vt_no_quick_edit', 20, 2 );
+}
+
+/**
+ * Take Quick Edit off a row that belongs to this plugin.
+ *
+ * Checked against the post rather than the screen, because core fires this
+ * filter from the row: one of our records drawn on somebody else's list — the
+ * way an application is drawn on the volunteer screen — is still ours.
+ *
+ * @param mixed   $actions What core offers.
+ * @param WP_Post $post    The row.
+ * @return mixed
+ */
+function gwc_vt_no_quick_edit( $actions, $post = null ) {
+	if ( ! is_array( $actions ) || ! is_a( $post, 'WP_Post' ) ) {
+		return $actions;
+	}
+
+	if ( ! in_array( (string) $post->post_type, gwc_vt_post_types(), true ) ) {
+		return $actions;
+	}
+
+	/* Core's key for it, which carries the class it needs rather than being a
+	 * word: 'inline hide-if-no-js'. Named in full because a partial match would
+	 * take somebody else's action with it one day. */
+	unset( $actions['inline hide-if-no-js'] );
+
+	return $actions;
+}
+
+/**
+ * Take Bulk Edit out of the dropdown above one of our lists.
+ *
+ * Moving several records to the trash at once is a real thing to want, so that
+ * one stays. Editing several records' post furniture at once is not.
+ *
+ * @param mixed $actions What core offers.
+ * @return mixed
+ */
+function gwc_vt_no_bulk_edit( $actions ) {
+	if ( ! is_array( $actions ) ) {
+		return $actions;
+	}
+
+	unset( $actions['edit'] );
+
+	return $actions;
 }
 
 /* ── Collapsing the colophon ─────────────────────────────────────────────────
