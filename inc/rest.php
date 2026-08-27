@@ -139,13 +139,13 @@ function gwc_vt_register_rest_routes(): void {
 			'callback'            => 'gwc_vt_rest_find_volunteers',
 			'permission_callback' => 'gwc_vt_rest_can_search_volunteers',
 			'args'                => array(
-				'retired' => array(
+				'inactive' => array(
 					'type'        => 'boolean',
 					'required'    => false,
 					'default'     => false,
-					'description' => __( 'Include volunteers who have retired.', 'groundwork-common-volunteer-tracker' ),
+					'description' => __( 'Include volunteers who are no longer active.', 'groundwork-common-volunteer-tracker' ),
 				),
-				'search'  => array(
+				'search'   => array(
 					'type'              => 'string',
 					'required'          => true,
 					'sanitize_callback' => 'sanitize_text_field',
@@ -319,7 +319,7 @@ function gwc_vt_rest_find_volunteers( $request ) {
 			 * dangerous direction: a picker that quietly stops offering somebody
 			 * is a small confusion, and one that quietly offers somebody who left
 			 * puts them on a shift. */
-			'post_status'            => $request['retired'] ? gwc_vt_volunteer_statuses() : array( 'publish', 'draft', 'pending', 'private' ),
+			'post_status'            => $request['inactive'] ? gwc_vt_volunteer_statuses() : array( 'publish', 'draft', 'pending', 'private' ),
 			'fields'                 => 'ids',
 			'posts_per_page'         => 100,
 			'no_found_rows'          => true,

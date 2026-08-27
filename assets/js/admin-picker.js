@@ -105,13 +105,13 @@
 		}
 
 		/* Pickers that are about work already done say so on the element, and
-		 * only those get volunteers who have retired. A roster must not: see the
+		 * only those get volunteers who are no longer active. A roster must not: see the
 		 * note on the route in inc/rest.php. */
-		var retired = root.hasAttribute( 'data-gwcvt-retired' ) ? '&retired=1' : '';
+		var inactive = root.hasAttribute( 'data-gwcvt-inactive' ) ? '&inactive=1' : '';
 
 		function lookup( term ) {
 			wp.apiFetch( {
-				path: '/gwc-vt/v1/volunteers?search=' + encodeURIComponent( term ) + retired
+				path: '/gwc-vt/v1/volunteers?search=' + encodeURIComponent( term ) + inactive
 			} ).then( function ( results ) {
 				// The field may have moved on while the request was in flight.
 				if ( search.value.trim() === term ) {

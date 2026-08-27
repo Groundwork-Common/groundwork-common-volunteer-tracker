@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T11:43:11+00:00\n"
+"POT-Creation-Date: 2026-08-27T16:21:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -42,7 +42,7 @@ msgstr ""
 
 #: inc/access.php:341
 #: inc/admin-applications.php:436
-#: inc/admin-volunteer-retire.php:169
+#: inc/admin-volunteer-status.php:169
 msgid "You do not have permission to do that."
 msgstr ""
 
@@ -65,7 +65,7 @@ msgstr ""
 #: inc/admin-verify.php:337
 #: inc/admin-verify.php:679
 #: inc/admin-volunteer-credentials.php:382
-#: inc/admin-volunteer-retire.php:170
+#: inc/admin-volunteer-status.php:170
 msgid "Permission denied"
 msgstr ""
 
@@ -109,7 +109,7 @@ msgid "What they said"
 msgstr ""
 
 #: inc/admin-applications.php:175
-#: inc/admin-volunteer-retire.php:411
+#: inc/admin-volunteer-status.php:411
 #: inc/privacy.php:915
 msgid "Applied"
 msgstr ""
@@ -232,7 +232,6 @@ msgid "Put it back"
 msgstr ""
 
 #: inc/admin-credentials.php:226
-#: inc/admin-volunteer-retire.php:359
 msgid "Retire"
 msgstr ""
 
@@ -3781,7 +3780,7 @@ msgid "Deleting the plugin will discard its configuration, so a reinstall starts
 msgstr ""
 
 #: inc/admin-settings.php:1276
-#: inc/admin-volunteer-retire.php:103
+#: inc/admin-volunteer-status.php:103
 msgid "Save"
 msgstr ""
 
@@ -4415,45 +4414,52 @@ msgstr ""
 msgid "Filter by credential"
 msgstr ""
 
-#: inc/admin-volunteer-retire.php:135
-msgid "Retired — not offered when staffing a shift."
+#: inc/admin-volunteer-status.php:135
+msgid "Inactive — not offered when staffing a shift."
 msgstr ""
 
-#: inc/admin-volunteer-retire.php:136
+#: inc/admin-volunteer-status.php:136
 msgid "Volunteering here."
 msgstr ""
 
-#: inc/admin-volunteer-retire.php:143
-#: inc/admin-volunteer-retire.php:291
-msgid "Put them back"
+#: inc/admin-volunteer-status.php:143
+msgid "Make them active"
 msgstr ""
 
-#: inc/admin-volunteer-retire.php:144
-msgid "Retire them"
+#: inc/admin-volunteer-status.php:144
+msgid "Make them inactive"
 msgstr ""
 
-#: inc/admin-volunteer-retire.php:177
+#: inc/admin-volunteer-status.php:177
 msgid "That is not a volunteer record."
 msgstr ""
 
-#: inc/admin-volunteer-retire.php:178
+#: inc/admin-volunteer-status.php:178
 msgid "Nothing to do"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-retire.php:283
+#: inc/admin-volunteer-status.php:283
 #, php-format
-msgid "%s is retired. Their hours and their name are untouched, and they are no longer offered when you are staffing a shift."
+msgid "%s is inactive. Their hours and their name are untouched, and they are no longer offered when you are staffing a shift."
+msgstr ""
+
+#: inc/admin-volunteer-status.php:291
+msgid "Make them active again"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-retire.php:306
+#: inc/admin-volunteer-status.php:306
 #, php-format
-msgid "%s is back. They can be put on shifts again."
+msgid "%s is active again, and can be put on shifts."
 msgstr ""
 
-#: inc/admin-volunteer-retire.php:358
-msgid "Put back"
+#: inc/admin-volunteer-status.php:358
+msgid "Make active"
+msgstr ""
+
+#: inc/admin-volunteer-status.php:359
+msgid "Make inactive"
 msgstr ""
 
 #: inc/admin-volunteer.php:46
@@ -5402,7 +5408,7 @@ msgid "Reporting is the safer choice and what most organizations want. Stopping 
 msgstr ""
 
 #: inc/help-content.php:245
-msgid "Retire somebody who has stopped volunteering"
+msgid "Mark somebody inactive who has stopped volunteering"
 msgstr ""
 
 #: inc/help-content.php:248
@@ -5410,11 +5416,11 @@ msgid "Hover the row for the person who has stopped."
 msgstr ""
 
 #: inc/help-content.php:249
-msgid "Select <strong>Retire</strong>."
+msgid "Select <strong>Make inactive</strong>."
 msgstr ""
 
 #: inc/help-content.php:251
-msgid "Retiring keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Retired</strong> above the list to see them, and <strong>Put back</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead."
+msgid "It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead."
 msgstr ""
 
 #: inc/help-content.php:254
@@ -6276,7 +6282,7 @@ msgid "The last date to consider, as Y-m-d."
 msgstr ""
 
 #: inc/rest.php:146
-msgid "Include volunteers who have retired."
+msgid "Include volunteers who are no longer active."
 msgstr ""
 
 #: inc/rest.php:153
@@ -6872,15 +6878,15 @@ msgstr ""
 
 #: inc/volunteer-cpt.php:126
 msgctxt "volunteer status"
-msgid "Retired"
+msgid "Inactive"
 msgstr ""
 
-#. translators: %s: how many volunteers are retired.
+#. translators: %s: how many volunteers are inactive.
 #: inc/volunteer-cpt.php:133
 #, php-format
 msgctxt "volunteer status"
-msgid "Retired <span class=\"count\">(%s)</span>"
-msgid_plural "Retired <span class=\"count\">(%s)</span>"
+msgid "Inactive <span class=\"count\">(%s)</span>"
+msgid_plural "Inactive <span class=\"count\">(%s)</span>"
 msgstr[0] ""
 msgstr[1] ""
 

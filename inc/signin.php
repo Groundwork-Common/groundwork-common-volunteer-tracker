@@ -215,7 +215,7 @@ function gwc_vt_handle_signin_request(): void {
 		array_filter(
 			$volunteers,
 			static function ( $volunteer_id ): bool {
-				return GWC_VT_VOLUNTEER_RETIRED !== get_post_status( (int) $volunteer_id );
+				return GWC_VT_VOLUNTEER_INACTIVE !== get_post_status( (int) $volunteer_id );
 			}
 		)
 	);

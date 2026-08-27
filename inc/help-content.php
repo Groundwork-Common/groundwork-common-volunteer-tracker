@@ -242,13 +242,13 @@ function gwc_vt_help_topics(): array {
 					'note'  => __( 'Reporting is the safer choice and what most organizations want. Stopping a signup is for the things nobody may work without.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Retire somebody who has stopped volunteering', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Mark somebody inactive who has stopped volunteering', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Hover the row for the person who has stopped.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Retire</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Make inactive</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'Retiring keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Retired</strong> above the list to see them, and <strong>Put back</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
 					'title' => __( 'Record that somebody holds one', 'groundwork-common-volunteer-tracker' ),

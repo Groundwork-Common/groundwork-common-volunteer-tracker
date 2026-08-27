@@ -432,6 +432,17 @@ function gwc_vt_lapsed_credential_ids( string $today = '' ): array {
 		/* Asked of the volunteer rather than of this record, because a later
 		 * grant of the same credential is what makes an expired one harmless —
 		 * and gwc_vt_volunteer_holds() is the function that knows it. */
+		/* Inactive volunteers are left out, and this is the count-and-screen
+		 * rule rather than a preference. The dashboard's line says "N have a
+		 * credential that has lapsed" and links to the volunteer list filtered
+		 * by this very function; that list does not show inactive records, so
+		 * counting them here says three and then shows two. It is also the
+		 * right answer on its own — chasing a renewal from somebody who has
+		 * stopped volunteering is work that cannot be finished. */
+		if ( GWC_VT_VOLUNTEER_INACTIVE === get_post_status( $volunteer_id ) ) {
+			continue;
+		}
+
 		if ( GWC_VT_HOLDS_EXPIRED === gwc_vt_volunteer_holds( $volunteer_id, $credential_id, $today ) ) {
 			$lapsed[ $volunteer_id ] = $volunteer_id;
 		}
@@ -495,7 +506,22 @@ function gwc_vt_credential_holder_ids( int $credential_id, string $state = 'any'
 			 * and so the answer below is computed once for them rather than
 			 * four times with the same result. */
 			if ( $volunteer_id > 0 && GWC_VT_VOLUNTEER_TYPE === get_post_type( $volunteer_id ) ) {
-				$volunteers[ $volunteer_id ] = $volunteer_id;
+				/* ── Inactive volunteers are not holders for this purpose ─────
+				 * They still hold the thing; the record of it is untouched and
+				 * their own screen still shows it. But this number is a
+				 * staffing number — "two hold it, one has lapsed" is read
+				 * before deciding who can work — and somebody who has stopped
+				 * volunteering cannot work it.
+				 *
+				 * It also has to be excluded because of the rule about a count
+				 * and the screen it links to: that link opens the volunteer
+				 * list, whose All view does not show inactive records, so a
+				 * count that included them said three and then showed two.
+				 * tests/integration/credentials.php asserts exactly that, and
+				 * caught this the day the status was added. */
+				if ( GWC_VT_VOLUNTEER_INACTIVE !== get_post_status( $volunteer_id ) ) {
+					$volunteers[ $volunteer_id ] = $volunteer_id;
+				}
 			}
 		}
 	);

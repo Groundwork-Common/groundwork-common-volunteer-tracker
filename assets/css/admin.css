@@ -2258,11 +2258,11 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 /* Where the status row used to be, saying the one thing about a volunteer's
    standing that this screen has any business saying. */
-.gwcvt-pub-retire .dashicons {
+.gwcvt-pub-status .dashicons {
 	color: #8c8f94;
 }
 
-.gwcvt-pub-retire__action {
+.gwcvt-pub-status__action {
 	display: block;
 	margin: .4em 0 0 24px;
 }

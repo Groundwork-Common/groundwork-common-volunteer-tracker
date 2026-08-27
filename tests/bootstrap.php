@@ -674,8 +674,8 @@ require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
 /* And the retire pass beside it, for a third time for the same reason: which
  * views the volunteer list offers, and in what order, is array manipulation
  * over what core hands it. The handlers either side of it write posts and are
- * covered by tests/integration/retired.php. */
-require GWC_VT_DIR . 'inc/admin-volunteer-retire.php';
+ * covered by tests/integration/inactive.php. */
+require GWC_VT_DIR . 'inc/admin-volunteer-status.php';
 
 /* The widget's week block groups shifts into days, which is arithmetic over
  * post meta and nothing else — the same split as the worklist it sits under. */
