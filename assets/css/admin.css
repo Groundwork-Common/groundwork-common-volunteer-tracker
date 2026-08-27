@@ -2124,9 +2124,24 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    Two tables that look alike and are not: the definitions screen lists what the
    organization asks for, the box on a volunteer's record lists where one person
    stands on each of them. */
-.gwcvt-credentials__actions {
-	text-align: right;
-	white-space: nowrap;
+/* `fixed` shares the width equally, and four equal columns give a credential's
+   name less room than the sentence about what happens without it. The three
+   short columns are pinned so the name keeps the rest. */
+.gwcvt-credentials .column-renewal,
+.gwcvt-credentials .column-mode {
+	width: 14em;
+}
+
+.gwcvt-credentials .column-holders {
+	width: 18em;
+}
+
+@media screen and (max-width: 782px) {
+	.gwcvt-credentials .column-renewal,
+	.gwcvt-credentials .column-mode,
+	.gwcvt-credentials .column-holders {
+		width: auto;
+	}
 }
 
 .gwcvt-held td {

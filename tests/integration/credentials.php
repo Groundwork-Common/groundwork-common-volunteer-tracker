@@ -654,6 +654,117 @@ foreach ( $GLOBALS['gwc_vt_cr_screens'] as $gwc_vt_cr_what => $gwc_vt_cr_draw ) 
 
 restore_error_handler();
 
+echo "\n── 10b. And the definitions screen is an ordinary grid ──────────\n";
+
+/* It reads as a WordPress list: All | Retired with counts, a count of what is
+ * on screen, and what you can do to a row under the row's own name rather than
+ * in a column of buttons. Asserted because every one of those is markup nobody
+ * looks at twice, and a row action that stops being drawn for an administrator
+ * is a feature that has silently gone.
+ *
+ * $gwc_vt_cr_old — "Zzcr retired thing" — was retired in §4 and is what tells
+ * the two lists apart. */
+function gwc_vt_cr_draw_credentials( string $status = '' ): string {
+	if ( '' !== $status ) {
+		$_GET['gwc_vt_status'] = $status;
+	}
+
+	ob_start();
+	gwc_vt_render_credentials_screen();
+	$html = (string) ob_get_clean();
+
+	unset( $_GET['gwc_vt_status'] );
+
+	return $html;
+}
+
+wp_set_current_user( 1 );
+
+$GLOBALS['gwc_vt_cr_all']  = gwc_vt_cr_draw_credentials();
+$GLOBALS['gwc_vt_cr_gone'] = gwc_vt_cr_draw_credentials( 'retired' );
+
+gwc_vt_cr_check(
+	'the table is a list table, not a table',
+	false !== strpos( $GLOBALS['gwc_vt_cr_all'], 'wp-list-table widefat fixed striped table-view-list' )
+);
+
+gwc_vt_cr_check(
+	'All lists what the organization asks for',
+	false !== strpos( $GLOBALS['gwc_vt_cr_all'], 'Zzcr liability waiver' )
+);
+
+/* The reason the two views exist. A retired credential in the working list is
+ * a thing somebody is asked to go on holding after the organization stopped
+ * asking for it. */
+gwc_vt_cr_check(
+	'and does not list a retired one',
+	false === strpos( $GLOBALS['gwc_vt_cr_all'], 'Zzcr retired thing' )
+);
+
+gwc_vt_cr_check(
+	'Retired lists exactly the other one',
+	false !== strpos( $GLOBALS['gwc_vt_cr_gone'], 'Zzcr retired thing' )
+		&& false === strpos( $GLOBALS['gwc_vt_cr_gone'], 'Zzcr liability waiver' )
+);
+
+gwc_vt_cr_check(
+	'the Retired view is offered, because there is something in it',
+	false !== strpos( $GLOBALS['gwc_vt_cr_all'], 'gwc_vt_status=retired' )
+);
+
+gwc_vt_cr_check(
+	'the count says how many are on the screen',
+	1 === substr_count( $GLOBALS['gwc_vt_cr_all'], 'displaying-num' )
+		&& false !== strpos(
+			$GLOBALS['gwc_vt_cr_all'],
+			(string) number_format_i18n( count( gwc_vt_live_credential_ids() ) ) . ' item'
+		),
+	count( gwc_vt_live_credential_ids() ) . ' live'
+);
+
+gwc_vt_cr_check(
+	'the count and the rows are the same number',
+	substr_count( $GLOBALS['gwc_vt_cr_all'], 'class="name column-name has-row-actions column-primary"' )
+		=== count( gwc_vt_live_credential_ids() ),
+	substr_count( $GLOBALS['gwc_vt_cr_all'], 'has-row-actions' ) . ' row(s)'
+);
+
+gwc_vt_cr_check(
+	'retiring is a row action under the name',
+	false !== strpos( $GLOBALS['gwc_vt_cr_all'], 'class="row-actions"' )
+);
+
+gwc_vt_cr_check(
+	'and not a column of buttons on every row',
+	false === strpos( $GLOBALS['gwc_vt_cr_all'], '<a class="button" href' )
+);
+
+/* Somebody who may read the screen but not define one gets no actions at all,
+ * rather than links that would be refused. An editor can see records; only an
+ * administrator can define. */
+$GLOBALS['gwc_vt_cr_reader'] = wp_insert_user(
+	array(
+		'user_login' => 'zzcr_reader',
+		'user_pass'  => wp_generate_password( 20, true ),
+		'role'       => 'editor',
+	)
+);
+
+if ( ! is_wp_error( $GLOBALS['gwc_vt_cr_reader'] ) ) {
+	wp_set_current_user( (int) $GLOBALS['gwc_vt_cr_reader'] );
+
+	$GLOBALS['gwc_vt_cr_read_only'] = gwc_vt_cr_draw_credentials();
+
+	gwc_vt_cr_check(
+		'somebody who cannot define one is offered no row actions',
+		false === strpos( $GLOBALS['gwc_vt_cr_read_only'], 'class="row-actions"' )
+			&& false !== strpos( $GLOBALS['gwc_vt_cr_read_only'], 'Zzcr liability waiver' )
+	);
+
+	wp_set_current_user( 1 );
+	wp_delete_user( (int) $GLOBALS['gwc_vt_cr_reader'] );
+}
+
 echo "\n── Clean up ─────────────────────────────────────────────────────\n";
 
 foreach ( array( $gwc_vt_cr_ada, $gwc_vt_cr_bo, $gwc_vt_cr_el, $gwc_vt_cr_fi, $gwc_vt_cr_gus ) as $gwc_vt_cr_left ) {
