@@ -449,8 +449,43 @@ final class InactiveTest extends TestCase {
 		);
 	}
 
+	/**
+	 * And off every one of this plugin's types, not only the one it started on.
+	 *
+	 * A list rather than a loop over gwc_vt_post_types(): reading the expectation
+	 * out of the function under test is how a type quietly dropped from that list
+	 * would still pass. Adding a type means adding it here, deliberately.
+	 */
+	public function test_quick_edit_is_off_every_type_this_plugin_registers(): void {
+		$types = array(
+			GWC_VT_ENTRY_TYPE,
+			GWC_VT_VOLUNTEER_TYPE,
+			GWC_VT_SHIFT_TYPE,
+			GWC_VT_SIGNUP_TYPE,
+			GWC_VT_EVENT_TYPE,
+			GWC_VT_LETTER_TYPE,
+			GWC_VT_APPLICATION_TYPE,
+			GWC_VT_CREDENTIAL_TYPE,
+			GWC_VT_RECORD_TYPE,
+		);
+
+		foreach ( $types as $type ) {
+			$this->assertArrayNotHasKey(
+				'inline hide-if-no-js',
+				gwc_vt_no_quick_edit( $this->core_row_actions(), new WP_Post( array( 'post_type' => $type ) ) ),
+				$type . ' still offers Quick Edit'
+			);
+		}
+
+		$this->assertSame(
+			$types,
+			gwc_vt_post_types(),
+			'a type this plugin registers is a type these two suppressions have to cover'
+		);
+	}
+
 	public function test_bulk_edit_is_off_the_dropdown_but_trash_is_not(): void {
-		$actions = gwc_vt_volunteer_bulk_actions(
+		$actions = gwc_vt_no_bulk_edit(
 			array(
 				'edit'  => 'Edit',
 				'trash' => 'Move to Trash',
