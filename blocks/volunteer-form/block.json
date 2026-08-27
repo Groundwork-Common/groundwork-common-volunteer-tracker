@@ -2,10 +2,10 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "groundwork-common-volunteer-tracker/volunteer-form",
-	"title": "Volunteer Offer Form",
+	"title": "Volunteer Application Form",
 	"category": "widgets",
 	"icon": "groups",
-	"description": "Lets people offer to volunteer. Nothing they send becomes a volunteer record until a staff member accepts it.",
+	"description": "Lets people apply to volunteer. Nothing they send becomes a volunteer record until a staff member accepts it.",
 	"keywords": [ "volunteer", "signup", "register" ],
 	"textdomain": "groundwork-common-volunteer-tracker",
 	"supports": {

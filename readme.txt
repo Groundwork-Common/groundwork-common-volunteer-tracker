@@ -37,7 +37,7 @@ The two halves meet when the shift is over: the roster becomes the hours, everyb
 * Gives every letter a reference code you can read back to anyone who phones to check it — and a panel on the dashboard that tells you whether it still matches your records.
 * Logs every letter issued, printing included.
 * Optionally lets volunteers send in their own hours from a page on your site. Off until you switch it on; everything sent arrives unverified and waits for staff.
-* Optionally lets people offer to volunteer from a page on your site. Off until you switch it on. Nothing they send becomes a volunteer record — it waits in a queue for a staff member to accept or discard, so nobody is added to your list by a stranger or a script.
+* Optionally lets people apply to volunteer from a page on your site. Off until you switch it on. Nothing they send becomes a volunteer record — it waits in a queue for a staff member to accept or discard, so nobody is added to your list by a stranger or a script.
 * Tracks how many hours somebody working off court-ordered or school-required service still has to complete, and by when. For your planning only — it never appears on a letter.
 * Lets you decide how long records are kept, and supports WordPress's own Export and Erase Personal Data tools.
 * Lets you choose which roles can verify hours and which can issue letters — they are frequently different people, and they are separate permissions.
@@ -62,7 +62,7 @@ Volunteer records here are more sensitive than most plugin data — in the manda
 
 Then open **Volunteer Tracker → All hours** and press **Log one shift**, verify what you logged, and produce a letter from the volunteer's own record. Doing that once on a made-up volunteer, before you rely on it, is worth the five minutes.
 
-Nothing here is public until you say so. The shift signup form, the volunteer self-log form and the offer-to-volunteer form are all switched off on a new install — they live under **Settings → Shifts** and **Settings → Logging**.
+Nothing here is public until you say so. The shift signup form, the volunteer self-log form and the volunteer application form are all switched off on a new install — they live under **Settings → Shifts** and **Settings → Logging**.
 
 = If you copy this site =
 

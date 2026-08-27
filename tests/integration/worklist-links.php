@@ -262,7 +262,7 @@ foreach ( array( 'overdue', 'offers', 'lapsed', 'unverified', 'unmatched' ) as $
 		'overdue'    => 'gwc_vt_requirement=overdue',
 		/* The offers screen IS the pending list, so there is no filter to
 		 * check — landing on it is the whole claim. */
-		'offers'     => 'page=gwc-vt-offers',
+		'offers'     => 'page=gwc-vt-applications',
 		'lapsed'     => 'gwc_vt_credential=lapsed',
 		'unverified' => 'page=gwc-vt-verify',
 		'unmatched'  => 'page=gwc-vt-verify',

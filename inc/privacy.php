@@ -878,7 +878,7 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 
 			$items[] = array(
 				'group_id'    => 'gwc_vt_application',
-				'group_label' => __( 'Offer to volunteer', 'groundwork-common-volunteer-tracker' ),
+				'group_label' => __( 'Application to volunteer', 'groundwork-common-volunteer-tracker' ),
 				'item_id'     => 'gwcvt-application-' . $offer['id'],
 				'data'        => array(
 					array(
@@ -908,7 +908,7 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 							: '',
 					),
 					array(
-						'name'  => __( 'Offered', 'groundwork-common-volunteer-tracker' ),
+						'name'  => __( 'Applied', 'groundwork-common-volunteer-tracker' ),
 						'value' => $offer['created'],
 					),
 					array(
@@ -916,7 +916,7 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 						/* Said, not sent — the same reasoning as the volunteer
 						 * record's photograph above. */
 						'value' => gwc_vt_has_photo( $offer['id'] )
-							? __( 'A photograph you sent with this offer is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you.', 'groundwork-common-volunteer-tracker' )
+							? __( 'A photograph you sent with this application is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you.', 'groundwork-common-volunteer-tracker' )
 							: __( 'None held.', 'groundwork-common-volunteer-tracker' ),
 					),
 					array(

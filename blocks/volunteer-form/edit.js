@@ -27,7 +27,7 @@
 						components.Notice,
 						{ status: 'warning', isDismissible: false, key: 'off' },
 						__(
-							'Nobody can offer to volunteer yet. Switch the form on under Volunteer Tracker → Settings → Logging, and pin it to this page.',
+							'Nobody can apply to volunteer yet. Switch the form on under Volunteer Tracker → Settings → Logging, and pin it to this page.',
 							'groundwork-common-volunteer-tracker'
 						)
 					)
@@ -71,14 +71,14 @@
 					components.Placeholder,
 					{
 						icon: 'groups',
-						label: __( 'Volunteer Offer Form', 'groundwork-common-volunteer-tracker' ),
+						label: __( 'Volunteer Application Form', 'groundwork-common-volunteer-tracker' ),
 						key: 'placeholder'
 					},
 					el(
 						'p',
 						null,
 						__(
-							'People fill this in to offer their help. Nothing they send becomes a volunteer record — it waits under Volunteer Tracker → Offers to volunteer until a staff member accepts or discards it.',
+							'People fill this in to offer their help. Nothing they send becomes a volunteer record — it waits under Volunteer Tracker → Applications until a staff member accepts or discards it.',
 							'groundwork-common-volunteer-tracker'
 						)
 					)

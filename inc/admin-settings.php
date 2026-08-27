@@ -255,7 +255,7 @@ function gwc_vt_settings_fields(): array {
 			'tab'     => 'logging',
 			'section' => 'registration',
 			'type'    => 'checkbox',
-			'label'   => __( 'Let people offer to volunteer from your site', 'groundwork-common-volunteer-tracker' ),
+			'label'   => __( 'Let people apply to volunteer from your site', 'groundwork-common-volunteer-tracker' ),
 			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name and contact details from anonymous visitors. Nothing they send becomes a volunteer record — it waits in a queue for a staff member to accept or discard, and nothing they enter appears publicly.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'registration_page'         => array(
@@ -263,7 +263,7 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'registration',
 			'type'    => 'page',
 			'label'   => __( 'The page the form is on', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Add the Volunteer Offer Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Offers are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Application Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Applications are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'registration_code'         => array(
 			'tab'     => 'logging',
@@ -450,7 +450,7 @@ function gwc_vt_settings_sections(): array {
 		'logging' => array(
 			'hours'        => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
 			'selflog'      => __( 'The public hours form', 'groundwork-common-volunteer-tracker' ),
-			'registration' => __( 'Offering to volunteer', 'groundwork-common-volunteer-tracker' ),
+			'registration' => __( 'Applying to volunteer', 'groundwork-common-volunteer-tracker' ),
 			'signin'       => __( 'Signing in', 'groundwork-common-volunteer-tracker' ),
 		),
 		'shifts'  => array(

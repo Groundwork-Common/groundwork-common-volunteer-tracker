@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T23:43:53+00:00\n"
+"POT-Creation-Date: 2026-08-26T23:59:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -69,17 +69,17 @@ msgstr ""
 
 #: inc/admin-applications.php:60
 #: inc/admin-help-page.php:85
-msgid "Offers to volunteer"
+msgid "Applications"
 msgstr ""
 
-#. translators: 1: the menu label, 2: how many offers are waiting.
+#. translators: 1: the menu label, 2: how many applications are waiting.
 #: inc/admin-applications.php:82
 #, php-format
 msgid "%1$s %2$s"
 msgstr ""
 
 #: inc/admin-applications.php:136
-msgid "You do not have permission to see offers to volunteer."
+msgid "You do not have permission to see volunteer applications."
 msgstr ""
 
 #: inc/admin-applications.php:152
@@ -91,11 +91,11 @@ msgid "Settings → Logging"
 msgstr ""
 
 #: inc/admin-applications.php:162
-msgid "Nobody is waiting. Offers sent through the form on your site appear here, and nothing becomes a volunteer record until you say so."
+msgid "Nobody is waiting. Applications sent through the form on your site appear here, and nothing becomes a volunteer record until you say so."
 msgstr ""
 
 #: inc/admin-applications.php:167
-msgid "Oldest first — somebody who offered three weeks ago and heard nothing is who this queue is for. Nothing here is a volunteer record yet, and none of it appears anywhere else on your site."
+msgid "Oldest first — somebody who applied three weeks ago and heard nothing is who this queue is for. Nothing here is a volunteer record yet, and none of it appears anywhere else on your site."
 msgstr ""
 
 #: inc/admin-applications.php:173
@@ -108,7 +108,7 @@ msgstr ""
 
 #: inc/admin-applications.php:175
 #: inc/privacy.php:911
-msgid "Offered"
+msgid "Applied"
 msgstr ""
 
 #: inc/admin-applications.php:176
@@ -143,11 +143,11 @@ msgid "Discard"
 msgstr ""
 
 #: inc/admin-applications.php:489
-msgid "That offer had already been dealt with. Nothing was changed."
+msgid "That application had already been dealt with. Nothing was changed."
 msgstr ""
 
 #: inc/admin-applications.php:490
-msgid "That offer has no name on it, so there is nothing to create a record under. Discard it instead."
+msgid "That application has no name on it, so there is nothing to create a record under. Discard it instead."
 msgstr ""
 
 #: inc/admin-applications.php:491
@@ -155,7 +155,7 @@ msgid "The volunteer record could not be created. Nothing was changed."
 msgstr ""
 
 #: inc/admin-applications.php:502
-msgid "Offer discarded. It is off this list, and what they sent is kept until your retention policy removes it."
+msgid "Application discarded. It is off this list, and what they sent is kept until your retention policy removes it."
 msgstr ""
 
 #: inc/admin-applications.php:521
@@ -379,8 +379,8 @@ msgstr[1] ""
 #. translators: %s is a count, already formatted.
 #: inc/admin-dashboard-widget.php:422
 #, php-format
-msgid "%s offer to answer"
-msgid_plural "%s offers to answer"
+msgid "%s application to answer"
+msgid_plural "%s applications to answer"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1508,7 +1508,7 @@ msgid "Nobody is told they are waiting"
 msgstr ""
 
 #: inc/admin-help.php:358
-msgid "The plugin sends nothing when an offer arrives and nothing while it sits here. Somebody who offered to help and hears nothing for three weeks has usually concluded the answer was no."
+msgid "The plugin sends nothing when an application arrives and nothing while it sits here. Somebody who applied and hears nothing for three weeks has usually concluded the answer was no."
 msgstr ""
 
 #: inc/admin-help.php:359
@@ -3344,7 +3344,7 @@ msgid "Optional. A word you give people at the front desk, which the form then a
 msgstr ""
 
 #: inc/admin-settings.php:258
-msgid "Let people offer to volunteer from your site"
+msgid "Let people apply to volunteer from your site"
 msgstr ""
 
 #: inc/admin-settings.php:259
@@ -3352,7 +3352,7 @@ msgid "Off until you switch it on. With it on, this site accepts a name and cont
 msgstr ""
 
 #: inc/admin-settings.php:266
-msgid "Add the Volunteer Offer Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Offers are only accepted on this page, and it is pinned by ID so renaming it changes nothing."
+msgid "Add the Volunteer Application Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Applications are only accepted on this page, and it is pinned by ID so renaming it changes nothing."
 msgstr ""
 
 #: inc/admin-settings.php:273
@@ -3549,7 +3549,7 @@ msgid "The public hours form"
 msgstr ""
 
 #: inc/admin-settings.php:453
-msgid "Offering to volunteer"
+msgid "Applying to volunteer"
 msgstr ""
 
 #: inc/admin-settings.php:454
@@ -4503,12 +4503,12 @@ msgstr[1] ""
 
 #: inc/application-cpt.php:102
 msgctxt "post type general name"
-msgid "Volunteer offers"
+msgid "Applications"
 msgstr ""
 
 #: inc/application-cpt.php:103
 msgctxt "post type singular name"
-msgid "Volunteer offer"
+msgid "Application"
 msgstr ""
 
 #: inc/application-cpt.php:279
@@ -4680,8 +4680,8 @@ msgstr ""
 
 #: inc/dashboard.php:165
 #: inc/help-content.php:294
-msgid "Answer somebody who offered to volunteer"
-msgid_plural "Answer people who offered to volunteer"
+msgid "Answer somebody who applied to volunteer"
+msgid_plural "Answer people who applied to volunteer"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -5425,7 +5425,7 @@ msgid "The volunteer list opens, showing only those people. You can also filter 
 msgstr ""
 
 #: inc/help-content.php:279
-msgid "Taking signups and offers from your site"
+msgid "Taking signups and applications from your site"
 msgstr ""
 
 #: inc/help-content.php:280
@@ -5457,7 +5457,7 @@ msgid "Visitors see what each shift is and how many places are left. They never 
 msgstr ""
 
 #: inc/help-content.php:296
-msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Offers to volunteer</strong>."
+msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Applications</strong>."
 msgstr ""
 
 #: inc/help-content.php:297
@@ -5469,7 +5469,7 @@ msgid "Select <strong>Accept</strong> to make a volunteer record from it, or <st
 msgstr ""
 
 #: inc/help-content.php:300
-msgid "Nothing is sent to them when an offer arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here."
+msgid "Nothing is sent to them when an application arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here."
 msgstr ""
 
 #: inc/i18n.php:51
@@ -5812,7 +5812,7 @@ msgid "Email given"
 msgstr ""
 
 #: inc/privacy.php:881
-msgid "Offer to volunteer"
+msgid "Application to volunteer"
 msgstr ""
 
 #: inc/privacy.php:893
@@ -5828,7 +5828,7 @@ msgid "Required service they described"
 msgstr ""
 
 #: inc/privacy.php:919
-msgid "A photograph you sent with this offer is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you."
+msgid "A photograph you sent with this application is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you."
 msgstr ""
 
 #: inc/privacy.php:923
@@ -6926,7 +6926,7 @@ msgid "Lists the shifts you need help with and lets people put their name down. 
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:29
-msgid "Nobody can offer to volunteer yet. Switch the form on under Volunteer Tracker → Settings → Logging, and pin it to this page."
+msgid "Nobody can apply to volunteer yet. Switch the form on under Volunteer Tracker → Settings → Logging, and pin it to this page."
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:45
@@ -6938,11 +6938,11 @@ msgid "This form also asks whether somebody is completing court-ordered or schoo
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:74
-msgid "Volunteer Offer Form"
+msgid "Volunteer Application Form"
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:80
-msgid "People fill this in to offer their help. Nothing they send becomes a volunteer record — it waits under Volunteer Tracker → Offers to volunteer until a staff member accepts or discards it."
+msgid "People fill this in to offer their help. Nothing they send becomes a volunteer record — it waits under Volunteer Tracker → Applications until a staff member accepts or discards it."
 msgstr ""
 
 #: blocks/volunteer-signin/edit.js:29
@@ -7039,12 +7039,12 @@ msgstr ""
 
 #: blocks/volunteer-form/block.json
 msgctxt "block title"
-msgid "Volunteer Offer Form"
+msgid "Volunteer Application Form"
 msgstr ""
 
 #: blocks/volunteer-form/block.json
 msgctxt "block description"
-msgid "Lets people offer to volunteer. Nothing they send becomes a volunteer record until a staff member accepts it."
+msgid "Lets people apply to volunteer. Nothing they send becomes a volunteer record until a staff member accepts it."
 msgstr ""
 
 #: blocks/volunteer-form/block.json

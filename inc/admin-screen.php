@@ -32,7 +32,7 @@ const GWC_VT_REPEAT_PAGE    = 'gwc-vt-repeat';
  * three. Moved here rather than worked around, because this is where the other
  * seven already live and the split was an accident of the order the screens
  * were written in. */
-const GWC_VT_APPLICATIONS_PAGE = 'gwc-vt-offers';
+const GWC_VT_APPLICATIONS_PAGE = 'gwc-vt-applications';
 const GWC_VT_CREDENTIALS_PAGE  = 'gwc-vt-credentials';
 const GWC_VT_HELP_PAGE         = 'gwc-vt-help';
 
