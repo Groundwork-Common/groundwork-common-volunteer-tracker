@@ -571,7 +571,7 @@ function gwc_vt_volunteers_by_email( string $email ): array {
 }
 
 /**
- * Offers to volunteer made by this address.
+ * Applications made by this address.
  *
  * The sibling of gwc_vt_signups_by_claim_email(), and needed for the same
  * reason: an offer holds a name and an email belonging to somebody who may
@@ -862,7 +862,7 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 		}
 	}
 
-	/* ── Offers to volunteer ─────────────────────────────────────────────────
+	/* ── Applications ────────────────────────────────────────────────────────
 	 * Found by address, because an offer belongs to no volunteer record — which
 	 * is exactly why nothing above would ever have reached it. Reported on the
 	 * first page only: there are never many, and paginating them alongside a
@@ -1101,7 +1101,7 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 		}
 	}
 
-	/* ── Offers to volunteer ─────────────────────────────────────────────────
+	/* ── Applications ────────────────────────────────────────────────────────
 	 * Reached by address rather than through a volunteer record, because the
 	 * whole point of an offer is that it belongs to nobody yet. Discarded ones
 	 * included: "we said no to this person" is precisely what an erasure request

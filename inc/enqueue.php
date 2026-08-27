@@ -149,7 +149,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		);
 	}
 
-	/* "Log a day" on the All hours list, moved up beside the heading. Enqueued
+	/* "Log a day" on the Hours list, moved up beside the heading. Enqueued
 	 * above the early return below, because that return covers the four screens
 	 * the picker serves and the entries LIST is not one of them — it is the
 	 * editor that is. */

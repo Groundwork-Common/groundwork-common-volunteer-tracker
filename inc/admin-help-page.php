@@ -91,8 +91,8 @@ function gwc_vt_help_screens(): array {
 	 * help is gated the same way, so listing them unconditionally would print
 	 * two empty headings on a site that does not. */
 	if ( gwc_vt_letters_enabled() ) {
-		$screens[ __( 'Producing a letter', 'groundwork-common-volunteer-tracker' ) ] = $page . GWC_VT_PRODUCE_PAGE;
-		$screens[ __( 'Letters issued', 'groundwork-common-volunteer-tracker' ) ]     = $page . GWC_VT_LETTERS_PAGE;
+		$screens[ __( 'Producing a letter', 'groundwork-common-volunteer-tracker' ) ]   = $page . GWC_VT_PRODUCE_PAGE;
+		$screens[ __( 'Verification letters', 'groundwork-common-volunteer-tracker' ) ] = $page . GWC_VT_LETTERS_PAGE;
 	}
 
 	return $screens;

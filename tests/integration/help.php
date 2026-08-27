@@ -473,6 +473,87 @@ gwc_vt_help_check(
 	implode( ', ', array_keys( gwc_vt_help_tabs_for( 'edit-post' ) ) )
 );
 
+/* ── Every "Go to Volunteer Tracker › X" names a row that is there ───────────
+ * The how-to guide gives numbered steps, and a numbered step is followed rather
+ * than read: somebody with the screen open does what step one says. Three of
+ * them named menu items that did not exist — "Verify" twice, which has never
+ * been on the menu because the queue is a view on the hours list, and "Letters",
+ * which the row has not been called under any of its three names.
+ *
+ * Two of those were wrong before the renames that found them, so this is not a
+ * guard against renaming. It is a guard against a step nobody can follow, which
+ * is what stale help is: confident, numbered, and pointing at nothing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Built here rather than assumed: nothing earlier in this script needs the
+ * admin menu, so $submenu is empty until somebody makes it. Same shape as
+ * tests/integration/menu.php — the three rows WordPress adds itself for the two
+ * post types, spelled out because wp-admin/menu.php wants a dozen request
+ * globals that do not exist under WP-CLI, then this plugin's own through the
+ * real add_submenu_page(). The globals die with the process, so nothing is
+ * restored afterwards. */
+wp_set_current_user( 1 );
+require_once ABSPATH . 'wp-admin/includes/admin.php';
+
+$GLOBALS['submenu'] = array();
+
+$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
+	array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+	array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+	array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
+);
+
+do_action( 'admin_menu', '' );
+
+$GLOBALS['gwc_vt_help_menu'] = array();
+
+foreach ( (array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() ) as $gwc_vt_help_row ) {
+	/* The label carries a count bubble on the rows that have one, so the span
+	 * goes before the tags do — stripping tags alone leaves "Applications 3". */
+	$gwc_vt_help_label = wp_strip_all_tags(
+		(string) preg_replace( '#<span\b[^>]*>.*?</span>#s', '', (string) ( $gwc_vt_help_row[0] ?? '' ) )
+	);
+
+	$GLOBALS['gwc_vt_help_menu'][] = trim( $gwc_vt_help_label );
+}
+
+gwc_vt_help_check(
+	'the menu was built, so the check below is comparing against something',
+	count( $GLOBALS['gwc_vt_help_menu'] ) > 4,
+	implode( ' · ', $GLOBALS['gwc_vt_help_menu'] )
+);
+
+$GLOBALS['gwc_vt_help_targets'] = array();
+
+foreach ( gwc_vt_help_topics() as $gwc_vt_help_topic ) {
+	foreach ( (array) ( $gwc_vt_help_topic['tasks'] ?? array() ) as $gwc_vt_help_task ) {
+		foreach ( (array) ( $gwc_vt_help_task['steps'] ?? array() ) as $gwc_vt_help_step ) {
+			if ( preg_match(
+				'#Volunteer Tracker</strong> &rsaquo; <strong>([^<]+)</strong>#',
+				(string) $gwc_vt_help_step,
+				$gwc_vt_help_hit
+			) ) {
+				$GLOBALS['gwc_vt_help_targets'][ trim( $gwc_vt_help_hit[1] ) ][] =
+					(string) ( $gwc_vt_help_task['title'] ?? '' );
+			}
+		}
+	}
+}
+
+gwc_vt_help_check(
+	'the guide does tell people which menu item to open',
+	count( $GLOBALS['gwc_vt_help_targets'] ) > 3,
+	implode( ' · ', array_keys( $GLOBALS['gwc_vt_help_targets'] ) )
+);
+
+foreach ( $GLOBALS['gwc_vt_help_targets'] as $gwc_vt_help_target => $gwc_vt_help_tasks ) {
+	gwc_vt_help_check(
+		'"' . $gwc_vt_help_target . '" is a row on the menu',
+		in_array( $gwc_vt_help_target, $GLOBALS['gwc_vt_help_menu'], true ),
+		'sent there by: ' . implode( '; ', array_unique( $gwc_vt_help_tasks ) )
+	);
+}
+
 echo "\n── Clean up ─────────────────────────────────────────────────────\n";
 
 update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_help_opts'] );

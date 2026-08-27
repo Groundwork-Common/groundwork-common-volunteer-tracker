@@ -249,7 +249,7 @@ function gwc_vt_add_volunteer_history_boxes(): void {
 
 	add_meta_box(
 		'gwc-vt-volunteer-letters',
-		__( 'Letters issued', 'groundwork-common-volunteer-tracker' ),
+		__( 'Verification letters', 'groundwork-common-volunteer-tracker' ),
 		'gwc_vt_render_volunteer_letters_box',
 		GWC_VT_VOLUNTEER_TYPE,
 		'normal',
