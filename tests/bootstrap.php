@@ -28,6 +28,9 @@ define( 'ABSPATH', __DIR__ . '/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
+define( 'WEEK_IN_SECONDS', 604800 );
+define( 'MONTH_IN_SECONDS', 2592000 );
+define( 'YEAR_IN_SECONDS', 31536000 );
 
 define( 'GWC_VT_DIR', dirname( __DIR__ ) . '/' );
 define( 'GWC_VT_URL', 'https://example.test/wp-content/plugins/groundwork-common-volunteer-tracker/' );
@@ -393,6 +396,9 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		/** @var string */
 		public $post_title = '';
 
+		/** @var string */
+		public $post_date = '';
+
 		/**
 		 * @param array<string, mixed> $fields Whatever the test needs set.
 		 */
@@ -402,6 +408,28 @@ if ( ! class_exists( 'WP_Post' ) ) {
 			}
 		}
 	}
+}
+
+/* Core's, to the resolution these tests care about: whether a duration was
+ * claimed at all, and roughly how long. Exact wording is core's business and
+ * changes between releases. */
+function human_time_diff( $from, $to = 0 ) {
+	$to   = $to ? (int) $to : time();
+	$diff = abs( (int) $to - (int) $from );
+
+	if ( $diff < DAY_IN_SECONDS ) {
+		return max( 1, (int) round( $diff / HOUR_IN_SECONDS ) ) . ' hours';
+	}
+
+	if ( $diff < MONTH_IN_SECONDS ) {
+		return max( 1, (int) round( $diff / DAY_IN_SECONDS ) ) . ' days';
+	}
+
+	if ( $diff < YEAR_IN_SECONDS ) {
+		return max( 1, (int) round( $diff / MONTH_IN_SECONDS ) ) . ' months';
+	}
+
+	return max( 1, (int) round( $diff / YEAR_IN_SECONDS ) ) . ' years';
 }
 
 function add_query_arg( ...$args ) {

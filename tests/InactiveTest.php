@@ -475,6 +475,75 @@ final class InactiveTest extends TestCase {
 		);
 	}
 
+	/* ── How long they have been at it ───────────────────────────────────────
+	 * Measured from their first logged shift rather than from the day somebody
+	 * typed the record in, because those are different facts and only one of
+	 * them is about volunteering.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * @param string $first Earliest entry date.
+	 * @param string $last  Latest entry date.
+	 * @return GWC_VT_Totals
+	 */
+	private function totals( string $first = '', string $last = '' ): GWC_VT_Totals {
+		return new GWC_VT_Totals( 600, 0, 2, $first, $last );
+	}
+
+	/**
+	 * @return WP_Post
+	 */
+	private function volunteer(): WP_Post {
+		return new WP_Post(
+			array(
+				'ID'        => 1,
+				'post_type' => GWC_VT_VOLUNTEER_TYPE,
+				'post_date' => '2024-03-01 09:00:00',
+			)
+		);
+	}
+
+	/**
+	 * Somebody with no hours has no tenure to report, and says so rather than
+	 * claiming the day a coordinator typed them in was the day they started.
+	 */
+	public function test_no_hours_reports_when_the_record_was_added(): void {
+		$said = gwc_vt_volunteer_tenure( $this->volunteer(), $this->totals(), false );
+
+		$this->assertStringContainsString( 'Added', $said );
+		$this->assertStringNotContainsString( 'since', $said );
+	}
+
+	public function test_an_active_volunteer_is_measured_from_their_first_shift(): void {
+		$said = gwc_vt_volunteer_tenure( $this->volunteer(), $this->totals( '2023-03-11', '2026-01-04' ), false );
+
+		$this->assertStringContainsString( 'since', $said );
+		$this->assertStringNotContainsString( 'Added', $said, 'the record date is not when they started volunteering' );
+	}
+
+	/**
+	 * "Volunteering since 2019" about somebody who left in 2021 is not true.
+	 */
+	public function test_an_inactive_volunteer_gets_a_span_with_two_ends(): void {
+		$said = gwc_vt_volunteer_tenure( $this->volunteer(), $this->totals( '2019-04-02', '2021-06-30' ), true );
+
+		$this->assertStringContainsString( 'to', $said );
+		$this->assertStringNotContainsString( 'since', $said );
+	}
+
+	/**
+	 * A first shift dated in the future is a typo somebody will fix, and
+	 * "volunteering for -3 days" is not the way to tell them.
+	 */
+	public function test_a_future_first_shift_reports_no_duration(): void {
+		$ahead = gmdate( 'Y-m-d', time() + ( 40 * DAY_IN_SECONDS ) );
+
+		$said = gwc_vt_volunteer_tenure( $this->volunteer(), $this->totals( $ahead, $ahead ), false );
+
+		$this->assertStringContainsString( 'since', $said );
+		$this->assertStringNotContainsString( '—', $said, 'no duration is claimed for a date that has not happened' );
+	}
+
 	/**
 	 * A view a site added of its own is kept, at the end rather than dropped.
 	 */
