@@ -1693,7 +1693,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    the chips, which are filters. */
 .gwcvt-schedule__views {
 	float: right;
-	margin: 1px 8px 0 0;
+	margin: 1px 0 0 16px;
 }
 
 /* Under core's touch breakpoint core stacks this row, and a floated control in

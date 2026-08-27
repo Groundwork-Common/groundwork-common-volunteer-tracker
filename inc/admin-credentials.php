@@ -205,6 +205,52 @@ function gwc_vt_render_credentials_screen(): void {
 }
 
 /**
+ * What is in the find box on this screen.
+ *
+ * @return string
+ */
+function gwc_vt_credentials_search(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; narrows a list and writes nothing.
+	return isset( $_GET['s'] ) ? trim( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) : '';
+}
+
+/**
+ * The ones whose name or note matches what was typed.
+ *
+ * The note is searched as well as the name, because it is where a site records
+ * what a credential actually is to them — "booked through the county office" —
+ * and somebody looking for the county one is looking for that word.
+ *
+ * @param int[]  $ids  Credential post IDs.
+ * @param string $term What to look for.
+ * @return int[]
+ */
+function gwc_vt_filter_credentials( array $ids, string $term ): array {
+	if ( '' === $term ) {
+		return $ids;
+	}
+
+	$kept = array();
+
+	foreach ( $ids as $id ) {
+		$credential = gwc_vt_credential( (int) $id );
+
+		if ( ! $credential ) {
+			continue;
+		}
+
+		foreach ( array( $credential['name'], $credential['note'] ) as $haystack ) {
+			if ( '' !== (string) $haystack && false !== stripos( (string) $haystack, $term ) ) {
+				$kept[] = (int) $id;
+				break;
+			}
+		}
+	}
+
+	return $kept;
+}
+
+/**
  * Which of the two lists somebody asked for.
  *
  * The same shape as core's own status views: "All" is the working list and does
@@ -322,7 +368,8 @@ function gwc_vt_render_credentials_list(): void {
 	);
 
 	$status  = gwc_vt_credentials_status();
-	$showing = 'retired' === $status ? $retired : $live;
+	$term    = gwc_vt_credentials_search();
+	$showing = gwc_vt_filter_credentials( 'retired' === $status ? $retired : $live, $term );
 	$columns = gwc_vt_credential_columns();
 	?>
 	<div class="wrap gwcvt-wrap">
@@ -336,7 +383,32 @@ function gwc_vt_render_credentials_list(): void {
 
 		<?php gwc_vt_credentials_notice(); ?>
 
+		<?php
+		/* The counts beside All and Retired are of everything, not of what the
+		 * search left: they are how you leave a search, and a "Retired (0)"
+		 * that means "none of them match this word" is a screen telling you
+		 * something that is not true. */
+		?>
 		<?php gwc_vt_render_credentials_views( count( $live ), count( $retired ), $status ); ?>
+
+		<?php
+		gwc_vt_render_list_search(
+			array(
+				'id'          => 'gwcvt-credential-search',
+				'value'       => $term,
+				'keep'        => array_merge(
+					array(
+						'post_type' => GWC_VT_ENTRY_TYPE,
+						'page'      => GWC_VT_CREDENTIALS_PAGE,
+					),
+					'retired' === $status ? array( 'gwc_vt_status' => 'retired' ) : array()
+				),
+				'label'       => __( 'Find a credential', 'groundwork-common-volunteer-tracker' ),
+				'placeholder' => __( 'Find a credential — name or note', 'groundwork-common-volunteer-tracker' ),
+				'button'      => __( 'Find', 'groundwork-common-volunteer-tracker' ),
+			)
+		);
+		?>
 
 		<?php gwc_vt_render_list_tablenav( count( $showing ) ); ?>
 
@@ -352,7 +424,9 @@ function gwc_vt_render_credentials_list(): void {
 				<?php else : ?>
 					<tr class="no-items">
 						<td class="colspanchange" colspan="<?php echo esc_attr( (string) count( $columns ) ); ?>">
-							<?php if ( 'retired' === $status ) : ?>
+							<?php if ( '' !== $term ) : ?>
+								<?php esc_html_e( 'No credential matches that.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php elseif ( 'retired' === $status ) : ?>
 								<?php esc_html_e( 'Nothing has been retired.', 'groundwork-common-volunteer-tracker' ); ?>
 							<?php elseif ( gwc_vt_can_define_credentials() ) : ?>
 								<?php esc_html_e( 'Nothing defined yet. Select “Add New Credential” to define the first one.', 'groundwork-common-volunteer-tracker' ); ?>
