@@ -332,6 +332,65 @@ gwc_vt_inact_check(
 	GWC_VT_HOLDS_NEVER !== gwc_vt_volunteer_holds( (int) $GLOBALS['gwc_vt_inact_id'], (int) $GLOBALS['gwc_vt_inact_cred'] )
 );
 
+/* ── The Status panel says something only when there is something to say ─────
+ * It used to say "Volunteering here." on an active record, which told a
+ * coordinator what they already knew about nearly every person they would ever
+ * open. Inactive is different: it has a consequence the facts cannot state.
+ *
+ * Asserted here rather than in the unit suite because the panel computes
+ * totals, which needs a database — and stubbing that away would have made the
+ * assertions pass against a panel with nothing in it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The panel's markup for one volunteer in one status.
+ *
+ * @param string $status A post status.
+ * @return string
+ */
+function gwc_vt_inact_panel( string $status ): string {
+	wp_update_post(
+		array(
+			'ID'          => (int) $GLOBALS['gwc_vt_inact_id'],
+			'post_status' => $status,
+		)
+	);
+
+	ob_start();
+	gwc_vt_render_volunteer_status_box( get_post( (int) $GLOBALS['gwc_vt_inact_id'] ) );
+
+	return (string) ob_get_clean();
+}
+
+$gwc_vt_inact_active = gwc_vt_inact_panel( 'publish' );
+
+gwc_vt_inact_check(
+	'an active volunteer gets no status sentence',
+	false === strpos( $gwc_vt_inact_active, 'gwcvt-standing__where' )
+);
+
+gwc_vt_inact_check(
+	'but does get the action, which is the point of the panel',
+	false !== strpos( $gwc_vt_inact_active, 'Make them inactive' )
+);
+
+gwc_vt_inact_check(
+	'and the action reads after the facts, not before them',
+	strpos( $gwc_vt_inact_active, 'gwcvt-standing__facts' ) < strpos( $gwc_vt_inact_active, 'gwcvt-standing__action' )
+);
+
+$gwc_vt_inact_off = gwc_vt_inact_panel( GWC_VT_VOLUNTEER_INACTIVE );
+
+gwc_vt_inact_check(
+	'an inactive one is told what that means for staffing',
+	false !== strpos( $gwc_vt_inact_off, 'not offered when you staff a shift' )
+);
+
+gwc_vt_inact_check(
+	'and is offered the way back',
+	false !== strpos( $gwc_vt_inact_off, 'Make them active' )
+);
+
 /* ── And active again ────────────────────────────────────────────────────────────── */
 
 wp_update_post(

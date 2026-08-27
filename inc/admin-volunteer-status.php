@@ -162,30 +162,26 @@ function gwc_vt_render_volunteer_status_box( $post ): void {
 	$totals   = gwc_vt_volunteer_totals( (int) $post->ID );
 	?>
 	<div class="gwcvt-standing">
-		<p class="gwcvt-standing__where">
-			<span class="dashicons dashicons-groups"></span>
-			<?php
-			echo esc_html(
-				$inactive
-					? __( 'Inactive — not offered when staffing a shift.', 'groundwork-common-volunteer-tracker' )
-					: __( 'Volunteering here.', 'groundwork-common-volunteer-tracker' )
-			);
-			?>
-		</p>
-
-		<?php if ( current_user_can( 'edit_post', $post->ID ) ) : ?>
-			<p class="gwcvt-standing__action">
-				<a href="<?php echo esc_url( gwc_vt_volunteer_status_url( (int) $post->ID, ! $inactive ) ); ?>">
-					<?php
-					echo esc_html(
-						$inactive
-							? __( 'Make them active', 'groundwork-common-volunteer-tracker' )
-							: __( 'Make them inactive', 'groundwork-common-volunteer-tracker' )
-					);
-					?>
-				</a>
+		<?php
+		/* ── Only the exception gets a sentence ───────────────────────────────
+		 * There was one for both states, and the active one said "Volunteering
+		 * here." on a record that is, by being open, a volunteer's. It told a
+		 * coordinator something they already knew about nearly every person
+		 * they would ever open, which is the definition of a line that trains
+		 * people to stop reading the panel it is in.
+		 *
+		 * Inactive is different: it has a consequence somebody may not know —
+		 * that this person stops being offered when a shift needs staffing —
+		 * and the facts below cannot say it. So that one keeps its line and the
+		 * other has none. */
+		?>
+		<?php if ( $inactive ) : ?>
+			<p class="gwcvt-standing__where">
+				<span class="dashicons dashicons-groups"></span>
+				<?php esc_html_e( 'Inactive — not offered when you staff a shift.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		<?php endif; ?>
+
 
 		<?php
 		/* ── A label and a value, never a sentence with a unit in it ──────────
@@ -222,6 +218,20 @@ function gwc_vt_render_volunteer_status_box( $post ): void {
 
 		<?php if ( $totals->is_empty() ) : ?>
 			<p class="description"><?php esc_html_e( 'No hours logged yet.', 'groundwork-common-volunteer-tracker' ); ?></p>
+		<?php endif; ?>
+
+		<?php if ( current_user_can( 'edit_post', $post->ID ) ) : ?>
+			<p class="gwcvt-standing__action">
+				<a href="<?php echo esc_url( gwc_vt_volunteer_status_url( (int) $post->ID, ! $inactive ) ); ?>">
+					<?php
+					echo esc_html(
+						$inactive
+							? __( 'Make them active', 'groundwork-common-volunteer-tracker' )
+							: __( 'Make them inactive', 'groundwork-common-volunteer-tracker' )
+					);
+					?>
+				</a>
+			</p>
 		<?php endif; ?>
 	</div>
 	<?php
