@@ -372,6 +372,23 @@ function number_format_i18n( $number, $decimals = 0 ) {
 	return number_format( (float) $number, (int) $decimals );
 }
 
+/* Counts per status. The suite has no database, so every status is zero — which
+ * is the honest answer and the useful one: a views test that depended on there
+ * being applications waiting would be asserting the fixture, not the filter. */
+function admin_url( $path = '', $scheme = 'admin' ) {
+	return 'https://example.test/wp-admin/' . ltrim( (string) $path, '/' );
+}
+
+function wp_count_posts( $type = 'post', $perm = '' ) {
+	$counts = new stdClass();
+
+	foreach ( array( 'publish', 'draft', 'pending', 'private', 'future', 'trash' ) as $status ) {
+		$counts->{$status} = 0;
+	}
+
+	return $counts;
+}
+
 function get_bloginfo( $show = '', $filter = 'raw' ) {
 	return 'name' === $show ? 'Test Food Bank' : '';
 }
@@ -653,6 +670,12 @@ require GWC_VT_DIR . 'inc/admin-volunteer.php';
  * trap it guards against — post__in with nothing in it listing everybody — is
  * the kind that is invisible until it is in front of a coordinator. */
 require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
+
+/* And the retire pass beside it, for a third time for the same reason: which
+ * views the volunteer list offers, and in what order, is array manipulation
+ * over what core hands it. The handlers either side of it write posts and are
+ * covered by tests/integration/retired.php. */
+require GWC_VT_DIR . 'inc/admin-volunteer-retire.php';
 
 /* The widget's week block groups shifts into days, which is arithmetic over
  * post meta and nothing else — the same split as the worklist it sits under. */
