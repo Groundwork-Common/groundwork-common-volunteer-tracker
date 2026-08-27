@@ -95,7 +95,7 @@ add_filter( 'post_row_actions', 'gwc_vt_entry_volunteer_row_action', 9, 2 );
 function gwc_vt_register_post_type(): void {
 	$labels = array(
 		'name'               => _x( 'Volunteer Hours', 'post type general name', 'groundwork-common-volunteer-tracker' ),
-		'singular_name'      => _x( 'Hour Entry', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
+		'singular_name'      => _x( 'Entry', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
 		/* The sidebar says the plugin's name, not the name of one post type
 		 * inside it. "Volunteer Hours" was accurate when hours were the whole
 		 * product; the menu now carries the schedule, events, volunteers and

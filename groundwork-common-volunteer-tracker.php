@@ -349,6 +349,9 @@ if ( ! function_exists( 'gwc_vt_register_block' ) ) {
 if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	require GWC_VT_DIR . 'inc/admin-screen.php';
 
+	// What the screen says after saving one of these, in this plugin's own nouns.
+	require GWC_VT_DIR . 'inc/admin-messages.php';
+
 	// Verification where staff look for it: the hours list, and the entry itself.
 	require GWC_VT_DIR . 'inc/admin-verify.php';
 
