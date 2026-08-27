@@ -308,6 +308,64 @@ gwc_vt_menu_check(
 	$gwc_vt_labels_obj->name
 );
 
+/* ── The footer says whose version each number is ────────────────────────────
+ * The right-hand footer is WordPress's, and it says "Version 7.1" — meaning
+ * WordPress. That is unambiguous everywhere else in wp-admin, where the left
+ * says "Thank you for creating with WordPress"; on our screens the left says
+ * "Built by Groundwork Common", and a bare number beside it reads as this
+ * plugin's. A plugin at 1.0.0 looked like it was at 7.1.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+echo "\n── The footer names both versions ───────────────────────────────\n";
+
+require_once ABSPATH . 'wp-admin/includes/screen.php';
+
+set_current_screen( 'edit-' . GWC_VT_ENTRY_TYPE );
+
+$GLOBALS['gwc_vt_menu_footer'] = gwc_vt_admin_footer_version( 'Version ' . get_bloginfo( 'version' ) );
+
+gwc_vt_menu_check(
+	'ours is named and is the plugin’s own version',
+	false !== strpos( $GLOBALS['gwc_vt_menu_footer'], 'Volunteer Tracker ' . GWC_VT_VERSION ),
+	$GLOBALS['gwc_vt_menu_footer']
+);
+
+gwc_vt_menu_check(
+	'and WordPress’s is named as WordPress’s',
+	false !== strpos( $GLOBALS['gwc_vt_menu_footer'], 'WordPress ' . get_bloginfo( 'version' ) ),
+	$GLOBALS['gwc_vt_menu_footer']
+);
+
+gwc_vt_menu_check(
+	'so no number on the line is unlabelled',
+	false === strpos( str_replace( 'WordPress ' . get_bloginfo( 'version' ), '', $GLOBALS['gwc_vt_menu_footer'] ), 'Version ' ),
+	$GLOBALS['gwc_vt_menu_footer']
+);
+
+/* An update to WordPress turns that footer into the prompt to install it —
+ * sometimes the only one on the page. Ours goes in front of it; core's is not
+ * touched, because tidying a label must never take a security prompt off a
+ * screen. */
+$GLOBALS['gwc_vt_menu_nag'] = gwc_vt_admin_footer_version(
+	'<a href="https://example.org/update-core.php">Get Version 9.9</a>'
+);
+
+gwc_vt_menu_check(
+	'an update prompt is kept exactly as core wrote it',
+	false !== strpos( $GLOBALS['gwc_vt_menu_nag'], '<a href="https://example.org/update-core.php">Get Version 9.9</a>' )
+		&& false !== strpos( $GLOBALS['gwc_vt_menu_nag'], 'Volunteer Tracker ' . GWC_VT_VERSION ),
+	$GLOBALS['gwc_vt_menu_nag']
+);
+
+/* Somebody else's screen keeps somebody else's footer. */
+set_current_screen( 'edit-post' );
+
+gwc_vt_menu_check(
+	'and a screen that is not ours is left alone',
+	'Version 9.9' === gwc_vt_admin_footer_version( 'Version 9.9' ),
+	gwc_vt_admin_footer_version( 'Version 9.9' )
+);
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
 
 /* Exit non-zero so a failure fails the job. Printing the count and returning 0
