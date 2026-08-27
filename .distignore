@@ -8,6 +8,7 @@
 .wp-env.json
 .wp-env.override.json
 .wp-env.php74.json
+.wp-env.php74.override.json
 .wp-env.ci.json
 .dev
 .design

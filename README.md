@@ -23,7 +23,7 @@ WordPress 6.3, PHP 7.4. No build step and no npm: every file that runs on a user
 The PHP 7.4 floor is tested, not assumed. PHPUnit 11 needs PHP 8.2, so the unit suite *cannot* run on 7.4 — which means without a deliberate job the compatibility claim in the plugin header would be verified by nobody. The Tests workflow runs the integration scripts against a real 7.4 site, and parses every shipping file with 7.4's own parser. To check it yourself:
 
 ```bash
-npx @wordpress/env start --config=.wp-env.php74.json
+bin/wpenv --floor start
 ```
 
 ## Things that are deliberate
@@ -63,7 +63,7 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **Who holds a credential is asked of the person, never of a record.** The holder list walks records — one indexed meta query gives the shortlist, where asking every volunteer would be a query each — but the *standing* comes from `gwc_vt_volunteer_holds()`, the same function the volunteer's own record renders from. Reading it off each record instead would report somebody who renewed after lapsing as current **and** expired: they would appear on both lists, and the two counts would add up to more people than exist. The integration script builds exactly that person, plus one whose newest record is a different credential — without the second, an implementation that read the first record happened to give the right answer and the sabotage passed.
 - **A retired credential still has holders.** Retiring stops the organization asking for the thing; it does not take it off the people who did it. So the holder filter offers retired credentials, marked as such, and `gwc_vt_all_credential_ids()` exists beside `gwc_vt_live_credential_ids()` for the questions where "what do we ask for" is the wrong one — "who did the forklift training before we dropped it" has a real answer.
 - **The Help page is a second document, never a second copy.** Contextual help belongs beside the thing it explains, and the Help tab is where WordPress has trained people to look — which assumes somebody knows the tab exists. Plenty do not: it is collapsed by default and easy to read as decoration. So there is a findable page as well. It was, briefly, a rendering of the tabs — every tab asked for through the same routing and printed in one scroll — and that was the wrong document: the tabs answer *what does this mean*, and somebody who has never opened the plugin needs *how do I*, in order, with the steps numbered. Thirty-two conceptual tabs do not become that however well written. So the page carries its own guide, held as data in `inc/help-content.php` and printed by `inc/admin-help-page.php`, one topic at a time behind a tab bar because a page of ninety-two steps is read once. The two must not become each other: a how-to that starts explaining what a credential *is* belongs in the tab, and a tab that starts listing steps belongs in the guide. What links them is the tab's sidebar, which points at the topic for the screen the reader is on rather than at the guide's front, and `tests/integration/help.php` asserts every screen's does. The guide is also the same for every reader, where the old page was personalised — a subscriber saw thirty-one tabs where an administrator saw thirty-two — because somebody reading to find out what they would be asking for access to needs all of it.
-- **Every screen has a Help tab, and a test fails when one does not.** Six of ten had none — the verify queue, applications, credentials, the repeat editor, settings, and a single volunteer's record, which is where a background check is recorded and where a photograph lives. Nothing failed when they shipped that way: the hook table stays current because there is a rule forcing it, and help text had no equivalent. `tests/integration/help.php` is that rule. It drives real screens rather than reading the source, because a branch that returns before adding anything, or a tab attached to the wrong screen id, both look right in a grep — and it clears each screen's tabs first, since `set_current_screen()` reuses the object and a screen with no help of its own would otherwise inherit the previous one's and pass on somebody else's work. It also asserts the plugin adds nothing to `edit-post`, which is the failure nobody would notice from inside this plugin. The list of screens it walks is the plugin's own, `gwc_vt_help_screens()`, so a screen added to one and not the other cannot happen — and a screen registered behind a feature switch is listed only when that switch is on, because a guard that asks after help for the schedule on a site with no schedule is failing about a screen nobody can open. The integration script turns both switches on for the run, so gating costs no coverage.
+- **Every screen has a Help tab, and a test fails when one does not.** Six of ten had none — the verify queue, applications, credentials, the repeat editor, settings, and a single volunteer's record, which is where a background check is recorded and where a photograph lives. Nothing failed when they shipped that way: the hook table stays current because there is a rule forcing it, and help text had no equivalent. `tests/integration/help.php` is that rule. It drives real screens rather than reading the source, because a branch that returns before adding anything, or a tab attached to the wrong screen id, both look right in a grep — and it clears each screen's tabs first, since `set_current_screen()` reuses the object and a screen with no help of its own would otherwise inherit the previous one's and pass on somebody else's work. It also asserts the plugin adds nothing to `edit-post`, which is the failure nobody would notice from inside this plugin. The list of screens it walks is the plugin's own, `gwc_vt_help_screens()`, so a screen added to one and not the other cannot happen — and a screen registered behind a feature switch is listed only when that switch is on, because a guard that asks after help for the schedule on a site with no schedule is failing about a screen nobody can open. The integration script turns both switches on for that walk — and off again for the menu check below, which is a question about the state a site starts in — so gating costs no coverage.
 - **One count bubble on the menu, not two, and the difference is whether the number lives anywhere else.** The applications bubble stays: nothing emails when somebody applies to volunteer, so as its own comment says, "the menu has to carry it" — take it away and an application can sit unanswered with nothing anywhere saying so. The unverified-hours bubble was removed, because by the time the dashboard widget shipped that number appeared in four places: the verify screen's own summary, the dashboard worklist, the widget on wp-admin's front page, and the bubble. It also never decays — the worklist puts unverified in the group where "both keep, and neither loses anything overnight" — so on a site that logs weekly and verifies monthly the badge is lit permanently, which is a badge people stop seeing. The same reasoning `gwc_vt_event_clashes()` carries about flagging things too freely, applied to the menu.
 - **A credential is a different noun from a requirement, and the vocabulary is enforced.** A *requirement* here is the service hours a court or a school ordered somebody to complete. A *credential* is a thing they have to hold — a child-safety class, a signed waiver, a background check. They are unrelated, and the words were already spoken for, so no file, constant, meta key or string in the credential feature uses the word "requirement"; `CredentialTest` strips the comments out of every one of those files and asserts it. The volunteer list carries two separate filters for the same reason — folding a lapsed credential into `gwc_vt_requirement` would put the wrong word in the one place a reader cannot avoid reading it, a URL.
 - **A credential's expiry is derived, never stored.** A record holds the day it was granted and nothing else; when it runs out is computed from the interval on the definition every time it is asked. Changing a class from twelve months to twenty-four re-dates everybody who holds it, rather than leaving a site full of rows that expire on the old schedule with nothing to say why. Month-end is clamped rather than rolled: a class taken on 31 January and renewed monthly comes due on 28 February, where `strtotime()` would say 3 March and quietly hand somebody three extra days.
@@ -167,6 +167,7 @@ npx @wordpress/env start --config=.wp-env.php74.json
 - **The letters screen's first line is load-bearing, and the name no longer helps it.** That row has been called "Letter records", then "Letters issued", and is now "Verification letters" — the phrase the product itself uses. The first two names were both picked to stop it reading as the place you *write* a letter: producing one starts from the volunteer's own record, so a menu item called "Letters" sends somebody here to do something they cannot do here. "Records" refused that with a noun and "issued" refused it with a tense; the current name refuses it with neither. That redirect now lives in two links under the heading rather than in a sentence describing where to go, which is also what stops the page being a cul-de-sac: everything it lists has already happened, and both things somebody arrives wanting are somewhere else. They are links and not page-title buttons deliberately — a "Produce a letter" button here would rebuild the exact flow `gwc_vt_hidden_menu_items()` took off the menu, *"an invitation to start from a blank form and go looking for somebody"*. The link goes to the volunteer **list**, so you pick the person and then the letter, which is the order the whole feature is built around. Each is offered only to somebody who can open it, and the reference link lands on `#gwcvt-reference` — the checker's own input, which already carries that id, rather than a second element invented to carry it again.
 
 - **A numbered step is followed, not read, so every one that names a menu item is checked against the menu.** Three how-tos told somebody to open a screen that was not there: *"Volunteer Tracker › Verify"* twice — the verify queue has never been on the menu, because it is offered as a view on the hours list where WordPress puts "the same list, narrowed" — and *"Volunteer Tracker › Letters"*, which that row has not been called under any of its three names. Two of the three were wrong before the renames that turned them up, so this is not a hazard of renaming; it is what stale help looks like, which is confident, numbered, and pointing at nothing. The "Produce a verification letter" how-to was worse than mislabelled: it described picking a volunteer from a blank form, which is the flow `gwc_vt_hidden_menu_items()` deliberately replaced with starting from the person's own record. `tests/integration/help.php` now builds the real menu, pulls every `Volunteer Tracker › X` out of `gwc_vt_help_topics()`, and fails when X is not a row — with the how-to's own title in the failure, so the fix is findable. It asserts the menu was built before comparing against it, because a guard that silently compares against an empty list passes everything.
+- **A topic for a feature a site has switched off is a set of steps nobody can follow, so the guide drops it.** The menu check above went red and stayed red on `main`: the guide's "Planning shifts" opens with *"Go to Volunteer Tracker › Schedule"*, and the menu it was compared against had no Schedule on it, because scheduling is off until an organization turns it on and `gwc_vt_register_schedule_menu()` returns early while it is. The tempting fix is the fixture — switch scheduling on and the check goes green — and it would have hidden the defect, which is on every install on its first day: a numbered step pointing at a menu row the reader has not got, saying nothing about why or how to get one. So `gwc_vt_help_topics()` drops the schedule topic when shifts are off and the letters topic when letters are off, which is the rule the rest of the help already follows — `gwc_vt_help_screens()` lists the two letter screens only when letters are on, and Log a day offers "Logging from a shift" only where a shift can exist. Letters was wrong the same way and quieter about it: that topic names no menu row, only **Produce a letter for this volunteer**, which `gwc_vt_add_volunteer_history_boxes()` does not register when letters are off. The fixture does now switch both on, because that is how the rest of the surface gets checked — and then off again, so the menu check runs a second time against the state a site starts in. A guard that only ever sees a site with everything on is what let this stand. Neither feature becomes unfindable while it is off: both are turned on from Settings, whose tabs are all there whatever a site uses.
 
 - **Ten numbered steps named controls that do not exist, and none of them read as wrong.** Checking the menu targets turned up three; checking every *button* a step names turned up ten more. "Accept" and "Set aside" on the applications queue, whose buttons say **Add as a volunteer** and **Discard**. "Change them" for a repeat, which says **Change these occurrences**. "Add to the shift" for a roster, which says **Add them**. "Print" for a letter, which says **Open the letter to print**. "Match to a volunteer", which is two controls and neither is called that. Two bare "Save"s on screens whose buttons say **Add to the schedule** and **Save this shift**. And four "Save changes" against core's **Save Changes**, capital C, which is `submit_button()`'s default. Every one of those sentences reads perfectly; they are only wrong beside the screen, which is why nobody reading the guide had caught them. `tests/HelpStepsTest.php` now parses the steps out of the source and fails when a control is not a string this plugin writes — a unit test, because it is a question about source and needs no database. **It says in its own docblock what it cannot catch**: it proves a control exists, not that it is on the screen the step names, so the bare "Save" is the one of the ten it would have passed, since a settings sub-screen really does have a button that says exactly that. A prefix only satisfies it when a placeholder follows, or "Save" would be satisfied by "Save this shift" and the test would be theatre.
 
@@ -294,14 +295,103 @@ curl -sLO https://phar.phpunit.de/phpunit-11.phar && php phpunit-11.phar
 Anything that genuinely needs WordPress runs under wp-env:
 
 ```bash
-npx @wordpress/env start
+bin/wpenv start
 ```
 
 Then the integration scripts, each of which creates and removes its own fixtures:
 
 ```bash
-npx @wordpress/env run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
+bin/wpenv run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
 ```
+
+### Why that is `bin/wpenv` and not `npx @wordpress/env`
+
+Everything after the wrapper is passed through untouched, so the two are
+interchangeable except in one respect: **which environment you get.**
+
+wp-env names its Docker Compose project and its `~/.wp-env/` instance directory
+after the config file's absolute path — `load-config.js` builds
+`basename( dirname( path ) )` plus the first eight characters of `md5( path )`.
+Every git worktree is a different path, so `npx @wordpress/env start` inside one
+does not reuse the plugin's environment. It builds a new one: four containers,
+its own WordPress download and a database volume — eight and two before the
+tests environment was switched off, which is the next section. Nothing warns
+you, because nothing is wrong — each environment works perfectly. They just
+accumulate. Across four plugins they reached thirty-four instances and thirteen
+gigabytes, ten of them pointing at directories that had since been deleted.
+
+`bin/wpenv` never runs wp-env from a worktree. It runs it from the repository's
+**main checkout** — one fixed path, so one fixed instance per plugin — and
+mounts whichever worktree you are standing in at
+`wp-content/plugins/groundwork-common-volunteer-tracker`. Moving between
+worktrees remounts the same environment rather than building another, and the
+site keeps its address and its database.
+
+Two consequences worth knowing before you rely on it. The mount is what makes
+the slug right, so `make-pot` run through this wrapper cannot produce the
+worktree-named template described under **Releasing** below. And one environment
+per plugin means exactly that: two worktrees cannot serve WordPress at the same
+time, which is the trade being bought.
+
+Configuration follows the branch. The wrapper reads the worktree's own
+`.wp-env.json`, folds it into the override it generates, and stamps the port, an
+emptied `plugins` and the mount on top — so a branch that edits wp-env config
+changes the environment it is editing. That is not free: wp-env is invoked from
+the main checkout, so the naive version reads whatever branch is checked out
+*there*, and this wrapper did exactly that for its first day. What deliberately
+does not follow the branch is the config file's *path*, because `md5( path )` is
+the instance identity and pinning it is the whole mechanism.
+
+The wrapper prints the worktree it just mounted on every invocation, because the
+environment now outlives the branch and what is behind the URL is no longer
+obvious.
+
+`--floor` selects the PHP 7.4 configuration, which is a second instance by
+design — the two PHP versions cannot share a container:
+
+```bash
+bin/wpenv --floor start
+```
+
+Ports resolve in three tiers: `GWC_WPENV_PORT` (or `GWC_WPENV_FLOOR_PORT`) wins
+outright if set; otherwise a `port` in the branch's own `.wp-env.json` is
+honoured, since configuration follows the branch; otherwise the pinned default,
+8898 and 8896 for the floor. One variable apiece, not two, for the reason
+below. The wrapper writes the mount and the port into
+`.wp-env.override.json` in the main checkout — and, for the floor, into
+`.wp-env.php74.override.json`, since wp-env derives an override's name from the
+`--config` it was given. Both are gitignored and both are named in
+`.distignore`.
+
+### There is no tests environment
+
+Both config files set `"testsEnvironment": false`, so each environment is one
+WordPress rather than two.
+
+wp-env has always started a development site and a tests site side by side, each
+with its own database and its own containers. 11.14 deprecates that: starting
+both by default is going away, and `env`, `testsPort` and `testsEnvironment` are
+all deprecated options. What it asks for instead is a separate config file per
+environment, started with `--config`.
+
+This plugin needs no such file, because it never used the second environment.
+The PHPUnit suite stubs WordPress outright — no database and no checkout, see
+`tests/bootstrap.php` — and every script under `tests/integration/` runs through
+`run cli`, which is the *development* container. The tests containers were
+downloaded, installed and started on every `start`, and nothing ever connected
+to them.
+
+Switching them off halves each instance — four containers instead of eight, one
+database volume instead of two. Given that the entire argument for `bin/wpenv`
+is that these accumulate unnoticed, that is worth more here than a config file
+for an environment nobody would open.
+
+Two things follow. `run tests-cli` is now an **error** rather than a command
+that quietly works — wp-env answers "Cannot run commands on tests-cli because
+the tests environment is disabled" — so use `run cli`; the wrapper's own
+post-start activation was narrowed to match. And `.github/workflows/test.yml`
+and the Plugin Check recipe under **The directory's own checker** already write
+`"testsEnvironment": false` into the configs they generate, so neither changes.
 
 ## Continuous integration
 
@@ -371,7 +461,7 @@ reads the version out of the plugin header, so running it first stamps the old
 number and `VersionTest` will say so.
 
 ```bash
-npx @wordpress/env run cli -- wp i18n make-pot \
+bin/wpenv run cli -- wp i18n make-pot \
   wp-content/plugins/groundwork-common-volunteer-tracker \
   wp-content/plugins/groundwork-common-volunteer-tracker/languages/groundwork-common-volunteer-tracker.pot \
   --exclude=tests,vendor,node_modules,bin,.claude
@@ -380,7 +470,9 @@ npx @wordpress/env run cli -- wp i18n make-pot \
 Then look at the two headers it wrote. `make-pot` derives `Report-Msgid-Bugs-To`
 and `X-Domain` from the name of the **directory** it was pointed at rather than
 from the plugin header, so generating from a git worktree produces a template
-that names a support forum which does not exist — and it is well-formed,
+that names a support forum which does not exist — which is the failure
+`bin/wpenv` was written to make structurally impossible, since its mount is
+always the real slug — and it is well-formed,
 correctly named and complete while doing it, so nothing about the file looks
 wrong. It was corrected by hand at three consecutive releases before it was
 written down here.

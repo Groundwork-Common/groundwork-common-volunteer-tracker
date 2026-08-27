@@ -1,6 +1,7 @@
 {
 	"core": null,
 	"plugins": [ "." ],
+	"testsEnvironment": false,
 	"config": {
 		"WP_DEBUG": true,
 		"WP_DEBUG_DISPLAY": true,

@@ -4,7 +4,7 @@
 	"phpVersion": "7.4",
 	"plugins": [ "." ],
 	"port": 8896,
-	"testsPort": 8897,
+	"testsEnvironment": false,
 	"config": {
 		"WP_DEBUG": true,
 		"WP_DEBUG_DISPLAY": true,

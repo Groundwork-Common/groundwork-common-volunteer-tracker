@@ -30,7 +30,7 @@
  *
  * Run under wp-env:
  *
- *   npx @wordpress/env run cli -- wp eval-file \
+ *   bin/wpenv run cli -- wp eval-file \
  *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/worklist-links.php
  *
  * @package VolunteerTracker

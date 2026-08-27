@@ -1,0 +1,271 @@
+#!/usr/bin/env bash
+#
+# Run wp-env against this plugin, one environment per plugin, from any worktree.
+#
+#   bin/wpenv start                    # start (or remount) the 8.x environment
+#   bin/wpenv --floor start            # the same, on the PHP 7.4 floor
+#   bin/wpenv run cli -- wp plugin list
+#   bin/wpenv status
+#   bin/wpenv stop
+#   bin/wpenv destroy                  # and this one really does delete the database
+#
+# Every argument after the flags is handed to `npx @wordpress/env` untouched.
+#
+# ── The problem this exists to solve ─────────────────────────────────────────
+# wp-env names its Docker Compose project and its ~/.wp-env/ instance directory
+# after the *config file's absolute path* — see load-config.js, which builds
+#
+#   basename( dirname( configFilePath ) ) + [ config basename ] + md5( configFilePath )[0..8]
+#
+# Every git worktree is a different path, so `npx @wordpress/env start` inside
+# one builds an entirely new stack: four containers, its own WordPress download
+# and a database volume — eight and two before the tests environment was
+# switched off. Four plugins had accumulated thirty-four of them, thirteen
+# gigabytes, ten of which pointed at directories that no longer existed.
+# Nothing warns you; each one simply works.
+#
+# So this script never runs wp-env from a worktree. It runs it from the
+# repository's *main* checkout — one fixed path, therefore one fixed instance
+# per plugin — and mounts whichever worktree you are standing in at
+# wp-content/plugins/<slug>. Switching worktrees remounts the same environment
+# instead of building another.
+#
+# ── Why that also fixes the make-pot slug ────────────────────────────────────
+# .wp-env.json says `"plugins": [ "." ]`, and wp-env mounts that under the
+# directory's basename — inside a worktree, something like
+# `shifts-scheduling-planning-7f4c5e`. `wp i18n make-pot` then derives
+# Report-Msgid-Bugs-To and X-Domain from the mount directory rather than from
+# the plugin header, and ships a template naming a support forum that does not
+# exist. That was corrected by hand at three consecutive releases. The mapping
+# written below names the real slug, so the generated template is right the
+# first time.
+#
+# ── Where the generated config goes ──────────────────────────────────────────
+# Into the main checkout, as .wp-env.override.json (or, for --floor,
+# .wp-env.php74.override.json — wp-env derives an override's name from the
+# --config file it was given). Both are gitignored and both are named in
+# .distignore, so neither reaches a release zip. Nothing is written into the
+# worktree you are working in.
+#
+set -euo pipefail
+
+# ── Ports ────────────────────────────────────────────────────────────────────
+# Pinned, because one environment per plugin means a stable address worth
+# bookmarking, and because wp-env's default 8888 is contended by every other
+# plugin on this machine. Override in the environment to move them.
+#
+# One port per environment rather than two: both config files set
+# `"testsEnvironment": false`, so wp-env no longer stands a second WordPress up
+# beside each one. See the block above the override for why that is safe.
+#
+# An unset variable means "take whatever the branch's config says, and fall back
+# to this" — see the merge below. Set one and it wins outright.
+PORT_FORCED="${GWC_WPENV_PORT:-}"
+FLOOR_PORT_FORCED="${GWC_WPENV_FLOOR_PORT:-}"
+PORT_DEFAULT=8898
+FLOOR_PORT_DEFAULT=8896
+
+FLOOR=0
+if [ "${1:-}" = "--floor" ]; then
+	FLOOR=1
+	shift
+fi
+
+if [ "$#" -eq 0 ]; then
+	sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'
+	exit 1
+fi
+
+# ── Locate the main checkout and the current worktree ────────────────────────
+# `git worktree list` always prints the main working tree first, whichever
+# worktree it is run from. That is the one wp-env will be invoked in.
+#
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+	echo "wpenv: not inside a git working tree." >&2
+	exit 1
+fi
+
+MAIN="$( git worktree list --porcelain | awk '/^worktree /{ print substr( $0, 10 ); exit }' )"
+HERE="$( git rev-parse --show-toplevel )"
+SLUG="$( basename "$MAIN" )"
+
+if [ ! -f "$MAIN/.wp-env.json" ]; then
+	echo "wpenv: no .wp-env.json in the main checkout ($MAIN)." >&2
+	exit 1
+fi
+
+# ── Write the override ───────────────────────────────────────────────────────
+# The override is the whole of the environment's configuration, not a patch on
+# top of the main checkout's. That is deliberate, and it is the answer to a
+# design fault this wrapper had until it was written.
+#
+# wp-env is invoked from the main checkout, so it reads the main checkout's
+# .wp-env.json — which is on whatever branch happens to be checked out there,
+# usually not yours. The wrapper mounted the worktree's *code* while using
+# another branch's *config*, and nothing said so. A branch that changed
+# .wp-env.json had no effect on the environment it was changing, and the way you
+# found out was that the change appeared not to work.
+#
+# So the worktree's own config file is read here and folded in, and the wrapper's
+# three keys are stamped on top of it. Config follows the branch, the same as the
+# code does. What cannot follow the branch is the config *path*, because
+# `md5( configFilePath )` is the instance identity — that has to stay pinned to
+# the main checkout or there is one environment per worktree again, which is the
+# thing this script exists to prevent.
+#
+# Precedence, in order:
+#
+#   the worktree's .wp-env.json      the branch's intent
+#   port                             GWC_WPENV_PORT if set, else the branch's
+#                                    own "port", else the pinned default
+#   plugins: []                      empties the inherited [ "." ], which would
+#                                    otherwise mount the main checkout beside
+#                                    the worktree, two copies fighting over one
+#                                    slug
+#   mappings                         the mount, applied last so it always wins
+#
+# Root-only options — testsEnvironment, testsPort, autoPort, lifecycleScripts,
+# env — are carried across at the root, which is where they are legal:
+# parse-config.js:474-486 throws on any of them nested inside an environment.
+# `$schema` is carried too; it is allowed by name at :467.
+#
+if [ "$FLOOR" -eq 1 ]; then
+	CONFIG_NAME=".wp-env.php74.json"
+	OVERRIDE="$MAIN/.wp-env.php74.override.json"
+	USE_FORCED="$FLOOR_PORT_FORCED"
+	USE_DEFAULT="$FLOOR_PORT_DEFAULT"
+	CONFIG_ARG=( --config "$MAIN/.wp-env.php74.json" )
+	FLOOR_FLAG=" --floor"
+	LABEL="PHP 7.4 floor"
+else
+	CONFIG_NAME=".wp-env.json"
+	OVERRIDE="$MAIN/.wp-env.override.json"
+	USE_FORCED="$PORT_FORCED"
+	USE_DEFAULT="$PORT_DEFAULT"
+	CONFIG_ARG=()
+	FLOOR_FLAG=""
+	LABEL="development"
+fi
+
+if [ ! -f "$HERE/$CONFIG_NAME" ]; then
+	echo "wpenv: no $CONFIG_NAME in $HERE." >&2
+	exit 1
+fi
+
+# PHP rather than a shell JSON fabrication, because "core": null is meaningful
+# here and has to survive the round trip as a null rather than being dropped as
+# empty. php is a given in this repository — it is what runs the test suite.
+#
+MERGE_PHP=$( cat <<'PHP'
+list( , $source, $target, $slug, $mount, $forced, $fallback ) = $argv;
+
+$raw = file_get_contents( $source );
+$config = json_decode( $raw, true );
+
+// A config file that does not parse is a stop, not something to route around.
+// Carrying on would build an environment from the defaults and look like it
+// had worked.
+if ( ! is_array( $config ) ) {
+	fwrite( STDERR, "wpenv: $source is not valid JSON: " . json_last_error_msg() . "
+" );
+	exit( 1 );
+}
+
+// array_key_exists rather than isset: "port": null is a set key.
+if ( '' !== $forced ) {
+	$port = (int) $forced;
+} elseif ( array_key_exists( 'port', $config ) && null !== $config['port'] ) {
+	$port = (int) $config['port'];
+} else {
+	$port = (int) $fallback;
+}
+
+$config['port']     = $port;
+$config['plugins']  = array();
+$config['mappings'] = array( "wp-content/plugins/$slug" => $mount );
+
+$json = json_encode( $config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+if ( false === $json ) {
+	fwrite( STDERR, "wpenv: could not encode the merged config.
+" );
+	exit( 1 );
+}
+
+if ( false === file_put_contents( $target, $json . "
+" ) ) {
+	fwrite( STDERR, "wpenv: could not write $target
+" );
+	exit( 1 );
+}
+
+// The chosen port goes back to the shell, which has to print it.
+echo $port;
+PHP
+)
+
+USE_PORT=$( php -r "$MERGE_PHP" -- \
+	"$HERE/$CONFIG_NAME" "$OVERRIDE" "$SLUG" "$HERE" "$USE_FORCED" "$USE_DEFAULT" )
+
+# ── Say what is mounted ──────────────────────────────────────────────────────
+# The whole point is that the environment outlives the worktree, which means the
+# code behind http://localhost:$USE_PORT is not necessarily the code you looked
+# at last. Print it every time rather than let that be a surprise.
+#
+echo "wpenv: $LABEL environment for $SLUG"
+echo "wpenv:   serving  $HERE"
+echo "wpenv:   at       http://localhost:$USE_PORT"
+if [ "$HERE" != "$MAIN" ]; then
+	echo "wpenv:   (worktree; wp-env itself runs in $MAIN)"
+fi
+
+# ── Warn about the stacks this script is meant to replace ────────────────────
+# A per-worktree environment started before this script existed is still running
+# and still holding a port. It will not collide — wp-env picked different ports
+# — but it will quietly serve stale code to a bookmark somebody kept.
+#
+STRAYS="$( docker ps --format '{{.Label "com.docker.compose.project"}}' 2>/dev/null \
+	| sort -u | grep '^wp-env-' | grep -v "^wp-env-$SLUG-" || true )"
+if [ -n "$STRAYS" ]; then
+	echo "wpenv: other wp-env stacks are running:" >&2
+	echo "$STRAYS" | sed 's/^/wpenv:   /' >&2
+fi
+
+cd "$MAIN"
+# --config is a global yargs option, so it goes before the subcommand: after
+# it, a `run cli -- wp ...` invocation would hand it to wp rather than wp-env.
+npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" "$@"
+
+# ── Activate, then check that it took ────────────────────────────────────────
+# A mapping is a mount, not an install: wp-env only activates what is listed in
+# "plugins", which the override just emptied. Do it here so that `start` leaves
+# a usable site rather than one where the plugin is present and switched off.
+#
+# The activation is allowed to fail — it is a no-op on an already-active site,
+# and wp-env's own container lifecycle will occasionally SIGTERM the run. What
+# is *not* allowed is announcing success without looking. An earlier version of
+# this block ended in an unconditional `echo "activated."` behind a `|| true`,
+# which is the same shape as the seven integration scripts that printed their
+# failures and exited zero. So the activation is best-effort and the *report*
+# comes from `is-active`, which is the thing anybody actually cares about.
+#
+# `cli` and nothing else. This used to run over `cli tests-cli`, and with the
+# tests environment switched off that second pass does not quietly do nothing —
+# wp-env raises "Cannot run commands on tests-cli because the tests environment
+# is disabled", the activation swallows it under `|| true`, and the is-active
+# check behind it then reports NOT active on every single start. A permanent
+# false alarm is the same failure as a silent pass, printed the other way up.
+#
+if [ "${1:-}" = "start" ]; then
+	CONTAINER=cli
+
+	npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" run "$CONTAINER" \
+		-- wp plugin activate "$SLUG" >/dev/null 2>&1 || true
+
+	if npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" run "$CONTAINER" \
+		-- wp plugin is-active "$SLUG" >/dev/null 2>&1; then
+		echo "wpenv:   active in $CONTAINER"
+	else
+		echo "wpenv:   NOT active in $CONTAINER. Activate it by hand:" >&2
+		echo "wpenv:     bin/wpenv$FLOOR_FLAG run $CONTAINER -- wp plugin activate $SLUG" >&2
+	fi
+fi

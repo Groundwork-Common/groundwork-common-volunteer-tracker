@@ -21,7 +21,7 @@
  *
  * Run under wp-env:
  *
- *   npx @wordpress/env run cli -- wp eval-file \
+ *   bin/wpenv run cli -- wp eval-file \
  *     wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/help.php
  *
  * @package VolunteerTracker
@@ -72,13 +72,85 @@ function gwc_vt_help_tabs_for( string $screen_id ): array {
 	return $screen->get_help_tabs();
 }
 
+/**
+ * The plugin's own menu rows, as a coordinator would read them.
+ *
+ * Built rather than assumed: nothing here runs a real admin request, so
+ * $submenu is empty until somebody makes it. Same shape as
+ * tests/integration/menu.php — the three rows WordPress adds itself for the two
+ * post types, spelled out because wp-admin/menu.php wants a dozen request
+ * globals that do not exist under WP-CLI, then this plugin's own through the
+ * real add_submenu_page(). The globals die with the process, so nothing is
+ * restored afterwards.
+ *
+ * A function because the menu is asked for twice, under two different settings:
+ * which rows exist depends on what the organization has switched on, which is
+ * the whole point of the checks that read this.
+ *
+ * @return string[] The label on each row.
+ */
+function gwc_vt_help_menu_labels(): array {
+	require_once ABSPATH . 'wp-admin/includes/admin.php';
+
+	$GLOBALS['submenu'] = array();
+
+	$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
+		array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+		array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+		array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
+	);
+
+	do_action( 'admin_menu', '' );
+
+	$labels = array();
+
+	foreach ( (array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() ) as $row ) {
+		/* The label carries a count bubble on the rows that have one, so the
+		 * span goes before the tags do — stripping tags alone leaves
+		 * "Applications 3". */
+		$label = wp_strip_all_tags(
+			(string) preg_replace( '#<span\b[^>]*>.*?</span>#s', '', (string) ( $row[0] ?? '' ) )
+		);
+
+		$labels[] = trim( $label );
+	}
+
+	return $labels;
+}
+
+/**
+ * Every "Go to Volunteer Tracker &rsaquo; X" the guide gives, and who says it.
+ *
+ * @return array<string, string[]> Menu label => the how-tos that send somebody there.
+ */
+function gwc_vt_help_menu_targets(): array {
+	$targets = array();
+
+	foreach ( gwc_vt_help_topics() as $topic ) {
+		foreach ( (array) ( $topic['tasks'] ?? array() ) as $task ) {
+			foreach ( (array) ( $task['steps'] ?? array() ) as $step ) {
+				if ( preg_match(
+					'#Volunteer Tracker</strong> &rsaquo; <strong>([^<]+)</strong>#',
+					(string) $step,
+					$hit
+				) ) {
+					$targets[ trim( $hit[1] ) ][] = (string) ( $task['title'] ?? '' );
+				}
+			}
+		}
+	}
+
+	return $targets;
+}
+
 wp_set_current_user( 1 );
 
-/* Both optional features on. gwc_vt_help_screens() lists a screen only when the
- * feature that registers it is switched on — the schedule under shifts, the two
- * letter screens under letters — so on a default install those three drop out of
- * the walk below for a reason that has nothing to do with whether anybody wrote
- * their help. Switched on here, everything the plugin can register is checked. */
+/* Letters and the schedule are off until an organization turns them on, and
+ * everything about them — the two letter screens, the Schedule row, the tab on
+ * Log a day, the guide's two topics — is registered only when they are. So
+ * switch both on: otherwise a screen is skipped for a reason that has nothing
+ * to do with whether anybody wrote its help. They go off again at the end, for
+ * the check that the guide follows the same rule. */
 $GLOBALS['gwc_vt_help_opts'] = get_option( GWC_VT_SETTINGS_OPTION, array() );
 
 update_option(
@@ -493,37 +565,9 @@ gwc_vt_help_check(
  * is what stale help is: confident, numbered, and pointing at nothing.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-/* Built here rather than assumed: nothing earlier in this script needs the
- * admin menu, so $submenu is empty until somebody makes it. Same shape as
- * tests/integration/menu.php — the three rows WordPress adds itself for the two
- * post types, spelled out because wp-admin/menu.php wants a dozen request
- * globals that do not exist under WP-CLI, then this plugin's own through the
- * real add_submenu_page(). The globals die with the process, so nothing is
- * restored afterwards. */
 wp_set_current_user( 1 );
-require_once ABSPATH . 'wp-admin/includes/admin.php';
 
-$GLOBALS['submenu'] = array();
-
-$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
-	array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-	array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-	array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
-);
-
-do_action( 'admin_menu', '' );
-
-$GLOBALS['gwc_vt_help_menu'] = array();
-
-foreach ( (array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() ) as $gwc_vt_help_row ) {
-	/* The label carries a count bubble on the rows that have one, so the span
-	 * goes before the tags do — stripping tags alone leaves "Applications 3". */
-	$gwc_vt_help_label = wp_strip_all_tags(
-		(string) preg_replace( '#<span\b[^>]*>.*?</span>#s', '', (string) ( $gwc_vt_help_row[0] ?? '' ) )
-	);
-
-	$GLOBALS['gwc_vt_help_menu'][] = trim( $gwc_vt_help_label );
-}
+$GLOBALS['gwc_vt_help_menu'] = gwc_vt_help_menu_labels();
 
 gwc_vt_help_check(
 	'the menu was built, so the check below is comparing against something',
@@ -531,22 +575,7 @@ gwc_vt_help_check(
 	implode( ' · ', $GLOBALS['gwc_vt_help_menu'] )
 );
 
-$GLOBALS['gwc_vt_help_targets'] = array();
-
-foreach ( gwc_vt_help_topics() as $gwc_vt_help_topic ) {
-	foreach ( (array) ( $gwc_vt_help_topic['tasks'] ?? array() ) as $gwc_vt_help_task ) {
-		foreach ( (array) ( $gwc_vt_help_task['steps'] ?? array() ) as $gwc_vt_help_step ) {
-			if ( preg_match(
-				'#Volunteer Tracker</strong> &rsaquo; <strong>([^<]+)</strong>#',
-				(string) $gwc_vt_help_step,
-				$gwc_vt_help_hit
-			) ) {
-				$GLOBALS['gwc_vt_help_targets'][ trim( $gwc_vt_help_hit[1] ) ][] =
-					(string) ( $gwc_vt_help_task['title'] ?? '' );
-			}
-		}
-	}
-}
+$GLOBALS['gwc_vt_help_targets'] = gwc_vt_help_menu_targets();
 
 gwc_vt_help_check(
 	'the guide does tell people which menu item to open',
@@ -561,6 +590,70 @@ foreach ( $GLOBALS['gwc_vt_help_targets'] as $gwc_vt_help_target => $gwc_vt_help
 		'sent there by: ' . implode( '; ', array_unique( $gwc_vt_help_tasks ) )
 	);
 }
+
+echo "\n── And on a site that has those features off ────────────────────\n";
+
+/* Everything above runs with letters and the schedule switched on, which is how
+ * the whole surface gets checked and is not how a site starts. Both are off by
+ * default, and the Schedule row and the letter screens exist only when they are
+ * on — so the same "step one names a row that is there" property has to hold in
+ * the state a coordinator meets on the day they install this.
+ *
+ * It did not. The guide carried "Planning shifts" whatever a site used, opening
+ * with "Go to Volunteer Tracker › Schedule" beside a menu with no Schedule on
+ * it, and saying nothing about why or how to get one.
+ *
+ * Driven by switching the settings off and asking for the menu and the guide
+ * again, rather than by reading gwc_vt_help_topics() for a conditional — which
+ * would pass for one written against the wrong setting. */
+update_option(
+	GWC_VT_SETTINGS_OPTION,
+	array_merge(
+		$GLOBALS['gwc_vt_help_opts'],
+		array(
+			'letters_enabled' => 0,
+			'shifts_enabled'  => 0,
+		)
+	)
+);
+gwc_vt_settings_cache( null, true );
+
+$GLOBALS['gwc_vt_help_off_menu']    = gwc_vt_help_menu_labels();
+$GLOBALS['gwc_vt_help_off_targets'] = gwc_vt_help_menu_targets();
+$GLOBALS['gwc_vt_help_off_missing'] = array();
+
+foreach ( $GLOBALS['gwc_vt_help_off_targets'] as $gwc_vt_help_target => $gwc_vt_help_tasks ) {
+	if ( ! in_array( $gwc_vt_help_target, $GLOBALS['gwc_vt_help_off_menu'], true ) ) {
+		$GLOBALS['gwc_vt_help_off_missing'][] = $gwc_vt_help_target .
+			' (' . implode( '; ', array_unique( $gwc_vt_help_tasks ) ) . ')';
+	}
+}
+
+gwc_vt_help_check(
+	'the menu shrank, so this is a different state from the one above',
+	count( $GLOBALS['gwc_vt_help_off_menu'] ) < count( $GLOBALS['gwc_vt_help_menu'] ),
+	implode( ' · ', $GLOBALS['gwc_vt_help_off_menu'] )
+);
+
+gwc_vt_help_check(
+	'every menu item the guide names is still one this site has',
+	array() === $GLOBALS['gwc_vt_help_off_missing'],
+	implode( ', ', $GLOBALS['gwc_vt_help_off_missing'] )
+);
+
+$GLOBALS['gwc_vt_help_off_ids'] = array();
+
+foreach ( gwc_vt_help_topics() as $gwc_vt_help_topic ) {
+	$GLOBALS['gwc_vt_help_off_ids'][] = (string) $gwc_vt_help_topic['id'];
+}
+
+/* And it is the two topics that went, not the guide. A filter that dropped
+ * everything would satisfy the check above and leave nobody a guide to read. */
+gwc_vt_help_check(
+	'and the guide is the rest of itself, without those two topics',
+	array( 'start', 'hours', 'credentials', 'public' ) === $GLOBALS['gwc_vt_help_off_ids'],
+	implode( ', ', $GLOBALS['gwc_vt_help_off_ids'] )
+);
 
 echo "\n── Clean up ─────────────────────────────────────────────────────\n";
 
