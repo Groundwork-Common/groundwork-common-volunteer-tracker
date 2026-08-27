@@ -2257,13 +2257,43 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	display: none;
 }
 
-/* Where the status row used to be, saying the one thing about a volunteer's
-   standing that this screen has any business saying. */
-.gwcvt-pub-status .dashicons {
-	color: #8c8f94;
+/* The Status panel: where they stand, how long they have been at it, and what
+   they have done. Its own box rather than a row inside Save, because the link
+   in it acts immediately and everything in Save does not. */
+.gwcvt-standing__where {
+	margin: 0 0 .5em;
+	font-weight: 600;
 }
 
-.gwcvt-pub-status__action {
-	display: block;
-	margin: .4em 0 0 24px;
+.gwcvt-standing__where .dashicons {
+	color: #8c8f94;
+	vertical-align: text-bottom;
+}
+
+.gwcvt-standing__action {
+	margin: 0 0 .8em 24px;
+}
+
+.gwcvt-standing__facts {
+	margin: 0;
+	padding: .7em 0 0;
+	border-top: 1px solid #f0f0f1;
+	color: #50575e;
+}
+
+.gwcvt-standing__facts div {
+	display: flex;
+	justify-content: space-between;
+	gap: 1em;
+	margin: 0 0 .3em;
+}
+
+.gwcvt-standing__facts dt {
+	flex: 0 0 auto;
+}
+
+.gwcvt-standing__facts dd {
+	margin: 0;
+	text-align: right;
+	color: #1d2327;
 }
