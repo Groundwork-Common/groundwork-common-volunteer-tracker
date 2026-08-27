@@ -30,6 +30,124 @@ add_action( 'admin_post_gwc_vt_restore_volunteer', 'gwc_vt_handle_restore_volunt
 add_filter( 'post_row_actions', 'gwc_vt_volunteer_row_actions', 10, 2 );
 add_filter( 'views_edit-' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_volunteer_views' );
 add_action( 'admin_notices', 'gwc_vt_volunteer_retire_notice' );
+add_filter( 'wp_insert_post_data', 'gwc_vt_keep_volunteer_status', 10, 2 );
+add_action( 'add_meta_boxes_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_rename_volunteer_submit_box' );
+add_action( 'post_submitbox_misc_actions', 'gwc_vt_volunteer_submitbox_retire' );
+
+/* ── Quick Edit would silently un-retire somebody ────────────────────────────
+ * This is the half of the change that is not presentation. Core's inline editor
+ * posts a status from a <select> it builds from a fixed list — Published,
+ * Scheduled, Pending, Draft, and Private in bulk — and wp_ajax_inline_save()
+ * then does, verbatim:
+ *
+ *     $data['post_status'] = $data['_status'];
+ *
+ * A custom status is not in that list and cannot be. So quick-editing a retired
+ * volunteer to fix a typo in their name sets them to Published on the way past,
+ * and nothing anywhere says so. That is the silent-correction-on-save bug this
+ * codebase already has a rule about, arriving through a door nobody opened.
+ *
+ * Hiding the control is not the fix, because a hidden <select> still posts. The
+ * fix is that an inline or bulk edit may not move a volunteer between statuses
+ * at all: retiring has its own action, with its own nonce, and it is the only
+ * thing that should be able to.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Keep a volunteer's status through a quick or bulk edit.
+ *
+ * @param array $data    The row about to be written.
+ * @param array $postarr What was submitted.
+ * @return array
+ */
+function gwc_vt_keep_volunteer_status( $data, $postarr ) {
+	if ( ! is_array( $data ) || GWC_VT_VOLUNTEER_TYPE !== ( $data['post_type'] ?? '' ) ) {
+		return $data;
+	}
+
+	$id = (int) ( $postarr['ID'] ?? 0 );
+
+	if ( $id < 1 ) {
+		return $data;
+	}
+
+	/* Only the two generic editors. gwc_vt_handle_retire_volunteer() and its
+	 * opposite call wp_update_post() directly and must still work, as must a
+	 * site moving a record to the trash. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- reading which editor sent this, not form data; core has already verified its own nonce by the time post data is filtered, and the branch only ever makes the write more conservative.
+	$inline = isset( $_POST['_inline_edit'] ) || isset( $_POST['bulk_edit'] ) || isset( $_GET['bulk_edit'] );
+
+	if ( ! $inline || 'trash' === ( $data['post_status'] ?? '' ) ) {
+		return $data;
+	}
+
+	$data['post_status'] = (string) get_post_status( $id );
+
+	return $data;
+}
+
+/**
+ * "Publish" is not what that panel does to a person.
+ *
+ * Re-registered rather than replaced: core's own callback still renders it, so
+ * the hidden fields and the Update button keep working exactly as they do
+ * everywhere else. Only the heading changes, and admin.css hides the rows
+ * inside it that describe a post rather than a person — the status, the
+ * visibility, the publish-immediately date, and Save Draft.
+ */
+function gwc_vt_rename_volunteer_submit_box(): void {
+	remove_meta_box( 'submitdiv', GWC_VT_VOLUNTEER_TYPE, 'side' );
+
+	add_meta_box(
+		'submitdiv',
+		__( 'Save', 'groundwork-common-volunteer-tracker' ),
+		'post_submit_meta_box',
+		GWC_VT_VOLUNTEER_TYPE,
+		'side',
+		'high'
+	);
+}
+
+/**
+ * Say whether they are retired, and offer the switch, inside that box.
+ *
+ * Where the status row used to be, and saying the one thing about a volunteer's
+ * standing that means anything here.
+ */
+function gwc_vt_volunteer_submitbox_retire(): void {
+	$post = get_post();
+
+	if ( ! $post || GWC_VT_VOLUNTEER_TYPE !== $post->post_type ) {
+		return;
+	}
+
+	if ( ! gwc_vt_can_see_records() || ! current_user_can( 'edit_post', $post->ID ) ) {
+		return;
+	}
+
+	$retired = GWC_VT_VOLUNTEER_RETIRED === $post->post_status;
+	?>
+	<div class="misc-pub-section gwcvt-pub-retire">
+		<span class="dashicons dashicons-groups"></span>
+		<?php
+		echo esc_html(
+			$retired
+				? __( 'Retired — not offered when staffing a shift.', 'groundwork-common-volunteer-tracker' )
+				: __( 'Volunteering here.', 'groundwork-common-volunteer-tracker' )
+		);
+		?>
+		<a class="gwcvt-pub-retire__action" href="<?php echo esc_url( gwc_vt_volunteer_retire_url( (int) $post->ID, ! $retired ) ); ?>">
+			<?php
+			echo esc_html(
+				$retired
+					? __( 'Put them back', 'groundwork-common-volunteer-tracker' )
+					: __( 'Retire them', 'groundwork-common-volunteer-tracker' )
+			);
+			?>
+		</a>
+	</div>
+	<?php
+}
 
 /**
  * Read and check one retire-or-restore request.

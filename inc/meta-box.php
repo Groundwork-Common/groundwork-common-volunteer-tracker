@@ -507,7 +507,6 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 
 	wp_nonce_field( 'gwc_vt_save_volunteer', 'gwc_vt_volunteer_nonce' );
 
-	$totals = $volunteer_id > 0 ? gwc_vt_volunteer_totals( $volunteer_id ) : new GWC_VT_Totals();
 	?>
 	<div class="gwcvt-fields">
 		<div class="gwcvt-field">
@@ -664,25 +663,6 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 			</p>
 		<?php endif; ?>
 
-		<?php if ( ! $totals->is_empty() ) : ?>
-			<p class="gwcvt-summary">
-				<?php
-				printf(
-					/* translators: 1: verified hours, 2: unverified hours, 3: number of shifts. */
-					esc_html__( '%1$s verified, %2$s awaiting verification, across %3$s.', 'groundwork-common-volunteer-tracker' ),
-					'<strong>' . esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ) . '</strong>',
-					'<strong>' . esc_html( gwc_vt_format_hours( $totals->pending_minutes ) ) . '</strong>',
-					'<strong>' . esc_html(
-						sprintf(
-							/* translators: %d: number of shifts. */
-							_n( '%d shift', '%d shifts', $totals->entries, 'groundwork-common-volunteer-tracker' ),
-							$totals->entries
-						)
-					) . '</strong>'
-				);
-				?>
-			</p>
-		<?php endif; ?>
 	</div>
 	<?php
 }

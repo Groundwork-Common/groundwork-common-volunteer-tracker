@@ -350,24 +350,6 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 		</tbody>
 	</table>
 
-	<p class="gwcvt-history__summary">
-		<?php
-		printf(
-			/* translators: 1: verified hours, 2: unverified hours, 3: number of shifts. */
-			esc_html__( '%1$s verified, %2$s awaiting verification, across %3$s.', 'groundwork-common-volunteer-tracker' ),
-			'<strong>' . esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ) . '</strong>',
-			'<strong>' . esc_html( gwc_vt_format_hours( $totals->pending_minutes ) ) . '</strong>',
-			'<strong>' . esc_html(
-				sprintf(
-					/* translators: %d: number of shifts. */
-					_n( '%d shift', '%d shifts', count( $rows ), 'groundwork-common-volunteer-tracker' ),
-					count( $rows )
-				)
-			) . '</strong>'
-		);
-		?>
-	</p>
-
 	<?php if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) && $totals->verified_minutes > 0 ) : ?>
 		<p>
 			<a class="button" href="<?php echo esc_url( gwc_vt_produce_letter_url( $volunteer_id ) ); ?>">
