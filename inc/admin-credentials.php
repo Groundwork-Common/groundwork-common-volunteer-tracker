@@ -88,6 +88,24 @@ function gwc_vt_restore_credentials_title(): void {
 		return;
 	}
 
+	/* Which of the three views, the way core titles Edit Post rather than
+	 * Posts. Read from the URL because this runs on `load-`, before anything has
+	 * decided what to draw — and the tab is written from it before that. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks a <title> and nothing else.
+	$asked = isset( $_GET['credential'] ) ? sanitize_key( wp_unslash( $_GET['credential'] ) ) : '';
+
+	if ( 'new' === $asked ) {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $title is how core carries an admin page's title into admin-header.php, and there is no API for setting it; this writes it only for this plugin's own screen, and only when nothing else has.
+		$GLOBALS['title'] = __( 'Add a credential', 'groundwork-common-volunteer-tracker' );
+		return;
+	}
+
+	if ( absint( $asked ) > 0 ) {
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- as above.
+		$GLOBALS['title'] = __( 'Edit a credential', 'groundwork-common-volunteer-tracker' );
+		return;
+	}
+
 	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $title is how core carries an admin page's title into admin-header.php, and there is no API for setting it; this writes it only for this plugin's own screen, and only when nothing else has.
 	$GLOBALS['title'] = gwc_vt_credentials_title();
 }
@@ -384,10 +402,40 @@ function gwc_vt_render_credential_row( array $credential ): void {
 
 	$modes   = gwc_vt_credential_modes();
 	$columns = gwc_vt_credential_columns();
+
+	/* Built here rather than inside the attribute: an opening PHP tag in the
+	 * middle of one is what the coding standard objects to, and it is right —
+	 * the markup below is easier to read for it. */
+	$opens = sprintf(
+		/* translators: %s: a credential's name. */
+		__( '%s (Edit)', 'groundwork-common-volunteer-tracker' ),
+		$credential['name']
+	);
 	?>
 	<tr>
 		<td class="name column-name has-row-actions column-primary" data-colname="<?php echo esc_attr( $columns['name'] ); ?>">
-			<strong><?php echo esc_html( $credential['name'] ); ?></strong>
+			<?php
+			/* The name is the link, because in every list table in wp-admin the
+			 * title is what you press to open the thing. Hover actions are the
+			 * second way in and were the only one here, which is a screen that
+			 * looks like a list and does not behave like one.
+			 *
+			 * Plain text for somebody who cannot define credentials: a link that
+			 * lands on a form they would be refused is worse than no link. */
+			?>
+			<strong>
+				<?php if ( gwc_vt_can_define_credentials() ) : ?>
+					<a
+						class="row-title"
+						href="<?php echo esc_url( gwc_vt_credentials_url( array( 'credential' => $credential['id'] ) ) ); ?>"
+						aria-label="<?php echo esc_attr( $opens ); ?>"
+					>
+						<?php echo esc_html( $credential['name'] ); ?>
+					</a>
+				<?php else : ?>
+					<?php echo esc_html( $credential['name'] ); ?>
+				<?php endif; ?>
+			</strong>
 			<?php if ( '' !== $credential['note'] ) : ?>
 				<br /><span class="description"><?php echo esc_html( $credential['note'] ); ?></span>
 			<?php endif; ?>
@@ -483,13 +531,26 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 		);
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1>
+		<h1 class="wp-heading-inline">
 			<?php
 			echo $editing
 				? esc_html__( 'Edit a credential', 'groundwork-common-volunteer-tracker' )
 				: esc_html__( 'Add a credential', 'groundwork-common-volunteer-tracker' );
 			?>
 		</h1>
+
+		<?php if ( $editing ) : ?>
+			<?php
+			/* The same button core keeps on an edit screen: having finished with
+			 * this one, the next thing somebody does is define another. */
+			?>
+			<a class="page-title-action" href="<?php echo esc_url( gwc_vt_credentials_url( array( 'credential' => 'new' ) ) ); ?>">
+				<?php esc_html_e( 'Add a credential', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+		<?php endif; ?>
+
+		<?php /* Where core moves notices to. Without it they land above the heading. */ ?>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_credentials_notice(); ?>
 
@@ -581,13 +642,40 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 				</tr>
 			</table>
 
-			<?php
-			submit_button(
-				$editing
-					? __( 'Save this credential', 'groundwork-common-volunteer-tracker' )
-					: __( 'Add it', 'groundwork-common-volunteer-tracker' )
-			);
-			?>
+			<div class="gwcvt-credential-submit">
+				<?php
+				submit_button(
+					$editing
+						? __( 'Save this credential', 'groundwork-common-volunteer-tracker' )
+						: __( 'Add it', 'groundwork-common-volunteer-tracker' ),
+					'primary',
+					'submit',
+					false
+				);
+				?>
+
+				<?php if ( $editing ) : ?>
+					<?php
+					/* Beside the save, where core keeps "Move to Trash": the
+					 * thing somebody wants after deciding this credential is
+					 * wrong is to stop asking for it, and hunting back to the
+					 * list for a hover action is the long way round.
+					 *
+					 * It is a link and not a second submit, because it is a
+					 * different action rather than another way to save this
+					 * form — and it carries its own nonce for that reason. */
+					?>
+					<?php if ( $credential['retired'] ) : ?>
+						<a class="gwcvt-credential-aside" href="<?php echo esc_url( gwc_vt_credential_action_url( 'gwc_vt_restore_credential', $credential_id ) ); ?>">
+							<?php esc_html_e( 'Put it back into use', 'groundwork-common-volunteer-tracker' ); ?>
+						</a>
+					<?php else : ?>
+						<a class="gwcvt-credential-aside submitdelete" href="<?php echo esc_url( gwc_vt_credential_action_url( 'gwc_vt_retire_credential', $credential_id ) ); ?>">
+							<?php esc_html_e( 'Retire it', 'groundwork-common-volunteer-tracker' ); ?>
+						</a>
+					<?php endif; ?>
+				<?php endif; ?>
+			</div>
 		</form>
 
 		<p>

@@ -922,6 +922,68 @@ gwc_vt_cr_check(
 );
 
 /* The list offers the way in. */
+/* ── And it behaves the way a list in wp-admin behaves ───────────────────── */
+
+$GLOBALS['gwc_vt_cr_list'] = gwc_vt_cr_draw_credentials();
+
+gwc_vt_cr_check(
+	'the name is the link, the way every list table in wp-admin works',
+	substr_count( $GLOBALS['gwc_vt_cr_list'], 'class="row-title"' )
+		=== substr_count( $GLOBALS['gwc_vt_cr_list'], 'has-row-actions' )
+		&& substr_count( $GLOBALS['gwc_vt_cr_list'], 'class="row-title"' ) > 0,
+	substr_count( $GLOBALS['gwc_vt_cr_list'], 'class="row-title"' ) . ' link(s) for '
+		. substr_count( $GLOBALS['gwc_vt_cr_list'], 'has-row-actions' ) . ' row(s)'
+);
+
+/* A link that lands on a form somebody would be refused is worse than no link.
+ * An editor may read this screen and may not define. */
+$GLOBALS['gwc_vt_cr_reader2'] = wp_insert_user(
+	array(
+		'user_login' => 'zzcr_reader2',
+		'user_pass'  => wp_generate_password( 20, true ),
+		'role'       => 'editor',
+	)
+);
+
+if ( ! is_wp_error( $GLOBALS['gwc_vt_cr_reader2'] ) ) {
+	wp_set_current_user( (int) $GLOBALS['gwc_vt_cr_reader2'] );
+
+	$GLOBALS['gwc_vt_cr_flat'] = gwc_vt_cr_draw_credentials();
+
+	gwc_vt_cr_check(
+		'and is plain text for somebody who cannot open it',
+		false === strpos( $GLOBALS['gwc_vt_cr_flat'], 'class="row-title"' )
+			&& false !== strpos( $GLOBALS['gwc_vt_cr_flat'], 'Zzcr liability waiver' )
+	);
+
+	wp_set_current_user( 1 );
+	wp_delete_user( (int) $GLOBALS['gwc_vt_cr_reader2'] );
+}
+
+/* The form is shaped like an add/edit screen: core moves notices to
+ * wp-header-end, and the thing you do after deciding this credential is wrong
+ * is beside the save, where core keeps Move to Trash. */
+$_GET['credential'] = (string) $GLOBALS['gwc_vt_cr_edit'];
+
+ob_start();
+gwc_vt_render_credentials_screen();
+$GLOBALS['gwc_vt_cr_shape'] = (string) ob_get_clean();
+
+unset( $_GET['credential'] );
+
+gwc_vt_cr_check(
+	'the form marks where its header ends, once',
+	1 === substr_count( $GLOBALS['gwc_vt_cr_shape'], 'wp-header-end' ),
+	substr_count( $GLOBALS['gwc_vt_cr_shape'], 'wp-header-end' ) . ' marker(s)'
+);
+
+gwc_vt_cr_check(
+	'and offers retiring beside the save, not only back on the list',
+	false !== strpos( $GLOBALS['gwc_vt_cr_shape'], 'gwcvt-credential-aside' )
+		&& false !== strpos( $GLOBALS['gwc_vt_cr_shape'], 'gwc_vt_restore_credential' ),
+	'retired fixture, so it offers putting it back'
+);
+
 gwc_vt_cr_check(
 	'the list offers Edit as a row action',
 	false !== strpos( gwc_vt_cr_draw_credentials( 'retired' ), 'credential=' . $GLOBALS['gwc_vt_cr_edit'] )
