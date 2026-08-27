@@ -1435,7 +1435,7 @@ function gwc_vt_render_shift_credentials_field( int $shift_id ): void {
 		</div>
 
 		<p class="description">
-			<?php esc_html_e( 'Leave everything clear and this shift asks for nothing. What is missing is flagged on the roster; only the ones marked “stops signup” actually turn anybody away.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Leave everything clear and this shift asks for nothing. A missing credential is flagged on the roster; only the ones marked “stops signup” actually turn anybody away.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</div>
 	<?php

@@ -146,16 +146,6 @@ function gwc_vt_render_credentials_screen(): void {
 			<?php esc_html_e( 'Things a volunteer has to hold before doing certain work — a training course, a signed waiver, a background check. You define them here and record who holds them on each volunteer’s own record.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
-		<?php
-		/* Said plainly rather than left to be discovered. Until shifts can ask
-		 * for a credential, "stop them signing up" has nothing to stop — and a
-		 * setting that appears to do something it does not is worse than one
-		 * that is not there. */
-		?>
-		<div class="notice notice-info inline">
-			<p><?php esc_html_e( 'Recording who holds what works now. Attaching credentials to shifts and events — so that a missing one is reported, or stops somebody signing up — is still being built, so nothing here refuses anybody yet.', 'groundwork-common-volunteer-tracker' ); ?></p>
-		</div>
-
 		<?php if ( $live || $retired ) : ?>
 			<table class="widefat striped gwcvt-credentials">
 				<thead>
@@ -290,7 +280,7 @@ function gwc_vt_render_credential_form(): void {
 				<th scope="row"><label for="gwcvt-credential-note"><?php esc_html_e( 'A note', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 				<td>
 					<input type="text" id="gwcvt-credential-note" name="gwc_vt_note" class="regular-text" maxlength="200" />
-					<p class="description"><?php esc_html_e( 'Optional, and for staff. Where the course is booked, who countersigns the form — whatever whoever records this needs to know.', 'groundwork-common-volunteer-tracker' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Optional, and for staff. Where the course is booked, who countersigns the form — whatever the person recording it needs to know.', 'groundwork-common-volunteer-tracker' ); ?></p>
 				</td>
 			</tr>
 		</table>
