@@ -72,7 +72,7 @@ function gwc_vt_render_event_editor( int $event_id, string $missing = '' ): void
 	$locations  = gwc_vt_location_vocabulary();
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1>
+		<h1 class="wp-heading-inline">
 			<?php
 			echo $is_new
 				? esc_html__( 'Add New Event', 'groundwork-common-volunteer-tracker' )

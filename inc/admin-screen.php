@@ -524,7 +524,8 @@ function gwc_vt_render_settings_screen(): void {
 	$current = gwc_vt_current_tab();
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php esc_html_e( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_render_colophon(); ?>
 
@@ -718,6 +719,110 @@ function gwc_vt_post_types(): array {
 		GWC_VT_CREDENTIAL_TYPE,
 		GWC_VT_RECORD_TYPE,
 	);
+}
+
+/* ── The header block every list screen wears ────────────────────────────────
+ * Core's list screens are all built the same way above the table, and a reader
+ * knows the shape before they know the screen:
+ *
+ *   <ul class="subsubsub">        which subset am I looking at
+ *   <p class="search-box">        floated right, on that same line
+ *   <div class="tablenav top">    controls on the left, how many on the right
+ *   <table class="wp-list-table">
+ *
+ * This plugin had five custom lists and five arrangements. The schedule put its
+ * search on the left inside a flex row of its own invention and said how many
+ * rows there were nowhere; applications and the letters log had no header block
+ * at all; only credentials had the count. None of that is worse in isolation —
+ * it is worse because it is different, on screens somebody moves between all
+ * day.
+ *
+ * So: three functions, one shape. The filter controls each screen owns go in
+ * the slot core keeps for them, which is what lets the chips stay chips rather
+ * than becoming a <select> nobody asked for.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The search box, in core's markup and core's place.
+ *
+ * A form of its own, because a GET form replaces the query string: everything
+ * else about the view has to be re-posted as a hidden field or searching drops
+ * it. Callers pass those in $keep.
+ *
+ * @param array $args id, name, label, button, value, and keep (hidden fields).
+ */
+function gwc_vt_render_list_search( array $args ): void {
+	$id    = (string) ( $args['id'] ?? 'gwcvt-search' );
+	$name  = (string) ( $args['name'] ?? 's' );
+	$label = (string) ( $args['label'] ?? __( 'Search', 'groundwork-common-volunteer-tracker' ) );
+	$value = (string) ( $args['value'] ?? '' );
+	?>
+	<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="search-form">
+		<?php foreach ( (array) ( $args['keep'] ?? array() ) as $key => $held ) : ?>
+			<input type="hidden" name="<?php echo esc_attr( (string) $key ); ?>" value="<?php echo esc_attr( (string) $held ); ?>" />
+		<?php endforeach; ?>
+
+		<p class="search-box">
+			<label class="screen-reader-text" for="<?php echo esc_attr( $id ); ?>">
+				<?php echo esc_html( $label ); ?>
+			</label>
+			<input
+				type="search"
+				id="<?php echo esc_attr( $id ); ?>"
+				name="<?php echo esc_attr( $name ); ?>"
+				value="<?php echo esc_attr( $value ); ?>"
+				placeholder="<?php echo esc_attr( (string) ( $args['placeholder'] ?? $label ) ); ?>"
+			/>
+			<?php submit_button( (string) ( $args['button'] ?? $label ), 'button', '', false ); ?>
+		</p>
+	</form>
+	<?php
+}
+
+/**
+ * The row above the table: what narrows it on the left, how many on the right.
+ *
+ * The count is core's `displaying-num` in core's `tablenav-pages`, said as "N
+ * items" — the same words on every screen, so the number is read rather than
+ * parsed. `one-page` because nothing here pages yet; the class is what keeps
+ * the box from drawing arrows it has nothing to point at.
+ *
+ * A view switcher goes on the right beside the count, which is where core puts
+ * the Media library's own list-or-grid control — the same question, and the same
+ * answer about where a reader looks for it.
+ *
+ * @param int      $count    How many rows are being shown.
+ * @param callable $filters  Optional. Prints the screen's own filter controls.
+ * @param callable $switcher Optional. Prints a view switcher, right-hand side.
+ */
+function gwc_vt_render_list_tablenav( int $count, $filters = null, $switcher = null ): void {
+	?>
+	<div class="tablenav top">
+		<?php if ( is_callable( $filters ) ) : ?>
+			<div class="alignleft actions">
+				<?php call_user_func( $filters ); ?>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( is_callable( $switcher ) ) : ?>
+			<?php call_user_func( $switcher ); ?>
+		<?php endif; ?>
+
+		<div class="tablenav-pages one-page">
+			<span class="displaying-num">
+				<?php
+				printf(
+					/* translators: %s: how many rows are on the screen, already formatted. */
+					esc_html( _n( '%s item', '%s items', $count, 'groundwork-common-volunteer-tracker' ) ),
+					esc_html( number_format_i18n( $count ) )
+				);
+				?>
+			</span>
+		</div>
+
+		<br class="clear" />
+	</div>
+	<?php
 }
 
 /* ── Quick Edit and Bulk Edit do not belong on any of these records ──────────

@@ -144,7 +144,8 @@ function gwc_vt_render_dashboard(): void {
 	?>
 	<div class="wrap gwcvt-wrap gwcvt-dash">
 
-		<h1><?php esc_html_e( 'Groundwork Common Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Groundwork Common Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<hr class="wp-header-end" />
 
 		<div class="gwcvt-dash__split">
 

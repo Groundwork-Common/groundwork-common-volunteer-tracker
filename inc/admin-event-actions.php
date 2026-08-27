@@ -102,7 +102,7 @@ function gwc_vt_render_call_off_slot( int $shift_id ): void {
 	$roster   = gwc_vt_shift_signup_ids( $shift_id, array( 'publish', GWC_VT_SIGNUP_WAITLIST ) );
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php esc_html_e( 'Call off a time', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Call off a time', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
 		<?php gwc_vt_render_schedule_back( gwc_vt_event_edit_url( $event_id ), __( 'Back to the event', 'groundwork-common-volunteer-tracker' ) ); ?>
 		<hr class="wp-header-end" />
@@ -207,7 +207,7 @@ function gwc_vt_render_drop_role( int $event_id, string $role ): void {
 	}
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php esc_html_e( 'Drop a role', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Drop a role', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
 		<?php gwc_vt_render_schedule_back( gwc_vt_event_edit_url( $event_id ), __( 'Back to the event', 'groundwork-common-volunteer-tracker' ) ); ?>
 		<hr class="wp-header-end" />

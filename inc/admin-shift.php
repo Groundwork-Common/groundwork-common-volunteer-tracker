@@ -50,7 +50,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 	$cancelled  = ! $is_new && gwc_vt_shift_is_cancelled( $shift_id );
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1>
+		<h1 class="wp-heading-inline">
 			<?php
 			echo $is_new
 				? esc_html__( 'Add New Shift', 'groundwork-common-volunteer-tracker' )

@@ -166,7 +166,8 @@ function gwc_vt_render_help_page(): void {
 	$current = gwc_vt_current_help_topic();
 	?>
 	<div class="wrap gwcvt-wrap gwcvt-help">
-		<h1><?php echo esc_html( gwc_vt_help_page_title() ); ?></h1>
+		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_help_page_title() ); ?></h1>
+		<hr class="wp-header-end" />
 
 		<p class="description gwcvt-help__lede">
 			<?php esc_html_e( 'How to do the things this plugin is for. Every screen also has a Help tab at the top right, which explains what the screen means rather than how to use it.', 'groundwork-common-volunteer-tracker' ); ?>

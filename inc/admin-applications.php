@@ -142,7 +142,8 @@ function gwc_vt_render_applications_screen(): void {
 	$waiting = gwc_vt_pending_application_ids();
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php echo esc_html( gwc_vt_applications_title() ); ?></h1>
+		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_applications_title() ); ?></h1>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_applications_notice(); ?>
 
@@ -162,6 +163,8 @@ function gwc_vt_render_applications_screen(): void {
 				<?php esc_html_e( 'Nobody is waiting. Applications sent through the form on your site appear here, and nothing becomes a volunteer record until you say so.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		<?php else : ?>
+
+			<?php gwc_vt_render_list_tablenav( count( $waiting ) ); ?>
 
 		<table class="widefat striped gwcvt-offers">
 			<thead>

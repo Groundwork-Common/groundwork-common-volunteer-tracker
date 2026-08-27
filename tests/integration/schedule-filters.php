@@ -410,7 +410,7 @@ $GLOBALS['gwc_vt_sfl_ev_all'] = gwc_vt_sfl_events_screen();
 
 gwc_vt_sfl_check(
 	'the events list has a find box and chips at all',
-	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-schedule__find' )
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'class="search-box"' )
 		&& false !== strpos( $GLOBALS['gwc_vt_sfl_ev_all'], 'gwcvt-chip-filter' )
 );
 
