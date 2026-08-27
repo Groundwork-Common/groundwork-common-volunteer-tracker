@@ -171,19 +171,125 @@ function gwc_vt_render_credentials_screen(): void {
 }
 
 /**
- * Every credential there is, live ones first and retired ones after.
+ * Which of the two lists somebody asked for.
+ *
+ * The same shape as core's own status views: "All" is the working list and does
+ * not include the retired ones, which have their own link beside it. Retiring is
+ * not deleting — README's ledger has why a retired credential keeps its holders
+ * — so the retired view is a place, not a bin.
+ *
+ * @return string 'retired', or 'all'.
+ */
+function gwc_vt_credentials_status(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation between this screen's two lists; nothing is written from it.
+	$asked = isset( $_GET['gwc_vt_status'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_status'] ) ) : '';
+
+	return 'retired' === $asked ? 'retired' : 'all';
+}
+
+/**
+ * All | Retired, with counts, in core's own markup.
+ *
+ * Retired is offered only when there is one, which is what core does with Trash:
+ * a link reading "Retired (0)" is a permanent invitation to an empty screen.
+ *
+ * @param int    $live    How many are being asked for.
+ * @param int    $retired How many have been retired.
+ * @param string $current Which list is being read.
+ */
+function gwc_vt_render_credentials_views( int $live, int $retired, string $current ): void {
+	?>
+	<ul class="subsubsub">
+		<li class="all">
+			<a
+				href="<?php echo esc_url( gwc_vt_credentials_url() ); ?>"
+				<?php echo 'all' === $current ? 'class="current" aria-current="page"' : ''; ?>
+			>
+				<?php esc_html_e( 'All', 'groundwork-common-volunteer-tracker' ); ?>
+				<span class="count">(<?php echo esc_html( number_format_i18n( $live ) ); ?>)</span>
+			</a>
+			<?php echo $retired > 0 ? ' |' : ''; ?>
+		</li>
+		<?php if ( $retired > 0 ) : ?>
+			<li class="retired">
+				<a
+					href="<?php echo esc_url( gwc_vt_credentials_url( array( 'gwc_vt_status' => 'retired' ) ) ); ?>"
+					<?php echo 'retired' === $current ? 'class="current" aria-current="page"' : ''; ?>
+				>
+					<?php esc_html_e( 'Retired', 'groundwork-common-volunteer-tracker' ); ?>
+					<span class="count">(<?php echo esc_html( number_format_i18n( $retired ) ); ?>)</span>
+				</a>
+			</li>
+		<?php endif; ?>
+	</ul>
+	<?php
+}
+
+/**
+ * The columns, named once for the head, the foot and each row's `data-colname`.
+ *
+ * One array rather than three copies: a heading and the label a narrow screen
+ * shows above the same cell disagreeing is the kind of thing nobody sees on the
+ * wide screen it was written on.
+ *
+ * @return array<string, string> Column key => heading.
+ */
+function gwc_vt_credential_columns(): array {
+	return array(
+		'name'    => __( 'Credential', 'groundwork-common-volunteer-tracker' ),
+		'renewal' => __( 'Renewed', 'groundwork-common-volunteer-tracker' ),
+		'mode'    => __( 'If somebody has not got it', 'groundwork-common-volunteer-tracker' ),
+		'holders' => __( 'Who holds it', 'groundwork-common-volunteer-tracker' ),
+	);
+}
+
+/**
+ * The head, which is also the foot.
+ *
+ * Core's list tables repeat the headings under a long table, and this is one on
+ * a site that asks for a dozen things.
+ */
+function gwc_vt_render_credential_headings(): void {
+	?>
+	<tr>
+		<?php foreach ( gwc_vt_credential_columns() as $key => $heading ) : ?>
+			<th
+				scope="col"
+				class="manage-column column-<?php echo esc_attr( $key ); ?><?php echo 'name' === $key ? ' column-primary' : ''; ?>"
+			>
+				<?php echo esc_html( $heading ); ?>
+			</th>
+		<?php endforeach; ?>
+	</tr>
+	<?php
+}
+
+/**
+ * Every credential in the list somebody asked for.
+ *
+ * The grid is core's: the name is the primary column and carries what you can do
+ * to the row underneath it, rather than a column of buttons standing to
+ * attention on every row whether or not anybody can press them. Retiring is a
+ * once-a-year decision, and a permanent button is loud for a rare one.
  */
 function gwc_vt_render_credentials_list(): void {
 	$live    = gwc_vt_live_credential_ids();
-	$retired = get_posts(
-		array(
-			'post_type'      => GWC_VT_CREDENTIAL_TYPE,
-			'post_status'    => GWC_VT_CREDENTIAL_RETIRED,
-			'posts_per_page' => 100,
-			'fields'         => 'ids',
-			'no_found_rows'  => true,
+	$retired = array_map(
+		'intval',
+		(array) get_posts(
+			array(
+				'post_type'      => GWC_VT_CREDENTIAL_TYPE,
+				'post_status'    => GWC_VT_CREDENTIAL_RETIRED,
+				'posts_per_page' => 100,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			)
 		)
 	);
+
+	$status  = gwc_vt_credentials_status();
+	$showing = 'retired' === $status ? $retired : $live;
+	$columns = gwc_vt_credential_columns();
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_credentials_title() ); ?></h1>
@@ -196,33 +302,50 @@ function gwc_vt_render_credentials_list(): void {
 
 		<?php gwc_vt_credentials_notice(); ?>
 
-		<?php if ( $live || $retired ) : ?>
-			<table class="widefat striped gwcvt-credentials">
-				<thead>
-					<tr>
-						<th scope="col"><?php esc_html_e( 'Credential', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Renewed', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'If somebody has not got it', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Who holds it', 'groundwork-common-volunteer-tracker' ); ?></th>
-						<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'groundwork-common-volunteer-tracker' ); ?></span></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php foreach ( array_merge( $live, array_map( 'intval', (array) $retired ) ) as $credential_id ) : ?>
+		<?php gwc_vt_render_credentials_views( count( $live ), count( $retired ), $status ); ?>
+
+		<div class="tablenav top">
+			<div class="tablenav-pages one-page">
+				<span class="displaying-num">
+					<?php
+					printf(
+						/* translators: %s: a number of credentials, already formatted. */
+						esc_html( _n( '%s item', '%s items', count( $showing ), 'groundwork-common-volunteer-tracker' ) ),
+						esc_html( number_format_i18n( count( $showing ) ) )
+					);
+					?>
+				</span>
+			</div>
+			<br class="clear" />
+		</div>
+
+		<table class="wp-list-table widefat fixed striped table-view-list gwcvt-credentials">
+			<thead>
+				<?php gwc_vt_render_credential_headings(); ?>
+			</thead>
+			<tbody id="the-list">
+				<?php if ( $showing ) : ?>
+					<?php foreach ( $showing as $credential_id ) : ?>
 						<?php gwc_vt_render_credential_row( gwc_vt_credential( (int) $credential_id ) ); ?>
 					<?php endforeach; ?>
-				</tbody>
-			</table>
-		<?php else : ?>
-			<?php /* An empty table is a heading row explaining nothing. The sentence says what is missing, and for somebody who may add one it says how. */ ?>
-			<p class="description">
-				<?php if ( gwc_vt_can_define_credentials() ) : ?>
-					<?php esc_html_e( 'Nothing defined yet. Select “Add a credential” to define the first one.', 'groundwork-common-volunteer-tracker' ); ?>
 				<?php else : ?>
-					<?php esc_html_e( 'Nothing defined yet.', 'groundwork-common-volunteer-tracker' ); ?>
+					<tr class="no-items">
+						<td class="colspanchange" colspan="<?php echo esc_attr( (string) count( $columns ) ); ?>">
+							<?php if ( 'retired' === $status ) : ?>
+								<?php esc_html_e( 'Nothing has been retired.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php elseif ( gwc_vt_can_define_credentials() ) : ?>
+								<?php esc_html_e( 'Nothing defined yet. Select “Add a credential” to define the first one.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php else : ?>
+								<?php esc_html_e( 'Nothing defined yet.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php endif; ?>
+						</td>
+					</tr>
 				<?php endif; ?>
-			</p>
-		<?php endif; ?>
+			</tbody>
+			<tfoot>
+				<?php gwc_vt_render_credential_headings(); ?>
+			</tfoot>
+		</table>
 
 		<?php if ( ! gwc_vt_can_define_credentials() ) : ?>
 			<p class="description">
@@ -243,19 +366,43 @@ function gwc_vt_render_credential_row( array $credential ): void {
 		return;
 	}
 
-	$modes = gwc_vt_credential_modes();
+	$modes   = gwc_vt_credential_modes();
+	$columns = gwc_vt_credential_columns();
 	?>
 	<tr>
-		<td>
+		<td class="name column-name has-row-actions column-primary" data-colname="<?php echo esc_attr( $columns['name'] ); ?>">
 			<strong><?php echo esc_html( $credential['name'] ); ?></strong>
-			<?php if ( $credential['retired'] ) : ?>
-				<span class="gwcvt-badge gwcvt-badge--cancelled"><?php esc_html_e( 'Retired', 'groundwork-common-volunteer-tracker' ); ?></span>
-			<?php endif; ?>
 			<?php if ( '' !== $credential['note'] ) : ?>
 				<br /><span class="description"><?php echo esc_html( $credential['note'] ); ?></span>
 			<?php endif; ?>
+
+			<?php if ( gwc_vt_can_define_credentials() ) : ?>
+				<div class="row-actions">
+					<span class="gwcvt-retire">
+						<?php if ( $credential['retired'] ) : ?>
+							<a href="<?php echo esc_url( gwc_vt_credential_action_url( 'gwc_vt_restore_credential', $credential['id'] ) ); ?>">
+								<?php esc_html_e( 'Put it back', 'groundwork-common-volunteer-tracker' ); ?>
+							</a>
+						<?php else : ?>
+							<a href="<?php echo esc_url( gwc_vt_credential_action_url( 'gwc_vt_retire_credential', $credential['id'] ) ); ?>">
+								<?php esc_html_e( 'Retire', 'groundwork-common-volunteer-tracker' ); ?>
+							</a>
+						<?php endif; ?>
+					</span>
+				</div>
+			<?php endif; ?>
+
+			<?php
+			/* Core's own control, and core's own script behind it: on a narrow
+			 * screen every column but this one is hidden until it is pressed. */
+			?>
+			<button type="button" class="toggle-row">
+				<span class="screen-reader-text">
+					<?php esc_html_e( 'Show more details', 'groundwork-common-volunteer-tracker' ); ?>
+				</span>
+			</button>
 		</td>
-		<td>
+		<td class="renewal column-renewal" data-colname="<?php echo esc_attr( $columns['renewal'] ); ?>">
 			<?php
 			echo esc_html(
 				$credential['months'] > 0
@@ -268,20 +415,11 @@ function gwc_vt_render_credential_row( array $credential ): void {
 			);
 			?>
 		</td>
-		<td><?php echo esc_html( $modes[ $credential['mode'] ] ?? '' ); ?></td>
-		<td><?php gwc_vt_render_credential_holders( $credential['id'] ); ?></td>
-		<td class="gwcvt-credentials__actions">
-			<?php if ( gwc_vt_can_define_credentials() ) : ?>
-				<?php if ( $credential['retired'] ) : ?>
-					<a class="button" href="<?php echo esc_url( gwc_vt_credential_action_url( 'gwc_vt_restore_credential', $credential['id'] ) ); ?>">
-						<?php esc_html_e( 'Put it back', 'groundwork-common-volunteer-tracker' ); ?>
-					</a>
-				<?php else : ?>
-					<a class="button" href="<?php echo esc_url( gwc_vt_credential_action_url( 'gwc_vt_retire_credential', $credential['id'] ) ); ?>">
-						<?php esc_html_e( 'Retire', 'groundwork-common-volunteer-tracker' ); ?>
-					</a>
-				<?php endif; ?>
-			<?php endif; ?>
+		<td class="mode column-mode" data-colname="<?php echo esc_attr( $columns['mode'] ); ?>">
+			<?php echo esc_html( $modes[ $credential['mode'] ] ?? '' ); ?>
+		</td>
+		<td class="holders column-holders" data-colname="<?php echo esc_attr( $columns['holders'] ); ?>">
+			<?php gwc_vt_render_credential_holders( $credential['id'] ); ?>
 		</td>
 	</tr>
 	<?php
