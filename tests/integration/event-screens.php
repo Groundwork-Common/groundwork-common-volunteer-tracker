@@ -363,6 +363,38 @@ gwc_vt_sc_check(
 	implode( ' / ', array_map( 'strlen', $GLOBALS['gwc_vt_sc_bars'] ) ) . ' bytes'
 );
 
+/* Every list offers the calendar, and offers it in the same place. The events
+ * list had no toggle at all, so the calendar was unreachable from it without
+ * going back to the schedule first. Far right is asserted the only way markup
+ * can: it comes after the links it shares a line with, and the row is closed
+ * immediately after it — the float itself is one CSS rule on that class. */
+foreach ( array( 'the schedule', 'the month', 'the events list' ) as $gwc_vt_sc_list ) {
+	$gwc_vt_sc_html = (string) $GLOBALS['gwc_vt_sc_views'][ $gwc_vt_sc_list ]['html'];
+
+	gwc_vt_sc_check(
+		$gwc_vt_sc_list . ' offers the list/calendar toggle',
+		1 === substr_count( $gwc_vt_sc_html, 'gwcvt-schedule__views' ),
+		substr_count( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) . ' toggle(s)'
+	);
+
+	gwc_vt_sc_check(
+		'and puts it after the list links, and last in the row',
+		strpos( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) > strpos( $gwc_vt_sc_html, 'subsubsub' )
+			&& 1 === preg_match(
+				'~gwcvt-schedule__views.*?</span>\s*<br class="clear" />~s',
+				$gwc_vt_sc_html
+			)
+	);
+
+	/* And the same two buttons beside the heading, in the same order. */
+	gwc_vt_sc_check(
+		'and offers both of the things this screen adds',
+		strpos( $gwc_vt_sc_html, 'Add a shift' ) < strpos( $gwc_vt_sc_html, 'Add an event' )
+			&& false !== strpos( $gwc_vt_sc_html, 'Add a shift' ),
+		false === strpos( $gwc_vt_sc_html, 'Add a shift' ) ? 'no shift button' : 'both'
+	);
+}
+
 /* ── A result in the URL is a result on the screen ───────────────────────── */
 
 $_GET['gwc_vt_event_result'] = 'saved';
