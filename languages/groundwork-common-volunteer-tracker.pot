@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T16:43:53+00:00\n"
+"POT-Creation-Date: 2026-08-27T16:49:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -101,18 +101,18 @@ msgid "Oldest first — somebody who applied three weeks ago and heard nothing i
 msgstr ""
 
 #: inc/admin-applications.php:173
-#: inc/admin-volunteer-list.php:165
+#: inc/admin-volunteer-list.php:230
 msgid "Who"
 msgstr ""
 
 #: inc/admin-applications.php:174
-#: inc/admin-volunteer-list.php:166
+#: inc/admin-volunteer-list.php:231
 msgid "What they said"
 msgstr ""
 
 #: inc/admin-applications.php:175
-#: inc/admin-volunteer-list.php:167
-#: inc/admin-volunteer-list.php:333
+#: inc/admin-volunteer-list.php:232
+#: inc/admin-volunteer-list.php:398
 #: inc/privacy.php:915
 msgid "Applied"
 msgstr ""
@@ -137,17 +137,17 @@ msgid "Says they have required service:"
 msgstr ""
 
 #: inc/admin-applications.php:264
-#: inc/admin-volunteer-list.php:190
+#: inc/admin-volunteer-list.php:255
 msgid "Nothing else."
 msgstr ""
 
 #: inc/admin-applications.php:270
-#: inc/admin-volunteer-list.php:244
+#: inc/admin-volunteer-list.php:309
 msgid "Add as a volunteer"
 msgstr ""
 
 #: inc/admin-applications.php:273
-#: inc/admin-volunteer-list.php:249
+#: inc/admin-volunteer-list.php:314
 msgid "Discard"
 msgstr ""
 
@@ -4420,12 +4420,12 @@ msgstr ""
 msgid "Filter by credential"
 msgstr ""
 
-#: inc/admin-volunteer-list.php:262
+#: inc/admin-volunteer-list.php:327
 #: inc/admin-volunteer.php:345
 msgid "Open"
 msgstr ""
 
-#: inc/admin-volunteer-list.php:326
+#: inc/admin-volunteer-list.php:391
 msgid "Active"
 msgstr ""
 

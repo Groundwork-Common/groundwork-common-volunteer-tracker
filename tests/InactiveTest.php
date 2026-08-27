@@ -403,6 +403,78 @@ final class InactiveTest extends TestCase {
 		);
 	}
 
+	/* ── Quick Edit and Bulk Edit are off this list ──────────────────────────
+	 * What they offer is a post's furniture — slug, date, author, password,
+	 * status — none of which means anything about a person, while the fields
+	 * that ARE theirs are meta neither editor can touch.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	/**
+	 * A volunteer row, as core would hand it over.
+	 *
+	 * @return array<string, string>
+	 */
+	private function core_row_actions(): array {
+		return array(
+			'edit'                 => '<a>Edit</a>',
+			'inline hide-if-no-js' => '<button>Quick Edit</button>',
+			'trash'                => '<a>Trash</a>',
+		);
+	}
+
+	public function test_quick_edit_is_off_a_volunteer_row(): void {
+		$actions = gwc_vt_no_quick_edit(
+			$this->core_row_actions(),
+			new WP_Post(
+				array(
+					'ID'        => 1,
+					'post_type' => GWC_VT_VOLUNTEER_TYPE,
+				)
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'inline hide-if-no-js', $actions );
+		$this->assertArrayHasKey( 'edit', $actions, 'opening the record is how you edit a volunteer' );
+		$this->assertArrayHasKey( 'trash', $actions );
+	}
+
+	/**
+	 * And only off this post type. The filter runs on every list in wp-admin.
+	 */
+	public function test_quick_edit_survives_on_everything_else(): void {
+		$this->assertArrayHasKey(
+			'inline hide-if-no-js',
+			gwc_vt_no_quick_edit( $this->core_row_actions(), new WP_Post( array( 'post_type' => 'post' ) ) ),
+			'a filter on post_row_actions sees every list in wp-admin, not just ours'
+		);
+	}
+
+	public function test_bulk_edit_is_off_the_dropdown_but_trash_is_not(): void {
+		$actions = gwc_vt_volunteer_bulk_actions(
+			array(
+				'edit'  => 'Edit',
+				'trash' => 'Move to Trash',
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'edit', $actions );
+		$this->assertArrayHasKey( 'trash', $actions, 'trashing several people at once is a real thing to want' );
+	}
+
+	/**
+	 * Removing the link does not remove the endpoint.
+	 *
+	 * wp-admin/admin-ajax.php lists 'inline-save' among the actions it answers,
+	 * whether or not anything links to it, so the server-side guard is what
+	 * keeps the data right and this is only what makes the interface honest.
+	 */
+	public function test_the_status_guard_is_still_in_place(): void {
+		$this->assertTrue(
+			function_exists( 'gwc_vt_keep_volunteer_status' ),
+			'quick edit is gone from the UI, but wp_ajax_inline_save still answers'
+		);
+	}
+
 	/**
 	 * A view a site added of its own is kept, at the end rather than dropped.
 	 */

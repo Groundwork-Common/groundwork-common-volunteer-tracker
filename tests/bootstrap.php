@@ -377,6 +377,33 @@ function number_format_i18n( $number, $decimals = 0 ) {
  * being applications waiting would be asserting the fixture, not the filter. */
 /* Enough of it to build a link. Ordering and encoding are core's business; what
  * the suite asserts is which view a link points at, not how it spells it. */
+/* Enough of it for the row-action filters, which core hands a real one and
+ * which guard on is_a() precisely so a stray array cannot reach them. */
+if ( ! class_exists( 'WP_Post' ) ) {
+	class WP_Post {
+		/** @var int */
+		public $ID = 0;
+
+		/** @var string */
+		public $post_type = 'post';
+
+		/** @var string */
+		public $post_status = 'publish';
+
+		/** @var string */
+		public $post_title = '';
+
+		/**
+		 * @param array<string, mixed> $fields Whatever the test needs set.
+		 */
+		public function __construct( array $fields = array() ) {
+			foreach ( $fields as $key => $value ) {
+				$this->{$key} = $value;
+			}
+		}
+	}
+}
+
 function add_query_arg( ...$args ) {
 	$url  = is_array( $args[0] ) ? (string) ( $args[1] ?? '' ) : (string) ( $args[2] ?? '' );
 	$pair = is_array( $args[0] ) ? $args[0] : array( $args[0] => $args[1] );

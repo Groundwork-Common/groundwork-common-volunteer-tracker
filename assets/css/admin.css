@@ -2241,14 +2241,15 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 /* ── A volunteer has no post status worth showing ────────────────────────────
    There is no such thing as a draft volunteer, and the only distinction that
-   means anything on this screen — retired or not — has its own control. What
-   is hidden here is core's generic status furniture, on this post type only.
+   means anything on this screen — active or not — has its own control. What is
+   hidden here is core's generic status furniture on the record itself, on this
+   post type only.
 
-   Hiding is the presentation half of it and not the fix: a hidden <select>
-   still posts its value, so gwc_vt_keep_volunteer_status() refuses the change
-   server-side. Take these rules away and the screen looks wrong; take that
-   filter away and a quick edit silently un-retires somebody. */
-.post-type-gwc_vt_volunteer .inline-edit-status,
+   The rule that hid it inside Quick Edit and Bulk Edit went when those two did:
+   a rule that suppresses nothing reads as protection and is not, which is the
+   same argument this repo makes about a stale phpcs:ignore. What still protects
+   the data is gwc_vt_keep_volunteer_status(), because wp_ajax_inline_save is
+   still registered whether or not anything links to it. */
 .post-type-gwc_vt_volunteer #minor-publishing-actions,
 .post-type-gwc_vt_volunteer .misc-pub-post-status,
 .post-type-gwc_vt_volunteer .misc-pub-visibility,
