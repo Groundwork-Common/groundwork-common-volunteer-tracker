@@ -37,6 +37,7 @@ const GWC_VT_CREDENTIALS_PAGE  = 'gwc-vt-credentials';
 const GWC_VT_HELP_PAGE         = 'gwc-vt-help';
 
 add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
+add_filter( 'update_footer', 'gwc_vt_admin_footer_version', 20 );
 add_action( 'admin_init', 'gwc_vt_handle_colophon_toggle' );
 add_action( 'admin_menu', 'gwc_vt_register_menu' );
 
@@ -641,6 +642,57 @@ function gwc_vt_admin_footer_text( $text ) {
 			esc_url( GWC_VT_GWC_URL ),
 			esc_html__( 'Groundwork Common', 'groundwork-common-volunteer-tracker' )
 		)
+	);
+}
+
+/**
+ * Say whose version each number is, on this plugin's own screens.
+ *
+ * ── The problem ──────────────────────────────────────────────────────────────
+ * The right-hand footer is WordPress's, and it says "Version 7.1" — meaning
+ * WordPress. On every other screen in wp-admin that is unambiguous, because the
+ * left-hand side says "Thank you for creating with WordPress". Here the left
+ * says "Built by Groundwork Common", and the bare number beside it reads as this
+ * plugin's: a plugin at version 1.0.0 appearing to be at 7.1.
+ *
+ * So on our screens both numbers are labelled — "Volunteer Tracker 1.0.0" and
+ * "WordPress 7.1" — and the ambiguity goes with the label rather than with the
+ * number being removed. Somebody reporting a problem is being asked for both.
+ *
+ * ── Why an available update is left alone ────────────────────────────────────
+ * When WordPress has an update to offer, this footer stops being a version
+ * number and becomes the prompt — a link to the update screen, sometimes the
+ * only one on the page. Rewriting that would take a security prompt off the
+ * screen to tidy up a label, so when core's text carries a link this only adds
+ * ours in front of it and leaves core's exactly as it was.
+ *
+ * @param string $content What core, or another plugin, has put there.
+ * @return string
+ */
+function gwc_vt_admin_footer_version( $content ) {
+	if ( ! gwc_vt_is_plugin_screen() ) {
+		return $content;
+	}
+
+	/* The name is inside the string rather than a second placeholder: "%1$s
+	 * %2$s" is not a sentence, it is two words a translator cannot place, and
+	 * TranslatorCommentTest rightly refuses to let one POT entry mean both this
+	 * and the menu label's count bubble. */
+	$ours = sprintf(
+		/* translators: %s: this plugin's version number. */
+		esc_html__( 'Volunteer Tracker %s', 'groundwork-common-volunteer-tracker' ),
+		esc_html( GWC_VT_VERSION )
+	);
+
+	/* A link means core is asking for something rather than stating a fact. */
+	if ( false !== strpos( (string) $content, '<a ' ) ) {
+		return $ours . ' &middot; ' . $content;
+	}
+
+	return $ours . ' &middot; ' . sprintf(
+		/* translators: %s: the version of WordPress this site runs. */
+		esc_html__( 'WordPress %s', 'groundwork-common-volunteer-tracker' ),
+		esc_html( (string) get_bloginfo( 'version' ) )
 	);
 }
 
