@@ -4,8 +4,11 @@ phpunit-*.phar
 .phpunit.cache/
 .phpunit.result.cache
 
-# wp-env writes this when a developer overrides ports or mounts locally.
+# wp-env overrides: ports and the worktree mount. Written by bin/wpenv, which
+# generates one per config file — wp-env derives an override's name from the
+# --config it was given, so the 7.4 floor gets its own.
 .wp-env.override.json
+.wp-env.php74.override.json
 
 # Written by the Tests workflow, one per PHP version in the matrix. Committed
 # nowhere: the versions it is generated for live in .github/workflows/test.yml,
