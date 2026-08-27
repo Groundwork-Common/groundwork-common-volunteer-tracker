@@ -303,7 +303,7 @@ function gwc_vt_add_credentials_help( $screen ): void {
 		'gwc-vt-credentials-expiry',
 		__( 'Renewing', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'When something expires is worked out from the day it was granted, and is never stored. Change a credential from twelve months to twenty-four and everybody who holds it is re-dated — there are no old dates left behind.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An expiry date is worked out from the day the credential was granted, and is never stored. Change a credential from twelve months to twenty-four and everybody who holds it is re-dated — there are no old dates left behind.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Somebody who did it on the 31st renews on the 31st, or on the last day of a month that is shorter.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Recording a renewal does not replace what came before it. Every grant is kept, so “renewed every year since 2019” is still there to read.', 'groundwork-common-volunteer-tracker' ),
 		)
@@ -374,7 +374,7 @@ function gwc_vt_add_verify_help( $screen ): void {
 		'gwc-vt-verify-what',
 		__( 'What verifying means', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'A member of your staff saying the work happened. Who did it and when is recorded, and it appears on any letter that includes those hours.', 'groundwork-common-volunteer-tracker' ),
+			__( 'A member of your staff saying the work happened. The plugin records who did it and when, and both appear on any letter that includes those hours.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Only verified hours reach a letter. Everything waiting here counts toward nothing until somebody says it happened.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
@@ -520,7 +520,7 @@ function gwc_vt_add_schedule_help( $screen ): void {
 		__( 'Events', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'An event is one occasion with several roles, each offered at several times — a festival, a meal service, a collection drive. Underneath it there is nothing new: every time on an event is an ordinary shift, so waiting lists, reminders, rosters and hours all behave exactly as they do for a shift you scheduled on its own.', 'groundwork-common-volunteer-tracker' ),
-			__( 'You build the day as a grid. Name a role once and hang its times underneath it; the role’s supervisor, address and what-to-know are typed once and carried down to every time in it. Anything a single time names for itself wins over the role, and anything the role names wins over the event — most specific wins, and nothing is ever appended to anything else.', 'groundwork-common-volunteer-tracker' ),
+			__( 'You build the day as a grid. Name a role once and hang its times underneath it; the role’s supervisor, address and <strong>What to know</strong> are typed once and carried down to every time in it. Anything a single time names for itself wins over the role, and anything the role names wins over the event — most specific wins, and nothing is ever appended to anything else.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The date is not something you fill in. It is read from the times in the grid, because a second date field is a second answer and it disagrees with the first the moment somebody moves one time.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Calling off a time and dropping a role are buttons rather than something you do by clearing a field, and each asks first. Removing a time cancels it when people are on it and deletes it only when nobody is — the row tells you which before you save.', 'groundwork-common-volunteer-tracker' ),
 			__( '<strong>Copy</strong> puts the whole day on a new date, roles and times and all, saved as a draft so you can check the dates before anybody sees it.', 'groundwork-common-volunteer-tracker' ),

@@ -60,7 +60,7 @@ function gwc_vt_settings_fields(): array {
 			'type'    => 'textarea',
 			'rows'    => 3,
 			'label'   => __( 'Address', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Printed under the name. One line per line.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Printed under the name. Each line you type is a line on the letter.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'org_logo'                  => array(
 			'tab'     => 'letter',
@@ -306,7 +306,7 @@ function gwc_vt_settings_fields(): array {
 			'type'    => 'select',
 			'label'   => __( 'Keep volunteer records for', 'groundwork-common-volunteer-tracker' ),
 			'options' => 'gwc_vt_retention_period_options',
-			'help'    => __( '"Keep indefinitely" is a legitimate answer, and it is the default — a plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date. What is not legitimate is never deciding, which is why this tab nags until you save it.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( '"Keep indefinitely" is a legitimate answer, and it is the default — a plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date. Never deciding is the answer that is not legitimate, which is why this tab keeps asking until you save it.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'retention_action'          => array(
 			'tab'     => 'privacy',

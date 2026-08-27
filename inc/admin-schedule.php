@@ -999,7 +999,7 @@ function gwc_vt_schedule_notice(): void {
 		/* Not a success message with a footnote. Somebody was put on a shift
 		 * they are not qualified for, on purpose, and the confirmation says so
 		 * plainly — the roster shows who decided and why from here on. */
-		'rostered-override' => __( 'Added, over a credential they do not hold. Who decided and why is recorded on the roster.', 'groundwork-common-volunteer-tracker' ),
+		'rostered-override' => __( 'Added, over a credential they do not hold. The roster records who decided, and why.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
@@ -2210,7 +2210,7 @@ function gwc_vt_event_notice(): void {
 		'deleted'           => __( 'The event was deleted.', 'groundwork-common-volunteer-tracker' ),
 		'promoted'          => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
 		'rostered'          => __( 'They are on the list.', 'groundwork-common-volunteer-tracker' ),
-		'rostered-override' => __( 'Added, over a credential they do not hold. Who decided and why is recorded on the roster.', 'groundwork-common-volunteer-tracker' ),
+		'rostered-override' => __( 'Added, over a credential they do not hold. The roster records who decided, and why.', 'groundwork-common-volunteer-tracker' ),
 		'no-title'          => __( 'An event needs a name — it is what volunteers will recognize it by.', 'groundwork-common-volunteer-tracker' ),
 		'no-role'           => __( 'A role with times under it needs a name. Nothing was saved.', 'groundwork-common-volunteer-tracker' ),
 		'bad-time'          => __( 'One of the times could not be read. A time needs a date, a start and an end, and the end must come after the start unless it runs past midnight.', 'groundwork-common-volunteer-tracker' ),
