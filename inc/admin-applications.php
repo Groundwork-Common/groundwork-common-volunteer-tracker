@@ -163,10 +163,6 @@ function gwc_vt_render_applications_screen(): void {
 			</p>
 		<?php else : ?>
 
-		<p class="description">
-			<?php esc_html_e( 'Oldest first — somebody who applied three weeks ago and heard nothing is who this queue is for. Nothing here is a volunteer record yet, and none of it appears anywhere else on your site.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
-
 		<table class="widefat striped gwcvt-offers">
 			<thead>
 				<tr id="gwcvt-application-<?php echo esc_attr( (string) $application_id ); ?>">

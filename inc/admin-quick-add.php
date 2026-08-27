@@ -202,10 +202,6 @@ function gwc_vt_render_blank_day_screen(): void {
 
 		<?php gwc_vt_quick_add_notice(); ?>
 
-		<p class="description gwcvt-quick-add__intro">
-			<?php esc_html_e( 'For typing up a sign-in sheet. Everything the shift had in common goes at the top; add each volunteer and the hours they worked below. They arrive unverified, the same as any other entry.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
-
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-quick-add">
 			<input type="hidden" name="action" value="gwc_vt_quick_add" />
 			<?php wp_nonce_field( 'gwc_vt_quick_add' ); ?>

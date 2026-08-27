@@ -608,10 +608,6 @@ a.gwcvt-badge--action:focus-visible {
    The things a shift has in common at the top, the people below. The hours
    column is narrow on purpose: it takes "3.5" or "3:30", and a wide box invites
    somebody to write a sentence in it. */
-.gwcvt-quick-add__intro {
-	max-width: 46em;
-}
-
 .gwcvt-quick-add__people {
 	max-width: 48em;
 }
@@ -1996,10 +1992,6 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 /* ─── Letter records, and producing one ─────────────────────────────────────
    Two screens now rather than one with three jobs on it. The log keeps the menu
    page; producing a letter starts from the volunteer it is about. */
-.gwcvt-letters__intro {
-	max-width: 46em;
-}
-
 .gwcvt-letters__log {
 	max-width: 46em;
 	margin-top: 16px;
