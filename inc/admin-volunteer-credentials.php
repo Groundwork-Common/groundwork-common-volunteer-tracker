@@ -115,13 +115,40 @@ function gwc_vt_render_volunteer_credentials_box( $post ): void {
 
 	wp_nonce_field( 'gwc_vt_save_volunteer_credential', 'gwc_vt_credential_nonce' );
 
-	echo '<table class="widefat striped gwcvt-held"><tbody>';
+	/* ── What this person holds, not what the organization asks for ───────────
+	 * The table listed every credential defined anywhere and said "not recorded"
+	 * against most of them, so a volunteer who holds one of six read as five
+	 * pieces of bad news and one fact. A record is about the person; the list of
+	 * what the organization asks for is a screen of its own, and the field below
+	 * is how you add to what is here.
+	 *
+	 * Asked over ALL credentials rather than the live ones, which is a second
+	 * thing this fixes: somebody who holds a credential the organization has
+	 * since retired held it all along and the old loop never showed it, because
+	 * it walked the definitions rather than the grants. Retiring stops asking;
+	 * it does not un-hold. */
+	$held = array();
 
-	foreach ( $live as $credential_id ) {
-		gwc_vt_render_held_row( $volunteer_id, (int) $credential_id );
+	foreach ( gwc_vt_all_credential_ids() as $credential_id ) {
+		if ( GWC_VT_HOLDS_NEVER !== gwc_vt_volunteer_holds( $volunteer_id, (int) $credential_id ) ) {
+			$held[] = (int) $credential_id;
+		}
 	}
 
-	echo '</tbody></table>';
+	if ( $held ) {
+		echo '<table class="widefat striped gwcvt-held"><tbody>';
+
+		foreach ( $held as $credential_id ) {
+			gwc_vt_render_held_row( $volunteer_id, (int) $credential_id );
+		}
+
+		echo '</tbody></table>';
+	} else {
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'Nothing recorded for this volunteer yet.', 'groundwork-common-volunteer-tracker' )
+		);
+	}
 
 	gwc_vt_render_record_credential_field( $volunteer_id, $live );
 }
@@ -143,7 +170,13 @@ function gwc_vt_render_held_row( int $volunteer_id, int $credential_id ): void {
 	$until    = gwc_vt_volunteer_holds_until( $volunteer_id, $credential_id );
 	?>
 	<tr>
-		<td><strong><?php echo esc_html( $credential['name'] ); ?></strong></td>
+		<td>
+			<strong><?php echo esc_html( $credential['name'] ); ?></strong>
+			<?php if ( ! empty( $credential['retired'] ) ) : ?>
+				<?php /* They hold it; the organization simply stopped asking. */ ?>
+				<span class="gwcvt-held__retired"><?php echo esc_html_x( 'Retired', 'credential status', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<?php endif; ?>
+		</td>
 		<td><?php echo wp_kses_post( gwc_vt_standing_badge( $standing ) ); ?></td>
 		<td>
 			<?php
