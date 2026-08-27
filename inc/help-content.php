@@ -320,9 +320,10 @@ function gwc_vt_help_topics(): array {
 	 * that has scheduling off, "Schedule a shift" opens by telling somebody to
 	 * go to a menu row that is not there, and says nothing about why — and the
 	 * letters topic names a button the volunteer record does not carry. The same
-	 * rule the rest of the help follows: gwc_vt_help_screens() lists the two
-	 * letter screens only when letters are on, and the Log a day tab offers
-	 * "Logging from a shift" only where a shift can exist.
+	 * rule the rest of the help follows: gwc_vt_help_screens() lists the
+	 * schedule and the two letter screens only when their own feature is on,
+	 * and the Log a day tab offers "Logging from a shift" only where a shift
+	 * can exist.
 	 *
 	 * Neither becomes unfindable. Both are switched on from Settings, whose tabs
 	 * are all present whatever a site uses, and the guide's own "Let people sign

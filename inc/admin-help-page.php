@@ -1,6 +1,6 @@
 <?php
 /**
- * One page carrying everything the Help tabs say.
+ * One page carrying the how-to guide.
  *
  * ── Why a page as well as the tabs, and not instead of them ──────────────────
  * inc/admin-help.php argues for the Help tab, and the argument is right as far
@@ -44,14 +44,6 @@
  * starts explaining what a credential IS, it belongs in the tab, and if a tab
  * starts listing steps, they belong here.
  *
- * So the tabs stay where they are and this carries its own document, written to
- * the Microsoft Writing Style Guide. inc/help-content.php holds it as data and
- * explains the conventions; this file is the loop that prints it.
- *
- * The two are not duplicates and must not become each other: if a how-to here
- * starts explaining what a credential IS, it belongs in the tab, and if a tab
- * starts listing steps, they belong here.
- *
  * @package VolunteerTracker
  */
 
@@ -61,12 +53,21 @@ add_action( 'admin_menu', 'gwc_vt_register_help_page', 90 );
 
 
 /**
- * Every screen with help, and what to call it here.
+ * Every screen that must have a Help tab, and what to call it when one does not.
  *
- * One definition. The page renders from it and tests/integration/help.php
- * checks against it, so a screen added to the plugin and not to this list is a
- * screen the guard stops guarding — which is the failure that put six screens
- * without help into a release in the first place.
+ * The page below renders the how-to guide and not this — the list survived that
+ * change because it is what tests/integration/help.php walks. It is the one
+ * place a screen is named, so a screen added to the plugin and not to this list
+ * is a screen the guard stops guarding, which is the failure that put six
+ * screens without help into a release in the first place.
+ *
+ * It lives here rather than in the test because a list in tests/ is a list that
+ * can quietly disagree with the plugin; and the labels are translated because
+ * they are what a failure reads out.
+ *
+ * A screen only registered when a feature is switched on is listed only then,
+ * for the same reason: the guard would otherwise fail over help for a screen
+ * that is not there to have any.
  *
  * @return array<string, string> Label => WP_Screen id.
  */
@@ -75,7 +76,6 @@ function gwc_vt_help_screens(): array {
 
 	$screens = array(
 		__( 'The dashboard', 'groundwork-common-volunteer-tracker' )        => $page . GWC_VT_DASHBOARD_PAGE,
-		__( 'The schedule', 'groundwork-common-volunteer-tracker' )         => $page . GWC_VT_SCHEDULE_PAGE,
 		__( 'Hours', 'groundwork-common-volunteer-tracker' )                => 'edit-' . GWC_VT_ENTRY_TYPE,
 		__( 'Logging a day', 'groundwork-common-volunteer-tracker' )        => $page . GWC_VT_QUICK_ADD_PAGE,
 		__( 'Verifying hours', 'groundwork-common-volunteer-tracker' )      => $page . GWC_VT_VERIFY_PAGE,
@@ -87,45 +87,28 @@ function gwc_vt_help_screens(): array {
 		__( 'Settings', 'groundwork-common-volunteer-tracker' )             => $page . GWC_VT_SETTINGS_PAGE,
 	);
 
+	/* The schedule only when the organization runs shifts. The screen itself is
+	 * registered under that switch, so on a site without it there is nothing to
+	 * hold a Help tab and the guard would be asking after help for a screen that
+	 * does not exist. The repeat editor is listed unconditionally above because
+	 * it is registered unconditionally.
+	 *
+	 * Added after the dashboard rather than beside it: order here is only what a
+	 * failure reads out, and a conditional entry cannot be spelled in the middle
+	 * of an array literal. */
+	if ( gwc_vt_shifts_enabled() ) {
+		$screens[ __( 'The schedule', 'groundwork-common-volunteer-tracker' ) ] = $page . GWC_VT_SCHEDULE_PAGE;
+	}
+
 	/* The two letter screens only when the organization issues letters — their
-	 * help is gated the same way, so listing them unconditionally would print
-	 * two empty headings on a site that does not. */
+	 * help is gated the same way, so listing them unconditionally would ask
+	 * after help that a site without letters has no screens to carry. */
 	if ( gwc_vt_letters_enabled() ) {
 		$screens[ __( 'Producing a letter', 'groundwork-common-volunteer-tracker' ) ]   = $page . GWC_VT_PRODUCE_PAGE;
 		$screens[ __( 'Verification letters', 'groundwork-common-volunteer-tracker' ) ] = $page . GWC_VT_LETTERS_PAGE;
 	}
 
 	return $screens;
-}
-
-/**
- * What one screen's Help tab would say, without disturbing this one.
- *
- * WP_Screen::get() builds the object; set_current_screen() would have made it
- * current, replacing the screen being rendered. The tabs are cleared first
- * because WP_Screen::get() returns a cached instance for an id already seen,
- * which would otherwise hand back tabs added on a previous pass and print them
- * twice.
- *
- * @param string $screen_id A WP_Screen id.
- * @return array<int, array> Tabs, in the order the screen adds them.
- */
-function gwc_vt_help_tabs_for_screen( string $screen_id ): array {
-	if ( ! class_exists( 'WP_Screen' ) ) {
-		return array();
-	}
-
-	$screen = WP_Screen::get( $screen_id );
-
-	foreach ( array_keys( $screen->get_help_tabs() ) as $existing ) {
-		$screen->remove_help_tab( $existing );
-	}
-
-	/* The plugin's own routing, not a second copy of it: whatever a screen gets
-	 * contextually is exactly what appears here. */
-	gwc_vt_add_screen_help( $screen );
-
-	return array_values( $screen->get_help_tabs() );
 }
 
 /**
@@ -326,17 +309,4 @@ function gwc_vt_help_topic_for_screen( string $screen_id ): string {
 	}
 
 	return '';
-}
-
-/**
- * A stable anchor for one screen's section.
- *
- * Kept for tests/integration/help.php, which still walks every screen to check
- * each one has a Help tab — that guard outlived the page rendering from it.
- *
- * @param string $screen_id A WP_Screen id.
- * @return string
- */
-function gwc_vt_help_anchor( string $screen_id ): string {
-	return 'gwcvt-help-' . sanitize_html_class( $screen_id );
 }
