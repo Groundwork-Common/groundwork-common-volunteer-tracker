@@ -348,11 +348,8 @@ function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 	<div class="wrap gwcvt-wrap">
 		<h1><?php esc_html_e( 'Log the hours for this shift', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
-		<p>
-			<a href="<?php echo esc_url( gwc_vt_schedule_url( array( 'shift' => $shift_id ) ) ); ?>">
-				&larr; <?php esc_html_e( 'Back to the shift', 'groundwork-common-volunteer-tracker' ); ?>
-			</a>
-		</p>
+		<?php gwc_vt_render_schedule_back( gwc_vt_schedule_url( array( 'shift' => $shift_id ) ), __( 'Back to the shift', 'groundwork-common-volunteer-tracker' ) ); ?>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_quick_add_notice(); ?>
 

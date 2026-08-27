@@ -277,6 +277,151 @@ gwc_vt_sc_check( 'the public grid shows a count', false !== strpos( $gwc_vt_grid
 /* The one that matters most. Somebody is on two of these slots. */
 gwc_vt_sc_check( 'THE PUBLIC GRID NAMES NOBODY', false === strpos( $gwc_vt_grid, 'Dana' ) );
 
+/* ── Every sub-view of the schedule behaves the same way ─────────────────────
+ * These screens grew one at a time and stopped agreeing about the things a
+ * screen does rather than shows: where the way out is, where a notice lands,
+ * and whether anything is said at all. The worst of it was silent — the event
+ * editor and the roster are where every event redirect ARRIVES, and neither
+ * printed the result it arrived with, so saving an event said nothing and a
+ * refused roster addition looked like a button that does nothing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+echo "\n── The sub-views agree ──────────────────────────────────────────\n";
+
+$GLOBALS['gwc_vt_sc_views'] = array(
+	'the schedule'     => array( 'html' => gwc_vt_sc_render( 'the schedule, again', function () {
+		gwc_vt_render_schedule_list();
+	} ), 'back' => false ),
+	'the month'        => array( 'html' => gwc_vt_sc_render( 'the month', function () {
+		gwc_vt_render_schedule_month();
+	} ), 'back' => false ),
+	'the events list'  => array( 'html' => gwc_vt_sc_render( 'the events list, again', function () {
+		gwc_vt_render_events_list();
+	} ), 'back' => false ),
+	'the event editor' => array( 'html' => $gwc_vt_editor, 'back' => true ),
+	'the roster'       => array( 'html' => $gwc_vt_roster, 'back' => true ),
+	'the call-off'     => array( 'html' => $gwc_vt_ask_slot, 'back' => true ),
+	'the drop-role'    => array( 'html' => $gwc_vt_ask_role, 'back' => true ),
+	'the shift editor' => array( 'html' => gwc_vt_sc_render( 'the shift editor', function () use ( $gwc_vt_slots ) {
+		gwc_vt_render_shift_editor( (int) $gwc_vt_slots[0] );
+	} ), 'back' => true ),
+);
+
+foreach ( $GLOBALS['gwc_vt_sc_views'] as $gwc_vt_sc_what => $gwc_vt_sc_view ) {
+	/* Core moves every notice to just after this, so a screen without one puts
+	 * its messages somewhere else than the screen beside it does. */
+	gwc_vt_sc_check(
+		$gwc_vt_sc_what . ' marks where its header ends, once',
+		1 === substr_count( (string) $gwc_vt_sc_view['html'], 'wp-header-end' ),
+		substr_count( (string) $gwc_vt_sc_view['html'], 'wp-header-end' ) . ' marker(s)'
+	);
+
+	if ( ! $gwc_vt_sc_view['back'] ) {
+		continue;
+	}
+
+	gwc_vt_sc_check(
+		$gwc_vt_sc_what . ' offers the way back, in the one shape',
+		1 === substr_count( (string) $gwc_vt_sc_view['html'], 'class="gwcvt-back"' ),
+		substr_count( (string) $gwc_vt_sc_view['html'], 'class="gwcvt-back"' ) . ' link(s)'
+	);
+}
+
+/* The three lists offer the same three lists. The events view used to offer
+ * "Coming up" and itself, so arriving there took the past and the calendar off
+ * the screen, with the browser's own back button as the only way to either. */
+$GLOBALS['gwc_vt_sc_bars'] = array();
+
+foreach ( array( 'the schedule', 'the month', 'the events list' ) as $gwc_vt_sc_list ) {
+	preg_match(
+		'~<ul class="subsubsub">.*?</ul>~s',
+		(string) $GLOBALS['gwc_vt_sc_views'][ $gwc_vt_sc_list ]['html'],
+		$gwc_vt_sc_hit
+	);
+
+	/* Compared on the links themselves, not the markup: which one is marked
+	 * current is the only difference the three are allowed. Whitespace is
+	 * collapsed after the attribute goes, because the view that marks nothing
+	 * still prints the space the attribute would have sat in. */
+	$GLOBALS['gwc_vt_sc_bars'][ $gwc_vt_sc_list ] = trim(
+		(string) preg_replace(
+			'~\s+~',
+			' ',
+			(string) preg_replace(
+				'~class="current" aria-current="page"~',
+				'',
+				(string) ( $gwc_vt_sc_hit[0] ?? '' )
+			)
+		)
+	);
+}
+
+gwc_vt_sc_check(
+	'all three lists carry the same three links',
+	1 === count( array_unique( $GLOBALS['gwc_vt_sc_bars'] ) )
+		&& '' !== reset( $GLOBALS['gwc_vt_sc_bars'] ),
+	implode( ' / ', array_map( 'strlen', $GLOBALS['gwc_vt_sc_bars'] ) ) . ' bytes'
+);
+
+/* ── A result in the URL is a result on the screen ───────────────────────── */
+
+$_GET['gwc_vt_event_result'] = 'saved';
+
+$GLOBALS['gwc_vt_sc_said'] = array(
+	'the event editor' => gwc_vt_sc_render( 'the event editor, arrived at from a save', function () use ( $gwc_vt_event ) {
+		gwc_vt_render_event_editor( $gwc_vt_event );
+	} ),
+	'the roster'       => gwc_vt_sc_render( 'the roster, arrived at from a save', function () use ( $gwc_vt_event ) {
+		gwc_vt_render_event_roster( $gwc_vt_event );
+	} ),
+	'the events list'  => gwc_vt_sc_render( 'the events list, arrived at from a save', function () {
+		gwc_vt_render_events_list();
+	} ),
+);
+
+unset( $_GET['gwc_vt_event_result'] );
+
+foreach ( $GLOBALS['gwc_vt_sc_said'] as $gwc_vt_sc_where => $gwc_vt_sc_html ) {
+	gwc_vt_sc_check(
+		$gwc_vt_sc_where . ' says what the redirect that landed on it did',
+		false !== strpos( (string) $gwc_vt_sc_html, 'Saved.' )
+	);
+}
+
+/* ── And a URL naming something that is gone says so ─────────────────────── */
+
+$GLOBALS['gwc_vt_sc_gone'] = array(
+	'a shift that is not there' => array( 'shift', (string) ( $gwc_vt_event + 4000 ), 'That shift is not there' ),
+	'an event that is not there' => array( 'gwc_vt_event', (string) ( $gwc_vt_event + 4000 ), 'That event is not there' ),
+);
+
+foreach ( $GLOBALS['gwc_vt_sc_gone'] as $gwc_vt_sc_case => $gwc_vt_sc_ask ) {
+	$_GET[ $gwc_vt_sc_ask[0] ] = $gwc_vt_sc_ask[1];
+
+	$gwc_vt_sc_html = gwc_vt_sc_render( $gwc_vt_sc_case . ' lands somewhere', 'gwc_vt_render_schedule_screen' );
+
+	unset( $_GET[ $gwc_vt_sc_ask[0] ] );
+
+	gwc_vt_sc_check(
+		'and ' . $gwc_vt_sc_case . ' says so rather than silently showing the schedule',
+		false !== strpos( $gwc_vt_sc_html, $gwc_vt_sc_ask[2] )
+	);
+}
+
+/* A time that is not part of this event lands on the event, and says why. */
+$_GET['gwc_vt_event'] = (string) $gwc_vt_event;
+$_GET['view']         = 'call-off';
+$_GET['slot']         = (string) ( $gwc_vt_event + 4000 );
+
+$GLOBALS['gwc_vt_sc_slot'] = gwc_vt_sc_render( 'a time that is not on this event', 'gwc_vt_render_schedule_screen' );
+
+unset( $_GET['gwc_vt_event'], $_GET['view'], $_GET['slot'] );
+
+gwc_vt_sc_check(
+	'and it says that, on the event it fell back to',
+	false !== strpos( $GLOBALS['gwc_vt_sc_slot'], 'That time is not part of this event' )
+);
+
 /* ── Teardown ────────────────────────────────────────────────────────────── */
 
 restore_error_handler();

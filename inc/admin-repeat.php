@@ -133,6 +133,10 @@ function gwc_vt_render_repeat_screen(): void {
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1><?php echo esc_html( gwc_vt_repeat_page_title() ); ?></h1>
+
+		<?php gwc_vt_render_schedule_back( gwc_vt_schedule_url(), __( 'Back to the schedule', 'groundwork-common-volunteer-tracker' ) ); ?>
+		<hr class="wp-header-end" />
+
 		<?php
 		if ( $series_id < 1 ) {
 			/* A one-off has nothing to apply across, and saying so is better
@@ -141,12 +145,6 @@ function gwc_vt_render_repeat_screen(): void {
 			printf(
 				'<div class="notice notice-error"><p>%s</p></div>',
 				esc_html__( 'That shift is not part of a repeat, so there is nothing to change across. Edit it on its own instead.', 'groundwork-common-volunteer-tracker' )
-			);
-
-			printf(
-				'<p><a class="button" href="%1$s">%2$s</a></p>',
-				esc_url( gwc_vt_schedule_url() ),
-				esc_html__( 'Back to the schedule', 'groundwork-common-volunteer-tracker' )
 			);
 
 			echo '</div>';
