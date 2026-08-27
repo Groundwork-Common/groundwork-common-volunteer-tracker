@@ -184,11 +184,16 @@ function gwc_vt_render_volunteer_status_box( $post ): void {
 
 
 		<?php
-		/* ── A label and a value, never a sentence with a unit in it ──────────
+		/* ── The unit belongs in the label, never in the value ────────────────
 		 * gwc_vt_format_hours() respects the site's hour_format, so it returns
-		 * "10" on one site and "10h 00m" on another, and "%s hours" reads
-		 * "10h 00m hours" on the second. The applications screen and the letter
-		 * both solve this the same way and say so; this is the third. */
+		 * "10" on one site and "10h 00m" on another. "%s hours" therefore reads
+		 * "10h 00m hours" on the second, which is why the applications screen
+		 * and the letter both refuse to build that sentence and say so.
+		 *
+		 * "Verified hours" as the label carries the unit on the site that needs
+		 * one and does not repeat it on the site that does not — and it is the
+		 * same wording as the volunteer list's column, so the two screens agree
+		 * about what the number is. */
 		?>
 		<dl class="gwcvt-standing__facts">
 			<div>
@@ -198,7 +203,7 @@ function gwc_vt_render_volunteer_status_box( $post ): void {
 
 			<?php if ( ! $totals->is_empty() ) : ?>
 				<div>
-					<dt><?php esc_html_e( 'Verified time', 'groundwork-common-volunteer-tracker' ); ?></dt>
+					<dt><?php esc_html_e( 'Verified hours', 'groundwork-common-volunteer-tracker' ); ?></dt>
 					<dd><?php echo esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ); ?></dd>
 				</div>
 
