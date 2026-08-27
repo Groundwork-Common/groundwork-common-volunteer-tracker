@@ -366,6 +366,44 @@ final class InactiveTest extends TestCase {
 	}
 
 	/**
+	 * No two features may claim the same query var.
+	 *
+	 * This one is not hypothetical. The list views first used 'gwc_vt_view',
+	 * which the dashboard's list-and-grid toggle already owned — and owns with
+	 * a nonce on it, so every view link reached that handler, failed its
+	 * check_admin_referer() and died with "The link you followed has expired."
+	 * on a link that never needed a nonce. Nothing failed until somebody
+	 * clicked one, because a query var collision is invisible to every test
+	 * that does not make the request.
+	 *
+	 * Read out of the source, because the names are what collide.
+	 */
+	public function test_no_other_feature_claims_this_query_var(): void {
+		$others = array();
+
+		foreach ( (array) glob( GWC_VT_DIR . 'inc/*.php' ) as $file ) {
+			if ( 'admin-volunteer-list.php' === basename( (string) $file ) ) {
+				continue;
+			}
+
+			$source = (string) file_get_contents( (string) $file );
+
+			/* Both spellings, because a collision does not care which one the
+			 * other feature used: a literal in its $_GET[], or the name written
+			 * anywhere it builds a link. */
+			if ( false !== strpos( $source, "'" . GWC_VT_LIST_VIEW . "'" ) ) {
+				$others[] = basename( (string) $file );
+			}
+		}
+
+		$this->assertSame(
+			array(),
+			$others,
+			'another file uses this query var, and whichever of them checks a nonce will kill the other one\'s links'
+		);
+	}
+
+	/**
 	 * A view a site added of its own is kept, at the end rather than dropped.
 	 */
 	public function test_somebody_elses_view_is_kept(): void {
