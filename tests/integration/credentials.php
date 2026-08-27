@@ -765,6 +765,168 @@ if ( ! is_wp_error( $GLOBALS['gwc_vt_cr_reader'] ) ) {
 	wp_delete_user( (int) $GLOBALS['gwc_vt_cr_reader'] );
 }
 
+echo "\n── 10c. And a credential can be edited ──────────────────────────\n";
+
+/* The screen was add-only and said why: renaming is what somebody will want,
+ * and changing the interval re-dates every expiry on the site, "which deserves
+ * its own screen saying so, rather than a pencil icon". This is that screen —
+ * so what is asserted is the saying-so as much as the saving.
+ *
+ * Driven through the real handler, because the interesting half is what the
+ * handler does NOT do: it does not touch the status, so an edit cannot quietly
+ * put a retired credential back into use. */
+wp_set_current_user( 1 );
+
+/**
+ * Post the credential form the way the browser does.
+ *
+ * @param int   $credential_id The credential, or 0 to add one.
+ * @param array $fields        What is in the form.
+ * @return array The query the redirect landed on.
+ */
+function gwc_vt_cr_post_form( int $credential_id, array $fields ): array {
+	$_POST = array_merge(
+		array(
+			'action'            => 'gwc_vt_save_credential',
+			'gwc_vt_credential' => (string) $credential_id,
+			'_wpnonce'          => wp_create_nonce( 'gwc_vt_save_credential_' . $credential_id ),
+		),
+		$fields
+	);
+
+	$_REQUEST = $_POST;
+	$landed   = '';
+
+	$catch = static function ( $location ) {
+		throw new Exception( (string) $location );
+	};
+
+	add_filter( 'wp_redirect', $catch, 1 );
+
+	try {
+		gwc_vt_handle_save_credential();
+	} catch ( Throwable $e ) {
+		$landed = $e->getMessage();
+	}
+
+	remove_filter( 'wp_redirect', $catch, 1 );
+
+	$_POST    = array();
+	$_REQUEST = array();
+
+	$args = array();
+	parse_str( (string) wp_parse_url( $landed, PHP_URL_QUERY ), $args );
+
+	return $args;
+}
+
+$GLOBALS['gwc_vt_cr_edit'] = gwc_vt_cr_credential( 'Zzcr editable class', 12, 'report' );
+gwc_vt_record_credential( $gwc_vt_cr_ada, $GLOBALS['gwc_vt_cr_edit'], gwc_vt_today() );
+
+$GLOBALS['gwc_vt_cr_landed'] = gwc_vt_cr_post_form(
+	(int) $GLOBALS['gwc_vt_cr_edit'],
+	array(
+		'gwc_vt_name'   => 'Zzcr renamed class',
+		'gwc_vt_months' => '24',
+		'gwc_vt_mode'   => 'block',
+		'gwc_vt_note'   => 'Booked through the county office',
+	)
+);
+
+gwc_vt_cr_check(
+	'saving an edit says it saved',
+	'saved' === (string) ( $GLOBALS['gwc_vt_cr_landed']['gwc_vt_credential_did'] ?? '' ),
+	(string) ( $GLOBALS['gwc_vt_cr_landed']['gwc_vt_credential_did'] ?? '-' )
+);
+
+$GLOBALS['gwc_vt_cr_after'] = gwc_vt_credential( (int) $GLOBALS['gwc_vt_cr_edit'] );
+
+gwc_vt_cr_check(
+	'and every field is what was typed',
+	'Zzcr renamed class' === $GLOBALS['gwc_vt_cr_after']['name']
+		&& 24 === (int) $GLOBALS['gwc_vt_cr_after']['months']
+		&& 'block' === $GLOBALS['gwc_vt_cr_after']['mode']
+		&& 'Booked through the county office' === $GLOBALS['gwc_vt_cr_after']['note'],
+	wp_json_encode( $GLOBALS['gwc_vt_cr_after'] )
+);
+
+/* The record did not move. This is why renaming can be offered at all: every
+ * record points at the credential itself, so the word changes under all of them
+ * at once. */
+gwc_vt_cr_check(
+	'the record of somebody holding it is untouched by a rename',
+	GWC_VT_HOLDS_CURRENT === gwc_vt_volunteer_holds( $gwc_vt_cr_ada, (int) $GLOBALS['gwc_vt_cr_edit'] ),
+	gwc_vt_volunteer_holds( $gwc_vt_cr_ada, (int) $GLOBALS['gwc_vt_cr_edit'] )
+);
+
+/* An empty name is refused, and lands back on THIS credential's form rather
+ * than on the blank one — which would offer to make a second credential out of
+ * the mistake. */
+$GLOBALS['gwc_vt_cr_landed'] = gwc_vt_cr_post_form(
+	(int) $GLOBALS['gwc_vt_cr_edit'],
+	array( 'gwc_vt_name' => '   ', 'gwc_vt_months' => '24', 'gwc_vt_mode' => 'report' )
+);
+
+gwc_vt_cr_check(
+	'an empty name is refused, on the form it was typed in',
+	'no-name' === (string) ( $GLOBALS['gwc_vt_cr_landed']['gwc_vt_credential_did'] ?? '' )
+		&& (string) $GLOBALS['gwc_vt_cr_edit'] === (string) ( $GLOBALS['gwc_vt_cr_landed']['credential'] ?? '' ),
+	(string) ( $GLOBALS['gwc_vt_cr_landed']['gwc_vt_credential_did'] ?? '-' ) . ' → ' . (string) ( $GLOBALS['gwc_vt_cr_landed']['credential'] ?? '-' )
+);
+
+gwc_vt_cr_check(
+	'and the name it had is still there',
+	'Zzcr renamed class' === gwc_vt_credential( (int) $GLOBALS['gwc_vt_cr_edit'] )['name']
+);
+
+/* Editing a retired one leaves it retired. Putting it back is its own action,
+ * with its own sentence about what that means. */
+wp_update_post(
+	array(
+		'ID'          => (int) $GLOBALS['gwc_vt_cr_edit'],
+		'post_status' => GWC_VT_CREDENTIAL_RETIRED,
+	)
+);
+
+gwc_vt_cr_post_form(
+	(int) $GLOBALS['gwc_vt_cr_edit'],
+	array( 'gwc_vt_name' => 'Zzcr renamed again', 'gwc_vt_months' => '6', 'gwc_vt_mode' => 'report' )
+);
+
+gwc_vt_cr_check(
+	'editing a retired credential does not put it back into use',
+	GWC_VT_CREDENTIAL_RETIRED === get_post_status( (int) $GLOBALS['gwc_vt_cr_edit'] ),
+	(string) get_post_status( (int) $GLOBALS['gwc_vt_cr_edit'] )
+);
+
+/* And the form says what changing the interval does, with the number of people
+ * it reaches — the sentence the original refusal to build this asked for. */
+$_GET['credential'] = (string) $GLOBALS['gwc_vt_cr_edit'];
+
+ob_start();
+gwc_vt_render_credentials_screen();
+$GLOBALS['gwc_vt_cr_form'] = (string) ob_get_clean();
+
+unset( $_GET['credential'] );
+
+gwc_vt_cr_check(
+	'the form warns what re-dating means, and says how many people it reaches',
+	false !== strpos( $GLOBALS['gwc_vt_cr_form'], 'volunteer holds this' )
+		&& false !== strpos( $GLOBALS['gwc_vt_cr_form'], 'never stored' ),
+	substr_count( $GLOBALS['gwc_vt_cr_form'], 'gwcvt-credential-warning' ) . ' warning(s)'
+);
+
+gwc_vt_cr_check(
+	'and it is the credential being edited that is in the fields',
+	false !== strpos( $GLOBALS['gwc_vt_cr_form'], 'value="Zzcr renamed again"' )
+);
+
+/* The list offers the way in. */
+gwc_vt_cr_check(
+	'the list offers Edit as a row action',
+	false !== strpos( gwc_vt_cr_draw_credentials( 'retired' ), 'credential=' . $GLOBALS['gwc_vt_cr_edit'] )
+);
+
 echo "\n── Clean up ─────────────────────────────────────────────────────\n";
 
 foreach ( array( $gwc_vt_cr_ada, $gwc_vt_cr_bo, $gwc_vt_cr_el, $gwc_vt_cr_fi, $gwc_vt_cr_gus ) as $gwc_vt_cr_left ) {

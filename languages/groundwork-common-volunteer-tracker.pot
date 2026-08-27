@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T19:33:47+00:00\n"
+"POT-Creation-Date: 2026-08-27T19:38:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -50,7 +50,7 @@ msgstr ""
 #: inc/admin-applications.php:137
 #: inc/admin-applications.php:433
 #: inc/admin-credentials.php:153
-#: inc/admin-credentials.php:631
+#: inc/admin-credentials.php:773
 #: inc/admin-dashboard.php:119
 #: inc/admin-help-page.php:160
 #: inc/admin-letters.php:241
@@ -181,168 +181,209 @@ msgstr ""
 msgid "You do not have permission to see credentials."
 msgstr ""
 
-#: inc/admin-credentials.php:208
+#: inc/admin-credentials.php:224
 msgid "All"
 msgstr ""
 
-#: inc/admin-credentials.php:219
+#: inc/admin-credentials.php:235
 msgid "Retired"
 msgstr ""
 
-#: inc/admin-credentials.php:239
+#: inc/admin-credentials.php:255
 #: inc/privacy.php:729
 msgid "Credential"
 msgstr ""
 
-#: inc/admin-credentials.php:240
+#: inc/admin-credentials.php:256
 msgid "Renewed"
 msgstr ""
 
-#: inc/admin-credentials.php:241
-#: inc/admin-credentials.php:469
+#: inc/admin-credentials.php:257
+#: inc/admin-credentials.php:560
 #: inc/admin-help.php:315
 msgid "If somebody has not got it"
 msgstr ""
 
-#: inc/admin-credentials.php:242
+#: inc/admin-credentials.php:258
 msgid "Who holds it"
 msgstr ""
 
-#: inc/admin-credentials.php:298
-#: inc/admin-credentials.php:444
+#: inc/admin-credentials.php:314
+#: inc/admin-credentials.php:490
 msgid "Add a credential"
 msgstr ""
 
 #. translators: %s: a number of credentials, already formatted.
-#: inc/admin-credentials.php:313
+#: inc/admin-credentials.php:329
 #, php-format
 msgid "%s item"
 msgid_plural "%s items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-credentials.php:335
+#: inc/admin-credentials.php:351
 msgid "Nothing has been retired."
 msgstr ""
 
-#: inc/admin-credentials.php:337
+#: inc/admin-credentials.php:353
 msgid "Nothing defined yet. Select “Add a credential” to define the first one."
 msgstr ""
 
-#: inc/admin-credentials.php:339
+#: inc/admin-credentials.php:355
 msgid "Nothing defined yet."
 msgstr ""
 
-#: inc/admin-credentials.php:352
+#: inc/admin-credentials.php:368
 msgid "Defining a credential changes what your organization asks of everybody, so it needs a site administrator. Recording that somebody holds one does not — that is on each volunteer’s record."
 msgstr ""
 
-#: inc/admin-credentials.php:384
+#: inc/admin-credentials.php:399
+#: inc/admin-schedule.php:2383
+msgid "Edit"
+msgstr ""
+
+#: inc/admin-credentials.php:405
 msgid "Put it back"
 msgstr ""
 
-#: inc/admin-credentials.php:388
+#: inc/admin-credentials.php:409
 msgid "Retire"
 msgstr ""
 
-#: inc/admin-credentials.php:401
+#: inc/admin-credentials.php:422
 msgid "Show more details"
 msgstr ""
 
 #. translators: %s: a number of months, already formatted.
-#: inc/admin-credentials.php:411
+#: inc/admin-credentials.php:432
 #, php-format
 msgid "Every %s month"
 msgid_plural "Every %s months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-credentials.php:414
+#: inc/admin-credentials.php:435
 msgid "Never expires"
 msgstr ""
 
-#: inc/admin-credentials.php:454
+#: inc/admin-credentials.php:489
+msgid "Edit a credential"
+msgstr ""
+
+#: inc/admin-credentials.php:499
+msgid "This one is retired. Nobody is being asked for it, and the records of who holds it are still here — editing it changes what those records are records of."
+msgstr ""
+
+#: inc/admin-credentials.php:511
 #: inc/admin-event.php:126
 msgid "What it is"
 msgstr ""
 
-#: inc/admin-credentials.php:457
+#: inc/admin-credentials.php:514
 msgid "What you would call it out loud — “Child safety class”, “Liability waiver”."
 msgstr ""
 
-#: inc/admin-credentials.php:461
+#: inc/admin-credentials.php:517
+msgid "Renaming is safe: every record points at this credential itself, so the word changes everywhere at once and no record moves."
+msgstr ""
+
+#: inc/admin-credentials.php:523
 msgid "Renewed every"
 msgstr ""
 
-#: inc/admin-credentials.php:464
+#: inc/admin-credentials.php:526
 msgid "months"
 msgstr ""
 
-#: inc/admin-credentials.php:465
+#: inc/admin-credentials.php:527
 msgid "Zero means it never expires. Somebody who did it on the 31st of a month renews on the 31st, or on the last day of a month that is shorter."
 msgstr ""
 
-#: inc/admin-credentials.php:476
+#. translators: %d: how many volunteers hold this credential.
+#: inc/admin-credentials.php:543
+#, php-format
+msgid "%d volunteer holds this. Changing the interval re-dates their renewal."
+msgid_plural "%d volunteers hold this. Changing the interval re-dates every one of their renewals."
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/admin-credentials.php:554
+msgid "Expiry is worked out from this number each time it is asked for and is never stored, so a shorter interval takes effect the moment you save — somebody who did it eleven months ago is lapsed as soon as the page reloads. Nothing is emailed either way."
+msgstr ""
+
+#: inc/admin-credentials.php:567
 msgid "Reporting is the safer default and the one most organizations want: you find out who is short, and decide. Stopping somebody is for the things nobody may work without."
 msgstr ""
 
-#: inc/admin-credentials.php:480
+#: inc/admin-credentials.php:570
+msgid "Changing this to stopping people applies to signups made from now on. Nobody already on a shift is taken off it."
+msgstr ""
+
+#: inc/admin-credentials.php:576
 msgid "A note"
 msgstr ""
 
-#: inc/admin-credentials.php:483
+#: inc/admin-credentials.php:579
 msgid "Optional, and for staff. Where the course is booked, who countersigns the form — whatever the person recording it needs to know."
 msgstr ""
 
-#: inc/admin-credentials.php:488
+#: inc/admin-credentials.php:587
+msgid "Save this credential"
+msgstr ""
+
+#: inc/admin-credentials.php:588
 msgid "Add it"
 msgstr ""
 
-#: inc/admin-credentials.php:493
+#: inc/admin-credentials.php:595
 msgid "← Back to credentials"
 msgstr ""
 
-#: inc/admin-credentials.php:630
+#: inc/admin-credentials.php:772
 msgid "You do not have permission to define credentials."
 msgstr ""
 
-#: inc/admin-credentials.php:675
+#: inc/admin-credentials.php:825
 msgid "Give the credential a name. Nothing was added."
 msgstr ""
 
-#: inc/admin-credentials.php:676
+#: inc/admin-credentials.php:826
 msgid "That could not be saved. Nothing was added."
 msgstr ""
 
-#: inc/admin-credentials.php:677
+#: inc/admin-credentials.php:827
 #: inc/credentials.php:294
 msgid "That credential no longer exists."
 msgstr ""
 
-#: inc/admin-credentials.php:686
+#: inc/admin-credentials.php:836
 msgid "Credential added. Record who holds it on each volunteer’s own record."
 msgstr ""
 
-#: inc/admin-credentials.php:690
+#: inc/admin-credentials.php:840
+msgid "Saved. Any expiry is worked out from the new interval from now on."
+msgstr ""
+
+#: inc/admin-credentials.php:844
 msgid "Retired. Nobody will be asked for it again, and every record of somebody holding it is kept."
 msgstr ""
 
-#: inc/admin-credentials.php:691
+#: inc/admin-credentials.php:845
 msgid "Back in use."
 msgstr ""
 
-#: inc/admin-credentials.php:717
+#: inc/admin-credentials.php:871
 msgid "Nobody yet"
 msgstr ""
 
 #. translators: %s: a count of people, already formatted. Reads "4 held" under a column headed "Who holds it".
-#: inc/admin-credentials.php:742
+#: inc/admin-credentials.php:896
 #, php-format
 msgid "%s held"
 msgstr ""
 
 #. translators: %s: a count of people, already formatted. Reads "1 lapsed".
-#: inc/admin-credentials.php:756
+#: inc/admin-credentials.php:910
 #, php-format
 msgid "%s lapsed"
 msgstr ""
@@ -1500,7 +1541,7 @@ msgid "Renewing"
 msgstr ""
 
 #: inc/admin-help.php:306
-msgid "An expiry date is worked out from the day the credential was granted, and is never stored. Change a credential from twelve months to twenty-four and everybody who holds it is re-dated — there are no old dates left behind."
+msgid "An expiry date is worked out from the day the credential was granted, and is never stored. Change a credential from twelve months to twenty-four — <strong>Edit</strong>, on its row — and everybody who holds it is re-dated. There are no old dates left behind, and nothing is emailed. A shorter interval works the same way in the other direction: somebody can be lapsed the moment you save, so the form says how many people hold it before that field."
 msgstr ""
 
 #: inc/admin-help.php:307
@@ -3077,10 +3118,6 @@ msgstr[1] ""
 
 #: inc/admin-schedule.php:2382
 msgid "Roster"
-msgstr ""
-
-#: inc/admin-schedule.php:2383
-msgid "Edit"
 msgstr ""
 
 #. translators: 1: how many roles, 2: how many times.
@@ -4969,7 +5006,7 @@ msgid "Open the schedule"
 msgstr ""
 
 #: inc/dashboard.php:165
-#: inc/help-content.php:305
+#: inc/help-content.php:315
 msgid "Answer somebody who applied to volunteer"
 msgid_plural "Answer people who applied to volunteer"
 msgstr[0] ""
@@ -5288,7 +5325,7 @@ msgstr ""
 #: inc/help-content.php:59
 #: inc/help-content.php:70
 #: inc/help-content.php:81
-#: inc/help-content.php:300
+#: inc/help-content.php:310
 msgid "Select <strong>Save Changes</strong>."
 msgstr ""
 
@@ -5341,7 +5378,7 @@ msgid "Hours reach a letter only after somebody on your staff says the work happ
 msgstr ""
 
 #: inc/help-content.php:96
-#: inc/help-content.php:249
+#: inc/help-content.php:259
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>."
 msgstr ""
 
@@ -5462,7 +5499,7 @@ msgid "Produce a verification letter"
 msgstr ""
 
 #: inc/help-content.php:157
-#: inc/help-content.php:258
+#: inc/help-content.php:268
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record."
 msgstr ""
 
@@ -5575,7 +5612,7 @@ msgid "Put somebody on a shift"
 msgstr ""
 
 #: inc/help-content.php:208
-#: inc/help-content.php:269
+#: inc/help-content.php:279
 msgid "Open the shift from the schedule."
 msgstr ""
 
@@ -5632,7 +5669,8 @@ msgid "Define a credential"
 msgstr ""
 
 #: inc/help-content.php:237
-#: inc/help-content.php:279
+#: inc/help-content.php:249
+#: inc/help-content.php:289
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>."
 msgstr ""
 
@@ -5661,126 +5699,146 @@ msgid "Reporting is the safer choice and what most organizations want. Stopping 
 msgstr ""
 
 #: inc/help-content.php:247
-msgid "Mark somebody inactive who has stopped volunteering"
+msgid "Change a credential you already defined"
 msgstr ""
 
 #: inc/help-content.php:250
-msgid "Hover the row for the person who has stopped."
+msgid "Hover the one you want and select <strong>Edit</strong>."
 msgstr ""
 
 #: inc/help-content.php:251
-msgid "Select <strong>Make inactive</strong>."
+msgid "Change the name, the renewal interval, what happens when somebody has not got it, or the note."
 msgstr ""
 
-#: inc/help-content.php:253
-msgid "It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead."
+#: inc/help-content.php:252
+msgid "Select <strong>Save this credential</strong>."
 msgstr ""
 
-#: inc/help-content.php:256
-msgid "Record that somebody holds one"
+#: inc/help-content.php:254
+msgid "Renaming is safe — every record points at the credential itself. Changing the interval is not the same kind of change: expiry is worked out from it every time it is asked for, so a shorter interval can make somebody lapsed the moment you save. The form says how many people hold it before you change that field."
 msgstr ""
 
-#: inc/help-content.php:259
-msgid "Find <strong>Credentials</strong>."
+#: inc/help-content.php:257
+msgid "Mark somebody inactive who has stopped volunteering"
 msgstr ""
 
 #: inc/help-content.php:260
-msgid "Choose the credential from the list."
+msgid "Hover the row for the person who has stopped."
 msgstr ""
 
 #: inc/help-content.php:261
-msgid "Enter the date they actually did it, which may not be today."
+msgid "Select <strong>Make inactive</strong>."
 msgstr ""
 
-#: inc/help-content.php:262
-msgid "Select <strong>Update</strong>."
+#: inc/help-content.php:263
+msgid "It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead."
 msgstr ""
 
-#: inc/help-content.php:264
-msgid "Anything that expires counts from the date you enter, so a class taken in March and recorded in June expires in March."
+#: inc/help-content.php:266
+msgid "Record that somebody holds one"
 msgstr ""
 
-#: inc/help-content.php:267
-msgid "Ask for a credential on a shift"
+#: inc/help-content.php:269
+msgid "Find <strong>Credentials</strong>."
 msgstr ""
 
 #: inc/help-content.php:270
-msgid "Find <strong>They have to hold</strong>."
+msgid "Choose the credential from the list."
 msgstr ""
 
 #: inc/help-content.php:271
-msgid "Select each credential this shift needs."
+msgid "Enter the date they actually did it, which may not be today."
 msgstr ""
 
 #: inc/help-content.php:272
-msgid "Select <strong>Save this shift</strong>."
+msgid "Select <strong>Update</strong>."
 msgstr ""
 
 #: inc/help-content.php:274
-msgid "For an event, set it on the event instead and every role on the day asks for it, in addition to anything a role asks for itself."
+msgid "Anything that expires counts from the date you enter, so a class taken in March and recorded in June expires in March."
 msgstr ""
 
 #: inc/help-content.php:277
-msgid "See who holds a credential"
+msgid "Ask for a credential on a shift"
 msgstr ""
 
 #: inc/help-content.php:280
-msgid "Find the credential in the list."
+msgid "Find <strong>They have to hold</strong>."
 msgstr ""
 
 #: inc/help-content.php:281
-msgid "In <strong>Who holds it</strong>, select the number of people who hold it, or the number whose has lapsed."
+msgid "Select each credential this shift needs."
 msgstr ""
 
-#: inc/help-content.php:283
-msgid "The volunteer list opens, showing only those people. You can also filter that list yourself with the two dropdowns above it."
+#: inc/help-content.php:282
+msgid "Select <strong>Save this shift</strong>."
+msgstr ""
+
+#: inc/help-content.php:284
+msgid "For an event, set it on the event instead and every role on the day asks for it, in addition to anything a role asks for itself."
+msgstr ""
+
+#: inc/help-content.php:287
+msgid "See who holds a credential"
 msgstr ""
 
 #: inc/help-content.php:290
-msgid "Taking signups and applications from your site"
+msgid "Find the credential in the list."
 msgstr ""
 
 #: inc/help-content.php:291
+msgid "In <strong>Who holds it</strong>, select the number of people who hold it, or the number whose has lapsed."
+msgstr ""
+
+#: inc/help-content.php:293
+msgid "The volunteer list opens, showing only those people. You can also filter that list yourself with the two dropdowns above it."
+msgstr ""
+
+#: inc/help-content.php:300
+msgid "Taking signups and applications from your site"
+msgstr ""
+
+#: inc/help-content.php:301
 msgid "Three public forms, each switched off until you switch it on. None of them creates a volunteer record on its own."
 msgstr ""
 
-#: inc/help-content.php:294
+#: inc/help-content.php:304
 msgid "Let people sign up for shifts"
 msgstr ""
 
-#: inc/help-content.php:296
+#: inc/help-content.php:306
 msgid "Create or choose the page you want the list to appear on."
 msgstr ""
 
-#: inc/help-content.php:297
+#: inc/help-content.php:307
 msgid "Add the <strong>Volunteer Shifts</strong> block to it, and publish the page."
 msgstr ""
 
-#: inc/help-content.php:298
+#: inc/help-content.php:308
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong> and select the <strong>Shifts</strong> tab."
 msgstr ""
 
-#: inc/help-content.php:299
+#: inc/help-content.php:309
 msgid "Turn on signups, and choose the page you added the block to."
 msgstr ""
 
-#: inc/help-content.php:302
+#: inc/help-content.php:312
 msgid "Visitors see what each shift is and how many places are left. They never see who is coming."
 msgstr ""
 
-#: inc/help-content.php:307
+#: inc/help-content.php:317
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>, then <strong>Applied</strong> above the list."
 msgstr ""
 
-#: inc/help-content.php:308
+#: inc/help-content.php:318
 msgid "Read what they sent."
 msgstr ""
 
-#: inc/help-content.php:309
+#: inc/help-content.php:319
 msgid "Select <strong>Add as a volunteer</strong> to make a record from it, or <strong>Discard</strong> to take it off the list."
 msgstr ""
 
-#: inc/help-content.php:311
+#: inc/help-content.php:321
 msgid "Nothing is sent to them when an application arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here."
 msgstr ""
 
