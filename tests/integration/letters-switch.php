@@ -474,14 +474,30 @@ gwc_vt_ls_check(
 	false === strpos( $gwc_vt_ls_records, 'gwcvt-letter-volunteer' )
 );
 
+/* The checker's own input, which is what renders only where the form does.
+ * Not the string "gwcvt-reference" any more — that is now also the anchor the
+ * link below points AT, so the old marker would be satisfied by the link and
+ * report a form that is not there. */
 gwc_vt_ls_check(
 	'nor the reference checker, which moved to the dashboard',
-	false === strpos( $gwc_vt_ls_records, 'gwcvt-reference' )
+	false === strpos( $gwc_vt_ls_records, 'name="reference"' )
+);
+
+/* ── And it is not a cul-de-sac ──────────────────────────────────────────────
+ * Everything on this screen has already happened, so both things somebody
+ * arrives wanting are elsewhere. Saying so in prose was not enough; these are
+ * the links that say it. Asserted by destination rather than by wording, so a
+ * copy edit does not fail the build and a broken link does.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+gwc_vt_ls_check(
+	'it offers a way to produce one, and it goes to the volunteer list',
+	false !== strpos( $gwc_vt_ls_records, 'post_type=' . GWC_VT_VOLUNTEER_TYPE )
 );
 
 gwc_vt_ls_check(
-	'and it says where both of them went',
-	false !== strpos( $gwc_vt_ls_records, 'Dashboard' )
+	'and a way to check a reference, landing on the checker itself',
+	false !== strpos( $gwc_vt_ls_records, 'page=' . GWC_VT_DASHBOARD_PAGE . '#gwcvt-reference' )
 );
 
 ob_start();

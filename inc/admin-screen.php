@@ -93,7 +93,7 @@ add_action( 'admin_head', 'gwc_vt_menu_rule_style' );
  * ── Why the schedule sits with the dashboard, not with the people ────────────
  * The first version of this filed Schedule with Volunteers, Applications and
  * Credentials, on the argument that all four are about staffing work that has
- * not happened yet, against Hours and Letters issued which run the other
+ * not happened yet, against Hours and Verification letters which run the other
  * way. That argument is sound and it needed two paragraphs, which is the tell:
  * a grouping a sidebar has to explain is one nobody reads.
  *

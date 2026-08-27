@@ -368,7 +368,7 @@ final class MenuTest extends TestCase {
 	 * Read out of the source rather than listed here, because the failure this
 	 * catches is somebody adding a screen and nobody noticing it has no band —
 	 * which is exactly how Offers and Credentials ended up at the bottom of the
-	 * menu below Letters issued, and how they stayed there for two releases.
+	 * menu below Verification letters, and how they stayed there for two releases.
 	 */
 	public function test_every_page_slug_is_banded_or_deliberately_hidden(): void {
 		$source = (string) file_get_contents( GWC_VT_DIR . 'inc/admin-screen.php' );

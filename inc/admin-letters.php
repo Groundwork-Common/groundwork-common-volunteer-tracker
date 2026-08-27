@@ -44,22 +44,91 @@ function gwc_vt_register_letters_menu(): void {
 	}
 }
 
+/* ── The two ways out of a screen you cannot do anything on ──────────────────
+ * This page is a log. Everything it lists has already happened, and the two
+ * things somebody arrives wanting — produce a letter, check a reference
+ * somebody has read down the phone — both live elsewhere. That was said in
+ * prose and left as prose, which made the screen a cul-de-sac: it told you
+ * where to go and then made you find it.
+ *
+ * They are links rather than buttons on purpose. A page-title action here would
+ * read as the primary thing to do on a screen whose primary thing is reading,
+ * and there is a sharper reason than tidiness for the first one:
+ * gwc_vt_hidden_menu_items() takes "Produce a letter" off the menu because a
+ * menu entry is "an invitation to start from a blank form and go looking for
+ * somebody, which is the flow it replaced". A button here would rebuild exactly
+ * that. The link goes to the volunteer LIST instead — you pick the person, then
+ * the letter, which is the order the whole feature is built around.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 /**
- * The records screen's name.
+ * Where to go from here, since it is not from here.
  *
- * "Letters issued", not "Letters": what is on it is the log of what has left
- * the building, and the thing somebody means when they say "letters" — writing
- * one — is somewhere else now. The past tense is doing that work, so it has to
- * survive any future edit to this string.
+ * Each is offered only to somebody who can actually open it, the same rule the
+ * dashboard's quick actions follow: a link that lands on a permission notice is
+ * worse than no link, because it reads as a thing you are supposed to be able
+ * to do.
+ */
+function gwc_vt_letters_next_steps(): void {
+	$links = array();
+
+	if ( gwc_vt_can_see_records() ) {
+		$links[] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ) ) . '">'
+			. esc_html__( 'Produce one from a volunteer’s record', 'groundwork-common-volunteer-tracker' )
+			. '</a>';
+	}
+
+	/* The reference checker is gated exactly as this screen is, so the only
+	 * question left is whether they can open the dashboard it sits on.
+	 *
+	 * #gwcvt-reference is the checker's own input, which
+	 * gwc_vt_render_reference_checker() already labels by that id — so the link
+	 * lands on the box rather than at the top of the dashboard, and it lands
+	 * there without a second id being invented for the same thing. Two elements
+	 * carrying it would break the <label for> as well as the anchor. */
+	if ( current_user_can( gwc_vt_records_cap() ) ) {
+		$links[] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE . '&page=' . GWC_VT_DASHBOARD_PAGE ) ) . '#gwcvt-reference">'
+			. esc_html__( 'Check a reference somebody has phoned in', 'groundwork-common-volunteer-tracker' )
+			. '</a>';
+	}
+
+	if ( ! $links ) {
+		return;
+	}
+
+	printf(
+		'<p class="description gwcvt-letters__next">%s</p>',
+		wp_kses( implode( ' &middot; ', $links ), array( 'a' => array( 'href' => array() ) ) )
+	);
+}
+
+/**
+ * The log screen's name.
  *
- * It was "Letter records" for the same reason and lost the second word because
- * "record" already means two specific things here — a volunteer record, and one
- * grant of one credential — and neither of them is this.
+ * "Verification letters" is what the document is called. It is the phrase this
+ * plugin's own first sentence uses — hours logged, staff attesting to them, and
+ * a verification letter a court or a school will accept — so the menu says what
+ * the product says.
+ *
+ * ── What this name stopped doing, and what covers it now ─────────────────────
+ * Two earlier names, "Letter records" and then "Letters issued", were both
+ * chosen to stop this row reading as the place you WRITE one. Producing a
+ * letter starts from the volunteer's own record, so a menu item called
+ * "Letters" sends somebody here to do a thing they cannot do here. "Records"
+ * refused the invitation with a noun and "issued" refused it with a tense; this
+ * name refuses it with neither.
+ *
+ * That work now falls on gwc_vt_letters_next_steps() above, which says where to
+ * go as two links rather than as a sentence describing where to go. Those links
+ * are load-bearing, not decoration: take them away and the name alone invites
+ * somebody to write a letter on a screen that only lists them. Do not let the
+ * name shorten to "Letters" either, which would sharpen the invitation while
+ * removing the last word that qualifies it.
  *
  * @return string
  */
 function gwc_vt_letters_page_title(): string {
-	return __( 'Letters issued', 'groundwork-common-volunteer-tracker' );
+	return __( 'Verification letters', 'groundwork-common-volunteer-tracker' );
 }
 
 /**
@@ -180,8 +249,10 @@ function gwc_vt_render_letters_screen(): void {
 		<?php gwc_vt_letters_notice(); ?>
 
 		<p class="description gwcvt-letters__intro">
-			<?php esc_html_e( 'Every letter that has left the building, printed or emailed. To produce one, start from the volunteer’s record; to check a phoned-in reference, use the panel on the Dashboard.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Every letter that has left the building, printed or emailed.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
+
+		<?php gwc_vt_letters_next_steps(); ?>
 
 		<div class="gwcvt-letters__log">
 			<?php gwc_vt_render_letter_log(); ?>

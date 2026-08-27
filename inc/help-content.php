@@ -124,7 +124,8 @@ function gwc_vt_help_topics(): array {
 				array(
 					'title' => __( 'Verify hours', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Verify</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Waiting to verify</strong>, above the list.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Read the shifts waiting, which are grouped by the person they are about.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Verify</strong> beside each one you can confirm happened.', 'groundwork-common-volunteer-tracker' ),
 					),
@@ -133,7 +134,7 @@ function gwc_vt_help_topics(): array {
 				array(
 					'title' => __( 'Match hours somebody sent in themselves', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Verify</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>, then <strong>Waiting to verify</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Find the group headed with a name that is not yet a volunteer record.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Match to a volunteer</strong>, then choose the right person.', 'groundwork-common-volunteer-tracker' ),
 						__( 'If they are not on file yet, select <strong>Create a volunteer from this</strong>.', 'groundwork-common-volunteer-tracker' ),
@@ -152,9 +153,8 @@ function gwc_vt_help_topics(): array {
 				array(
 					'title' => __( 'Produce a verification letter', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Letters</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Produce a letter</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Choose the volunteer.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Produce a letter for this volunteer</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Choose the dates to cover, or leave them empty for everything.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Print</strong> to open it for printing, or <strong>Email</strong> to send it to the volunteer.', 'groundwork-common-volunteer-tracker' ),
 					),

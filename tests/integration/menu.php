@@ -183,7 +183,7 @@ gwc_vt_menu_check(
  * named in the order. Asserted by position rather than by presence: they were
  * always present, just at the bottom. */
 gwc_vt_menu_check(
-	'Offers and Credentials sit with the volunteers, not below Letters issued',
+	'Offers and Credentials sit with the volunteers, not below Verification letters',
 	array_search( GWC_VT_APPLICATIONS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
 		&& array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) < array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true ),
 	implode( ' · ', $gwc_vt_slugs )
