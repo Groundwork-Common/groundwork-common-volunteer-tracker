@@ -168,9 +168,11 @@ function gwc_vt_render_schedule_screen(): void {
 /**
  * Say when the list has been narrowed to match a number somebody clicked.
  *
- * Both narrowings are invisible otherwise. Slots mode looks like an ordinary
- * schedule that has mysteriously grown a festival's six times; a seven-day
- * window looks like a site with nothing booked past Friday. A screen that has
+ * Every one of these narrowings is invisible otherwise. Slots mode looks like an
+ * ordinary schedule that has mysteriously grown a festival's six times; a
+ * seven-day window looks like a site with nothing booked past Friday; and events
+ * only — which is where a day clicked out of a calendar of events lands — looks
+ * like a week on which nobody scheduled a single shift. A screen that has
  * quietly stopped showing everything, without saying so, is how somebody
  * concludes there is nothing there.
  *
@@ -178,13 +180,18 @@ function gwc_vt_render_schedule_screen(): void {
  * @param int    $within How many days the window was narrowed to, or 0.
  * @param string $when   'past' or 'upcoming'.
  * @param string $base   The screen's own URL.
+ * @param string $only   'events' when the shifts are being left out, or ''.
  */
-function gwc_vt_render_schedule_narrowing( bool $slots, int $within, string $when, string $base ): void {
-	if ( ! $slots && $within < 1 ) {
+function gwc_vt_render_schedule_narrowing( bool $slots, int $within, string $when, string $base, string $only = '' ): void {
+	if ( ! $slots && $within < 1 && '' === $only ) {
 		return;
 	}
 
 	$said = array();
+
+	if ( 'events' === $only ) {
+		$said[] = __( 'only events are listed, not the shifts around them', 'groundwork-common-volunteer-tracker' );
+	}
 
 	if ( $slots ) {
 		$said[] = __( 'an event’s times are listed one by one rather than as a single row', 'groundwork-common-volunteer-tracker' );
@@ -207,7 +214,7 @@ function gwc_vt_render_schedule_narrowing( bool $slots, int $within, string $whe
 	/* Everything except the two narrowing arguments, so "show the rest" keeps
 	 * the state chip, the search and the past/upcoming half somebody is in.
 	 * Rebuilt from the current URL rather than from $base for that reason. */
-	$rest = remove_query_arg( array( 'gwc_vt_slots', 'gwc_vt_within' ), gwc_vt_current_admin_url() );
+	$rest = remove_query_arg( array( 'gwc_vt_slots', 'gwc_vt_within', 'gwc_vt_only' ), gwc_vt_current_admin_url() );
 	?>
 	<div class="notice notice-info gwcvt-schedule__narrowed">
 		<p>
@@ -289,7 +296,12 @@ function gwc_vt_schedule_list_state(): array {
 		unset( $shift_args['parent'] );
 	}
 
-	$shifts = gwc_vt_shifts_between( $shift_args );
+	/* Narrowed to events, usually because somebody clicked a day out of a
+	 * calendar of them. Skipped rather than filtered afterwards, the same as the
+	 * month does it. */
+	$only = gwc_vt_schedule_only();
+
+	$shifts = 'events' === $only ? array() : gwc_vt_shifts_between( $shift_args );
 
 	/* No event summary rows in slots mode. The times themselves are in $shifts
 	 * now, and drawing both would show a festival once as a whole and six more
@@ -335,6 +347,7 @@ function gwc_vt_schedule_list_state(): array {
 		'when'   => $when,
 		'slots'  => $slots,
 		'within' => $within,
+		'only'   => $only,
 		'term'   => $term,
 		'state'  => $state,
 		'day'    => $day,
@@ -362,6 +375,7 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 	$when   = $drawn['when'];
 	$slots  = $drawn['slots'];
 	$within = $drawn['within'];
+	$only   = $drawn['only'];
 	$term   = $drawn['term'];
 	$state  = $drawn['state'];
 	$day    = $drawn['day'];
@@ -377,7 +391,16 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 	);
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1 class="wp-heading-inline"><?php esc_html_e( 'Schedule', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline">
+			<?php
+			/* The heading says what is on the screen, the same as the calendar's
+			 * does: a list of one organization's events under the word
+			 * "Schedule" reads as a schedule with almost nothing in it. */
+			echo 'events' === $only
+				? esc_html__( 'Events', 'groundwork-common-volunteer-tracker' )
+				: esc_html__( 'Schedule', 'groundwork-common-volunteer-tracker' );
+			?>
+		</h1>
 		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
@@ -389,9 +412,9 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 		<?php gwc_vt_render_schedule_missing( $missing ); ?>
 		<?php gwc_vt_schedule_notice(); ?>
 		<?php gwc_vt_event_notice(); ?>
-		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base ); ?>
+		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base, $only ); ?>
 
-		<?php gwc_vt_render_schedule_nav( $base, $when, 'list' ); ?>
+		<?php gwc_vt_render_schedule_nav( $base, 'events' === $only ? 'events' : $when, 'list', $only ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when ); ?>
 
 		<?php if ( '' !== $day ) : ?>
@@ -425,6 +448,12 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 							<?php
 							if ( '' !== $state || '' !== $term ) {
 								esc_html_e( 'Nothing on the schedule matches that.', 'groundwork-common-volunteer-tracker' );
+							} elseif ( 'events' === $only ) {
+								/* Narrowed to events, "add a shift" is advice
+								 * about the thing this screen is not showing. */
+								echo 'past' === $when
+									? esc_html__( 'No events in the last few months.', 'groundwork-common-volunteer-tracker' )
+									: esc_html__( 'No events coming up.', 'groundwork-common-volunteer-tracker' );
 							} else {
 								echo 'past' === $when
 									? esc_html__( 'Nothing in the last few months.', 'groundwork-common-volunteer-tracker' )
@@ -488,15 +517,22 @@ function gwc_vt_render_schedule_month(): void {
 	$last = $weeks[ count( $weeks ) - 1 ];
 	$to   = (string) $last[ count( $last ) - 1 ]['date'];
 
-	$shifts = gwc_vt_shifts_between(
-		array(
-			'from'     => $from,
-			'to'       => $to,
-			'statuses' => array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ),
-			'limit'    => 200,
-			'parent'   => 0,
-		)
-	);
+	/* Narrowed to events when somebody arrived here from the events list. The
+	 * query is skipped rather than the rows filtered afterwards: two hundred
+	 * shifts fetched to be thrown away is two hundred shifts fetched. */
+	$only = gwc_vt_schedule_only();
+
+	$shifts = 'events' === $only
+		? array()
+		: gwc_vt_shifts_between(
+			array(
+				'from'     => $from,
+				'to'       => $to,
+				'statuses' => array( 'publish', 'draft', GWC_VT_SHIFT_CANCELLED ),
+				'limit'    => 200,
+				'parent'   => 0,
+			)
+		);
 
 	$events = gwc_vt_events_between(
 		array(
@@ -534,7 +570,16 @@ function gwc_vt_render_schedule_month(): void {
 	$weekdays = gwc_vt_weekday_initials( (int) get_option( 'start_of_week' ) );
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1 class="wp-heading-inline"><?php esc_html_e( 'Schedule', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline">
+			<?php
+			/* The heading says what is on the screen. A calendar of one
+			 * organization's events under the word "Schedule" is the same
+			 * screen as a calendar of everything, and reads as one. */
+			echo 'events' === $only
+				? esc_html__( 'Events', 'groundwork-common-volunteer-tracker' )
+				: esc_html__( 'Schedule', 'groundwork-common-volunteer-tracker' );
+			?>
+		</h1>
 		<a href="<?php echo esc_url( add_query_arg( 'shift', 'new', $base ) ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add a shift', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
@@ -547,11 +592,12 @@ function gwc_vt_render_schedule_month(): void {
 		<?php gwc_vt_event_notice(); ?>
 
 		<?php
-		/* Nothing marked current: a calendar is neither half of the list, and
-		 * saying it is "Coming up" would be false of the four December rows it
-		 * is showing in January. These are the way out of it. */
+		/* Narrowed to events, "Events" is the list being read and is marked so.
+		 * Otherwise nothing is marked: a calendar is neither half of the list,
+		 * and saying it is "Coming up" would be false of the four December rows
+		 * it is showing in January. Either way these are the way out of it. */
 		?>
-		<?php gwc_vt_render_schedule_nav( $base, '', 'month' ); ?>
+		<?php gwc_vt_render_schedule_nav( $base, 'events' === $only ? 'events' : '', 'month', $only ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'month' ); ?>
 
 		<?php
@@ -559,6 +605,10 @@ function gwc_vt_render_schedule_month(): void {
 		 * month you navigated to with a filter on and lost the filter is one
 		 * you have to set up again on arrival. */
 		$carrier = add_query_arg( 'view', 'month', $base );
+
+		if ( 'events' === $only ) {
+			$carrier = add_query_arg( 'gwc_vt_only', 'events', $carrier );
+		}
 
 		if ( '' !== $state ) {
 			$carrier = add_query_arg( 'gwc_vt_state', $state, $carrier );
@@ -1304,6 +1354,28 @@ function gwc_vt_schedule_filter(): string {
 }
 
 /**
+ * Whether the screen has been narrowed to events.
+ *
+ * The two controls above every list answer different questions — which things
+ * are listed, and whether they are drawn as a list or a calendar — so switching
+ * one must not answer the other. It did: pressing Month on the events list gave
+ * a calendar of everything, quietly widening what was being looked at while
+ * appearing only to change how.
+ *
+ * So the narrowing is a parameter rather than a property of one screen, and any
+ * view that lists things reads it. The events list is the same narrowing with
+ * its own columns, which is why it does not need to be spelled in the URL there.
+ *
+ * @return string 'events', or ''.
+ */
+function gwc_vt_schedule_only(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; decides which rows are drawn.
+	$asked = isset( $_GET['gwc_vt_only'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_only'] ) ) : '';
+
+	return 'events' === $asked ? 'events' : '';
+}
+
+/**
  * Whether to show an event's times as their own rows.
  *
  * The list collapses an event to one summary row, for the reason spelled out in
@@ -1722,11 +1794,12 @@ function gwc_vt_render_schedule_back( string $href, string $label ): void {
  *
  * @param string $base  The screen's own URL.
  * @param string $lists Which of the three lists is being read, or ''.
- * @param string $view  'list', 'month', or 'events' for the one that is neither.
+ * @param string $view  'list' or 'month' — how what is listed is drawn.
+ * @param string $only  'events' when the screen is narrowed to them, or ''.
  */
-function gwc_vt_render_schedule_nav( string $base, string $lists, string $view ): void {
+function gwc_vt_render_schedule_nav( string $base, string $lists, string $view, string $only = '' ): void {
 	gwc_vt_render_schedule_status_links( $base, $lists );
-	gwc_vt_render_schedule_view_tabs( $base, $view );
+	gwc_vt_render_schedule_view_tabs( $base, $view, $only );
 
 	echo '<br class="clear" />';
 }
@@ -1784,8 +1857,14 @@ function gwc_vt_render_schedule_status_links( string $base, string $current ): v
  *
  * @param string $base The screen's own URL.
  * @param string $view Which one is showing, 'month' or 'list'.
+ * @param string $only 'events' when the screen is narrowed to them, or ''. WHAT
+ *                     is being looked at survives a change of HOW it is drawn:
+ *                     somebody on the events list who presses Month is asking
+ *                     for those events as a calendar, and used to get a calendar
+ *                     of everything — the control that changes the drawing
+ *                     silently changed the subject.
  */
-function gwc_vt_render_schedule_view_tabs( string $base, string $view ): void {
+function gwc_vt_render_schedule_view_tabs( string $base, string $view, string $only = '' ): void {
 	$options = array(
 		'list'  => __( 'List', 'groundwork-common-volunteer-tracker' ),
 		'month' => __( 'Month', 'groundwork-common-volunteer-tracker' ),
@@ -1808,13 +1887,23 @@ function gwc_vt_render_schedule_view_tabs( string $base, string $view ): void {
 	}
 
 	$carrier = add_query_arg( $keep, $base );
+
+	$links = array(
+		'list'  => $carrier,
+		'month' => add_query_arg( 'view', 'month', $carrier ),
+	);
+
+	if ( 'events' === $only ) {
+		$links['list']  = add_query_arg( 'view', 'events', $carrier );
+		$links['month'] = add_query_arg( 'gwc_vt_only', 'events', $links['month'] );
+	}
 	?>
 	<span class="gwcvt-segmented gwcvt-schedule__views">
 		<?php foreach ( $options as $key => $label ) : ?>
 			<?php if ( $key === $view ) : ?>
 				<span class="gwcvt-segmented__on" aria-current="true"><?php echo esc_html( $label ); ?></span>
 			<?php else : ?>
-				<a href="<?php echo esc_url( 'month' === $key ? add_query_arg( 'view', 'month', $carrier ) : $carrier ); ?>">
+				<a href="<?php echo esc_url( (string) $links[ $key ] ); ?>">
 					<?php echo esc_html( $label ); ?>
 				</a>
 			<?php endif; ?>
@@ -1858,6 +1947,14 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 		$keep['s'] = $term;
 	}
 
+	/* A chip must not widen the screen it is narrowing. Without this, pressing
+	 * "Short of people" on a calendar of events answers with the shifts too. */
+	$only = gwc_vt_schedule_only();
+
+	if ( '' !== $only ) {
+		$keep['gwc_vt_only'] = $only;
+	}
+
 	$carrier = add_query_arg( $keep, $base );
 	?>
 	<div class="gwcvt-schedule__filters">
@@ -1881,16 +1978,21 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 			<?php if ( '' !== $state ) : ?>
 				<input type="hidden" name="gwc_vt_state" value="<?php echo esc_attr( $state ); ?>" />
 			<?php endif; ?>
+			<?php if ( '' !== $only ) : ?>
+				<input type="hidden" name="gwc_vt_only" value="<?php echo esc_attr( $only ); ?>" />
+			<?php endif; ?>
 
 			<?php
-			/* The one thing the events list says differently, because it is the
-			 * one thing that would be untrue there: the box searches what the
-			 * screen is listing. */
-			$find = 'events' === $view
+			/* The box says what it searches — the one thing that would be untrue
+			 * on a screen showing only events, whether that is the events list
+			 * or a calendar somebody reached from it. */
+			$events_only = 'events' === $view || 'events' === $only;
+
+			$find = $events_only
 				? __( 'Find an event', 'groundwork-common-volunteer-tracker' )
 				: __( 'Find a shift', 'groundwork-common-volunteer-tracker' );
 
-			$hint = 'events' === $view
+			$hint = $events_only
 				? __( 'Find an event — name, place, or person', 'groundwork-common-volunteer-tracker' )
 				: __( 'Find a shift — activity, place, or person', 'groundwork-common-volunteer-tracker' );
 			?>
@@ -2296,11 +2398,11 @@ function gwc_vt_render_events_list(): void {
 		<?php gwc_vt_event_notice(); ?>
 
 		<?php
-		/* 'events' marks neither half of the toggle, because this list is
-		 * neither: both are somewhere else to go, and marking "List" current
-		 * would leave the flat schedule with no link to it from here. */
+		/* Events, drawn as a list — so the toggle marks List, and its Month
+		 * goes to a calendar of these events rather than of everything. The way
+		 * to the shifts is on the left, where what-is-listed lives. */
 		?>
-		<?php gwc_vt_render_schedule_nav( $base, 'events', 'events' ); ?>
+		<?php gwc_vt_render_schedule_nav( $base, 'events', 'list', 'events' ); ?>
 		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'events' ); ?>
 
 		<table class="widefat striped gwcvt-schedule">

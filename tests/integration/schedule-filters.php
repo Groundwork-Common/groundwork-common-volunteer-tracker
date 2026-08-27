@@ -487,6 +487,168 @@ gwc_vt_sfl_check(
 		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_none'], 'No events yet' )
 );
 
+/* ── Changing HOW a screen is drawn must not change WHAT is on it ────────────
+ * Pressing Month on the events list gave a calendar of everything: the control
+ * that changes the drawing silently widened the subject, and a coordinator who
+ * asked for their events got their shifts as well.
+ *
+ * gwc_vt_only=events is the narrowing that fixes it, and it is a parameter
+ * rather than a property of one screen — the calendar reads it, the flat list
+ * reads it (which is where a day clicked out of that calendar lands), and every
+ * link on both carries it, because a chip that widens the screen it is narrowing
+ * is the same bug wearing a different hat.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Everything above this point works on data and needed nobody; these render the
+ * real screen, which is behind gwc_vt_can_see_records(). */
+$gwc_vt_sfl_admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
+wp_set_current_user( $gwc_vt_sfl_admins ? (int) $gwc_vt_sfl_admins[0]->ID : 1 );
+
+/**
+ * One view of the schedule, as somebody arrives at it.
+ *
+ * @param array $query What is in the URL.
+ * @return string
+ */
+function gwc_vt_sfl_screen( array $query ): string {
+	$was = $_GET;
+
+	foreach ( array( 'view', 'gwc_vt_only', 'gwc_vt_state', 's', 'gwc_vt_month' ) as $key ) {
+		unset( $_GET[ $key ] );
+	}
+
+	foreach ( $query as $key => $value ) {
+		$_GET[ $key ] = $value;
+	}
+
+	ob_start();
+	gwc_vt_render_schedule_screen();
+	$html = (string) ob_get_clean();
+
+	$_GET = $was;
+
+	return $html;
+}
+
+$GLOBALS['gwc_vt_sfl_ev_list']  = gwc_vt_sfl_screen( array( 'view' => 'events' ) );
+$GLOBALS['gwc_vt_sfl_ev_month'] = gwc_vt_sfl_screen(
+	array(
+		'view'        => 'month',
+		'gwc_vt_only' => 'events',
+		'gwc_vt_month' => substr( $gwc_vt_sfl_soon, 0, 7 ),
+	)
+);
+$GLOBALS['gwc_vt_sfl_all_month'] = gwc_vt_sfl_screen(
+	array(
+		'view'         => 'month',
+		'gwc_vt_month' => substr( $gwc_vt_sfl_soon, 0, 7 ),
+	)
+);
+
+/* The trip somebody takes: Events, then Month. */
+gwc_vt_sfl_check(
+	'Month on the events list asks for a calendar of the events',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_list'], 'view=month&#038;gwc_vt_only=events' )
+);
+
+gwc_vt_sfl_check(
+	'and that calendar draws the event',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'Zzytest lantern parade' )
+);
+
+/* The bug itself: the shifts around it are not on that calendar. The control
+ * changes how, never what. */
+gwc_vt_sfl_check(
+	'and not the shifts around it',
+	false === strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'Zzytest produce sorting' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'Zzytest front desk' )
+);
+
+/* The control, not the calendar: the same month without the narrowing still
+ * draws the shifts, or this would be a calendar that lost them for everybody.
+ *
+ * Counted rather than named, because a day cell caps at GWC_VT_MONTH_CHIPS and
+ * says "+2 more" — on a fixture day holding four things, asserting one title is
+ * asserting which three the cap happened to keep. */
+$GLOBALS['gwc_vt_sfl_chips_all'] = substr_count( $GLOBALS['gwc_vt_sfl_all_month'], 'gwcvt-chip__what' );
+$GLOBALS['gwc_vt_sfl_chips_ev']  = substr_count( $GLOBALS['gwc_vt_sfl_ev_month'], 'gwcvt-chip__what' );
+
+gwc_vt_sfl_check(
+	'the calendar itself still draws the shifts when nothing narrowed it',
+	$GLOBALS['gwc_vt_sfl_chips_all'] > $GLOBALS['gwc_vt_sfl_chips_ev']
+		&& $GLOBALS['gwc_vt_sfl_chips_ev'] > 0,
+	$GLOBALS['gwc_vt_sfl_chips_all'] . ' chip(s) against ' . $GLOBALS['gwc_vt_sfl_chips_ev'] . ' narrowed'
+);
+
+/* And every one the narrowed calendar draws is an event. */
+gwc_vt_sfl_check(
+	'nothing on the narrowed calendar links to a shift',
+	! preg_match( '~gwcvt-month__chip[^>]*shift=[0-9]~', $GLOBALS['gwc_vt_sfl_ev_month'] )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'shift=' . $gwc_vt_sfl_hers )
+);
+
+/* And back again, so the trip is a round one rather than a one-way door. */
+gwc_vt_sfl_check(
+	'List on that calendar goes back to the events list',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'view=events' )
+);
+
+gwc_vt_sfl_check(
+	'the calendar says it is the events it is showing',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'Events' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sfl_ev_month'], 'Find an event' )
+);
+
+/* Every link on it keeps the narrowing. A chip or a month step that dropped it
+ * would put the shifts back one click later, which is the reported bug with an
+ * extra step in front of it. */
+foreach ( array( 'gwcvt-chip-filter', 'gwcvt-month__step' ) as $gwc_vt_sfl_kind ) {
+	preg_match_all(
+		'~class="[^"]*' . $gwc_vt_sfl_kind . '[^"]*"[^>]*~',
+		$GLOBALS['gwc_vt_sfl_ev_month'],
+		$gwc_vt_sfl_tags
+	);
+
+	/* The chips carry the class after the href, the steps before it, so the
+	 * whole tag is re-read rather than trusting one order. */
+	preg_match_all(
+		'~<a[^>]*' . $gwc_vt_sfl_kind . '[^>]*>|<a[^>]*class="[^"]*' . $gwc_vt_sfl_kind . '~',
+		$GLOBALS['gwc_vt_sfl_ev_month'],
+		$gwc_vt_sfl_links
+	);
+
+	$gwc_vt_sfl_all  = implode( ' ', $gwc_vt_sfl_links[0] );
+	$gwc_vt_sfl_have = substr_count( $gwc_vt_sfl_all, 'gwc_vt_only=events' );
+
+	gwc_vt_sfl_check(
+		'every ' . $gwc_vt_sfl_kind . ' on it keeps the narrowing',
+		count( $gwc_vt_sfl_links[0] ) > 0 && $gwc_vt_sfl_have === count( $gwc_vt_sfl_links[0] ),
+		$gwc_vt_sfl_have . ' of ' . count( $gwc_vt_sfl_links[0] ) . ' link(s)'
+	);
+}
+
+/* A day clicked out of that calendar lands on the flat list, which reads the
+ * same narrowing rather than answering with the shifts. */
+$GLOBALS['gwc_vt_sfl_day'] = gwc_vt_sfl_screen(
+	array(
+		'gwc_vt_only' => 'events',
+		'gwc_vt_on'   => $gwc_vt_sfl_soon,
+	)
+);
+
+gwc_vt_sfl_check(
+	'the flat list reads the narrowing too',
+	false === strpos( $GLOBALS['gwc_vt_sfl_day'], 'Zzytest produce sorting' )
+);
+
+/* And says so. A screen that has quietly stopped showing everything is how
+ * somebody concludes there is nothing there. */
+gwc_vt_sfl_check(
+	'and says it has been narrowed, with the way back',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_day'], 'only events are listed' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sfl_day'], 'gwcvt-schedule__narrowed' )
+);
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
 
 /* Exit non-zero so a failure fails the job. Printing the count and returning 0
