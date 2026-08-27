@@ -25,16 +25,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'admin_post_gwc_vt_retire_volunteer', 'gwc_vt_handle_retire_volunteer' );
-add_action( 'admin_post_gwc_vt_restore_volunteer', 'gwc_vt_handle_restore_volunteer' );
+add_action( 'admin_post_gwc_vt_deactivate_volunteer', 'gwc_vt_handle_deactivate_volunteer' );
+add_action( 'admin_post_gwc_vt_activate_volunteer', 'gwc_vt_handle_activate_volunteer' );
 add_filter( 'post_row_actions', 'gwc_vt_volunteer_row_actions', 10, 2 );
 add_filter( 'views_edit-' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_volunteer_views' );
-add_action( 'admin_notices', 'gwc_vt_volunteer_retire_notice' );
+add_action( 'admin_notices', 'gwc_vt_volunteer_status_notice' );
 add_filter( 'wp_insert_post_data', 'gwc_vt_keep_volunteer_status', 10, 2 );
 add_action( 'add_meta_boxes_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_rename_volunteer_submit_box' );
-add_action( 'post_submitbox_misc_actions', 'gwc_vt_volunteer_submitbox_retire' );
+add_action( 'post_submitbox_misc_actions', 'gwc_vt_volunteer_submitbox_status' );
 
-/* ── Quick Edit would silently un-retire somebody ────────────────────────────
+/* ── Quick Edit would silently reactivate somebody ────────────────────────────
  * This is the half of the change that is not presentation. Core's inline editor
  * posts a status from a <select> it builds from a fixed list — Published,
  * Scheduled, Pending, Draft, and Private in bulk — and wp_ajax_inline_save()
@@ -42,7 +42,7 @@ add_action( 'post_submitbox_misc_actions', 'gwc_vt_volunteer_submitbox_retire' )
  *
  *     $data['post_status'] = $data['_status'];
  *
- * A custom status is not in that list and cannot be. So quick-editing a retired
+ * A custom status is not in that list and cannot be. So quick-editing an inactive
  * volunteer to fix a typo in their name sets them to Published on the way past,
  * and nothing anywhere says so. That is the silent-correction-on-save bug this
  * codebase already has a rule about, arriving through a door nobody opened.
@@ -71,7 +71,7 @@ function gwc_vt_keep_volunteer_status( $data, $postarr ) {
 		return $data;
 	}
 
-	/* Only the two generic editors. gwc_vt_handle_retire_volunteer() and its
+	/* Only the two generic editors. gwc_vt_handle_deactivate_volunteer() and its
 	 * opposite call wp_update_post() directly and must still work, as must a
 	 * site moving a record to the trash. */
 	// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended -- reading which editor sent this, not form data; core has already verified its own nonce by the time post data is filtered, and the branch only ever makes the write more conservative.
@@ -109,12 +109,12 @@ function gwc_vt_rename_volunteer_submit_box(): void {
 }
 
 /**
- * Say whether they are retired, and offer the switch, inside that box.
+ * Say whether they are active, and offer the switch, inside that box.
  *
  * Where the status row used to be, and saying the one thing about a volunteer's
  * standing that means anything here.
  */
-function gwc_vt_volunteer_submitbox_retire(): void {
+function gwc_vt_volunteer_submitbox_status(): void {
 	$post = get_post();
 
 	if ( ! $post || GWC_VT_VOLUNTEER_TYPE !== $post->post_type ) {
@@ -125,23 +125,23 @@ function gwc_vt_volunteer_submitbox_retire(): void {
 		return;
 	}
 
-	$retired = GWC_VT_VOLUNTEER_RETIRED === $post->post_status;
+	$inactive = GWC_VT_VOLUNTEER_INACTIVE === $post->post_status;
 	?>
-	<div class="misc-pub-section gwcvt-pub-retire">
+	<div class="misc-pub-section gwcvt-pub-status">
 		<span class="dashicons dashicons-groups"></span>
 		<?php
 		echo esc_html(
-			$retired
-				? __( 'Retired — not offered when staffing a shift.', 'groundwork-common-volunteer-tracker' )
+			$inactive
+				? __( 'Inactive — not offered when staffing a shift.', 'groundwork-common-volunteer-tracker' )
 				: __( 'Volunteering here.', 'groundwork-common-volunteer-tracker' )
 		);
 		?>
-		<a class="gwcvt-pub-retire__action" href="<?php echo esc_url( gwc_vt_volunteer_retire_url( (int) $post->ID, ! $retired ) ); ?>">
+		<a class="gwcvt-pub-status__action" href="<?php echo esc_url( gwc_vt_volunteer_status_url( (int) $post->ID, ! $inactive ) ); ?>">
 			<?php
 			echo esc_html(
-				$retired
-					? __( 'Put them back', 'groundwork-common-volunteer-tracker' )
-					: __( 'Retire them', 'groundwork-common-volunteer-tracker' )
+				$inactive
+					? __( 'Make them active', 'groundwork-common-volunteer-tracker' )
+					: __( 'Make them inactive', 'groundwork-common-volunteer-tracker' )
 			);
 			?>
 		</a>
@@ -150,7 +150,7 @@ function gwc_vt_volunteer_submitbox_retire(): void {
 }
 
 /**
- * Read and check one retire-or-restore request.
+ * Read and check one activate-or-deactivate request.
  *
  * The same shape as gwc_vt_credential_request(): the nonce and the capability
  * are checked in one place, so a second action cannot be added later that
@@ -159,7 +159,7 @@ function gwc_vt_volunteer_submitbox_retire(): void {
  * @param string $action The admin_post action being answered.
  * @return int The volunteer.
  */
-function gwc_vt_volunteer_retire_request( string $action ): int {
+function gwc_vt_volunteer_status_request( string $action ): int {
 	$volunteer_id = isset( $_REQUEST['volunteer'] ) ? absint( wp_unslash( $_REQUEST['volunteer'] ) ) : 0;
 
 	check_admin_referer( $action . '_' . $volunteer_id );
@@ -184,35 +184,35 @@ function gwc_vt_volunteer_retire_request( string $action ): int {
 }
 
 /**
- * Retire a volunteer.
+ * Mark a volunteer inactive.
  */
-function gwc_vt_handle_retire_volunteer(): void {
-	$volunteer_id = gwc_vt_volunteer_retire_request( 'gwc_vt_retire_volunteer' );
+function gwc_vt_handle_deactivate_volunteer(): void {
+	$volunteer_id = gwc_vt_volunteer_status_request( 'gwc_vt_deactivate_volunteer' );
 
 	wp_update_post(
 		array(
 			'ID'          => $volunteer_id,
-			'post_status' => GWC_VT_VOLUNTEER_RETIRED,
+			'post_status' => GWC_VT_VOLUNTEER_INACTIVE,
 		)
 	);
 
 	/**
-	 * Fires after a volunteer has been retired.
+	 * Fires after a volunteer has been made inactive.
 	 *
 	 * Their hours, their name and their records are all untouched.
 	 *
 	 * @param int $volunteer_id The volunteer.
 	 */
-	do_action( 'gwc_vt_volunteer_retired', $volunteer_id );
+	do_action( 'gwc_vt_volunteer_deactivated', $volunteer_id );
 
-	gwc_vt_volunteer_retire_redirect( 'retired', $volunteer_id );
+	gwc_vt_volunteer_status_redirect( 'inactive', $volunteer_id );
 }
 
 /**
- * Put a retired volunteer back.
+ * Make an inactive volunteer active again.
  */
-function gwc_vt_handle_restore_volunteer(): void {
-	$volunteer_id = gwc_vt_volunteer_retire_request( 'gwc_vt_restore_volunteer' );
+function gwc_vt_handle_activate_volunteer(): void {
+	$volunteer_id = gwc_vt_volunteer_status_request( 'gwc_vt_activate_volunteer' );
 
 	wp_update_post(
 		array(
@@ -222,13 +222,13 @@ function gwc_vt_handle_restore_volunteer(): void {
 	);
 
 	/**
-	 * Fires after a retired volunteer has been put back.
+	 * Fires after an inactive volunteer has been made active again.
 	 *
 	 * @param int $volunteer_id The volunteer.
 	 */
-	do_action( 'gwc_vt_volunteer_restored', $volunteer_id );
+	do_action( 'gwc_vt_volunteer_reactivated', $volunteer_id );
 
-	gwc_vt_volunteer_retire_redirect( 'restored', $volunteer_id );
+	gwc_vt_volunteer_status_redirect( 'active', $volunteer_id );
 }
 
 /**
@@ -237,7 +237,7 @@ function gwc_vt_handle_restore_volunteer(): void {
  * @param string $result       What happened.
  * @param int    $volunteer_id The volunteer.
  */
-function gwc_vt_volunteer_retire_redirect( string $result, int $volunteer_id ): void {
+function gwc_vt_volunteer_status_redirect( string $result, int $volunteer_id ): void {
 	$back = wp_get_referer();
 
 	if ( ! $back ) {
@@ -262,7 +262,7 @@ function gwc_vt_volunteer_retire_redirect( string $result, int $volunteer_id ): 
  * Retiring is one click and reversible, so the undo belongs in the notice
  * rather than behind a confirmation screen nobody wanted.
  */
-function gwc_vt_volunteer_retire_notice(): void {
+function gwc_vt_volunteer_status_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reading a redirect result to render a message; nothing is written.
 	$result = isset( $_GET['gwc_vt_volunteer_result'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_volunteer_result'] ) ) : '';
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
@@ -274,21 +274,21 @@ function gwc_vt_volunteer_retire_notice(): void {
 
 	$name = get_the_title( $volunteer_id );
 
-	if ( 'retired' === $result ) {
+	if ( 'inactive' === $result ) {
 		printf(
 			'<div class="notice notice-success is-dismissible"><p>%s %s</p></div>',
 			esc_html(
 				sprintf(
 					/* translators: %s: a volunteer's name. */
-					__( '%s is retired. Their hours and their name are untouched, and they are no longer offered when you are staffing a shift.', 'groundwork-common-volunteer-tracker' ),
+					__( '%s is inactive. Their hours and their name are untouched, and they are no longer offered when you are staffing a shift.', 'groundwork-common-volunteer-tracker' ),
 					$name
 				)
 			),
 			wp_kses(
 				sprintf(
 					'<a href="%s">%s</a>',
-					esc_url( gwc_vt_volunteer_retire_url( $volunteer_id, false ) ),
-					esc_html__( 'Put them back', 'groundwork-common-volunteer-tracker' )
+					esc_url( gwc_vt_volunteer_status_url( $volunteer_id, false ) ),
+					esc_html__( 'Make them active again', 'groundwork-common-volunteer-tracker' )
 				),
 				array( 'a' => array( 'href' => array() ) )
 			)
@@ -297,13 +297,13 @@ function gwc_vt_volunteer_retire_notice(): void {
 		return;
 	}
 
-	if ( 'restored' === $result ) {
+	if ( 'active' === $result ) {
 		printf(
 			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
 			esc_html(
 				sprintf(
 					/* translators: %s: a volunteer's name. */
-					__( '%s is back. They can be put on shifts again.', 'groundwork-common-volunteer-tracker' ),
+					__( '%s is active again, and can be put on shifts.', 'groundwork-common-volunteer-tracker' ),
 					$name
 				)
 			)
@@ -312,14 +312,14 @@ function gwc_vt_volunteer_retire_notice(): void {
 }
 
 /**
- * The nonced link that retires somebody, or puts them back.
+ * The nonced link that makes somebody inactive, or active again.
  *
  * @param int  $volunteer_id The volunteer.
- * @param bool $retire       True to retire, false to restore.
+ * @param bool $deactivate   True to make inactive, false to make active.
  * @return string
  */
-function gwc_vt_volunteer_retire_url( int $volunteer_id, bool $retire = true ): string {
-	$action = $retire ? 'gwc_vt_retire_volunteer' : 'gwc_vt_restore_volunteer';
+function gwc_vt_volunteer_status_url( int $volunteer_id, bool $deactivate = true ): string {
+	$action = $deactivate ? 'gwc_vt_deactivate_volunteer' : 'gwc_vt_activate_volunteer';
 
 	return wp_nonce_url(
 		add_query_arg(
@@ -349,14 +349,14 @@ function gwc_vt_volunteer_row_actions( $actions, $post ) {
 		return $actions;
 	}
 
-	$retired = GWC_VT_VOLUNTEER_RETIRED === $post->post_status;
+	$inactive = GWC_VT_VOLUNTEER_INACTIVE === $post->post_status;
 
-	$actions['gwc_vt_retire'] = sprintf(
+	$actions['gwc_vt_status'] = sprintf(
 		'<a href="%s">%s</a>',
-		esc_url( gwc_vt_volunteer_retire_url( (int) $post->ID, ! $retired ) ),
-		$retired
-			? esc_html__( 'Put back', 'groundwork-common-volunteer-tracker' )
-			: esc_html__( 'Retire', 'groundwork-common-volunteer-tracker' )
+		esc_url( gwc_vt_volunteer_status_url( (int) $post->ID, ! $inactive ) ),
+		$inactive
+			? esc_html__( 'Make active', 'groundwork-common-volunteer-tracker' )
+			: esc_html__( 'Make inactive', 'groundwork-common-volunteer-tracker' )
 	);
 
 	return $actions;
@@ -428,7 +428,7 @@ function gwc_vt_volunteer_views( $views ) {
 	 * the bin. "Mine" keeps the place core gives it, second, because moving a
 	 * view somebody already knows the position of is its own small tax. Anything a site has added of its own keeps its place at the end
 	 * rather than being dropped. */
-	$order  = array( 'all', 'mine', GWC_VT_VOLUNTEER_RETIRED, 'gwc_vt_applied', 'trash' );
+	$order  = array( 'all', 'mine', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' );
 	$sorted = array();
 
 	foreach ( $order as $key ) {

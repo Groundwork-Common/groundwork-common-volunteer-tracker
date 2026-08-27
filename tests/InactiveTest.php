@@ -1,6 +1,6 @@
 <?php
 /**
- * Which surfaces a retired volunteer disappears from, and which they do not.
+ * Which surfaces an inactive volunteer disappears from, and which they do not.
  *
  * The whole feature is one status plus a decision, taken seven times, about
  * whether a given query is asking a question about work still to come or about
@@ -12,7 +12,7 @@
 
 use PHPUnit\Framework\TestCase;
 
-final class RetiredTest extends TestCase {
+final class InactiveTest extends TestCase {
 
 	protected function setUp(): void {
 		gwc_vt_test_reset();
@@ -81,23 +81,23 @@ final class RetiredTest extends TestCase {
 	 * cannot name them makes the record unfinishable. The default is the roster
 	 * answer, because that is the direction where being wrong does damage.
 	 */
-	public function test_the_rest_picker_excludes_retired_unless_asked(): void {
+	public function test_the_rest_picker_excludes_inactive_unless_asked(): void {
 		$source = (string) file_get_contents( GWC_VT_DIR . 'inc/rest.php' );
 
 		$this->assertStringContainsString(
-			"'retired'",
+			"'inactive'",
 			$source,
-			'the volunteers route stopped offering retired as a parameter'
+			'the volunteers route stopped offering inactive as a parameter'
 		);
 
 		$this->assertStringContainsString(
 			"'default'     => false",
 			$source,
-			'the volunteers route now offers retired volunteers to every picker, including the rosters'
+			'the volunteers route now offers inactive volunteers to every picker, including the rosters'
 		);
 
 		$this->assertStringContainsString(
-			"\$request['retired'] ? gwc_vt_volunteer_statuses()",
+			"\$request['inactive'] ? gwc_vt_volunteer_statuses()",
 			$source,
 			'the volunteers route no longer branches on the parameter'
 		);
@@ -106,11 +106,11 @@ final class RetiredTest extends TestCase {
 	/**
 	 * And exactly one picker asks for them: producing a letter.
 	 */
-	public function test_only_the_letter_picker_asks_for_retired(): void {
+	public function test_only_the_letter_picker_asks_for_inactive(): void {
 		$asking = array();
 
 		foreach ( (array) glob( GWC_VT_DIR . 'inc/*.php' ) as $file ) {
-			if ( false !== strpos( (string) file_get_contents( (string) $file ), 'data-gwcvt-retired' ) ) {
+			if ( false !== strpos( (string) file_get_contents( (string) $file ), 'data-gwcvt-inactive' ) ) {
 				$asking[] = basename( (string) $file );
 			}
 		}
@@ -119,14 +119,14 @@ final class RetiredTest extends TestCase {
 	}
 
 	/**
-	 * A retired volunteer is still a person the law can ask about.
+	 * An inactive volunteer is still a person the law can ask about.
 	 *
 	 * The retention sweep and the email lookup behind the exporter and the
 	 * eraser all have to see them. A record the sweep cannot see is one it can
 	 * never purge, which turns retiring into a way of accidentally keeping
 	 * somebody's data forever.
 	 */
-	public function test_the_privacy_surfaces_see_retired_volunteers(): void {
+	public function test_the_privacy_surfaces_see_inactive_volunteers(): void {
 		$queries = $this->volunteer_queries();
 
 		$this->assertNotEmpty( $queries['privacy.php'] ?? array(), 'privacy.php stopped querying volunteers' );
@@ -135,7 +135,7 @@ final class RetiredTest extends TestCase {
 			$this->assertSame(
 				'gwc_vt_volunteer_statuses()',
 				$shape,
-				'a volunteer query in privacy.php cannot see retired records, so the retention sweep and the eraser will both miss them'
+				'a volunteer query in privacy.php cannot see inactive records, so the retention sweep and the eraser will both miss them'
 			);
 		}
 	}
@@ -153,7 +153,7 @@ final class RetiredTest extends TestCase {
 				$this->assertSame(
 					'gwc_vt_volunteer_statuses()',
 					$shape,
-					$file . ' cannot see retired volunteers, so work they did before leaving cannot be attributed to them'
+					$file . ' cannot see inactive volunteers, so work they did before leaving cannot be attributed to them'
 				);
 			}
 		}
@@ -201,7 +201,7 @@ final class RetiredTest extends TestCase {
 			'pending'                  => '<a>Pending (0)</a>',
 			'private'                  => '<a>Private (0)</a>',
 			'trash'                    => '<a>Trash (1)</a>',
-			GWC_VT_VOLUNTEER_RETIRED   => '<a>Retired (3)</a>',
+			GWC_VT_VOLUNTEER_INACTIVE   => '<a>Inactive (3)</a>',
 		);
 	}
 
@@ -226,7 +226,7 @@ final class RetiredTest extends TestCase {
 	 */
 	public function test_the_strip_reads_as_a_lifecycle(): void {
 		$this->assertSame(
-			array( 'all', 'mine', GWC_VT_VOLUNTEER_RETIRED, 'gwc_vt_applied', 'trash' ),
+			array( 'all', 'mine', GWC_VT_VOLUNTEER_INACTIVE, 'gwc_vt_applied', 'trash' ),
 			array_keys( gwc_vt_volunteer_views( $this->core_views() ) )
 		);
 	}
@@ -253,12 +253,12 @@ final class RetiredTest extends TestCase {
 	}
 
 	/**
-	 * The status list is the four that were there plus retired, and nothing
+	 * The status list is the four that were there plus inactive, and nothing
 	 * else — a status silently dropped from it disappears from six queries.
 	 */
-	public function test_the_status_list_is_what_it_was_plus_retired(): void {
+	public function test_the_status_list_is_what_it_was_plus_inactive(): void {
 		$this->assertSame(
-			array( 'publish', 'draft', 'pending', 'private', GWC_VT_VOLUNTEER_RETIRED ),
+			array( 'publish', 'draft', 'pending', 'private', GWC_VT_VOLUNTEER_INACTIVE ),
 			gwc_vt_volunteer_statuses()
 		);
 	}
@@ -269,15 +269,15 @@ final class RetiredTest extends TestCase {
 	 * simply not working.
 	 */
 	public function test_the_status_name_fits_the_column(): void {
-		$this->assertLessThanOrEqual( 20, strlen( GWC_VT_VOLUNTEER_RETIRED ) );
+		$this->assertLessThanOrEqual( 20, strlen( GWC_VT_VOLUNTEER_INACTIVE ) );
 	}
 
 	/**
 	 * Not 'draft', and the reason is the six queries that already name it.
 	 */
-	public function test_retired_is_not_a_core_status(): void {
+	public function test_inactive_is_not_a_core_status(): void {
 		$this->assertNotContains(
-			GWC_VT_VOLUNTEER_RETIRED,
+			GWC_VT_VOLUNTEER_INACTIVE,
 			array( 'publish', 'draft', 'pending', 'private', 'trash', 'auto-draft', 'future', 'inherit' ),
 			'a core status is included by the four-status literal these queries already use, and its label is global'
 		);
