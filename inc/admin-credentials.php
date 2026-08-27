@@ -196,10 +196,6 @@ function gwc_vt_render_credentials_list(): void {
 
 		<?php gwc_vt_credentials_notice(); ?>
 
-		<p class="description">
-			<?php esc_html_e( 'Things a volunteer has to hold before doing certain work — a training course, a signed waiver, a background check. You define them here and record who holds them on each volunteer’s own record.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
-
 		<?php if ( $live || $retired ) : ?>
 			<table class="widefat striped gwcvt-credentials">
 				<thead>
@@ -310,10 +306,6 @@ function gwc_vt_render_credential_form(): void {
 		<h1><?php esc_html_e( 'Add a credential', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
 		<?php gwc_vt_credentials_notice(); ?>
-
-		<p class="description">
-			<?php esc_html_e( 'Something a volunteer has to hold before doing certain work. Once it exists you record who holds it on each volunteer’s own record.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="gwc_vt_save_credential" />

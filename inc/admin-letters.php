@@ -248,10 +248,6 @@ function gwc_vt_render_letters_screen(): void {
 
 		<?php gwc_vt_letters_notice(); ?>
 
-		<p class="description gwcvt-letters__intro">
-			<?php esc_html_e( 'Every letter that has left the building, printed or emailed.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
-
 		<?php gwc_vt_letters_next_steps(); ?>
 
 		<div class="gwcvt-letters__log">
