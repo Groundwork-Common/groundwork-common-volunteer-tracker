@@ -132,7 +132,7 @@ function gwc_vt_render_repeat_screen(): void {
 	$series_id = gwc_vt_shift_series_id( $shift_id );
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php echo esc_html( gwc_vt_repeat_page_title() ); ?></h1>
+		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_repeat_page_title() ); ?></h1>
 
 		<?php gwc_vt_render_schedule_back( gwc_vt_schedule_url(), __( 'Back to the schedule', 'groundwork-common-volunteer-tracker' ) ); ?>
 		<hr class="wp-header-end" />

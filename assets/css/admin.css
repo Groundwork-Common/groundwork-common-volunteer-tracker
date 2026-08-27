@@ -1466,27 +1466,14 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    The find box and the state chips, above both views. Plain links and a plain
    GET form — nothing here needs JavaScript, which is what makes this the cheap
    half of the schedule work. */
-.gwcvt-schedule__filters {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 8px 16px;
-	margin: 12px 0;
-}
+/* The chips sit in the tablenav's own actions box now, so what is left is the
+   spacing between them — core's box brings the rest. */
 
-.gwcvt-schedule__find {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.gwcvt-schedule__find input[type="search"] {
+/* Core sizes .search-box for a word or two; these boxes are searched with a
+   person's name or a place, and the placeholder says so. */
+.gwcvt-wrap .search-box input[type="search"] {
 	width: 22em;
 	max-width: 100%;
-}
-
-.gwcvt-schedule__clear {
-	font-size: 12px;
 }
 
 .gwcvt-schedule__chips {
@@ -1700,22 +1687,22 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 .gwcvt-month__swatch--awaiting  { background: #dba617; }
 .gwcvt-month__swatch--cancelled { background: #8c8f94; }
 
-/* Far right, on the same line as the list links — which float left, so this
-   floats right and the row ends with core's own <br class="clear">. It is the
-   control that redraws the whole screen rather than one that narrows it, and
-   putting it beside the chips would read as a third filter. The top margin is
-   core's own on .subsubsub, so the two sit on one line rather than nearly. */
+/* In the tablenav's right-hand group, beside the count — where core keeps the
+   Media library's list-or-grid switch. It is the control that redraws the whole
+   screen rather than one that narrows it, so it belongs on the far side from
+   the chips, which are filters. */
 .gwcvt-schedule__views {
 	float: right;
-	margin: 8px 0 0;
+	margin: 1px 8px 0 0;
 }
 
-/* Under core's touch breakpoint there is no room for two controls on one line,
-   and the wp-admin list screens stack everything here anyway. */
+/* Under core's touch breakpoint core stacks this row, and a floated control in
+   the middle of a stack lands beside whatever happens to be short. */
 @media ( max-width: 782px ) {
 	.gwcvt-schedule__views {
 		float: none;
-		margin: 12px 0 0;
+		display: inline-flex;
+		margin: 8px 0;
 	}
 }
 

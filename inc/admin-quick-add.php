@@ -198,7 +198,8 @@ function gwc_vt_render_blank_day_screen(): void {
 	$max_date   = gwc_vt_setting( 'allow_future_dates' ) ? '' : gwc_vt_today();
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php esc_html_e( 'Log a day’s shifts', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Log a day’s shifts', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_quick_add_notice(); ?>
 
@@ -346,7 +347,7 @@ function gwc_vt_render_quick_add_row( int $index, bool $walk_in = false ): void 
 function gwc_vt_render_shift_log_screen( int $shift_id ): void {
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php esc_html_e( 'Log the hours for this shift', 'groundwork-common-volunteer-tracker' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Log the hours for this shift', 'groundwork-common-volunteer-tracker' ); ?></h1>
 
 		<?php gwc_vt_render_schedule_back( gwc_vt_schedule_url( array( 'shift' => $shift_id ) ), __( 'Back to the shift', 'groundwork-common-volunteer-tracker' ) ); ?>
 		<hr class="wp-header-end" />

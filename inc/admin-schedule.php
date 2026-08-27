@@ -428,7 +428,7 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base, $only ); ?>
 
 		<?php gwc_vt_render_schedule_nav( $base, 'events' === $only ? 'events' : $when, 'list', $only ); ?>
-		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when ); ?>
+		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when, 'list', count( $rows ) ); ?>
 
 		<?php if ( '' !== $day ) : ?>
 			<p class="gwcvt-schedule__day">
@@ -608,7 +608,7 @@ function gwc_vt_render_schedule_month(): void {
 		 * it is showing in January. Either way these are the way out of it. */
 		?>
 		<?php gwc_vt_render_schedule_nav( $base, 'events' === $only ? 'events' : '', 'month', $only ); ?>
-		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'month' ); ?>
+		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'month', count( $rows ) ); ?>
 
 		<?php
 		/* ‹ and › as plain links carrying everything else about the view. A
@@ -1882,9 +1882,6 @@ function gwc_vt_render_schedule_chooser( string $base ): void {
  */
 function gwc_vt_render_schedule_nav( string $base, string $lists, string $view, string $only = '' ): void {
 	gwc_vt_render_schedule_status_links( $base, $lists );
-	gwc_vt_render_schedule_view_tabs( $base, $view, $only );
-
-	echo '<br class="clear" />';
 }
 
 /**
@@ -1996,6 +1993,66 @@ function gwc_vt_render_schedule_view_tabs( string $base, string $view, string $o
 }
 
 /**
+ * The state chips, which are this screen's filter control.
+ *
+ * Chips rather than core's <select> and Filter button, and they stay chips: they
+ * carry the count of what each one would leave, which is the thing a coordinator
+ * is actually reading the screen for. What changed is where they sit — inside
+ * the tablenav's left-hand actions, which is where core keeps the controls that
+ * narrow a list.
+ *
+ * @param array<string, int> $counts  How many rows are in each state.
+ * @param string             $state   Which state is active, or ''.
+ * @param string             $term    What is in the find box, kept by each link.
+ * @param string             $carrier The screen's URL with everything else on it.
+ */
+function gwc_vt_render_schedule_chips( array $counts, string $state, string $term, string $carrier ): void {
+	$labels = gwc_vt_shift_state_labels();
+	?>
+	<div class="gwcvt-schedule__chips">
+		<?php
+		foreach ( GWC_VT_SCHEDULE_FILTERS as $key ) :
+			$count  = (int) ( $counts[ $key ] ?? 0 );
+			$active = $key === $state;
+
+			/* A chip with nothing behind it is not offered — except the one that
+			 * is currently on, which has to stay clickable or there is no way
+			 * back to the whole list. */
+			if ( 0 === $count && ! $active ) {
+				continue;
+			}
+
+			$url = $active
+				? remove_query_arg( 'gwc_vt_state', $carrier )
+				: add_query_arg( 'gwc_vt_state', $key, $carrier );
+			?>
+			<a
+				href="<?php echo esc_url( $url ); ?>"
+				class="gwcvt-chip-filter<?php echo $active ? ' gwcvt-chip-filter--on gwcvt-chip-filter--' . esc_attr( $key ) : ''; ?>"
+				<?php echo $active ? 'aria-current="true"' : ''; ?>
+			>
+				<?php
+				printf(
+					/* translators: 1: the state, such as "Short of people". 2: how many. */
+					esc_html__( '%1$s · %2$d', 'groundwork-common-volunteer-tracker' ),
+					esc_html( (string) ( $labels[ $key ] ?? $key ) ),
+					(int) $count
+				);
+
+				if ( $active ) {
+					echo ' <span aria-hidden="true">&times;</span>';
+					echo '<span class="screen-reader-text"> ' . esc_html__( '— clear this filter', 'groundwork-common-volunteer-tracker' ) . '</span>';
+				}
+				?>
+			</a>
+			<?php
+		endforeach;
+		?>
+	</div>
+	<?php
+}
+
+/**
  * The filter chips and the find box.
  *
  * @param string             $base   The screen's own URL.
@@ -2004,10 +2061,9 @@ function gwc_vt_render_schedule_view_tabs( string $base, string $view, string $o
  * @param string             $term   What is in the find box.
  * @param string             $when   'past' or 'upcoming'.
  * @param string             $view   'list', 'month' or 'events'.
+ * @param int                $count  How many rows are on the screen.
  */
-function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when, string $view = 'list' ): void {
-	$labels = gwc_vt_shift_state_labels();
-
+function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when, string $view = 'list', int $count = 0 ): void {
 	/* Every link keeps the half of the query it is not about: switching a chip
 	 * must not silently drop a search, and neither may throw you back to the
 	 * upcoming view from the past one. */
@@ -2039,107 +2095,54 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 	}
 
 	$carrier = add_query_arg( $keep, $base );
-	?>
-	<div class="gwcvt-schedule__filters">
-		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="gwcvt-schedule__find">
-			<?php
-			/* Every GET parameter that is not the search has to be re-posted as
-			 * a hidden field, because a GET form replaces the query string
-			 * rather than adding to it — a search from the past view would
-			 * otherwise land on the upcoming one. */
-			?>
-			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
-			<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_SCHEDULE_PAGE ); ?>" />
-			<?php if ( 'month' === $view ) : ?>
-				<input type="hidden" name="view" value="month" />
-				<input type="hidden" name="gwc_vt_month" value="<?php echo esc_attr( gwc_vt_schedule_month() ); ?>" />
-			<?php elseif ( 'events' === $view ) : ?>
-				<input type="hidden" name="view" value="events" />
-			<?php elseif ( 'past' === $when ) : ?>
-				<input type="hidden" name="when" value="past" />
-			<?php endif; ?>
-			<?php if ( '' !== $state ) : ?>
-				<input type="hidden" name="gwc_vt_state" value="<?php echo esc_attr( $state ); ?>" />
-			<?php endif; ?>
-			<?php if ( '' !== $only ) : ?>
-				<input type="hidden" name="gwc_vt_only" value="<?php echo esc_attr( $only ); ?>" />
-			<?php endif; ?>
 
-			<?php
-			/* The box says what it searches — the one thing that would be untrue
-			 * on a screen showing only events, whether that is the events list
-			 * or a calendar somebody reached from it. */
-			$events_only = 'events' === $view || 'events' === $only;
+	/* The box says what it searches — the one thing that would be untrue on a
+	 * screen showing only events, whether that is the events list or a calendar
+	 * somebody reached from it. */
+	$events_only = 'events' === $view || 'events' === $only;
 
-			$find = $events_only
+	/* Core's shape, with this screen's own controls in the slots core keeps for
+	 * them: the search floated right beside the view links, the chips in the
+	 * tablenav's left-hand actions where a Posts screen keeps its date and
+	 * category dropdowns. */
+	gwc_vt_render_list_search(
+		array(
+			'id'          => 'gwcvt-schedule-search',
+			'value'       => $term,
+			'keep'        => array_merge(
+				array(
+					'post_type' => GWC_VT_ENTRY_TYPE,
+					'page'      => GWC_VT_SCHEDULE_PAGE,
+				),
+				$keep,
+				'' !== $state ? array( 'gwc_vt_state' => $state ) : array()
+			),
+			'label'       => $events_only
 				? __( 'Find an event', 'groundwork-common-volunteer-tracker' )
-				: __( 'Find a shift', 'groundwork-common-volunteer-tracker' );
-
-			$hint = $events_only
+				: __( 'Find a shift', 'groundwork-common-volunteer-tracker' ),
+			'placeholder' => $events_only
 				? __( 'Find an event — name, place, or person', 'groundwork-common-volunteer-tracker' )
-				: __( 'Find a shift — activity, place, or person', 'groundwork-common-volunteer-tracker' );
-			?>
-			<label class="screen-reader-text" for="gwcvt-schedule-search">
-				<?php echo esc_html( $find ); ?>
-			</label>
-			<input
-				type="search"
-				id="gwcvt-schedule-search"
-				name="s"
-				value="<?php echo esc_attr( $term ); ?>"
-				placeholder="<?php echo esc_attr( $hint ); ?>"
-			/>
-			<button type="submit" class="button"><?php esc_html_e( 'Find', 'groundwork-common-volunteer-tracker' ); ?></button>
+				: __( 'Find a shift — activity, place, or person', 'groundwork-common-volunteer-tracker' ),
+			'button'      => __( 'Find', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
 
-			<?php if ( '' !== $term ) : ?>
-				<a href="<?php echo esc_url( remove_query_arg( 's', $carrier ) ); ?>" class="gwcvt-schedule__clear">
-					<?php esc_html_e( 'Clear', 'groundwork-common-volunteer-tracker' ); ?>
-				</a>
-			<?php endif; ?>
-		</form>
-
-		<div class="gwcvt-schedule__chips">
-			<?php
-			foreach ( GWC_VT_SCHEDULE_FILTERS as $key ) :
-				$count  = (int) ( $counts[ $key ] ?? 0 );
-				$active = $key === $state;
-
-				/* A chip with nothing behind it is not offered — except the one
-				 * that is currently on, which has to stay clickable or there is
-				 * no way back to the whole list. */
-				if ( 0 === $count && ! $active ) {
-					continue;
-				}
-
-				$url = $active
-					? remove_query_arg( 'gwc_vt_state', $carrier )
-					: add_query_arg( 'gwc_vt_state', $key, $carrier );
-				?>
-				<a
-					href="<?php echo esc_url( $url ); ?>"
-					class="gwcvt-chip-filter<?php echo $active ? ' gwcvt-chip-filter--on gwcvt-chip-filter--' . esc_attr( $key ) : ''; ?>"
-					<?php echo $active ? 'aria-current="true"' : ''; ?>
-				>
-					<?php
-					printf(
-						/* translators: 1: the state, such as "Short of people". 2: how many. */
-						esc_html__( '%1$s · %2$d', 'groundwork-common-volunteer-tracker' ),
-						esc_html( (string) ( $labels[ $key ] ?? $key ) ),
-						(int) $count
-					);
-
-					if ( $active ) {
-						echo ' <span aria-hidden="true">&times;</span>';
-						echo '<span class="screen-reader-text"> ' . esc_html__( '— clear this filter', 'groundwork-common-volunteer-tracker' ) . '</span>';
-					}
-					?>
-				</a>
-				<?php
-			endforeach;
-			?>
-		</div>
-	</div>
-	<?php
+	gwc_vt_render_list_tablenav(
+		$count,
+		static function () use ( $counts, $state, $term, $carrier ) {
+			gwc_vt_render_schedule_chips( $counts, $state, $term, $carrier );
+		},
+		static function () use ( $base, $view, $events_only ) {
+			/* The events list is events drawn as a list, so the toggle marks
+			 * List and its Month carries the narrowing — the same pair the nav
+			 * row used to pass before this control moved into the tablenav. */
+			gwc_vt_render_schedule_view_tabs(
+				$base,
+				'events' === $view ? 'list' : $view,
+				$events_only ? 'events' : ''
+			);
+		}
+	);
 }
 
 /**
@@ -2494,7 +2497,7 @@ function gwc_vt_render_events_list(): void {
 		 * to the shifts is on the left, where what-is-listed lives. */
 		?>
 		<?php gwc_vt_render_schedule_nav( $base, 'events', 'list', 'events' ); ?>
-		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'events' ); ?>
+		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'events', count( $rows ) ); ?>
 
 		<table class="widefat striped gwcvt-schedule">
 			<thead>

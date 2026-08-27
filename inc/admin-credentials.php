@@ -338,20 +338,7 @@ function gwc_vt_render_credentials_list(): void {
 
 		<?php gwc_vt_render_credentials_views( count( $live ), count( $retired ), $status ); ?>
 
-		<div class="tablenav top">
-			<div class="tablenav-pages one-page">
-				<span class="displaying-num">
-					<?php
-					printf(
-						/* translators: %s: a number of credentials, already formatted. */
-						esc_html( _n( '%s item', '%s items', count( $showing ), 'groundwork-common-volunteer-tracker' ) ),
-						esc_html( number_format_i18n( count( $showing ) ) )
-					);
-					?>
-				</span>
-			</div>
-			<br class="clear" />
-		</div>
+		<?php gwc_vt_render_list_tablenav( count( $showing ) ); ?>
 
 		<table class="wp-list-table widefat fixed striped table-view-list gwcvt-credentials">
 			<thead>

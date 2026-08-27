@@ -40,7 +40,7 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 	$open = gwc_vt_event_open_slot( $event_id );
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></h1>
+		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_event_name( $event_id ) ); ?></h1>
 
 		<?php gwc_vt_render_schedule_back( gwc_vt_event_edit_url( $event_id ), __( 'Back to the event', 'groundwork-common-volunteer-tracker' ) ); ?>
 		<hr class="wp-header-end" />

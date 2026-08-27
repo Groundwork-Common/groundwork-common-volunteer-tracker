@@ -363,11 +363,10 @@ gwc_vt_sc_check(
 	implode( ' / ', array_map( 'strlen', $GLOBALS['gwc_vt_sc_bars'] ) ) . ' bytes'
 );
 
-/* Every list offers the calendar, and offers it in the same place. The events
- * list had no toggle at all, so the calendar was unreachable from it without
- * going back to the schedule first. Far right is asserted the only way markup
- * can: it comes after the links it shares a line with, and the row is closed
- * immediately after it — the float itself is one CSS rule on that class. */
+/* Every list offers the calendar, and offers it in the same place: the right of
+ * the tablenav, beside the count, where core keeps the Media library's own
+ * list-or-grid switch. The events list had no toggle at all, so the calendar
+ * was unreachable from it without going back to the schedule first. */
 foreach ( array( 'the schedule', 'the month', 'the events list' ) as $gwc_vt_sc_list ) {
 	$gwc_vt_sc_html = (string) $GLOBALS['gwc_vt_sc_views'][ $gwc_vt_sc_list ]['html'];
 
@@ -378,12 +377,36 @@ foreach ( array( 'the schedule', 'the month', 'the events list' ) as $gwc_vt_sc_
 	);
 
 	gwc_vt_sc_check(
-		'and puts it after the list links, and last in the row',
-		strpos( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) > strpos( $gwc_vt_sc_html, 'subsubsub' )
-			&& 1 === preg_match(
-				'~gwcvt-schedule__views.*?</span>\s*<br class="clear" />~s',
-				$gwc_vt_sc_html
-			)
+		'and puts it in the tablenav, on the right with the count',
+		strpos( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) > strpos( $gwc_vt_sc_html, 'tablenav top' )
+			&& strpos( $gwc_vt_sc_html, 'gwcvt-schedule__views' ) < strpos( $gwc_vt_sc_html, 'displaying-num' )
+	);
+
+	/* And the header block above it is the one core builds on every list: the
+	 * view links, then the search floated right, then the tablenav. */
+	/* The rows the block is made of, in core's order. The table is checked only
+	 * where there is one: the month draws a calendar of divs, and the header
+	 * above it is the same header. */
+	$gwc_vt_sc_order = array( 'subsubsub', 'class="search-box"', 'tablenav top' );
+
+	if ( false !== strpos( $gwc_vt_sc_html, '<table' ) ) {
+		$gwc_vt_sc_order[] = '<table';
+	}
+
+	$gwc_vt_sc_at = array();
+
+	foreach ( $gwc_vt_sc_order as $gwc_vt_sc_part ) {
+		$gwc_vt_sc_at[ $gwc_vt_sc_part ] = strpos( $gwc_vt_sc_html, $gwc_vt_sc_part );
+	}
+
+	$gwc_vt_sc_sorted = $gwc_vt_sc_at;
+	asort( $gwc_vt_sc_sorted );
+
+	gwc_vt_sc_check(
+		'and wears the header block core builds on every list',
+		! in_array( false, $gwc_vt_sc_at, true )
+			&& array_keys( $gwc_vt_sc_sorted ) === $gwc_vt_sc_order,
+		implode( ' → ', array_keys( $gwc_vt_sc_sorted ) )
 	);
 
 	/* And one way to add, the same on all three. The two buttons this replaced

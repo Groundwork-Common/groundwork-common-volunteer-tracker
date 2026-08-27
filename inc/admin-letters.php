@@ -244,7 +244,8 @@ function gwc_vt_render_letters_screen(): void {
 	}
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php echo esc_html( gwc_vt_letters_page_title() ); ?></h1>
+		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_letters_page_title() ); ?></h1>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_letters_notice(); ?>
 
@@ -308,7 +309,8 @@ function gwc_vt_render_produce_letter_screen(): void {
 		: null;
 	?>
 	<div class="wrap gwcvt-wrap">
-		<h1><?php echo esc_html( gwc_vt_produce_page_title() ); ?></h1>
+		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_produce_page_title() ); ?></h1>
+		<hr class="wp-header-end" />
 
 		<?php gwc_vt_letters_notice(); ?>
 		<?php gwc_vt_render_reissue_banner( $reissue ); ?>
@@ -1189,6 +1191,8 @@ function gwc_vt_render_letter_log(): void {
 		<?php if ( ! $records ) : ?>
 			<p class="description"><?php esc_html_e( 'No letters have been issued yet.', 'groundwork-common-volunteer-tracker' ); ?></p>
 		<?php else : ?>
+			<?php gwc_vt_render_list_tablenav( count( $records ) ); ?>
+
 			<table class="widefat striped gwcvt-log">
 				<thead>
 					<tr>
