@@ -341,7 +341,7 @@ function gwc_vt_add_credentials_help( $screen ): void {
 function gwc_vt_add_offers_help( $screen ): void {
 	gwc_vt_add_help_tab(
 		$screen,
-		'gwc-vt-offers-what',
+		'gwc-vt-applications-what',
 		__( 'What is waiting here', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'What somebody typed into the form on your site. Nothing here is a volunteer record yet, and nothing here counts toward anything.', 'groundwork-common-volunteer-tracker' ),
@@ -352,10 +352,10 @@ function gwc_vt_add_offers_help( $screen ): void {
 
 	gwc_vt_add_help_tab(
 		$screen,
-		'gwc-vt-offers-waiting',
+		'gwc-vt-applications-waiting',
 		__( 'Nobody is told they are waiting', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'The plugin sends nothing when an offer arrives and nothing while it sits here. Somebody who offered to help and hears nothing for three weeks has usually concluded the answer was no.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The plugin sends nothing when an application arrives and nothing while it sits here. Somebody who applied and hears nothing for three weeks has usually concluded the answer was no.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The count beside this screen’s name in the menu, and the line on the dashboard, are how you find out one is waiting.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);

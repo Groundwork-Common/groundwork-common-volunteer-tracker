@@ -27,8 +27,6 @@ add_action( 'admin_menu', 'gwc_vt_register_applications_screen', 14 );
 add_action( 'admin_post_gwc_vt_approve_application', 'gwc_vt_handle_approve_application' );
 add_action( 'admin_post_gwc_vt_discard_application', 'gwc_vt_handle_discard_application' );
 
-/** Where offers are dealt with. */
-const GWC_VT_APPLICATIONS_PAGE = 'gwc-vt-offers';
 
 /**
  * Register the screen, and hide it when the feature is off.
@@ -59,7 +57,7 @@ function gwc_vt_register_applications_screen(): void {
  * @return string
  */
 function gwc_vt_applications_title(): string {
-	return __( 'Offers to volunteer', 'groundwork-common-volunteer-tracker' );
+	return __( 'Applications', 'groundwork-common-volunteer-tracker' );
 }
 
 /**
@@ -80,7 +78,7 @@ function gwc_vt_applications_menu_label(): string {
 	}
 
 	return sprintf(
-		/* translators: 1: the menu label, 2: how many offers are waiting. */
+		/* translators: 1: the menu label, 2: how many applications are waiting. */
 		__( '%1$s %2$s', 'groundwork-common-volunteer-tracker' ),
 		gwc_vt_applications_title(),
 		sprintf(
@@ -135,7 +133,7 @@ function gwc_vt_application_action_url( string $action, int $application_id ): s
 function gwc_vt_render_applications_screen(): void {
 	if ( ! gwc_vt_can_see_records() ) {
 		wp_die(
-			esc_html__( 'You do not have permission to see offers to volunteer.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'You do not have permission to see volunteer applications.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
 			array( 'response' => 403 )
 		);
@@ -161,12 +159,12 @@ function gwc_vt_render_applications_screen(): void {
 
 		<?php if ( ! $waiting ) : ?>
 			<p class="description">
-				<?php esc_html_e( 'Nobody is waiting. Offers sent through the form on your site appear here, and nothing becomes a volunteer record until you say so.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Nobody is waiting. Applications sent through the form on your site appear here, and nothing becomes a volunteer record until you say so.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		<?php else : ?>
 
 		<p class="description">
-			<?php esc_html_e( 'Oldest first — somebody who offered three weeks ago and heard nothing is who this queue is for. Nothing here is a volunteer record yet, and none of it appears anywhere else on your site.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Oldest first — somebody who applied three weeks ago and heard nothing is who this queue is for. Nothing here is a volunteer record yet, and none of it appears anywhere else on your site.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<table class="widefat striped gwcvt-offers">
@@ -174,7 +172,7 @@ function gwc_vt_render_applications_screen(): void {
 				<tr>
 					<th scope="col"><?php esc_html_e( 'Who', 'groundwork-common-volunteer-tracker' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'What they said', 'groundwork-common-volunteer-tracker' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Offered', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Applied', 'groundwork-common-volunteer-tracker' ); ?></th>
 					<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'groundwork-common-volunteer-tracker' ); ?></span></th>
 				</tr>
 			</thead>
@@ -488,8 +486,8 @@ function gwc_vt_applications_notice(): void {
 	}
 
 	$errors = array(
-		'gone'    => __( 'That offer had already been dealt with. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
-		'no-name' => __( 'That offer has no name on it, so there is nothing to create a record under. Discard it instead.', 'groundwork-common-volunteer-tracker' ),
+		'gone'    => __( 'That application had already been dealt with. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'no-name' => __( 'That application has no name on it, so there is nothing to create a record under. Discard it instead.', 'groundwork-common-volunteer-tracker' ),
 		'failed'  => __( 'The volunteer record could not be created. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
 	);
 
@@ -501,7 +499,7 @@ function gwc_vt_applications_notice(): void {
 	if ( 'discarded' === $result ) {
 		printf(
 			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-			esc_html__( 'Offer discarded. It is off this list, and what they sent is kept until your retention policy removes it.', 'groundwork-common-volunteer-tracker' )
+			esc_html__( 'Application discarded. It is off this list, and what they sent is kept until your retention policy removes it.', 'groundwork-common-volunteer-tracker' )
 		);
 
 		return;

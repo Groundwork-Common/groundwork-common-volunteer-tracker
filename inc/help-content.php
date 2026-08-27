@@ -276,7 +276,7 @@ function gwc_vt_help_topics(): array {
 
 		array(
 			'id'    => 'public',
-			'title' => __( 'Taking signups and offers from your site', 'groundwork-common-volunteer-tracker' ),
+			'title' => __( 'Taking signups and applications from your site', 'groundwork-common-volunteer-tracker' ),
 			'intro' => __( 'Three public forms, each switched off until you switch it on. None of them creates a volunteer record on its own.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
@@ -291,13 +291,13 @@ function gwc_vt_help_topics(): array {
 					'note'  => __( 'Visitors see what each shift is and how many places are left. They never see who is coming.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Answer somebody who offered to volunteer', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Answer somebody who applied to volunteer', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Offers to volunteer</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Applications</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Read what they sent.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Accept</strong> to make a volunteer record from it, or <strong>Set aside</strong> to take it off the list.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'Nothing is sent to them when an offer arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'Nothing is sent to them when an application arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
 		),

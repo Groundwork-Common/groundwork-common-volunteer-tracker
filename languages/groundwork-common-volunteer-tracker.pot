@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-26T23:24:04+00:00\n"
+"POT-Creation-Date: 2026-08-27T00:05:11+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -41,17 +41,17 @@ msgid "https://www.groundworkcommon.com/"
 msgstr ""
 
 #: inc/access.php:341
-#: inc/admin-applications.php:438
+#: inc/admin-applications.php:436
 msgid "You do not have permission to do that."
 msgstr ""
 
 #: inc/access.php:342
-#: inc/admin-applications.php:139
-#: inc/admin-applications.php:439
-#: inc/admin-credentials.php:126
-#: inc/admin-credentials.php:436
+#: inc/admin-applications.php:137
+#: inc/admin-applications.php:437
+#: inc/admin-credentials.php:124
+#: inc/admin-credentials.php:434
 #: inc/admin-dashboard.php:119
-#: inc/admin-help-page.php:179
+#: inc/admin-help-page.php:177
 #: inc/admin-letters.php:167
 #: inc/admin-letters.php:203
 #: inc/admin-quick-add.php:177
@@ -67,52 +67,52 @@ msgstr ""
 msgid "Permission denied"
 msgstr ""
 
-#: inc/admin-applications.php:62
-#: inc/admin-help-page.php:87
-msgid "Offers to volunteer"
+#: inc/admin-applications.php:60
+#: inc/admin-help-page.php:85
+msgid "Applications"
 msgstr ""
 
-#. translators: 1: the menu label, 2: how many offers are waiting.
-#: inc/admin-applications.php:84
+#. translators: 1: the menu label, 2: how many applications are waiting.
+#: inc/admin-applications.php:82
 #, php-format
 msgid "%1$s %2$s"
 msgstr ""
 
-#: inc/admin-applications.php:138
-msgid "You do not have permission to see offers to volunteer."
+#: inc/admin-applications.php:136
+msgid "You do not have permission to see volunteer applications."
 msgstr ""
 
-#: inc/admin-applications.php:154
+#: inc/admin-applications.php:152
 msgid "The form that feeds this queue is switched off, so nothing new will arrive. Anything already here is still yours to deal with."
 msgstr ""
 
-#: inc/admin-applications.php:156
+#: inc/admin-applications.php:154
 msgid "Settings → Logging"
 msgstr ""
 
-#: inc/admin-applications.php:164
-msgid "Nobody is waiting. Offers sent through the form on your site appear here, and nothing becomes a volunteer record until you say so."
+#: inc/admin-applications.php:162
+msgid "Nobody is waiting. Applications sent through the form on your site appear here, and nothing becomes a volunteer record until you say so."
 msgstr ""
 
-#: inc/admin-applications.php:169
-msgid "Oldest first — somebody who offered three weeks ago and heard nothing is who this queue is for. Nothing here is a volunteer record yet, and none of it appears anywhere else on your site."
+#: inc/admin-applications.php:167
+msgid "Oldest first — somebody who applied three weeks ago and heard nothing is who this queue is for. Nothing here is a volunteer record yet, and none of it appears anywhere else on your site."
 msgstr ""
 
-#: inc/admin-applications.php:175
+#: inc/admin-applications.php:173
 msgid "Who"
 msgstr ""
 
-#: inc/admin-applications.php:176
+#: inc/admin-applications.php:174
 msgid "What they said"
 msgstr ""
 
-#: inc/admin-applications.php:177
+#: inc/admin-applications.php:175
 #: inc/privacy.php:911
-msgid "Offered"
+msgid "Applied"
 msgstr ""
 
-#: inc/admin-applications.php:178
-#: inc/admin-credentials.php:169
+#: inc/admin-applications.php:176
+#: inc/admin-credentials.php:167
 #: inc/admin-event-roster.php:414
 #: inc/admin-shift.php:581
 #: inc/admin-volunteer.php:319
@@ -121,203 +121,203 @@ msgid "Actions"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/admin-applications.php:250
+#: inc/admin-applications.php:248
 #, php-format
 msgid "due %s"
 msgstr ""
 
-#: inc/admin-applications.php:260
+#: inc/admin-applications.php:258
 msgid "Says they have required service:"
 msgstr ""
 
-#: inc/admin-applications.php:266
+#: inc/admin-applications.php:264
 msgid "Nothing else."
 msgstr ""
 
-#: inc/admin-applications.php:272
+#: inc/admin-applications.php:270
 msgid "Add as a volunteer"
 msgstr ""
 
-#: inc/admin-applications.php:275
+#: inc/admin-applications.php:273
 msgid "Discard"
 msgstr ""
 
+#: inc/admin-applications.php:489
+msgid "That application had already been dealt with. Nothing was changed."
+msgstr ""
+
+#: inc/admin-applications.php:490
+msgid "That application has no name on it, so there is nothing to create a record under. Discard it instead."
+msgstr ""
+
 #: inc/admin-applications.php:491
-msgid "That offer had already been dealt with. Nothing was changed."
-msgstr ""
-
-#: inc/admin-applications.php:492
-msgid "That offer has no name on it, so there is nothing to create a record under. Discard it instead."
-msgstr ""
-
-#: inc/admin-applications.php:493
 msgid "The volunteer record could not be created. Nothing was changed."
 msgstr ""
 
-#: inc/admin-applications.php:504
-msgid "Offer discarded. It is off this list, and what they sent is kept until your retention policy removes it."
+#: inc/admin-applications.php:502
+msgid "Application discarded. It is off this list, and what they sent is kept until your retention policy removes it."
 msgstr ""
 
-#: inc/admin-applications.php:523
+#: inc/admin-applications.php:521
 msgid "Added as a volunteer."
 msgstr ""
 
-#: inc/admin-applications.php:528
+#: inc/admin-applications.php:526
 msgid "Open their record"
 msgstr ""
 
-#: inc/admin-credentials.php:69
-#: inc/admin-help-page.php:86
+#: inc/admin-credentials.php:67
+#: inc/admin-help-page.php:84
 #: inc/admin-volunteer-credentials.php:73
 #: inc/privacy.php:721
 msgid "Credentials"
 msgstr ""
 
-#: inc/admin-credentials.php:125
+#: inc/admin-credentials.php:123
 msgid "You do not have permission to see credentials."
 msgstr ""
 
-#: inc/admin-credentials.php:148
+#: inc/admin-credentials.php:146
 msgid "Things a volunteer has to hold before doing certain work — a training course, a signed waiver, a background check. You define them here and record who holds them on each volunteer’s own record."
 msgstr ""
 
-#: inc/admin-credentials.php:158
+#: inc/admin-credentials.php:156
 msgid "Recording who holds what works now. Attaching credentials to shifts and events — so that a missing one is reported, or stops somebody signing up — is still being built, so nothing here refuses anybody yet."
 msgstr ""
 
-#: inc/admin-credentials.php:165
+#: inc/admin-credentials.php:163
 #: inc/privacy.php:725
 msgid "Credential"
 msgstr ""
 
-#: inc/admin-credentials.php:166
+#: inc/admin-credentials.php:164
 msgid "Renewed"
 msgstr ""
 
-#: inc/admin-credentials.php:167
-#: inc/admin-credentials.php:281
+#: inc/admin-credentials.php:165
+#: inc/admin-credentials.php:279
 #: inc/admin-help.php:315
 msgid "If somebody has not got it"
 msgstr ""
 
-#: inc/admin-credentials.php:168
+#: inc/admin-credentials.php:166
 msgid "Who holds it"
 msgstr ""
 
-#: inc/admin-credentials.php:179
+#: inc/admin-credentials.php:177
 msgid "Nothing defined yet."
 msgstr ""
 
-#: inc/admin-credentials.php:186
+#: inc/admin-credentials.php:184
 msgid "Defining a credential changes what your organization asks of everybody, so it needs a site administrator. Recording that somebody holds one does not — that is on each volunteer’s record."
 msgstr ""
 
-#: inc/admin-credentials.php:209
+#: inc/admin-credentials.php:207
 msgid "Retired"
 msgstr ""
 
 #. translators: %s: a number of months, already formatted.
-#: inc/admin-credentials.php:221
+#: inc/admin-credentials.php:219
 #, php-format
 msgid "Every %s month"
 msgid_plural "Every %s months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-credentials.php:224
+#: inc/admin-credentials.php:222
 msgid "Never expires"
 msgstr ""
 
-#: inc/admin-credentials.php:234
+#: inc/admin-credentials.php:232
 msgid "Put it back"
 msgstr ""
 
-#: inc/admin-credentials.php:238
+#: inc/admin-credentials.php:236
 msgid "Retire"
 msgstr ""
 
-#: inc/admin-credentials.php:258
+#: inc/admin-credentials.php:256
 msgid "Add a credential"
 msgstr ""
 
-#: inc/admin-credentials.php:266
+#: inc/admin-credentials.php:264
 #: inc/admin-event.php:112
 msgid "What it is"
 msgstr ""
 
-#: inc/admin-credentials.php:269
+#: inc/admin-credentials.php:267
 msgid "What you would call it out loud — “Child safety class”, “Liability waiver”."
 msgstr ""
 
-#: inc/admin-credentials.php:273
+#: inc/admin-credentials.php:271
 msgid "Renewed every"
 msgstr ""
 
-#: inc/admin-credentials.php:276
+#: inc/admin-credentials.php:274
 msgid "months"
 msgstr ""
 
-#: inc/admin-credentials.php:277
+#: inc/admin-credentials.php:275
 msgid "Zero means it never expires. Somebody who did it on the 31st of a month renews on the 31st, or on the last day of a month that is shorter."
 msgstr ""
 
-#: inc/admin-credentials.php:288
+#: inc/admin-credentials.php:286
 msgid "Reporting is the safer default and the one most organizations want: you find out who is short, and decide. Stopping somebody is for the things nobody may work without."
 msgstr ""
 
-#: inc/admin-credentials.php:292
+#: inc/admin-credentials.php:290
 msgid "A note"
 msgstr ""
 
-#: inc/admin-credentials.php:295
+#: inc/admin-credentials.php:293
 msgid "Optional, and for staff. Where the course is booked, who countersigns the form — whatever whoever records this needs to know."
 msgstr ""
 
-#: inc/admin-credentials.php:300
+#: inc/admin-credentials.php:298
 msgid "Add it"
 msgstr ""
 
-#: inc/admin-credentials.php:435
+#: inc/admin-credentials.php:433
 msgid "You do not have permission to define credentials."
 msgstr ""
 
-#: inc/admin-credentials.php:473
+#: inc/admin-credentials.php:471
 msgid "Give the credential a name. Nothing was added."
 msgstr ""
 
-#: inc/admin-credentials.php:474
+#: inc/admin-credentials.php:472
 msgid "That could not be saved. Nothing was added."
 msgstr ""
 
-#: inc/admin-credentials.php:475
+#: inc/admin-credentials.php:473
 #: inc/credentials.php:294
 msgid "That credential no longer exists."
 msgstr ""
 
-#: inc/admin-credentials.php:484
+#: inc/admin-credentials.php:482
 msgid "Credential added. Record who holds it on each volunteer’s own record."
 msgstr ""
 
-#: inc/admin-credentials.php:488
+#: inc/admin-credentials.php:486
 msgid "Retired. Nobody will be asked for it again, and every record of somebody holding it is kept."
 msgstr ""
 
-#: inc/admin-credentials.php:489
+#: inc/admin-credentials.php:487
 msgid "Back in use."
 msgstr ""
 
-#: inc/admin-credentials.php:515
+#: inc/admin-credentials.php:513
 msgid "Nobody yet"
 msgstr ""
 
 #. translators: %s: a count of people, already formatted. Reads "4 held" under a column headed "Who holds it".
-#: inc/admin-credentials.php:540
+#: inc/admin-credentials.php:538
 #, php-format
 msgid "%s held"
 msgstr ""
 
 #. translators: %s: a count of people, already formatted. Reads "1 lapsed".
-#: inc/admin-credentials.php:554
+#: inc/admin-credentials.php:552
 #, php-format
 msgid "%s lapsed"
 msgstr ""
@@ -325,7 +325,7 @@ msgstr ""
 #: inc/admin-dashboard-widget.php:116
 #: inc/admin-dashboard.php:104
 #: inc/admin-help.php:91
-#: inc/admin-screen.php:333
+#: inc/admin-screen.php:518
 msgid "Volunteer Tracker"
 msgstr ""
 
@@ -379,8 +379,8 @@ msgstr[1] ""
 #. translators: %s is a count, already formatted.
 #: inc/admin-dashboard-widget.php:422
 #, php-format
-msgid "%s offer to answer"
-msgid_plural "%s offers to answer"
+msgid "%s application to answer"
+msgid_plural "%s applications to answer"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -431,7 +431,7 @@ msgid "Dashboard"
 msgstr ""
 
 #: inc/admin-dashboard.php:118
-#: inc/admin-help-page.php:178
+#: inc/admin-help-page.php:176
 #: inc/admin-letters.php:166
 #: inc/admin-verify.php:336
 msgid "You do not have permission to see this."
@@ -1243,15 +1243,15 @@ msgstr ""
 msgid "Only offered while nobody has signed up. Once somebody has, it can be called off but not deleted."
 msgstr ""
 
-#: inc/admin-help-page.php:79
+#: inc/admin-help-page.php:77
 msgid "The dashboard"
 msgstr ""
 
-#: inc/admin-help-page.php:80
+#: inc/admin-help-page.php:78
 msgid "The schedule"
 msgstr ""
 
-#: inc/admin-help-page.php:81
+#: inc/admin-help-page.php:79
 #: inc/admin-quick-add.php:260
 #: inc/admin-quick-add.php:489
 #: inc/admin-volunteer.php:316
@@ -1261,56 +1261,56 @@ msgstr ""
 msgid "Hours"
 msgstr ""
 
-#: inc/admin-help-page.php:82
+#: inc/admin-help-page.php:80
 #: inc/admin-help.php:697
 msgid "Logging a day"
 msgstr ""
 
-#: inc/admin-help-page.php:83
+#: inc/admin-help-page.php:81
 #: inc/admin-help.php:581
 msgid "Verifying hours"
 msgstr ""
 
-#: inc/admin-help-page.php:84
+#: inc/admin-help-page.php:82
 #: inc/admin-letters.php:266
 #: inc/volunteer-cpt.php:95
 msgid "Volunteers"
 msgstr ""
 
-#: inc/admin-help-page.php:85
+#: inc/admin-help-page.php:83
 msgid "One volunteer’s record"
 msgstr ""
 
-#: inc/admin-help-page.php:88
+#: inc/admin-help-page.php:86
 msgid "Changing a whole repeat"
 msgstr ""
 
-#: inc/admin-help-page.php:89
+#: inc/admin-help-page.php:87
 #: inc/admin-help.php:93
-#: inc/admin-screen.php:255
+#: inc/admin-screen.php:440
 msgid "Settings"
 msgstr ""
 
-#: inc/admin-help-page.php:96
+#: inc/admin-help-page.php:94
 #: inc/admin-help.php:653
 #: inc/help-content.php:149
 msgid "Producing a letter"
 msgstr ""
 
-#: inc/admin-help-page.php:97
+#: inc/admin-help-page.php:95
 #: inc/admin-volunteer.php:252
 msgid "Letters issued"
 msgstr ""
 
-#: inc/admin-help-page.php:157
+#: inc/admin-help-page.php:155
 msgid "Help"
 msgstr ""
 
-#: inc/admin-help-page.php:191
+#: inc/admin-help-page.php:189
 msgid "How to do the things this plugin is for. Every screen also has a Help tab at the top right, which explains what the screen means rather than how to use it."
 msgstr ""
 
-#: inc/admin-help-page.php:202
+#: inc/admin-help-page.php:200
 msgid "Help topics"
 msgstr ""
 
@@ -1319,7 +1319,7 @@ msgid "How-to guide"
 msgstr ""
 
 #: inc/admin-help.php:94
-#: inc/admin-screen.php:666
+#: inc/admin-screen.php:851
 msgid "Report a problem"
 msgstr ""
 
@@ -1362,7 +1362,7 @@ msgid "The public form is switched off until you switch it on and choose a page 
 msgstr ""
 
 #: inc/admin-help.php:163
-#: inc/admin-screen.php:298
+#: inc/admin-screen.php:483
 #: inc/render.php:132
 msgid "Shifts"
 msgstr ""
@@ -1508,7 +1508,7 @@ msgid "Nobody is told they are waiting"
 msgstr ""
 
 #: inc/admin-help.php:358
-msgid "The plugin sends nothing when an offer arrives and nothing while it sits here. Somebody who offered to help and hears nothing for three weeks has usually concluded the answer was no."
+msgid "The plugin sends nothing when an application arrives and nothing while it sits here. Somebody who applied and hears nothing for three weeks has usually concluded the answer was no."
 msgstr ""
 
 #: inc/admin-help.php:359
@@ -3062,72 +3062,72 @@ msgstr ""
 msgid "Recorded against this signup with your name, and shown on the roster. “Certificate seen, being entered Monday” is the kind of thing that belongs here."
 msgstr ""
 
-#: inc/admin-screen.php:254
+#: inc/admin-screen.php:439
 msgid "Volunteer Tracker Settings"
 msgstr ""
 
-#: inc/admin-screen.php:294
+#: inc/admin-screen.php:479
 msgid "Letter"
 msgstr ""
 
-#: inc/admin-screen.php:297
+#: inc/admin-screen.php:482
 msgid "Logging"
 msgstr ""
 
-#: inc/admin-screen.php:299
+#: inc/admin-screen.php:484
 msgid "Privacy"
 msgstr ""
 
-#: inc/admin-screen.php:337
+#: inc/admin-screen.php:522
 msgid "Settings sections"
 msgstr ""
 
 #. translators: %s: the name of a settings tab.
-#: inc/admin-screen.php:371
+#: inc/admin-screen.php:556
 #, php-format
 msgid "The %s settings are not built yet. Hours logging works without them."
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:446
+#: inc/admin-screen.php:631
 #, php-format
 msgid "Built by %s — technology leadership and support for nonprofits."
 msgstr ""
 
-#: inc/admin-screen.php:450
-#: inc/admin-screen.php:582
-#: inc/admin-screen.php:612
-#: inc/admin-screen.php:626
+#: inc/admin-screen.php:635
+#: inc/admin-screen.php:767
+#: inc/admin-screen.php:797
+#: inc/admin-screen.php:811
 msgid "Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:584
+#: inc/admin-screen.php:769
 msgid "Show"
 msgstr ""
 
-#: inc/admin-screen.php:592
+#: inc/admin-screen.php:777
 msgid "Hide for 30 days"
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:631
+#: inc/admin-screen.php:816
 #, php-format
 msgid "%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it."
 msgstr ""
 
-#: inc/admin-screen.php:639
+#: inc/admin-screen.php:824
 msgid "If you find this plugin useful, the most valuable thing you can do for us is mention us to a nonprofit who might benefit from our services. Referrals are how our business continues to grow its impact and reach."
 msgstr ""
 
-#: inc/admin-screen.php:645
+#: inc/admin-screen.php:830
 msgid "Learn about Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:654
+#: inc/admin-screen.php:839
 msgid "You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give."
 msgstr ""
 
-#: inc/admin-screen.php:659
+#: inc/admin-screen.php:844
 msgid "Support our work"
 msgstr ""
 
@@ -3344,7 +3344,7 @@ msgid "Optional. A word you give people at the front desk, which the form then a
 msgstr ""
 
 #: inc/admin-settings.php:258
-msgid "Let people offer to volunteer from your site"
+msgid "Let people apply to volunteer from your site"
 msgstr ""
 
 #: inc/admin-settings.php:259
@@ -3352,7 +3352,7 @@ msgid "Off until you switch it on. With it on, this site accepts a name and cont
 msgstr ""
 
 #: inc/admin-settings.php:266
-msgid "Add the Volunteer Offer Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Offers are only accepted on this page, and it is pinned by ID so renaming it changes nothing."
+msgid "Add the Volunteer Application Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Applications are only accepted on this page, and it is pinned by ID so renaming it changes nothing."
 msgstr ""
 
 #: inc/admin-settings.php:273
@@ -3549,7 +3549,7 @@ msgid "The public hours form"
 msgstr ""
 
 #: inc/admin-settings.php:453
-msgid "Offering to volunteer"
+msgid "Applying to volunteer"
 msgstr ""
 
 #: inc/admin-settings.php:454
@@ -4503,12 +4503,12 @@ msgstr[1] ""
 
 #: inc/application-cpt.php:102
 msgctxt "post type general name"
-msgid "Volunteer offers"
+msgid "Applications"
 msgstr ""
 
 #: inc/application-cpt.php:103
 msgctxt "post type singular name"
-msgid "Volunteer offer"
+msgid "Application"
 msgstr ""
 
 #: inc/application-cpt.php:279
@@ -4680,8 +4680,8 @@ msgstr ""
 
 #: inc/dashboard.php:165
 #: inc/help-content.php:294
-msgid "Answer somebody who offered to volunteer"
-msgid_plural "Answer people who offered to volunteer"
+msgid "Answer somebody who applied to volunteer"
+msgid_plural "Answer people who applied to volunteer"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -5425,7 +5425,7 @@ msgid "The volunteer list opens, showing only those people. You can also filter 
 msgstr ""
 
 #: inc/help-content.php:279
-msgid "Taking signups and offers from your site"
+msgid "Taking signups and applications from your site"
 msgstr ""
 
 #: inc/help-content.php:280
@@ -5457,7 +5457,7 @@ msgid "Visitors see what each shift is and how many places are left. They never 
 msgstr ""
 
 #: inc/help-content.php:296
-msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Offers to volunteer</strong>."
+msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Applications</strong>."
 msgstr ""
 
 #: inc/help-content.php:297
@@ -5469,7 +5469,7 @@ msgid "Select <strong>Accept</strong> to make a volunteer record from it, or <st
 msgstr ""
 
 #: inc/help-content.php:300
-msgid "Nothing is sent to them when an offer arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here."
+msgid "Nothing is sent to them when an application arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here."
 msgstr ""
 
 #: inc/i18n.php:51
@@ -5812,7 +5812,7 @@ msgid "Email given"
 msgstr ""
 
 #: inc/privacy.php:881
-msgid "Offer to volunteer"
+msgid "Application to volunteer"
 msgstr ""
 
 #: inc/privacy.php:893
@@ -5828,7 +5828,7 @@ msgid "Required service they described"
 msgstr ""
 
 #: inc/privacy.php:919
-msgid "A photograph you sent with this offer is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you."
+msgid "A photograph you sent with this application is held. It is not published anywhere, and only staff who can open the record can see it. Ask us for a copy and we will send it to you."
 msgstr ""
 
 #: inc/privacy.php:923
@@ -6926,7 +6926,7 @@ msgid "Lists the shifts you need help with and lets people put their name down. 
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:29
-msgid "Nobody can offer to volunteer yet. Switch the form on under Volunteer Tracker → Settings → Logging, and pin it to this page."
+msgid "Nobody can apply to volunteer yet. Switch the form on under Volunteer Tracker → Settings → Logging, and pin it to this page."
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:45
@@ -6938,11 +6938,11 @@ msgid "This form also asks whether somebody is completing court-ordered or schoo
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:74
-msgid "Volunteer Offer Form"
+msgid "Volunteer Application Form"
 msgstr ""
 
 #: blocks/volunteer-form/edit.js:80
-msgid "People fill this in to offer their help. Nothing they send becomes a volunteer record — it waits under Volunteer Tracker → Offers to volunteer until a staff member accepts or discards it."
+msgid "People fill this in to offer their help. Nothing they send becomes a volunteer record — it waits under Volunteer Tracker → Applications until a staff member accepts or discards it."
 msgstr ""
 
 #: blocks/volunteer-signin/edit.js:29
@@ -7039,12 +7039,12 @@ msgstr ""
 
 #: blocks/volunteer-form/block.json
 msgctxt "block title"
-msgid "Volunteer Offer Form"
+msgid "Volunteer Application Form"
 msgstr ""
 
 #: blocks/volunteer-form/block.json
 msgctxt "block description"
-msgid "Lets people offer to volunteer. Nothing they send becomes a volunteer record until a staff member accepts it."
+msgid "Lets people apply to volunteer. Nothing they send becomes a volunteer record until a staff member accepts it."
 msgstr ""
 
 #: blocks/volunteer-form/block.json

@@ -419,7 +419,7 @@ function gwc_vt_widget_short_label( array $item ): string {
 		// translators: %s is a count, already formatted.
 		'understaffed' => _n_noop( '%s shift short of people', '%s shifts short of people', 'groundwork-common-volunteer-tracker' ),
 		// translators: %s is a count, already formatted.
-		'offers'       => _n_noop( '%s offer to answer', '%s offers to answer', 'groundwork-common-volunteer-tracker' ),
+		'offers'       => _n_noop( '%s application to answer', '%s applications to answer', 'groundwork-common-volunteer-tracker' ),
 		// translators: %s is a count, already formatted.
 		'overdue'      => _n_noop( '%s past a deadline', '%s past a deadline', 'groundwork-common-volunteer-tracker' ),
 		// translators: %s is a count, already formatted.

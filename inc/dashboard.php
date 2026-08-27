@@ -163,8 +163,8 @@ function gwc_vt_dashboard_items( array $counts ): array {
 		'offers'       => array(
 			'severity' => 'waiting',
 			'what'     => _n_noop(
-				'Answer somebody who offered to volunteer',
-				'Answer people who offered to volunteer',
+				'Answer somebody who applied to volunteer',
+				'Answer people who applied to volunteer',
 				'groundwork-common-volunteer-tracker'
 			),
 			'why'      => __( 'They sent this through your own form and are waiting to hear. Accepting or setting one aside takes it off this list.', 'groundwork-common-volunteer-tracker' ),
@@ -314,7 +314,7 @@ function gwc_vt_dashboard_item_url( string $key ): string {
 			return add_query_arg(
 				array(
 					'post_type' => GWC_VT_ENTRY_TYPE,
-					'page'      => 'gwc-vt-offers',
+					'page'      => 'gwc-vt-applications',
 				),
 				admin_url( 'edit.php' )
 			);

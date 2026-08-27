@@ -59,8 +59,6 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'gwc_vt_register_help_page', 90 );
 
-/** Where the help lives. */
-const GWC_VT_HELP_PAGE = 'gwc-vt-help';
 
 /**
  * Every screen with help, and what to call it here.
@@ -84,7 +82,7 @@ function gwc_vt_help_screens(): array {
 		__( 'Volunteers', 'groundwork-common-volunteer-tracker' )           => 'edit-' . GWC_VT_VOLUNTEER_TYPE,
 		__( 'One volunteer’s record', 'groundwork-common-volunteer-tracker' ) => GWC_VT_VOLUNTEER_TYPE,
 		__( 'Credentials', 'groundwork-common-volunteer-tracker' )          => $page . GWC_VT_CREDENTIALS_PAGE,
-		__( 'Offers to volunteer', 'groundwork-common-volunteer-tracker' )  => $page . GWC_VT_APPLICATIONS_PAGE,
+		__( 'Applications', 'groundwork-common-volunteer-tracker' )         => $page . GWC_VT_APPLICATIONS_PAGE,
 		__( 'Changing a whole repeat', 'groundwork-common-volunteer-tracker' ) => $page . GWC_VT_REPEAT_PAGE,
 		__( 'Settings', 'groundwork-common-volunteer-tracker' )             => $page . GWC_VT_SETTINGS_PAGE,
 	);

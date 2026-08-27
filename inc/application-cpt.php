@@ -99,8 +99,8 @@ function gwc_vt_register_application_type(): void {
 
 	$args = array(
 		'labels'              => array(
-			'name'          => _x( 'Volunteer offers', 'post type general name', 'groundwork-common-volunteer-tracker' ),
-			'singular_name' => _x( 'Volunteer offer', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
+			'name'          => _x( 'Applications', 'post type general name', 'groundwork-common-volunteer-tracker' ),
+			'singular_name' => _x( 'Application', 'post type singular name', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		/* Every one of these is the same answer the volunteer type gives, for a
