@@ -127,7 +127,12 @@ function gwc_vt_register_volunteer_type(): void {
 			'public'                    => false,
 			'internal'                  => false,
 			'exclude_from_search'       => true,
-			'show_in_admin_all_list'    => false,
+			/* Inactive people DO belong in All, because All means everybody this
+			 * organization knows and there is a separate Active view for the
+			 * ones still coming. That is the opposite of the credential status
+			 * next door, where retiring is about hiding a thing nobody should
+			 * be asked for any more. */
+			'show_in_admin_all_list'    => true,
 			'show_in_admin_status_list' => true,
 			/* translators: %s: how many volunteers are inactive. */
 			'label_count'               => _nx_noop( 'Inactive <span class="count">(%s)</span>', 'Inactive <span class="count">(%s)</span>', 'volunteer status', 'groundwork-common-volunteer-tracker' ),

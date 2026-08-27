@@ -375,6 +375,21 @@ function number_format_i18n( $number, $decimals = 0 ) {
 /* Counts per status. The suite has no database, so every status is zero — which
  * is the honest answer and the useful one: a views test that depended on there
  * being applications waiting would be asserting the fixture, not the filter. */
+/* Enough of it to build a link. Ordering and encoding are core's business; what
+ * the suite asserts is which view a link points at, not how it spells it. */
+function add_query_arg( ...$args ) {
+	$url  = is_array( $args[0] ) ? (string) ( $args[1] ?? '' ) : (string) ( $args[2] ?? '' );
+	$pair = is_array( $args[0] ) ? $args[0] : array( $args[0] => $args[1] );
+	$sep  = false === strpos( $url, '?' ) ? '?' : '&';
+
+	foreach ( $pair as $key => $value ) {
+		$url .= $sep . rawurlencode( (string) $key ) . '=' . rawurlencode( (string) $value );
+		$sep  = '&';
+	}
+
+	return $url;
+}
+
 function admin_url( $path = '', $scheme = 'admin' ) {
 	return 'https://example.test/wp-admin/' . ltrim( (string) $path, '/' );
 }
@@ -676,6 +691,9 @@ require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
  * over what core hands it. The handlers either side of it write posts and are
  * covered by tests/integration/inactive.php. */
 require GWC_VT_DIR . 'inc/admin-volunteer-status.php';
+
+// One list, three views: the applications queue is a view on it, not a screen.
+require GWC_VT_DIR . 'inc/admin-volunteer-list.php';
 
 /* The widget's week block groups shifts into days, which is arithmetic over
  * post meta and nothing else — the same split as the worklist it sits under. */

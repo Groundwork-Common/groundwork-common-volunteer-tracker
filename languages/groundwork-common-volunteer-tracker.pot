@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-27T16:21:51+00:00\n"
+"POT-Creation-Date: 2026-08-27T16:38:22+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -42,7 +42,7 @@ msgstr ""
 
 #: inc/access.php:341
 #: inc/admin-applications.php:436
-#: inc/admin-volunteer-status.php:169
+#: inc/admin-volunteer-status.php:168
 msgid "You do not have permission to do that."
 msgstr ""
 
@@ -65,7 +65,7 @@ msgstr ""
 #: inc/admin-verify.php:337
 #: inc/admin-verify.php:679
 #: inc/admin-volunteer-credentials.php:382
-#: inc/admin-volunteer-status.php:170
+#: inc/admin-volunteer-status.php:169
 msgid "Permission denied"
 msgstr ""
 
@@ -101,15 +101,18 @@ msgid "Oldest first — somebody who applied three weeks ago and heard nothing i
 msgstr ""
 
 #: inc/admin-applications.php:173
+#: inc/admin-volunteer-list.php:156
 msgid "Who"
 msgstr ""
 
 #: inc/admin-applications.php:174
+#: inc/admin-volunteer-list.php:157
 msgid "What they said"
 msgstr ""
 
 #: inc/admin-applications.php:175
-#: inc/admin-volunteer-status.php:411
+#: inc/admin-volunteer-list.php:158
+#: inc/admin-volunteer-list.php:324
 #: inc/privacy.php:915
 msgid "Applied"
 msgstr ""
@@ -134,14 +137,17 @@ msgid "Says they have required service:"
 msgstr ""
 
 #: inc/admin-applications.php:264
+#: inc/admin-volunteer-list.php:181
 msgid "Nothing else."
 msgstr ""
 
 #: inc/admin-applications.php:270
+#: inc/admin-volunteer-list.php:235
 msgid "Add as a volunteer"
 msgstr ""
 
 #: inc/admin-applications.php:273
+#: inc/admin-volunteer-list.php:240
 msgid "Discard"
 msgstr ""
 
@@ -539,7 +545,7 @@ msgid "verified hours"
 msgstr ""
 
 #: inc/admin-dashboard.php:670
-#: inc/volunteer-cpt.php:191
+#: inc/volunteer-cpt.php:196
 msgid "Awaiting verification"
 msgstr ""
 
@@ -1273,7 +1279,7 @@ msgstr ""
 
 #: inc/admin-help-page.php:82
 #: inc/admin-letters.php:342
-#: inc/volunteer-cpt.php:148
+#: inc/volunteer-cpt.php:153
 msgid "Volunteers"
 msgstr ""
 
@@ -1966,7 +1972,7 @@ msgstr ""
 #: inc/admin-letters.php:528
 #: inc/privacy.php:674
 #: inc/render.php:131
-#: inc/volunteer-cpt.php:190
+#: inc/volunteer-cpt.php:195
 msgid "Verified hours"
 msgstr ""
 
@@ -3780,7 +3786,7 @@ msgid "Deleting the plugin will discard its configuration, so a reinstall starts
 msgstr ""
 
 #: inc/admin-settings.php:1276
-#: inc/admin-volunteer-status.php:103
+#: inc/admin-volunteer-status.php:102
 msgid "Save"
 msgstr ""
 
@@ -4414,51 +4420,60 @@ msgstr ""
 msgid "Filter by credential"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:135
+#: inc/admin-volunteer-list.php:253
+#: inc/admin-volunteer.php:345
+msgid "Open"
+msgstr ""
+
+#: inc/admin-volunteer-list.php:317
+msgid "Active"
+msgstr ""
+
+#: inc/admin-volunteer-status.php:134
 msgid "Inactive — not offered when staffing a shift."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:136
+#: inc/admin-volunteer-status.php:135
 msgid "Volunteering here."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:143
+#: inc/admin-volunteer-status.php:142
 msgid "Make them active"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:144
+#: inc/admin-volunteer-status.php:143
 msgid "Make them inactive"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:177
+#: inc/admin-volunteer-status.php:176
 msgid "That is not a volunteer record."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:178
+#: inc/admin-volunteer-status.php:177
 msgid "Nothing to do"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-status.php:283
+#: inc/admin-volunteer-status.php:282
 #, php-format
 msgid "%s is inactive. Their hours and their name are untouched, and they are no longer offered when you are staffing a shift."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:291
+#: inc/admin-volunteer-status.php:290
 msgid "Make them active again"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-status.php:306
+#: inc/admin-volunteer-status.php:305
 #, php-format
 msgid "%s is active again, and can be put on shifts."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:358
+#: inc/admin-volunteer-status.php:357
 msgid "Make active"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:359
+#: inc/admin-volunteer-status.php:358
 msgid "Make inactive"
 msgstr ""
 
@@ -4495,10 +4510,6 @@ msgstr ""
 #: inc/privacy.php:774
 #: inc/render.php:135
 msgid "Activity"
-msgstr ""
-
-#: inc/admin-volunteer.php:345
-msgid "Open"
 msgstr ""
 
 #: inc/admin-volunteer.php:356
@@ -6882,7 +6893,7 @@ msgid "Inactive"
 msgstr ""
 
 #. translators: %s: how many volunteers are inactive.
-#: inc/volunteer-cpt.php:133
+#: inc/volunteer-cpt.php:138
 #, php-format
 msgctxt "volunteer status"
 msgid "Inactive <span class=\"count\">(%s)</span>"
@@ -6890,51 +6901,51 @@ msgid_plural "Inactive <span class=\"count\">(%s)</span>"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/volunteer-cpt.php:138
+#: inc/volunteer-cpt.php:143
 msgctxt "post type general name"
 msgid "Volunteers"
 msgstr ""
 
-#: inc/volunteer-cpt.php:139
+#: inc/volunteer-cpt.php:144
 msgctxt "post type singular name"
 msgid "Volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:140
+#: inc/volunteer-cpt.php:145
 msgctxt "admin menu"
 msgid "Volunteers"
 msgstr ""
 
-#: inc/volunteer-cpt.php:141
-#: inc/volunteer-cpt.php:142
+#: inc/volunteer-cpt.php:146
+#: inc/volunteer-cpt.php:147
 msgid "Add volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:143
+#: inc/volunteer-cpt.php:148
 msgid "Edit volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:144
+#: inc/volunteer-cpt.php:149
 msgid "New volunteer"
 msgstr ""
 
-#: inc/volunteer-cpt.php:145
+#: inc/volunteer-cpt.php:150
 msgid "Search volunteers"
 msgstr ""
 
-#: inc/volunteer-cpt.php:146
+#: inc/volunteer-cpt.php:151
 msgid "No volunteers yet."
 msgstr ""
 
-#: inc/volunteer-cpt.php:147
+#: inc/volunteer-cpt.php:152
 msgid "No volunteers in the trash."
 msgstr ""
 
-#: inc/volunteer-cpt.php:192
+#: inc/volunteer-cpt.php:197
 msgid "Required"
 msgstr ""
 
-#: inc/volunteer-cpt.php:193
+#: inc/volunteer-cpt.php:198
 msgid "Last shift"
 msgstr ""
 
