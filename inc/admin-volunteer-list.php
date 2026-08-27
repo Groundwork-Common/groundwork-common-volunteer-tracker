@@ -60,6 +60,71 @@ add_action( 'pre_get_posts', 'gwc_vt_volunteer_list_query' );
 add_filter( 'manage_' . GWC_VT_VOLUNTEER_TYPE . '_posts_columns', 'gwc_vt_volunteer_list_columns', 20 );
 add_action( 'manage_' . GWC_VT_APPLICATION_TYPE . '_posts_custom_column', 'gwc_vt_application_column', 10, 2 );
 add_filter( 'post_row_actions', 'gwc_vt_application_row_actions', 10, 2 );
+add_filter( 'post_row_actions', 'gwc_vt_no_quick_edit', 20, 2 );
+add_filter( 'bulk_actions-edit-' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_volunteer_bulk_actions' );
+
+/* ── Quick Edit and Bulk Edit do not belong on a person ──────────────────────
+ * What they offer is a post's furniture: slug, date, author, password, status.
+ * A volunteer has none of those in any sense that means anything, and the
+ * fields that ARE theirs — email, phone, what a court required of them — are
+ * meta, which neither editor can touch. So the whole of what they could
+ * usefully change is the name, and the whole of what they could usefully break
+ * is everything else.
+ *
+ * Quick Edit was also actively dangerous here. Its status <select> is built
+ * from a fixed list that cannot contain a custom status, and
+ * wp_ajax_inline_save() assigns whatever it posts, so editing a typo in an
+ * inactive volunteer's name published them on the way past.
+ *
+ * ── Taking the link away is not the fix, and does not replace it ─────────────
+ * wp_ajax_inline_save is still registered and still answers. Removing a link
+ * removes the ordinary way in, not the endpoint, so
+ * gwc_vt_keep_volunteer_status() in inc/admin-volunteer-status.php stays
+ * exactly as it is. This makes the interface honest; that keeps the data right.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Take Quick Edit off a volunteer's row.
+ *
+ * @param array<string, string> $actions What core offers.
+ * @param WP_Post               $post    The row.
+ * @return array<string, string>
+ */
+function gwc_vt_no_quick_edit( $actions, $post ) {
+	if ( ! is_array( $actions ) || ! is_a( $post, 'WP_Post' ) ) {
+		return $actions;
+	}
+
+	if ( GWC_VT_VOLUNTEER_TYPE !== $post->post_type ) {
+		return $actions;
+	}
+
+	/* Core's key for it, which carries the class it needs rather than being a
+	 * word: 'inline hide-if-no-js'. Named in full because a partial match would
+	 * take somebody else's action with it one day. */
+	unset( $actions['inline hide-if-no-js'] );
+
+	return $actions;
+}
+
+/**
+ * And Bulk Edit out of the dropdown above the list.
+ *
+ * Moving several people to the trash at once is a real thing to want, so that
+ * one stays. Editing several people's post furniture at once is not.
+ *
+ * @param array<string, string> $actions What core offers.
+ * @return array<string, string>
+ */
+function gwc_vt_volunteer_bulk_actions( $actions ) {
+	if ( ! is_array( $actions ) ) {
+		return $actions;
+	}
+
+	unset( $actions['edit'] );
+
+	return $actions;
+}
 
 /**
  * Which view the screen is showing.
