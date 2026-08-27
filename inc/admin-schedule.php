@@ -1810,7 +1810,7 @@ function gwc_vt_render_schedule_view_tabs( string $base, string $view ): void {
  * @param string             $state  Which state is active, or ''.
  * @param string             $term   What is in the find box.
  * @param string             $when   'past' or 'upcoming'.
- * @param string             $view   'list' or 'month'.
+ * @param string             $view   'list', 'month' or 'events'.
  */
 function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when, string $view = 'list' ): void {
 	$labels = gwc_vt_shift_state_labels();
@@ -1826,6 +1826,9 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 		/* The month being looked at, so clicking a chip narrows THIS month
 		 * rather than sending somebody back to today. */
 		$keep['gwc_vt_month'] = gwc_vt_schedule_month();
+	} elseif ( 'events' === $view ) {
+		/* Without this a chip on the events list answers with the shifts. */
+		$keep['view'] = 'events';
 	} elseif ( 'past' === $when ) {
 		$keep['when'] = 'past';
 	}
@@ -1849,6 +1852,8 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 			<?php if ( 'month' === $view ) : ?>
 				<input type="hidden" name="view" value="month" />
 				<input type="hidden" name="gwc_vt_month" value="<?php echo esc_attr( gwc_vt_schedule_month() ); ?>" />
+			<?php elseif ( 'events' === $view ) : ?>
+				<input type="hidden" name="view" value="events" />
 			<?php elseif ( 'past' === $when ) : ?>
 				<input type="hidden" name="when" value="past" />
 			<?php endif; ?>
@@ -1856,15 +1861,27 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 				<input type="hidden" name="gwc_vt_state" value="<?php echo esc_attr( $state ); ?>" />
 			<?php endif; ?>
 
+			<?php
+			/* The one thing the events list says differently, because it is the
+			 * one thing that would be untrue there: the box searches what the
+			 * screen is listing. */
+			$find = 'events' === $view
+				? __( 'Find an event', 'groundwork-common-volunteer-tracker' )
+				: __( 'Find a shift', 'groundwork-common-volunteer-tracker' );
+
+			$hint = 'events' === $view
+				? __( 'Find an event — name, place, or person', 'groundwork-common-volunteer-tracker' )
+				: __( 'Find a shift — activity, place, or person', 'groundwork-common-volunteer-tracker' );
+			?>
 			<label class="screen-reader-text" for="gwcvt-schedule-search">
-				<?php esc_html_e( 'Find a shift', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php echo esc_html( $find ); ?>
 			</label>
 			<input
 				type="search"
 				id="gwcvt-schedule-search"
 				name="s"
 				value="<?php echo esc_attr( $term ); ?>"
-				placeholder="<?php esc_attr_e( 'Find a shift — activity, place, or person', 'groundwork-common-volunteer-tracker' ); ?>"
+				placeholder="<?php echo esc_attr( $hint ); ?>"
 			/>
 			<button type="submit" class="button"><?php esc_html_e( 'Find', 'groundwork-common-volunteer-tracker' ); ?></button>
 
@@ -2221,6 +2238,22 @@ function gwc_vt_render_events_list(): void {
 			'limit'    => 100,
 		)
 	);
+
+	/* The same rows, the same filter, the same counts as the other two lists —
+	 * gwc_vt_schedule_rows() has always taken events, and
+	 * gwc_vt_filter_schedule_rows() has always had a branch for them, because an
+	 * event has no roster of its own and somebody searching for a name is
+	 * looking for whoever is on one of its times.
+	 *
+	 * Searched first, counted, then narrowed by the chip: the counts describe
+	 * what the search left, which is what makes a chip reading "Short of people
+	 * · 2" the number of rows that appear when it is pressed. */
+	$rows   = gwc_vt_schedule_rows( array(), $events );
+	$term   = gwc_vt_schedule_search();
+	$rows   = gwc_vt_filter_schedule_rows( $rows, '', $term );
+	$counts = gwc_vt_schedule_state_counts( $rows );
+	$state  = gwc_vt_schedule_filter();
+	$rows   = gwc_vt_filter_schedule_rows( $rows, $state, '' );
 	?>
 	<div class="wrap gwcvt-wrap">
 		<h1 class="wp-heading-inline"><?php esc_html_e( 'Events', 'groundwork-common-volunteer-tracker' ); ?></h1>
@@ -2233,6 +2266,7 @@ function gwc_vt_render_events_list(): void {
 		<?php gwc_vt_event_notice(); ?>
 
 		<?php gwc_vt_render_schedule_status_links( $base, 'events' ); ?>
+		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, 'upcoming', 'events' ); ?>
 
 		<table class="widefat striped gwcvt-schedule">
 			<thead>
@@ -2244,14 +2278,25 @@ function gwc_vt_render_events_list(): void {
 				</tr>
 			</thead>
 			<tbody>
-				<?php if ( ! $events ) : ?>
+				<?php if ( ! $rows ) : ?>
 					<tr>
-						<td colspan="4"><?php esc_html_e( 'No events yet. An event is one occasion with several roles — a festival, a meal service, a collection drive.', 'groundwork-common-volunteer-tracker' ); ?></td>
+						<td colspan="4">
+							<?php
+							/* Two different facts, and saying the first when the
+							 * second is true tells somebody with a full calendar
+							 * that they have no events. */
+							if ( '' !== $state || '' !== $term ) {
+								esc_html_e( 'No event matches that.', 'groundwork-common-volunteer-tracker' );
+							} else {
+								esc_html_e( 'No events yet. An event is one occasion with several roles — a festival, a meal service, a collection drive.', 'groundwork-common-volunteer-tracker' );
+							}
+							?>
+						</td>
 					</tr>
 				<?php endif; ?>
 
-				<?php foreach ( $events as $event_id ) : ?>
-					<?php gwc_vt_render_event_summary_row( (int) $event_id ); ?>
+				<?php foreach ( $rows as $row ) : ?>
+					<?php gwc_vt_render_event_summary_row( (int) $row['id'] ); ?>
 				<?php endforeach; ?>
 			</tbody>
 		</table>
