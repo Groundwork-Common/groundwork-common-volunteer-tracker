@@ -373,6 +373,39 @@ function gwc_vt_letter_fingerprint( array $rows ): array {
 }
 
 /**
+ * What every reference code starts with.
+ *
+ * Its own function because two places need it and they must agree: the code a
+ * letter is stamped with, and the example on the screen where somebody types
+ * one back in. An example in the wrong shape is worse than none — it is read as
+ * the shape, and the person retypes a code that was already right.
+ *
+ * Letters and numbers only, upper case, with the separator, or an empty string
+ * when the site has set no prefix.
+ *
+ * @return string
+ */
+function gwc_vt_reference_prefix(): string {
+	$prefix = trim( (string) gwc_vt_setting( 'reference_prefix' ) );
+
+	return '' !== $prefix ? strtoupper( preg_replace( '/[^A-Za-z0-9]/', '', $prefix ) ) . '-' : '';
+}
+
+/**
+ * A code in the shape this site issues them in.
+ *
+ * Built from the site's own prefix rather than written out, so the example on
+ * screen matches the codes on the letters this organization sends. The rest is
+ * plainly an example: a volunteer number, the day it was issued, and the digest
+ * — the three parts somebody is reading off the page in front of them.
+ *
+ * @return string
+ */
+function gwc_vt_reference_example(): string {
+	return gwc_vt_reference_prefix() . '1042-20260415-9A591C8E';
+}
+
+/**
  * Mint a reference code.
  *
  * @param int                   $volunteer_id     Volunteer post ID.
@@ -396,12 +429,9 @@ function gwc_vt_letter_reference( int $volunteer_id, string $from, string $to, i
 
 	$digest = substr( hash_hmac( 'sha256', (string) $canonical, wp_salt( 'gwc_vt_letter' ) ), 0, 8 );
 
-	$prefix = trim( (string) gwc_vt_setting( 'reference_prefix' ) );
-	$prefix = '' !== $prefix ? strtoupper( preg_replace( '/[^A-Za-z0-9]/', '', $prefix ) ) . '-' : '';
-
 	$code = sprintf(
 		'%s%d-%s-%s',
-		$prefix,
+		gwc_vt_reference_prefix(),
 		$volunteer_id,
 		gmdate( 'Ymd' ),
 		strtoupper( $digest )

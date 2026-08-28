@@ -606,7 +606,7 @@ function gwc_vt_render_reference_check_body( string $page ): void {
 	$code = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
 	?>
 		<p class="description">
-			<?php esc_html_e( 'The code printed on the letter.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Somebody has called about a letter? Type the code printed at the foot of it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
@@ -615,7 +615,15 @@ function gwc_vt_render_reference_check_body( string $page ): void {
 
 			<p>
 				<label class="screen-reader-text" for="gwcvt-reference"><?php esc_html_e( 'Reference code', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<input type="text" id="gwcvt-reference" name="reference" class="regular-text code" value="<?php echo esc_attr( $code ); ?>" />
+				<?php
+				/* The example lives in the box rather than in the sentence above
+				 * it: it is a shape, and a shape belongs where somebody is about
+				 * to type one. It is built from this site's own prefix, so it is
+				 * the shape of the codes on the letters this organization sends
+				 * rather than the shape of somebody else's. */
+				?>
+				<input type="text" id="gwcvt-reference" name="reference" class="regular-text code" value="<?php echo esc_attr( $code ); ?>"
+					placeholder="<?php echo esc_attr( gwc_vt_reference_example() ); ?>" />
 			</p>
 			<p><button type="submit" class="button"><?php esc_html_e( 'Check it', 'groundwork-common-volunteer-tracker' ); ?></button></p>
 		</form>
