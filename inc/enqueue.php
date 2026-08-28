@@ -163,6 +163,25 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		);
 	}
 
+	/* The letters box on a volunteer's record. Enhancement only, and enqueued
+	 * above the early return below because the volunteer editor is not one of the
+	 * screens the picker serves. No wp_set_script_translations() call, and none
+	 * needed: the script has no strings — every word it shows is markup PHP
+	 * already rendered, and it only shows and hides it. */
+	if ( in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true )
+		&& $screen
+		&& GWC_VT_VOLUNTEER_TYPE === (string) ( $screen->post_type ?? '' )
+		&& gwc_vt_letters_enabled()
+		&& current_user_can( gwc_vt_cap( 'issue' ) ) ) {
+		wp_enqueue_script(
+			'gwc-vt-admin-letters-box',
+			GWC_VT_URL . 'assets/js/admin-letters-box.js',
+			array(),
+			GWC_VT_VERSION,
+			true
+		);
+	}
+
 	/* The picker appears wherever somebody has to name a volunteer: the entry
 	 * editor, the produce-a-letter screen, the log-a-day rows, the schedule's
 	 * roster box and the drawer. One script serves all of them — it binds to
