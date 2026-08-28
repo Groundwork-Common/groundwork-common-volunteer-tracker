@@ -99,6 +99,17 @@ class GWC_VT_Letter {
 	public int $issued_at = 0;
 
 	/**
+	 * The moment the attestations on this letter were counted as of.
+	 *
+	 * A GMT datetime, or '' for a letter built from the record as it stands. Set
+	 * by gwc_vt_build_letter() from its arguments, like entry_ids, and for the
+	 * same reason: only the builder knows it.
+	 *
+	 * @var string
+	 */
+	public string $verified_as_of = '';
+
+	/**
 	 * The entry IDs this letter was built from.
 	 *
 	 * Not a constructor argument: it is set by gwc_vt_build_letter() after

@@ -23,9 +23,11 @@ defined( 'ABSPATH' ) || exit;
  * the bug.
  *
  * @param int   $volunteer_id Volunteer post ID.
- * @param array $args         Optional. 'from' and 'to' as Y-m-d, and
- *                            'entry_ids' to build from named entries rather
- *                            than from everything the period matches.
+ * @param array $args         Optional. 'from' and 'to' as Y-m-d; 'entry_ids' to
+ *                            build from named entries rather than from
+ *                            everything the period matches; and
+ *                            'verified_as_of', a GMT datetime, to count only
+ *                            what had been attested to by then.
  * @return GWC_VT_Letter|null Null if there is no such volunteer.
  */
 function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
@@ -58,6 +60,17 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 			)
 		);
 
+	/* ── As it stood at a fixed moment ───────────────────────────────────────
+	 * A draft locks the answer to "who had we attested to by then", so that a
+	 * letter states what the person who drafted it saw. Without it a draft made
+	 * in March and issued in April silently states April's figures — which is
+	 * the behaviour this replaced.
+	 *
+	 * A GMT datetime, compared against the entry's own GWC_VT_ENTRY_VERIFIED_AT,
+	 * which is written in the same format by gwc_vt_verify_entry().
+	 * ─────────────────────────────────────────────────────────────────────── */
+	$as_of = (string) ( $args['verified_as_of'] ?? '' );
+
 	$rows       = array();
 	$used       = array();
 	$verified   = 0;
@@ -76,7 +89,19 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 		}
 
 		$is_verified = gwc_vt_entry_is_verified( $entry_id );
-		$minutes     = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
+
+		if ( $is_verified && '' !== $as_of ) {
+			$when = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_VERIFIED_AT, true );
+
+			/* An attestation with no time on it predates every draft there can
+			 * be, because a draft cannot be older than the feature that records
+			 * one. Counted as verified rather than dropped: the alternative
+			 * silently takes real hours off a letter. */
+			if ( '' !== $when && $when > $as_of ) {
+				$is_verified = false;
+			}
+		}
+		$minutes = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
 
 		if ( $is_verified ) {
 			$verified += $minutes;
@@ -126,7 +151,8 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 	 *
 	 * IDs only, and that is the whole point — see the note beside
 	 * GWC_VT_LETTER_ENTRY_IDS in inc/letter-cpt.php. */
-	$letter->entry_ids = array_map( 'intval', $used );
+	$letter->entry_ids      = array_map( 'intval', $used );
+	$letter->verified_as_of = $as_of;
 
 	/**
 	 * The assembled letter, before it is rendered.
@@ -187,8 +213,9 @@ function gwc_vt_rebuild_issued_letter( array $record ) {
 	$entry_ids    = (array) ( $record['entry_ids'] ?? array() );
 
 	$args = array(
-		'from' => (string) ( $record['from'] ?? '' ),
-		'to'   => (string) ( $record['to'] ?? '' ),
+		'from'           => (string) ( $record['from'] ?? '' ),
+		'to'             => (string) ( $record['to'] ?? '' ),
+		'verified_as_of' => (string) ( $record['as_of'] ?? '' ),
 	);
 
 	/* A letter issued before the log stored entry IDs has none, and there is
@@ -429,11 +456,30 @@ function gwc_vt_verify_reference( string $code ): array {
 	 * the same digest. tests/integration/letter.php edits a record and asserts
 	 * the code stops matching; that test is the only reason this is right.
 	 * ─────────────────────────────────────────────────────────────────────── */
+	/* Rebuilt from the entries, over the same period, AS OF the moment this
+	 * letter's figures were fixed to — which is what makes the answer mean
+	 * something rather than being either circular or noisy.
+	 *
+	 * Not from the letter's own stored figures: that compares the letter against
+	 * itself and answers "matches" every time, for every letter, which is worse
+	 * than no verifier because it actively vouches.
+	 *
+	 * And not as things stand today either, which was the other failure and the
+	 * quieter one. Every letter about somebody still volunteering reported
+	 * "changed" as soon as their next shift was attested to — a warning firing
+	 * on the ordinary case, which teaches whoever answers the phone to wave all
+	 * of them through, including the one that matters.
+	 *
+	 * As of the fixed moment, a shift verified since is simply not part of the
+	 * question. A shift the letter LISTS being edited still is, and still
+	 * reports changed. tests/integration/letter.php edits a record and asserts
+	 * the code stops matching; that test is the only reason this is right. */
 	$current = gwc_vt_build_letter(
 		$record['volunteer_id'],
 		array(
-			'from' => $record['from'],
-			'to'   => $record['to'],
+			'from'           => $record['from'],
+			'to'             => $record['to'],
+			'verified_as_of' => (string) ( $record['as_of'] ?? '' ),
 		)
 	);
 

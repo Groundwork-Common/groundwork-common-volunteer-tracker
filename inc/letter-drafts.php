@@ -30,6 +30,22 @@ function gwc_vt_add_letter_draft( int $volunteer_id, string $from = '', string $
 	$from = gwc_vt_sanitize_date( $from );
 	$to   = gwc_vt_sanitize_date( $to );
 
+	/* ── The period stops moving the moment the draft exists ─────────────────
+	 * "Everything on record" used to mean "up to whenever somebody gets round to
+	 * issuing this", so a draft made in March and issued in June covered three
+	 * months nobody had looked at. The end is pinned to the day the draft is
+	 * made, which is also what makes the period printable as two real dates
+	 * rather than as a description of one.
+	 *
+	 * The start is left open when it was left open: it means "from their first
+	 * shift", and the earliest shift on record cannot move later. A shift
+	 * BACKDATED into the period after the draft was made still would — which is
+	 * what the as-of rule below is for, since backdating one means verifying it,
+	 * and that has a time on it. */
+	if ( '' === $to ) {
+		$to = (string) wp_date( 'Y-m-d' );
+	}
+
 	/* Turned round rather than refused. Two dates the wrong way round is a
 	 * typing order, not a decision, and the alternative is an error message
 	 * about something the screen can see for itself. */
@@ -93,6 +109,29 @@ function gwc_vt_letter_draft( int $draft_id ): array {
 		'to'        => (string) get_post_meta( $draft_id, GWC_VT_DRAFT_TO, true ),
 		'by'        => (int) get_post_meta( $draft_id, GWC_VT_DRAFT_BY, true ),
 		'started'   => (string) get_post_time( 'Y-m-d', true, $draft_id ),
+		/* The moment the draft was made, which is the moment its figures are
+		 * fixed to. Not stored as meta: the post's own creation time is exactly
+		 * this fact, and a second copy of it is a second thing that can be
+		 * wrong. See the note on 'verified_as_of' in gwc_vt_build_letter(). */
+		'as_of'     => (string) get_post_field( 'post_date_gmt', $draft_id ),
+	);
+}
+
+/**
+ * What to build a draft's letter from, in one place.
+ *
+ * The box draws a draft's figures and the issue handler produces the letter, and
+ * the two must agree exactly — somebody reads the row, presses Issue, and the
+ * letter has to say what the row said. One function so there is one answer.
+ *
+ * @param array $draft From gwc_vt_letter_draft().
+ * @return array Arguments for gwc_vt_build_letter().
+ */
+function gwc_vt_letter_args_for_draft( array $draft ): array {
+	return array(
+		'from'           => (string) ( $draft['from'] ?? '' ),
+		'to'             => (string) ( $draft['to'] ?? '' ),
+		'verified_as_of' => (string) ( $draft['as_of'] ?? '' ),
 	);
 }
 
