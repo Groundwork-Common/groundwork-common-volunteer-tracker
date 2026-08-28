@@ -393,6 +393,26 @@ gwc_vt_check(
 	false !== strpos( $GLOBALS['gwc_vt_typed'], 'value="Ada"' )
 );
 
+/* Carried by a hidden field, because the box itself must not be named. A named
+ * text field is one the browser remembers and offers again on the next visit —
+ * which on this screen means arriving to find somebody's name already in it,
+ * reported within a day of the box being given a name. */
+gwc_vt_check(
+	'the box has nothing for a browser to remember',
+	1 !== preg_match(
+		'~<input[^>]*id="gwcvt-letter-volunteer"[^>]*\sname=~',
+		$GLOBALS['gwc_vt_typed']
+	)
+);
+
+gwc_vt_check(
+	'and the typed name rides a hidden field instead',
+	1 === preg_match(
+		'~<input type="hidden" name="volunteer_name" data-gwcvt-typed~',
+		$GLOBALS['gwc_vt_typed']
+	)
+);
+
 $GLOBALS['gwc_vt_blank'] = gwc_vt_letter_screen( array( 'volunteer_name' => '' ) );
 
 gwc_vt_check(
