@@ -1508,35 +1508,65 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	box-shadow: inset 0 0 0 1px #2271b1;
 }
 
+/* ── An on chip is filled, not tinted ────────────────────────────────────────
+   The off state is an outline on white. The on state used to be a pale tint of
+   the state's colour — #fcf0f1 beside #fff — which at a glance is white beside
+   white, so the only thing announcing "this list is filtered" was the small ×
+   at the end. A filter somebody cannot see is on is a screen that lies about
+   what it is showing.
+
+   Filled, in the state's own colour, with white text: the same weight the
+   segmented List | Month control already uses for its on state, so "chosen"
+   looks the same on both controls on this screen. Every pairing below is white
+   text on a colour at 4.5:1 or better — the ambers and greens are darkened from
+   the tints' border colours for exactly that reason. */
+.gwcvt-chip-filter--on {
+	font-weight: 600;
+	color: #fff;
+	background: #50575e;
+	box-shadow: inset 0 0 0 1px #50575e;
+}
+
 .gwcvt-chip-filter--short {
-	background: #fcf0f1;
-	color: #8a2424;
-	box-shadow: inset 0 0 0 1px #d63638;
+	background: #b32d2e;
+	box-shadow: inset 0 0 0 1px #b32d2e;
 }
 
 .gwcvt-chip-filter--awaiting {
-	background: #fcf9e8;
-	color: #614200;
-	box-shadow: inset 0 0 0 1px #dba617;
+	background: #8a6100;
+	box-shadow: inset 0 0 0 1px #8a6100;
 }
 
 .gwcvt-chip-filter--full {
-	background: #edfaef;
-	color: #00450c;
-	box-shadow: inset 0 0 0 1px #68de7c;
+	background: #007017;
+	box-shadow: inset 0 0 0 1px #007017;
 }
 
 .gwcvt-chip-filter--cancelled {
-	background: #f0f0f1;
-	color: #50575e;
-	box-shadow: inset 0 0 0 1px #8c8f94;
+	background: #646970;
+	box-shadow: inset 0 0 0 1px #646970;
 }
 
-/* The active chip keeps its own colour on hover; without this the generic rule
-   above repaints it blue the moment somebody moves the mouse to clear it. */
+/* Events narrows what is listed rather than describing a state, so it takes the
+   blue every other "you chose this" on the screen uses rather than a state
+   colour it would be borrowing. */
+.gwcvt-chip-filter--events {
+	background: #2271b1;
+	box-shadow: inset 0 0 0 1px #2271b1;
+}
+
+/* The × that clears it, and the chip it sits in, stay legible on the fill: the
+   generic hover rule above repaints a chip blue on white, which on a filled one
+   would be blue on red. */
 .gwcvt-chip-filter--on:hover,
 .gwcvt-chip-filter--on:focus {
-	color: inherit;
+	color: #fff;
+	filter: brightness(0.9);
+}
+
+.gwcvt-chip-filter--on:focus {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
 }
 
 /* ─── Week and month headings on the schedule ───────────────────────────────
