@@ -202,6 +202,43 @@ function gwc_vt_rebuild_issued_letter( array $record ) {
 }
 
 /**
+ * Put the issued letter's own identity back onto a rebuild.
+ *
+ * ── Why this is separate, and must stay separate ─────────────────────────────
+ * A rebuild comes out of gwc_vt_build_letter() carrying a freshly minted
+ * reference and an issued_at of now, because that function has no idea it is
+ * reproducing something rather than producing it. Both have to be replaced with
+ * what the log says before the document is rendered, or a letter printed a week
+ * after issue is dated the day it was printed and states a period ending that
+ * day — while the log, the box and the letter the volunteer is holding all say
+ * otherwise. Two documents, one reference, different dates.
+ *
+ * It is not done inside gwc_vt_rebuild_issued_letter() because
+ * gwc_vt_rebuild_is_faithful() compares the rebuild's own reference against the
+ * record's. Stamping first would compare the record against itself and answer
+ * "faithful" every time, for every letter, however far the records had moved —
+ * the same "verifier that always says yes" this plugin warns about beside
+ * gwc_vt_verify_reference(), and worse here, because this one gates whether a
+ * document may be sent to a court.
+ *
+ * So: rebuild, check, and only then stamp. The date is safe to stamp either
+ * way — the digest does not cover it, which is precisely why the drift was
+ * invisible until somebody asked which date it was.
+ *
+ * @param array         $record From gwc_vt_letter_record().
+ * @param GWC_VT_Letter $letter The rebuild, already checked.
+ */
+function gwc_vt_stamp_issued_letter( array $record, GWC_VT_Letter $letter ): void {
+	$letter->reference = (string) ( $record['reference'] ?? '' );
+
+	$issued = (int) strtotime( (string) ( $record['issued_at_gmt'] ?? '' ) . ' GMT' );
+
+	if ( $issued > 0 ) {
+		$letter->issued_at = $issued;
+	}
+}
+
+/**
  * Whether a rebuilt letter is still the one that was issued.
  *
  * Compared on the digest for the same reason gwc_vt_verify_reference() does:
