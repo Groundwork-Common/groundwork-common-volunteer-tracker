@@ -45,8 +45,10 @@ tool this file used to describe, and the later half is easy to miss when scannin
 `inc/`:
 
 - **Hours and the letter** — `cpt.php`, `entries.php`, `verify.php`, `letter.php`,
-  `render.php`, `letter-cpt.php`. The original product. A letter is now started
-  on the volunteer rather than on a screen of its own: `letter-draft-cpt.php` and
+  `render.php`, `letter-cpt.php`. The original product. **There is no
+  produce-a-letter screen** — there was, and its first question was "who",
+  which is the question the box on the volunteer cannot ask wrongly. A letter is
+  started on the volunteer: `letter-draft-cpt.php` and
   `letter-drafts.php` hold the intention — the period, and deliberately nothing
   else — and `admin-volunteer-letters.php` is the box that shows drafts and
   issued letters as one list. A draft dies with the volunteer; the issued-letter

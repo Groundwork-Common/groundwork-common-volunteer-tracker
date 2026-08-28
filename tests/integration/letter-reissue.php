@@ -4,21 +4,32 @@
  *
  * ── The thing this has to get right ──────────────────────────────────────────
  * Somebody rings up and asks for their letter again. The plugin keeps no copy
- * of what was sent — deliberately; the issued-letter log holds figures and a
- * reference and no name — so there is nothing to re-open. What it can do is
- * rebuild the letter from the same volunteer over the same period.
+ * of what was sent — deliberately; the issued-letter log holds figures, a
+ * reference and no name, and outlives the volunteer on purpose. So there is
+ * nothing to re-open, only something to rebuild.
  *
- * A rebuild is not necessarily the same document. Hours get corrected and
- * shifts get verified after a letter goes out, and when that has happened the
- * reprint says something different and carries a different reference. Handing
- * that to a probation officer as "the letter we sent in March" is the failure
- * this screen exists to prevent, so the three states — unchanged, changed, and
- * the volunteer is gone — each have to be told apart and said out loud.
+ * A rebuild is not automatically the same document, and handing one to a
+ * probation officer as "the letter we sent in March" is the failure everything
+ * here exists to prevent.
+ *
+ * ── What changed, and why this file was rewritten rather than deleted ────────
+ * The concern above has not moved an inch. The mechanism has, twice.
+ *
+ * It used to rebuild from the PERIOD and warn you when the answer had drifted,
+ * on a screen of its own, offering to print the drifted version as a new letter
+ * with a new reference. That screen is gone, and so is that offer: the log now
+ * records which entries the letter listed, so a rebuild reproduces the letter
+ * exactly or does not reproduce it at all — and when it does not, delivering it
+ * is refused rather than relabelled.
+ *
+ * So the three states are the same three states, and each is now a different
+ * answer: it reproduces, it cannot be reproduced, or there is nobody left to
+ * rebuild from.
  *
  * ── Why this needs a database ────────────────────────────────────────────────
- * All of it. The comparison rebuilds a letter from entries, the reference is a
- * salted digest over every printed field, and the interesting case is a record
- * edited after issuance. None of that is reachable without real posts.
+ * All of it. The rebuild reads entries, the reference is a salted digest over
+ * every printed field, and the interesting case is a record edited after
+ * issuance. None of that is reachable without real posts.
  *
  * Run under wp-env:
  *
@@ -31,7 +42,6 @@
 /* $GLOBALS explicitly — see the note in tests/integration/events.php. */
 $GLOBALS['gwc_vt_failures'] = 0;
 $GLOBALS['gwc_vt_lr_made']  = array();
-$GLOBALS['gwc_vt_lr_get']   = $_GET;
 
 /**
  * Assert, tersely.
@@ -51,11 +61,11 @@ function gwc_vt_lr_check( string $label, bool $ok, string $got = '' ): void {
 /**
  * A volunteer with two verified shifts, and a letter issued over them.
  *
- * @param string $name Volunteer name.
+ * @param string $name Their name.
  * @return array{volunteer:int, entries:int[], record:array}
  */
 function gwc_vt_lr_issue( string $name ): array {
-	$volunteer = wp_insert_post(
+	$volunteer = (int) wp_insert_post(
 		array(
 			'post_type'   => GWC_VT_VOLUNTEER_TYPE,
 			'post_status' => 'publish',
@@ -63,12 +73,12 @@ function gwc_vt_lr_issue( string $name ): array {
 		)
 	);
 
-	$GLOBALS['gwc_vt_lr_made'][] = (int) $volunteer;
+	$GLOBALS['gwc_vt_lr_made'][] = $volunteer;
 
 	$entries = array();
 
 	foreach ( array( array( '2026-05-02', 180 ), array( '2026-05-09', 240 ) ) as $shift ) {
-		$entry = wp_insert_post(
+		$entry = (int) wp_insert_post(
 			array(
 				'post_type'   => GWC_VT_ENTRY_TYPE,
 				'post_status' => 'publish',
@@ -81,248 +91,179 @@ function gwc_vt_lr_issue( string $name ): array {
 		update_post_meta( $entry, GWC_VT_ENTRY_MINUTES, $shift[1] );
 		update_post_meta( $entry, GWC_VT_ENTRY_ACTIVITY, 'Zzlr food sorting' );
 
-		gwc_vt_verify_entry( (int) $entry, 1 );
+		gwc_vt_verify_entry( $entry, 1 );
 
-		$GLOBALS['gwc_vt_lr_made'][] = (int) $entry;
-		$entries[]                   = (int) $entry;
+		$GLOBALS['gwc_vt_lr_made'][] = $entry;
+		$entries[]                   = $entry;
 	}
 
 	$letter = gwc_vt_build_letter(
-		(int) $volunteer,
+		$volunteer,
 		array(
 			'from' => '2026-05-01',
 			'to'   => '2026-05-31',
 		)
 	);
 
-	$log_id = gwc_vt_log_letter( $letter, 'print' );
+	$log_id = gwc_vt_log_letter( $letter );
 
-	$GLOBALS['gwc_vt_lr_made'][] = (int) $log_id;
+	$GLOBALS['gwc_vt_lr_made'][] = $log_id;
 
 	return array(
-		'volunteer' => (int) $volunteer,
+		'volunteer' => $volunteer,
 		'entries'   => $entries,
-		'record'    => (array) gwc_vt_find_letter_record( $letter->reference ),
+		'record'    => (array) gwc_vt_letter_record( $log_id ),
 	);
-}
-
-/**
- * Render the produce screen as though somebody clicked a log row.
- *
- * @param array $record The issued-letter record.
- * @return string The markup, or the exception message if it threw.
- */
-function gwc_vt_lr_render( array $record ): string {
-	$query = array();
-	wp_parse_str( (string) wp_parse_url( gwc_vt_letter_review_url( $record ), PHP_URL_QUERY ), $query );
-
-	$_GET = $query;
-
-	set_error_handler(  // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- a test asserting the screen renders clean.
-		static function ( int $no, string $message ): bool {
-			throw new RuntimeException( $message );
-		},
-		E_ALL
-	);
-
-	try {
-		ob_start();
-		gwc_vt_render_produce_letter_screen();
-		$html = (string) ob_get_clean();
-	} catch ( Throwable $e ) {
-		ob_end_clean();
-		$html = 'THREW: ' . $e->getMessage();
-	}
-
-	restore_error_handler();
-
-	return $html;
 }
 
 wp_set_current_user( 1 );
 
-/* ── Unchanged: the same letter, and safe to say so ──────────────────────── */
+echo "\n── 1. Finding it again ──────────────────────────────────────────────\n";
 
-$GLOBALS['gwc_vt_lr_same'] = gwc_vt_lr_issue( 'Zzlr Unchanged Volunteer' );
+$GLOBALS['gwc_vt_lr_same'] = gwc_vt_lr_issue( 'Zzlr Unchanged' );
 
 gwc_vt_lr_check(
 	'a letter that was issued can be found by its reference',
-	! empty( $GLOBALS['gwc_vt_lr_same']['record']['reference'] ),
-	'the log record was not found'
+	! empty( $GLOBALS['gwc_vt_lr_same']['record']['id'] ),
+	(string) ( $GLOBALS['gwc_vt_lr_same']['record']['reference'] ?? '' )
 );
+
+/* The way back is the volunteer's own record, because that is where every
+ * letter lives now. It used to be a screen with the reference in the query
+ * string, which reopened the letter by rebuilding it from the period — a screen
+ * that no longer exists and an answer that was only ever approximately right. */
+$GLOBALS['gwc_vt_lr_url'] = gwc_vt_letter_review_url( $GLOBALS['gwc_vt_lr_same']['record'] );
 
 gwc_vt_lr_check(
-	'the link back to it carries the volunteer, the period and the reference',
-	( function () {
-		$url = gwc_vt_letter_review_url( $GLOBALS['gwc_vt_lr_same']['record'] );
-
-		return false !== strpos( $url, 'volunteer=' . $GLOBALS['gwc_vt_lr_same']['volunteer'] )
-			&& false !== strpos( $url, 'from=2026-05-01' )
-			&& false !== strpos( $url, 'to=2026-05-31' )
-			&& false !== strpos( $url, 'gwc_vt_reissue=' );
-	} )(),
-	gwc_vt_letter_review_url( $GLOBALS['gwc_vt_lr_same']['record'] )
+	'and the way back to it is the record it is about',
+	false !== strpos( $GLOBALS['gwc_vt_lr_url'], 'post=' . $GLOBALS['gwc_vt_lr_same']['volunteer'] )
+		&& false !== strpos( $GLOBALS['gwc_vt_lr_url'], '#gwc-vt-volunteer-letters' ),
+	$GLOBALS['gwc_vt_lr_url']
 );
 
-$GLOBALS['gwc_vt_lr_same_html'] = gwc_vt_lr_render( $GLOBALS['gwc_vt_lr_same']['record'] );
+echo "\n── 2. It reproduces, or it does not ─────────────────────────────────\n";
+
+$GLOBALS['gwc_vt_lr_reb'] = gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_lr_same']['record'] );
 
 gwc_vt_lr_check(
-	'the screen renders without a warning',
-	false === strpos( $GLOBALS['gwc_vt_lr_same_html'], 'THREW:' ),
-	substr( $GLOBALS['gwc_vt_lr_same_html'], 0, 120 )
+	'an untouched letter reproduces exactly',
+	$GLOBALS['gwc_vt_lr_reb'] instanceof GWC_VT_Letter
+		&& gwc_vt_rebuild_is_faithful( $GLOBALS['gwc_vt_lr_same']['record'], $GLOBALS['gwc_vt_lr_reb'] )
 );
+
+/* ── The case the whole file is for ──────────────────────────────────────────
+ * A shift the letter LISTS is edited afterwards. There is no version of this
+ * where a document can be produced: what the page would state and what the
+ * reference on it digests have come apart, and printing it anyway hands a
+ * court something whose own code fails when they ring to check it.
+ *
+ * The old answer was to print it as a NEW letter with a new reference and warn
+ * about it in prose. That put the decision on whoever read the warning. The
+ * answer now is that delivering it is refused. */
+$GLOBALS['gwc_vt_lr_moved'] = gwc_vt_lr_issue( 'Zzlr Corrected' );
+$GLOBALS['gwc_vt_lr_first'] = (int) $GLOBALS['gwc_vt_lr_moved']['record']['entry_ids'][0];
+
+update_post_meta( $GLOBALS['gwc_vt_lr_first'], GWC_VT_ENTRY_MINUTES, 999 );
+
+$GLOBALS['gwc_vt_lr_broke'] = gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_lr_moved']['record'] );
 
 gwc_vt_lr_check(
-	'and says nothing has changed, so a reprint is the same letter',
-	false !== strpos( $GLOBALS['gwc_vt_lr_same_html'], 'notice-success' )
-		&& false !== strpos( $GLOBALS['gwc_vt_lr_same_html'], 'has changed since' ),
-	'it did not say the record was unchanged'
+	'a letter one of whose shifts was edited cannot be reproduced',
+	$GLOBALS['gwc_vt_lr_broke'] instanceof GWC_VT_Letter
+		&& ! gwc_vt_rebuild_is_faithful( $GLOBALS['gwc_vt_lr_moved']['record'], $GLOBALS['gwc_vt_lr_broke'] )
 );
 
-/* ── Changed: a different document, and it has to say so ─────────────────── */
+/* The old reference stays what it is: the code on the copy somebody is holding,
+ * and still the answer to what was issued that day. Nothing here rewrites it. */
+gwc_vt_lr_check(
+	'and the reference on the record is untouched by any of that',
+	$GLOBALS['gwc_vt_lr_moved']['record']['reference']
+		=== (string) get_the_title( (int) $GLOBALS['gwc_vt_lr_moved']['record']['id'] )
+);
 
-$GLOBALS['gwc_vt_lr_diff'] = gwc_vt_lr_issue( 'Zzlr Changed Volunteer' );
+/* A shift verified since is a different matter and must NOT break it — that is
+ * ordinary, and treating it as tampering is what made the old warning fire on
+ * every letter about somebody still volunteering. */
+$GLOBALS['gwc_vt_lr_extra'] = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_ENTRY_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzlr later shift',
+	)
+);
+$GLOBALS['gwc_vt_lr_made'][] = $GLOBALS['gwc_vt_lr_extra'];
 
-/* An hour corrected after the letter went out — the ordinary case, not an
- * exotic one, which is exactly why the banner matters. */
-update_post_meta( $GLOBALS['gwc_vt_lr_diff']['entries'][0], GWC_VT_ENTRY_MINUTES, 300 );
-gwc_vt_invalidate_from_entry( $GLOBALS['gwc_vt_lr_diff']['entries'][0] );
-
-$GLOBALS['gwc_vt_lr_diff_html'] = gwc_vt_lr_render( $GLOBALS['gwc_vt_lr_diff']['record'] );
+update_post_meta( $GLOBALS['gwc_vt_lr_extra'], GWC_VT_ENTRY_VOLUNTEER, (string) $GLOBALS['gwc_vt_lr_same']['volunteer'] );
+update_post_meta( $GLOBALS['gwc_vt_lr_extra'], GWC_VT_ENTRY_DATE, '2026-05-16' );
+update_post_meta( $GLOBALS['gwc_vt_lr_extra'], GWC_VT_ENTRY_MINUTES, 120 );
+update_post_meta( $GLOBALS['gwc_vt_lr_extra'], GWC_VT_ENTRY_ACTIVITY, 'Zzlr food sorting' );
+gwc_vt_verify_entry( $GLOBALS['gwc_vt_lr_extra'], 1 );
 
 gwc_vt_lr_check(
-	'a record edited since is reported as changed, not as a copy',
-	false !== strpos( $GLOBALS['gwc_vt_lr_diff_html'], 'notice-warning' )
-		&& false !== strpos( $GLOBALS['gwc_vt_lr_diff_html'], 'not a copy of that letter' ),
-	'it did not say the letter had changed'
+	'while a shift verified since leaves it reproducing perfectly',
+	gwc_vt_rebuild_is_faithful(
+		$GLOBALS['gwc_vt_lr_same']['record'],
+		gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_lr_same']['record'] )
+	)
 );
 
-/* The two facts somebody about to reprint has to have: this goes out as a NEW
- * letter, and the OLD reference stays valid for the copy already in the world. */
-gwc_vt_lr_check(
-	'and warns that printing it makes a new letter with a new reference',
-	false !== strpos( $GLOBALS['gwc_vt_lr_diff_html'], 'new letter with a new reference' ),
-	'it did not warn about the new reference'
-);
+echo "\n── 3. Or there is nobody left to rebuild from ───────────────────────\n";
 
-gwc_vt_lr_check(
-	'and names the old reference as still the one on their copy',
-	false !== strpos( $GLOBALS['gwc_vt_lr_diff_html'], (string) $GLOBALS['gwc_vt_lr_diff']['record']['reference'] ),
-	'the issued reference was not named'
-);
-
-/* The claim the banner makes has to be true: rebuilding really does produce a
- * different reference now. Without this the wording could be right about a
- * situation that never arises. */
-gwc_vt_lr_check(
-	'and the rebuild really would carry a different reference',
-	( function () {
-		$now = gwc_vt_build_letter(
-			$GLOBALS['gwc_vt_lr_diff']['volunteer'],
-			array(
-				'from' => '2026-05-01',
-				'to'   => '2026-05-31',
-			)
-		);
-
-		return $now instanceof GWC_VT_Letter
-			&& $now->reference !== $GLOBALS['gwc_vt_lr_diff']['record']['reference'];
-	} )(),
-	'the reference did not move when the hours did'
-);
-
-/* ── Gone: nothing to rebuild from, and nothing offered ──────────────────── */
-
-$GLOBALS['gwc_vt_lr_gone'] = gwc_vt_lr_issue( 'Zzlr Purged Volunteer' );
+$GLOBALS['gwc_vt_lr_gone'] = gwc_vt_lr_issue( 'Zzlr Erased' );
 
 gwc_vt_delete_volunteer( $GLOBALS['gwc_vt_lr_gone']['volunteer'] );
 
-$GLOBALS['gwc_vt_lr_gone_html'] = gwc_vt_lr_render( $GLOBALS['gwc_vt_lr_gone']['record'] );
+/* The log entry survives, because it is the organization's own receipt of its
+ * own conduct and holds no name. There is simply nothing left to build a page
+ * out of, and a blank one would be a document rather than an explanation. */
+gwc_vt_lr_check(
+	'the log record outlives the volunteer',
+	is_array( gwc_vt_letter_record( (int) $GLOBALS['gwc_vt_lr_gone']['record']['id'] ) )
+		&& '' !== (string) gwc_vt_letter_record( (int) $GLOBALS['gwc_vt_lr_gone']['record']['id'] )['reference']
+);
 
 gwc_vt_lr_check(
-	'a letter whose volunteer is gone says so plainly',
-	false !== strpos( $GLOBALS['gwc_vt_lr_gone_html'], 'notice-error' )
-		&& false !== strpos( $GLOBALS['gwc_vt_lr_gone_html'], 'removed or anonymized' ),
-	'it did not explain that the record is gone'
+	'but there is nothing to rebuild',
+	null === gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_lr_gone']['record'] )
 );
 
-/* And offers nothing to print. Rendering an empty letter over a purged record
- * would be the plugin producing a document about nobody. */
+/* And the log stops offering a link rather than offering one that dies. */
 gwc_vt_lr_check(
-	'and offers no way to print one',
-	false === strpos( $GLOBALS['gwc_vt_lr_gone_html'], 'gwc_vt_letter_print' ),
-	'a purged record still offered a print button'
+	'and no way back is offered',
+	'' === gwc_vt_letter_review_url( $GLOBALS['gwc_vt_lr_gone']['record'] )
 );
 
-/* ── A URL whose reference and period disagree ───────────────────────────────
- * The link carries all four values, so they agree by construction and no
- * assertion above can tell whether the record or the query string is winning.
- * A hand-edited or truncated URL is where it matters: the banner speaks for the
- * issued letter, so the letter drawn under it has to be the same period. If the
- * query string won, the screen would compare one period and render another.
- *
- * Found by removing the guard and watching every check still pass.
- * ─────────────────────────────────────────────────────────────────────────── */
+echo "\n── 4. The letterhead warning, where letters are made ────────────────\n";
 
-$_GET = array(
-	'volunteer'      => $GLOBALS['gwc_vt_lr_same']['volunteer'],
-	'from'           => '2020-01-01',
-	'to'             => '2020-12-31',
-	'gwc_vt_reissue' => $GLOBALS['gwc_vt_lr_same']['record']['reference'],
+/* Three settings fall back to something reasonable when empty, and together
+ * they mean a court letter headed with a website's title over a webmaster's
+ * address. The warning used to live on the screen that produced letters; it
+ * moved to the box when the screen went, and it must appear once. */
+$GLOBALS['gwc_vt_lr_org'] = get_option( 'blogname' );
+
+update_option( 'gwc_vt_settings', array_merge( (array) get_option( 'gwc_vt_settings', array() ), array( 'org_name' => '' ) ) );
+
+ob_start();
+gwc_vt_render_volunteer_letters_box( get_post( $GLOBALS['gwc_vt_lr_same']['volunteer'] ) );
+$GLOBALS['gwc_vt_lr_box'] = (string) ob_get_clean();
+
+gwc_vt_lr_check(
+	'the box warns about the letterhead, once',
+	1 === substr_count( $GLOBALS['gwc_vt_lr_box'], 'gwcvt-letterhead-warning' )
+		|| 1 === substr_count( $GLOBALS['gwc_vt_lr_box'], 'notice-warning' ),
+	substr_count( $GLOBALS['gwc_vt_lr_box'], 'notice-warning' ) . ' warnings'
 );
 
-set_error_handler(  // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- a test asserting the screen renders clean.
-	static function ( int $no, string $message ): bool {
-		throw new RuntimeException( $message );
-	},
-	E_ALL
-);
-
-try {
-	ob_start();
-	gwc_vt_render_produce_letter_screen();
-	$GLOBALS['gwc_vt_lr_forced'] = (string) ob_get_clean();
-} catch ( Throwable $gwc_vt_lr_e ) {
-	ob_end_clean();
-	$GLOBALS['gwc_vt_lr_forced'] = 'THREW: ' . $gwc_vt_lr_e->getMessage();
+/**
+ * Take everything this script made back out.
+ */
+function gwc_vt_lr_cleanup(): void {
+	foreach ( (array) $GLOBALS['gwc_vt_lr_made'] as $id ) {
+		wp_delete_post( (int) $id, true );
+	}
 }
 
-restore_error_handler();
-
-$_GET = $GLOBALS['gwc_vt_lr_get'];
-
-gwc_vt_lr_check(
-	'the issued letter’s own period wins over the one in the URL',
-	false !== strpos( $GLOBALS['gwc_vt_lr_forced'], 'value="2026-05-01"' )
-		&& false === strpos( $GLOBALS['gwc_vt_lr_forced'], 'value="2020-01-01"' ),
-	'the screen used the period from the query string'
-);
-
-gwc_vt_lr_check(
-	'and it still reports the letter as unchanged',
-	false !== strpos( $GLOBALS['gwc_vt_lr_forced'], 'notice-success' ),
-	'a mismatched URL changed what the banner said'
-);
-
-/* ── The letterhead warning appears once ─────────────────────────────────── */
-
-gwc_vt_lr_check(
-	'the letterhead warning is not drawn twice on one screen',
-	substr_count( $GLOBALS['gwc_vt_lr_same_html'], 'has not been given your letterhead' ) <= 1,
-	'it appeared ' . substr_count( $GLOBALS['gwc_vt_lr_same_html'], 'has not been given your letterhead' ) . ' times'
-);
-
-/* ── Clean up ────────────────────────────────────────────────────────────── */
-
-$_GET = $GLOBALS['gwc_vt_lr_get'];
-
-foreach ( get_posts( array( 'post_type' => array( GWC_VT_VOLUNTEER_TYPE, GWC_VT_ENTRY_TYPE ), 'post_status' => 'any', 'numberposts' => -1, 's' => 'Zzlr' ) ) as $gwc_vt_lr_post ) {
-	$GLOBALS['gwc_vt_lr_made'][] = (int) $gwc_vt_lr_post->ID;
-}
-
-foreach ( array_unique( $GLOBALS['gwc_vt_lr_made'] ) as $gwc_vt_lr_id ) {
-	wp_delete_post( (int) $gwc_vt_lr_id, true );
-}
+register_shutdown_function( 'gwc_vt_lr_cleanup' );
 
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 

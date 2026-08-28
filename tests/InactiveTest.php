@@ -104,9 +104,26 @@ final class InactiveTest extends TestCase {
 	}
 
 	/**
-	 * And exactly one picker asks for them: producing a letter.
+	 * And no picker asks for them, because none has to any more.
+	 *
+	 * This used to assert that exactly ONE did — the produce-a-letter screen,
+	 * which was the one place somebody had to be able to name a volunteer who
+	 * had stopped coming, since an inactive person is precisely who a court
+	 * asks about months later.
+	 *
+	 * That screen is gone. Letters are written in a box on the volunteer's own
+	 * record, which is reached by opening the record, which works exactly the
+	 * same for somebody inactive — they are still on the volunteer list, under
+	 * their own view. So the requirement did not disappear; it stopped needing a
+	 * picker to satisfy it, and a whole class of bug went with it. Nobody can
+	 * now ship a picker that quietly excludes the people letters are most often
+	 * about, because no picker stands between anybody and a letter.
+	 *
+	 * Asserted as an empty set rather than deleted: if a picker reappears in
+	 * this flow, that is a decision worth making on purpose rather than by
+	 * accident, and this is where it will be noticed.
 	 */
-	public function test_only_the_letter_picker_asks_for_inactive(): void {
+	public function test_no_picker_has_to_ask_for_inactive_volunteers(): void {
 		$asking = array();
 
 		foreach ( (array) glob( GWC_VT_DIR . 'inc/*.php' ) as $file ) {
@@ -115,7 +132,7 @@ final class InactiveTest extends TestCase {
 			}
 		}
 
-		$this->assertSame( array( 'admin-letters.php' ), $asking );
+		$this->assertSame( array(), $asking );
 	}
 
 	/**

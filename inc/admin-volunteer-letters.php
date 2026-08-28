@@ -227,6 +227,16 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 	usort( $drafts, static fn( array $a, array $b ): int => (int) $b['id'] <=> (int) $a['id'] );
 	?>
 	<div class="gwcvt-letters-box" data-gwcvt-letters>
+		<?php
+		/* Three settings fall back to something reasonable when empty and the
+		 * letter prints perfectly well without any of them — which together
+		 * means a court letter headed with a website's title, giving a
+		 * webmaster's address as the number to ring. Said here because this is
+		 * where letters are made now; it used to be on the screen that made
+		 * them. */
+		gwc_vt_render_letterhead_warning();
+		?>
+
 		<table class="widefat striped">
 			<thead>
 				<tr>
@@ -312,7 +322,35 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 				</div>
 			<?php endif; ?>
 		</td>
-		<td><span class="gwcvt-badge gwcvt-badge--draft"><?php esc_html_e( 'Draft', 'groundwork-common-volunteer-tracker' ); ?></span></td>
+		<td>
+			<span class="gwcvt-badge gwcvt-badge--draft"><?php esc_html_e( 'Draft', 'groundwork-common-volunteer-tracker' ); ?></span>
+
+			<?php
+			/* ── What this one will never pick up ────────────────────────────
+			 * Unverified hours are not on a letter, and since a draft fixes the
+			 * moment its attestations are counted as of, verifying them later
+			 * will not add them to THIS draft either. That is the point of the
+			 * lock and it is also the one way it can surprise somebody, so the
+			 * row says it where the decision is made rather than leaving it to
+			 * be discovered after the letter has gone.
+			 *
+			 * The produce screen said a version of this in a box of its own.
+			 * The screen is gone; the sentence was worth keeping. */
+			$waiting = gwc_vt_draft_unverified_minutes( $draft );
+
+			if ( $waiting > 0 ) :
+				?>
+				<div class="description gwcvt-letters-box__waiting">
+					<?php
+					printf(
+						/* translators: %s: a duration, e.g. "3". */
+						esc_html__( '%s of their time is not verified, and this draft will not pick it up. Verify it and start another.', 'groundwork-common-volunteer-tracker' ),
+						esc_html( gwc_vt_format_hours( $waiting ) )
+					);
+					?>
+				</div>
+			<?php endif; ?>
+		</td>
 		<td class="description"><?php esc_html_e( '— none until issued', 'groundwork-common-volunteer-tracker' ); ?></td>
 		<td class="gwcvt-letters-box__actions">
 			<?php if ( $empty ) : ?>
@@ -611,8 +649,16 @@ function gwc_vt_render_letter_poster(): void {
 		<div class="gwcvt-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="gwcvt-poster-title">
 			<div class="gwcvt-sheet__head">
 				<h2 id="gwcvt-poster-title"><?php esc_html_e( 'Post this letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
-				<button type="button" class="button-link gwcvt-sheet__close" data-gwcvt-sheet-close>
-					<?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php
+				/* Where wp-admin puts one: a dashicon cross at the top right of
+				 * the panel, not the word "Close" beside the title. Somebody
+				 * looking to shut a dialog looks in the corner, because that is
+				 * where the media modal and every other one in this admin put
+				 * it. The word is still there for a screen reader. */
+				?>
+				<button type="button" class="gwcvt-sheet__close" data-gwcvt-sheet-close>
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?></span>
 				</button>
 			</div>
 
@@ -655,8 +701,16 @@ function gwc_vt_render_letter_reader(): void {
 		<div class="gwcvt-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="gwcvt-reader-title">
 			<div class="gwcvt-sheet__head">
 				<h2 id="gwcvt-reader-title" data-gwcvt-reader-title><?php esc_html_e( 'Letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
-				<button type="button" class="button-link gwcvt-sheet__close" data-gwcvt-sheet-close>
-					<?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php
+				/* Where wp-admin puts one: a dashicon cross at the top right of
+				 * the panel, not the word "Close" beside the title. Somebody
+				 * looking to shut a dialog looks in the corner, because that is
+				 * where the media modal and every other one in this admin put
+				 * it. The word is still there for a screen reader. */
+				?>
+				<button type="button" class="gwcvt-sheet__close" data-gwcvt-sheet-close>
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?></span>
 				</button>
 			</div>
 
@@ -691,8 +745,16 @@ function gwc_vt_render_letter_mailer( string $on_file ): void {
 		<div class="gwcvt-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="gwcvt-mailer-title">
 			<div class="gwcvt-sheet__head">
 				<h2 id="gwcvt-mailer-title"><?php esc_html_e( 'Email this letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
-				<button type="button" class="button-link gwcvt-sheet__close" data-gwcvt-sheet-close>
-					<?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php
+				/* Where wp-admin puts one: a dashicon cross at the top right of
+				 * the panel, not the word "Close" beside the title. Somebody
+				 * looking to shut a dialog looks in the corner, because that is
+				 * where the media modal and every other one in this admin put
+				 * it. The word is still there for a screen reader. */
+				?>
+				<button type="button" class="gwcvt-sheet__close" data-gwcvt-sheet-close>
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+					<span class="screen-reader-text"><?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?></span>
 				</button>
 			</div>
 

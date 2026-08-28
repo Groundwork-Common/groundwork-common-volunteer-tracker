@@ -148,18 +148,28 @@ function gwc_vt_help_topics(): array {
 
 		array(
 			'id'    => 'letters',
-			'title' => __( 'Producing a letter', 'groundwork-common-volunteer-tracker' ),
-			'intro' => __( 'The letter reports what your organization recorded. It carries a reference code so that anybody who receives it can phone you and check it.', 'groundwork-common-volunteer-tracker' ),
+			'title' => __( 'Writing a letter', 'groundwork-common-volunteer-tracker' ),
+			'intro' => __( 'A letter reports what your organization recorded. You write it on the volunteer’s own record: start a draft, issue it when you are happy with it, then send it. It carries a reference code so anybody who receives it can phone you and check it.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
-					'title' => __( 'Produce a verification letter', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Start a letter', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Produce a letter for this volunteer</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Choose the dates to cover, or leave them empty for everything.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Open the letter to print</strong>, or <strong>Email it to</strong> the address shown to send it to them.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find <strong>Verification letters</strong> and select <strong>Add a letter</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Choose <strong>Everything on record</strong>, or <strong>A period</strong> if a court or a school asked about particular months.', 'groundwork-common-volunteer-tracker' ),
+						__( 'If it is going to somebody other than the volunteer, fill in who it is addressed to and what it is about.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save the draft</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'To save a PDF, choose your browser’s Print command and then Save as PDF. The plugin does not bundle a PDF library.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'A draft is fixed at the moment you make it. It states what you had verified that day, and shifts verified afterwards will not join it — so if hours are still waiting, verify them first and start the draft after. Nothing is sent and nothing is logged until you issue it.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Issue it and send it', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Select <strong>Open</strong> on the draft to read the letter it would produce. Reading one records nothing.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Issue it</strong>. The letter gets its reference code and goes into your log. It has not been sent to anybody yet.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Then select <strong>Print</strong>, <strong>Post</strong> or <strong>Email</strong> on the issued row.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Each of the three is recorded against the letter with the date, and Post and Email also record who it went to — so the log answers “did you send it to us”, not only “a letter was produced”. Email offers the address on the record or one you type. To save a PDF, choose Print and then your browser’s Save as PDF; the plugin does not bundle a PDF library.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
 					'title' => __( 'Check a reference code somebody phoned about', 'groundwork-common-volunteer-tracker' ),
@@ -169,7 +179,7 @@ function gwc_vt_help_topics(): array {
 						__( 'Enter the code the caller reads to you.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Check it</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'You are told whether the code matches a letter you issued and whether the figures on it still match your records. You are not told anything the caller is not already holding.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'You are told whether the code matches a letter you issued and whether it still says what your records say. A shift verified since the letter went out does not disturb the answer — the letter is checked against what you had attested to on the day it was fixed. You are not told anything the caller is not already holding.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
 		),

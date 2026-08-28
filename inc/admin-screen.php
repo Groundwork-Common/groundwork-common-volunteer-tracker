@@ -23,7 +23,6 @@ const GWC_VT_QUICK_ADD_PAGE = 'gwc-vt-log-a-day';
 const GWC_VT_SCHEDULE_PAGE  = 'gwc-vt-schedule';
 const GWC_VT_DASHBOARD_PAGE = 'gwc-vt-dashboard';
 const GWC_VT_VERIFY_PAGE    = 'gwc-vt-verify';
-const GWC_VT_PRODUCE_PAGE   = 'gwc-vt-produce-letter';
 const GWC_VT_REPEAT_PAGE    = 'gwc-vt-repeat';
 
 /* The three that used to be declared in the files that render them, which put
@@ -269,13 +268,6 @@ function gwc_vt_hidden_menu_items(): array {
 		 * narrowed to what is waiting, and it is offered where WordPress offers
 		 * a narrowed list — beside "All" on that screen's own views. */
 		GWC_VT_VERIFY_PAGE,
-
-		/* Producing a letter is about one person, so it is reached from that
-		 * person: their record, their row on the volunteer list, and the verify
-		 * queue's offer when their last hours are attested to. A menu item would
-		 * be an invitation to start from a blank form and go looking for
-		 * somebody, which is the flow it replaced. */
-		GWC_VT_PRODUCE_PAGE,
 
 		/* Changing a whole repeat is reached from an occurrence of that repeat,
 		 * because "which repeat" is the one thing the screen cannot ask you. A

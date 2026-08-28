@@ -9,8 +9,6 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'gwc_vt_register_letters_menu', 11 );
 add_action( 'admin_post_gwc_vt_letter_preview', 'gwc_vt_handle_letter_preview' );
-add_action( 'admin_post_gwc_vt_letter_print', 'gwc_vt_handle_letter_print' );
-add_action( 'admin_post_gwc_vt_letter_send', 'gwc_vt_handle_letter_send' );
 
 /**
  * Hang the Letters screen off the Volunteer Tracker menu.
@@ -29,20 +27,12 @@ function gwc_vt_register_letters_menu(): void {
 		'gwc_vt_render_letters_screen'
 	);
 
-	/* Producing one is its own screen, registered and then taken off the menu by
-	 * gwc_vt_hidden_menu_items(). It is reached from the volunteer it is about. */
-	$hook = add_submenu_page(
-		GWC_VT_MENU_SLUG,
-		gwc_vt_produce_page_title(),
-		gwc_vt_produce_page_title(),
-		gwc_vt_cap( 'issue' ),
-		GWC_VT_PRODUCE_PAGE,
-		'gwc_vt_render_produce_letter_screen'
-	);
-
-	if ( $hook ) {
-		add_action( 'load-' . $hook, 'gwc_vt_restore_produce_page_title' );
-	}
+	/* There is no screen for PRODUCING one. There was, and it was registered
+	 * here and then hidden from the menu, because a menu entry would have been
+	 * "an invitation to start from a blank form and go looking for somebody".
+	 * The box on the volunteer's own record replaced it outright: you are
+	 * already on the person, so the screen's first question had no reason to be
+	 * asked and its answer was the thing that went wrong. */
 }
 
 /* ── The two ways out of a screen you cannot do anything on ──────────────────
@@ -55,11 +45,10 @@ function gwc_vt_register_letters_menu(): void {
  * They are links rather than buttons on purpose. A page-title action here would
  * read as the primary thing to do on a screen whose primary thing is reading,
  * and there is a sharper reason than tidiness for the first one:
- * gwc_vt_hidden_menu_items() takes "Produce a letter" off the menu because a
- * menu entry is "an invitation to start from a blank form and go looking for
- * somebody, which is the flow it replaced". A button here would rebuild exactly
- * that. The link goes to the volunteer LIST instead — you pick the person, then
- * the letter, which is the order the whole feature is built around.
+ * there is no longer a screen to send anybody to. Letters are made in a box on
+ * the volunteer's own record, so the link goes to the volunteer LIST — you pick
+ * the person, then the letter, which is the order the whole feature is built
+ * around, and was the order even when a screen existed to do it the other way.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -133,56 +122,6 @@ function gwc_vt_letters_page_title(): string {
 }
 
 /**
- * The produce screen's name.
- *
- * @return string
- */
-function gwc_vt_produce_page_title(): string {
-	return __( 'Produce a letter', 'groundwork-common-volunteer-tracker' );
-}
-
-/**
- * Give the produce screen its title back.
- *
- * Off the menu, so get_admin_page_title() cannot find it — the same problem
- * gwc_vt_restore_quick_add_title() describes at length.
- */
-function gwc_vt_restore_produce_page_title(): void {
-	if ( ! empty( $GLOBALS['title'] ) ) {
-		return;
-	}
-
-	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- $title is how core carries an admin page's title into admin-header.php, and there is no API for setting it; this writes it only for this plugin's own screen, and only when nothing else has.
-	$GLOBALS['title'] = gwc_vt_produce_page_title();
-}
-
-/**
- * Where a letter for one volunteer is produced.
- *
- * @param int    $volunteer_id Volunteer post ID.
- * @param string $from         Y-m-d or ''.
- * @param string $to           Y-m-d or ''.
- * @return string
- */
-function gwc_vt_produce_letter_url( int $volunteer_id, string $from = '', string $to = '' ): string {
-	$args = array(
-		'post_type' => GWC_VT_ENTRY_TYPE,
-		'page'      => GWC_VT_PRODUCE_PAGE,
-		'volunteer' => $volunteer_id,
-	);
-
-	if ( '' !== $from ) {
-		$args['from'] = $from;
-	}
-
-	if ( '' !== $to ) {
-		$args['to'] = $to;
-	}
-
-	return add_query_arg( $args, admin_url( 'edit.php' ) );
-}
-
-/**
  * A URL for the Letters screen.
  *
  * @param array $args Extra query arguments.
@@ -248,7 +187,6 @@ function gwc_vt_render_letters_screen(): void {
 		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_letters_page_title() ); ?></h1>
 		<hr class="wp-header-end" />
 
-		<?php gwc_vt_letters_notice(); ?>
 
 		<?php gwc_vt_letters_next_steps(); ?>
 
@@ -256,434 +194,6 @@ function gwc_vt_render_letters_screen(): void {
 			<?php gwc_vt_render_letter_log(); ?>
 		</div>
 	</div>
-	<?php
-}
-
-/**
- * Producing a letter for one volunteer.
- */
-function gwc_vt_render_produce_letter_screen(): void {
-	if ( ! gwc_vt_letters_enabled() ) {
-		wp_die(
-			esc_html__( 'This organization does not issue verification letters.', 'groundwork-common-volunteer-tracker' ),
-			esc_html__( 'Not available', 'groundwork-common-volunteer-tracker' ),
-			array( 'response' => 403 )
-		);
-	}
-
-	if ( ! current_user_can( gwc_vt_cap( 'issue' ) ) ) {
-		wp_die(
-			esc_html__( 'You do not have permission to produce letters.', 'groundwork-common-volunteer-tracker' ),
-			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
-			array( 'response' => 403 )
-		);
-	}
-
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from these.
-	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$from = isset( $_GET['from'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$to = isset( $_GET['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
-
-	/* What was typed into the picker, and whether this screen is answering the
-	 * form at all. The text field posts even when it is empty, so its presence
-	 * is what tells "asked for a preview" apart from "just arrived". */
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$typed = isset( $_GET['volunteer_name'] ) ? sanitize_text_field( wp_unslash( $_GET['volunteer_name'] ) ) : '';
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
-	$asked = isset( $_GET['volunteer_name'] );
-
-	/* An issued letter somebody has come back to look at. Read before the build
-	 * so its volunteer and period win over an empty query string — the link
-	 * carries all three, but a hand-edited URL that kept the reference and lost
-	 * the dates would otherwise rebuild a different period under a banner
-	 * claiming to be about this one. */
-	$reissue = gwc_vt_reissue_record();
-
-	if ( $reissue ) {
-		$volunteer_id = (int) $reissue['volunteer_id'];
-		$from         = (string) $reissue['from'];
-		$to           = (string) $reissue['to'];
-	}
-
-	$letter = $volunteer_id > 0
-		? gwc_vt_build_letter(
-			$volunteer_id,
-			array(
-				'from' => $from,
-				'to'   => $to,
-			)
-		)
-		: null;
-	?>
-	<div class="wrap gwcvt-wrap">
-		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_produce_page_title() ); ?></h1>
-		<hr class="wp-header-end" />
-
-		<?php gwc_vt_letters_notice(); ?>
-		<?php gwc_vt_render_reissue_banner( $reissue ); ?>
-
-		<?php
-		/* Only when there is no preview below. gwc_vt_render_letter_preview()
-		 * draws the same warning immediately above the print and send buttons,
-		 * which is where it earns its place — it is the compounding-fallback
-		 * trap, and the moment to read it is the moment before the document
-		 * leaves. Both fired unconditionally, so the screen carried the warning
-		 * twice whenever a letter was on it. Kept here for the empty screen,
-		 * where somebody arriving to produce their first letter should see it
-		 * before they pick anybody. */
-		if ( ! $letter instanceof GWC_VT_Letter ) {
-			gwc_vt_render_letterhead_warning();
-		}
-		?>
-
-		<?php if ( $volunteer_id > 0 && $letter instanceof GWC_VT_Letter ) : ?>
-			<?php
-			/* Where they came from, said as a path rather than a back button:
-			 * this screen is reached from three places and a browser's back
-			 * button is the only one of them that knows which. */
-			?>
-			<p class="gwcvt-letters__crumbs">
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ) ); ?>">
-					<?php esc_html_e( 'Volunteers', 'groundwork-common-volunteer-tracker' ); ?>
-				</a>
-				<span aria-hidden="true">&rarr;</span>
-				<a href="<?php echo esc_url( (string) get_edit_post_link( $volunteer_id ) ); ?>">
-					<?php echo esc_html( $letter->volunteer_name ); ?>
-				</a>
-				<span aria-hidden="true">&rarr;</span>
-				<strong><?php echo esc_html( gwc_vt_produce_page_title() ); ?></strong>
-			</p>
-		<?php endif; ?>
-
-		<div class="gwcvt-letters-main">
-			<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>" class="gwcvt-letter-form">
-				<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
-				<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_PRODUCE_PAGE ); ?>" />
-
-				<div class="gwcvt-field">
-					<label for="gwcvt-letter-volunteer">
-						<strong><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></strong>
-					</label>
-					<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-inactive data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
-						<input
-							type="text"
-							id="gwcvt-letter-volunteer"
-							class="regular-text"
-							autocomplete="off"
-							role="combobox"
-							aria-expanded="false"
-							aria-autocomplete="list"
-							aria-controls="gwcvt-letter-volunteer-results"
-							placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
-							value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : $typed ); ?>"
-						/>
-						<input type="hidden" name="volunteer" id="gwcvt-letter-volunteer-id" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
-						<ul id="gwcvt-letter-volunteer-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
-					</div>
-
-					<?php
-					/* What was typed, carried by a hidden field rather than by
-					 * naming the box itself.
-					 *
-					 * The box had a name for one afternoon and the report came
-					 * straight back: arriving at the screen, somebody's name was
-					 * already in it. A named text field is one the browser
-					 * remembers and offers again — reasonable for a postcode, and
-					 * not for the screen that produces a letter about a named
-					 * person, where the name that comes back is whoever was
-					 * looked up last and the letter is about a record, not a
-					 * name. `autocomplete="off"` is a request browsers decline.
-					 *
-					 * Unnamed, there is nothing to remember. admin-picker.js
-					 * mirrors the text into this field as it is typed, which is
-					 * what lets the screen put the words back after refusing a
-					 * preview nobody chose a volunteer for. */
-					?>
-					<input type="hidden" name="volunteer_name" data-gwcvt-typed value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : $typed ); ?>" />
-
-					<?php
-					/* Pressing the button with nothing chosen used to reload this
-					 * screen unchanged: no preview, no message, and the name
-					 * cleared out of the box — which is indistinguishable from a
-					 * button that does nothing, and is what somebody reported.
-					 *
-					 * Typing is deliberately not choosing. admin-picker.js clears
-					 * the ID on every keystroke, because a corrected name with the
-					 * old ID still attached would produce a letter about the wrong
-					 * person under the right name. So the screen has to say what
-					 * it is waiting for. */
-					if ( $asked && $volunteer_id < 1 ) :
-						?>
-						<div class="notice notice-warning inline">
-							<p>
-								<?php if ( '' !== $typed ) : ?>
-									<?php esc_html_e( 'Nobody is chosen yet. Select the name from the list under the box — a letter is about one volunteer’s record, and typing a name does not say which record.', 'groundwork-common-volunteer-tracker' ); ?>
-								<?php else : ?>
-									<?php esc_html_e( 'Choose a volunteer first: start typing a name and select it from the list.', 'groundwork-common-volunteer-tracker' ); ?>
-								<?php endif; ?>
-							</p>
-						</div>
-						<?php
-					endif;
-					?>
-				</div>
-
-				<div class="gwcvt-field-row">
-					<div class="gwcvt-field">
-						<label for="gwcvt-letter-from"><strong><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
-						<input type="date" id="gwcvt-letter-from" name="from" value="<?php echo esc_attr( $from ); ?>" />
-					</div>
-					<div class="gwcvt-field">
-						<label for="gwcvt-letter-to"><strong><?php esc_html_e( 'To', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
-						<input type="date" id="gwcvt-letter-to" name="to" value="<?php echo esc_attr( $to ); ?>" />
-					</div>
-				</div>
-
-				<p class="description">
-					<?php esc_html_e( 'Leave both dates empty for everything on record, up to the day the letter is issued.', 'groundwork-common-volunteer-tracker' ); ?>
-				</p>
-
-				<?php gwc_vt_render_letter_readiness( $volunteer_id, $from, $to ); ?>
-
-				<?php
-				/* This button never previewed anything. It reloads the screen
-				 * with a table of four figures — verified hours, shifts, the
-				 * period, the reference — which is a useful check and is not a
-				 * letter. Worse, the usual way in is "Produce a letter for this
-				 * volunteer" from the volunteer's own record, which arrives with
-				 * those figures already on screen: pressing a button labelled
-				 * Preview then re-ran the same query and repainted an identical
-				 * page. It looked broken because it was doing nothing.
-				 *
-				 * It says what it does now. Previewing the letter is its own
-				 * button, beside the two that issue one, and it opens the
-				 * document. */
-				?>
-				<p>
-					<button type="submit" class="button">
-						<?php
-						echo $letter instanceof GWC_VT_Letter
-							? esc_html__( 'Update the figures', 'groundwork-common-volunteer-tracker' )
-							: esc_html__( 'Work out the figures', 'groundwork-common-volunteer-tracker' );
-						?>
-					</button>
-				</p>
-			</form>
-
-			<?php gwc_vt_render_letter_preview( $letter, $volunteer_id, $from, $to ); ?>
-		</div>
-	</div>
-	<?php
-}
-
-/**
- * What the letter will say, before anybody presses Preview.
- *
- * ── Recomputed, never read off the rollup ────────────────────────────────────
- * The volunteer's cached total is right there and would answer this in one
- * lookup. It must not be used: a sentence that disagrees with the letter printed
- * thirty seconds later is worse than no sentence, and the letter is built from
- * entries every time precisely so it cannot inherit a stale number. So this goes
- * through gwc_vt_build_letter() — the same path the print and email handlers
- * use.
- *
- * ── And built again, with include_unverified forced on ───────────────────────
- * Not handed the letter the screen already built, which would look like the
- * obvious saving and would be wrong half the time. GWC_VT_Letter's
- * unverified_minutes is only populated when the letter was asked to LIST
- * unattested shifts, and whether it was is a site setting — so reading that
- * field would give the right answer on a site with the setting on and a
- * confident zero on a site with it off. "Nothing of theirs is waiting" is
- * exactly the sentence that must not be wrong.
- *
- * The second half is the one worth having at all. It is the difference between
- * a total somebody can hand over and a total that is about to change, and it is
- * invisible on the letter itself, which reports only what is attested.
- *
- * @param int    $volunteer_id Volunteer post ID, or 0 before one is chosen.
- * @param string $from         Y-m-d or ''.
- * @param string $to           Y-m-d or ''.
- */
-function gwc_vt_render_letter_readiness( int $volunteer_id, string $from, string $to ): void {
-	if ( $volunteer_id < 1 ) {
-		return;
-	}
-
-	$letter = gwc_vt_build_letter(
-		$volunteer_id,
-		array(
-			'from'               => $from,
-			'to'                 => $to,
-			'include_unverified' => true,
-		)
-	);
-
-	if ( ! $letter instanceof GWC_VT_Letter || $letter->is_empty() ) {
-		return;
-	}
-
-	$unverified = $letter->unverified_minutes;
-	?>
-	<div class="gwcvt-readiness gwcvt-readiness--<?php echo esc_attr( $unverified > 0 ? 'waiting' : 'clear' ); ?>">
-		<p>
-			<strong>
-				<?php
-				/* "%s of verified time", not "%s hours" — gwc_vt_format_hours()
-				 * respects the site's hour_format, so on a site set to hours and
-				 * minutes it returns "3h 15m" and appending a unit would read
-				 * "3h 15m hours". The letter itself solved this the same way; see
-				 * the unverified note in inc/render.php. */
-				printf(
-					/* translators: 1: a duration, e.g. "12.5". 2: how many shifts. */
-					esc_html__( 'The letter will state %1$s of verified time across %2$s.', 'groundwork-common-volunteer-tracker' ),
-					esc_html( gwc_vt_format_hours( $letter->verified_minutes ) ),
-					esc_html(
-						sprintf(
-							/* translators: %d: number of shifts. */
-							_n( '%d shift', '%d shifts', $letter->verified_count(), 'groundwork-common-volunteer-tracker' ),
-							$letter->verified_count()
-						)
-					)
-				);
-				?>
-			</strong>
-
-			<?php
-			echo $unverified > 0
-				? esc_html(
-					sprintf(
-						/* translators: %s: a duration, e.g. "3". */
-						__( 'A further %s of their recorded time is not verified yet, and is not in that total. Verifying it would change what the letter says.', 'groundwork-common-volunteer-tracker' ),
-						gwc_vt_format_hours( $unverified )
-					)
-				)
-				: esc_html__( 'Nothing of theirs is waiting to be verified, so nothing is about to change that total.', 'groundwork-common-volunteer-tracker' );
-			?>
-		</p>
-	</div>
-	<?php
-}
-
-/**
- * What the chosen volunteer's letter would say, and the two ways to issue it.
- *
- * @param GWC_VT_Letter|null $letter       The letter, or null.
- * @param int                $volunteer_id Volunteer post ID.
- * @param string             $from         Y-m-d or ''.
- * @param string             $to           Y-m-d or ''.
- */
-function gwc_vt_render_letter_preview( $letter, int $volunteer_id, string $from, string $to ): void {
-	if ( ! $letter instanceof GWC_VT_Letter ) {
-		if ( $volunteer_id > 0 ) {
-			printf(
-				'<div class="notice notice-error inline"><p>%s</p></div>',
-				esc_html__( 'That volunteer no longer exists.', 'groundwork-common-volunteer-tracker' )
-			);
-		}
-		return;
-	}
-
-	$email = (string) get_post_meta( $letter->volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
-	?>
-	<hr />
-	<h2 class="title"><?php echo esc_html( $letter->volunteer_name ); ?></h2>
-
-	<?php /* Named, because a four-row table under somebody's name was being read as the letter. */ ?>
-	<p class="description"><?php esc_html_e( 'What the letter will state:', 'groundwork-common-volunteer-tracker' ); ?></p>
-
-	<?php if ( $letter->is_empty() ) : ?>
-		<div class="notice notice-warning inline">
-			<p><?php esc_html_e( 'There are no published hour entries for this volunteer in that period, so there is nothing to verify. A letter stating zero hours is not something to send.', 'groundwork-common-volunteer-tracker' ); ?></p>
-		</div>
-		<?php return; ?>
-	<?php endif; ?>
-
-	<table class="widefat striped gwcvt-preview">
-		<tbody>
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Verified hours', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<td><strong><?php echo esc_html( gwc_vt_format_hours( $letter->verified_minutes ) ); ?></strong></td>
-			</tr>
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Verified shifts', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<td><?php echo esc_html( number_format_i18n( $letter->verified_count() ) ); ?></td>
-			</tr>
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Period', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<td><?php echo esc_html( gwc_vt_letter_period( $letter ) ); ?></td>
-			</tr>
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Reference', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<td><code><?php echo esc_html( $letter->reference ); ?></code></td>
-			</tr>
-		</tbody>
-	</table>
-
-	<?php if ( 0 === $letter->verified_minutes ) : ?>
-		<div class="notice notice-warning inline">
-			<p><?php esc_html_e( 'None of these hours has been verified yet. Verify them before issuing a letter — otherwise it reports zero verified hours.', 'groundwork-common-volunteer-tracker' ); ?></p>
-		</div>
-	<?php endif; ?>
-
-	<?php gwc_vt_render_letterhead_warning(); ?>
-
-	<p class="gwcvt-letter-actions">
-		<?php
-		/* Reading it comes before issuing it, so it is offered first — and as
-		 * the secondary button, because the two beside it are the ones that put
-		 * a letter into the world. A new tab: this screen is where somebody
-		 * comes back to, with the dates they typed still in it. */
-		?>
-		<a
-			class="button"
-			target="_blank"
-			rel="noopener noreferrer"
-			href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $from, $to ) ); ?>"
-		>
-			<?php esc_html_e( 'Preview the letter', 'groundwork-common-volunteer-tracker' ); ?>
-		</a>
-
-		<a
-			class="button button-primary"
-			href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_print', $volunteer_id, $from, $to ) ); ?>"
-		>
-			<?php esc_html_e( 'Open the letter to print', 'groundwork-common-volunteer-tracker' ); ?>
-		</a>
-
-		<?php if ( '' !== $email && is_email( $email ) ) : ?>
-			<a
-				class="button"
-				href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_send', $volunteer_id, $from, $to ) ); ?>"
-				onclick="return confirm( '<?php echo esc_js( sprintf( /* translators: %s: an email address. */ __( 'Email this letter to %s?', 'groundwork-common-volunteer-tracker' ), $email ) ); ?>' );"
-			>
-				<?php
-				printf(
-					/* translators: %s: an email address. */
-					esc_html__( 'Email it to %s', 'groundwork-common-volunteer-tracker' ),
-					esc_html( $email )
-				);
-				?>
-			</a>
-		<?php else : ?>
-			<span class="description">
-				<?php
-				printf(
-					/* translators: %s: a link to the volunteer's record. */
-					esc_html__( 'No email address on file, so it cannot be emailed. %s', 'groundwork-common-volunteer-tracker' ),
-					'<a href="' . esc_url( (string) get_edit_post_link( $volunteer_id ) ) . '">'
-						. esc_html__( 'Add one to their record', 'groundwork-common-volunteer-tracker' )
-						. '</a>'
-				);
-				?>
-			</span>
-		<?php endif; ?>
-	</p>
-
-	<p class="description">
-		<?php esc_html_e( 'Both actions are recorded in the log, including printing — a printed letter has left the building just as much as an emailed one.', 'groundwork-common-volunteer-tracker' ); ?>
-	</p>
 	<?php
 }
 
@@ -704,117 +214,29 @@ function gwc_vt_render_letter_preview( $letter, int $volunteer_id, string $from,
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The screen for looking at an issued letter again.
+ * Where to go to look at an issued letter again.
  *
- * The produce screen, with the volunteer and dates already filled in and the
- * reference carried alongside so it can say whether the two still agree. A
- * separate screen was considered and rejected: it would be the produce screen
- * with one extra sentence, and two screens that render a letter is two places
- * for the letterhead warning and the print button to drift apart.
+ * The volunteer's own record, anchored to the letters box, because that is
+ * where every letter now lives. It used to be the produce screen with the
+ * reference in the query string, which reopened it by rebuilding from the
+ * period — a screen that no longer exists and an answer that was only ever
+ * approximately the letter.
+ *
+ * Empty when the volunteer has been erased. The log record outlives them on
+ * purpose and stays perfectly readable; there is simply no record left to open.
  *
  * @param array $record From gwc_vt_letter_record().
- * @return string
+ * @return string A URL, or '' when there is nowhere to go.
  */
 function gwc_vt_letter_review_url( array $record ): string {
-	return add_query_arg(
-		'gwc_vt_reissue',
-		rawurlencode( (string) ( $record['reference'] ?? '' ) ),
-		gwc_vt_produce_letter_url(
-			(int) ( $record['volunteer_id'] ?? 0 ),
-			(string) ( $record['from'] ?? '' ),
-			(string) ( $record['to'] ?? '' )
-		)
-	);
+	$volunteer_id = (int) ( $record['volunteer_id'] ?? 0 );
+
+	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+		return '';
+	}
+
+	return (string) get_edit_post_link( $volunteer_id, 'url' ) . '#gwc-vt-volunteer-letters';
 }
-
-/**
- * The issued letter this screen was asked to look at again, if any.
- *
- * @return array Empty when there is none, or the reference names nothing.
- */
-function gwc_vt_reissue_record(): array {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation; nothing is written from it.
-	$reference = isset( $_GET['gwc_vt_reissue'] ) ? sanitize_text_field( wp_unslash( $_GET['gwc_vt_reissue'] ) ) : '';
-
-	if ( '' === $reference ) {
-		return array();
-	}
-
-	$record = gwc_vt_find_letter_record( $reference );
-
-	return is_array( $record ) ? $record : array();
-}
-
-/**
- * Say whether printing this again would produce the same document.
- *
- * Three answers, and the middle one is the reason the banner exists at all.
- *
- * Unchanged: reprint freely, it is the same letter and the same reference.
- *
- * Changed: the records have moved since. The reprint is a NEW letter with a NEW
- * reference — it is not a copy of what was sent, and the old reference stays
- * the one on the copy the volunteer is holding. Both facts have to be said,
- * because somebody reprinting "the March letter" and posting it to a court is
- * otherwise sending a document that disagrees with the one already on file
- * there, with nothing on either page to explain why.
- *
- * Gone: the volunteer's record has been anonymized, erased or swept. There is
- * nothing to rebuild from, so there is nothing to print, and the screen says
- * that rather than rendering an empty letter.
- *
- * @param array $record From gwc_vt_letter_record().
- */
-function gwc_vt_render_reissue_banner( array $record ): void {
-	if ( ! $record ) {
-		return;
-	}
-
-	$result = gwc_vt_verify_reference( (string) $record['reference'] );
-	$status = (string) ( $result['status'] ?? 'unknown' );
-
-	$issued = sprintf(
-		/* translators: 1: a date, 2: a reference code. */
-		__( 'Issued %1$s, reference %2$s.', 'groundwork-common-volunteer-tracker' ),
-		$record['issued_at'],
-		$record['reference']
-	);
-
-	if ( 'match' === $status ) {
-		printf(
-			'<div class="notice notice-success"><p><strong>%1$s</strong> %2$s</p></div>',
-			esc_html( $issued ),
-			esc_html__( 'Nothing on this volunteer’s record has changed since. Printing or emailing it again produces the same letter, with the same reference.', 'groundwork-common-volunteer-tracker' )
-		);
-
-		return;
-	}
-
-	if ( ! isset( $result['current']['minutes'] ) ) {
-		printf(
-			'<div class="notice notice-error"><p><strong>%1$s</strong> %2$s</p></div>',
-			esc_html( $issued ),
-			esc_html__( 'This volunteer’s record has since been removed or anonymized, so there is nothing left to build a letter from. The log entry above is what remains, and it is enough to confirm that a letter was issued and what it stated.', 'groundwork-common-volunteer-tracker' )
-		);
-
-		return;
-	}
-
-	printf(
-		'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p><p>%3$s</p><p><strong>%4$s</strong></p></div>',
-		esc_html( $issued ),
-		esc_html__( 'This is not a copy of that letter — no copy is kept. It is the letter your records would produce today, and they have changed since.', 'groundwork-common-volunteer-tracker' ),
-		esc_html( gwc_vt_reference_difference_note( $result, $record ) ),
-		esc_html(
-			sprintf(
-				/* translators: %s: the reference code of the letter that was issued. */
-				__( 'If you print or send this, it goes out as a new letter with a new reference. %s stays the reference on the copy the volunteer already has, and will still check out as what you issued that day.', 'groundwork-common-volunteer-tracker' ),
-				$record['reference']
-			)
-		)
-	);
-}
-
 
 /**
  * A nonced URL for issuing a letter.
@@ -1106,127 +528,27 @@ function gwc_vt_handle_letter_preview(): void {
 }
 
 /**
- * Render a letter for printing.
- */
-function gwc_vt_handle_letter_print(): void {
-	$request = gwc_vt_letter_request();
-	$letter  = $request['letter'];
-
-	gwc_vt_log_letter( $letter, 'print' );
-	gwc_vt_finish_letter_draft( (int) $request['draft'] );
-
-	/* This is the response in this plugin with the most personal data in it.
-	 * Nothing about it should be cached, stored by an intermediary, or indexed.
-	 * The two roster sheets say the same thing about themselves and now share
-	 * this, rather than each carrying its own copy that only one of them kept
-	 * up to date. */
-	gwc_vt_private_document_headers();
-
-	echo gwc_vt_render_letter( $letter, 'print' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
-	exit;
-}
-
-/**
- * Email a letter to the volunteer.
- */
-function gwc_vt_handle_letter_send(): void {
-	$request = gwc_vt_letter_request();
-	$letter  = $request['letter'];
-
-	/* A typed address wins over the one on file, and is checked rather than
-	 * corrected. Refused on what somebody typed, not on what survived
-	 * sanitizing — see the note on 'typed' in gwc_vt_letter_request(). */
-	if ( ! empty( $request['typed'] ) && ! is_email( (string) $request['recipient'] ) ) {
-		gwc_vt_letters_redirect( 'bad-email', $request );
-	}
-
-	$recipient = ! empty( $request['typed'] )
-		? (string) $request['recipient']
-		: (string) get_post_meta( $letter->volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
-
-	if ( '' === $recipient || ! is_email( $recipient ) ) {
-		gwc_vt_letters_redirect( 'no-email', $request );
-	}
-
-	$sent = gwc_vt_send_email(
-		$recipient,
-		gwc_vt_letter_subject( $letter ),
-		gwc_vt_render_letter( $letter, 'email' )
-	);
-
-	gwc_vt_log_letter( $letter, 'email', $recipient, $sent );
-
-	/* Only when it went. A send that failed leaves the draft where it is, so the
-	 * intention survives the mail server being down — which is the whole reason
-	 * a draft exists rather than a URL somebody has to remember. */
-	if ( $sent ) {
-		gwc_vt_finish_letter_draft( (int) $request['draft'] );
-	}
-
-	gwc_vt_letters_redirect( $sent ? 'sent' : 'send-failed', $request );
-}
-
-/**
  * Back to the Letters screen with a result.
  *
  * @param string $result  What happened.
  * @param array  $request From gwc_vt_letter_request().
  */
 function gwc_vt_letters_redirect( string $result, array $request ): void {
-	/* Back to the record, when that is where the act started. The letters box
-	 * is the whole of the flow now — landing somebody on a different screen
-	 * afterwards loses the volunteer they were working with, which is the thing
-	 * moving the flow onto the record was for. */
-	if ( ! empty( $request['back'] ) ) {
-		wp_safe_redirect(
-			add_query_arg(
-				array( 'gwc_vt_letter_did' => $result ),
-				(string) get_edit_post_link( (int) $request['volunteer_id'], 'redirect' )
-			) . '#gwc-vt-volunteer-letters'
-		);
-		exit;
-	}
-
-	/* Otherwise back to the produce screen, not to the records log. Somebody who has just
-	 * printed a letter is looking at the letter — the log's job starts later,
-	 * and landing them there would answer a question they have not asked while
-	 * losing the volunteer and the dates they were working with. */
+	/* Always back to the record. Producing a letter was its own screen once and
+	 * this had a second branch for landing there; the screen is gone and the
+	 * box on the volunteer is the whole of the flow, so there is nowhere else a
+	 * delivery could sensibly finish. Landing somebody anywhere else loses the
+	 * volunteer they were working with, which is what moving the flow onto the
+	 * record was for.
+	 *
+	 * gwc_vt_volunteer_letters_notice() prints the result. */
 	wp_safe_redirect(
 		add_query_arg(
-			'gwc_vt_letter',
-			$result,
-			gwc_vt_produce_letter_url(
-				(int) $request['volunteer_id'],
-				(string) $request['from'],
-				(string) $request['to']
-			)
-		)
+			array( 'gwc_vt_letter_did' => $result ),
+			(string) get_edit_post_link( (int) $request['volunteer_id'], 'redirect' )
+		) . '#gwc-vt-volunteer-letters'
 	);
 	exit;
-}
-
-/**
- * Say what happened.
- */
-function gwc_vt_letters_notice(): void {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; picks which sentence to print after a redirect.
-	$result = isset( $_GET['gwc_vt_letter'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_letter'] ) ) : '';
-
-	$messages = array(
-		'sent'        => array( 'success', __( 'The letter was emailed and recorded in the log.', 'groundwork-common-volunteer-tracker' ) ),
-		'send-failed' => array( 'error', __( 'WordPress could not send the email. The attempt is recorded in the log. Check the site’s mail configuration, or print the letter instead.', 'groundwork-common-volunteer-tracker' ) ),
-		'no-email'    => array( 'error', __( 'That volunteer has no email address on file.', 'groundwork-common-volunteer-tracker' ) ),
-	);
-
-	if ( ! isset( $messages[ $result ] ) ) {
-		return;
-	}
-
-	printf(
-		'<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
-		esc_attr( $messages[ $result ][0] ),
-		esc_html( $messages[ $result ][1] )
-	);
 }
 
 /* ── Checking a reference ────────────────────────────────────────────────────
@@ -1463,9 +785,22 @@ function gwc_vt_render_letter_log(): void {
 								 * what became of it, which is the answer to the
 								 * question that brought them. */
 								?>
-								<a href="<?php echo esc_url( gwc_vt_letter_review_url( $record ) ); ?>">
+								<?php
+								/* Linked to the record it is about, when there
+								 * still is one. A letter whose volunteer has
+								 * been erased stays in the log — that is what
+								 * the log is for — and simply has nowhere to
+								 * go, so the reference prints without a link
+								 * rather than as one that dies. */
+								$gwc_vt_review = gwc_vt_letter_review_url( $record );
+								?>
+								<?php if ( '' !== $gwc_vt_review ) : ?>
+									<a href="<?php echo esc_url( $gwc_vt_review ); ?>">
+										<code><?php echo esc_html( $record['reference'] ); ?></code>
+									</a>
+								<?php else : ?>
 									<code><?php echo esc_html( $record['reference'] ); ?></code>
-								</a>
+								<?php endif; ?>
 							</td>
 							<td>
 								<?php
