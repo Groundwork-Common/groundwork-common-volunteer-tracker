@@ -167,7 +167,7 @@ if ( $gwc_vt_letter instanceof GWC_VT_Letter ) {
 	 * out would have to be named to be useful. */
 	gwc_vt_check(
 		'the letter model still carries only what it always did',
-		array( 'entries', 'entry_ids', 'from', 'includes_unverified', 'issued_at', 'reference', 'to', 'unverified_minutes', 'verified_minutes', 'volunteer_id', 'volunteer_name' ) === $gwc_vt_props,
+		array( 'entries', 'entry_ids', 'from', 'includes_unverified', 'issued_at', 'reference', 'to', 'unverified_minutes', 'verified_as_of', 'verified_minutes', 'volunteer_id', 'volunteer_name' ) === $gwc_vt_props,
 		implode( ',', $gwc_vt_props )
 	);
 

@@ -54,7 +54,11 @@ tool this file used to describe, and the later half is easy to miss when scannin
   issues (mints the reference, writes the record, no document) and then prints,
   posts or emails, each appending a delivery row. A delivery rebuilds from the
   entry IDs the log stored — IDs only, so the log still holds no name — and is
-  refused when the rebuild no longer matches the reference.
+  refused when the rebuild no longer matches the reference. **A draft fixes a
+  moment** — the end of its period, and the instant its attestations are counted
+  as of — so the letter states what was reviewed rather than what has been
+  verified since; the log keeps that moment, and `gwc_vt_verify_reference()`
+  asks its question as of it.
 - **The schedule** — `shift-cpt.php`, `shifts.php`, `recurrence.php`,
   `signup-cpt.php`, `signups.php`, plus the public `signup-form.php` /
   `signup-handler.php`, `ics.php`, and two cron passes in `schedule-cron.php`

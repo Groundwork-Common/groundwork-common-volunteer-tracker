@@ -32,6 +32,29 @@ defined( 'ABSPATH' ) || exit;
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
+ * Whether this rendering carries a real reference code.
+ *
+ * Three renderings, two answers, and the distinction is not the medium alone —
+ * which is why it is a function rather than a condition spelled out wherever it
+ * is needed. A draft has no reference, because it is in no log and a code that
+ * fails the only test it exists for is worse than no code. A print or an email
+ * has one. And an issued letter REOPENED and rebuilt exactly goes through the
+ * draft medium while having one, because it is the letter.
+ *
+ * That third case was missed twice — once in the token table, once in the note
+ * under the disclaimer, where a letter printed its own code and then said "this
+ * draft has none" two lines below it. Both were the same fact stated in two
+ * places and only corrected in one, so now it is stated here.
+ *
+ * @param string $medium     'print', 'email' or 'draft'.
+ * @param bool   $reproduced Whether this is an issued letter, rebuilt exactly.
+ * @return bool
+ */
+function gwc_vt_letter_shows_reference( string $medium, bool $reproduced ): bool {
+	return 'draft' !== $medium || $reproduced;
+}
+
+/**
  * Render a letter.
  *
  * ── The third medium, and why it is not a fourth document ───────────────────
@@ -105,7 +128,7 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print', 
 	<?php endif; ?>
 </head>
 <body class="gwcvt-letter-page">
-	<?php if ( 'draft' === $medium && ! $reproduced ) : ?>
+	<?php if ( ! gwc_vt_letter_shows_reference( $medium, $reproduced ) ) : ?>
 		<?php
 		/* NOT hidden under @media print, unlike the toolbar below it. A draft
 		 * that loses its banner on paper is an issued letter that nothing
@@ -377,12 +400,20 @@ function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium, bool $reprod
 
 		<footer class="gwcvt-disclaimer">
 			<p><?php echo wp_kses( gwc_vt_replace_tokens( gwc_vt_disclaimer(), $tokens ), gwc_vt_letter_allowed_html() ); ?></p>
-			<?php if ( 'draft' === $medium ) : ?>
+			<?php if ( ! gwc_vt_letter_shows_reference( $medium, $reproduced ) ) : ?>
 				<?php
 				/* No reference on a draft. It is the digest somebody checks by
 				 * telephone against the issued-letter log, and a draft is in no
 				 * log — a code that fails the only test it exists for is worse
-				 * than no code. */
+				 * than no code.
+				 *
+				 * $reproduced is the third case and the one this branch missed:
+				 * an issued letter reopened and rebuilt exactly is rendered
+				 * through the draft medium, and it does have a reference. It
+				 * said "this draft has none" underneath the code it was printing
+				 * two lines further up. Every place that reads the medium to
+				 * decide whether there is a reference has to read this as
+				 * well — the token table, the band, the title, and here. */
 				?>
 				<p class="gwcvt-reference-note"><?php esc_html_e( 'A reference is given when the letter is issued. This draft has none, so there is nothing to check by telephone.', 'groundwork-common-volunteer-tracker' ); ?></p>
 			<?php else : ?>
@@ -435,9 +466,9 @@ function gwc_vt_letter_tokens( GWC_VT_Letter $letter, string $medium = 'print', 
 	 * getting it exactly backwards. It is told apart from a draft by having one
 	 * at all: gwc_vt_build_letter() always mints a reference, but a draft's is
 	 * never written to the log and never printed. */
-	$reference = 'draft' === $medium && ! $reproduced
-		? __( 'none — this copy has not been issued', 'groundwork-common-volunteer-tracker' )
-		: $letter->reference;
+	$reference = gwc_vt_letter_shows_reference( $medium, $reproduced )
+		? $letter->reference
+		: __( 'none — this copy has not been issued', 'groundwork-common-volunteer-tracker' );
 
 	return array(
 		'{org}'       => gwc_vt_org_name(),

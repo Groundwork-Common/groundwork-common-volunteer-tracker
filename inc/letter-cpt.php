@@ -73,6 +73,22 @@ const GWC_VT_LETTER_DELIVERY = '_gwc_vt_letter_delivery';
  * about a person, so this does not change what the log holds. */
 const GWC_VT_LETTER_COVERS_FROM = '_gwc_vt_letter_covers_from';
 
+/* ── The moment this letter's figures were fixed to ──────────────────────────
+ * A letter issued from a draft states what had been attested to when the DRAFT
+ * was made, not when the button was pressed. That moment has to survive on the
+ * record, because the reference checker rebuilds from the entries to answer a
+ * court's phone call — and rebuilding "as things stand now" reports every
+ * genuine letter as changed the moment the volunteer works another shift.
+ *
+ * With it, the check asks the right question: does this letter still match what
+ * we had attested to on the day it was fixed? A shift verified since is not an
+ * answer to that and does not disturb it; a shift ON the letter being edited
+ * still is, and still does.
+ *
+ * Empty on a letter issued before this existed, and on one produced without a
+ * draft, in which case the checker behaves exactly as it always did. */
+const GWC_VT_LETTER_AS_OF = '_gwc_vt_letter_as_of';
+
 add_action( 'init', 'gwc_vt_register_letter_type' );
 
 /* ── Where the house convention bends, and why ───────────────────────────────
@@ -179,6 +195,7 @@ function gwc_vt_log_letter( GWC_VT_Letter $letter, string $medium = '', string $
 	update_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, $sent_ok ? 1 : 0 );
 	update_post_meta( $record_id, GWC_VT_LETTER_ENTRY_IDS, implode( ',', array_map( 'intval', $letter->entry_ids ) ) );
 	update_post_meta( $record_id, GWC_VT_LETTER_COVERS_FROM, gwc_vt_letter_earliest_date( $letter ) );
+	update_post_meta( $record_id, GWC_VT_LETTER_AS_OF, $letter->verified_as_of );
 
 	/* A letter issued without going anywhere yet records no delivery. The
 	 * produce screen still issues and delivers in one act and passes a medium,
@@ -398,6 +415,7 @@ function gwc_vt_letter_record( int $record_id ): array {
 		'reference'     => (string) get_the_title( $record_id ),
 		'entry_ids'     => '' === $ids ? array() : array_map( 'intval', explode( ',', $ids ) ),
 		'covers_from'   => gwc_vt_letter_covers_from( $record_id ),
+		'as_of'         => (string) get_post_meta( $record_id, GWC_VT_LETTER_AS_OF, true ),
 		'deliveries'    => gwc_vt_letter_deliveries( $record_id ),
 		'volunteer_id'  => (int) get_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, true ),
 		'issued_by'     => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),

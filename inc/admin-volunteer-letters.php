@@ -265,13 +265,10 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 function gwc_vt_render_letter_draft_row( array $draft ): void {
 	$volunteer_id = (int) $draft['volunteer'];
 
-	$letter = gwc_vt_build_letter(
-		$volunteer_id,
-		array(
-			'from' => $draft['from'],
-			'to'   => $draft['to'],
-		)
-	);
+	/* As the draft stands, which is as the record stood when it was made. The
+	 * row and the letter issued from it have to state the same figures, so both
+	 * ask for the same fixed moment. */
+	$letter = gwc_vt_build_letter( $volunteer_id, gwc_vt_letter_args_for_draft( $draft ) );
 
 	$empty = ! $letter instanceof GWC_VT_Letter || $letter->is_empty();
 

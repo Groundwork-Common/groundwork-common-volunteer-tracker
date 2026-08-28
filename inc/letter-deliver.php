@@ -56,8 +56,29 @@ add_action( 'admin_post_gwc_vt_letter_deliver_email', 'gwc_vt_handle_deliver_ema
  */
 function gwc_vt_handle_letter_issue(): void {
 	$request = gwc_vt_letter_request();
+	$letter  = $request['letter'];
 
-	$record_id = gwc_vt_log_letter( $request['letter'] );
+	/* ── Issued as the draft stood, not as the record stands ─────────────────
+	 * gwc_vt_letter_request() builds from the period alone, because most of its
+	 * callers have no draft. This one always does, and the draft is what fixes
+	 * the figures: it pins the end of the period and the moment the attestations
+	 * are counted as of, so that the letter states what the person who drafted
+	 * it saw rather than whatever has been verified since.
+	 *
+	 * Rebuilt rather than adjusted, because the figures, the shift list and the
+	 * reference all follow from that one decision and none of them can be
+	 * corrected afterwards. */
+	$draft = gwc_vt_letter_draft( (int) $request['draft'] );
+
+	if ( $draft ) {
+		$rebuilt = gwc_vt_build_letter( (int) $draft['volunteer'], gwc_vt_letter_args_for_draft( $draft ) );
+
+		if ( $rebuilt instanceof GWC_VT_Letter ) {
+			$letter = $rebuilt;
+		}
+	}
+
+	$record_id = gwc_vt_log_letter( $letter );
 
 	if ( $record_id < 1 ) {
 		gwc_vt_letters_redirect( 'issue-failed', $request );
