@@ -2751,6 +2751,32 @@ body.js .gwcvt-sheet--open {
    where there is no #poststuff to be inside of — gwc_vt_render_panel() writes
    core's postbox markup on a page that has no meta box API to build one. Both
    selectors, one rule: a panel is the same object wherever it is drawn. */
+/* ── The heading, on a screen that is not a post editor ──────────────────────
+   A .postbox gets its frame from common.css, which every admin screen loads —
+   border, shadow, white ground, all identical on a menu page. Its HEADING does
+   not: .postbox-header and .hndle are styled in edit.css, and only a post
+   editor enqueues that. So a hand-written panel on a menu screen renders its
+   title as a bare <h2>: 1.3em, with 16px of margin above and below and none of
+   the padding, which is a header block half again too tall with the text
+   floating in it. That is what the Letters screen shipped looking like.
+
+   The values below are core's own, read off a panel in the volunteer editor
+   rather than guessed, so this changes nothing where edit.css is loaded and
+   matches it where it is not. */
+.gwcvt-panel .postbox-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.gwcvt-panel .postbox-header .hndle {
+	margin: 0;
+	padding: 8px 12px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
 #poststuff .gwcvt-panel .inside,
 .gwcvt-panel .inside {
 	margin: 0;
