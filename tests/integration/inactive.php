@@ -379,6 +379,89 @@ gwc_vt_inact_check(
 	strpos( $gwc_vt_inact_active, 'gwcvt-standing__facts' ) < strpos( $gwc_vt_inact_active, 'gwcvt-standing__action' )
 );
 
+/* ── One label for the hours, and the split only where there is one ──────────
+ * It was two rows — "Verified hours" and "Awaiting verification" — which put
+ * the two halves of one number under two headings and never named the whole.
+ * One row now: the total, then what it splits into. Shifts comes first, being
+ * the coarser fact and the one nobody has to read twice.
+ *
+ * Its own volunteer, with hours on it: the one rendered above has none, so the
+ * panel takes the "Added <date>" branch and has no hours row at all to check. */
+$GLOBALS['gwc_vt_inact_hv'] = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzinact Hourshaver',
+	)
+);
+
+gwc_vt_log_one_entry( $GLOBALS['gwc_vt_inact_hv'], '2026-05-04', 150, 'Zzinact sorting' );
+$GLOBALS['gwc_vt_inact_hv_verified'] = gwc_vt_log_one_entry( $GLOBALS['gwc_vt_inact_hv'], '2026-05-11', 90, 'Zzinact sorting' );
+gwc_vt_verify_entry( $GLOBALS['gwc_vt_inact_hv_verified'], 1 );
+
+ob_start();
+gwc_vt_render_volunteer_status_box( get_post( $GLOBALS['gwc_vt_inact_hv'] ) );
+$GLOBALS['gwc_vt_inact_hv_html'] = (string) ob_get_clean();
+
+$GLOBALS['gwc_vt_inact_hours'] = array();
+
+if ( preg_match_all( '/<dd[^>]*>\s*([^<]+?)\s*<\/dd>/', $GLOBALS['gwc_vt_inact_hv_html'], $gwc_vt_inact_dds ) ) {
+	$GLOBALS['gwc_vt_inact_hours'] = array_map( 'trim', $gwc_vt_inact_dds[1] );
+}
+
+gwc_vt_inact_check(
+	'the hours are one row, under one label',
+	false !== strpos( $GLOBALS['gwc_vt_inact_hv_html'], '>Hours<' )
+		&& false === strpos( $GLOBALS['gwc_vt_inact_hv_html'], 'Verified hours' )
+		&& false === strpos( $GLOBALS['gwc_vt_inact_hv_html'], 'Awaiting verification' ),
+	implode( ' | ', $GLOBALS['gwc_vt_inact_hours'] )
+);
+
+gwc_vt_inact_check(
+	'and shifts come before them',
+	strpos( $GLOBALS['gwc_vt_inact_hv_html'], '>Shifts<' ) < strpos( $GLOBALS['gwc_vt_inact_hv_html'], '>Hours<' )
+);
+
+/* The arithmetic rather than the wording: the total is the two halves added up,
+ * which is the one thing a reader takes from the row. */
+$GLOBALS['gwc_vt_inact_nums'] = array();
+
+foreach ( $GLOBALS['gwc_vt_inact_hours'] as $gwc_vt_inact_line ) {
+	if ( preg_match( '/^([0-9.]+) (total|verified|unverified)$/', $gwc_vt_inact_line, $gwc_vt_inact_bit ) ) {
+		$GLOBALS['gwc_vt_inact_nums'][ $gwc_vt_inact_bit[2] ] = (float) $gwc_vt_inact_bit[1];
+	}
+}
+
+gwc_vt_inact_check(
+	'and the total is what the two halves add up to',
+	isset( $GLOBALS['gwc_vt_inact_nums']['total'], $GLOBALS['gwc_vt_inact_nums']['verified'], $GLOBALS['gwc_vt_inact_nums']['unverified'] )
+		&& abs( $GLOBALS['gwc_vt_inact_nums']['total'] - ( $GLOBALS['gwc_vt_inact_nums']['verified'] + $GLOBALS['gwc_vt_inact_nums']['unverified'] ) ) < 0.001,
+	wp_json_encode( $GLOBALS['gwc_vt_inact_nums'] )
+);
+
+/* And with nothing waiting, the split does not appear at all: "14.5 total /
+ * 14.5 verified / 0 unverified" is three lines to say one thing, two of them
+ * about nothing. */
+gwc_vt_verify_entry( (int) gwc_vt_entry_ids_for_volunteer( $GLOBALS['gwc_vt_inact_hv'] )[0], 1 );
+gwc_vt_verify_entry( (int) gwc_vt_entry_ids_for_volunteer( $GLOBALS['gwc_vt_inact_hv'] )[1], 1 );
+
+ob_start();
+gwc_vt_render_volunteer_status_box( get_post( $GLOBALS['gwc_vt_inact_hv'] ) );
+$GLOBALS['gwc_vt_inact_all_v'] = (string) ob_get_clean();
+
+gwc_vt_inact_check(
+	'and with nothing waiting there is no split to show',
+	false === strpos( $GLOBALS['gwc_vt_inact_all_v'], 'unverified' )
+		&& false === strpos( $GLOBALS['gwc_vt_inact_all_v'], 'total' )
+		&& false !== strpos( $GLOBALS['gwc_vt_inact_all_v'], 'verified' )
+);
+
+foreach ( gwc_vt_entry_ids_for_volunteer( $GLOBALS['gwc_vt_inact_hv'] ) as $gwc_vt_inact_e ) {
+	wp_delete_post( (int) $gwc_vt_inact_e, true );
+}
+
+wp_delete_post( $GLOBALS['gwc_vt_inact_hv'], true );
+
 $gwc_vt_inact_off = gwc_vt_inact_panel( GWC_VT_VOLUNTEER_INACTIVE );
 
 gwc_vt_inact_check(

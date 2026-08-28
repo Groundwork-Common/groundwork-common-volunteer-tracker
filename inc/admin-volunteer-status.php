@@ -202,22 +202,76 @@ function gwc_vt_render_volunteer_status_box( $post ): void {
 			</div>
 
 			<?php if ( ! $totals->is_empty() ) : ?>
-				<div>
-					<dt><?php esc_html_e( 'Verified hours', 'groundwork-common-volunteer-tracker' ); ?></dt>
-					<dd><?php echo esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ); ?></dd>
-				</div>
-
-				<?php if ( $totals->pending_minutes > 0 ) : ?>
-					<div>
-						<dt><?php esc_html_e( 'Awaiting verification', 'groundwork-common-volunteer-tracker' ); ?></dt>
-						<dd><?php echo esc_html( gwc_vt_format_hours( $totals->pending_minutes ) ); ?></dd>
-					</div>
-				<?php endif; ?>
-
+				<?php
+				/* Shifts first: how many times somebody came, then what that
+				 * came to in hours. The count is the coarser fact and the one
+				 * that does not need reading twice. */
+				?>
 				<div>
 					<dt><?php esc_html_e( 'Shifts', 'groundwork-common-volunteer-tracker' ); ?></dt>
 					<dd><?php echo esc_html( number_format_i18n( $totals->entries ) ); ?></dd>
 				</div>
+
+				<?php
+				/* ── One label, and the breakdown under it ────────────────────
+				 * This was two rows — "Verified hours" and "Awaiting
+				 * verification" — which put the two halves of one number under
+				 * two headings and never named the whole. Somebody wanting to
+				 * know how much this person has done had to add them up.
+				 *
+				 * One row now, with the total first and the split beneath it,
+				 * because the total is the answer and the split is why it is
+				 * not all on a letter.
+				 *
+				 * The split only appears when there is one. All-verified would
+				 * otherwise read "14.5 total / 14.5 verified / 0 unverified" —
+				 * three lines to say one thing, and two of them saying it about
+				 * nothing. */
+				?>
+				<div>
+					<dt><?php esc_html_e( 'Hours', 'groundwork-common-volunteer-tracker' ); ?></dt>
+
+					<?php if ( $totals->pending_minutes > 0 ) : ?>
+						<dd>
+							<?php
+							printf(
+								/* translators: %s: a number of hours, already formatted. */
+								esc_html__( '%s total', 'groundwork-common-volunteer-tracker' ),
+								esc_html( gwc_vt_format_hours( $totals->verified_minutes + $totals->pending_minutes ) )
+							);
+							?>
+						</dd>
+						<dd>
+							<?php
+							printf(
+								/* translators: %s: a number of hours, already formatted. */
+								esc_html__( '%s verified', 'groundwork-common-volunteer-tracker' ),
+								esc_html( gwc_vt_format_hours( $totals->verified_minutes ) )
+							);
+							?>
+						</dd>
+						<dd>
+							<?php
+							printf(
+								/* translators: %s: a number of hours, already formatted. */
+								esc_html__( '%s unverified', 'groundwork-common-volunteer-tracker' ),
+								esc_html( gwc_vt_format_hours( $totals->pending_minutes ) )
+							);
+							?>
+						</dd>
+					<?php else : ?>
+						<dd>
+							<?php
+							printf(
+								/* translators: %s: a number of hours, already formatted. */
+								esc_html__( '%s verified', 'groundwork-common-volunteer-tracker' ),
+								esc_html( gwc_vt_format_hours( $totals->verified_minutes ) )
+							);
+							?>
+						</dd>
+					<?php endif; ?>
+				</div>
+
 			<?php endif; ?>
 		</dl>
 
