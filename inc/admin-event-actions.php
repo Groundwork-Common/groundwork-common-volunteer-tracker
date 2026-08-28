@@ -233,7 +233,7 @@ function gwc_vt_render_drop_role( int $event_id, string $role ): void {
 
 		<?php if ( $busy ) : ?>
 			<h2><?php esc_html_e( 'Called off, and kept', 'groundwork-common-volunteer-tracker' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'People are on these, so they stay on the schedule marked as called off rather than being deleted.', 'groundwork-common-volunteer-tracker' ); ?></p>
+			<p class="description"><?php esc_html_e( 'People are on these, so they stay on the schedule marked as called off.', 'groundwork-common-volunteer-tracker' ); ?></p>
 			<ul class="ul-disc">
 				<?php foreach ( $busy as $shift_id ) : ?>
 					<li>

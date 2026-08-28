@@ -444,7 +444,7 @@ function gwc_vt_render_credentials_list(): void {
 
 		<?php if ( ! gwc_vt_can_define_credentials() ) : ?>
 			<p class="description">
-				<?php esc_html_e( 'Defining a credential changes what your organization asks of everybody, so it needs a site administrator. Recording that somebody holds one does not — that is on each volunteer’s record.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Defining a credential needs a site administrator. Recording that somebody holds one is done on their record.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		<?php endif; ?>
 	</div>
@@ -618,7 +618,7 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 		<?php if ( $editing && $credential['retired'] ) : ?>
 			<div class="notice notice-warning inline">
 				<p>
-					<?php esc_html_e( 'This one is retired. Nobody is being asked for it, and the records of who holds it are still here — editing it changes what those records are records of.', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php esc_html_e( 'This one is retired. Nobody is being asked for it, and the records of who held it are still here.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 			</div>
 		<?php endif; ?>
@@ -633,10 +633,10 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 					<th scope="row"><label for="gwcvt-credential-name"><?php esc_html_e( 'What it is', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 					<td>
 						<input type="text" id="gwcvt-credential-name" name="gwc_vt_name" class="regular-text" maxlength="120" value="<?php echo esc_attr( (string) $credential['name'] ); ?>" required />
-						<p class="description"><?php esc_html_e( 'What you would call it out loud — “Child safety class”, “Liability waiver”.', 'groundwork-common-volunteer-tracker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'What you call it out loud — “Child safety class”, “Liability waiver”.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						<?php if ( $editing && $held_by > 0 ) : ?>
 							<p class="description">
-								<?php esc_html_e( 'Renaming is safe: every record points at this credential itself, so the word changes everywhere at once and no record moves.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php esc_html_e( 'Renaming is safe: the word changes everywhere at once and no record moves.', 'groundwork-common-volunteer-tracker' ); ?>
 							</p>
 						<?php endif; ?>
 					</td>
@@ -646,7 +646,7 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 					<td>
 						<input type="number" id="gwcvt-credential-months" name="gwc_vt_months" min="0" max="<?php echo esc_attr( (string) GWC_VT_CREDENTIAL_MAX_MONTHS ); ?>" step="1" value="<?php echo esc_attr( (string) $credential['months'] ); ?>" />
 						<?php esc_html_e( 'months', 'groundwork-common-volunteer-tracker' ); ?>
-						<p class="description"><?php esc_html_e( 'Zero means it never expires. Somebody who did it on the 31st of a month renews on the 31st, or on the last day of a month that is shorter.', 'groundwork-common-volunteer-tracker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Zero means it never expires.', 'groundwork-common-volunteer-tracker' ); ?></p>
 
 						<?php if ( $editing && $held_by > 0 ) : ?>
 							<?php
@@ -673,7 +673,7 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 									);
 									?>
 								</strong>
-								<?php esc_html_e( 'Expiry is worked out from this number each time it is asked for and is never stored, so a shorter interval takes effect the moment you save — somebody who did it eleven months ago is lapsed as soon as the page reloads. Nothing is emailed either way.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php esc_html_e( 'Expiry is worked out from this number each time and never stored, so a shorter interval takes effect the moment you save. Nothing is emailed either way.', 'groundwork-common-volunteer-tracker' ); ?>
 							</p>
 						<?php endif; ?>
 					</td>
@@ -686,10 +686,10 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 								<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $slug, (string) $credential['mode'] ); ?>><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
-						<p class="description"><?php esc_html_e( 'Reporting is the safer default and the one most organizations want: you find out who is short, and decide. Stopping somebody is for the things nobody may work without.', 'groundwork-common-volunteer-tracker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Reporting tells you who is short. Stopping is for what nobody may work without.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						<?php if ( $editing ) : ?>
 							<p class="description">
-								<?php esc_html_e( 'Changing this to stopping people applies to signups made from now on. Nobody already on a shift is taken off it.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php esc_html_e( 'Nobody already on a shift is taken off it.', 'groundwork-common-volunteer-tracker' ); ?>
 							</p>
 						<?php endif; ?>
 					</td>
@@ -698,7 +698,7 @@ function gwc_vt_render_credential_form( int $credential_id = 0 ): void {
 					<th scope="row"><label for="gwcvt-credential-note"><?php esc_html_e( 'A note', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 					<td>
 						<input type="text" id="gwcvt-credential-note" name="gwc_vt_note" class="regular-text" maxlength="200" value="<?php echo esc_attr( (string) $credential['note'] ); ?>" />
-						<p class="description"><?php esc_html_e( 'Optional, and for staff. Where the course is booked, who countersigns the form — whatever the person recording it needs to know.', 'groundwork-common-volunteer-tracker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'For staff — where the course is booked, who countersigns the form.', 'groundwork-common-volunteer-tracker' ); ?></p>
 					</td>
 				</tr>
 			</table>

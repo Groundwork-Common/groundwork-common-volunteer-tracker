@@ -159,7 +159,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 						<label for="gwcvt-shift-date"><?php esc_html_e( 'Date', 'groundwork-common-volunteer-tracker' ); ?></label>
 						<input type="date" id="gwcvt-shift-date" name="gwc_vt_date" required value="<?php echo esc_attr( $date ); ?>" />
 						<p class="description">
-							<?php esc_html_e( 'A shift is something that has not happened yet, so this one is allowed to be in the future — unlike an hour entry, which records a day somebody already worked.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php esc_html_e( 'May be in the future, unlike an hour entry.', 'groundwork-common-volunteer-tracker' ); ?>
 						</p>
 					</div>
 
@@ -177,7 +177,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 						</label>
 
 						<p class="description">
-							<?php esc_html_e( 'An overnight shift at a shelter runs 22:00 to 06:00 with that checkbox selected. Without it, an end time before the start is treated as a typo and refused.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php esc_html_e( '22:00 to 06:00 needs that checkbox. Without it, an end before the start is refused as a typo.', 'groundwork-common-volunteer-tracker' ); ?>
 						</p>
 					</div>
 
@@ -188,7 +188,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 							<label for="gwcvt-shift-max" class="gwcvt-shift-form__inline"><?php esc_html_e( 'and have room for', 'groundwork-common-volunteer-tracker' ); ?></label>
 							<input type="number" id="gwcvt-shift-max" name="gwc_vt_max" class="small-text" min="0" max="<?php echo esc_attr( (string) GWC_VT_SHIFT_CAPACITY_MAX ); ?>" value="<?php echo esc_attr( (string) $max ); ?>" />
 						</span>
-						<p class="description"><?php esc_html_e( 'Below the first, the shift is flagged on the schedule. Past the second, later signups go on a waiting list rather than being turned away. Zero means no minimum and no limit.', 'groundwork-common-volunteer-tracker' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Under the first, the shift is flagged on the schedule. Past the second, signups go on a waiting list. Zero means neither.', 'groundwork-common-volunteer-tracker' ); ?></p>
 					</div>
 
 					<div class="gwcvt-shift-field">
@@ -320,7 +320,7 @@ function gwc_vt_render_shift_editor( int $shift_id ): void {
 						?>
 					</label>
 					<span class="description">
-						<?php esc_html_e( 'Nothing is sent for anything else — correcting the activity, the supervisor or the notes does not email anybody.', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Correcting the activity, the supervisor or the notes emails nobody.', 'groundwork-common-volunteer-tracker' ); ?>
 					</span>
 				</p>
 			<?php endif; ?>
@@ -603,7 +603,7 @@ function gwc_vt_render_shift_roster( int $shift_id ): void {
 			<a class="button" href="<?php echo esc_url( gwc_vt_roster_print_url( $shift_id ) ); ?>" target="_blank" rel="noopener noreferrer">
 				<?php esc_html_e( 'Print the roster', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
-			<span class="description"><?php esc_html_e( 'The sheet for the clipboard. Bring it back marked up and type it into Log a day.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'For the clipboard. Bring it back marked up and type it into Log a day.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</p>
 	<?php endif; ?>
 
@@ -634,7 +634,7 @@ function gwc_vt_render_shift_roster( int $shift_id ): void {
 		<?php submit_button( __( 'Add them', 'groundwork-common-volunteer-tracker' ), 'secondary', 'submit', false ); ?>
 
 		<p class="description">
-			<?php esc_html_e( 'Most signups at this size are a phone call. Somebody who is not on file yet needs a volunteer record first.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Somebody not on file yet needs a volunteer record first.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</form>
 	<?php
@@ -759,7 +759,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 			<?php endif; ?>
 
 			<p class="description">
-				<?php esc_html_e( 'The shift stays on the schedule marked as canceled, so it is clear it was called off rather than never planned.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'It stays on the schedule marked as canceled, so it reads as called off rather than never planned.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 
 			<?php
@@ -783,7 +783,7 @@ function gwc_vt_render_shift_danger_zone( int $shift_id ): void {
 			>
 				<?php esc_html_e( 'Delete this shift', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
-			<span class="description"><?php esc_html_e( 'Only offered while nobody is signed up. A shift people committed to is canceled, not erased.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Offered only while nobody is signed up. A shift people committed to is canceled, not erased.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</p>
 	<?php endif; ?>
 	<?php
@@ -1433,7 +1433,7 @@ function gwc_vt_render_shift_credentials_field( int $shift_id ): void {
 		</div>
 
 		<p class="description">
-			<?php esc_html_e( 'Leave everything clear and this shift asks for nothing. A missing credential is flagged on the roster; only the ones marked “stops signup” actually turn anybody away.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'A missing credential is flagged on the roster; only the ones marked “stops signup” turn anybody away.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</div>
 	<?php

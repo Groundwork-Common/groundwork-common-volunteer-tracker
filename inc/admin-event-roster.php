@@ -77,7 +77,7 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 
 		<?php if ( $slot_list ) : ?>
 			<p class="description">
-				<?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use "Log the hours" beside each time — everybody who signed up is already listed and selected.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'One sheet for the clipboard, split by role and time. Bring it back marked up, then use “Log the hours” beside each time.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		<?php endif; ?>
 
@@ -175,7 +175,7 @@ function gwc_vt_render_event_roster( int $event_id ): void {
 									<?php endforeach; ?>
 								</select>
 								<p class="description">
-									<?php esc_html_e( 'Over the maximum goes on the waiting list. Raise the maximum first if you mean to add them to the roster.', 'groundwork-common-volunteer-tracker' ); ?>
+									<?php esc_html_e( 'Over the maximum goes on the waiting list; raise it first to put them on the roster.', 'groundwork-common-volunteer-tracker' ); ?>
 								</p>
 							</td>
 						</tr>

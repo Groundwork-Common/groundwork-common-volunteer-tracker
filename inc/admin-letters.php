@@ -726,7 +726,7 @@ function gwc_vt_render_reference_comparison( array $result ): void {
 		</div>
 
 		<p class="description">
-			<?php esc_html_e( 'This is generated from the records as they stand right now. It is not a stored copy of what was sent — this plugin does not keep one.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Generated from the records as they stand now. Not a copy of what was sent — this plugin keeps none.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</details>
 	<?php

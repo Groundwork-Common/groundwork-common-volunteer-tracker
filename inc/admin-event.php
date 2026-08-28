@@ -154,7 +154,7 @@ function gwc_vt_render_event_editor( int $event_id, string $missing = '' ): void
 									<?php endforeach; ?>
 								</datalist>
 							<?php endif; ?>
-							<p class="description"><?php esc_html_e( 'A role can override this. Most will not.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'A role can override this.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -198,7 +198,7 @@ function gwc_vt_render_event_editor( int $event_id, string $missing = '' ): void
 								 * silently drop the waiver from the one role most likely to
 								 * need it. */
 								?>
-								<p class="description"><?php esc_html_e( 'Added to whatever each role asks for, rather than replacing it — so a waiver here plus a food handler card on the kitchen role means the kitchen needs both.', 'groundwork-common-volunteer-tracker' ); ?></p>
+								<p class="description"><?php esc_html_e( 'Added to what each role asks for, not instead of it.', 'groundwork-common-volunteer-tracker' ); ?></p>
 							</td>
 						</tr>
 					<?php endif; ?>
@@ -209,7 +209,7 @@ function gwc_vt_render_event_editor( int $event_id, string $missing = '' ): void
 								<input type="checkbox" name="gwc_vt_published" value="1" <?php checked( $published || $is_new ); ?> />
 								<?php esc_html_e( 'Published', 'groundwork-common-volunteer-tracker' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'A draft takes no signups. Publishing does not give the event an address — it is seen on the page you put it on.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'A draft takes no signups. Publishing gives it no address of its own — it is seen on the page you put it on.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -270,7 +270,7 @@ function gwc_vt_render_event_editor( int $event_id, string $missing = '' ): void
 									<?php esc_html_e( 'Email anybody affected if this save moves a time', 'groundwork-common-volunteer-tracker' ); ?>
 								</label>
 								<p class="description">
-									<?php esc_html_e( 'Only a move counts: the date, the times, or the address. Renaming a role or changing a number tells nobody.', 'groundwork-common-volunteer-tracker' ); ?>
+									<?php esc_html_e( 'Only a move counts — the date, the times, the address. Renaming a role tells nobody.', 'groundwork-common-volunteer-tracker' ); ?>
 								</p>
 							</td>
 						</tr>
@@ -315,7 +315,7 @@ function gwc_vt_render_event_visibility( int $event_id, bool $is_new, bool $publ
 	if ( $is_new || $event_id < 1 ) {
 		?>
 		<p class="description">
-			<?php esc_html_e( 'Create the event first. Then put it on a page or a post, and this will name it.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Create the event first, then put it on a page or a post.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 		<?php
 		return;
@@ -475,7 +475,7 @@ function gwc_vt_render_event_role_block( int $index, string $role, array $slot_i
 				?>
 				<div style="flex:0 1 330px;text-align:right">
 					<p class="description" style="margin:0">
-						<?php esc_html_e( 'Every time in this role has been called off. Put one back on below if you need it again.', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Every time in this role has been called off.', 'groundwork-common-volunteer-tracker' ); ?>
 					</p>
 				</div>
 			<?php endif; ?>
@@ -495,7 +495,7 @@ function gwc_vt_render_event_role_block( int $index, string $role, array $slot_i
 			<label for="<?php echo esc_attr( $id ); ?>-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label><br />
 			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Closed shoes, park around the back, ask for Dana at the desk.', 'groundwork-common-volunteer-tracker' ); ?>"><?php echo esc_textarea( $notes ); ?></textarea>
 			<p class="description">
-				<?php esc_html_e( 'Shown to whoever signs up, and in their confirmation, reminder and calendar entry. Applies to every time in this role.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Shown on signup, and in the confirmation, reminder and calendar entry. Applies to every time in this role.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</div>
 
@@ -763,7 +763,7 @@ function gwc_vt_render_event_danger_zone( int $event_id ): void {
 		<?php submit_button( __( 'Copy this event', 'groundwork-common-volunteer-tracker' ), 'secondary', 'submit', false ); ?>
 
 		<p class="description">
-			<?php esc_html_e( 'The same roles, times, numbers and credentials against a new date, saved as a draft with nobody on it.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'The same roles, times, numbers and credentials on a new date, as a draft with nobody on it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<p class="description">
@@ -813,7 +813,7 @@ function gwc_vt_render_event_danger_zone( int $event_id ): void {
 
 			<?php submit_button( __( 'Delete it', 'groundwork-common-volunteer-tracker' ), 'delete', 'submit', false ); ?>
 			<span class="description">
-				<?php esc_html_e( 'Only offered while nobody has signed up. Once somebody has, it can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Offered only while nobody has signed up. After that it can be called off, not deleted.', 'groundwork-common-volunteer-tracker' ); ?>
 			</span>
 		</form>
 	<?php endif; ?>
