@@ -77,6 +77,13 @@ function gwc_vt_uninstall_site(): void {
 	foreach ( GWC_VT_UNINSTALL_OPTIONS as $option ) {
 		delete_option( $option );
 	}
+
+	/* The one thing this plugin writes that is not an option and is not a
+	 * record: whether each person dismissed the notice pointing at the guide.
+	 * It is a preference, it goes with the settings, and it is deleted only
+	 * under the same arming — a reinstall then offers the guide again, which is
+	 * the right answer for what is, by then, a new install. */
+	delete_metadata( 'user', 0, 'gwc_vt_welcome_dismissed', '', true );
 }
 
 if ( is_multisite() ) {

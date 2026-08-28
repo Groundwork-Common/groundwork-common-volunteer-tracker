@@ -462,6 +462,12 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	 * inc/admin-help.php, whose tabs each link into a topic of it. */
 	require GWC_VT_DIR . 'inc/help-content.php';
 	require GWC_VT_DIR . 'inc/admin-help-page.php';
+
+	/* And the notice that says the guide is there, which needs both of the
+	 * above: it links to the page, and it is the only thing on a new site
+	 * pointing at it. Last, because it is also the least important thing on
+	 * any screen it appears on. */
+	require GWC_VT_DIR . 'inc/admin-welcome.php';
 }
 
 /* ── Activation ──────────────────────────────────────────────────────────────
