@@ -285,7 +285,7 @@ function gwc_vt_enqueue_photo_capture(): void {
 		'gwc-vt-photo-capture',
 		GWC_VT_URL . 'assets/js/registration-photo.js',
 		array(),
-		GWC_VT_VERSION,
+		gwc_vt_asset_version( 'assets/js/registration-photo.js' ),
 		true
 	);
 
