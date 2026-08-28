@@ -663,7 +663,30 @@ function gwc_vt_letter_title( GWC_VT_Letter $letter, string $medium = 'print', a
 }
 
 /**
- * The organization's logo, if one is set and still exists.
+ * The organization's logo, if there is one.
+ *
+ * ── Two places it can come from, and which wins ──────────────────────────────
+ * The plugin's own setting first. An organization that has chosen a logo for
+ * its letters has chosen it FOR its letters — a programme mark, a coalition
+ * badge, something with the address already in it — and a site logo appearing
+ * instead would be this plugin overruling a decision somebody made on purpose.
+ *
+ * Otherwise the site's own logo, because a nonprofit that has already put its
+ * logo on its website has told WordPress what its logo is, and asking again on
+ * a settings screen is asking a question that has an answer. This is the same
+ * shape as the name falling back to the site title and the contact falling back
+ * to admin_email — the letter works out of the box and improves when somebody
+ * fills the letterhead in.
+ *
+ * The site logo is a theme modification, so it goes when the theme does. That
+ * is a fair description of a logo rather than a flaw: a site that changes theme
+ * and loses its logo has lost its logo everywhere, and the letter is the least
+ * of it. Nothing breaks either way, because the organization's NAME is always
+ * printed as text underneath and the letter reads correctly with no image at
+ * all — email programs refuse to load images often enough that it has to.
+ *
+ * Not the site ICON. That is a favicon: square, tiny, and cropped for a browser
+ * tab, which is not a letterhead.
  *
  * A sized version rather than the original: the letterhead caps the height in
  * CSS either way, but a four-megabyte original inside an emailed letter is rude
@@ -672,8 +695,22 @@ function gwc_vt_letter_title( GWC_VT_Letter $letter, string $medium = 'print', a
  * @return string An absolute URL, or ''.
  */
 function gwc_vt_letter_logo_url(): string {
-	$attachment = (int) gwc_vt_setting( 'org_logo' );
+	$chosen = gwc_vt_attachment_url( (int) gwc_vt_setting( 'org_logo' ) );
 
+	/* Falls through on a logo that was chosen and has since been deleted from
+	 * the media library, not only on one that was never chosen. Both are "there
+	 * is no logo here", and a setting pointing at a hole should not stop the
+	 * letterhead using the logo the site plainly has. */
+	return '' !== $chosen ? $chosen : gwc_vt_attachment_url( (int) get_theme_mod( 'custom_logo' ) );
+}
+
+/**
+ * One attachment, at letterhead size, or ''.
+ *
+ * @param int $attachment Attachment post ID, or 0.
+ * @return string An absolute URL, or ''.
+ */
+function gwc_vt_attachment_url( int $attachment ): string {
 	if ( $attachment < 1 ) {
 		return '';
 	}

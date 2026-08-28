@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T17:13:59+00:00\n"
+"POT-Creation-Date: 2026-08-28T17:18:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -3330,7 +3330,7 @@ msgid "Logo"
 msgstr ""
 
 #: inc/admin-settings.php:70
-msgid "Printed above the organization name. Kept small on purpose — this is correspondence, not a flyer. Email programs often refuse to load images, so the name is always printed as text underneath and the letter reads correctly without it."
+msgid "Leave this empty and your site’s own logo is used. Set one here only if letters should carry something different. Kept small on purpose — this is correspondence, not a flyer. Email programs often refuse to load images, so the name is always printed as text underneath and the letter reads correctly without it."
 msgstr ""
 
 #: inc/admin-settings.php:76

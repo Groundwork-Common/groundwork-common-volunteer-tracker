@@ -67,7 +67,7 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'letterhead',
 			'type'    => 'image',
 			'label'   => __( 'Logo', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Printed above the organization name. Kept small on purpose — this is correspondence, not a flyer. Email programs often refuse to load images, so the name is always printed as text underneath and the letter reads correctly without it.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Leave this empty and your site’s own logo is used. Set one here only if letters should carry something different. Kept small on purpose — this is correspondence, not a flyer. Email programs often refuse to load images, so the name is always printed as text underneath and the letter reads correctly without it.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'org_contact'               => array(
 			'tab'         => 'letter',
