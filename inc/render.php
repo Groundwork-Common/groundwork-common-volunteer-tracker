@@ -503,13 +503,7 @@ function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
 	 * The reference is unaffected: gwc_vt_letter_reference() digests the raw
 	 * from and to, which stay empty, so every letter already issued still checks
 	 * out against its own code. */
-	$earliest = '';
-
-	foreach ( $letter->entries as $entry ) {
-		if ( '' === $earliest || $entry->date < $earliest ) {
-			$earliest = $entry->date;
-		}
-	}
+	$earliest = gwc_vt_letter_earliest_date( $letter );
 
 	$issued = gwc_vt_display_date( (string) wp_date( 'Y-m-d', $letter->issued_at ) );
 

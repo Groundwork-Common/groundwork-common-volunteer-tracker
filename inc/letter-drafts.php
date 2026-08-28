@@ -222,26 +222,64 @@ function gwc_vt_orphan_letter_draft_ids( int $limit = 100 ): array {
 /**
  * How a period reads, in one place.
  *
- * Every screen that shows a draft, and the draft's own stored title, come
- * through here — so the unbounded case is worded identically wherever somebody
- * meets it, and a change to that wording is one edit.
+ * Every screen that shows a draft or an issued letter, and the draft's own
+ * stored title, come through here — so a period is worded identically wherever
+ * somebody meets it, and a change to that wording is one edit.
+ *
+ * ── Why the unbounded case takes two more arguments ──────────────────────────
+ * "Everything on record, up to the day it is issued" is true and says no dates,
+ * which is the one thing somebody looking at a list of letters wants from this
+ * column. It also disagreed in tone with the letter itself, which has always
+ * named both ends — the earliest shift it lists, and the day it went out.
+ *
+ * So the caller passes the ends when it knows them. A draft knows its start
+ * (the earliest shift on the letter it would produce) and cannot know its end,
+ * because the end is the day somebody issues it and nobody has. An issued
+ * letter knows both, from the log. Naming today's date on a draft would be a
+ * date that is wrong tomorrow, so the draft says where the end comes from
+ * instead — the same sentence the document uses.
  *
  * gwc_vt_display_date() rather than gwc_vt_local_date(): a period is calendar
  * dates, which were never instants, and putting a plain Y-m-d through the
  * timezone conversion shifts it across a day boundary on every site west of
  * UTC. inc/verify.php has the long version beside the two functions.
  *
- * @param string $from Y-m-d or ''.
- * @param string $to   Y-m-d or ''.
+ * @param string $from        Y-m-d or '' — the period that was asked for.
+ * @param string $to          Y-m-d or '' — as above.
+ * @param string $covers_from Optional. Y-m-d of the earliest shift, when the
+ *                            caller knows it and the period is unbounded.
+ * @param string $covers_to   Optional. Y-m-d the letter was issued.
  * @return string
  */
-function gwc_vt_letter_period_words( string $from, string $to ): string {
+function gwc_vt_letter_period_words( string $from, string $to, string $covers_from = '', string $covers_to = '' ): string {
 	if ( '' === $from && '' === $to ) {
-		/* Not "their whole time volunteering". A letter with no dates on it
-		 * covers what was recorded between their first shift and the day it goes
-		 * out — which is not all of their time unless they never come back, and
-		 * a draft has not been issued yet so it cannot even name the end. What it
-		 * can say truthfully is where the end will come from. */
+		if ( '' !== $covers_from && '' !== $covers_to ) {
+			return sprintf(
+				/* translators: 1: a date, 2: a later date. */
+				__( '%1$s to %2$s', 'groundwork-common-volunteer-tracker' ),
+				gwc_vt_display_date( $covers_from ),
+				gwc_vt_display_date( $covers_to )
+			);
+		}
+
+		if ( '' !== $covers_from ) {
+			return sprintf(
+				/* translators: %s: the date of the earliest shift on record. */
+				__( '%s to the day it is issued', 'groundwork-common-volunteer-tracker' ),
+				gwc_vt_display_date( $covers_from )
+			);
+		}
+
+		if ( '' !== $covers_to ) {
+			return sprintf(
+				/* translators: %s: the date the letter was issued. */
+				__( 'Everything on record, up to %s', 'groundwork-common-volunteer-tracker' ),
+				gwc_vt_display_date( $covers_to )
+			);
+		}
+
+		/* Nothing on record to name a start with. The figures column beside this
+		 * says the same thing in its own words, and neither is guessing. */
 		return __( 'Everything on record, up to the day it is issued', 'groundwork-common-volunteer-tracker' );
 	}
 

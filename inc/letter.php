@@ -138,6 +138,29 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 }
 
 /**
+ * The date of the earliest shift a letter lists.
+ *
+ * The start of what a letter with no dates on it actually covers. Both the
+ * document and the box on the volunteer's record name it — the document in its
+ * period sentence, the box in its Period column — and they have to agree, so
+ * they ask the same function rather than each running the same loop.
+ *
+ * @param GWC_VT_Letter $letter The letter.
+ * @return string Y-m-d, or '' when it lists nothing.
+ */
+function gwc_vt_letter_earliest_date( GWC_VT_Letter $letter ): string {
+	$earliest = '';
+
+	foreach ( $letter->entries as $entry ) {
+		if ( '' === $earliest || $entry->date < $earliest ) {
+			$earliest = $entry->date;
+		}
+	}
+
+	return $earliest;
+}
+
+/**
  * Rebuild the letter an issued record describes.
  *
  * ── What this is for, and the one thing it must not do ───────────────────────

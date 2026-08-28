@@ -55,6 +55,24 @@ const GWC_VT_LETTER_ENTRY_IDS = '_gwc_vt_letter_entry_ids';
  * every letter issued before this existed still reports how it went out. */
 const GWC_VT_LETTER_DELIVERY = '_gwc_vt_letter_delivery';
 
+/* ── The dates a letter with no dates on it actually covered ─────────────────
+ * RANGE_FROM and RANGE_TO are what somebody ASKED for, and both are empty on
+ * the common letter — "everything on record". The reference digests those raw
+ * values, so they cannot be filled in afterwards without invalidating every
+ * code already issued.
+ *
+ * But the document names two real ends, because "everything on record" is not
+ * something a court can check: it says the date of the earliest shift it lists
+ * and the day it was issued. This is the first of those, recorded at issue
+ * because that is the one moment it is free — the letter object is right there
+ * holding the shifts. The second is the record's own post_date.
+ *
+ * So the box on the volunteer's record can print the same period the letter
+ * prints without rebuilding anything, and a reader comparing the two sees one
+ * sentence rather than a vague one and a specific one. A date is not a fact
+ * about a person, so this does not change what the log holds. */
+const GWC_VT_LETTER_COVERS_FROM = '_gwc_vt_letter_covers_from';
+
 add_action( 'init', 'gwc_vt_register_letter_type' );
 
 /* ── Where the house convention bends, and why ───────────────────────────────
@@ -160,6 +178,7 @@ function gwc_vt_log_letter( GWC_VT_Letter $letter, string $medium = '', string $
 	update_post_meta( $record_id, GWC_VT_LETTER_ENTRIES, $letter->entry_count() );
 	update_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, $sent_ok ? 1 : 0 );
 	update_post_meta( $record_id, GWC_VT_LETTER_ENTRY_IDS, implode( ',', array_map( 'intval', $letter->entry_ids ) ) );
+	update_post_meta( $record_id, GWC_VT_LETTER_COVERS_FROM, gwc_vt_letter_earliest_date( $letter ) );
 
 	/* A letter issued without going anywhere yet records no delivery. The
 	 * produce screen still issues and delivers in one act and passes a medium,
@@ -323,6 +342,49 @@ function gwc_vt_letter_deliveries( int $record_id ): array {
 }
 
 /**
+ * The date of the earliest shift an issued letter listed.
+ *
+ * Stored at issue, because that is the one moment it is free. A letter issued
+ * before it was stored falls back to reading it off the entries it listed —
+ * one primed meta cache and then no queries at all, and only for those older
+ * records, so the cost disappears as letters are issued rather than
+ * accumulating. Not written back: an append-only log is not somewhere to
+ * quietly fill in fields that were not there at the time.
+ *
+ * @param int $record_id Log post ID.
+ * @return string Y-m-d, or '' when there is nothing left to read it from.
+ */
+function gwc_vt_letter_covers_from( int $record_id ): string {
+	$stored = (string) get_post_meta( $record_id, GWC_VT_LETTER_COVERS_FROM, true );
+
+	if ( '' !== $stored ) {
+		return $stored;
+	}
+
+	$ids = (string) get_post_meta( $record_id, GWC_VT_LETTER_ENTRY_IDS, true );
+
+	if ( '' === $ids ) {
+		return '';
+	}
+
+	$entry_ids = array_map( 'intval', explode( ',', $ids ) );
+
+	update_meta_cache( 'post', $entry_ids );
+
+	$earliest = '';
+
+	foreach ( $entry_ids as $entry_id ) {
+		$date = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true );
+
+		if ( '' !== $date && ( '' === $earliest || $date < $earliest ) ) {
+			$earliest = $date;
+		}
+	}
+
+	return $earliest;
+}
+
+/**
  * Read one log entry.
  *
  * @param int $record_id Log post ID.
@@ -335,6 +397,7 @@ function gwc_vt_letter_record( int $record_id ): array {
 		'id'           => $record_id,
 		'reference'    => (string) get_the_title( $record_id ),
 		'entry_ids'    => '' === $ids ? array() : array_map( 'intval', explode( ',', $ids ) ),
+		'covers_from'  => gwc_vt_letter_covers_from( $record_id ),
 		'deliveries'   => gwc_vt_letter_deliveries( $record_id ),
 		'volunteer_id' => (int) get_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, true ),
 		'issued_by'    => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),

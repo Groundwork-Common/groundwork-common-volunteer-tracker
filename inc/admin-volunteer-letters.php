@@ -274,9 +274,14 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 	);
 
 	$empty = ! $letter instanceof GWC_VT_Letter || $letter->is_empty();
+
+	/* The start of what this would cover, so the column names a date instead of
+	 * describing one. The end is genuinely not known — it is the day somebody
+	 * issues this, and nobody has. */
+	$covers_from = $letter instanceof GWC_VT_Letter ? gwc_vt_letter_earliest_date( $letter ) : '';
 	?>
 	<tr class="gwcvt-letters-box__row gwcvt-letters-box__row--draft">
-		<td><?php echo esc_html( gwc_vt_letter_period_words( $draft['from'], $draft['to'] ) ); ?></td>
+		<td><?php echo esc_html( gwc_vt_letter_period_words( $draft['from'], $draft['to'], $covers_from ) ); ?></td>
 		<td>
 			<?php if ( $empty ) : ?>
 				<span class="description"><?php esc_html_e( 'Nothing verified in that period yet', 'groundwork-common-volunteer-tracker' ); ?></span>
@@ -340,9 +345,14 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 	$to           = (string) $record['to'];
 	$reference    = (string) $record['reference'];
 	$deliveries   = (array) ( $record['deliveries'] ?? array() );
+
+	/* Both ends, from the record rather than from a rebuild: the start was
+	 * stored at issue and the end is the day it was issued. The same two dates
+	 * the document itself prints. */
+	$issued_on = (string) wp_date( 'Y-m-d', (int) strtotime( (string) $record['issued_at'] ) );
 	?>
 	<tr class="gwcvt-letters-box__row gwcvt-letters-box__row--issued">
-		<td><?php echo esc_html( gwc_vt_letter_period_words( $from, $to ) ); ?></td>
+		<td><?php echo esc_html( gwc_vt_letter_period_words( $from, $to, (string) ( $record['covers_from'] ?? '' ), $issued_on ) ); ?></td>
 		<td>
 			<strong><?php echo esc_html( gwc_vt_format_hours( (int) $record['minutes'] ) ); ?></strong>
 			<div class="description">
