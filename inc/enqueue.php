@@ -23,7 +23,7 @@ function gwc_vt_register_front_assets(): void {
 		'gwc-vt-form',
 		GWC_VT_URL . 'assets/css/form.css',
 		array(),
-		GWC_VT_VERSION
+		gwc_vt_asset_version( 'assets/css/form.css' )
 	);
 
 	/* The shift list's stylesheet, on the same terms: blocks/shift-list's
@@ -35,7 +35,7 @@ function gwc_vt_register_front_assets(): void {
 		'gwc-vt-schedule',
 		GWC_VT_URL . 'assets/css/schedule.css',
 		array(),
-		GWC_VT_VERSION
+		gwc_vt_asset_version( 'assets/css/schedule.css' )
 	);
 
 	/* The letter's own stylesheet, registered rather than enqueued. Three
@@ -48,7 +48,7 @@ function gwc_vt_register_front_assets(): void {
 		'gwc-vt-letter',
 		GWC_VT_URL . 'assets/css/letter.css',
 		array(),
-		GWC_VT_VERSION
+		gwc_vt_asset_version( 'assets/css/letter.css' )
 	);
 }
 
@@ -97,6 +97,41 @@ function gwc_vt_print_document_styles( string $handle = 'gwc-vt-letter' ): void 
 }
 
 /**
+ * The version to hang on an asset URL.
+ *
+ * GWC_VT_VERSION everywhere it matters: a released plugin's assets change when
+ * the plugin does, and every browser holding the old ones is told so by the
+ * update.
+ *
+ * Except on a development install, where they change constantly and the version
+ * does not. `bin/deploy-staging.sh` rsyncs a working tree onto the beta site
+ * between releases, so a stylesheet edited five minutes ago arrives under a
+ * query string identical to yesterday's and every browser that has been there
+ * before keeps the old one. The symptom is a screen that looks like the CSS was
+ * never written — which is exactly how it was reported, and cost the time it
+ * takes to prove the rules were right all along.
+ *
+ * The file's own modification time, then, on the two environment types that mean
+ * "somebody is editing these files": 'development', which is what the beta site
+ * reports, and 'local', which is what wp-env reports. Production and staging get
+ * the released version, unchanged, and one filesystem stat per asset stays where
+ * it can do no harm.
+ *
+ * @param string $relative Path under the plugin directory, e.g. 'assets/css/admin.css'.
+ * @return string
+ */
+function gwc_vt_asset_version( string $relative ): string {
+	if ( ! in_array( wp_get_environment_type(), array( 'development', 'local' ), true ) ) {
+		return GWC_VT_VERSION;
+	}
+
+	$path = GWC_VT_DIR . $relative;
+	$time = file_exists( $path ) ? (int) filemtime( $path ) : 0;
+
+	return $time > 0 ? GWC_VT_VERSION . '.' . $time : GWC_VT_VERSION;
+}
+
+/**
  * The admin stylesheet and, on the entry screen, the volunteer picker.
  *
  * Scoped rather than loaded everywhere. A plugin that puts its stylesheet on
@@ -117,7 +152,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 				'gwc-vt-widget',
 				GWC_VT_URL . 'assets/css/widget.css',
 				array(),
-				GWC_VT_VERSION
+				gwc_vt_asset_version( 'assets/css/widget.css' )
 			);
 		}
 
@@ -132,7 +167,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		'gwc-vt-admin',
 		GWC_VT_URL . 'assets/css/admin.css',
 		array(),
-		GWC_VT_VERSION
+		gwc_vt_asset_version( 'assets/css/admin.css' )
 	);
 
 	$screen = get_current_screen();
@@ -144,7 +179,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-admin-media',
 			GWC_VT_URL . 'assets/js/admin-media.js',
 			array(),
-			GWC_VT_VERSION,
+			gwc_vt_asset_version( 'assets/js/admin-media.js' ),
 			true
 		);
 	}
@@ -158,7 +193,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-admin-title-actions',
 			GWC_VT_URL . 'assets/js/admin-title-actions.js',
 			array(),
-			GWC_VT_VERSION,
+			gwc_vt_asset_version( 'assets/js/admin-title-actions.js' ),
 			true
 		);
 	}
@@ -177,7 +212,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-admin-letters-box',
 			GWC_VT_URL . 'assets/js/admin-letters-box.js',
 			array(),
-			GWC_VT_VERSION,
+			gwc_vt_asset_version( 'assets/js/admin-letters-box.js' ),
 			true
 		);
 	}
@@ -213,7 +248,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		'gwc-vt-admin-picker',
 		GWC_VT_URL . 'assets/js/admin-picker.js',
 		array( 'wp-api-fetch' ),
-		GWC_VT_VERSION,
+		gwc_vt_asset_version( 'assets/js/admin-picker.js' ),
 		true
 	);
 
@@ -245,7 +280,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-quick-add',
 			GWC_VT_URL . 'assets/js/admin-quick-add.js',
 			array( 'gwc-vt-admin-picker' ),
-			GWC_VT_VERSION,
+			gwc_vt_asset_version( 'assets/js/admin-quick-add.js' ),
 			true
 		);
 	}
@@ -258,7 +293,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-event-grid',
 			GWC_VT_URL . 'assets/js/admin-event-grid.js',
 			array(),
-			GWC_VT_VERSION,
+			gwc_vt_asset_version( 'assets/js/admin-event-grid.js' ),
 			true
 		);
 
@@ -272,7 +307,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-shift-repeat',
 			GWC_VT_URL . 'assets/js/admin-shift-repeat.js',
 			array( 'wp-api-fetch' ),
-			GWC_VT_VERSION,
+			gwc_vt_asset_version( 'assets/js/admin-shift-repeat.js' ),
 			true
 		);
 
@@ -288,7 +323,7 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 			'gwc-vt-shift-drawer',
 			GWC_VT_URL . 'assets/js/admin-shift-drawer.js',
 			array( 'wp-api-fetch', 'gwc-vt-admin-picker' ),
-			GWC_VT_VERSION,
+			gwc_vt_asset_version( 'assets/js/admin-shift-drawer.js' ),
 			true
 		);
 	}

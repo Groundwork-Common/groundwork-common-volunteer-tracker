@@ -27,6 +27,33 @@
 	var mailForm = document.getElementById( 'gwcvt-email-letter' );
 
 	/**
+	 * Whether the stylesheet that makes a panel a panel actually arrived.
+	 *
+	 * A panel is only a panel because of CSS. Without it the markup is a block
+	 * of document at the bottom of the page, and intercepting a link that would
+	 * have opened a clean new tab replaces a working thing with a wrecked one —
+	 * which is what a stale admin.css looked like on the beta site, where the
+	 * file changes between releases and the version on its URL does not.
+	 *
+	 * So the enhancement asks first. One computed read at startup: if the sheet
+	 * is not positioned, the links are left exactly as PHP rendered them.
+	 *
+	 * @param {Element} sheet The panel to probe.
+	 * @return {boolean}
+	 */
+	function styled( sheet ) {
+		return !! sheet && 'fixed' === window.getComputedStyle( sheet ).position;
+	}
+
+	if ( ! styled( reader ) ) {
+		reader = null;
+	}
+
+	if ( ! styled( mailer ) ) {
+		mailer = null;
+	}
+
+	/**
 	 * Show or hide, using the attribute rather than a class so the PHP-rendered
 	 * starting state and the script's state are the same mechanism.
 	 *

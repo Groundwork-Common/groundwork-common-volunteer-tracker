@@ -213,9 +213,12 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 	usort( $drafts, static fn( array $a, array $b ): int => (int) $b['id'] <=> (int) $a['id'] );
 	?>
 	<div class="gwcvt-letters-box" data-gwcvt-letters>
-		<p class="gwcvt-letters-box__count">
-			<?php echo esc_html( gwc_vt_letters_box_count( count( $drafts ), count( $issued ) ) ); ?>
-		</p>
+		<?php if ( $drafts || $issued ) : ?>
+			<?php /* Only when there is something to count. The table's own empty row says the same thing and says what to do about it, and two sentences reporting the same nothing is one of them too many. */ ?>
+			<p class="gwcvt-letters-box__count">
+				<?php echo esc_html( gwc_vt_letters_box_count( count( $drafts ), count( $issued ) ) ); ?>
+			</p>
+		<?php endif; ?>
 
 		<table class="widefat striped">
 			<thead>
@@ -265,6 +268,9 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 function gwc_vt_letters_box_count( int $drafts, int $issued ): string {
 	$total = $drafts + $issued;
 
+	/* The box does not print this line at all when there is nothing — the empty
+	 * row in the table says it, and better. Kept as a defined answer rather than
+	 * an empty string so a later caller cannot render a blank line by accident. */
 	if ( 0 === $total ) {
 		return __( 'Nothing on this record yet.', 'groundwork-common-volunteer-tracker' );
 	}
