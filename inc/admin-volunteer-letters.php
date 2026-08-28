@@ -33,7 +33,6 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_post_gwc_vt_add_letter_draft', 'gwc_vt_handle_add_letter_draft' );
 add_action( 'admin_post_gwc_vt_discard_letter_draft', 'gwc_vt_handle_discard_letter_draft' );
-add_action( 'admin_notices', 'gwc_vt_volunteer_letters_notice' );
 add_action( 'admin_footer', 'gwc_vt_letters_box_footer' );
 
 /**
@@ -53,21 +52,6 @@ function gwc_vt_letters_box_require_letters(): void {
 	}
 }
 
-/**
- * Back to the volunteer, with a word about what happened.
- *
- * @param int    $volunteer_id Volunteer post ID.
- * @param string $result       What to say.
- */
-function gwc_vt_letters_box_redirect( int $volunteer_id, string $result ): void {
-	wp_safe_redirect(
-		add_query_arg(
-			array( 'gwc_vt_letter_did' => $result ),
-			(string) get_edit_post_link( $volunteer_id, 'redirect' )
-		) . '#gwc-vt-volunteer-letters'
-	);
-	exit;
-}
 
 /**
  * Start a letter for this volunteer.
@@ -100,7 +84,7 @@ function gwc_vt_handle_add_letter_draft(): void {
 		trim( sanitize_text_field( (string) ( $posted['matter'] ?? '' ) ) )
 	);
 
-	gwc_vt_letters_box_redirect( $volunteer_id, $draft_id > 0 ? 'drafted' : 'failed' );
+	gwc_vt_sheet_redirect( $volunteer_id, $draft_id > 0 ? 'drafted' : 'failed', 'gwc-vt-volunteer-letters' );
 }
 
 /**
@@ -128,56 +112,9 @@ function gwc_vt_handle_discard_letter_draft(): void {
 
 	gwc_vt_discard_letter_draft( $draft_id );
 
-	gwc_vt_letters_box_redirect( (int) $draft['volunteer'], 'discarded' );
+	gwc_vt_sheet_redirect( (int) $draft['volunteer'], 'discarded', 'gwc-vt-volunteer-letters' );
 }
 
-/**
- * What the last act did, said on the screen it came back to.
- */
-function gwc_vt_volunteer_letters_notice(): void {
-	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-
-	if ( ! $screen || GWC_VT_VOLUNTEER_TYPE !== $screen->id ) {
-		return;
-	}
-
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a word about a completed redirect; nothing acts on it.
-	$did = isset( $_GET['gwc_vt_letter_did'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_letter_did'] ) ) : '';
-
-	/* The last four are set by the send handler in inc/admin-letters.php, which
-	 * redirects here when the act started here. One table rather than two,
-	 * because a reader who has just pressed a button on this box does not care
-	 * which file answered it. */
-	$said = array(
-		'drafted'         => array( 'success', __( 'Draft started. It is on this record until somebody issues it, and nothing has been sent.', 'groundwork-common-volunteer-tracker' ) ),
-		'discarded'       => array( 'success', __( 'Draft discarded. There was nothing in the issued-letter log to remove.', 'groundwork-common-volunteer-tracker' ) ),
-		'failed'          => array( 'error', __( 'That draft could not be started. Nothing was saved.', 'groundwork-common-volunteer-tracker' ) ),
-		'sent'            => array( 'success', __( 'Letter issued and emailed. It has a reference now, and it is in the issued-letter log.', 'groundwork-common-volunteer-tracker' ) ),
-		'send-failed'     => array( 'error', __( 'The letter could not be emailed, so nothing was sent. The attempt is recorded against it as a failed send, and the letter is still here to try again.', 'groundwork-common-volunteer-tracker' ) ),
-		'no-email'        => array( 'error', __( 'There is no email address on this record, so there was nowhere to send it. Add one above, or use “Issue it” and send it yourself.', 'groundwork-common-volunteer-tracker' ) ),
-		'bad-email'       => array( 'error', __( 'That is not an email address, so nothing was sent.', 'groundwork-common-volunteer-tracker' ) ),
-
-		/* Issuing, and then the three ways a letter leaves. */
-		'issued'          => array( 'success', __( 'Letter issued. It has a reference now and it is in the log — send it whenever you are ready.', 'groundwork-common-volunteer-tracker' ) ),
-		'issue-failed'    => array( 'error', __( 'That letter could not be issued. Nothing was recorded and the draft is still here.', 'groundwork-common-volunteer-tracker' ) ),
-		'delivered-email' => array( 'success', __( 'Emailed, and recorded against the letter.', 'groundwork-common-volunteer-tracker' ) ),
-		'no-addressee'    => array( 'error', __( 'Nothing was recorded, because a posted letter needs somebody to have been posted to.', 'groundwork-common-volunteer-tracker' ) ),
-
-		/* The one refusal that matters. See inc/letter-deliver.php. */
-		'stale'           => array( 'error', __( 'This letter can no longer be produced: one of the shifts it lists has changed since it was issued, so the document would state something its own reference contradicts. Issue a new letter — the old one stays in the log, and stays valid as what you sent that day.', 'groundwork-common-volunteer-tracker' ) ),
-		'gone'            => array( 'error', __( 'There is nothing left to build this letter from. The record it was about has been erased, and the log entry stays as the receipt that it went out.', 'groundwork-common-volunteer-tracker' ) ),
-	);
-
-	if ( ! isset( $said[ $did ] ) ) {
-		return;
-	}
-
-	printf(
-		'<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
-		esc_attr( $said[ $did ][0] ),
-		esc_html( $said[ $did ][1] )
-	);
-}
 
 
 /* ── Progressive enhancement, and which way round it runs ────────────────────
@@ -266,7 +203,7 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 			</tbody>
 		</table>
 
-		<?php gwc_vt_render_letter_draft_form( $volunteer_id ); ?>
+		<?php gwc_vt_sheet_trigger( 'draft-letter', __( 'Draft a verification letter', 'groundwork-common-volunteer-tracker' ) ); ?>
 	</div>
 	<?php
 }
@@ -512,93 +449,77 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
  *
  * @param int $volunteer_id Volunteer post ID.
  */
-function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
-	?>
-	<div class="gwcvt-letters-box__adder">
-		<?php /* Hidden until the script unhides it — see the note above the box. */ ?>
-		<?php
-		/* A link, the same as "Log hours" on the panel above. This box is a list
-		 * of what has happened to somebody's letters; drafting another is what
-		 * you do after reading it, not the first thing on the screen. A primary
-		 * button here was a slab of blue at the foot of every volunteer's
-		 * record, competing with the panel heading on a screen where most of
-		 * the reading is elsewhere.
-		 *
-		 * Still a <button>: it opens a panel on this page rather than going
-		 * anywhere, and something that navigates nowhere is not a link however
-		 * it is painted. .button-link is wp-admin's own way of saying that. */
-		?>
-		<p class="gwcvt-letters-box__open" data-gwcvt-letters-open hidden>
-			<button type="button" class="button-link" data-gwcvt-letters-add>
-				<?php esc_html_e( 'Draft a verification letter', 'groundwork-common-volunteer-tracker' ); ?>
-			</button>
-		</p>
+function gwc_vt_render_letter_draft_sheet( int $volunteer_id ): void {
+	gwc_vt_render_sheet(
+		'draft-letter',
+		__( 'Draft a verification letter', 'groundwork-common-volunteer-tracker' ),
+		static function () use ( $volunteer_id ): void {
+			?>
+		<input type="hidden" form="gwcvt-start-letter" name="action" value="gwc_vt_add_letter_draft" />
+		<input type="hidden" form="gwcvt-start-letter" name="volunteer" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
+		<input type="hidden" form="gwcvt-start-letter" name="_wpnonce" value="<?php echo esc_attr( wp_create_nonce( 'gwc_vt_add_letter_draft_' . $volunteer_id ) ); ?>" />
 
-		<div class="gwcvt-letters-box__panel" data-gwcvt-letters-panel>
-			<input type="hidden" form="gwcvt-start-letter" name="action" value="gwc_vt_add_letter_draft" />
-			<input type="hidden" form="gwcvt-start-letter" name="volunteer" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
-			<input type="hidden" form="gwcvt-start-letter" name="_wpnonce" value="<?php echo esc_attr( wp_create_nonce( 'gwc_vt_add_letter_draft_' . $volunteer_id ) ); ?>" />
+		<fieldset>
+			<legend class="screen-reader-text"><?php esc_html_e( 'What the letter covers', 'groundwork-common-volunteer-tracker' ); ?></legend>
 
-			<fieldset>
-				<legend class="screen-reader-text"><?php esc_html_e( 'What the letter covers', 'groundwork-common-volunteer-tracker' ); ?></legend>
+			<div class="gwcvt-letters-box__choice">
+				<label>
+					<input type="radio" form="gwcvt-start-letter" name="gwc_vt_period" value="all" checked data-gwcvt-letters-period="all" />
+					<?php esc_html_e( 'Everything on record', 'groundwork-common-volunteer-tracker' ); ?>
+				</label>
+				<span class="description"><?php esc_html_e( 'Their first shift to today.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			</div>
 
-				<div class="gwcvt-letters-box__choice">
-					<label>
-						<input type="radio" form="gwcvt-start-letter" name="gwc_vt_period" value="all" checked data-gwcvt-letters-period="all" />
-						<?php esc_html_e( 'Everything on record', 'groundwork-common-volunteer-tracker' ); ?>
-					</label>
-					<span class="description"><?php esc_html_e( 'Their first shift to today.', 'groundwork-common-volunteer-tracker' ); ?></span>
-				</div>
-
-				<div class="gwcvt-letters-box__choice">
-					<label>
-						<input type="radio" form="gwcvt-start-letter" name="gwc_vt_period" value="range" data-gwcvt-letters-period="range" />
-						<?php esc_html_e( 'A period', 'groundwork-common-volunteer-tracker' ); ?>
-					</label>
-						<span class="gwcvt-letters-box__dates" data-gwcvt-letters-dates>
-						<label for="gwcvt-draft-from-<?php echo esc_attr( (string) $volunteer_id ); ?>"><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></label>
-						<input type="date" form="gwcvt-start-letter" id="gwcvt-draft-from-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="from" />
-						<label for="gwcvt-draft-to-<?php echo esc_attr( (string) $volunteer_id ); ?>"><?php esc_html_e( 'To', 'groundwork-common-volunteer-tracker' ); ?></label>
-						<input type="date" form="gwcvt-start-letter" id="gwcvt-draft-to-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="to" />
-					</span>
-				</div>
-			</fieldset>
+			<div class="gwcvt-letters-box__choice">
+				<label>
+					<input type="radio" form="gwcvt-start-letter" name="gwc_vt_period" value="range" data-gwcvt-letters-period="range" />
+					<?php esc_html_e( 'A period', 'groundwork-common-volunteer-tracker' ); ?>
+				</label>
+					<span class="gwcvt-letters-box__dates" data-gwcvt-letters-dates>
+					<label for="gwcvt-draft-from-<?php echo esc_attr( (string) $volunteer_id ); ?>"><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></label>
+					<input type="date" form="gwcvt-start-letter" id="gwcvt-draft-from-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="from" />
+					<label for="gwcvt-draft-to-<?php echo esc_attr( (string) $volunteer_id ); ?>"><?php esc_html_e( 'To', 'groundwork-common-volunteer-tracker' ); ?></label>
+					<input type="date" form="gwcvt-start-letter" id="gwcvt-draft-to-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="to" />
+				</span>
+			</div>
+		</fieldset>
 
 			<?php
 			/* Both optional and both blank by default: most letters are handed
-			 * to the volunteer and need neither. They exist for the court or
-			 * school that asked to be sent one directly, where an officer's
-			 * name and a case number are how the paperwork gets filed at the
-			 * other end. */
+			* to the volunteer and need neither. They exist for the court or
+			* school that asked to be sent one directly, where an officer's
+			* name and a case number are how the paperwork gets filed at the
+			* other end. */
 			?>
-			<div class="gwcvt-letters-box__addressing">
-				<p>
-					<label for="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>">
-						<?php esc_html_e( 'Addressed to', 'groundwork-common-volunteer-tracker' ); ?>
-					</label><br />
-					<textarea form="gwcvt-start-letter" id="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="addressee" rows="3" class="large-text"
-						placeholder="<?php esc_attr_e( 'Officer J. Smith, Richmond County Probation', 'groundwork-common-volunteer-tracker' ); ?>"></textarea>
-					<span class="description"><?php esc_html_e( 'Only if it is going to somebody other than the volunteer.', 'groundwork-common-volunteer-tracker' ); ?></span>
-				</p>
+		<div class="gwcvt-letters-box__addressing">
+			<p>
+				<label for="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>">
+					<?php esc_html_e( 'Addressed to', 'groundwork-common-volunteer-tracker' ); ?>
+				</label><br />
+				<textarea form="gwcvt-start-letter" id="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="addressee" rows="3" class="large-text"
+					placeholder="<?php esc_attr_e( 'Officer J. Smith, Richmond County Probation', 'groundwork-common-volunteer-tracker' ); ?>"></textarea>
+				<span class="description"><?php esc_html_e( 'Only if it is going to somebody other than the volunteer.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			</p>
 
-				<p>
-					<label for="gwcvt-draft-matter-<?php echo esc_attr( (string) $volunteer_id ); ?>">
-						<?php esc_html_e( 'About', 'groundwork-common-volunteer-tracker' ); ?>
-					</label><br />
-					<input type="text" form="gwcvt-start-letter" id="gwcvt-draft-matter-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="matter" class="regular-text"
-						placeholder="<?php esc_attr_e( 'e.g. case 2026-CR-1234', 'groundwork-common-volunteer-tracker' ); ?>" />
-					<span class="description"><?php esc_html_e( 'Printed as a “Re:” line.', 'groundwork-common-volunteer-tracker' ); ?></span>
-				</p>
-			</div>
-
-			<p class="gwcvt-letters-box__foot">
-				<button type="submit" form="gwcvt-start-letter" class="button button-primary"><?php esc_html_e( 'Save the draft', 'groundwork-common-volunteer-tracker' ); ?></button>
-				<button type="button" class="button" data-gwcvt-letters-cancel hidden><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
-				<span class="description"><?php esc_html_e( 'Figures are fixed when you save it.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<p>
+				<label for="gwcvt-draft-matter-<?php echo esc_attr( (string) $volunteer_id ); ?>">
+					<?php esc_html_e( 'About', 'groundwork-common-volunteer-tracker' ); ?>
+				</label><br />
+				<input type="text" form="gwcvt-start-letter" id="gwcvt-draft-matter-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="matter" class="regular-text"
+					placeholder="<?php esc_attr_e( 'e.g. case 2026-CR-1234', 'groundwork-common-volunteer-tracker' ); ?>" />
+				<span class="description"><?php esc_html_e( 'Printed as a “Re:” line.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 		</div>
-	</div>
-	<?php
+			<?php
+		},
+		static function (): void {
+			?>
+			<button type="submit" form="gwcvt-start-letter" class="button button-primary"><?php esc_html_e( 'Save the draft', 'groundwork-common-volunteer-tracker' ); ?></button>
+			<button type="button" class="button" data-gwcvt-sheet-close><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
+			<span class="description"><?php esc_html_e( 'Figures are fixed when you save it.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<?php
+		}
+	);
 }
 
 /**
@@ -640,10 +561,13 @@ function gwc_vt_letters_box_footer(): void {
 	 * check_admin_referer() has always read. Nothing here has to keep a copy of
 	 * a nonce, and nothing can point at the wrong letter. */
 	?>
-	<form id="gwcvt-start-letter" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"></form>
-	<form id="gwcvt-email-letter" method="post" action=""></form>
-	<form id="gwcvt-post-letter" method="post" action="" target="_blank"></form>
+	<?php
+	gwc_vt_sheet_form( 'gwcvt-start-letter', admin_url( 'admin-post.php' ) );
+	gwc_vt_sheet_form( 'gwcvt-email-letter' );
+	gwc_vt_sheet_form( 'gwcvt-post-letter', '', true );
+	?>
 
+	<?php gwc_vt_render_letter_draft_sheet( $volunteer_id ); ?>
 	<?php gwc_vt_render_letter_reader(); ?>
 	<?php gwc_vt_render_letter_mailer( $on_file ); ?>
 	<?php gwc_vt_render_letter_poster(); ?>
@@ -661,43 +585,30 @@ function gwc_vt_letters_box_footer(): void {
  * The form opens the letter in a new tab, because posting one means printing it.
  */
 function gwc_vt_render_letter_poster(): void {
-	?>
-	<div class="gwcvt-sheet gwcvt-sheet--narrow" data-gwcvt-letter-poster hidden>
-		<div class="gwcvt-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="gwcvt-poster-title">
-			<div class="gwcvt-sheet__head">
-				<h2 id="gwcvt-poster-title"><?php esc_html_e( 'Post this letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
-				<?php
-				/* Where wp-admin puts one: a dashicon cross at the top right of
-				 * the panel, not the word "Close" beside the title. Somebody
-				 * looking to shut a dialog looks in the corner, because that is
-				 * where the media modal and every other one in this admin put
-				 * it. The word is still there for a screen reader. */
-				?>
-				<button type="button" class="gwcvt-sheet__close" data-gwcvt-sheet-close>
-					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
-					<span class="screen-reader-text"><?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?></span>
-				</button>
-			</div>
+	gwc_vt_render_sheet(
+		'post-letter',
+		__( 'Post this letter', 'groundwork-common-volunteer-tracker' ),
+		static function (): void {
+			?>
+			<p class="description">
+				<?php esc_html_e( 'The letter opens ready to print, and who it went to is recorded.', 'groundwork-common-volunteer-tracker' ); ?>
+			</p>
 
-			<div class="gwcvt-sheet__body">
-				<p class="description">
-					<?php esc_html_e( 'The letter opens ready to print, and who it went to is recorded.', 'groundwork-common-volunteer-tracker' ); ?>
-				</p>
-
-				<p>
-					<label for="gwcvt-post-addressee"><?php esc_html_e( 'Addressed to', 'groundwork-common-volunteer-tracker' ); ?></label><br />
-					<input type="text" form="gwcvt-post-letter" id="gwcvt-post-addressee" name="addressee" class="regular-text" required
-						placeholder="<?php esc_attr_e( 'e.g. Jefferson County Probation', 'groundwork-common-volunteer-tracker' ); ?>" />
-				</p>
-			</div>
-
-			<div class="gwcvt-sheet__foot">
-				<button type="submit" form="gwcvt-post-letter" class="button button-primary"><?php esc_html_e( 'Record it and print', 'groundwork-common-volunteer-tracker' ); ?></button>
-				<button type="button" class="button" data-gwcvt-sheet-close><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
-			</div>
-		</div>
-	</div>
-	<?php
+			<p>
+				<label for="gwcvt-post-addressee"><?php esc_html_e( 'Addressed to', 'groundwork-common-volunteer-tracker' ); ?></label><br />
+				<input type="text" form="gwcvt-post-letter" id="gwcvt-post-addressee" name="addressee" class="regular-text" required
+					placeholder="<?php esc_attr_e( 'e.g. Jefferson County Probation', 'groundwork-common-volunteer-tracker' ); ?>" />
+			</p>
+			<?php
+		},
+		static function (): void {
+			?>
+			<button type="submit" form="gwcvt-post-letter" class="button button-primary"><?php esc_html_e( 'Record it and print', 'groundwork-common-volunteer-tracker' ); ?></button>
+			<button type="button" class="button" data-gwcvt-sheet-close><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
+			<?php
+		},
+		'gwcvt-sheet--narrow'
+	);
 }
 
 /**
@@ -708,52 +619,38 @@ function gwc_vt_render_letter_poster(): void {
  * theme, and now a script, from owning a document a court reads. It is empty
  * until something is opened, so nothing is fetched by arriving on the screen.
  *
+ * gwcvt-sheet--document is what tells the shared frame that its body is a
+ * document rather than a form: no padding, and the frame fills what is left
+ * between the heading and the actions.
+ *
  * The footer is filled from the row that was pressed: the script moves that
  * row's own action links into it, so the panel offers exactly what the row did
  * and there is no second copy of those URLs to keep in step.
  */
 function gwc_vt_render_letter_reader(): void {
-	?>
-	<div class="gwcvt-sheet" data-gwcvt-letter-reader hidden>
-		<div class="gwcvt-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="gwcvt-reader-title">
-			<div class="gwcvt-sheet__head">
-				<h2 id="gwcvt-reader-title" data-gwcvt-reader-title><?php esc_html_e( 'Letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
-				<?php
-				/* Where wp-admin puts one: a dashicon cross at the top right of
-				 * the panel, not the word "Close" beside the title. Somebody
-				 * looking to shut a dialog looks in the corner, because that is
-				 * where the media modal and every other one in this admin put
-				 * it. The word is still there for a screen reader. */
-				?>
-				<button type="button" class="gwcvt-sheet__close" data-gwcvt-sheet-close>
-					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
-					<span class="screen-reader-text"><?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?></span>
-				</button>
-			</div>
-
+	gwc_vt_render_sheet(
+		'read-letter',
+		__( 'Letter', 'groundwork-common-volunteer-tracker' ),
+		static function (): void {
+			?>
 			<iframe class="gwcvt-sheet__doc" title="<?php esc_attr_e( 'The letter', 'groundwork-common-volunteer-tracker' ); ?>" data-gwcvt-reader-frame src="about:blank"></iframe>
+			<?php
+		},
+		static function (): void {
+			?>
+			<span data-gwcvt-reader-actions></span>
 
-			<div class="gwcvt-sheet__foot">
-				<span data-gwcvt-reader-actions></span>
-
-				<?php
-				/* One note, and only on a draft. That a draft records nothing is
-				 * a fact about what did NOT happen, which is the kind a screen
-				 * has to state because nobody can see it — and it is the
-				 * reassurance somebody wants before pressing Issue.
-				 *
-				 * The issued row had a sibling explaining that sending is
-				 * recorded and the reference is kept. Both are visible: the
-				 * deliveries are listed under Issued on the row behind this
-				 * panel, and the reference is printed on the letter being read.
-				 * A sentence describing what is already on the screen is one the
-				 * reader has to check against the screen. */
-				?>
-				<span class="description gwcvt-sheet__note--draft" hidden data-gwcvt-reader-note-draft><?php esc_html_e( 'Reading a draft records nothing.', 'groundwork-common-volunteer-tracker' ); ?></span>
-			</div>
-		</div>
-	</div>
-	<?php
+			<?php
+			/* One note, and only on a draft. That a draft records nothing is a
+			 * fact about what did NOT happen, which is the kind a screen has to
+			 * state because nobody can see it, and it is the reassurance
+			 * somebody wants before pressing Issue. */
+			?>
+			<span class="description" hidden data-gwcvt-reader-note-draft><?php esc_html_e( 'Reading a draft records nothing.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<?php
+		},
+		'gwcvt-sheet--document'
+	);
 }
 
 /**
@@ -769,64 +666,52 @@ function gwc_vt_render_letter_reader(): void {
  */
 function gwc_vt_render_letter_mailer( string $on_file ): void {
 	$has_address = '' !== $on_file && is_email( $on_file );
-	?>
-	<div class="gwcvt-sheet gwcvt-sheet--narrow" data-gwcvt-letter-mailer hidden>
-		<div class="gwcvt-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="gwcvt-mailer-title">
-			<div class="gwcvt-sheet__head">
-				<h2 id="gwcvt-mailer-title"><?php esc_html_e( 'Email this letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
-				<?php
-				/* Where wp-admin puts one: a dashicon cross at the top right of
-				 * the panel, not the word "Close" beside the title. Somebody
-				 * looking to shut a dialog looks in the corner, because that is
-				 * where the media modal and every other one in this admin put
-				 * it. The word is still there for a screen reader. */
-				?>
-				<button type="button" class="gwcvt-sheet__close" data-gwcvt-sheet-close>
-					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
-					<span class="screen-reader-text"><?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?></span>
-				</button>
-			</div>
 
-			<div class="gwcvt-sheet__body">
-				<p class="description">
-					<?php esc_html_e( 'Recorded against the letter, which keeps its reference.', 'groundwork-common-volunteer-tracker' ); ?>
-				</p>
+	gwc_vt_render_sheet(
+		'email-letter',
+		__( 'Email this letter', 'groundwork-common-volunteer-tracker' ),
+		static function () use ( $on_file, $has_address ): void {
+			?>
+			<p class="description">
+				<?php esc_html_e( 'Recorded against the letter, which keeps its reference.', 'groundwork-common-volunteer-tracker' ); ?>
+			</p>
 
-				<fieldset>
-					<legend class="screen-reader-text"><?php esc_html_e( 'Where to send it', 'groundwork-common-volunteer-tracker' ); ?></legend>
+			<fieldset>
+				<legend class="screen-reader-text"><?php esc_html_e( 'Where to send it', 'groundwork-common-volunteer-tracker' ); ?></legend>
 
-					<?php if ( $has_address ) : ?>
-						<div class="gwcvt-letters-box__choice">
-							<label>
-								<input type="radio" form="gwcvt-email-letter" name="gwc_vt_mailto" value="file" checked data-gwcvt-mailto="file" />
-								<?php echo esc_html( $on_file ); ?>
-							</label>
-							<span class="description"><?php esc_html_e( 'The address on this record.', 'groundwork-common-volunteer-tracker' ); ?></span>
-						</div>
-					<?php endif; ?>
-
+				<?php if ( $has_address ) : ?>
 					<div class="gwcvt-letters-box__choice">
 						<label>
-							<input type="radio" form="gwcvt-email-letter" name="gwc_vt_mailto" value="other" <?php checked( ! $has_address ); ?> data-gwcvt-mailto="other" />
-							<?php esc_html_e( 'Another address', 'groundwork-common-volunteer-tracker' ); ?>
+							<input type="radio" form="gwcvt-email-letter" name="gwc_vt_mailto" value="file" checked data-gwcvt-mailto="file" />
+							<?php echo esc_html( $on_file ); ?>
 						</label>
-						<span class="description"><?php esc_html_e( 'A probation officer, a school.', 'groundwork-common-volunteer-tracker' ); ?></span>
-
-						<span class="gwcvt-letters-box__dates" data-gwcvt-mailer-other>
-							<label class="screen-reader-text" for="gwcvt-mail-address"><?php esc_html_e( 'Email address', 'groundwork-common-volunteer-tracker' ); ?></label>
-							<input type="email" form="gwcvt-email-letter" id="gwcvt-mail-address" name="recipient" class="regular-text" placeholder="name@example.org" />
-						</span>
+						<span class="description"><?php esc_html_e( 'The address on this record.', 'groundwork-common-volunteer-tracker' ); ?></span>
 					</div>
-				</fieldset>
-			</div>
+				<?php endif; ?>
 
-			<div class="gwcvt-sheet__foot">
-				<button type="submit" form="gwcvt-email-letter" class="button button-primary"><?php esc_html_e( 'Send it', 'groundwork-common-volunteer-tracker' ); ?></button>
-				<button type="button" class="button" data-gwcvt-sheet-close><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
-			</div>
-		</div>
-	</div>
-	<?php
+				<div class="gwcvt-letters-box__choice">
+					<label>
+						<input type="radio" form="gwcvt-email-letter" name="gwc_vt_mailto" value="other" <?php checked( ! $has_address ); ?> data-gwcvt-mailto="other" />
+						<?php esc_html_e( 'Another address', 'groundwork-common-volunteer-tracker' ); ?>
+					</label>
+					<span class="description"><?php esc_html_e( 'A probation officer, a school.', 'groundwork-common-volunteer-tracker' ); ?></span>
+
+					<span class="gwcvt-letters-box__dates" data-gwcvt-mailer-other>
+						<label class="screen-reader-text" for="gwcvt-mail-address"><?php esc_html_e( 'Email address', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<input type="email" form="gwcvt-email-letter" id="gwcvt-mail-address" name="recipient" class="regular-text" placeholder="name@example.org" />
+					</span>
+				</div>
+			</fieldset>
+			<?php
+		},
+		static function (): void {
+			?>
+			<button type="submit" form="gwcvt-email-letter" class="button button-primary"><?php esc_html_e( 'Send it', 'groundwork-common-volunteer-tracker' ); ?></button>
+			<button type="button" class="button" data-gwcvt-sheet-close><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
+			<?php
+		},
+		'gwcvt-sheet--narrow'
+	);
 }
 
 /**

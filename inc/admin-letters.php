@@ -528,27 +528,17 @@ function gwc_vt_handle_letter_preview(): void {
 }
 
 /**
- * Back to the Letters screen with a result.
+ * Back to the record with a result.
  *
- * @param string $result  What happened.
+ * A thin wrapper over gwc_vt_sheet_redirect(), kept because the delivery
+ * handlers pass the request array they already have rather than picking it
+ * apart at four call sites.
+ *
+ * @param string $result  A key in gwc_vt_sheet_messages().
  * @param array  $request From gwc_vt_letter_request().
  */
 function gwc_vt_letters_redirect( string $result, array $request ): void {
-	/* Always back to the record. Producing a letter was its own screen once and
-	 * this had a second branch for landing there; the screen is gone and the
-	 * box on the volunteer is the whole of the flow, so there is nowhere else a
-	 * delivery could sensibly finish. Landing somebody anywhere else loses the
-	 * volunteer they were working with, which is what moving the flow onto the
-	 * record was for.
-	 *
-	 * gwc_vt_volunteer_letters_notice() prints the result. */
-	wp_safe_redirect(
-		add_query_arg(
-			array( 'gwc_vt_letter_did' => $result ),
-			(string) get_edit_post_link( (int) $request['volunteer_id'], 'redirect' )
-		) . '#gwc-vt-volunteer-letters'
-	);
-	exit;
+	gwc_vt_sheet_redirect( (int) $request['volunteer_id'], $result, 'gwc-vt-volunteer-letters' );
 }
 
 /* ── Checking a reference ────────────────────────────────────────────────────

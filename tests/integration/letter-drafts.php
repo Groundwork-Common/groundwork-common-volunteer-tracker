@@ -368,19 +368,41 @@ gwc_vt_ld_check(
 	implode( ' | ', $GLOBALS['gwc_vt_ld_links'] )
 );
 
-/* Rendered open with the button hidden, so the screen works without the script.
- * Written the other way round, a script that failed to load would leave a box of
- * buttons that do nothing on the screen where letters to courts are made. */
+/* ── The pattern every secondary action on this screen follows ───────────────
+ * The box carries a TRIGGER and nothing else; the fields live in a sheet, which
+ * inc/admin-sheet.php prints in the footer outside wp-admin's own post form.
+ *
+ * The trigger renders hidden and the sheet does not, and that is the whole
+ * no-JavaScript story: with scripting off the trigger never appears and the
+ * sheet is simply a block at the foot of the record, working. Written the other
+ * way round — sheet hidden, trigger shown — a script that failed to load would
+ * leave a button that does nothing on the screen where letters to courts are
+ * made. */
 gwc_vt_ld_check(
-	'the adder renders open, and its button renders hidden',
-	false !== strpos( $GLOBALS['gwc_vt_ld_box'], 'data-gwcvt-letters-open hidden' )
-		&& false !== strpos( $GLOBALS['gwc_vt_ld_box'], 'data-gwcvt-letters-panel>' )
-		&& false === strpos( $GLOBALS['gwc_vt_ld_box'], 'data-gwcvt-letters-panel hidden' )
+	'the box carries a trigger, and it renders hidden',
+	false !== strpos( $GLOBALS['gwc_vt_ld_box'], 'data-gwcvt-sheet-trigger hidden' )
+		&& false !== strpos( $GLOBALS['gwc_vt_ld_box'], 'data-gwcvt-sheet-open="draft-letter"' )
+);
+
+ob_start();
+gwc_vt_render_letter_draft_sheet( $GLOBALS['gwc_vt_ld_boxvol'] );
+$GLOBALS['gwc_vt_ld_sheet'] = (string) ob_get_clean();
+
+gwc_vt_ld_check(
+	'and the sheet it opens does not render hidden',
+	false !== strpos( $GLOBALS['gwc_vt_ld_sheet'], 'data-gwcvt-sheet="draft-letter"' )
+		&& false === strpos( $GLOBALS['gwc_vt_ld_sheet'], 'data-gwcvt-sheet="draft-letter" hidden' )
 );
 
 gwc_vt_ld_check(
-	'and so do the dates the second choice needs',
-	false !== strpos( $GLOBALS['gwc_vt_ld_box'], 'data-gwcvt-letters-dates>' )
+	'the fields are in the sheet, not in the box',
+	false !== strpos( $GLOBALS['gwc_vt_ld_sheet'], 'name="gwc_vt_period"' )
+		&& false === strpos( $GLOBALS['gwc_vt_ld_box'], 'name="gwc_vt_period"' )
+);
+
+gwc_vt_ld_check(
+	'including the dates the second choice needs',
+	false !== strpos( $GLOBALS['gwc_vt_ld_sheet'], 'data-gwcvt-letters-dates>' )
 );
 
 /* The fields name the form they belong to, because a meta box renders inside
@@ -388,7 +410,7 @@ gwc_vt_ld_check(
  * field that stopped naming it would be submitted with the volunteer instead. */
 $GLOBALS['gwc_vt_ld_stray'] = array();
 
-if ( preg_match_all( '/<input\b[^>]*>/', $GLOBALS['gwc_vt_ld_box'], $gwc_vt_ld_inputs ) ) {
+if ( preg_match_all( '/<input\b[^>]*>/', $GLOBALS['gwc_vt_ld_sheet'], $gwc_vt_ld_inputs ) ) {
 	foreach ( $gwc_vt_ld_inputs[0] as $gwc_vt_ld_tag ) {
 		if ( false === strpos( $gwc_vt_ld_tag, 'form="gwcvt-start-letter"' ) ) {
 			$GLOBALS['gwc_vt_ld_stray'][] = $gwc_vt_ld_tag;
@@ -397,7 +419,7 @@ if ( preg_match_all( '/<input\b[^>]*>/', $GLOBALS['gwc_vt_ld_box'], $gwc_vt_ld_i
 }
 
 gwc_vt_ld_check(
-	'every field in the box names the form it belongs to',
+	'every field in the sheet names the form it belongs to',
 	array() === $GLOBALS['gwc_vt_ld_stray'],
 	implode( ' ', $GLOBALS['gwc_vt_ld_stray'] )
 );

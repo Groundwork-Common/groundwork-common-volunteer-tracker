@@ -85,6 +85,14 @@ tool this file used to describe, and the later half is easy to miss when scannin
   `gwc_vt_add_signup()`**, which the reconciler and every fixture also call, and
   **never** on `gwc_vt_settle_signups()` or `gwc_vt_handle_signup_promote()`,
   which act on somebody already accepted and would fail silently on cron.
+- **Sheets** — `admin-sheet.php` is the one way a secondary action opens on a
+  volunteer's record: the frame, the trigger, the redirect and the one table of
+  messages. `admin-volunteer-sheets.php` carries logging hours and recording a
+  credential; the letter flow's four live with the letters. A sheet is printed
+  outside `<form id="post">`, so **every field in one names its form by ID** —
+  `tests/integration/sheets.php` checks that across all of them, and checks that
+  none renders `hidden`, since they are hidden by CSS under `body.js` so they
+  still work with no JavaScript.
 - **The dashboard** — `dashboard.php` (counts, pure) and `admin-dashboard.php`
   (the screen). Split so the worklist's ordering can be asserted without a
   database. `admin-dashboard-widget.php` puts a window onto it on **WordPress's

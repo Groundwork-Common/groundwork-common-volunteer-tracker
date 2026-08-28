@@ -2696,12 +2696,24 @@ a.gwcvt-letters-box__discard:focus {
 }
 
 
-/* Under the list, not over it: the panel is here to be read, and the thing you
-   do afterwards belongs after it. A link rather than a button for the same
-   reason — a button competes with the heading for the first thing the eye
-   lands on, which is the reading. */
+/* Every trigger looks the same and sits the same way: under whatever it acts
+   on, ruled off from it, a link rather than a button. Under, because the panel
+   is there to be read and the thing you do afterwards belongs after it; a link,
+   because a button competes with the heading for the first thing the eye lands
+   on, which is the reading. Three panels doing the same kind of thing should not
+   look like three different kinds of thing. */
+.gwcvt-sheet-trigger,
 .gwcvt-history__add {
 	margin: 0;
 	padding: 10px 12px;
 	border-top: 1px solid #dcdcde;
+}
+
+/* A sheet whose body is a document rather than a form: no padding, and the
+   frame fills whatever is left between the heading and the actions. */
+.gwcvt-sheet--document .gwcvt-sheet__body {
+	display: flex;
+	flex: 1 1 auto;
+	padding: 0;
+	overflow: hidden;
 }
