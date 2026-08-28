@@ -2645,3 +2645,61 @@ a.gwcvt-letters-box__discard:focus {
 .gwcvt-letters-box__addressing label {
 	font-weight: 600;
 }
+
+/* ─── The requirement, as a sentence ────────────────────────────────────────
+   Three values that read as one line of English, so they are laid out as one.
+   Wraps rather than scrolls on a narrow screen, and the baselines are aligned
+   so the words sit on the same line as the boxes between them. */
+.gwcvt-required-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 8px;
+	font-size: 14px;
+}
+
+.gwcvt-required-line input {
+	margin: 0;
+}
+
+/* ─── A table that fills its panel ──────────────────────────────────────────
+   wp-admin pads a meta box's body, which is right for fields and wrong for a
+   table: the table draws its own border and the padding puts a second frame
+   around the first, with a gap of panel showing between them. Core's own
+   full-width tables in panels sit flush, so these do too — the padding is
+   removed from the box and given back to whatever else is in it. */
+#gwc-vt-volunteer-hours .inside,
+#gwc-vt-volunteer-letters .inside {
+	margin: 0;
+	padding: 0;
+}
+
+#gwc-vt-volunteer-hours .inside > :not(table):not(.gwcvt-letters-box),
+#gwc-vt-volunteer-letters .inside > :not(table):not(.gwcvt-letters-box) {
+	margin: 12px;
+}
+
+#gwc-vt-volunteer-hours .gwcvt-history,
+.gwcvt-letters-box table {
+	margin: 0;
+	border-left: 0;
+	border-right: 0;
+}
+
+/* The letters box is a wrapper rather than a bare table, so its own padding
+   has to come back for everything that is not the table. */
+.gwcvt-letters-box > :not(table) {
+	margin-left: 12px;
+	margin-right: 12px;
+}
+
+.gwcvt-letters-box > .notice {
+	margin-top: 12px;
+}
+
+/* The way from a person to their hours. Above the table rather than below it,
+   because it is what somebody came here to do, not a footnote to the list. */
+.gwcvt-history__add {
+	margin: 12px;
+}

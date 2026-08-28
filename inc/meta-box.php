@@ -82,12 +82,30 @@ function gwc_vt_render_entry_meta_box( $post ): void {
 	$entry_id = (int) $post->ID;
 
 	$volunteer_id = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, true );
-	$date         = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true );
-	$minutes      = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
-	$activity     = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true );
-	$supervisor   = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, true );
-	$claim_name   = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, true );
-	$claim_email  = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_EMAIL, true );
+
+	/* ── Arriving from somebody's record with them already filled in ─────────
+	 * "Log hours" on a volunteer lands here, and the one thing that screen
+	 * knows and this one would otherwise ask for is who it is about. Read only
+	 * on a new entry: on an existing one the meta is the answer, and a query
+	 * string that could overrule it would be a way to reassign somebody's hours
+	 * by editing a URL.
+	 *
+	 * Checked to be a volunteer before it is believed, because it arrives in a
+	 * URL — an ID naming something else would put a shift against a shift. */
+	if ( $volunteer_id < 1 && 'auto-draft' === get_post_status( $entry_id ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- prefills a field on a blank form; nothing is written until the post is saved, which is nonced by core.
+		$arriving = isset( $_GET['gwc_vt_for'] ) ? absint( wp_unslash( $_GET['gwc_vt_for'] ) ) : 0;
+
+		if ( $arriving > 0 && GWC_VT_VOLUNTEER_TYPE === get_post_type( $arriving ) ) {
+			$volunteer_id = $arriving;
+		}
+	}
+	$date        = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true );
+	$minutes     = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
+	$activity    = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, true );
+	$supervisor  = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, true );
+	$claim_name  = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_NAME, true );
+	$claim_email = (string) get_post_meta( $entry_id, GWC_VT_ENTRY_CLAIM_EMAIL, true );
 
 	/* A new entry defaults to today. The overwhelmingly common case is somebody
 	 * logging a shift that just finished, and an empty date field is a required
@@ -605,65 +623,73 @@ function gwc_vt_render_volunteer_required_box( $post ): void {
 
 	$volunteer_id = (int) $post->ID;
 	?>
-	<div class="gwcvt-fields">
 	<?php
-	/* ── What they have to complete ──────────────────────────────────────
-	 * Most volunteers have nothing here and it stays empty for them. For
-	 * the ones who do, this is the question they and their coordinator ask
-	 * every single week, and until now the answer lived on a sticky note.
+	/* ── One sentence, not three fields ──────────────────────────────────────
+	 * This was three labelled inputs, each under its own heading, each with a
+	 * paragraph of explanation — nearly two hundred words to record three
+	 * values, on a panel most volunteers never use at all.
 	 *
-	 * It is never printed on a letter. See the note on the constants in
-	 * inc/volunteer-cpt.php for why that is not a detail. */
+	 * The three values make one sentence in English and always did: complete
+	 * this many hours, by this date, for these people. Written that way the
+	 * labels are unnecessary, because the sentence around each box says what
+	 * goes in it, and two of the three paragraphs turn out to have been saying
+	 * the same thing — that none of this reaches a letter. That is said once,
+	 * underneath, because it is the invariant this panel exists to protect and
+	 * not a caption for any one field.
+	 *
+	 * The labels are still there for anybody not reading the sentence: a screen
+	 * reader gets "Hours they have to complete", not "edit text". A sentence
+	 * with holes in it is only self-explanatory if you can see it. */
 	$required = gwc_vt_required_minutes( $volunteer_id );
 	?>
-	<div class="gwcvt-field gwcvt-required">
-		<label for="gwcvt-required">
-			<strong><?php esc_html_e( 'Hours they have to complete', 'groundwork-common-volunteer-tracker' ); ?></strong>
-		</label>
-		<input
-			type="text"
-			id="gwcvt-required"
-			name="gwc_vt_required"
-			class="small-text"
-			inputmode="decimal"
-			value="<?php echo esc_attr( $required > 0 ? gwc_vt_format_hours( $required, 'decimal' ) : '' ); ?>"
-			placeholder="<?php esc_attr_e( 'e.g. 40', 'groundwork-common-volunteer-tracker' ); ?>"
-		/>
-		<span class="description">
-			<?php esc_html_e( 'For somebody working off court-ordered or school-required service. Leave empty for everybody else. This is for your own planning and never appears on a letter — how many hours were ordered is a fact about somebody else’s document, not about anything you observed.', 'groundwork-common-volunteer-tracker' ); ?>
-		</span>
-	</div>
+	<div class="gwcvt-fields">
+		<p class="gwcvt-required-line">
+			<?php esc_html_e( 'Complete', 'groundwork-common-volunteer-tracker' ); ?>
 
-	<div class="gwcvt-field">
-		<label for="gwcvt-required-by">
-			<strong><?php esc_html_e( 'By when', 'groundwork-common-volunteer-tracker' ); ?></strong>
-		</label>
-		<input
-			type="date"
-			id="gwcvt-required-by"
-			name="gwc_vt_required_by"
-			value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_BY, true ) ); ?>"
-		/>
-		<span class="description"><?php esc_html_e( 'Optional. Shown as a countdown on their record and on the volunteer list.', 'groundwork-common-volunteer-tracker' ); ?></span>
-	</div>
+			<label class="screen-reader-text" for="gwcvt-required">
+				<?php esc_html_e( 'Hours they have to complete', 'groundwork-common-volunteer-tracker' ); ?>
+			</label>
+			<input
+				type="text"
+				id="gwcvt-required"
+				name="gwc_vt_required"
+				class="small-text"
+				inputmode="decimal"
+				value="<?php echo esc_attr( $required > 0 ? gwc_vt_format_hours( $required, 'decimal' ) : '' ); ?>"
+				placeholder="<?php esc_attr_e( '40', 'groundwork-common-volunteer-tracker' ); ?>"
+			/>
 
-	<div class="gwcvt-field">
-		<label for="gwcvt-required-for">
-			<strong><?php esc_html_e( 'Who requires it', 'groundwork-common-volunteer-tracker' ); ?></strong>
-		</label>
-		<input
-			type="text"
-			id="gwcvt-required-for"
-			name="gwc_vt_required_for"
-			class="regular-text"
-			maxlength="200"
-			value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR, true ) ); ?>"
-			placeholder="<?php esc_attr_e( 'e.g. a court, a school, a scouting group', 'groundwork-common-volunteer-tracker' ); ?>"
-		/>
-		<span class="description">
-			<?php esc_html_e( 'For your own records, so you know which program this person is here under. Like the rest of this section it never reaches a letter — what a court asked for is a fact about the court\'s document, not about anything you observed.', 'groundwork-common-volunteer-tracker' ); ?>
-		</span>
-	</div>
+			<?php esc_html_e( 'hours by', 'groundwork-common-volunteer-tracker' ); ?>
+
+			<label class="screen-reader-text" for="gwcvt-required-by">
+				<?php esc_html_e( 'The date they have to complete them by', 'groundwork-common-volunteer-tracker' ); ?>
+			</label>
+			<input
+				type="date"
+				id="gwcvt-required-by"
+				name="gwc_vt_required_by"
+				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_BY, true ) ); ?>"
+			/>
+
+			<?php esc_html_e( 'for', 'groundwork-common-volunteer-tracker' ); ?>
+
+			<label class="screen-reader-text" for="gwcvt-required-for">
+				<?php esc_html_e( 'Who requires it', 'groundwork-common-volunteer-tracker' ); ?>
+			</label>
+			<input
+				type="text"
+				id="gwcvt-required-for"
+				name="gwc_vt_required_for"
+				class="regular-text"
+				maxlength="200"
+				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR, true ) ); ?>"
+				placeholder="<?php esc_attr_e( 'a court, a school, a scouting group', 'groundwork-common-volunteer-tracker' ); ?>"
+			/>
+		</p>
+
+		<p class="description">
+			<?php esc_html_e( 'Leave this empty for everybody who is not working off court-ordered or school-required service. None of it ever reaches a letter — what somebody was ordered to do is a fact about their court’s document, not about anything you observed. The date is optional and shows as a countdown here and on the volunteer list.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
 
 	<?php if ( gwc_vt_has_requirement( $volunteer_id ) ) : ?>
 		<?php $progress = gwc_vt_requirement_progress( $volunteer_id ); ?>

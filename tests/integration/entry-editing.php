@@ -195,6 +195,95 @@ delete_transient( 'gwc_vt_entry_saved_' . (int) $gwc_vt_entry . '_' . get_curren
 update_option( GWC_VT_SETTINGS_OPTION, $gwc_vt_restore );
 gwc_vt_settings_cache( null, true );
 
+
+echo "\n── Arriving from a volunteer, with them already filled in ───────\n";
+
+/* ── The path this closes ────────────────────────────────────────────────────
+ * The hours panel on a volunteer listed what they had done and offered no way
+ * to record anything more, so the route from "I am looking at Dana" to "Dana
+ * worked on Tuesday" was: leave the record, find Hours, start a blank entry,
+ * and search for Dana again. The one thing that screen knows is exactly the
+ * thing the blank form asks for first. */
+$gwc_vt_arrival = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_ENTRY_TYPE,
+		'post_status' => 'auto-draft',
+		'post_title'  => 'Auto Draft',
+	)
+);
+
+/**
+ * The entry editor's fields, as somebody arrives at them.
+ *
+ * @param int $entry The auto-draft standing in for a new entry.
+ * @param int $for   What gwc_vt_for says, or 0 for no parameter at all.
+ * @return string
+ */
+function gwc_vt_arriving_at( int $entry, int $for ): string {
+	unset( $_GET['gwc_vt_for'] );
+
+	if ( $for > 0 ) {
+		$_GET['gwc_vt_for'] = (string) $for;
+	}
+
+	ob_start();
+	gwc_vt_render_entry_meta_box( get_post( $entry ) );
+	$html = (string) ob_get_clean();
+
+	unset( $_GET['gwc_vt_for'] );
+
+	return $html;
+}
+
+$gwc_vt_prefilled = gwc_vt_arriving_at( $gwc_vt_arrival, $gwc_vt_volunteer );
+
+gwc_vt_ee_check(
+	'a new entry arrives with the volunteer already chosen',
+	false !== strpos( $gwc_vt_prefilled, 'id="gwcvt-volunteer-id" value="' . $gwc_vt_volunteer . '"' )
+		&& false !== strpos( $gwc_vt_prefilled, (string) get_the_title( $gwc_vt_volunteer ) )
+);
+
+/* It arrives in a URL, so it is checked before it is believed. An ID naming
+ * something else would put a shift against a shift. */
+gwc_vt_ee_check(
+	'and an id that names something else is ignored',
+	false !== strpos( gwc_vt_arriving_at( $gwc_vt_arrival, $gwc_vt_entry ), 'id="gwcvt-volunteer-id" value="0"' )
+);
+
+gwc_vt_ee_check(
+	'as is one that names nothing at all',
+	false !== strpos( gwc_vt_arriving_at( $gwc_vt_arrival, 999999 ), 'id="gwcvt-volunteer-id" value="0"' )
+);
+
+gwc_vt_ee_check(
+	'and with no parameter the field is simply empty',
+	false !== strpos( gwc_vt_arriving_at( $gwc_vt_arrival, 0 ), 'id="gwcvt-volunteer-id" value="0"' )
+);
+
+/* ── And never on an entry that already has one ──────────────────────────────
+ * The meta is the answer on a saved entry. A query string that could overrule
+ * it would be a way to reassign somebody's hours by editing a URL. */
+update_post_meta( $gwc_vt_entry, GWC_VT_ENTRY_VOLUNTEER, (string) $gwc_vt_volunteer );
+
+$gwc_vt_other = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzarrive Somebodyelse',
+	)
+);
+
+gwc_vt_ee_check(
+	'a saved entry cannot be reassigned by a query string',
+	false !== strpos(
+		gwc_vt_arriving_at( $gwc_vt_entry, $gwc_vt_other ),
+		'id="gwcvt-volunteer-id" value="' . $gwc_vt_volunteer . '"'
+	)
+);
+
+wp_delete_post( $gwc_vt_other, true );
+wp_delete_post( $gwc_vt_arrival, true );
+
 wp_delete_post( (int) $gwc_vt_entry, true );
 wp_delete_post( (int) $gwc_vt_volunteer, true );
 
