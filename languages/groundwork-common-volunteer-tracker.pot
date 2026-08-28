@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T17:47:59+00:00\n"
+"POT-Creation-Date: 2026-08-28T17:59:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -116,7 +116,7 @@ msgstr ""
 #: inc/admin-event-roster.php:426
 #: inc/admin-shift.php:579
 #: inc/admin-volunteer-letters.php:247
-#: inc/admin-volunteer.php:320
+#: inc/admin-volunteer.php:338
 msgid "Actions"
 msgstr ""
 
@@ -808,7 +808,7 @@ msgstr ""
 #: inc/admin-shift.php:503
 #: inc/admin-shift.php:617
 #: inc/cpt.php:253
-#: inc/meta-box.php:131
+#: inc/meta-box.php:149
 #: inc/render.php:234
 msgid "Volunteer"
 msgstr ""
@@ -818,7 +818,7 @@ msgstr ""
 #: inc/admin-quick-add.php:603
 #: inc/admin-shift.php:504
 #: inc/admin-shift.php:618
-#: inc/meta-box.php:139
+#: inc/meta-box.php:157
 msgid "No volunteer of that name"
 msgstr ""
 
@@ -827,7 +827,7 @@ msgstr ""
 #: inc/admin-quick-add.php:614
 #: inc/admin-shift.php:513
 #: inc/admin-shift.php:628
-#: inc/meta-box.php:149
+#: inc/meta-box.php:167
 msgid "Start typing a name…"
 msgstr ""
 
@@ -1212,7 +1212,7 @@ msgstr ""
 #: inc/admin-quick-add.php:215
 #: inc/admin-quick-add.php:445
 #: inc/admin-shift.php:159
-#: inc/admin-volunteer.php:316
+#: inc/admin-volunteer.php:334
 #: inc/cpt.php:254
 #: inc/privacy.php:774
 #: inc/render.php:238
@@ -1360,7 +1360,7 @@ msgstr ""
 #: inc/admin-help-page.php:79
 #: inc/admin-quick-add.php:257
 #: inc/admin-quick-add.php:483
-#: inc/admin-volunteer.php:317
+#: inc/admin-volunteer.php:335
 #: inc/cpt.php:134
 #: inc/cpt.php:255
 #: inc/privacy.php:778
@@ -2288,7 +2288,7 @@ msgstr ""
 
 #: inc/admin-quick-add.php:228
 #: inc/admin-quick-add.php:453
-#: inc/meta-box.php:222
+#: inc/meta-box.php:240
 msgid "What they did"
 msgstr ""
 
@@ -2299,7 +2299,7 @@ msgstr ""
 #: inc/admin-quick-add.php:242
 #: inc/admin-quick-add.php:467
 #: inc/admin-shift.php:195
-#: inc/meta-box.php:245
+#: inc/meta-box.php:263
 #: inc/privacy.php:786
 #: inc/render.php:241
 msgid "Supervised by"
@@ -4280,7 +4280,7 @@ msgid "Nobody on file matches this name or email. Or choose an existing voluntee
 msgstr ""
 
 #: inc/admin-verify.php:41
-#: inc/admin-volunteer.php:319
+#: inc/admin-volunteer.php:337
 #: inc/i18n.php:50
 msgid "Verified"
 msgstr ""
@@ -4712,7 +4712,7 @@ msgstr ""
 #: inc/admin-volunteer-letters.php:367
 #: inc/admin-volunteer-letters.php:458
 #: inc/admin-volunteer-list.php:267
-#: inc/admin-volunteer.php:346
+#: inc/admin-volunteer.php:364
 msgid "Open"
 msgstr ""
 
@@ -4744,7 +4744,7 @@ msgid "Post"
 msgstr ""
 
 #: inc/admin-volunteer-letters.php:479
-#: inc/meta-box.php:526
+#: inc/meta-box.php:544
 #: inc/privacy.php:674
 msgid "Email"
 msgstr ""
@@ -4989,7 +4989,11 @@ msgstr ""
 msgid "No hours logged for this volunteer yet."
 msgstr ""
 
-#: inc/admin-volunteer.php:318
+#: inc/admin-volunteer.php:327
+msgid "Log hours for them"
+msgstr ""
+
+#: inc/admin-volunteer.php:336
 #: inc/cpt.php:256
 #: inc/privacy.php:782
 #: inc/render.php:240
@@ -6312,184 +6316,188 @@ msgstr ""
 msgid "Required service"
 msgstr ""
 
-#: inc/meta-box.php:114
+#: inc/meta-box.php:132
 msgid "Logged from the public form and not yet matched to a volunteer."
 msgstr ""
 
 #. translators: 1: the name typed into the public form, 2: the email address typed into it.
-#: inc/meta-box.php:119
+#: inc/meta-box.php:137
 #, php-format
 msgid "Submitted as %1$s (%2$s). These are claims made by whoever filled in the form — check them before choosing a volunteer."
 msgstr ""
 
-#: inc/meta-box.php:120
+#: inc/meta-box.php:138
 msgid "no name given"
 msgstr ""
 
-#: inc/meta-box.php:121
+#: inc/meta-box.php:139
 msgid "no email given"
 msgstr ""
 
 #. translators: %s: a link to the new-volunteer screen.
-#: inc/meta-box.php:159
+#: inc/meta-box.php:177
 #, php-format
 msgid "No record yet? %s first."
 msgstr ""
 
-#: inc/meta-box.php:161
+#: inc/meta-box.php:179
 msgid "Add the volunteer"
 msgstr ""
 
-#: inc/meta-box.php:170
+#: inc/meta-box.php:188
 msgid "Date of the shift"
 msgstr ""
 
-#: inc/meta-box.php:187
+#: inc/meta-box.php:205
 msgid "Future dates are switched off in Settings → Logging."
 msgstr ""
 
-#: inc/meta-box.php:193
+#: inc/meta-box.php:211
 msgid "Hours worked"
 msgstr ""
 
-#: inc/meta-box.php:206
+#: inc/meta-box.php:224
 msgid "Accepts 3.5, 3:30, 3h 30m or 210m."
 msgstr ""
 
 #. translators: %d: a number of minutes.
-#: inc/meta-box.php:212
+#: inc/meta-box.php:230
 #, php-format
 msgid "Rounded to the nearest %d minutes."
 msgstr ""
 
-#: inc/meta-box.php:240
+#: inc/meta-box.php:258
 msgid "Appears on the verification letter."
 msgstr ""
 
-#: inc/meta-box.php:255
+#: inc/meta-box.php:273
 msgid "The person who was there. Not necessarily whoever verifies the entry."
 msgstr ""
 
-#: inc/meta-box.php:416
+#: inc/meta-box.php:434
 msgid "This shift was saved with no hours on it, because what was typed could not be read as a duration. Hours can be written as 3.5, 3:30, 3h 30m or 210m — a bare number means hours, so anything longer than a single day is refused rather than recorded."
 msgstr ""
 
-#: inc/meta-box.php:417
+#: inc/meta-box.php:435
 msgid "The date was in the future, so it was changed to today. Hours dated ahead would be dated the day they were typed rather than the day they were worked, and that date is what a letter prints. Future dates can be allowed under Settings → Logging."
 msgstr ""
 
-#: inc/meta-box.php:418
+#: inc/meta-box.php:436
 msgid "The volunteer could not be attached, so these hours are on nobody's record and will not appear on any letter. Choose somebody with the picker and save again."
 msgstr ""
 
 #. translators: 1: a duration as the site formats them, 2: a number of minutes.
-#: inc/meta-box.php:464
+#: inc/meta-box.php:482
 #, php-format
 msgid "Recorded as %1$s. Hours are rounded to the nearest %2$d minutes — to the nearest, never up, so the organization never credits time nobody worked. The increment is on the Logging tab."
 msgstr ""
 
-#: inc/meta-box.php:529
+#: inc/meta-box.php:547
 msgid "Where a verification letter is sent, and how the privacy tools find this record."
 msgstr ""
 
-#: inc/meta-box.php:534
+#: inc/meta-box.php:552
 #: inc/privacy.php:678
 msgid "Phone"
 msgstr ""
 
-#: inc/meta-box.php:537
+#: inc/meta-box.php:555
 msgid "For your own use — calling around when a shift is short. It is never printed on a letter and never shown publicly."
 msgstr ""
 
-#: inc/meta-box.php:553
+#: inc/meta-box.php:571
 msgid "Keep this record regardless of the retention policy"
 msgstr ""
 
-#: inc/meta-box.php:563
+#: inc/meta-box.php:581
 msgid "Why it is held"
 msgstr ""
 
-#: inc/meta-box.php:571
+#: inc/meta-box.php:589
 msgid "Why — e.g. court order, open case"
 msgstr ""
 
-#: inc/meta-box.php:575
+#: inc/meta-box.php:593
 msgid "Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal."
 msgstr ""
 
-#: inc/meta-box.php:621
+#: inc/meta-box.php:647
+msgid "Complete"
+msgstr ""
+
+#: inc/meta-box.php:650
 msgid "Hours they have to complete"
 msgstr ""
 
-#: inc/meta-box.php:630
-msgid "e.g. 40"
+#: inc/meta-box.php:659
+msgid "40"
 msgstr ""
 
-#: inc/meta-box.php:633
-msgid "For somebody working off court-ordered or school-required service. Leave empty for everybody else. This is for your own planning and never appears on a letter — how many hours were ordered is a fact about somebody else’s document, not about anything you observed."
+#: inc/meta-box.php:662
+msgid "hours by"
 msgstr ""
 
-#: inc/meta-box.php:639
-msgid "By when"
+#: inc/meta-box.php:665
+msgid "The date they have to complete them by"
 msgstr ""
 
-#: inc/meta-box.php:647
-msgid "Optional. Shown as a countdown on their record and on the volunteer list."
+#: inc/meta-box.php:674
+msgid "for"
 msgstr ""
 
-#: inc/meta-box.php:652
+#: inc/meta-box.php:677
 #: inc/privacy.php:698
 msgid "Who requires it"
 msgstr ""
 
-#: inc/meta-box.php:661
-msgid "e.g. a court, a school, a scouting group"
+#: inc/meta-box.php:686
+msgid "a court, a school, a scouting group"
 msgstr ""
 
-#: inc/meta-box.php:664
-msgid "For your own records, so you know which program this person is here under. Like the rest of this section it never reaches a letter — what a court asked for is a fact about the court's document, not about anything you observed."
+#: inc/meta-box.php:691
+msgid "Leave this empty for everybody who is not working off court-ordered or school-required service. None of it ever reaches a letter — what somebody was ordered to do is a fact about their court’s document, not about anything you observed. The date is optional and shows as a countdown here and on the volunteer list."
 msgstr ""
 
 #. translators: %s: a number of hours, already formatted.
-#: inc/meta-box.php:678
+#: inc/meta-box.php:704
 #, php-format
 msgid "%s to go"
 msgstr ""
 
 #. translators: %s: a number of hours, already formatted.
-#: inc/meta-box.php:693
+#: inc/meta-box.php:719
 #, php-format
 msgid "%s more is logged but not verified yet, so it does not count toward this."
 msgstr ""
 
-#: inc/meta-box.php:755
+#: inc/meta-box.php:781
 msgid "Photo saved."
 msgstr ""
 
-#: inc/meta-box.php:756
+#: inc/meta-box.php:782
 msgid "Photo removed."
 msgstr ""
 
-#: inc/meta-box.php:784
+#: inc/meta-box.php:810
 msgid "Photo"
 msgstr ""
 
-#: inc/meta-box.php:800
+#: inc/meta-box.php:826
 msgid "Remove this photo when I save"
 msgstr ""
 
-#: inc/meta-box.php:805
+#: inc/meta-box.php:831
 #: inc/registration-form.php:169
 msgid "Choose a photo"
 msgstr ""
 
 #. translators: %s: a file size, such as "8 MB".
-#: inc/meta-box.php:813
+#: inc/meta-box.php:839
 #, php-format
 msgid "For telling two records apart at the desk. JPEG, PNG or WebP, up to %s."
 msgstr ""
 
-#: inc/meta-box.php:820
+#: inc/meta-box.php:846
 msgid "It is kept out of the Media Library, is never given a public address, and is never printed on a letter. Only somebody who can open this record can see it. Location data the camera recorded is discarded."
 msgstr ""
 
