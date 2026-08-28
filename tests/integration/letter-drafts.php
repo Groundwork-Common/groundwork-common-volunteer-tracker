@@ -758,6 +758,102 @@ gwc_vt_ld_check(
 		&& array() === gwc_vt_letter_deliveries( $GLOBALS['gwc_vt_ld_twin'] )
 );
 
+echo "\n── 14. A draft picks up what happens after it is made ───────────────\n";
+
+/* The question this section answers: a draft is started, the volunteer works
+ * another shift, somebody verifies it, and then the draft is issued. Is the new
+ * shift on the letter?
+ *
+ * Yes, and it has to be. A draft holds the period and nothing else — it is the
+ * QUESTION "this person, these dates", and the answer is computed when somebody
+ * issues it. A draft that stored 18h30m would be a letter that disagreed with
+ * the record the day after it was made, silently, on the number a court reads.
+ *
+ * Which is exactly the opposite of what happens after issuing: §11 asserts that
+ * a shift verified AFTER a letter is issued never appears on it. The line
+ * between the two is the act of issuing, and that is the whole design. */
+$GLOBALS['gwc_vt_ld_grow'] = gwc_vt_ld_volunteer( 'Zzld Stillworking' );
+gwc_vt_ld_entry( $GLOBALS['gwc_vt_ld_grow'], '2026-05-01', 120 );
+
+$GLOBALS['gwc_vt_ld_open'] = gwc_vt_add_letter_draft( $GLOBALS['gwc_vt_ld_grow'] );
+
+gwc_vt_ld_check(
+	'the draft is worth two hours when it is made',
+	120 === gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_grow'] )->verified_minutes,
+	(string) gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_grow'] )->verified_minutes
+);
+
+$GLOBALS['gwc_vt_ld_late'] = gwc_vt_ld_entry( $GLOBALS['gwc_vt_ld_grow'], '2026-05-08', 90 );
+
+gwc_vt_ld_check(
+	'and worth three and a half once another verified shift arrives',
+	210 === gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_grow'] )->verified_minutes,
+	(string) gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_grow'] )->verified_minutes
+);
+
+/* Unverified hours are counted separately and never folded into the figure the
+ * letter states. The organization vouches for what it attested to. */
+$GLOBALS['gwc_vt_ld_unver'] = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_ENTRY_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'tmp',
+	)
+);
+$GLOBALS['gwc_vt_ld_entries'][] = $GLOBALS['gwc_vt_ld_unver'];
+
+update_post_meta( $GLOBALS['gwc_vt_ld_unver'], GWC_VT_ENTRY_VOLUNTEER, (string) $GLOBALS['gwc_vt_ld_grow'] );
+update_post_meta( $GLOBALS['gwc_vt_ld_unver'], GWC_VT_ENTRY_DATE, '2026-05-15' );
+update_post_meta( $GLOBALS['gwc_vt_ld_unver'], GWC_VT_ENTRY_MINUTES, 60 );
+
+gwc_vt_ld_check(
+	'but an unverified one changes nothing',
+	210 === gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_grow'] )->verified_minutes,
+	(string) gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_grow'] )->verified_minutes
+);
+
+$GLOBALS['gwc_vt_ld_now']    = gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_grow'] );
+$GLOBALS['gwc_vt_ld_issued'] = gwc_vt_letter_record( gwc_vt_log_letter( $GLOBALS['gwc_vt_ld_now'] ) );
+
+gwc_vt_ld_check(
+	'issuing states the figure as it stands at that moment',
+	210 === (int) $GLOBALS['gwc_vt_ld_issued']['minutes'] && 2 === (int) $GLOBALS['gwc_vt_ld_issued']['entries'],
+	$GLOBALS['gwc_vt_ld_issued']['minutes'] . 'm over ' . $GLOBALS['gwc_vt_ld_issued']['entries']
+);
+
+gwc_vt_ld_check(
+	'and lists the shift that arrived after the draft was made',
+	in_array( $GLOBALS['gwc_vt_ld_late'], $GLOBALS['gwc_vt_ld_issued']['entry_ids'], true )
+		&& ! in_array( $GLOBALS['gwc_vt_ld_unver'], $GLOBALS['gwc_vt_ld_issued']['entry_ids'], true ),
+	implode( ',', $GLOBALS['gwc_vt_ld_issued']['entry_ids'] )
+);
+
+/* The edge that can surprise somebody: a draft asked for particular months
+ * picks up new shifts INSIDE those months and never outside them. The period is
+ * the whole of what a draft remembers, so it is also the whole of what it can
+ * grow within. */
+$GLOBALS['gwc_vt_ld_bounded'] = gwc_vt_letter_draft(
+	gwc_vt_add_letter_draft( $GLOBALS['gwc_vt_ld_grow'], '2026-05-01', '2026-05-05' )
+);
+
+gwc_vt_ld_check(
+	'a draft for particular months does not pick up a shift outside them',
+	120 === gwc_vt_build_letter(
+		$GLOBALS['gwc_vt_ld_grow'],
+		array(
+			'from' => $GLOBALS['gwc_vt_ld_bounded']['from'],
+			'to'   => $GLOBALS['gwc_vt_ld_bounded']['to'],
+		)
+	)->verified_minutes,
+	(string) gwc_vt_build_letter(
+		$GLOBALS['gwc_vt_ld_grow'],
+		array(
+			'from' => $GLOBALS['gwc_vt_ld_bounded']['from'],
+			'to'   => $GLOBALS['gwc_vt_ld_bounded']['to'],
+		)
+	)->verified_minutes
+);
+
 /**
  * Take everything this script made back out.
  */
