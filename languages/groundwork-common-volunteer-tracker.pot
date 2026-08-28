@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T19:44:38+00:00\n"
+"POT-Creation-Date: 2026-08-28T19:53:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -43,7 +43,7 @@ msgstr ""
 #: inc/access.php:341
 #: inc/admin-applications.php:435
 #: inc/admin-volunteer-sheets.php:35
-#: inc/admin-volunteer-status.php:320
+#: inc/admin-volunteer-status.php:374
 msgid "You do not have permission to do that."
 msgstr ""
 
@@ -66,7 +66,7 @@ msgstr ""
 #: inc/admin-verify.php:683
 #: inc/admin-volunteer-credentials.php:346
 #: inc/admin-volunteer-sheets.php:36
-#: inc/admin-volunteer-status.php:321
+#: inc/admin-volunteer-status.php:375
 msgid "Permission denied"
 msgstr ""
 
@@ -635,7 +635,6 @@ msgid "verified hours"
 msgstr ""
 
 #: inc/admin-dashboard.php:671
-#: inc/admin-volunteer-status.php:212
 #: inc/volunteer-cpt.php:196
 msgid "Awaiting verification"
 msgstr ""
@@ -1367,6 +1366,7 @@ msgstr ""
 #: inc/admin-quick-add.php:257
 #: inc/admin-quick-add.php:483
 #: inc/admin-volunteer-sheets.php:146
+#: inc/admin-volunteer-status.php:232
 #: inc/admin-volunteer.php:317
 #: inc/cpt.php:134
 #: inc/cpt.php:255
@@ -1476,7 +1476,7 @@ msgstr ""
 
 #: inc/admin-help.php:163
 #: inc/admin-screen.php:494
-#: inc/admin-volunteer-status.php:218
+#: inc/admin-volunteer-status.php:211
 #: inc/render.php:237
 msgid "Shifts"
 msgstr ""
@@ -4941,80 +4941,92 @@ msgstr ""
 msgid "Volunteering"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:206
-#: inc/privacy.php:682
-#: inc/render.php:236
-#: inc/volunteer-cpt.php:195
-msgid "Verified hours"
+#. translators: %s: a number of hours, already formatted.
+#: inc/admin-volunteer-status.php:239
+#, php-format
+msgid "%s total"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:225
+#. translators: %s: a number of hours, already formatted.
+#: inc/admin-volunteer-status.php:248
+#: inc/admin-volunteer-status.php:267
+#, php-format
+msgid "%s verified"
+msgstr ""
+
+#. translators: %s: a number of hours, already formatted.
+#: inc/admin-volunteer-status.php:257
+#, php-format
+msgid "%s unverified"
+msgstr ""
+
+#: inc/admin-volunteer-status.php:279
 #: inc/cpt.php:132
 msgid "No hours logged yet."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:234
+#: inc/admin-volunteer-status.php:288
 msgid "Make them active"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:235
+#: inc/admin-volunteer-status.php:289
 msgid "Make them inactive"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/admin-volunteer-status.php:265
+#: inc/admin-volunteer-status.php:319
 #, php-format
 msgid "Added %s"
 msgstr ""
 
 #. translators: 1: the date of their first shift. 2: the date of their last.
-#: inc/admin-volunteer-status.php:273
+#: inc/admin-volunteer-status.php:327
 #, php-format
 msgctxt "volunteer tenure"
 msgid "%1$s to %2$s"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/admin-volunteer-status.php:286
+#: inc/admin-volunteer-status.php:340
 #, php-format
 msgid "Since %s"
 msgstr ""
 
 #. translators: 1: a date. 2: a length of time, such as "1 year".
-#: inc/admin-volunteer-status.php:297
+#: inc/admin-volunteer-status.php:351
 #, php-format
 msgid "%1$s — %2$s"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:328
+#: inc/admin-volunteer-status.php:382
 msgid "That is not a volunteer record."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:329
+#: inc/admin-volunteer-status.php:383
 msgid "Nothing to do"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-status.php:434
+#: inc/admin-volunteer-status.php:488
 #, php-format
 msgid "%s is inactive. Their hours and their name are untouched, and they are no longer offered when you are staffing a shift."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:442
+#: inc/admin-volunteer-status.php:496
 msgid "Make them active again"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-status.php:457
+#: inc/admin-volunteer-status.php:511
 #, php-format
 msgid "%s is active again, and can be put on shifts."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:509
+#: inc/admin-volunteer-status.php:563
 msgid "Make active"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:510
+#: inc/admin-volunteer-status.php:564
 msgid "Make inactive"
 msgstr ""
 
@@ -6574,6 +6586,12 @@ msgstr ""
 #: inc/privacy.php:641
 #: inc/privacy.php:1010
 msgid "Volunteer hours"
+msgstr ""
+
+#: inc/privacy.php:682
+#: inc/render.php:236
+#: inc/volunteer-cpt.php:195
+msgid "Verified hours"
 msgstr ""
 
 #: inc/privacy.php:686

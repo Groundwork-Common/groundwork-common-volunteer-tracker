@@ -2326,7 +2326,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    they have done. Its own box rather than a row inside Save, because the link
    in it acts immediately and everything in Save does not. */
 .gwcvt-standing__where {
-	margin: 0 0 .5em;
+	margin: 0 0 .8em;
 	font-weight: 600;
 }
 
@@ -2339,10 +2339,17 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	margin: .8em 0 0;
 }
 
+/* No rule above this. It had one, to separate the facts from the sentence over
+   them — and that sentence only appears for somebody inactive, which is not
+   most people. On everybody else the border was the first thing in the panel,
+   drawn immediately under the panel's own header and inset by the padding: a
+   stray line across the top of the box, separating nothing from nothing.
+
+   Separation from the sentence, where there is one, is the sentence's own
+   bottom margin. */
 .gwcvt-standing__facts {
 	margin: 0;
-	padding: .7em 0 0;
-	border-top: 1px solid #f0f0f1;
+	padding: 0;
 	color: #50575e;
 }
 
@@ -2354,21 +2361,28 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
    min-width rather than a fixed column, so the values line up where the labels
    allow it and a long label pushes its own value along instead of wrapping. */
+/* A grid rather than a flex row, because one label can have several values
+   under it: Hours is a total and the two halves it splits into. Both are placed
+   by column, so the values stack in the second one however many there are and
+   the label stays put beside the first. Flex would have laid them side by
+   side. */
 .gwcvt-standing__facts div {
-	display: flex;
-	gap: .6em;
+	display: grid;
+	grid-template-columns: 8em 1fr;
+	gap: 0 .6em;
 	margin: 0 0 .35em;
 }
 
 .gwcvt-standing__facts dt {
-	flex: 0 0 auto;
-	min-width: 9em;
+	grid-column: 1;
 	color: #646970;
 }
 
 .gwcvt-standing__facts dd {
+	grid-column: 2;
 	margin: 0;
 	color: #1d2327;
+	font-variant-numeric: tabular-nums;
 }
 
 /* A credential somebody still holds after the organization stopped asking for
