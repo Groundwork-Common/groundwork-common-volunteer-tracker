@@ -41,14 +41,18 @@ function gwc_vt_register_letters_menu(): void {
  * in prose and left as prose, which made the screen a cul-de-sac: it told you
  * where to go and then made you find it.
  *
- * There were two links here. The second sent somebody to the dashboard to check
- * a reference, and the checker is now in this screen's own rail, so it pointed
- * at another page for a box six inches to the right.
+ * It sits under the table, ruled off from it, exactly as "Log hours" sits under
+ * the hours on a volunteer's record: the panel is there to be read, and the
+ * thing you do afterwards belongs after it. It was above the table, which is
+ * where a page-title action goes — and this is not the primary thing to do on a
+ * screen whose primary thing is reading.
  *
- * A link rather than a button, on purpose: a page-title action would read as
- * the primary thing to do on a screen whose primary thing is reading. And it
- * goes to the volunteer LIST rather than to a form — you pick the person, then
- * the letter, which is the order the whole feature is built around.
+ * There were two links. The second sent somebody to the dashboard to check a
+ * reference, and the checker is in this screen's own rail now, so it pointed at
+ * another page for a box six inches to the right.
+ *
+ * It goes to the volunteer LIST rather than to a form — you pick the person,
+ * then the letter, which is the order the whole feature is built around.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -65,7 +69,7 @@ function gwc_vt_letters_next_steps(): void {
 	}
 
 	printf(
-		'<p class="description gwcvt-letters__next"><a href="%s">%s</a></p>',
+		'<p class="gwcvt-panel__foot"><a href="%s">%s</a></p>',
 		esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ) ),
 		esc_html__( 'Draft one from a volunteer’s record', 'groundwork-common-volunteer-tracker' )
 	);
@@ -167,14 +171,16 @@ function gwc_vt_render_letters_screen(): void {
 		<hr class="wp-header-end" />
 
 
-		<?php gwc_vt_letters_next_steps(); ?>
-
 		<?php
 		/* The same two columns the dashboard uses, from the same rules — the log
 		 * beside the thing somebody does while reading it. Checking a reference
 		 * is the one job that starts on this screen rather than on a volunteer,
 		 * and it was only on the dashboard, which is not where somebody looking
-		 * at the log is standing. */
+		 * at the log is standing.
+		 *
+		 * Both are panels, in core's own postbox markup: this screen is a list of
+		 * records and a small form, which is what a volunteer's record is, and
+		 * there is no reason for the two to look like different products. */
 		?>
 		<div class="gwcvt-split">
 			<div class="gwcvt-split__main">
@@ -182,7 +188,7 @@ function gwc_vt_render_letters_screen(): void {
 			</div>
 
 			<div class="gwcvt-split__rail">
-				<?php gwc_vt_render_reference_checker( GWC_VT_LETTERS_PAGE ); ?>
+				<?php gwc_vt_render_reference_check_panel(); ?>
 			</div>
 		</div>
 	</div>
@@ -546,24 +552,59 @@ function gwc_vt_letters_redirect( string $result, array $request ): void {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The reference checker box.
+ * The reference checker, as a box in the dashboard's rail.
  *
- * Takes the page it should come back to, because it is no longer only on the
- * Letters screen: the dashboard's rail carries it too, on the grounds that
- * whoever picks up the phone is not necessarily whoever issues letters, and the
- * dashboard is where they already are. The form is a GET, so the answer is
- * rendered by whichever screen the query lands on — pointing it at the wrong
+ * It is on two screens: whoever picks up the phone is not necessarily whoever
+ * issues letters, and the dashboard is where they already are. Both take the
+ * page they should come back to, because the form is a GET — the answer is
+ * rendered by whichever screen the query lands on, and pointing it at the wrong
  * one would answer the question on a page the person was not looking at.
  *
  * @param string $page The admin page slug to submit to.
  */
-function gwc_vt_render_reference_checker( string $page = GWC_VT_LETTERS_PAGE ): void {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup; nothing is written and no data is disclosed that the viewer cannot already see.
-	$code = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
+function gwc_vt_render_reference_checker( string $page = GWC_VT_DASHBOARD_PAGE ): void {
 	?>
 	<div class="gwcvt-box">
 		<h2><?php esc_html_e( 'Check a reference', 'groundwork-common-volunteer-tracker' ); ?></h2>
+		<?php gwc_vt_render_reference_check_body( $page ); ?>
+	</div>
+	<?php
+}
 
+/**
+ * The same checker, as a panel.
+ *
+ * The Letters screen's rail, where everything else on the screen is a panel.
+ * The dashboard keeps the box: its rail sets section headings above flush
+ * cards, and a panel with its heading inside it would be a third shape on a
+ * screen that already has two.
+ *
+ * Only the wrapper differs. The form, the lookup and all three answers are
+ * gwc_vt_render_reference_check_body() either way.
+ */
+function gwc_vt_render_reference_check_panel(): void {
+	gwc_vt_render_panel(
+		__( 'Check a reference', 'groundwork-common-volunteer-tracker' ),
+		static function (): void {
+			gwc_vt_render_reference_check_body( GWC_VT_LETTERS_PAGE );
+		},
+		'gwcvt-check'
+	);
+}
+
+/**
+ * The form, and the answer when there is one.
+ *
+ * Split from the panel around it because the panel is markup and this is the
+ * screen's only real work — and because an early return that had to echo a
+ * closing </div> on its way out is how a screen ends up with one.
+ *
+ * @param string $page The admin page slug to submit to.
+ */
+function gwc_vt_render_reference_check_body( string $page ): void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup; nothing is written and no data is disclosed that the viewer cannot already see.
+	$code = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
+	?>
 		<p class="description">
 			<?php esc_html_e( 'The code printed on the letter.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
@@ -581,7 +622,6 @@ function gwc_vt_render_reference_checker( string $page = GWC_VT_LETTERS_PAGE ): 
 
 		<?php
 		if ( '' === trim( $code ) ) {
-			echo '</div>';
 			return;
 		}
 
@@ -589,7 +629,7 @@ function gwc_vt_render_reference_checker( string $page = GWC_VT_LETTERS_PAGE ): 
 
 		if ( 'unknown' === $result['status'] ) {
 			printf(
-				'<div class="notice notice-error inline"><p>%s</p></div></div>',
+				'<div class="notice notice-error inline"><p>%s</p></div>',
 				esc_html__( 'No letter with that reference has been issued from this site.', 'groundwork-common-volunteer-tracker' )
 			);
 			return;
@@ -636,9 +676,6 @@ function gwc_vt_render_reference_checker( string $page = GWC_VT_LETTERS_PAGE ): 
 		}
 
 		gwc_vt_render_reference_comparison( $result );
-		?>
-	</div>
-	<?php
 }
 
 /**
@@ -736,14 +773,19 @@ function gwc_vt_render_reference_comparison( array $result ): void {
  * The recent-issuance log.
  */
 function gwc_vt_render_letter_log(): void {
+	gwc_vt_render_panel(
+		__( 'Recently issued', 'groundwork-common-volunteer-tracker' ),
+		'gwc_vt_render_letter_log_body',
+		'gwcvt-letters__log'
+	);
+}
+
+/**
+ * What is inside that panel: the table, and the way to make another.
+ */
+function gwc_vt_render_letter_log_body(): void {
 	$records = gwc_vt_recent_letters( 15 );
 	?>
-	<section class="gwcvt-section gwcvt-letters__log">
-		<div class="gwcvt-section__head">
-			<h2><?php esc_html_e( 'Recently issued', 'groundwork-common-volunteer-tracker' ); ?></h2>
-		</div>
-
-		<div class="gwcvt-card">
 		<?php if ( ! $records ) : ?>
 			<p class="description"><?php esc_html_e( 'No letters have been issued yet.', 'groundwork-common-volunteer-tracker' ); ?></p>
 		<?php else : ?>
@@ -815,7 +857,6 @@ function gwc_vt_render_letter_log(): void {
 				</tbody>
 			</table>
 		<?php endif; ?>
-		</div>
-	</section>
 	<?php
+	gwc_vt_letters_next_steps();
 }

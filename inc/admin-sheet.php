@@ -320,3 +320,37 @@ function gwc_vt_mark_record_panels(): void {
 }
 
 add_action( 'admin_init', 'gwc_vt_mark_record_panels' );
+
+/* ── The same shape on a screen with no meta boxes ───────────────────────────
+ * A menu page has no postbox API to hang a panel off: WordPress builds those
+ * from add_meta_box(), and only on a post editor. So a screen that wants the
+ * same panel writes the markup itself — which is exactly how the three panels
+ * on a volunteer's record drifted apart before they were given one class.
+ *
+ * One function writes it instead. It emits core's own postbox markup, so the
+ * border, the header rule and the heading are core's rather than ours, plus the
+ * gwcvt-panel class the stylesheet keys off — which means a panel on the
+ * Letters screen and a panel on a volunteer's record are the same object, and
+ * stay the same object when either is changed.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A panel, on a screen that has no meta boxes to make one from.
+ *
+ * @param string   $title   The heading.
+ * @param callable $body    Prints the panel's contents.
+ * @param string   $classes Optional extra classes on the box.
+ */
+function gwc_vt_render_panel( string $title, callable $body, string $classes = '' ): void {
+	?>
+	<div class="postbox gwcvt-panel <?php echo esc_attr( $classes ); ?>">
+		<div class="postbox-header">
+			<h2 class="hndle"><?php echo esc_html( $title ); ?></h2>
+		</div>
+
+		<div class="inside">
+			<?php call_user_func( $body ); ?>
+		</div>
+	</div>
+	<?php
+}

@@ -246,15 +246,21 @@ if ( preg_match_all( '/(\.gwcvt-[^{}]*?(?:__row[a-z-]*|\s+t[dr]))\s*\{([^}]*)\}/
  *
  * And the table's own top border has to go, because the panel header already
  * drew that line. Left alone it draws a second one directly under the first,
- * which is the same fault one pixel apart instead of six. */
+ * which is the same fault one pixel apart instead of six.
+ *
+ * Each rule carries both selectors: the ID-scoped one for a panel on a post
+ * editor, and the class-only one for a panel gwc_vt_render_panel() draws on a
+ * menu screen, where there is no #poststuff to be inside of. Asserted as a
+ * selector list rather than as one selector, because dropping either half is a
+ * panel that goes back to being padded on one screen and not the other. */
 gwc_vt_sh_check(
 	'the panel rules are specific enough to beat WordPress’s own',
-	1 === preg_match( '/#poststuff\s+\.gwcvt-panel\s+\.inside\s*\{[^}]*margin:\s*0/', $GLOBALS['gwc_vt_sh_css'] )
+	1 === preg_match( '/#poststuff\s+\.gwcvt-panel\s+\.inside\s*,\s*\.gwcvt-panel\s+\.inside\s*\{[^}]*margin:\s*0/', $GLOBALS['gwc_vt_sh_css'] )
 );
 
 gwc_vt_sh_check(
 	'and the table does not draw the line the panel header already drew',
-	1 === preg_match( '/#poststuff\s+\.gwcvt-panel\s+\.inside\s*>\s*table\s*\{[^}]*border-top:\s*0/', $GLOBALS['gwc_vt_sh_css'] )
+	1 === preg_match( '/#poststuff\s+\.gwcvt-panel\s+\.inside\s*>\s*table\s*,\s*\.gwcvt-panel\s+\.inside\s*>\s*table\s*\{[^}]*border-top:\s*0/', $GLOBALS['gwc_vt_sh_css'] )
 );
 
 gwc_vt_sh_check(

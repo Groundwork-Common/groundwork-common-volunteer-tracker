@@ -530,6 +530,31 @@ gwc_vt_ls_check(
 	false === strpos( $gwc_vt_ls_records, 'page=' . GWC_VT_DASHBOARD_PAGE . '#gwcvt-reference' )
 );
 
+/* ── The same panel a volunteer's record is made of ──────────────────────────
+ * Core's postbox markup, and the class the record's three panels carry, so one
+ * rule set draws both. Written by hand here because a menu screen has no meta
+ * box API to build one from — which is exactly how the record's panels drifted
+ * apart before they were given a class.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+gwc_vt_ls_check(
+	'the log is a panel, in the markup the record\'s own panels use',
+	false !== strpos( $gwc_vt_ls_records, 'postbox gwcvt-panel' )
+		&& false !== strpos( $gwc_vt_ls_records, 'class="hndle"' )
+);
+
+/* Under the table, ruled off from it, exactly as "Log hours" sits under the
+ * hours on a volunteer's record. It was above the table, where a page-title
+ * action goes — and reading, not drafting, is what this screen is for. */
+$gwc_vt_ls_table = strpos( $gwc_vt_ls_records, '<table' );
+$gwc_vt_ls_foot  = strpos( $gwc_vt_ls_records, 'gwcvt-panel__foot' );
+
+gwc_vt_ls_check(
+	'and the way to draft one is under it, not over it',
+	false !== $gwc_vt_ls_table && false !== $gwc_vt_ls_foot && $gwc_vt_ls_foot > $gwc_vt_ls_table,
+	'table at ' . var_export( $gwc_vt_ls_table, true ) . ', foot at ' . var_export( $gwc_vt_ls_foot, true )
+);
+
 ob_start();
 gwc_vt_render_dashboard_reference();
 $gwc_vt_ls_dash = (string) ob_get_clean();
