@@ -426,6 +426,101 @@ gwc_vt_check(
 	$GLOBALS['gwc_vt_logged_before'] . ' → ' . $GLOBALS['gwc_vt_logged_after']
 );
 
+
+echo "\n── The letterhead uses the site’s own logo ──────────────────────\n";
+
+/* A nonprofit that has put its logo on its website has already told WordPress
+ * what its logo is. Asking again on a settings screen is asking a question with
+ * an answer — the same reasoning the name falling back to the site title and
+ * the contact falling back to admin_email are built on. */
+$GLOBALS['gwc_vt_logo_before'] = get_theme_mod( 'custom_logo' );
+$GLOBALS['gwc_vt_logo_opts']   = get_option( GWC_VT_SETTINGS_OPTION );
+
+$GLOBALS['gwc_vt_logo_att'] = (int) wp_insert_post(
+	array(
+		'post_type'      => 'attachment',
+		'post_status'    => 'inherit',
+		'post_title'     => 'Zzlogo site',
+		'post_mime_type' => 'image/png',
+	)
+);
+
+$GLOBALS['gwc_vt_logo_own'] = (int) wp_insert_post(
+	array(
+		'post_type'      => 'attachment',
+		'post_status'    => 'inherit',
+		'post_title'     => 'Zzlogo letters',
+		'post_mime_type' => 'image/png',
+	)
+);
+
+update_post_meta( $GLOBALS['gwc_vt_logo_att'], '_wp_attached_file', 'zzlogo-site.png' );
+update_post_meta( $GLOBALS['gwc_vt_logo_own'], '_wp_attached_file', 'zzlogo-letters.png' );
+
+set_theme_mod( 'custom_logo', $GLOBALS['gwc_vt_logo_att'] );
+
+/**
+ * Point the plugin's own logo setting somewhere, and read what the letter uses.
+ *
+ * @param int $attachment Attachment ID, or 0 for unset.
+ * @return string
+ */
+function gwc_vt_logo_with( int $attachment ): string {
+	$settings              = (array) get_option( GWC_VT_SETTINGS_OPTION, array() );
+	$settings['org_logo']  = $attachment;
+
+	update_option( GWC_VT_SETTINGS_OPTION, $settings );
+	gwc_vt_settings_cache( null, true );
+
+	return gwc_vt_letter_logo_url();
+}
+
+gwc_vt_check(
+	'with no logo set for letters, the letterhead uses the site’s',
+	false !== strpos( gwc_vt_logo_with( 0 ), 'zzlogo-site' ),
+	gwc_vt_logo_with( 0 )
+);
+
+/* An organization that chose a logo FOR its letters chose it for its letters,
+ * and the site's must not overrule that. */
+gwc_vt_check(
+	'and a logo chosen for letters wins over the site’s',
+	false !== strpos( gwc_vt_logo_with( $GLOBALS['gwc_vt_logo_own'] ), 'zzlogo-letters' ),
+	gwc_vt_logo_with( $GLOBALS['gwc_vt_logo_own'] )
+);
+
+/* A setting pointing at a hole is "there is no logo here", the same as never
+ * having chosen one — and should not stop the letterhead using the logo the
+ * site plainly has. */
+gwc_vt_check(
+	'and one that has been deleted since falls through rather than blanking it',
+	false !== strpos( gwc_vt_logo_with( 999999 ), 'zzlogo-site' ),
+	gwc_vt_logo_with( 999999 )
+);
+
+remove_theme_mod( 'custom_logo' );
+
+gwc_vt_check(
+	'with neither, there is simply no logo, and the letter still reads',
+	'' === gwc_vt_logo_with( 0 )
+		&& false !== strpos( gwc_vt_render_letter( gwc_vt_build_letter( (int) $GLOBALS['gwc_vt_shown'] ), 'print' ), gwc_vt_org_name() )
+);
+
+if ( false !== $GLOBALS['gwc_vt_logo_before'] ) {
+	set_theme_mod( 'custom_logo', $GLOBALS['gwc_vt_logo_before'] );
+}
+
+if ( false === $GLOBALS['gwc_vt_logo_opts'] ) {
+	delete_option( GWC_VT_SETTINGS_OPTION );
+} else {
+	update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_logo_opts'] );
+}
+
+gwc_vt_settings_cache( null, true );
+
+wp_delete_post( $GLOBALS['gwc_vt_logo_att'], true );
+wp_delete_post( $GLOBALS['gwc_vt_logo_own'], true );
+
 /* This section runs after the file's own clean-up loop, so it clears up after
  * itself. Left behind, one extra "Zzytest" volunteer is a fixture in somebody
  * else's database: tests/integration/entries.php searches that prefix and
