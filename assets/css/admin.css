@@ -2037,19 +2037,31 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    was the only thing on the screen, and beside a rail it left a band of empty
    page between the two.
 
-   A heading over a flush card, which is what a panel looks like on a menu
-   screen here. It was a .gwcvt-box: a padded card with its heading inside it
-   and a bordered table inside that, so the table drew a second frame twenty
-   pixels in from the first. The same fault the record panels had, fixed the
-   same way — the card is flush and its contents pad themselves. */
-.gwcvt-letters__log .gwcvt-card > table {
-	margin: 0;
-	border: 0;
+   It is a panel — core's postbox, the class the record's own panels carry, and
+   the same rules below. It was a .gwcvt-box: a padded card with its heading
+   inside it and a bordered table inside that, so the table drew a second frame
+   twenty pixels in from the first. Being a panel is what fixes that, and what
+   stops this screen and a volunteer's record looking like two products.
+
+   The panel is the last thing in its column, so nothing below it needs the
+   bottom margin core gives a postbox in a stack. */
+.gwcvt-letters__log,
+.gwcvt-check {
+	margin-bottom: 0;
 }
 
-.gwcvt-letters__log .gwcvt-card > p {
-	margin: 0;
-	padding: 16px 18px;
+/* A rail is narrower than core's .regular-text, which is a fixed 25em: left
+   alone the input runs off the right-hand edge of the panel. Seen in the
+   browser, not guessed — the same fix the dashboard's rail already makes for
+   the same box. */
+.gwcvt-split__rail .gwcvt-panel input[type="text"] {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.gwcvt-split__rail .gwcvt-panel .notice {
+	margin: 10px 0 0;
 }
 
 .gwcvt-letters__crumbs {
@@ -2733,8 +2745,14 @@ body.js .gwcvt-sheet--open {
    #poststuff .inside — so a class-only rule of ours loses to it however
    specific it looks, and the 6px top margin it sets survived. That margin is
    what put a strip of panel background between the header's bottom border and
-   the table's top one: two rules with a gap trapped between them. */
-#poststuff .gwcvt-panel .inside {
+   the table's top one: two rules with a gap trapped between them.
+
+   The plain .gwcvt-panel half of each pair is for a panel on a menu screen,
+   where there is no #poststuff to be inside of — gwc_vt_render_panel() writes
+   core's postbox markup on a page that has no meta box API to build one. Both
+   selectors, one rule: a panel is the same object wherever it is drawn. */
+#poststuff .gwcvt-panel .inside,
+.gwcvt-panel .inside {
 	margin: 0;
 	padding: 0;
 }
@@ -2742,14 +2760,16 @@ body.js .gwcvt-sheet--open {
 /* And no top border on the table, because the panel header already drew that
    line. Left to itself it draws a second one immediately under the first, which
    is the same fault a pixel apart instead of six. */
-#poststuff .gwcvt-panel .inside > table {
+#poststuff .gwcvt-panel .inside > table,
+.gwcvt-panel .inside > table {
 	margin: 0;
 	border-top: 0;
 	border-left: 0;
 	border-right: 0;
 }
 
-#poststuff .gwcvt-panel .inside > :not(table):not(.gwcvt-sheet-trigger) {
+#poststuff .gwcvt-panel .inside > :not(table):not(.gwcvt-sheet-trigger):not(.gwcvt-panel__foot),
+.gwcvt-panel .inside > :not(table):not(.gwcvt-sheet-trigger):not(.gwcvt-panel__foot) {
 	margin: 0;
 	padding: 12px;
 }
@@ -2766,8 +2786,11 @@ body.js .gwcvt-sheet--open {
 }
 
 /* The one that is not a sheet: the no-JavaScript route to the entry editor,
-   which has to sit and look exactly like the trigger it stands in for. */
-.gwcvt-history__add {
+   which has to sit and look exactly like the trigger it stands in for. And the
+   one that is not on a record at all: the Letters screen's way to the volunteer
+   list, under its log for the same reason. */
+.gwcvt-history__add,
+.gwcvt-panel__foot {
 	margin: 0;
 	padding: 10px 12px;
 	border-top: 1px solid #dcdcde;
