@@ -189,7 +189,7 @@ function gwc_vt_render_repeat_form( int $shift_id, int $series_id ): void {
 
 		<h2><?php esc_html_e( 'What to change', 'groundwork-common-volunteer-tracker' ); ?></h2>
 		<p class="description">
-			<?php esc_html_e( 'Only the things you tick are written. Everything else on every occurrence is left exactly as it is — including anything somebody has already corrected by hand on one of them.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Only what you tick is written. Anything corrected by hand on one occurrence stays as it is.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<?php gwc_vt_render_repeat_fields( $shift_id ); ?>
@@ -208,7 +208,7 @@ function gwc_vt_render_repeat_form( int $shift_id, int $series_id ): void {
 				?>
 			</label>
 			<p class="description">
-				<?php esc_html_e( 'Off by default. Changing the supervisor almost never means rewriting last March — and hours already logged against those shifts keep the activity they were logged with either way.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Hours already logged keep the supervisor they were logged with.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</div>
 
@@ -224,7 +224,7 @@ function gwc_vt_render_repeat_form( int $shift_id, int $series_id ): void {
 				?>
 			</label>
 			<p class="description">
-				<?php esc_html_e( 'Off by default, and worth leaving off. A cancellation is an answer you already gave whoever had signed up; changing its time now does not un-send that message, it just makes your records disagree with it.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Changing a called-off shift does not un-send what its signups were told.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</div>
 
@@ -242,7 +242,7 @@ function gwc_vt_render_repeat_form( int $shift_id, int $series_id ): void {
 				?>
 			</label>
 			<p class="description">
-				<?php esc_html_e( 'One decision for the whole batch. Only occurrences still to come are written to, only the ones where something they would care about actually moved, and somebody on three of these Saturdays gets three messages.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Only occurrences still to come, and only where something they would care about moved. Somebody on three of these Saturdays gets three messages.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</div>
 
@@ -295,7 +295,7 @@ function gwc_vt_render_repeat_fields( int $shift_id ): void {
 			</label>
 		</p>
 		<p class="description">
-			<?php esc_html_e( 'The date of each occurrence never moves. Shifting every one by a day is a different repeat, not a change to this one.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'The date of each occurrence never moves.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</div>
 
@@ -308,7 +308,7 @@ function gwc_vt_render_repeat_fields( int $shift_id ): void {
 			<input type="text" class="regular-text" name="gwc_vt_activity" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_ACTIVITY, true ) ); ?>" />
 		</p>
 		<p class="description">
-			<?php esc_html_e( 'This is what appears on every letter the hours from these shifts reach. Hours already logged keep the wording they were logged with.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Appears on every letter these hours reach. Hours already logged keep the wording they were logged with.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</div>
 
@@ -348,7 +348,7 @@ function gwc_vt_render_repeat_fields( int $shift_id ): void {
 			</label>
 		</p>
 		<p class="description">
-			<?php esc_html_e( 'Lowering the room for people does not take anybody off a roster who is already on one.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Lowering it takes nobody off a roster.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</div>
 
@@ -399,7 +399,7 @@ function gwc_vt_render_repeat_fields( int $shift_id ): void {
 			</div>
 
 			<p class="description">
-				<?php esc_html_e( 'This replaces what each occurrence asks for rather than adding to it — so selecting the box with nothing chosen clears them across the whole repeat.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Replaces what each occurrence asks for, so ticking this with nothing chosen clears them.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</div>
 	<?php endif; ?>

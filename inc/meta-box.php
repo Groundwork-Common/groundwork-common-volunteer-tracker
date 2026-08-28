@@ -314,7 +314,7 @@ function gwc_vt_render_entry_meta_box( $post ): void {
 				maxlength="100"
 				value="<?php echo esc_attr( $supervisor ); ?>"
 			/>
-			<span class="description"><?php esc_html_e( 'The person who was there. Not necessarily whoever verifies the entry.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Not necessarily whoever verifies it.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 	</div>
 	<?php
@@ -588,7 +588,7 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 				<strong><?php esc_html_e( 'Email', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
 			<input type="email" id="gwcvt-email" name="gwc_vt_email" class="regular-text" value="<?php echo esc_attr( $email ); ?>" />
-			<span class="description"><?php esc_html_e( 'Where a verification letter is sent, and how the privacy tools find this record.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Where a verification letter is sent.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
 		<div class="gwcvt-field">
@@ -596,7 +596,7 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 				<strong><?php esc_html_e( 'Phone', 'groundwork-common-volunteer-tracker' ); ?></strong>
 			</label>
 			<input type="text" id="gwcvt-phone" name="gwc_vt_phone" class="regular-text" maxlength="40" value="<?php echo esc_attr( $phone ); ?>" />
-			<span class="description"><?php esc_html_e( 'For your own use — calling around when a shift is short. It is never printed on a letter and never shown publicly.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Never printed on a letter, never shown publicly.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 
 		<?php gwc_vt_render_volunteer_photo_field( $volunteer_id ); ?>
@@ -702,7 +702,7 @@ function gwc_vt_render_volunteer_required_box( $post ): void {
 		</p>
 
 		<p class="description">
-			<?php esc_html_e( 'For court-ordered or school-required service only. None of it ever reaches a letter.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'None of this reaches a letter.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 	<?php
@@ -825,14 +825,14 @@ function gwc_vt_render_volunteer_photo_field( int $volunteer_id ): void {
 			<?php
 			printf(
 				/* translators: %s: a file size, such as "8 MB". */
-				esc_html__( 'For telling two records apart at the desk. JPEG, PNG or WebP, up to %s.', 'groundwork-common-volunteer-tracker' ),
+				esc_html__( 'JPEG, PNG or WebP, up to %s.', 'groundwork-common-volunteer-tracker' ),
 				esc_html( size_format( GWC_VT_PHOTO_MAX_BYTES ) )
 			);
 			?>
 		</span>
 
 		<span class="description">
-			<?php esc_html_e( 'It is kept out of the Media Library, is never given a public address, and is never printed on a letter. Only somebody who can open this record can see it. Location data the camera recorded is discarded.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Kept out of the Media Library, never public, never on a letter. Location data from the camera is discarded.', 'groundwork-common-volunteer-tracker' ); ?>
 		</span>
 	</div>
 
@@ -1088,7 +1088,7 @@ function gwc_vt_render_volunteer_retention_box( $post ): void {
 		</p>
 
 		<p class="description">
-			<?php esc_html_e( 'Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Also blocks a WordPress erasure request. The reason is shown to whoever handles it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<?php
@@ -1099,7 +1099,7 @@ function gwc_vt_render_volunteer_retention_box( $post ): void {
 		?>
 		<?php if ( (int) gwc_vt_setting( 'retention_months' ) < 1 ) : ?>
 			<p class="description">
-				<?php esc_html_e( 'Nothing is being purged at the moment, so this changes nothing until a retention period is set.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Nothing is being purged, so this holds nothing until a retention period is set.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		<?php endif; ?>
 	</div>

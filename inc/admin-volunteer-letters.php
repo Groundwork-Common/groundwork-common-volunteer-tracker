@@ -494,7 +494,7 @@ function gwc_vt_render_letter_draft_sheet( int $volunteer_id ): void {
 				</label><br />
 				<textarea form="gwcvt-start-letter" id="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="addressee" rows="3" class="large-text"
 					placeholder="<?php esc_attr_e( 'Officer J. Smith, Richmond County Probation', 'groundwork-common-volunteer-tracker' ); ?>"></textarea>
-				<span class="description"><?php esc_html_e( 'Only if it is going to somebody other than the volunteer.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<span class="description"><?php esc_html_e( 'Only if it is going to somebody else.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 
 			<p>
@@ -587,7 +587,7 @@ function gwc_vt_render_letter_poster(): void {
 		static function (): void {
 			?>
 			<p class="description">
-				<?php esc_html_e( 'The letter opens ready to print, and who it went to is recorded.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Opens ready to print.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 
 			<p>

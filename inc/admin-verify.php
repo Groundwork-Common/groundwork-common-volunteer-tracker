@@ -904,10 +904,10 @@ function gwc_vt_bulk_unverify_confirm(): void {
 			</strong>
 		</p>
 		<p>
-			<?php esc_html_e( 'Each of these carries a staff member\'s name and the date they attested to it. Withdrawing removes that. Verifying them again afterwards does not restore it — it records whoever does it, on the day they do it.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Each carries a staff member\'s name and the date they attested. Withdrawing removes that; verifying again records whoever does it, on the day they do it.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 		<p>
-			<?php esc_html_e( 'The hours themselves are untouched. They stop counting toward anything, and they stop appearing as verified on a letter, until somebody attests to them again.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'The hours themselves are untouched. They stop counting, and stop appearing as verified on a letter, until somebody attests again.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<?php if ( $skipped > 0 ) : ?>
@@ -1290,7 +1290,7 @@ function gwc_vt_render_verify_meta_box( $post ): void {
 
 	printf(
 		'<p class="description">%s</p>',
-		esc_html__( 'Verifying records that you, as a member of staff, attest these hours were worked. Your name and the date are recorded and appear on the verification letter.', 'groundwork-common-volunteer-tracker' )
+		esc_html__( 'Attests, as a member of staff, that these hours were worked. Your name and the date appear on the verification letter.', 'groundwork-common-volunteer-tracker' )
 	);
 
 	printf(

@@ -67,7 +67,7 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'letterhead',
 			'type'    => 'image',
 			'label'   => __( 'Logo', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Leave this empty and your site’s own logo is used. Set one here only if letters should carry something different. Kept small on purpose — this is correspondence, not a flyer. Email programs often refuse to load images, so the name is always printed as text underneath and the letter reads correctly without it.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Leave empty to use your site’s own logo. Kept small on purpose, and the name always prints as text underneath, so the letter reads correctly where images do not load.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'org_contact'               => array(
 			'tab'         => 'letter',
@@ -75,7 +75,7 @@ function gwc_vt_settings_fields(): array {
 			'type'        => 'text',
 			'label'       => __( 'Contact for questions', 'groundwork-common-volunteer-tracker' ),
 			'placeholder' => (string) get_option( 'admin_email' ),
-			'help'        => __( 'Where a court or school should direct questions about a letter. This is the number somebody phones to check a reference code, so make it one that is answered.', 'groundwork-common-volunteer-tracker' ),
+			'help'        => __( 'Where a court or school directs questions about a letter. Make it one that is answered.', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		/* ── Letter: signature ───────────────────────────────────────────── */
@@ -85,14 +85,14 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'signature',
 			'type'    => 'text',
 			'label'   => __( 'Signed by', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Printed under the signature line. Left empty, the line prints unlabeled — which looks unfinished, and is meant to.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Printed under the signature line. Left empty, the line prints unlabeled.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signatory_title'           => array(
 			'tab'     => 'letter',
 			'section' => 'signature',
 			'type'    => 'text',
 			'label'   => __( 'Their title', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Printed under the name — "Volunteer Coordinator", "Executive Director". It tells a reader what standing the person signing has to say what the letter says.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Printed under the name — “Volunteer Coordinator”, “Executive Director”.', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		/* ── Letter: wording ─────────────────────────────────────────────── */
@@ -114,7 +114,7 @@ function gwc_vt_settings_fields(): array {
 			'rows'        => 5,
 			'label'       => __( 'Disclaimer', 'groundwork-common-volunteer-tracker' ),
 			'placeholder' => gwc_vt_default_disclaimer(),
-			'help'        => __( 'Your counsel may want particular wording, so this is yours to change. It cannot be emptied: saving it blank restores the default. A letter with no disclaimer is a letter that has quietly started implying this plugin certified something.', 'groundwork-common-volunteer-tracker' ),
+			'help'        => __( 'Yours to change, and it cannot be emptied: saving it blank restores the default.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
 		'letter_reference_note'     => array(
@@ -124,7 +124,7 @@ function gwc_vt_settings_fields(): array {
 			'rows'        => 3,
 			'label'       => __( 'What the reference code proves', 'groundwork-common-volunteer-tracker' ),
 			'placeholder' => gwc_vt_default_reference_note(),
-			'help'        => __( 'Also cannot be emptied. Without it, a reader reasonably assumes a code means some outside body issued the document.', 'groundwork-common-volunteer-tracker' ),
+			'help'        => __( 'Also cannot be emptied. Without it, a reader assumes a code means some outside body issued the document.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
 
@@ -135,21 +135,21 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'contents',
 			'type'    => 'checkbox',
 			'label'   => __( 'List every shift', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'On by default. A total with nothing behind it is a number the reader has to take on faith, which is what this document exists to avoid.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'On by default. A total with nothing behind it is a number the reader has to take on faith.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'letter_include_unverified' => array(
 			'tab'     => 'letter',
 			'section' => 'contents',
 			'type'    => 'checkbox',
 			'label'   => __( 'Also list hours nobody has verified', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off by default. When on, unverified shifts appear marked as such and are still excluded from the verified total — they are never quietly added in.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off by default. Unverified shifts then appear marked as such, and are still left out of the verified total.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'reference_prefix'          => array(
 			'tab'     => 'letter',
 			'section' => 'contents',
 			'type'    => 'text',
 			'label'   => __( 'Reference prefix', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Prepended to every reference code. Letters and numbers only — the code gets read aloud over the phone and typed back in.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Prepended to every reference code. Letters and numbers only; it gets read aloud over the phone.', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		/* ── Letter: email ───────────────────────────────────────────────── */
@@ -168,7 +168,7 @@ function gwc_vt_settings_fields(): array {
 			'type'    => 'textarea',
 			'rows'    => 3,
 			'label'   => __( 'Covering note', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Appears above the letter in the email, outside it. The letter itself is identical whether printed or emailed, and this is how a short “here is your letter” message gets added without changing the document.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Appears above the letter in the email, outside it. The letter itself is identical printed or emailed.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'  => true,
 		),
 		'from_name'                 => array(
@@ -183,7 +183,7 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'email',
 			'type'    => 'email',
 			'label'   => __( 'From address', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Use an address at your own domain. A letter sent from an address somewhere else is the thing a spam filter is most likely to hold back, and the volunteer never learns it was sent.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Use an address at your own domain. Mail from anywhere else is what a spam filter holds back, and the volunteer never learns it was sent.', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		/* ── Logging ─────────────────────────────────────────────────────── */
@@ -197,7 +197,7 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'hours',
 			'type'    => 'checkbox',
 			'label'   => __( 'Issue verification letters', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'On unless you clear it. Clear it if your organization records hours but never writes to a court or a school: the Letters screen and the Letter settings tab disappear, and nobody can produce or send a letter. Nothing is deleted — every letter already issued, the log of what went out, and every letter setting stay exactly where they are, and selecting this again finds them unchanged.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'On unless you clear it. Cleared, the Letters screen and the Letter tab disappear and nobody can produce a letter. Nothing is deleted — issued letters, the log of what went out and every letter setting stay where they are, and selecting this again finds them unchanged.', 'groundwork-common-volunteer-tracker' ),
 		),
 
 		'hour_increment'            => array(
@@ -228,42 +228,42 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'hours',
 			'type'    => 'checkbox',
 			'label'   => __( 'Allow shifts dated in the future', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off by default. A shift dated next Tuesday is a typo far more often than a plan, and on a document a court reads it discredits the whole record.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off by default. A shift dated next Tuesday is far more often a typo than a plan.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'self_log_enabled'          => array(
 			'tab'     => 'logging',
 			'section' => 'selflog',
 			'type'    => 'checkbox',
 			'label'   => __( 'Let volunteers send in their own hours', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name, an email address and a date from anonymous visitors — everything they send arrives unverified and waits for a staff member. Nothing they enter appears publicly.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name, an email address and a date from anonymous visitors. Everything arrives unverified and waits for a staff member, and nothing they enter appears publicly.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'self_log_page'             => array(
 			'tab'     => 'logging',
 			'section' => 'selflog',
 			'type'    => 'page',
 			'label'   => __( 'The page the form is on', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Add the Volunteer Hours Form block, or the [gwc_vt_hours_form] shortcode, to a page and choose it here. Submissions are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Hours Form block, or the [gwc_vt_hours_form] shortcode, to a page and choose it here. Submissions are accepted only on this page, pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'self_log_code'             => array(
 			'tab'     => 'logging',
 			'section' => 'selflog',
 			'type'    => 'text',
 			'label'   => __( 'Require a code', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Optional. A word you give people at the front desk, which the form then asks for. Not a security control — it is the difference between a form the whole internet can post to and one only people who have been handed a card will bother with.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Optional. A word you give people at the front desk, which the form then asks for. Not a security control.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'registration_enabled'      => array(
 			'tab'     => 'logging',
 			'section' => 'registration',
 			'type'    => 'checkbox',
 			'label'   => __( 'Let people apply to volunteer from your site', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name and contact details from anonymous visitors. Nothing they send becomes a volunteer record — it waits in a queue for a staff member to accept or discard, and nothing they enter appears publicly.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name and contact details from anonymous visitors. Nothing becomes a volunteer record — it waits for a staff member to accept or discard, and nothing appears publicly.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'registration_page'         => array(
 			'tab'     => 'logging',
 			'section' => 'registration',
 			'type'    => 'page',
 			'label'   => __( 'The page the form is on', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Add the Volunteer Application Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Applications are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Application Form block, or the [gwc_vt_volunteer_form] shortcode, to a page and choose it here. Applications are accepted only on this page, pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'registration_code'         => array(
 			'tab'     => 'logging',
@@ -277,21 +277,21 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'registration',
 			'type'    => 'checkbox',
 			'label'   => __( 'Ask whether they have required service hours', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off by default, and worth reading before you turn it on. With it on, a public page asks a stranger whether they are completing court-ordered or school-required service, and this site stores the answer against their name. It is useful — you can plan around a deadline from day one instead of finding out after the first shift — but it is the most sensitive thing this plugin holds, arriving through the least trusted door it has. Leave it off and a staff member can record the same thing on the volunteer record afterwards, having spoken to them.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off by default, and worth reading before you turn it on. With it on, a public page asks a stranger whether they are completing court-ordered or school-required service, and stores the answer against their name — the most sensitive thing this plugin holds, arriving through the least trusted door it has. Left off, a staff member records the same thing afterwards, having spoken to them.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'registration_ask_photo'    => array(
 			'tab'     => 'logging',
 			'section' => 'registration',
 			'type'    => 'checkbox',
 			'label'   => __( 'Invite a photo', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off by default. With it on, the form offers to take a photo — from a file, or from the camera on the device they are using. It is optional for them, kept out of the Media Library, never given a public address, and only visible to staff who can open the record. Turning this on is the one place this plugin lets an anonymous visitor put a file on your server, so leave it off unless you want faces on your volunteer records.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off by default. With it on, the form offers a photo, from a file or the camera. Optional for them, kept out of the Media Library, never public, and visible only to staff who can open the record. It is the one place this plugin lets an anonymous visitor put a file on your server.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signin_enabled'            => array(
 			'tab'     => 'logging',
 			'section' => 'signin',
 			'type'    => 'checkbox',
 			'label'   => __( 'Let volunteers sign in', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off until you switch it on. A volunteer types their email address, and if it matches one of your records they are sent a link that signs them in for the day. No account is created and no password exists. Signed in, they can see their own hours, see what they are down for, and cancel a shift — and anything they sign up for arrives already matched to their record instead of waiting to be matched by hand. It needs email to work from this site: there is no second way in.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. A volunteer types their email address and, if it matches a record, is sent a link that signs them in for the day. No account, no password. Signed in, they see their own hours and what they are down for, can cancel a shift, and anything they sign up for arrives already matched. It needs email to work from this site: there is no second way in.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signin_page'               => array(
 			'tab'     => 'logging',
@@ -306,7 +306,7 @@ function gwc_vt_settings_fields(): array {
 			'type'    => 'select',
 			'label'   => __( 'Keep volunteer records for', 'groundwork-common-volunteer-tracker' ),
 			'options' => 'gwc_vt_retention_period_options',
-			'help'    => __( '"Keep indefinitely" is a legitimate answer, and it is the default — a plugin that deleted records on a schedule it chose would eventually destroy the six weeks of Saturdays somebody needs for a court date. Never deciding is the answer that is not legitimate, which is why this tab keeps asking until you save it.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( '“Keep indefinitely” is a legitimate answer, and it is the default. Never deciding is not, which is why this tab keeps asking until you save it.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'retention_action'          => array(
 			'tab'     => 'privacy',
@@ -317,7 +317,7 @@ function gwc_vt_settings_fields(): array {
 				'anonymize' => __( 'Remove the name and contact details, keep the hours', 'groundwork-common-volunteer-tracker' ),
 				'delete'    => __( 'Delete the record and its shifts entirely', 'groundwork-common-volunteer-tracker' ),
 			),
-			'help'    => __( 'Anonymizing is usually right: your grant reporting and your Form 990 need the hours, and the hours identify nobody once the name is gone.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Anonymizing is usually right: grant reporting and your Form 990 need the hours, and the hours identify nobody once the name is gone.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'retention_anchor'          => array(
 			'tab'     => 'privacy',
@@ -328,7 +328,7 @@ function gwc_vt_settings_fields(): array {
 				'last_entry'  => __( 'Their last recorded shift', 'groundwork-common-volunteer-tracker' ),
 				'verified_at' => __( 'The last time a shift of theirs was verified', 'groundwork-common-volunteer-tracker' ),
 			),
-			'help'    => __( 'The clock runs on the whole person, not on each shift — a record is removed when the person has been inactive this long, and their old shifts go with them. Measuring from the last shift is what most policies mean. Measuring from the last verification is later, sometimes much later, because a shift written up in March and attested in June counts from June.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'The clock runs on the person, not each shift: a record goes when they have been inactive this long, and their shifts go with them. From the last verification is later — a shift written up in March and attested in June counts from June.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'activities'                => array(
 			'tab'     => 'logging',
@@ -346,7 +346,7 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'schedule',
 			'type'    => 'checkbox',
 			'label'   => __( 'Plan shifts ahead of time', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off until you switch it on. With it on, a Schedule screen appears where you can plan shifts, repeat them, put volunteers on them and print a roster. A scheduled shift is a plan and records nothing about anybody\'s hours — hours are still logged after the fact and still have to be verified.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. With it on, a Schedule screen appears for planning shifts, repeating them, staffing them and printing a roster. A scheduled shift records nobody\'s hours — those are still logged afterwards and still verified.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'shift_locations'           => array(
 			'tab'     => 'shifts',
@@ -361,21 +361,21 @@ function gwc_vt_settings_fields(): array {
 			'section' => 'signup',
 			'type'    => 'checkbox',
 			'label'   => __( 'Let people sign up for shifts themselves', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name and an email address from anonymous visitors. The public list shows what each shift is and how many places are left — never who else is coming. Nobody who signs up is added to your volunteer records automatically; a staff member matches them, exactly as with the hours form.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Off until you switch it on. With it on, this site accepts a name and an email address from anonymous visitors. The public list shows what each shift is and how many places are left, never who else is coming. Nobody is added to your records automatically; a staff member matches them, as with the hours form.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'schedule_page'             => array(
 			'tab'     => 'shifts',
 			'section' => 'signup',
 			'type'    => 'page',
 			'label'   => __( 'The page the shifts are on', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Add the Volunteer Shifts block, or the [gwc_vt_shift_list] shortcode, to a page and choose it here. Signups are only accepted on this page, and it is pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Add the Volunteer Shifts block, or the [gwc_vt_shift_list] shortcode, to a page and choose it here. Signups are accepted only on this page, pinned by ID so renaming it changes nothing.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signup_code'               => array(
 			'tab'     => 'shifts',
 			'section' => 'signup',
 			'type'    => 'text',
 			'label'   => __( 'Require a code', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'Optional. A word you give people, which the form then asks for. Not a security control — it is the difference between a form the whole internet can post to and one only people who have been told about it will bother with.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Optional. A word you give people, which the form then asks for. Not a security control.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signup_horizon_days'       => array(
 			'tab'     => 'shifts',
@@ -383,7 +383,7 @@ function gwc_vt_settings_fields(): array {
 			'type'    => 'select',
 			'label'   => __( 'Show shifts up to', 'groundwork-common-volunteer-tracker' ),
 			'options' => 'gwc_vt_signup_horizon_options',
-			'help'    => __( 'How far ahead the public list looks. A year of Saturdays is a wall of text nobody reads to the bottom of.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'How far ahead the public list looks.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'signup_cutoff_hours'       => array(
 			'tab'     => 'shifts',
@@ -391,14 +391,14 @@ function gwc_vt_settings_fields(): array {
 			'type'    => 'select',
 			'label'   => __( 'Close signups', 'groundwork-common-volunteer-tracker' ),
 			'options' => 'gwc_vt_signup_cutoff_options',
-			'help'    => __( 'Right up to the start is fine for a warehouse where an extra pair of hands is always welcome. Choose earlier if you have to print a list the night before.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Right up to the start is fine. Choose earlier if you print a list the night before.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'reminder_enabled'          => array(
 			'tab'     => 'shifts',
 			'section' => 'notices',
 			'type'    => 'checkbox',
 			'label'   => __( 'Remind people before their shift', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'One message per person per shift, sent once. Whoever is on the roster gets it; people on the waiting list do not, because they do not have a place yet.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'One message per person per shift, sent once. People on the waiting list do not get it — they have no place yet.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'reminder_lead_hours'       => array(
 			'tab'     => 'shifts',
@@ -406,14 +406,14 @@ function gwc_vt_settings_fields(): array {
 			'type'    => 'select',
 			'label'   => __( 'Send the reminder', 'groundwork-common-volunteer-tracker' ),
 			'options' => 'gwc_vt_reminder_lead_options',
-			'help'    => __( 'Two days is usually right: long enough that somebody who cannot make it still has time to say so, and you still have time to call somebody else.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'Two days is usually right: time for somebody to say they cannot make it, and time for you to call somebody else.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'digest_enabled'            => array(
 			'tab'     => 'shifts',
 			'section' => 'notices',
 			'type'    => 'checkbox',
 			'label'   => __( 'Send yourself a daily summary', 'groundwork-common-volunteer-tracker' ),
-			'help'    => __( 'One message a day listing shifts in the next week that are short of people, and shifts that have happened without their hours being logged. Nothing is sent on a day when there is nothing to say.', 'groundwork-common-volunteer-tracker' ),
+			'help'    => __( 'One message a day listing shifts next week that are short of people, and shifts whose hours have not been logged. Nothing is sent when there is nothing to say.', 'groundwork-common-volunteer-tracker' ),
 		),
 		'digest_recipient'          => array(
 			'tab'         => 'shifts',
@@ -1078,11 +1078,11 @@ function gwc_vt_render_permissions_tab(): void {
 	<h2><?php esc_html_e( 'Who can do what', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'Anybody who can edit posts on this site can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization\'s name on a letter to a court. They are frequently different people.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'Anybody who can edit posts can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization\'s name on a letter to a court.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'A role with neither still sees the hours list and can type up a shift. It simply has no Verify button and no Letters screen, rather than being shown buttons that would refuse it.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'A role with neither still sees the hours list and can type up a shift — it simply has no Verify button and no Letters screen.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -1137,7 +1137,7 @@ function gwc_vt_render_permissions_tab(): void {
 		</table>
 
 		<p class="description" style="max-width:44em">
-			<?php esc_html_e( 'Administrator is fixed. A site where nobody can issue a letter has no way to give one back, and an administrator can change this screen anyway.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Administrator is fixed: a site where nobody can issue a letter has no way to give one back.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<?php submit_button(); ?>
@@ -1228,11 +1228,11 @@ function gwc_vt_render_uninstall_section(): void {
 	<h2><?php esc_html_e( 'Removing this plugin', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'Deleting this plugin from the Plugins screen leaves every volunteer record, every logged shift, every scheduled shift and signup, and the log of letters issued, exactly where they are. Deactivating it does the same. Nothing here removes a person\'s hours by accident, and reinstalling picks up where you left off.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'Deleting this plugin leaves every record where it is: volunteers, logged hours, scheduled shifts, signups and the log of letters issued. Deactivating does the same, and reinstalling picks up where you left off.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'That is the right default and it is worth knowing about, because it also means deleting the plugin is not a way to remove somebody\'s data. To do that, use the retention policy above, or WordPress\'s own Erase Personal Data tool, before you delete anything.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'So deleting the plugin is not a way to remove somebody\'s data. Use the retention policy above, or WordPress\'s own Erase Personal Data tool, before you delete anything.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width:44em">
@@ -1249,7 +1249,7 @@ function gwc_vt_render_uninstall_section(): void {
 							<?php esc_html_e( 'Also remove this plugin\'s settings when it is deleted', 'groundwork-common-volunteer-tracker' ); ?>
 						</label>
 						<p class="description">
-							<?php esc_html_e( 'Off by default. With it on, deleting the plugin also removes its settings, its retention log and the record of what it had been asked to do. It still does not delete a single volunteer, shift, signup, hour entry or issued letter — nothing this plugin can do from this screen will.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php esc_html_e( 'With this on, deleting the plugin also removes its settings and its retention log. It still deletes no volunteer, shift, signup, hour entry or issued letter.', 'groundwork-common-volunteer-tracker' ); ?>
 						</p>
 						<p class="description">
 							<?php
@@ -1259,13 +1259,13 @@ function gwc_vt_render_uninstall_section(): void {
 							 * rather than a database row, so somebody who has
 							 * emptied the database and moved on would reasonably
 							 * assume the images went too. They do not. */
-							esc_html_e( 'Volunteer photographs are files rather than database records, and the same rule covers them: deleting the plugin leaves every one of them in place. They are removed when the volunteer is anonymized, erased or swept by the retention policy, or when the record is deleted outright.', 'groundwork-common-volunteer-tracker' );
+							esc_html_e( 'Volunteer photographs are files rather than database records, and the same rule covers them. They go when the volunteer is anonymized, erased, swept by the retention policy, or deleted outright.', 'groundwork-common-volunteer-tracker' );
 							?>
 						</p>
 						<?php if ( $armed ) : ?>
 							<p class="description">
 								<strong><?php esc_html_e( 'Currently armed.', 'groundwork-common-volunteer-tracker' ); ?></strong>
-								<?php esc_html_e( 'Deleting the plugin will discard its configuration, so a reinstall starts from the defaults and the retention question is asked again.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php esc_html_e( 'A reinstall will start from the defaults, and the retention question is asked again.', 'groundwork-common-volunteer-tracker' ); ?>
 							</p>
 						<?php endif; ?>
 					</td>
@@ -1305,7 +1305,7 @@ function gwc_vt_render_retention_log(): void {
 
 	<?php if ( ! $log ) : ?>
 		<p class="description">
-			<?php esc_html_e( 'Nothing has been purged yet. The sweep runs once a day and does nothing at all while records are kept indefinitely.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'Nothing has been purged yet. The sweep runs daily and does nothing while records are kept indefinitely.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 		<?php return; ?>
 	<?php endif; ?>

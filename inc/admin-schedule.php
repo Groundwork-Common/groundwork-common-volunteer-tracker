@@ -1889,7 +1889,7 @@ function gwc_vt_render_schedule_chooser( string $base ): void {
 				</p>
 
 				<p class="description">
-					<?php esc_html_e( 'It can repeat — every Saturday until December — and each occurrence is a real shift you can move or call off on its own.', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php esc_html_e( 'It can repeat — every Saturday until December — and each occurrence is a shift you can move or call off on its own.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 
 				<p>
@@ -1907,7 +1907,7 @@ function gwc_vt_render_schedule_chooser( string $base ): void {
 				</p>
 
 				<p class="description">
-					<?php esc_html_e( 'Every time on it is an ordinary shift underneath, so rosters, reminders and hours work exactly as they do for one you scheduled on its own.', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php esc_html_e( 'Every time on it is an ordinary shift underneath, so rosters, reminders and hours work as they always do.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 
 				<p>
@@ -2800,7 +2800,7 @@ function gwc_vt_render_credential_refusal_notice(): void {
 						required
 					/>
 					<p class="description">
-						<?php esc_html_e( 'Recorded against this signup with your name, and shown on the roster. “Certificate seen, being entered Monday” is the kind of thing that belongs here.', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Recorded with your name and shown on the roster — “certificate seen, being entered Monday”.', 'groundwork-common-volunteer-tracker' ); ?>
 					</p>
 				</div>
 

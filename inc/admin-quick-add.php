@@ -242,7 +242,7 @@ function gwc_vt_render_blank_day_screen(): void {
 						<th scope="row"><label for="gwcvt-qa-supervisor"><?php esc_html_e( 'Supervised by', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
 							<input type="text" id="gwcvt-qa-supervisor" name="gwc_vt_supervisor" class="regular-text" maxlength="100" value="<?php echo esc_attr( wp_get_current_user()->display_name ); ?>" />
-							<p class="description"><?php esc_html_e( 'The person who was there. Prefilled with your name — change it if it was somebody else.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Prefilled with your name. Change it if it was somebody else.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 				</tbody>
@@ -446,7 +446,7 @@ function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): voi
 						<td>
 							<strong><?php echo esc_html( gwc_vt_shift_date_label( $shift_id ) ); ?></strong>,
 							<?php echo esc_html( gwc_vt_shift_time_label( $shift_id ) ); ?>
-							<p class="description"><?php esc_html_e( 'The shift’s own date. Every entry below is dated that day.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Every entry below is dated that day.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -460,14 +460,14 @@ function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): voi
 									<?php endforeach; ?>
 								</datalist>
 							<?php endif; ?>
-							<p class="description"><?php esc_html_e( 'From the shift. Change it if the day turned out differently — this is what appears on every letter these hours reach.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'From the shift. Appears on every letter these hours reach.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="gwcvt-qa-supervisor"><?php esc_html_e( 'Supervised by', 'groundwork-common-volunteer-tracker' ); ?></label></th>
 						<td>
 							<input type="text" id="gwcvt-qa-supervisor" name="gwc_vt_supervisor" class="regular-text" maxlength="100" value="<?php echo esc_attr( (string) get_post_meta( $shift_id, GWC_VT_SHIFT_SUPERVISOR, true ) ); ?>" />
-							<p class="description"><?php esc_html_e( 'From the shift. Change it if somebody else actually covered it.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'From the shift.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
 				</tbody>
@@ -505,7 +505,7 @@ function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): voi
 			</p>
 
 			<p class="description">
-				<?php esc_html_e( 'Clear the checkbox for anybody who did not turn up — nothing is recorded for them. The blank rows at the bottom are for people who came without signing up. Hours accept 3.5, 3:30, 3h 30m or 210m.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Clear the checkbox for anybody who did not turn up. The blank rows are for people who came without signing up. Hours accept 3.5, 3:30, 3h 30m or 210m.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 
 			<?php submit_button( __( 'Log these hours', 'groundwork-common-volunteer-tracker' ) ); ?>

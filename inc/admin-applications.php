@@ -160,7 +160,7 @@ function gwc_vt_render_applications_screen(): void {
 
 		<?php if ( ! $waiting ) : ?>
 			<p class="description">
-				<?php esc_html_e( 'Nobody is waiting. Applications sent through the form on your site appear here, and nothing becomes a volunteer record until you say so.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Nobody is waiting. Applications appear here, and nothing becomes a volunteer record until you say so.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		<?php else : ?>
 

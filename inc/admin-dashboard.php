@@ -316,7 +316,7 @@ function gwc_vt_render_dashboard_start_here(): void {
 	$steps[] = array(
 		'url'  => admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
 		'what' => __( 'Log a shift they worked', 'groundwork-common-volunteer-tracker' ),
-		'why'  => __( 'One occasion of work. A member of staff then verifies it, and verified hours are what a letter reports.', 'groundwork-common-volunteer-tracker' ),
+		'why'  => __( 'One occasion of work. Staff verify it, and verified hours are what a letter reports.', 'groundwork-common-volunteer-tracker' ),
 		'done' => false,
 	);
 
@@ -324,21 +324,21 @@ function gwc_vt_render_dashboard_start_here(): void {
 		$steps[] = array(
 			'url'  => gwc_vt_settings_url( 'logging' ),
 			'what' => __( 'Say whether you issue verification letters', 'groundwork-common-volunteer-tracker' ),
-			'why'  => __( 'They are on, which is what most organizations want. If yours records hours but never writes to a court or a school, turning them off takes a whole screen and its settings out of your way.', 'groundwork-common-volunteer-tracker' ),
+			'why'  => __( 'They are on. If yours records hours but never writes to a court or a school, turning them off takes a screen and its settings out of your way.', 'groundwork-common-volunteer-tracker' ),
 			'done' => gwc_vt_letters_decided(),
 		);
 
 		$steps[] = array(
 			'url'  => gwc_vt_settings_url( 'privacy' ),
 			'what' => __( 'Decide how long records are kept', 'groundwork-common-volunteer-tracker' ),
-			'why'  => __( 'Keeping them indefinitely is a perfectly good answer. Not having decided is not, which is why this one asks until you do.', 'groundwork-common-volunteer-tracker' ),
+			'why'  => __( 'Keeping them indefinitely is a good answer. Not having decided is not.', 'groundwork-common-volunteer-tracker' ),
 			'done' => (bool) gwc_vt_setting( 'retention_decided' ),
 		);
 	}
 	?>
 	<p class="gwcvt-docket__clear">
 		<strong><?php esc_html_e( 'Nothing here yet.', 'groundwork-common-volunteer-tracker' ); ?></strong>
-		<?php esc_html_e( 'This screen fills up on its own once hours are being logged. Until then, here is the order most organizations start in.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'This screen fills up once hours are being logged. Until then, start in this order.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<?php
