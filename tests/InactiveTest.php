@@ -569,7 +569,12 @@ final class InactiveTest extends TestCase {
 	public function test_an_active_volunteer_is_measured_from_their_first_shift(): void {
 		$said = gwc_vt_volunteer_tenure( $this->volunteer(), $this->totals( '2023-03-11', '2026-01-04' ), false );
 
-		$this->assertStringContainsString( 'since', $said );
+		/* The DATE, not the word that used to introduce it. This asserted that
+		 * the string contained "since", which was only ever a proxy for "not
+		 * the Added branch" — and it broke the day that word came off, on a
+		 * change that altered nothing this test is about. The first shift's own
+		 * date is what the claim is. */
+		$this->assertStringContainsString( '2023-03-11', $said );
 		$this->assertStringNotContainsString( 'Added', $said, 'the record date is not when they started volunteering' );
 	}
 
@@ -579,8 +584,11 @@ final class InactiveTest extends TestCase {
 	public function test_an_inactive_volunteer_gets_a_span_with_two_ends(): void {
 		$said = gwc_vt_volunteer_tenure( $this->volunteer(), $this->totals( '2019-04-02', '2021-06-30' ), true );
 
-		$this->assertStringContainsString( 'to', $said );
-		$this->assertStringNotContainsString( 'since', $said );
+		/* Both ends, which is what a span is. The second assertion here used to
+		 * be "does not contain since", and that became trivially true the day
+		 * no branch said "since" — a check that cannot fail is not a check. */
+		$this->assertStringContainsString( '2019-04-02', $said );
+		$this->assertStringContainsString( '2021-06-30', $said );
 	}
 
 	/**
@@ -592,7 +600,7 @@ final class InactiveTest extends TestCase {
 
 		$said = gwc_vt_volunteer_tenure( $this->volunteer(), $this->totals( $ahead, $ahead ), false );
 
-		$this->assertStringContainsString( 'since', $said );
+		$this->assertStringContainsString( $ahead, $said );
 		$this->assertStringNotContainsString( '—', $said, 'no duration is claimed for a date that has not happened' );
 	}
 

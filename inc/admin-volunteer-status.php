@@ -283,14 +283,18 @@ function gwc_vt_volunteer_tenure( $post, $totals, bool $inactive ): string {
 		 * "volunteering for -3 days" is not the way to tell them. */
 		return sprintf(
 			/* translators: %s: a date. */
-			__( 'since %s', 'groundwork-common-volunteer-tracker' ),
+			__( 'Since %s', 'groundwork-common-volunteer-tracker' ),
 			gwc_vt_display_date( $totals->first )
 		);
 	}
 
 	return sprintf(
+		/* No "since": the label beside this says Volunteering, and the sidebar
+		 * column is about a hundred pixels wide — a word that adds nothing is a
+		 * word that costs a line. */
+
 		/* translators: 1: a date. 2: a length of time, such as "1 year". */
-		__( 'since %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
+		__( '%1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
 		gwc_vt_display_date( $totals->first ),
 		human_time_diff( $since )
 	);

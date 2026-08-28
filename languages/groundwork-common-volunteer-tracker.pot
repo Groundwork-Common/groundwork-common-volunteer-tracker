@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T19:37:25+00:00\n"
+"POT-Creation-Date: 2026-08-28T19:44:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -43,7 +43,7 @@ msgstr ""
 #: inc/access.php:341
 #: inc/admin-applications.php:435
 #: inc/admin-volunteer-sheets.php:35
-#: inc/admin-volunteer-status.php:316
+#: inc/admin-volunteer-status.php:320
 msgid "You do not have permission to do that."
 msgstr ""
 
@@ -66,7 +66,7 @@ msgstr ""
 #: inc/admin-verify.php:683
 #: inc/admin-volunteer-credentials.php:346
 #: inc/admin-volunteer-sheets.php:36
-#: inc/admin-volunteer-status.php:317
+#: inc/admin-volunteer-status.php:321
 msgid "Permission denied"
 msgstr ""
 
@@ -4977,44 +4977,44 @@ msgstr ""
 #. translators: %s: a date.
 #: inc/admin-volunteer-status.php:286
 #, php-format
-msgid "since %s"
+msgid "Since %s"
 msgstr ""
 
 #. translators: 1: a date. 2: a length of time, such as "1 year".
-#: inc/admin-volunteer-status.php:293
+#: inc/admin-volunteer-status.php:297
 #, php-format
-msgid "since %1$s — %2$s"
+msgid "%1$s — %2$s"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:324
+#: inc/admin-volunteer-status.php:328
 msgid "That is not a volunteer record."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:325
+#: inc/admin-volunteer-status.php:329
 msgid "Nothing to do"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-status.php:430
+#: inc/admin-volunteer-status.php:434
 #, php-format
 msgid "%s is inactive. Their hours and their name are untouched, and they are no longer offered when you are staffing a shift."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:438
+#: inc/admin-volunteer-status.php:442
 msgid "Make them active again"
 msgstr ""
 
 #. translators: %s: a volunteer's name.
-#: inc/admin-volunteer-status.php:453
+#: inc/admin-volunteer-status.php:457
 #, php-format
 msgid "%s is active again, and can be put on shifts."
 msgstr ""
 
-#: inc/admin-volunteer-status.php:505
+#: inc/admin-volunteer-status.php:509
 msgid "Make active"
 msgstr ""
 
-#: inc/admin-volunteer-status.php:506
+#: inc/admin-volunteer-status.php:510
 msgid "Make inactive"
 msgstr ""
 
