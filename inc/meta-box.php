@@ -645,15 +645,24 @@ function gwc_vt_render_volunteer_required_box( $post ): void {
 	 *
 	 * The three values make one sentence in English and always did: complete
 	 * this many hours, by this date, for these people. Written that way the
-	 * labels are unnecessary, because the sentence around each box says what
-	 * goes in it, and two of the three paragraphs turn out to have been saying
-	 * the same thing — that none of this reaches a letter. That is said once,
-	 * underneath, because it is the invariant this panel exists to protect and
-	 * not a caption for any one field.
+	 * visible labels are unnecessary, because the sentence around each box says
+	 * what goes in it.
 	 *
 	 * The labels are still there for anybody not reading the sentence: a screen
 	 * reader gets "Hours they have to complete", not "edit text". A sentence
-	 * with holes in it is only self-explanatory if you can see it. */
+	 * with holes in it is only self-explanatory if you can see it.
+	 *
+	 * ── And nothing else ────────────────────────────────────────────────────
+	 * No placeholders. "40" sat in a small box in the grey a value is drawn in
+	 * on a focused field, and read as forty hours already recorded; "a court, a
+	 * school, a scouting group" filled its box end to end and read as an answer
+	 * somebody had typed. A placeholder that is mistaken for data is worse than
+	 * an empty box, because an empty box is not wrong about anything.
+	 *
+	 * And no line underneath. It said "None of this reaches a letter", which is
+	 * true and is not a question anybody asks of a panel called Required
+	 * service: nothing on this record reaches a letter except the hours and the
+	 * name, and the letter's own settings are where that is decided. */
 	$required = gwc_vt_required_minutes( $volunteer_id );
 	?>
 	<div class="gwcvt-fields">
@@ -670,7 +679,6 @@ function gwc_vt_render_volunteer_required_box( $post ): void {
 				class="small-text"
 				inputmode="decimal"
 				value="<?php echo esc_attr( $required > 0 ? gwc_vt_format_hours( $required, 'decimal' ) : '' ); ?>"
-				placeholder="<?php esc_attr_e( '40', 'groundwork-common-volunteer-tracker' ); ?>"
 			/>
 
 			<?php esc_html_e( 'hours by', 'groundwork-common-volunteer-tracker' ); ?>
@@ -697,12 +705,7 @@ function gwc_vt_render_volunteer_required_box( $post ): void {
 				class="regular-text"
 				maxlength="200"
 				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_REQUIRED_FOR, true ) ); ?>"
-				placeholder="<?php esc_attr_e( 'a court, a school, a scouting group', 'groundwork-common-volunteer-tracker' ); ?>"
 			/>
-		</p>
-
-		<p class="description">
-			<?php esc_html_e( 'None of this reaches a letter.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 	<?php
