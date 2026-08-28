@@ -109,11 +109,24 @@ function gwc_vt_handle_record_credential(): void {
 		sanitize_text_field( (string) ( $posted['gwc_vt_record_date'] ?? '' ) )
 	);
 
-	gwc_vt_sheet_redirect(
-		$volunteer_id,
-		is_wp_error( $result ) || ! $result ? 'credential-failed' : 'credential-recorded',
-		'gwc-vt-volunteer-credentials'
-	);
+	/* The recorder says WHY it refused, and this screen used to answer every
+	 * refusal with "could not be recorded" — no cause and no way out, in front
+	 * of somebody who has typed a date wrong and can fix it in four seconds.
+	 * Mapped by error code rather than by passing the message through the URL:
+	 * the strings stay translatable and nothing arbitrary is rendered back. */
+	$outcome = 'credential-recorded';
+
+	if ( is_wp_error( $result ) || ! $result ) {
+		$refusals = array(
+			'gwc_vt_bad_date'      => 'credential-bad-date',
+			'gwc_vt_no_credential' => 'credential-gone',
+		);
+
+		$code    = is_wp_error( $result ) ? $result->get_error_code() : '';
+		$outcome = $refusals[ $code ] ?? 'credential-failed';
+	}
+
+	gwc_vt_sheet_redirect( $volunteer_id, $outcome, 'gwc-vt-volunteer-credentials' );
 }
 
 
@@ -145,7 +158,8 @@ function gwc_vt_render_log_hours_sheet( int $volunteer_id ): void {
 			<p>
 				<label for="gwcvt-log-hours-field"><?php esc_html_e( 'Hours', 'groundwork-common-volunteer-tracker' ); ?></label><br />
 				<input type="text" form="gwcvt-log-hours" id="gwcvt-log-hours-field" name="hours" class="small-text" inputmode="decimal" required
-					placeholder="<?php esc_attr_e( '2.5', 'groundwork-common-volunteer-tracker' ); ?>" />
+					aria-describedby="gwcvt-log-hours-hint" />
+				<span class="description" id="gwcvt-log-hours-hint"><?php esc_html_e( 'Accepts 2.5, 2:30, 2h 30m or 150m.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 
 			<p>

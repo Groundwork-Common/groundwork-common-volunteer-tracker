@@ -218,25 +218,32 @@ function gwc_vt_sheet_messages(): array {
 		/* Logging hours. */
 		'hours-logged'        => array( 'success', __( 'Hours logged. They are waiting to be verified.', 'groundwork-common-volunteer-tracker' ) ),
 		'hours-unreadable'    => array( 'error', __( 'Those hours could not be read, so nothing was logged. Try 2, 2.5 or 2:30.', 'groundwork-common-volunteer-tracker' ) ),
-		'hours-failed'        => array( 'error', __( 'Those hours could not be logged.', 'groundwork-common-volunteer-tracker' ) ),
+		'hours-failed'        => array( 'error', __( 'Those hours could not be logged, and nothing was saved. Try again.', 'groundwork-common-volunteer-tracker' ) ),
 
 		/* Credentials. */
 		'credential-recorded' => array( 'success', __( 'Credential recorded.', 'groundwork-common-volunteer-tracker' ) ),
-		'credential-failed'   => array( 'error', __( 'That credential could not be recorded.', 'groundwork-common-volunteer-tracker' ) ),
+		'credential-failed'   => array( 'error', __( 'That credential could not be recorded, and nothing was saved. Try again.', 'groundwork-common-volunteer-tracker' ) ),
+
+		/* The three the recorder can actually refuse for. It returns a WP_Error
+		 * saying which, and this screen used to answer all three with "could
+		 * not be recorded" — a message that names no cause and offers no way
+		 * out, in front of somebody who has typed a date wrong. */
+		'credential-bad-date' => array( 'error', __( 'Give the date it was granted, as a real date on or before today.', 'groundwork-common-volunteer-tracker' ) ),
+		'credential-gone'     => array( 'error', __( 'That credential no longer exists. It may have been deleted while this was open — reload and try again.', 'groundwork-common-volunteer-tracker' ) ),
 
 		/* Letters: drafting one. */
 		'drafted'             => array( 'success', __( 'Draft started. Nothing has been sent.', 'groundwork-common-volunteer-tracker' ) ),
 		'discarded'           => array( 'success', __( 'Draft discarded.', 'groundwork-common-volunteer-tracker' ) ),
-		'failed'              => array( 'error', __( 'That draft could not be started.', 'groundwork-common-volunteer-tracker' ) ),
+		'failed'              => array( 'error', __( 'That draft could not be started, and nothing was saved. Try again.', 'groundwork-common-volunteer-tracker' ) ),
 
 		/* And issuing and delivering it. */
 		'issued'              => array( 'success', __( 'Letter issued. It has a reference now — send it whenever you are ready.', 'groundwork-common-volunteer-tracker' ) ),
-		'issue-failed'        => array( 'error', __( 'That letter could not be issued.', 'groundwork-common-volunteer-tracker' ) ),
+		'issue-failed'        => array( 'error', __( 'That letter could not be issued, and nothing was recorded. Try again.', 'groundwork-common-volunteer-tracker' ) ),
 		'delivered-email'     => array( 'success', __( 'Emailed, and recorded against the letter.', 'groundwork-common-volunteer-tracker' ) ),
 		'send-failed'         => array( 'error', __( 'The letter could not be emailed, so nothing was sent. The attempt is recorded against it.', 'groundwork-common-volunteer-tracker' ) ),
 		'no-email'            => array( 'error', __( 'There is no email address on this record. Add one above, or print it and send it yourself.', 'groundwork-common-volunteer-tracker' ) ),
-		'bad-email'           => array( 'error', __( 'That is not an email address, so nothing was sent.', 'groundwork-common-volunteer-tracker' ) ),
-		'no-addressee'        => array( 'error', __( 'Nothing was recorded, because a posted letter needs somebody to have been posted to.', 'groundwork-common-volunteer-tracker' ) ),
+		'bad-email'           => array( 'error', __( 'That is not an email address, so nothing was sent. Check it and try again.', 'groundwork-common-volunteer-tracker' ) ),
+		'no-addressee'        => array( 'error', __( 'Nothing was recorded: say who the letter was posted to.', 'groundwork-common-volunteer-tracker' ) ),
 
 		/* The one refusal that needs explaining. See inc/letter-deliver.php. */
 		'stale'               => array( 'error', __( 'This letter can no longer be produced: one of the shifts it lists has changed since it was issued, so the document would state something its own reference contradicts. Issue a new one — the old letter stays in the log, and stays valid as what you sent that day.', 'groundwork-common-volunteer-tracker' ) ),

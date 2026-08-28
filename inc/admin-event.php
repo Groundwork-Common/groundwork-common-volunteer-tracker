@@ -439,9 +439,20 @@ function gwc_vt_render_event_role_block( int $index, string $role, array $slot_i
 					class="regular-text"
 					maxlength="200"
 					value="<?php echo esc_attr( $role ); ?>"
-					placeholder="<?php esc_attr_e( 'What they will be doing', 'groundwork-common-volunteer-tracker' ); ?>"
+					<?php echo '' === $role ? 'aria-describedby="' . esc_attr( $id ) . '-hint"' : ''; ?>
 					<?php echo $vocabulary ? 'list="gwcvt-event-roles"' : ''; ?>
 				/>
+				<?php
+				/* Only on a role with no name yet — which is the blank row at
+				 * the bottom, the one somebody is about to type in. An event
+				 * with four roles would otherwise print the same example four
+				 * times, three of them beside a field already answered. */
+				?>
+				<?php if ( '' === $role ) : ?>
+					<p class="description" id="<?php echo esc_attr( $id ); ?>-hint">
+						<?php esc_html_e( 'What they will be doing. For example, Greeter, Kitchen, Clean-up.', 'groundwork-common-volunteer-tracker' ); ?>
+					</p>
+				<?php endif; ?>
 			</div>
 
 			<?php if ( $live > 0 ) : ?>
@@ -493,9 +504,18 @@ function gwc_vt_render_event_role_block( int $index, string $role, array $slot_i
 
 		<div style="margin-top:10px">
 			<label for="<?php echo esc_attr( $id ); ?>-notes"><?php esc_html_e( 'What to know', 'groundwork-common-volunteer-tracker' ); ?></label><br />
-			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000" placeholder="<?php esc_attr_e( 'Closed shoes, park around the back, ask for Dana at the desk.', 'groundwork-common-volunteer-tracker' ); ?>"><?php echo esc_textarea( $notes ); ?></textarea>
-			<p class="description">
+			<textarea id="<?php echo esc_attr( $id ); ?>-notes" name="<?php echo esc_attr( $field ); ?>[notes]" class="large-text" rows="2" maxlength="1000" aria-describedby="<?php echo esc_attr( $id ); ?>-notes-hint"><?php echo esc_textarea( $notes ); ?></textarea>
+			<p class="description" id="<?php echo esc_attr( $id ); ?>-notes-hint">
 				<?php esc_html_e( 'Shown on signup, and in the confirmation, reminder and calendar entry. Applies to every time in this role.', 'groundwork-common-volunteer-tracker' ); ?>
+
+				<?php
+				/* The example only where there is nothing to read instead. On a
+				 * role already written up, it is a second sentence competing
+				 * with the answer directly above it. */
+				?>
+				<?php if ( '' === $notes ) : ?>
+					<?php esc_html_e( 'For example, closed shoes, park around the back, ask for Dana at the desk.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php endif; ?>
 			</p>
 		</div>
 

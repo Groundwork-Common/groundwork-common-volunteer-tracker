@@ -605,25 +605,35 @@ function gwc_vt_render_reference_check_body( string $page ): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup; nothing is written and no data is disclosed that the viewer cannot already see.
 	$code = isset( $_GET['reference'] ) ? sanitize_text_field( wp_unslash( $_GET['reference'] ) ) : '';
 	?>
-		<p class="description">
-			<?php esc_html_e( 'Somebody has called about a letter? Type the code printed at the foot of it.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
-
 		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
 			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
 			<input type="hidden" name="page" value="<?php echo esc_attr( $page ); ?>" />
 
+			<?php
+			/* Label, then hint, then the box — and the example in the hint
+			 * rather than in a placeholder. A placeholder is gone the moment
+			 * somebody types, is announced inconsistently, and in a field
+			 * styled for code reads as a value already entered. The example is
+			 * the one thing here that has to survive the first keystroke: it is
+			 * what somebody compares against the paper in their hand.
+			 *
+			 * "For example" is doing work, not padding. A code-shaped string
+			 * beside an empty box, with nothing marking it as an illustration,
+			 * is read as the thing to type. */
+			?>
 			<p>
-				<label class="screen-reader-text" for="gwcvt-reference"><?php esc_html_e( 'Reference code', 'groundwork-common-volunteer-tracker' ); ?></label>
-				<?php
-				/* The example lives in the box rather than in the sentence above
-				 * it: it is a shape, and a shape belongs where somebody is about
-				 * to type one. It is built from this site's own prefix, so it is
-				 * the shape of the codes on the letters this organization sends
-				 * rather than the shape of somebody else's. */
-				?>
+				<label for="gwcvt-reference"><strong><?php esc_html_e( 'Reference code', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
+				<span class="description" id="gwcvt-reference-hint">
+					<?php
+					printf(
+						/* translators: %s: an example reference code, in this site's own format. */
+						esc_html__( 'Printed at the bottom of the letter. For example, %s.', 'groundwork-common-volunteer-tracker' ),
+						esc_html( gwc_vt_reference_example() )
+					);
+					?>
+				</span>
 				<input type="text" id="gwcvt-reference" name="reference" class="regular-text code" value="<?php echo esc_attr( $code ); ?>"
-					placeholder="<?php echo esc_attr( gwc_vt_reference_example() ); ?>" />
+					aria-describedby="gwcvt-reference-hint" />
 			</p>
 			<p><button type="submit" class="button"><?php esc_html_e( 'Check it', 'groundwork-common-volunteer-tracker' ); ?></button></p>
 		</form>

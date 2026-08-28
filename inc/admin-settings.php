@@ -1273,7 +1273,7 @@ function gwc_vt_render_uninstall_section(): void {
 			</tbody>
 		</table>
 
-		<?php submit_button( __( 'Save', 'groundwork-common-volunteer-tracker' ) ); ?>
+		<?php submit_button(); ?>
 	</form>
 	<?php
 }
