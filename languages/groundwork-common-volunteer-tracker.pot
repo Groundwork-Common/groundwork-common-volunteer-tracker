@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T17:18:20+00:00\n"
+"POT-Creation-Date: 2026-08-28T17:47:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -1223,13 +1223,13 @@ msgstr ""
 #: inc/admin-event.php:589
 #: inc/admin-repeat.php:285
 #: inc/admin-shift.php:167
-#: inc/admin-volunteer-letters.php:542
+#: inc/admin-volunteer-letters.php:550
 msgid "From"
 msgstr ""
 
 #: inc/admin-event.php:507
 #: inc/admin-event.php:593
-#: inc/admin-volunteer-letters.php:544
+#: inc/admin-volunteer-letters.php:552
 msgid "To"
 msgstr ""
 
@@ -1429,7 +1429,7 @@ msgid "Report a problem"
 msgstr ""
 
 #: inc/admin-help.php:139
-#: inc/admin-volunteer-letters.php:717
+#: inc/admin-volunteer-letters.php:725
 msgid "The letter"
 msgstr ""
 
@@ -1939,7 +1939,7 @@ msgid "Writing a letter"
 msgstr ""
 
 #: inc/admin-help.php:659
-msgid "Every letter for this person lives in <strong>Verification letters</strong> below: the ones you have started, and the ones that have gone out. Select <strong>Add a letter</strong> to begin one."
+msgid "Every letter for this person lives in <strong>Verification letters</strong> below: the ones you have started, and the ones that have gone out. Select <strong>Start a letter</strong> to begin one."
 msgstr ""
 
 #: inc/admin-help.php:660
@@ -3220,7 +3220,7 @@ msgid "Volunteer Tracker Settings"
 msgstr ""
 
 #: inc/admin-screen.php:490
-#: inc/admin-volunteer-letters.php:703
+#: inc/admin-volunteer-letters.php:711
 msgid "Letter"
 msgstr ""
 
@@ -4076,9 +4076,9 @@ msgid "Save this shift"
 msgstr ""
 
 #: inc/admin-shift.php:416
-#: inc/admin-volunteer-letters.php:661
-#: inc/admin-volunteer-letters.php:713
-#: inc/admin-volunteer-letters.php:769
+#: inc/admin-volunteer-letters.php:669
+#: inc/admin-volunteer-letters.php:721
+#: inc/admin-volunteer-letters.php:777
 msgid "Close"
 msgstr ""
 
@@ -4672,7 +4672,7 @@ msgid "Status"
 msgstr ""
 
 #: inc/admin-volunteer-letters.php:254
-msgid "No letters yet. Add one when a court or a school asks for proof of somebody’s service."
+msgid "No letters yet. Start one when a court or a school asks for proof of somebody’s service."
 msgstr ""
 
 #. translators: %s: who the letter is addressed to.
@@ -4749,122 +4749,123 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:513
-msgid "Add a letter"
+#: inc/admin-volunteer-letters.php:521
+#: inc/help-content.php:155
+msgid "Start a letter"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:515
+#: inc/admin-volunteer-letters.php:523
 msgid "Saved as a draft. Nothing is sent and nothing is logged until you issue it."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:524
+#: inc/admin-volunteer-letters.php:532
 msgid "What the letter covers"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:529
+#: inc/admin-volunteer-letters.php:537
 msgid "Everything on record"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:531
+#: inc/admin-volunteer-letters.php:539
 msgid "From their first shift to the day it is issued. The letter names both dates."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:537
+#: inc/admin-volunteer-letters.php:545
 msgid "A period"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:539
+#: inc/admin-volunteer-letters.php:547
 msgid "For a court or a school that asked about particular months."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:560
-#: inc/admin-volunteer-letters.php:671
+#: inc/admin-volunteer-letters.php:568
+#: inc/admin-volunteer-letters.php:679
 msgid "Addressed to"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:563
+#: inc/admin-volunteer-letters.php:571
 msgid "Officer J. Smith, Richmond County Probation"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:564
+#: inc/admin-volunteer-letters.php:572
 msgid "Optional. Leave empty for a letter you are handing to the volunteer."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:569
+#: inc/admin-volunteer-letters.php:577
 msgid "About"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:572
+#: inc/admin-volunteer-letters.php:580
 msgid "e.g. case 2026-CR-1234"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:573
+#: inc/admin-volunteer-letters.php:581
 msgid "Optional. Printed as a “Re:” line so the letter can be filed. Nothing a court required of them ever appears on a letter."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:578
+#: inc/admin-volunteer-letters.php:586
 msgid "Save the draft"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:579
-#: inc/admin-volunteer-letters.php:679
-#: inc/admin-volunteer-letters.php:808
+#: inc/admin-volunteer-letters.php:587
+#: inc/admin-volunteer-letters.php:687
+#: inc/admin-volunteer-letters.php:816
 msgid "Cancel"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:580
+#: inc/admin-volunteer-letters.php:588
 msgid "The figures are worked out when you open it, and again when you issue it."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:651
+#: inc/admin-volunteer-letters.php:659
 msgid "Post this letter"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:667
+#: inc/admin-volunteer-letters.php:675
 msgid "The letter opens ready to print. Who it was addressed to is recorded against it, so the log can answer “did you send it to us” rather than only “a letter was printed”."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:673
+#: inc/admin-volunteer-letters.php:681
 msgid "e.g. Jefferson County Probation"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:678
+#: inc/admin-volunteer-letters.php:686
 msgid "Record it and print"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:735
+#: inc/admin-volunteer-letters.php:743
 msgid "Reading a draft records nothing."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:759
+#: inc/admin-volunteer-letters.php:767
 msgid "Email this letter"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:775
+#: inc/admin-volunteer-letters.php:783
 msgid "The letter is already issued and keeps its reference. Sending it is recorded against it, so the log says where it went and when."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:779
+#: inc/admin-volunteer-letters.php:787
 msgid "Where to send it"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:787
+#: inc/admin-volunteer-letters.php:795
 msgid "The address on this record."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:794
+#: inc/admin-volunteer-letters.php:802
 msgid "Another address"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:796
+#: inc/admin-volunteer-letters.php:804
 msgid "A probation officer or a school who asked to receive it directly."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:799
+#: inc/admin-volunteer-letters.php:807
 msgid "Email address"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:807
+#: inc/admin-volunteer-letters.php:815
 msgid "Send it"
 msgstr ""
 
@@ -5666,17 +5667,13 @@ msgstr ""
 msgid "A letter reports what your organization recorded. You write it on the volunteer’s own record: start a draft, issue it when you are happy with it, then send it. It carries a reference code so anybody who receives it can phone you and check it."
 msgstr ""
 
-#: inc/help-content.php:155
-msgid "Start a letter"
-msgstr ""
-
 #: inc/help-content.php:157
 #: inc/help-content.php:339
 msgid "Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record."
 msgstr ""
 
 #: inc/help-content.php:158
-msgid "Find <strong>Verification letters</strong> and select <strong>Add a letter</strong>."
+msgid "Find <strong>Verification letters</strong> and select <strong>Start a letter</strong>."
 msgstr ""
 
 #: inc/help-content.php:159

@@ -188,7 +188,7 @@ function gwc_vt_volunteer_letters_notice(): void {
  * All three are built so the screen works with the script absent, and the
  * script takes things AWAY rather than adding them:
  *
- *   The adder renders open, and "Add a letter" renders hidden. The script
+ *   The adder renders open, and "Start a letter" renders hidden. The script
  *   unhides the button and folds the panel. A reader without it gets the form.
  *
  *   "Open" is a plain link to the letter. The script intercepts it and shows the
@@ -251,7 +251,7 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 				<?php if ( ! $drafts && ! $issued ) : ?>
 					<tr>
 						<td colspan="5" class="description">
-							<?php esc_html_e( 'No letters yet. Add one when a court or a school asks for proof of somebody’s service.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php esc_html_e( 'No letters yet. Start one when a court or a school asks for proof of somebody’s service.', 'groundwork-common-volunteer-tracker' ); ?>
 						</td>
 					</tr>
 				<?php endif; ?>
@@ -484,13 +484,21 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 }
 
 /**
- * Adding one.
+ * Starting one.
+ *
+ * ── The verb ────────────────────────────────────────────────────────────────
+ * "Start", not "Add". You are not adding a letter to a collection — nothing has
+ * been written yet, and the thing that appears is a draft you will come back to
+ * and issue later. Every other word in this feature already said so: the notice
+ * says "Draft started", the guide's task is "Start a letter", the handler is
+ * gwc_vt_handle_add_letter_draft() but the form it posts is #gwcvt-start-letter.
+ * The button was the only place still saying add.
  *
  * ── Why the fields are not in a form ─────────────────────────────────────────
  * A meta box is rendered inside wp-admin's own <form id="post">, and a form
  * inside a form is not something HTML has. The parser does not complain; it
  * drops the inner tags and leaves the fields behind, still on the page, now
- * belonging to the post form. So "Add a letter" looked right, rendered right,
+ * belonging to the post form. So "Start a letter" looked right, rendered right,
  * and saved the volunteer.
  *
  * The fix is the HTML5 `form` attribute: the fields live here, the form element
@@ -510,7 +518,7 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 		<?php /* Hidden until the script unhides it — see the note above the box. */ ?>
 		<p class="gwcvt-letters-box__open" data-gwcvt-letters-open hidden>
 			<button type="button" class="button button-primary" data-gwcvt-letters-add>
-				<?php esc_html_e( 'Add a letter', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Start a letter', 'groundwork-common-volunteer-tracker' ); ?>
 			</button>
 			<span class="description"><?php esc_html_e( 'Saved as a draft. Nothing is sent and nothing is logged until you issue it.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</p>

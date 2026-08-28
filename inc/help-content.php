@@ -155,7 +155,7 @@ function gwc_vt_help_topics(): array {
 					'title' => __( 'Start a letter', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Find <strong>Verification letters</strong> and select <strong>Add a letter</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find <strong>Verification letters</strong> and select <strong>Start a letter</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Choose <strong>Everything on record</strong>, or <strong>A period</strong> if a court or a school asked about particular months.', 'groundwork-common-volunteer-tracker' ),
 						__( 'If it is going to somebody other than the volunteer, fill in who it is addressed to and what it is about.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Save the draft</strong>.', 'groundwork-common-volunteer-tracker' ),
