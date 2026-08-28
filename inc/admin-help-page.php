@@ -234,6 +234,15 @@ function gwc_vt_render_help_page(): void {
 					<?php endif; ?>
 				</div>
 			<?php endforeach; ?>
+
+			<?php
+			/* A topic may end in a reference rather than in more how-tos. One
+			 * does: every setting, read out of the registry that draws the
+			 * settings form — see gwc_vt_help_settings_reference(). */
+			?>
+			<?php if ( ! empty( $topic['reference'] ) ) : ?>
+				<?php gwc_vt_render_help_settings_reference(); ?>
+			<?php endif; ?>
 		<?php endforeach; ?>
 	</div>
 	<?php
@@ -299,7 +308,7 @@ function gwc_vt_help_topic_for_screen( string $screen_id ): string {
 		GWC_VT_VERIFY_PAGE       => 'hours',
 		GWC_VT_QUICK_ADD_PAGE    => 'hours',
 		GWC_VT_LETTERS_PAGE      => 'letters',
-		GWC_VT_SETTINGS_PAGE     => 'start',
+		GWC_VT_SETTINGS_PAGE     => 'settings',
 	);
 
 	foreach ( $map as $page => $topic ) {
@@ -315,4 +324,46 @@ function gwc_vt_help_topic_for_screen( string $screen_id ): string {
 	}
 
 	return '';
+}
+
+/**
+ * Every setting, tab by tab.
+ *
+ * A definition list rather than a table: the label is a term and its help is
+ * the definition, that is what a reader is doing here, and it reflows on a
+ * narrow screen where a two-column table does not.
+ */
+function gwc_vt_render_help_settings_reference(): void {
+	?>
+	<div class="gwcvt-help__reference">
+		<h3><?php esc_html_e( 'What every setting does', 'groundwork-common-volunteer-tracker' ); ?></h3>
+
+		<?php foreach ( gwc_vt_help_settings_reference() as $tab ) : ?>
+			<div class="gwcvt-help__tab">
+				<h4><?php echo esc_html( (string) $tab['tab'] ); ?></h4>
+
+				<?php if ( '' !== (string) ( $tab['note'] ?? '' ) ) : ?>
+					<p class="gwcvt-help__note"><?php echo esc_html( (string) $tab['note'] ); ?></p>
+				<?php endif; ?>
+
+				<?php foreach ( (array) $tab['sections'] as $section ) : ?>
+					<h5><?php echo esc_html( (string) $section['section'] ); ?></h5>
+
+					<dl class="gwcvt-help__settings">
+						<?php foreach ( (array) $section['fields'] as $field ) : ?>
+							<dt><?php echo esc_html( (string) $field['label'] ); ?></dt>
+							<dd>
+								<?php
+								echo '' !== (string) $field['help']
+									? esc_html( (string) $field['help'] )
+									: esc_html__( 'The label says it.', 'groundwork-common-volunteer-tracker' );
+								?>
+							</dd>
+						<?php endforeach; ?>
+					</dl>
+				<?php endforeach; ?>
+			</div>
+		<?php endforeach; ?>
+	</div>
+	<?php
 }

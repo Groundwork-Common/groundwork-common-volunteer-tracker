@@ -393,6 +393,35 @@ function gwc_vt_help_topics(): array {
 				),
 			),
 		),
+
+		array(
+			'id'        => 'settings',
+			'title'     => __( 'Settings', 'groundwork-common-volunteer-tracker' ),
+			'intro'     => __( 'Every setting this plugin has, in the tab it lives on. Each tab saves on its own — select Save Changes before moving to the next one.', 'groundwork-common-volunteer-tracker' ),
+			'tasks'     => array(
+				array(
+					'title' => __( 'Turn verification letters on or off', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select the <strong>Logging</strong> tab.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select or clear <strong>Issue verification letters</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save Changes</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'The switch is on the Logging tab, not the Letter tab, because turning it off hides the Letter tab. Nothing is deleted: letters already issued, the log of what went out and every letter setting stay where they are, and turning it back on finds them unchanged.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Turn the schedule on or off', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select the <strong>Shifts</strong> tab.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select or clear <strong>Plan shifts ahead of time</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save Changes</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'With it off, the Schedule screen and events go away and hours are still logged after the fact, exactly as they were. Shifts already planned are not deleted.', 'groundwork-common-volunteer-tracker' ),
+				),
+			),
+			'reference' => true,
+		),
 	);
 
 	/* ── Two of them only when the site has the feature ──────────────────────
@@ -439,4 +468,128 @@ function gwc_vt_help_topics(): array {
 	}
 
 	return $shown;
+}
+
+/* ── The settings reference, which is not written here ───────────────────────
+ * Every setting, its label and what it does — read out of the same registry
+ * that draws the form and sanitizes the save. inc/admin-settings.php calls that
+ * registry "one registry, three jobs"; this is the third, and it was the one
+ * not being done: the guide had how-tos for three settings out of forty-odd,
+ * and no way at all to find out what the rest were for without opening the
+ * screen and reading it.
+ *
+ * Generated rather than transcribed, because a transcription is a second copy
+ * of forty strings that agrees with the first until somebody edits one. A
+ * setting added to the registry appears here on the same deploy, in the right
+ * tab, saying what its own field says.
+ *
+ * Two things are not in the registry and are named below by hand: the
+ * Permissions tab, which is a table of roles rather than a list of fields, and
+ * the uninstall checkbox on the Privacy tab, which is its own form. Both are
+ * short and both are the ones somebody most needs told about.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Every settings tab, its sections, and the fields in each.
+ *
+ * @return array<int, array{tab:string, note:string, sections:array}>
+ */
+function gwc_vt_help_settings_reference(): array {
+	$tabs = gwc_vt_admin_tabs();
+
+	/* The Letter tab is absent from that list on a site with letters switched
+	 * off — which is exactly the site whose reader is looking for how to switch
+	 * them back on. Documentation does not disappear with the feature it
+	 * documents, so it is put back, first, where the screen has it. */
+	if ( ! isset( $tabs['letter'] ) ) {
+		$tabs = array( 'letter' => __( 'Letter', 'groundwork-common-volunteer-tracker' ) ) + $tabs;
+	}
+
+	$sections = gwc_vt_settings_sections();
+	$fields   = gwc_vt_settings_fields();
+	$out      = array();
+
+	foreach ( $tabs as $tab => $tab_label ) {
+		$groups = array();
+
+		foreach ( (array) ( $sections[ $tab ] ?? array() ) as $section => $section_label ) {
+			$rows = array();
+
+			foreach ( $fields as $field ) {
+				if ( ( $field['tab'] ?? '' ) !== $tab || ( $field['section'] ?? '' ) !== $section ) {
+					continue;
+				}
+
+				$rows[] = array(
+					'label' => (string) ( $field['label'] ?? '' ),
+					'help'  => (string) ( $field['help'] ?? '' ),
+				);
+			}
+
+			if ( array() !== $rows ) {
+				$groups[] = array(
+					'section' => (string) $section_label,
+					'fields'  => $rows,
+				);
+			}
+		}
+
+		$groups = array_merge( $groups, gwc_vt_help_settings_extras( $tab ) );
+
+		if ( array() === $groups ) {
+			continue;
+		}
+
+		$out[] = array(
+			'tab'      => (string) $tab_label,
+			'note'     => 'letter' === $tab
+				? __( 'This tab is on the screen only while verification letters are switched on.', 'groundwork-common-volunteer-tracker' )
+				: '',
+			'sections' => $groups,
+		);
+	}
+
+	return $out;
+}
+
+/**
+ * The two tabs that are not built from the settings registry.
+ *
+ * @param string $tab Tab slug.
+ * @return array<int, array{section:string, fields:array}>
+ */
+function gwc_vt_help_settings_extras( string $tab ): array {
+	if ( 'permissions' === $tab ) {
+		return array(
+			array(
+				'section' => __( 'Who can do what', 'groundwork-common-volunteer-tracker' ),
+				'fields'  => array(
+					array(
+						'label' => __( 'Verify hours', 'groundwork-common-volunteer-tracker' ),
+						'help'  => __( 'Which roles may attest that hours were worked. Anybody who can edit posts can already log hours and see volunteer records; this is the bigger decision held separately.', 'groundwork-common-volunteer-tracker' ),
+					),
+					array(
+						'label' => __( 'Issue letters', 'groundwork-common-volunteer-tracker' ),
+						'help'  => __( 'Which roles may put your organization’s name on a letter to a court. Administrator is fixed: a site where nobody can issue a letter has no way to give one back.', 'groundwork-common-volunteer-tracker' ),
+					),
+				),
+			),
+		);
+	}
+
+	if ( 'privacy' === $tab ) {
+		return array(
+			array(
+				'section' => __( 'Removing this plugin', 'groundwork-common-volunteer-tracker' ),
+				'fields'  => array(
+					array(
+						'label' => __( 'On deletion', 'groundwork-common-volunteer-tracker' ),
+						'help'  => __( 'Whether deleting the plugin also removes its settings. It never removes a volunteer, a shift, a signup, an hour entry or an issued letter — nothing on this screen does.', 'groundwork-common-volunteer-tracker' ),
+					),
+				),
+			),
+		);
+	}
+
+	return array();
 }

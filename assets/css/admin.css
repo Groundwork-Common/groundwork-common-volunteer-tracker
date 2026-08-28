@@ -2341,6 +2341,50 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	font-size: 13px;
 }
 
+/* ── Every setting, as a reference ───────────────────────────────────────────
+   The one topic that is not a procedure: a term and what it means, forty times
+   over. Set to the same reading width as the how-tos, with the label carrying
+   the weight so the eye can run down the left-hand edge looking for one. */
+.gwcvt-help__reference {
+	max-width: 44em;
+	margin-top: 2em;
+}
+
+.gwcvt-help__tab {
+	margin: 0 0 1.8em;
+	padding-top: .4em;
+	border-top: 1px solid #dcdcde;
+}
+
+.gwcvt-help__tab h4 {
+	margin: .4em 0 .2em;
+	font-size: 15px;
+}
+
+.gwcvt-help__tab h5 {
+	margin: 1.1em 0 .2em;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.gwcvt-help__settings {
+	margin: 0;
+}
+
+.gwcvt-help__settings dt {
+	margin: .7em 0 0;
+	font-weight: 600;
+}
+
+.gwcvt-help__settings dd {
+	margin: .1em 0 0;
+	color: #50575e;
+	font-size: 13px;
+}
+
 /* ── A volunteer has no post status worth showing ────────────────────────────
    There is no such thing as a draft volunteer, and the only distinction that
    means anything on this screen — active or not — has its own control. What is
