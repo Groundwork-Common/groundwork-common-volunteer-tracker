@@ -1028,6 +1028,52 @@ gwc_vt_ld_check(
 	)
 );
 
+
+echo "\n── 17. The footer says each thing once ──────────────────────────────\n";
+
+/* Two facts, each stated twice, in one footer. The disclaimer quoted the
+ * reference three lines above the same code printed on its own, and the note
+ * beside that code said the letter was "not a certification by any outside
+ * body" — which the disclaimer already spends a clause on.
+ *
+ * The split is now: the disclaimer says what the DOCUMENT is and who is
+ * answerable for it; the note beside the code says what the CODE is for. */
+$GLOBALS['gwc_vt_ld_foot'] = gwc_vt_render_letter(
+	gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_addr'] ),
+	'print'
+);
+
+$GLOBALS['gwc_vt_ld_footref'] = gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_addr'] )->reference;
+
+gwc_vt_ld_check(
+	'the reference is printed once, not once in prose and once on its own',
+	1 === substr_count( $GLOBALS['gwc_vt_ld_foot'], $GLOBALS['gwc_vt_ld_footref'] ),
+	substr_count( $GLOBALS['gwc_vt_ld_foot'], $GLOBALS['gwc_vt_ld_footref'] ) . ' times'
+);
+
+gwc_vt_ld_check(
+	'and the letter says once that it is not a certification',
+	1 === substr_count( strtolower( wp_strip_all_tags( $GLOBALS['gwc_vt_ld_foot'] ) ), 'certification' ),
+	substr_count( strtolower( wp_strip_all_tags( $GLOBALS['gwc_vt_ld_foot'] ) ), 'certification' ) . ' times'
+);
+
+/* Saying it AT ALL is the part that cannot be lost. The disclaimer is the one
+ * thing on this document that may not be emptied, and the sentence it exists
+ * for is this one — so the deduplication above must not have quietly taken the
+ * surviving copy with it. */
+gwc_vt_ld_check(
+	'but it does still say it, which is the whole reason the block exists',
+	false !== stripos( $GLOBALS['gwc_vt_ld_foot'], 'not an independent certification' )
+		&& false !== stripos( $GLOBALS['gwc_vt_ld_foot'], 'authoritative record-keeper' )
+);
+
+/* And the code still comes with the one instruction that uses it. A reference
+ * nobody is told what to do with is a reference nobody rings up about. */
+gwc_vt_ld_check(
+	'and still tells the reader what to do with the code',
+	false !== stripos( $GLOBALS['gwc_vt_ld_foot'], 'Quote this reference' )
+);
+
 /**
  * Take everything this script made back out.
  */

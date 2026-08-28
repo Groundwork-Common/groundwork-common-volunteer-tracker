@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T16:25:28+00:00\n"
+"POT-Creation-Date: 2026-08-28T16:35:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -4955,7 +4955,7 @@ msgid "Reading a draft records nothing."
 msgstr ""
 
 #: inc/admin-volunteer-letters.php:669
-msgid "Every send is logged, and issues a new letter with its own reference."
+msgid "Sending or printing this is recorded against it. The letter keeps the reference it was issued with."
 msgstr ""
 
 #: inc/admin-volunteer-letters.php:693
@@ -6286,12 +6286,12 @@ msgstr ""
 msgid "Hours and minutes (3h 30m)"
 msgstr ""
 
-#: inc/i18n.php:127
-msgid "This letter was generated from volunteer hour records kept by {org}. {org} is the authoritative record-keeper for these hours; this document reports those records and is not an independent certification that the hours were worked. Questions about this letter should be directed to {org} at {contact}, quoting reference {reference}. Generated {timestamp} ({timezone})."
+#: inc/i18n.php:141
+msgid "This letter was generated from volunteer hour records kept by {org}, who are the authoritative record-keeper for these hours. It reports those records and is not an independent certification that the hours were worked. Questions should be directed to {contact}. Generated {timestamp} ({timezone})."
 msgstr ""
 
-#: inc/i18n.php:151
-msgid "The reference code identifies this letter against the records it was generated from. {org} can confirm whether a code still matches their current records. It is not a certification by any outside body."
+#: inc/i18n.php:170
+msgid "Quote this reference when you contact {org} and they can confirm the letter against the records it was generated from."
 msgstr ""
 
 #. translators: %s: a staff member's name.

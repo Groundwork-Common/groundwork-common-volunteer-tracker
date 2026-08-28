@@ -106,12 +106,26 @@ function gwc_vt_hour_format_labels(): array {
  *
  *   1. Where the numbers came from — the organization's own records.
  *   2. Who is answerable for them — the organization, explicitly, not us.
- *   3. How to check — a named contact and a reference code that can be read
- *      back over the phone.
+ *   3. Who to ask — a named contact.
  *
  * What is deliberately absent: any statement that the hours were worked. The
  * plugin cannot know that. It knows what was recorded and who attested to it,
  * and saying more would be the exact overclaim this plugin exists to avoid.
+ *
+ * ── And what this deliberately stops saying ──────────────────────────────────
+ * It used to quote the reference code, three lines above the same code printed
+ * on its own; and the note beside that code said the letter was "not a
+ * certification by any outside body", which is the sentence this paragraph
+ * already spends a clause on. Two facts, each stated twice, in one footer.
+ *
+ * The split is now: this paragraph says what the DOCUMENT is and who is
+ * answerable for it, and the note beside the code says what the CODE is for.
+ * Neither repeats the other, and the one that must never be emptied is this one.
+ *
+ * The timestamp stays even though the letterhead carries the date. Two letters
+ * issued on one day over one set of shifts produce the same reference — the
+ * digest covers the facts, not the hour — so the time is the only thing on the
+ * page telling them apart.
  *
  * Placeholders are substituted by gwc_vt_render_letter(): {org}, {contact},
  * {timestamp}, {timezone}, {reference}.
@@ -125,7 +139,7 @@ function gwc_vt_default_disclaimer(): string {
 	}
 
 	$text = __(
-		'This letter was generated from volunteer hour records kept by {org}. {org} is the authoritative record-keeper for these hours; this document reports those records and is not an independent certification that the hours were worked. Questions about this letter should be directed to {org} at {contact}, quoting reference {reference}. Generated {timestamp} ({timezone}).',
+		'This letter was generated from volunteer hour records kept by {org}, who are the authoritative record-keeper for these hours. It reports those records and is not an independent certification that the hours were worked. Questions should be directed to {contact}. Generated {timestamp} ({timezone}).',
 		'groundwork-common-volunteer-tracker'
 	);
 
@@ -135,10 +149,15 @@ function gwc_vt_default_disclaimer(): string {
 /**
  * What the reference code on a letter does and does not prove.
  *
- * Printed alongside the code itself. Without this sentence a reader reasonably
- * assumes a code means the document was issued by some authority; with it, the
- * code means the narrower and true thing — that this document still matches
- * what the organization has on file.
+ * Printed alongside the code itself, and its whole job is to make the code
+ * actionable — without a sentence here a reader reasonably assumes a code means
+ * the document was issued by some authority, and has nothing to do with it.
+ * With it, the code means the narrower and true thing and comes with the one
+ * instruction that uses it: quote this, to them.
+ *
+ * It no longer says the letter is not a certification. The disclaimer directly
+ * above spends a clause on exactly that, and a footer that makes the same point
+ * twice reads as a document arguing with itself.
  *
  * @return string
  */
@@ -149,7 +168,7 @@ function gwc_vt_default_reference_note(): string {
 	}
 
 	$text = __(
-		'The reference code identifies this letter against the records it was generated from. {org} can confirm whether a code still matches their current records. It is not a certification by any outside body.',
+		'Quote this reference when you contact {org} and they can confirm the letter against the records it was generated from.',
 		'groundwork-common-volunteer-tracker'
 	);
 
