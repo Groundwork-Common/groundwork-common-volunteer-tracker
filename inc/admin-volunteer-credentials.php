@@ -133,13 +133,31 @@ function gwc_vt_render_volunteer_credentials_box( $post ): void {
 	}
 
 	if ( $held ) {
-		echo '<table class="widefat striped gwcvt-held"><tbody>';
+		/* A header row, because the two panels above this one have them and a
+		 * table without one beside two with them reads as a different kind of
+		 * thing. The last column is the actions, named for a screen reader and
+		 * blank on the page — the same shape the other two use. */
+		?>
+		<table class="widefat striped gwcvt-held">
+			<thead>
+				<tr>
+					<th scope="col"><?php esc_html_e( 'Credential', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Standing', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Expiry', 'groundwork-common-volunteer-tracker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Recorded', 'groundwork-common-volunteer-tracker' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+		<?php
 
 		foreach ( $held as $credential_id ) {
 			gwc_vt_render_held_row( $volunteer_id, (int) $credential_id );
 		}
 
-		echo '</tbody></table>';
+		?>
+			</tbody>
+		</table>
+		<?php
 	} else {
 		printf(
 			'<p class="description">%s</p>',

@@ -160,7 +160,90 @@ gwc_vt_sh_check(
 	implode( ' ', $GLOBALS['gwc_vt_sh_stray'] )
 );
 
-echo "\n── 3. And every trigger is the same trigger ─────────────────────────\n";
+echo "\n── 3. One shape for a panel ─────────────────────────────────────────\n";
+
+/* ── Why this is asserted and not just styled ────────────────────────────────
+ * Hours, letters and credentials are the same thing three times: a table of
+ * what has happened, and a trigger at the foot for making more of it. They were
+ * styled three times too, each patched against its own id, and they drifted —
+ * one table flush to the panel edge and another inset by twelve pixels, a rule
+ * above one trigger and none above another, a header row on two of three.
+ *
+ * The stylesheet keys off one class now, so what can still drift is the LIST:
+ * a fourth panel that never joins, or a third that quietly leaves. */
+$GLOBALS['gwc_vt_sh_panels'] = gwc_vt_record_panels();
+
+gwc_vt_sh_check(
+	'every panel on the record follows the same shape',
+	array( 'gwc-vt-volunteer-hours', 'gwc-vt-volunteer-letters', 'gwc-vt-volunteer-credentials' ) === $GLOBALS['gwc_vt_sh_panels'],
+	implode( ', ', $GLOBALS['gwc_vt_sh_panels'] )
+);
+
+/* ── And the two that are deliberately NOT in it ─────────────────────────────
+ * Status and Required service are field panels: a handful of inputs, which is
+ * exactly what wp-admin's padding is for. Giving them this class would strip it
+ * and butt their fields against the panel edge.
+ *
+ * So the rule is not "every meta box on this screen" — it is "every one whose
+ * body is a table", and the two shapes are listed against each other here, so
+ * that adding a panel means deciding which it is rather than discovering it in
+ * a screenshot. */
+$GLOBALS['gwc_vt_sh_boxes'] = array();
+
+foreach ( (array) glob( GWC_VT_DIR . 'inc/*.php' ) as $gwc_vt_sh_file ) {
+	if ( preg_match_all( "/add_meta_box\(\s*'(gwc-vt-volunteer-[a-z-]+)'/", (string) file_get_contents( (string) $gwc_vt_sh_file ), $gwc_vt_sh_found ) ) {
+		foreach ( $gwc_vt_sh_found[1] as $gwc_vt_sh_id ) {
+			$GLOBALS['gwc_vt_sh_boxes'][] = $gwc_vt_sh_id;
+		}
+	}
+}
+
+$GLOBALS['gwc_vt_sh_boxes']  = array_values( array_unique( $GLOBALS['gwc_vt_sh_boxes'] ) );
+$GLOBALS['gwc_vt_sh_fields'] = array( 'gwc-vt-volunteer-standing', 'gwc-vt-volunteer-required' );
+
+gwc_vt_sh_check(
+	'and every panel there is one shape or the other, none unaccounted for',
+	array() === array_diff( $GLOBALS['gwc_vt_sh_boxes'], $GLOBALS['gwc_vt_sh_panels'], $GLOBALS['gwc_vt_sh_fields'] ),
+	implode( ', ', array_diff( $GLOBALS['gwc_vt_sh_boxes'], $GLOBALS['gwc_vt_sh_panels'], $GLOBALS['gwc_vt_sh_fields'] ) )
+);
+
+/* The class the whole rule set hangs on actually reaches the box. Registered on
+ * admin_init, which wp-cli does not fire, so it is called here first — the
+ * point is that the filter is added and returns the class, not when. */
+gwc_vt_mark_record_panels();
+
+$GLOBALS['gwc_vt_sh_classes'] = (array) apply_filters(
+	'postbox_classes_' . GWC_VT_VOLUNTEER_TYPE . '_gwc-vt-volunteer-credentials',
+	array( 'postbox' )
+);
+
+gwc_vt_sh_check(
+	'and the class the stylesheet keys off reaches it',
+	in_array( 'gwcvt-panel', $GLOBALS['gwc_vt_sh_classes'], true ),
+	implode( ' ', $GLOBALS['gwc_vt_sh_classes'] )
+);
+
+/* Nothing in a panel may paint over the zebra striping. `striped` alternates on
+ * odd and even rows; a background on every row of one KIND overrides some of
+ * them and not others, so the alternation stops halfway down the table and
+ * starts again below it. A draft row had exactly that. */
+$GLOBALS['gwc_vt_sh_painted'] = array();
+
+if ( preg_match_all( '/(\.gwcvt-[^{}]*?(?:__row[a-z-]*|\s+t[dr]))\s*\{([^}]*)\}/', $GLOBALS['gwc_vt_sh_css'], $gwc_vt_sh_rules, PREG_SET_ORDER ) ) {
+	foreach ( $gwc_vt_sh_rules as $gwc_vt_sh_rule ) {
+		if ( false !== strpos( $gwc_vt_sh_rule[2], 'background' ) ) {
+			$GLOBALS['gwc_vt_sh_painted'][] = trim( $gwc_vt_sh_rule[1] );
+		}
+	}
+}
+
+gwc_vt_sh_check(
+	'and nothing paints over the striping',
+	array() === $GLOBALS['gwc_vt_sh_painted'],
+	implode( ' / ', $GLOBALS['gwc_vt_sh_painted'] )
+);
+
+echo "\n── 4. And every trigger is the same trigger ─────────────────────────\n";
 
 ob_start();
 gwc_vt_sheet_trigger( 'zzsheet-one', 'One' );
@@ -186,7 +269,7 @@ gwc_vt_sh_check(
 		&& false !== strpos( $GLOBALS['gwc_vt_sh_trigs'], 'data-gwcvt-sheet-open="zzsheet-two"' )
 );
 
-echo "\n── 4. What a sheet says afterwards ──────────────────────────────────\n";
+echo "\n── 5. What a sheet says afterwards ──────────────────────────────────\n";
 
 /* One table, one query argument. There were two of these for a while, doing the
  * same job under different names because they were written a week apart. */
@@ -208,7 +291,7 @@ gwc_vt_sh_check(
 	function_exists( 'gwc_vt_sheet_messages' ) && ! defined( 'GWC_VT_SHEET_MESSAGES' )
 );
 
-echo "\n── 5. Logging hours through the sheet ───────────────────────────────\n";
+echo "\n── 6. Logging hours through the sheet ───────────────────────────────\n";
 
 $GLOBALS['gwc_vt_sh_entry'] = gwc_vt_log_one_entry( $GLOBALS['gwc_vt_sh_vol'], '2026-07-04', 150, 'Zzsheet sorting', 'Dana' );
 

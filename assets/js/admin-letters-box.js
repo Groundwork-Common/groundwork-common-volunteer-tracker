@@ -16,9 +16,7 @@
 ( function () {
 	'use strict';
 
-	var box = document.querySelector( '[data-gwcvt-letters]' );
-
-	if ( ! box || ! window.gwcVtSheet ) {
+	if ( ! window.gwcVtSheet ) {
 		return;
 	}
 
@@ -55,7 +53,10 @@
 	 * The sheet is opened by the shared script; what is letter-specific is
 	 * which document goes in the frame and which of the row's actions come
 	 * with it. */
-	box.addEventListener( 'click', function ( event ) {
+	/* Delegated from the document, like the two below it. The letters box used to
+	 * carry a wrapper div to bind to; the panel's own class does that job now,
+	 * and the selector below is specific enough to need no container. */
+	document.addEventListener( 'click', function ( event ) {
 		var link = event.target && event.target.closest
 			? event.target.closest( '[data-gwcvt-letter-open]' )
 			: null;
