@@ -909,13 +909,27 @@ function gwc_vt_letter_request(): array {
 	 * not on, having lost the record they were working with. */
 	$back = ! empty( $_REQUEST['back'] );
 
-	$letter = gwc_vt_build_letter(
-		$volunteer_id,
-		array(
-			'from' => $from,
-			'to'   => $to,
-		)
-	);
+	/* ── Built from the draft when there is one ──────────────────────────────
+	 * A draft fixes the end of its period and the moment its attestations are
+	 * counted as of, and carries who the letter is for. Building from the URL's
+	 * period alone ignores all three — so previewing a draft showed different
+	 * figures from the row above it and from the letter that issuing would
+	 * produce, which is the whole thing the lock exists to prevent.
+	 *
+	 * Here rather than in each handler, because every caller that is given a
+	 * draft wants the same answer, and the two that were doing it separately had
+	 * already drifted apart once. */
+	$draft = $draft_id > 0 ? gwc_vt_letter_draft( $draft_id ) : array();
+
+	$letter = $draft
+		? gwc_vt_build_letter( (int) $draft['volunteer'], gwc_vt_letter_args_for_draft( $draft ) )
+		: gwc_vt_build_letter(
+			$volunteer_id,
+			array(
+				'from' => $from,
+				'to'   => $to,
+			)
+		);
 
 	if ( ! $letter instanceof GWC_VT_Letter ) {
 		wp_die(

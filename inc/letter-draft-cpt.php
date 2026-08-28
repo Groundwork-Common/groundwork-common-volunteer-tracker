@@ -54,6 +54,32 @@ const GWC_VT_DRAFT_TYPE = 'gwc_vt_letter_draft';
 const GWC_VT_DRAFT_FROM = '_gwc_vt_draft_from';
 const GWC_VT_DRAFT_TO   = '_gwc_vt_draft_to';
 
+/* ── Who it is for, and what it concerns ─────────────────────────────────────
+ * Both optional. Most letters are handed to the volunteer and need neither.
+ *
+ * Where a court or a school asked to be sent one directly, these are what make
+ * the document route at the other end: a named officer and a case number is how
+ * the paperwork is filed. In Georgia, which is where this plugin's first
+ * organizations are, court-ordered service runs through a community service
+ * officer assigned to the circuit and an agency already registered with the
+ * court — so the letter arriving addressed to the right person, about the right
+ * matter, is most of what verification actually consists of there.
+ *
+ * ── Why a case number is allowed on a letter and required hours are not ──────
+ * This looks like it contradicts the rule that what a court ordered never
+ * reaches the letter, and it does not. That rule is about ASSERTIONS: how many
+ * hours were ordered, who ordered them and by when are facts about the court's
+ * own document, and an organization repeating them back to the court that
+ * issued them is certifying somebody else's paperwork.
+ *
+ * "Re: 2026-CR-1234" asserts nothing about the person. It says which
+ * correspondence this is. The test is whether removing it would change what the
+ * letter CLAIMS — and it would not; it would only make the envelope harder to
+ * file.
+ */
+const GWC_VT_DRAFT_ADDRESSEE = '_gwc_vt_draft_addressee';
+const GWC_VT_DRAFT_MATTER    = '_gwc_vt_draft_matter';
+
 /** Who asked for it, and when — provenance, the same as a credential record. */
 const GWC_VT_DRAFT_BY = '_gwc_vt_draft_by';
 

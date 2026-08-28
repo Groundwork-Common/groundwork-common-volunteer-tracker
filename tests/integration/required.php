@@ -159,7 +159,14 @@ if ( $gwc_vt_letter instanceof GWC_VT_Letter ) {
 	$gwc_vt_props = array_keys( get_object_vars( $gwc_vt_letter ) );
 	sort( $gwc_vt_props );
 
-	/* entry_ids joined this list when issuing and delivering came apart: the log
+	/* addressee and matter joined it so a letter can be addressed to the officer
+	 * who asked for it. Those are ADDRESSING and not assertion — they say which
+	 * correspondence this is, where "40 hours were ordered" would be this
+	 * organization repeating a court's own document back to it. The leak checks
+	 * below still run over a letter built with a requirement on the volunteer,
+	 * so nothing about that requirement can ride in on them.
+	 *
+	 * entry_ids joined this list when issuing and delivering came apart: the log
 	 * has to remember which entries a letter listed so a delivery next week
 	 * reproduces the letter that was issued. It is IDs and nothing else, which
 	 * is exactly why it does not weaken what this check is for — an ID says
@@ -167,7 +174,7 @@ if ( $gwc_vt_letter instanceof GWC_VT_Letter ) {
 	 * out would have to be named to be useful. */
 	gwc_vt_check(
 		'the letter model still carries only what it always did',
-		array( 'entries', 'entry_ids', 'from', 'includes_unverified', 'issued_at', 'reference', 'to', 'unverified_minutes', 'verified_as_of', 'verified_minutes', 'volunteer_id', 'volunteer_name' ) === $gwc_vt_props,
+		array( 'addressee', 'entries', 'entry_ids', 'from', 'includes_unverified', 'issued_at', 'matter', 'reference', 'to', 'unverified_minutes', 'verified_as_of', 'verified_minutes', 'volunteer_id', 'volunteer_name' ) === $gwc_vt_props,
 		implode( ',', $gwc_vt_props )
 	);
 
