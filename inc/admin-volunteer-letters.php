@@ -718,9 +718,21 @@ function gwc_vt_render_letter_reader(): void {
 
 			<div class="gwcvt-sheet__foot">
 				<span data-gwcvt-reader-actions></span>
-				<span class="description" data-gwcvt-reader-note></span>
+
+				<?php
+				/* One note, and only on a draft. That a draft records nothing is
+				 * a fact about what did NOT happen, which is the kind a screen
+				 * has to state because nobody can see it — and it is the
+				 * reassurance somebody wants before pressing Issue.
+				 *
+				 * The issued row had a sibling explaining that sending is
+				 * recorded and the reference is kept. Both are visible: the
+				 * deliveries are listed under Issued on the row behind this
+				 * panel, and the reference is printed on the letter being read.
+				 * A sentence describing what is already on the screen is one the
+				 * reader has to check against the screen. */
+				?>
 				<span class="description gwcvt-sheet__note--draft" hidden data-gwcvt-reader-note-draft><?php esc_html_e( 'Reading a draft records nothing.', 'groundwork-common-volunteer-tracker' ); ?></span>
-				<span class="description gwcvt-sheet__note--issued" hidden data-gwcvt-reader-note-issued><?php esc_html_e( 'Sending or printing this is recorded against it. The letter keeps the reference it was issued with.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</div>
 		</div>
 	</div>

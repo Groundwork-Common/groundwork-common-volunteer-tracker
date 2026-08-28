@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T16:54:35+00:00\n"
+"POT-Creation-Date: 2026-08-28T17:13:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -4078,7 +4078,7 @@ msgstr ""
 #: inc/admin-shift.php:416
 #: inc/admin-volunteer-letters.php:661
 #: inc/admin-volunteer-letters.php:713
-#: inc/admin-volunteer-letters.php:757
+#: inc/admin-volunteer-letters.php:769
 msgid "Close"
 msgstr ""
 
@@ -4808,7 +4808,7 @@ msgstr ""
 
 #: inc/admin-volunteer-letters.php:579
 #: inc/admin-volunteer-letters.php:679
-#: inc/admin-volunteer-letters.php:796
+#: inc/admin-volunteer-letters.php:808
 msgid "Cancel"
 msgstr ""
 
@@ -4832,43 +4832,39 @@ msgstr ""
 msgid "Record it and print"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:722
+#: inc/admin-volunteer-letters.php:735
 msgid "Reading a draft records nothing."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:723
-msgid "Sending or printing this is recorded against it. The letter keeps the reference it was issued with."
-msgstr ""
-
-#: inc/admin-volunteer-letters.php:747
+#: inc/admin-volunteer-letters.php:759
 msgid "Email this letter"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:763
+#: inc/admin-volunteer-letters.php:775
 msgid "The letter is already issued and keeps its reference. Sending it is recorded against it, so the log says where it went and when."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:767
+#: inc/admin-volunteer-letters.php:779
 msgid "Where to send it"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:775
+#: inc/admin-volunteer-letters.php:787
 msgid "The address on this record."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:782
+#: inc/admin-volunteer-letters.php:794
 msgid "Another address"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:784
+#: inc/admin-volunteer-letters.php:796
 msgid "A probation officer or a school who asked to receive it directly."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:787
+#: inc/admin-volunteer-letters.php:799
 msgid "Email address"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:795
+#: inc/admin-volunteer-letters.php:807
 msgid "Send it"
 msgstr ""
 
