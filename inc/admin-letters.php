@@ -376,12 +376,31 @@ function gwc_vt_render_produce_letter_screen(): void {
 							aria-autocomplete="list"
 							aria-controls="gwcvt-letter-volunteer-results"
 							placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
-							name="volunteer_name"
 							value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : $typed ); ?>"
 						/>
 						<input type="hidden" name="volunteer" id="gwcvt-letter-volunteer-id" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
 						<ul id="gwcvt-letter-volunteer-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
 					</div>
+
+					<?php
+					/* What was typed, carried by a hidden field rather than by
+					 * naming the box itself.
+					 *
+					 * The box had a name for one afternoon and the report came
+					 * straight back: arriving at the screen, somebody's name was
+					 * already in it. A named text field is one the browser
+					 * remembers and offers again — reasonable for a postcode, and
+					 * not for the screen that produces a letter about a named
+					 * person, where the name that comes back is whoever was
+					 * looked up last and the letter is about a record, not a
+					 * name. `autocomplete="off"` is a request browsers decline.
+					 *
+					 * Unnamed, there is nothing to remember. admin-picker.js
+					 * mirrors the text into this field as it is typed, which is
+					 * what lets the screen put the words back after refusing a
+					 * preview nobody chose a volunteer for. */
+					?>
+					<input type="hidden" name="volunteer_name" data-gwcvt-typed value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : $typed ); ?>" />
 
 					<?php
 					/* Pressing the button with nothing chosen used to reload this

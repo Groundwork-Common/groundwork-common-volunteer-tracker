@@ -33,6 +33,22 @@
 			return;
 		}
 
+		/* Optional, and outside this element: a hidden field the SEARCH text is
+		 * mirrored into, so a form that reloads itself can put the words back in
+		 * the box. The box itself deliberately has no name — a named text field
+		 * is one a browser remembers and re-fills on the next visit, and this one
+		 * would come back holding somebody's name on a screen that produces
+		 * letters about people. Looked up in the form rather than in the picker,
+		 * because the picker's own hidden field is found by position above. */
+		var form = root.closest ? root.closest( 'form' ) : null;
+		var typed = form ? form.querySelector( 'input[data-gwcvt-typed]' ) : null;
+
+		function remember() {
+			if ( typed ) {
+				typed.value = search.value;
+			}
+		}
+
 		var timer = null;
 		var active = -1;
 		var items = [];
@@ -48,6 +64,7 @@
 		function choose( item ) {
 			hidden.value = String( item.id );
 			search.value = item.label;
+			remember();
 			close();
 		}
 
@@ -128,6 +145,7 @@
 			 * volunteer's ID with a different name showing above it — a wrong
 			 * record that looks right. */
 			hidden.value = '';
+			remember();
 
 			var term = search.value.trim();
 
