@@ -827,9 +827,12 @@ function gwc_vt_render_reissue_banner( array $record ): void {
  * @param string $from         Y-m-d or ''.
  * @param string $to           Y-m-d or ''.
  * @param int    $draft_id     The draft this is being issued from, or 0.
+ * @param array  $extra        Anything else the handler reads — 'back' to end up
+ *                             on the volunteer's record, 'reference' to open a
+ *                             letter that already went out.
  * @return string
  */
-function gwc_vt_letter_action_url( string $action, int $volunteer_id, string $from, string $to, int $draft_id = 0 ): string {
+function gwc_vt_letter_action_url( string $action, int $volunteer_id, string $from, string $to, int $draft_id = 0, array $extra = array() ): string {
 	$args = array(
 		'action'    => $action,
 		'volunteer' => $volunteer_id,
@@ -847,19 +850,27 @@ function gwc_vt_letter_action_url( string $action, int $volunteer_id, string $fr
 	}
 
 	return wp_nonce_url(
-		add_query_arg( $args, admin_url( 'admin-post.php' ) ),
+		add_query_arg( array_merge( $args, $extra ), admin_url( 'admin-post.php' ) ),
 		$action . '_' . $volunteer_id
 	);
 }
 
 /**
- * The shared front half of both issue handlers.
+ * The shared front half of every issue handler.
  *
- * @return array{letter:GWC_VT_Letter, volunteer_id:int, from:string, to:string}
+ * $_REQUEST rather than $_GET because the letters box on a volunteer's own
+ * record sends by POST: the address to send to can be typed into a dialog, and a
+ * typed value does not belong in a URL that ends up in a browser history and a
+ * server log. Everything here is covered by the nonce either way —
+ * check_admin_referer() has always read $_REQUEST.
+ *
+ * @return array{letter:GWC_VT_Letter, volunteer_id:int, from:string, to:string, draft:int, recipient:string, typed:bool, back:bool}
  */
 function gwc_vt_letter_request(): array {
-	$action       = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
-	$volunteer_id = isset( $_GET['volunteer'] ) ? absint( wp_unslash( $_GET['volunteer'] ) ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- named in the nonce action checked below, which is the check.
+	$action = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$volunteer_id = isset( $_REQUEST['volunteer'] ) ? absint( wp_unslash( $_REQUEST['volunteer'] ) ) : 0;
 
 	/* Both admin_post_ handlers come through here, so this is the one place
 	 * producing a letter has to be refused. Before the capability check for the
@@ -877,12 +888,26 @@ function gwc_vt_letter_request(): array {
 
 	check_admin_referer( $action . '_' . $volunteer_id );
 
-	$from = isset( $_GET['from'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
-	$to   = isset( $_GET['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
+	$from = isset( $_REQUEST['from'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_REQUEST['from'] ) ) ) : '';
+	$to   = isset( $_REQUEST['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_REQUEST['to'] ) ) ) : '';
 
 	/* Covered by the nonce above with everything else in this request: which
 	 * draft, if any, this letter is being issued from. */
-	$draft_id = isset( $_GET['draft'] ) ? absint( wp_unslash( $_GET['draft'] ) ) : 0;
+	$draft_id = isset( $_REQUEST['draft'] ) ? absint( wp_unslash( $_REQUEST['draft'] ) ) : 0;
+
+	/* An address somebody typed into the email dialog, for the probation officer
+	 * or the school who asked to receive it directly. Empty means "the address on
+	 * this record", which is what the handler falls back to — but a typed address
+	 * that does not parse is refused rather than quietly replaced, because
+	 * silently sending a court letter somewhere other than where it was addressed
+	 * is the worst kind of helpful. */
+	$typed     = isset( $_REQUEST['recipient'] ) ? trim( sanitize_text_field( wp_unslash( $_REQUEST['recipient'] ) ) ) : '';
+	$recipient = '' !== $typed ? sanitize_email( $typed ) : '';
+
+	/* Whether this act started on the volunteer's own record, and should end
+	 * there. Without it, issuing from the box lands on a screen the reader was
+	 * not on, having lost the record they were working with. */
+	$back = ! empty( $_REQUEST['back'] );
 
 	$letter = gwc_vt_build_letter(
 		$volunteer_id,
@@ -906,6 +931,15 @@ function gwc_vt_letter_request(): array {
 		'from'         => $from,
 		'to'           => $to,
 		'draft'        => $draft_id,
+		'recipient'    => $recipient,
+		/* Whether somebody typed anything at all, which sanitize_email() cannot
+		 * be asked afterwards: it strips "dana@" down to nothing, and an empty
+		 * $recipient is otherwise indistinguishable from "they did not type one",
+		 * which would send a court letter to the address on file instead. A
+		 * silent correction on the way to a mailbox is the same bug as a silent
+		 * correction on the way to a database. */
+		'typed'        => '' !== $typed,
+		'back'         => $back,
 	);
 }
 
@@ -1012,9 +1046,18 @@ function gwc_vt_render_letterhead_warning(): void {
 function gwc_vt_handle_letter_preview(): void {
 	$request = gwc_vt_letter_request();
 
+	/* Opening a letter that already went out. Covered by the same nonce as the
+	 * rest of the request; it changes nothing but the band across the top, which
+	 * has to say "this is not the copy they hold" rather than "this is a draft".
+	 * A reference naming nothing falls through to the draft band, which is the
+	 * safe direction: it claims less, not more. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- gwc_vt_letter_request() checked the nonce over this whole request.
+	$reference = isset( $_REQUEST['reference'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['reference'] ) ) : '';
+	$issued    = '' !== $reference ? gwc_vt_find_letter_record( $reference ) : array();
+
 	gwc_vt_private_document_headers();
 
-	echo gwc_vt_render_letter( $request['letter'], 'draft' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
+	echo gwc_vt_render_letter( $request['letter'], 'draft', is_array( $issued ) ? $issued : array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
 	exit;
 }
 
@@ -1046,7 +1089,16 @@ function gwc_vt_handle_letter_send(): void {
 	$request = gwc_vt_letter_request();
 	$letter  = $request['letter'];
 
-	$recipient = (string) get_post_meta( $letter->volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
+	/* A typed address wins over the one on file, and is checked rather than
+	 * corrected. Refused on what somebody typed, not on what survived
+	 * sanitizing — see the note on 'typed' in gwc_vt_letter_request(). */
+	if ( ! empty( $request['typed'] ) && ! is_email( (string) $request['recipient'] ) ) {
+		gwc_vt_letters_redirect( 'bad-email', $request );
+	}
+
+	$recipient = ! empty( $request['typed'] )
+		? (string) $request['recipient']
+		: (string) get_post_meta( $letter->volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
 
 	if ( '' === $recipient || ! is_email( $recipient ) ) {
 		gwc_vt_letters_redirect( 'no-email', $request );
@@ -1077,7 +1129,21 @@ function gwc_vt_handle_letter_send(): void {
  * @param array  $request From gwc_vt_letter_request().
  */
 function gwc_vt_letters_redirect( string $result, array $request ): void {
-	/* Back to the produce screen, not to the records log. Somebody who has just
+	/* Back to the record, when that is where the act started. The letters box
+	 * is the whole of the flow now — landing somebody on a different screen
+	 * afterwards loses the volunteer they were working with, which is the thing
+	 * moving the flow onto the record was for. */
+	if ( ! empty( $request['back'] ) ) {
+		wp_safe_redirect(
+			add_query_arg(
+				array( 'gwc_vt_letter_did' => $result ),
+				(string) get_edit_post_link( (int) $request['volunteer_id'], 'redirect' )
+			) . '#gwc-vt-volunteer-letters'
+		);
+		exit;
+	}
+
+	/* Otherwise back to the produce screen, not to the records log. Somebody who has just
 	 * printed a letter is looking at the letter — the log's job starts later,
 	 * and landing them there would answer a question they have not asked while
 	 * losing the volunteer and the dates they were working with. */

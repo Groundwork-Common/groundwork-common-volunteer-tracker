@@ -2400,7 +2400,12 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    answers is "where is this person's letter up to", and splitting it makes the
    reader join the halves themselves. What separates them is the status badge
    and the actions, both of which say the difference in words. */
-.gwcvt-letters-box {
+.gwcvt-letters-box__count {
+	margin: 0 0 8px;
+	color: #646970;
+}
+
+.gwcvt-letters-box table {
 	margin-bottom: 12px;
 }
 
@@ -2437,18 +2442,32 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 /* Destructive, and inside a row of ordinary links, so it is the one thing in
    the group that is red — the same treatment core gives "Delete Permanently"
    in a row of row actions, and a nonced link for the same reason. */
-.gwcvt-letters-box__discard {
+a.gwcvt-letters-box__discard {
 	color: #b32d2e;
 }
 
-.gwcvt-letters-box__discard:hover,
-.gwcvt-letters-box__discard:focus {
+a.gwcvt-letters-box__discard:hover,
+a.gwcvt-letters-box__discard:focus {
 	color: #8a2424;
 }
 
-/* The starting form. Two choices stacked rather than side by side: the second
-   one grows a pair of date fields when it is picked, and a two-column layout
-   would move the first choice every time somebody chose the second. */
+/* ─── Adding one ────────────────────────────────────────────────────────────
+   Folded behind one button by assets/js/admin-letters-box.js, and rendered
+   open so it still works without it. Nothing here assumes either state. */
+.gwcvt-letters-box__panel {
+	padding: 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	background: #f6f7f7;
+}
+
+.gwcvt-letters-box__open {
+	margin: 0;
+}
+
+/* Two choices stacked rather than side by side: the second grows a pair of date
+   fields when it is picked, and a two-column layout would move the first choice
+   every time somebody chose the second. */
 .gwcvt-letters-box__choice {
 	margin-bottom: 8px;
 }
@@ -2464,4 +2483,103 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	align-items: center;
 	gap: 6px;
 	margin: 4px 0 0 24px;
+}
+
+.gwcvt-letters-box__foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 12px 0 0;
+}
+
+/* ─── The panels a letter is read and sent from ─────────────────────────────
+   Over the record rather than in another tab. Reading a letter is a step in the
+   job — check it, then issue it — and a new tab makes it a departure: the row
+   you were working on is behind you, and coming back means finding it again.
+
+   No <dialog>. It would carry the backdrop and the focus trap for free, and it
+   also sits in the top layer above everything wp-admin paints, which is fine
+   until an admin notice or the media modal is open behind it. A positioned
+   overlay is a handful of lines and behaves the same on every browser this
+   plugin's 7.4 floor implies somebody is still running. */
+.gwcvt-sheet {
+	position: fixed;
+	inset: 0;
+	z-index: 160000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	background: rgba(0, 0, 0, .55);
+}
+
+.gwcvt-sheet[hidden] {
+	display: none;
+}
+
+.gwcvt-sheet__panel {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-width: 860px;
+	max-height: 100%;
+	border-radius: 4px;
+	background: #fff;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, .2), 0 20px 48px rgba(0, 0, 0, .3);
+}
+
+.gwcvt-sheet--narrow .gwcvt-sheet__panel {
+	max-width: 480px;
+}
+
+.gwcvt-sheet__head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.gwcvt-sheet__head h2 {
+	margin: 0;
+	font-size: 15px;
+}
+
+.gwcvt-sheet__close {
+	margin-left: auto;
+}
+
+/* The letter itself, in an iframe, so gwc_vt_render_letter() stays the only
+   thing that has ever produced one — the rule that keeps a theme from owning a
+   document a court reads keeps a script from owning it too. */
+.gwcvt-sheet__doc {
+	flex: 1 1 auto;
+	width: 100%;
+	min-height: 420px;
+	border: 0;
+	background: #f0f0f1;
+}
+
+.gwcvt-sheet__body {
+	padding: 16px;
+	overflow-y: auto;
+}
+
+.gwcvt-sheet__foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	border-top: 1px solid #dcdcde;
+}
+
+/* The panel's copies of the row's actions are given the button class by the
+   script, so they read as the things you do here rather than as a row of links
+   under a document. */
+.gwcvt-sheet__foot [data-gwcvt-reader-actions] {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 8px;
 }

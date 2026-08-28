@@ -54,11 +54,21 @@ defined( 'ABSPATH' ) || exit;
  *   one thing a draft must not become is a letter somebody printed and handed
  *   over while the organization's own log knows nothing about it.
  *
+ * ── And the same document again, for one already issued ─────────────────────
+ * No copy of an issued letter is kept, deliberately. So "open it again" can only
+ * ever mean "render from the records as they stand now", which may not be what
+ * went out. That is a different sentence from "this is a draft", and the band
+ * says so when $issued names the log record it is being opened from: the
+ * reference on the copy somebody is holding stays theirs, and this rendering is
+ * not it.
+ *
  * @param GWC_VT_Letter $letter The letter.
  * @param string        $medium 'print', 'email' or 'draft'.
+ * @param array         $issued Optional. The log record this is being reopened
+ *                              from, which changes the band a draft carries.
  * @return string A complete HTML document.
  */
-function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' ): string {
+function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print', array $issued = array() ): string {
 	$body = gwc_vt_letter_body( $letter, $medium );
 
 	/* Everything a draft does, the print document does — it is the same paper. */
@@ -76,7 +86,7 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' )
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="noindex, nofollow" />
-	<title><?php echo esc_html( gwc_vt_letter_title( $letter, $medium ) ); ?></title>
+	<title><?php echo esc_html( gwc_vt_letter_title( $letter, $medium, $issued ) ); ?></title>
 	<?php if ( $on_paper ) : ?>
 		<?php gwc_vt_print_document_styles(); ?>
 	<?php endif; ?>
@@ -89,8 +99,21 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' )
 		 * recorded. */
 		?>
 		<div class="gwcvt-letter-draft" role="note">
-			<strong><?php esc_html_e( 'Draft — not issued', 'groundwork-common-volunteer-tracker' ); ?></strong>
-			<span><?php esc_html_e( 'Nobody has been sent this and nothing has been recorded. Go back and use “Issue and print” or “Issue and email” on the volunteer’s record — issuing is what gives a letter its reference.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<?php if ( isset( $issued['reference'] ) ) : ?>
+				<strong><?php esc_html_e( 'Not the copy that went out', 'groundwork-common-volunteer-tracker' ); ?></strong>
+				<span>
+					<?php
+					printf(
+						/* translators: %s: a reference code. */
+						esc_html__( 'No copy of a letter is kept. This is what your records would produce today, and they may have changed since. %s stays the reference on the letter they are holding, and still checks out as what you issued that day.', 'groundwork-common-volunteer-tracker' ),
+						esc_html( (string) $issued['reference'] )
+					);
+					?>
+				</span>
+			<?php else : ?>
+				<strong><?php esc_html_e( 'Draft — not issued', 'groundwork-common-volunteer-tracker' ); ?></strong>
+				<span><?php esc_html_e( 'Nobody has been sent this and nothing has been recorded. Use “Issue it” or “Email it” on the volunteer’s record — issuing is what gives a letter its reference.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 
@@ -99,9 +122,16 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' )
 		<div class="gwcvt-letter-toolbar">
 			<button type="button" class="gwcvt-print-button" onclick="window.print()">
 				<?php
-				echo 'draft' === $medium
-					? esc_html__( 'Print this draft', 'groundwork-common-volunteer-tracker' )
-					: esc_html__( 'Print this letter', 'groundwork-common-volunteer-tracker' );
+				if ( isset( $issued['reference'] ) ) {
+					/* Printing this does not issue anything and does not log
+					 * anything — it is a rendering of a letter that already
+					 * went out, and the band above says so. */
+					esc_html_e( 'Print this copy', 'groundwork-common-volunteer-tracker' );
+				} elseif ( 'draft' === $medium ) {
+					esc_html_e( 'Print this draft', 'groundwork-common-volunteer-tracker' );
+				} else {
+					esc_html_e( 'Print this letter', 'groundwork-common-volunteer-tracker' );
+				}
 				?>
 			</button>
 			<span class="gwcvt-letter-toolbar__hint">
@@ -381,7 +411,7 @@ function gwc_vt_letter_tokens( GWC_VT_Letter $letter, string $medium = 'print' )
 	 * substitution happens here rather than in three places that would have to
 	 * agree. */
 	$reference = 'draft' === $medium
-		? __( 'none — this is a draft', 'groundwork-common-volunteer-tracker' )
+		? __( 'none — this copy has not been issued', 'groundwork-common-volunteer-tracker' )
 		: $letter->reference;
 
 	return array(
@@ -506,9 +536,20 @@ function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
  *
  * @param GWC_VT_Letter $letter The letter.
  * @param string        $medium 'print', 'email' or 'draft'.
+ * @param array         $issued Optional. The log record this is being reopened
+ *                              from — a copy of one, not a draft.
  * @return string
  */
-function gwc_vt_letter_title( GWC_VT_Letter $letter, string $medium = 'print' ): string {
+function gwc_vt_letter_title( GWC_VT_Letter $letter, string $medium = 'print', array $issued = array() ): string {
+	if ( isset( $issued['reference'] ) ) {
+		return sprintf(
+			/* translators: 1: a volunteer's name, 2: the organization's name. */
+			__( 'Copy — volunteer service verification — %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
+			$letter->volunteer_name,
+			gwc_vt_org_name()
+		);
+	}
+
 	if ( 'draft' === $medium ) {
 		return sprintf(
 			/* translators: 1: a volunteer's name, 2: the organization's name. */
