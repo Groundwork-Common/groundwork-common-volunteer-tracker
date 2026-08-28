@@ -179,30 +179,30 @@ function gwc_vt_render_schedule_screen(): void {
 /**
  * Say when the list has been narrowed to match a number somebody clicked.
  *
- * Every one of these narrowings is invisible otherwise. Slots mode looks like an
- * ordinary schedule that has mysteriously grown a festival's six times; a
- * seven-day window looks like a site with nothing booked past Friday; and events
- * only — which is where a day clicked out of a calendar of events lands — looks
- * like a week on which nobody scheduled a single shift. A screen that has
- * quietly stopped showing everything, without saying so, is how somebody
- * concludes there is nothing there.
+ * Both of these narrowings are invisible otherwise, and that is the whole test
+ * for whether one belongs here. Slots mode looks like an ordinary schedule that
+ * has mysteriously grown a festival's six times; a seven-day window looks like a
+ * site with nothing booked past Friday. Neither has a control on the screen
+ * saying it is on, so without this sentence a screen that has quietly stopped
+ * showing everything is how somebody concludes there is nothing there.
+ *
+ * Events-only USED to be said here too, and stopped being when it became a chip.
+ * The chip is filled, says "Events · 4", and clears itself with the × on it — so
+ * the notice was telling somebody what the control beside it was already
+ * showing, and offering a second way back to the same place. A message that
+ * repeats the interface is one more thing to read before the screen begins.
  *
  * @param bool   $slots  Whether event times are drawn as their own rows.
  * @param int    $within How many days the window was narrowed to, or 0.
  * @param string $when   'past' or 'upcoming'.
  * @param string $base   The screen's own URL.
- * @param string $only   'events' when the shifts are being left out, or ''.
  */
-function gwc_vt_render_schedule_narrowing( bool $slots, int $within, string $when, string $base, string $only = '' ): void {
-	if ( ! $slots && $within < 1 && '' === $only ) {
+function gwc_vt_render_schedule_narrowing( bool $slots, int $within, string $when, string $base ): void {
+	if ( ! $slots && $within < 1 ) {
 		return;
 	}
 
 	$said = array();
-
-	if ( 'events' === $only ) {
-		$said[] = __( 'only events are listed, not the shifts around them', 'groundwork-common-volunteer-tracker' );
-	}
 
 	if ( $slots ) {
 		$said[] = __( 'an event’s times are listed one by one rather than as a single row', 'groundwork-common-volunteer-tracker' );
@@ -225,7 +225,7 @@ function gwc_vt_render_schedule_narrowing( bool $slots, int $within, string $whe
 	/* Everything except the two narrowing arguments, so "show the rest" keeps
 	 * the state chip, the search and the past/upcoming half somebody is in.
 	 * Rebuilt from the current URL rather than from $base for that reason. */
-	$rest = remove_query_arg( array( 'gwc_vt_slots', 'gwc_vt_within', 'gwc_vt_only' ), gwc_vt_current_admin_url() );
+	$rest = remove_query_arg( array( 'gwc_vt_slots', 'gwc_vt_within' ), gwc_vt_current_admin_url() );
 	?>
 	<div class="notice notice-info gwcvt-schedule__narrowed">
 		<p>
@@ -423,7 +423,7 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 		<?php gwc_vt_render_schedule_missing( $missing ); ?>
 		<?php gwc_vt_schedule_notice(); ?>
 		<?php gwc_vt_event_notice(); ?>
-		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base, $only ); ?>
+		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base ); ?>
 
 		<?php gwc_vt_render_schedule_nav( $base, $when, 'list', $only ); ?>
 		<?php

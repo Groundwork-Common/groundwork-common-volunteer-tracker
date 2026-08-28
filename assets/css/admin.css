@@ -1508,60 +1508,42 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	box-shadow: inset 0 0 0 1px #2271b1;
 }
 
-/* ── An on chip is filled, not tinted ────────────────────────────────────────
-   The off state is an outline on white. The on state used to be a pale tint of
-   the state's colour — #fcf0f1 beside #fff — which at a glance is white beside
-   white, so the only thing announcing "this list is filtered" was the small ×
-   at the end. A filter somebody cannot see is on is a screen that lies about
-   what it is showing.
+/* ── On is one colour, because on is one thing ───────────────────────────────
+   The off state is an outline on white. The on state was a pale tint of the
+   state's own colour, which is white beside white at a glance — so the only
+   thing announcing a filtered list was the small × at the end. It is filled
+   now, in the blue this admin uses everywhere for "you chose this": the
+   List | Month control's on state, core's current view link, a primary button.
 
-   Filled, in the state's own colour, with white text: the same weight the
-   segmented List | Month control already uses for its on state, so "chosen"
-   looks the same on both controls on this screen. Every pairing below is white
-   text on a colour at 4.5:1 or better — the ambers and greens are darkened from
-   the tints' border colours for exactly that reason. */
+   Per-state colours were tried here first — red for short, green for full — on
+   the argument that short is the same red everywhere in this plugin. That held
+   while only one chip could be on: two were never side by side. Events is a
+   filter now, so it can be on WITH a state, and two chips that are both simply
+   on in two different colours read as two different kinds of on. Colour on a
+   control says whether it is chosen; colour on a row says what the row is. They
+   are different jobs and this row was doing both.
+
+   The state's colour still means what it always meant, everywhere it describes
+   data rather than a choice: the rule down the left of a row, the badges, the
+   chips on the calendar, the legend under it.
+
+   The gwcvt-chip-filter--<state> modifier is still written, unstyled, for a site
+   that wants its own answer to this. */
 .gwcvt-chip-filter--on {
 	font-weight: 600;
 	color: #fff;
-	background: #50575e;
-	box-shadow: inset 0 0 0 1px #50575e;
-}
-
-.gwcvt-chip-filter--short {
-	background: #b32d2e;
-	box-shadow: inset 0 0 0 1px #b32d2e;
-}
-
-.gwcvt-chip-filter--awaiting {
-	background: #8a6100;
-	box-shadow: inset 0 0 0 1px #8a6100;
-}
-
-.gwcvt-chip-filter--full {
-	background: #007017;
-	box-shadow: inset 0 0 0 1px #007017;
-}
-
-.gwcvt-chip-filter--cancelled {
-	background: #646970;
-	box-shadow: inset 0 0 0 1px #646970;
-}
-
-/* Events narrows what is listed rather than describing a state, so it takes the
-   blue every other "you chose this" on the screen uses rather than a state
-   colour it would be borrowing. */
-.gwcvt-chip-filter--events {
 	background: #2271b1;
 	box-shadow: inset 0 0 0 1px #2271b1;
 }
 
 /* The × that clears it, and the chip it sits in, stay legible on the fill: the
    generic hover rule above repaints a chip blue on white, which on a filled one
-   would be blue on red. */
+   would be blue on blue. */
 .gwcvt-chip-filter--on:hover,
 .gwcvt-chip-filter--on:focus {
 	color: #fff;
-	filter: brightness(0.9);
+	background: #135e96;
+	box-shadow: inset 0 0 0 1px #135e96;
 }
 
 .gwcvt-chip-filter--on:focus {
