@@ -222,8 +222,11 @@ function gwc_vt_add_screen_help( $screen ): void {
 		return;
 	}
 
-	if ( gwc_vt_letters_enabled() && false !== strpos( (string) $screen->id, GWC_VT_PRODUCE_PAGE ) ) {
-		gwc_vt_add_produce_help( $screen );
+	/* The volunteer's own editor, which is where letters are written now. There
+	 * was a screen for producing them and this branch pointed at it; the box
+	 * replaced the screen, so the tab followed the work. */
+	if ( gwc_vt_letters_enabled() && GWC_VT_VOLUNTEER_TYPE === $screen->id ) {
+		gwc_vt_add_volunteer_letters_help( $screen );
 		return;
 	}
 
@@ -635,7 +638,7 @@ function gwc_vt_add_letters_help( $screen ): void {
 		array(
 			__( 'Every letter this organization has issued, and everywhere each one has been since. Printing, posting and emailing are all recorded against the letter, so the log answers “did you send it to us” and not only “a letter was produced”.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Rows reading <strong>record removed</strong> are letters produced for somebody whose volunteer record has since been erased or anonymized. They stay, deliberately: the log holds no name and no hours of its own, and it is the receipt of this organization’s own conduct. Losing it when a record goes would be losing it exactly when it starts to matter.', 'groundwork-common-volunteer-tracker' ),
-			__( 'To produce a letter, start from the volunteer’s own record. To check a reference somebody has phoned in, use the panel on the Dashboard.', 'groundwork-common-volunteer-tracker' ),
+			__( 'To write a letter, open the volunteer’s own record — every letter is started, issued and sent from the box there. To check a reference somebody has phoned in, use the panel on the Dashboard.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
@@ -647,16 +650,29 @@ function gwc_vt_add_letters_help( $screen ): void {
  *
  * @param WP_Screen $screen The screen.
  */
-function gwc_vt_add_produce_help( $screen ): void {
+function gwc_vt_add_volunteer_letters_help( $screen ): void {
 	gwc_vt_add_help_tab(
 		$screen,
-		'gwc-vt-help-producing',
-		__( 'Producing a letter', 'groundwork-common-volunteer-tracker' ),
+		'gwc-vt-help-writing',
+		__( 'Writing a letter', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'Choose a volunteer and, if you need one, a date range. Leaving both dates empty covers everything on record, from their first shift to the day the letter is issued — the letter names both of those dates rather than claiming to cover all of their time.', 'groundwork-common-volunteer-tracker' ),
-			__( 'Issuing a letter mints its reference and writes it into the log. Nothing has gone anywhere yet: printing, posting and emailing it are separate acts on the volunteer’s record, and each one is recorded against the letter with the date and, where there is one, who it went to.', 'groundwork-common-volunteer-tracker' ),
-			__( 'The letter is built fresh from your records every time it is produced. It is never a stored copy, so it always states what you currently have on file.', 'groundwork-common-volunteer-tracker' ),
-			__( 'The line above Preview says what the letter will state and whether anything of theirs is still waiting to be verified. Unverified hours are never on a letter, so a total that is about to change is worth knowing before you send one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Every letter for this person lives in <strong>Verification letters</strong> below: the ones you have started, and the ones that have gone out. Select <strong>Add a letter</strong> to begin one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Choose <strong>Everything on record</strong>, or <strong>A period</strong> when a court or a school asked about particular months. Leaving it on everything covers their first shift to the day you started the draft, and the letter names both of those dates rather than claiming to cover all of their time.', 'groundwork-common-volunteer-tracker' ),
+			__( 'A draft is fixed at the moment you make it. It states what you had verified that day, so what you read on the draft is what the letter will say — and a shift verified afterwards will not join it. If hours are still waiting to be verified, the row says so; verify them and start another draft.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Select <strong>Open</strong> to read the letter a draft would produce. Reading one records nothing and sends nothing.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-help-issuing',
+		__( 'Issuing and sending', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( '<strong>Issue it</strong> gives the letter its reference code and writes it into your log. Nothing has gone anywhere at that point — issuing and sending are separate on purpose, so the letter exists and is recorded before anybody has to decide how it travels.', 'groundwork-common-volunteer-tracker' ),
+			__( 'An issued letter can then be <strong>printed</strong>, <strong>posted</strong> or <strong>emailed</strong>, as often as you need. Each one is recorded against the letter with the date; posting and emailing also record who it went to, so the log can answer “did you send it to us” and not only “a letter was produced”.', 'groundwork-common-volunteer-tracker' ),
+			__( 'It keeps the reference it was issued with every time — sending it again does not make a new letter. To save a PDF, choose <strong>Print</strong> and then your browser’s Save as PDF; the plugin does not bundle a PDF library.', 'groundwork-common-volunteer-tracker' ),
+			__( 'If one of the shifts a letter lists is edited afterwards, that letter can no longer be produced and sending it is refused — the document would state something its own reference contradicts. Issue a new one; the old letter stays in the log, and stays valid as what you sent that day.', 'groundwork-common-volunteer-tracker' ),
+			__( 'If a court or a school asked to be sent it directly, fill in who it is addressed to and what it is about when you start the draft. Those print on the letter so it can be filed at the other end. What a court <em>required</em> of somebody never appears on a letter.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);
 
@@ -680,7 +696,8 @@ function gwc_vt_add_reference_help( $screen ): void {
 		array(
 			__( 'Every letter carries a reference code. Somebody who has been sent one — a court, a school, an employer — can phone and read it out, and the panel on this screen will tell you whether the letter still matches your records.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The code covers every detail the letter prints, not just the total: the dates, the activities, the supervisors and each shift’s hours. Two shifts swapped so the total came out the same will still show as changed.', 'groundwork-common-volunteer-tracker' ),
-			__( '<strong>Records have changed</strong> is not an accusation. Hours get corrected and shifts get verified after a letter goes out, and all of that is ordinary. The whole letter is shown as your records stand now so you can compare it against the copy somebody was sent.', 'groundwork-common-volunteer-tracker' ),
+			__( 'A shift verified after a letter went out does not disturb the answer. Each letter is checked against what you had attested to on the day it was fixed, so somebody still volunteering does not make their old letter look wrong.', 'groundwork-common-volunteer-tracker' ),
+			__( '<strong>Records have changed</strong> is not an accusation either. It means a shift the letter itself lists has been edited since, or its verification withdrawn — hours get corrected, and that is ordinary. The whole letter is shown as your records stand now so you can compare it against the copy somebody was sent.', 'groundwork-common-volunteer-tracker' ),
 			__( 'What the code proves is that a document matches your records. It does not prove the hours were worked — that is what your staff attested to, and it is stated on the letter itself.', 'groundwork-common-volunteer-tracker' ),
 		)
 	);

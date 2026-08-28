@@ -100,11 +100,17 @@ function gwc_vt_help_screens(): array {
 		$screens[ __( 'The schedule', 'groundwork-common-volunteer-tracker' ) ] = $page . GWC_VT_SCHEDULE_PAGE;
 	}
 
-	/* The two letter screens only when the organization issues letters — their
-	 * help is gated the same way, so listing them unconditionally would ask
-	 * after help that a site without letters has no screens to carry. */
+	/* Only when the organization issues letters — the help is gated the same
+	 * way, so listing it unconditionally would ask after help that a site
+	 * without letters has no screen to carry.
+	 *
+	 * One entry, not two. Producing a letter had a screen of its own and it is
+	 * gone: letters are written in a box on the volunteer's record, and a
+	 * volunteer's record is not somewhere this list can send anybody — it needs
+	 * a volunteer, and which one is exactly the question the old screen asked
+	 * and got wrong. The log is a real destination and the guide covers the
+	 * writing. */
 	if ( gwc_vt_letters_enabled() ) {
-		$screens[ __( 'Producing a letter', 'groundwork-common-volunteer-tracker' ) ]   = $page . GWC_VT_PRODUCE_PAGE;
 		$screens[ __( 'Verification letters', 'groundwork-common-volunteer-tracker' ) ] = $page . GWC_VT_LETTERS_PAGE;
 	}
 
@@ -293,7 +299,6 @@ function gwc_vt_help_topic_for_screen( string $screen_id ): string {
 		GWC_VT_VERIFY_PAGE       => 'hours',
 		GWC_VT_QUICK_ADD_PAGE    => 'hours',
 		GWC_VT_LETTERS_PAGE      => 'letters',
-		GWC_VT_PRODUCE_PAGE      => 'letters',
 		GWC_VT_SETTINGS_PAGE     => 'start',
 	);
 

@@ -401,48 +401,76 @@ function gwc_vt_ls_hours( int $minutes, bool $verified ): int {
 gwc_vt_ls_hours( 240, true );
 gwc_vt_ls_hours( 180, false );
 
+/* ── Told about waiting hours whichever way the switch is set ────────────────
+ * letter_include_unverified decides whether unverified time is PRINTED on a
+ * letter. Whether the coordinator is TOLD it exists is a different question,
+ * and the answer has to be yes either way — a total about to change is worth
+ * knowing before a letter goes out.
+ *
+ * This used to be the readiness line on the produce screen. That screen is
+ * gone, and the sentence matters more than it did: a draft fixes the moment its
+ * attestations are counted as of, so hours verified later will not join THIS
+ * draft at all. gwc_vt_draft_unverified_minutes() asks with include_unverified
+ * forced on, precisely so the answer does not depend on the setting. */
+$GLOBALS['gwc_vt_ls_draft'] = gwc_vt_letter_draft( gwc_vt_add_letter_draft( (int) $GLOBALS['gwc_vt_ls_person'] ) );
+
 foreach ( array( true, false ) as $gwc_vt_ls_listing ) {
 	$gwc_vt_ls_settings                              = (array) get_option( GWC_VT_SETTINGS_OPTION );
 	$gwc_vt_ls_settings['letter_include_unverified'] = $gwc_vt_ls_listing;
 	update_option( GWC_VT_SETTINGS_OPTION, $gwc_vt_ls_settings );
 	gwc_vt_settings_cache( null, true );
 
-	ob_start();
-	gwc_vt_render_letter_readiness( (int) $GLOBALS['gwc_vt_ls_person'], '', '' );
-	$gwc_vt_ls_line = (string) ob_get_clean();
-
 	gwc_vt_ls_check(
-		'with the unverified listing ' . ( $gwc_vt_ls_listing ? 'on' : 'off' ) . ', the readiness line reports the waiting hours',
-		false !== strpos( $gwc_vt_ls_line, 'not verified yet' ),
-		false !== strpos( $gwc_vt_ls_line, 'Nothing of theirs' ) ? 'it said nothing was waiting' : 'reported'
+		'with the unverified listing ' . ( $gwc_vt_ls_listing ? 'on' : 'off' ) . ', the waiting hours are still reported',
+		180 === gwc_vt_draft_unverified_minutes( $GLOBALS['gwc_vt_ls_draft'] ),
+		(string) gwc_vt_draft_unverified_minutes( $GLOBALS['gwc_vt_ls_draft'] )
 	);
 
 	gwc_vt_ls_check(
-		'and states the verified total either way',
-		false !== strpos( $gwc_vt_ls_line, gwc_vt_format_hours( 240 ) ),
-		gwc_vt_format_hours( 240 )
+		'and the verified total is the same either way',
+		240 === gwc_vt_build_letter(
+			(int) $GLOBALS['gwc_vt_ls_person'],
+			gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ls_draft'] )
+		)->verified_minutes,
+		(string) gwc_vt_build_letter(
+			(int) $GLOBALS['gwc_vt_ls_person'],
+			gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ls_draft'] )
+		)->verified_minutes
 	);
 }
 
-/* Verify the last one, and the sentence flips. */
+/* Verify the last one. The draft is fixed to a moment BEFORE that, so it does
+ * not move — which is the lock working, and is why the row tells somebody to
+ * start another draft rather than implying this one will catch up.
+ *
+ * A second first, because the cutoff is an instant and the comparison is
+ * strictly later. An attestation written in the same second as the draft counts
+ * as part of it: the alternative rounds the other way and silently takes real
+ * hours off a letter, which is the direction this plugin refuses to fail in. */
+sleep( 1 );
+
 foreach ( gwc_vt_entry_ids_for_volunteer( (int) $GLOBALS['gwc_vt_ls_person'] ) as $gwc_vt_ls_id ) {
 	gwc_vt_verify_entry( (int) $gwc_vt_ls_id, 1 );
 }
 
-ob_start();
-gwc_vt_render_letter_readiness( (int) $GLOBALS['gwc_vt_ls_person'], '', '' );
-$gwc_vt_ls_line = (string) ob_get_clean();
-
 gwc_vt_ls_check(
-	'once nothing is waiting, it says so',
-	false !== strpos( $gwc_vt_ls_line, 'Nothing of theirs' ),
-	false !== strpos( $gwc_vt_ls_line, 'not verified yet' ) ? 'it still warned' : 'said so'
+	'and verifying them afterwards does not quietly join them to the draft',
+	240 === gwc_vt_build_letter(
+		(int) $GLOBALS['gwc_vt_ls_person'],
+		gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ls_draft'] )
+	)->verified_minutes,
+	(string) gwc_vt_build_letter(
+		(int) $GLOBALS['gwc_vt_ls_person'],
+		gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ls_draft'] )
+	)->verified_minutes
 );
 
+/* And the record itself does move, which is what makes the check above a lock
+ * rather than an absence: a NEW draft started now would state everything. */
 gwc_vt_ls_check(
-	'and the total is now everything',
-	false !== strpos( $gwc_vt_ls_line, gwc_vt_format_hours( 420 ) ),
-	gwc_vt_format_hours( 420 )
+	'while the record itself is now everything',
+	420 === gwc_vt_build_letter( (int) $GLOBALS['gwc_vt_ls_person'] )->verified_minutes,
+	(string) gwc_vt_build_letter( (int) $GLOBALS['gwc_vt_ls_person'] )->verified_minutes
 );
 
 /* ── The split ──────────────────────────────────────────────────────────────

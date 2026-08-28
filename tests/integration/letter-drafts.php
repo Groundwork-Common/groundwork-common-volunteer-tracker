@@ -345,9 +345,17 @@ $GLOBALS['gwc_vt_ld_box'] = (string) ob_get_clean();
 
 /* The four the prototype settles on, in the order it puts them. "Read it" and
  * "Issue and print" were this box's own words for two of them and nobody else's. */
+/* Scoped to the actions cell rather than the whole box, which also carries the
+ * letterhead warning and its link to the settings. Reading every anchor on the
+ * box made this assert about a warning that has nothing to do with the row. */
 $GLOBALS['gwc_vt_ld_links'] = array();
+$GLOBALS['gwc_vt_ld_cell']  = '';
 
-if ( preg_match_all( '/<a\b[^>]*>\s*([^<]+?)\s*<\/a>/', $GLOBALS['gwc_vt_ld_box'], $gwc_vt_ld_found ) ) {
+if ( preg_match( '/<td class="gwcvt-letters-box__actions">(.*?)<\/td>/s', $GLOBALS['gwc_vt_ld_box'], $gwc_vt_ld_td ) ) {
+	$GLOBALS['gwc_vt_ld_cell'] = $gwc_vt_ld_td[1];
+}
+
+if ( preg_match_all( '/<a\b[^>]*>\s*([^<]+?)\s*<\/a>/', $GLOBALS['gwc_vt_ld_cell'], $gwc_vt_ld_found ) ) {
 	$GLOBALS['gwc_vt_ld_links'] = array_map( 'trim', $gwc_vt_ld_found[1] );
 }
 

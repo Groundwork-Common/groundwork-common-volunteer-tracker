@@ -316,127 +316,26 @@ foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {
 	wp_delete_post( $gwc_vt_id, true );
 }
 
-/* ── The button that looked like it did nothing ──────────────────────────────
- * "Preview the letter" is a GET form whose volunteer is a hidden field the
- * picker fills in. admin-picker.js clears that field on every keystroke — a
- * corrected name carrying the previous ID would produce a letter about the
- * wrong person under the right name — so pressing the button after typing but
- * without choosing submitted nothing, and the screen came back with no preview,
- * no message, and the typed name gone. Reported as a button that does nothing,
- * which is exactly what it looked like.
+/* ── The produce screen, which no longer exists ──────────────────────────────
+ * Six checks lived here about a screen you went to, searched for a volunteer
+ * on, and produced a letter from: that a name typed but not chosen was answered
+ * rather than ignored, that the typed name survived the round trip, that
+ * arriving fresh was not an error, and that choosing somebody drew their
+ * letter.
+ *
+ * All of it was about the screen's first question — WHO — and that question is
+ * the reason the screen is gone. Letters are written in a box on the
+ * volunteer's own record, where the answer is the page you are already on and
+ * cannot be typed wrongly. The bug those checks were written for could not
+ * occur now if somebody tried.
+ *
+ * What was worth keeping is below and has nothing to do with the screen: the
+ * draft medium, and the one line that separates reading a letter from issuing
+ * one.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-echo "\n── Asking for a preview without choosing anybody ────────────────\n";
+echo "\n── Reading a letter is not issuing it ───────────────────────────\n";
 
-$GLOBALS['gwc_vt_letters_before'] = get_option( GWC_VT_SETTINGS_OPTION );
-
-update_option(
-	GWC_VT_SETTINGS_OPTION,
-	array_merge( (array) get_option( GWC_VT_SETTINGS_OPTION, array() ), array( 'letters_enabled' => 1 ) )
-);
-gwc_vt_settings_cache( null, true );
-
-register_shutdown_function(
-	static function () {
-		if ( false === $GLOBALS['gwc_vt_letters_before'] ) {
-			delete_option( GWC_VT_SETTINGS_OPTION );
-		} else {
-			update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_letters_before'] );
-		}
-
-		gwc_vt_settings_cache( null, true );
-	}
-);
-
-/**
- * The produce screen, as somebody arrives at it.
- *
- * @param array $query What is in the URL.
- * @return string
- */
-function gwc_vt_letter_screen( array $query ): string {
-	foreach ( array( 'volunteer', 'volunteer_name', 'from', 'to' ) as $key ) {
-		unset( $_GET[ $key ] );
-	}
-
-	foreach ( $query as $key => $value ) {
-		$_GET[ $key ] = $value;
-	}
-
-	ob_start();
-	gwc_vt_render_produce_letter_screen();
-	$html = (string) ob_get_clean();
-
-	foreach ( array_keys( $query ) as $key ) {
-		unset( $_GET[ $key ] );
-	}
-
-	return $html;
-}
-
-$GLOBALS['gwc_vt_typed'] = gwc_vt_letter_screen(
-	array(
-		'volunteer'      => '',
-		'volunteer_name' => 'Ada',
-	)
-);
-
-gwc_vt_check(
-	'a name typed but not chosen is answered, not ignored',
-	false !== strpos( $GLOBALS['gwc_vt_typed'], 'Nobody is chosen yet' )
-);
-
-/* And the screen keeps what was typed, so it is visibly the same screen
- * replying rather than one that has reset itself. */
-gwc_vt_check(
-	'and the name stays in the box',
-	false !== strpos( $GLOBALS['gwc_vt_typed'], 'value="Ada"' )
-);
-
-/* Carried by a hidden field, because the box itself must not be named. A named
- * text field is one the browser remembers and offers again on the next visit —
- * which on this screen means arriving to find somebody's name already in it,
- * reported within a day of the box being given a name. */
-gwc_vt_check(
-	'the box has nothing for a browser to remember',
-	1 !== preg_match(
-		'~<input[^>]*id="gwcvt-letter-volunteer"[^>]*\sname=~',
-		$GLOBALS['gwc_vt_typed']
-	)
-);
-
-gwc_vt_check(
-	'and the typed name rides a hidden field instead',
-	1 === preg_match(
-		'~<input type="hidden" name="volunteer_name" data-gwcvt-typed~',
-		$GLOBALS['gwc_vt_typed']
-	)
-);
-
-$GLOBALS['gwc_vt_blank'] = gwc_vt_letter_screen( array( 'volunteer_name' => '' ) );
-
-gwc_vt_check(
-	'an empty box asks for a name rather than scolding about one',
-	false !== strpos( $GLOBALS['gwc_vt_blank'], 'Choose a volunteer first' )
-);
-
-/* Arriving fresh says nothing at all: there is no question outstanding. */
-$GLOBALS['gwc_vt_fresh'] = gwc_vt_letter_screen( array() );
-
-gwc_vt_check(
-	'arriving at the screen is not an error',
-	false === strpos( $GLOBALS['gwc_vt_fresh'], 'Nobody is chosen yet' )
-		&& false === strpos( $GLOBALS['gwc_vt_fresh'], 'Choose a volunteer first' )
-);
-
-/* And choosing somebody still produces the letter, which is the half that was
- * never broken and is the half worth not breaking.
- *
- * Its own volunteer rather than the one at the top of this file: the sections
- * between here and there verify, unverify and tamper with that one's entries,
- * so what the screen would draw for them depends on how far down the file you
- * are. A guard about the screen should not also be a guard about the order of
- * the script. */
 $GLOBALS['gwc_vt_shown'] = wp_insert_post(
 	array(
 		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
@@ -448,13 +347,6 @@ $GLOBALS['gwc_vt_shown'] = wp_insert_post(
 $GLOBALS['gwc_vt_made'][] = $GLOBALS['gwc_vt_shown'];
 
 gwc_vt_make_entry( (int) $GLOBALS['gwc_vt_shown'], '2026-03-09', 180, true );
-
-$GLOBALS['gwc_vt_chosen'] = gwc_vt_letter_screen(
-	array(
-		'volunteer'      => (string) $GLOBALS['gwc_vt_shown'],
-		'volunteer_name' => 'Zzytest Rosalind Okonkwo',
-	)
-);
 
 /* ── The preview is the letter, and it is not an issue ───────────────────────
  * What the screen called a preview was four figures in a table. The document —
@@ -532,48 +424,6 @@ gwc_vt_check(
 	'rendering a draft writes nothing to the issued-letter log',
 	$GLOBALS['gwc_vt_logged_before'] === $GLOBALS['gwc_vt_logged_after'],
 	$GLOBALS['gwc_vt_logged_before'] . ' → ' . $GLOBALS['gwc_vt_logged_after']
-);
-
-/* And the screen offers it beside the two that do issue. */
-gwc_vt_check(
-	'the screen offers a preview, a print and a send',
-	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwc_vt_letter_preview' )
-		&& false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwc_vt_letter_print' )
-);
-
-gwc_vt_check(
-	'and calls the figures what they are',
-	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'What the letter will state' )
-);
-
-/* The button says what pressing it would do. Arriving from a volunteer's record
- * lands here with the preview already drawn, and a button still labelled
- * "Preview the letter" then repaints an identical screen — which is what "it
- * does nothing" looked like the second time it was reported. */
-gwc_vt_check(
-	'with a letter on the screen the button offers to redo the figures',
-	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'Update the figures' )
-);
-
-gwc_vt_check(
-	'and with nobody chosen it offers to work them out',
-	false !== strpos( $GLOBALS['gwc_vt_fresh'], 'Work out the figures' )
-		&& false === strpos( $GLOBALS['gwc_vt_fresh'], 'Update the figures' )
-);
-
-/* And "Preview the letter" is on the screen only where there is a letter to
- * preview — beside the actions, not on the form's own button. */
-gwc_vt_check(
-	'previewing is offered with the letter, not instead of the figures',
-	false === strpos( $GLOBALS['gwc_vt_fresh'], 'Preview the letter' )
-		&& false !== strpos( $GLOBALS['gwc_vt_chosen'], 'Preview the letter' )
-);
-
-gwc_vt_check(
-	'choosing somebody previews their letter',
-	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwcvt-preview' )
-		&& false === strpos( $GLOBALS['gwc_vt_chosen'], 'Nobody is chosen yet' ),
-	strlen( $GLOBALS['gwc_vt_chosen'] ) . ' bytes'
 );
 
 /* This section runs after the file's own clean-up loop, so it clears up after

@@ -227,7 +227,14 @@
 				slot.innerHTML = '';
 
 				Array.prototype.forEach.call(
-					link.closest( 'td' ).querySelectorAll( '[data-gwcvt-letter-issue], [data-gwcvt-letter-mail]' ),
+					/* Every act the row offers except opening it, which is what
+					 * you are already doing. Print and Post were missing from
+					 * this list and the panel showed a lone Email button on a
+					 * row with three ways out — the list was written when there
+					 * were only two and not revisited when deliveries arrived. */
+					link.closest( 'td' ).querySelectorAll(
+						'[data-gwcvt-letter-issue], [data-gwcvt-letter-deliver], [data-gwcvt-letter-post], [data-gwcvt-letter-mail]'
+					),
 					function ( action ) {
 						var copy = action.cloneNode( true );
 

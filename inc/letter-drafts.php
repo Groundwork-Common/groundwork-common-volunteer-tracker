@@ -174,6 +174,27 @@ function gwc_vt_letter_args_for_draft( array $draft ): array {
 }
 
 /**
+ * How much of their recorded time this draft leaves out because nobody has
+ * attested to it.
+ *
+ * Asked over the draft's own period and as of its own moment, so the answer is
+ * about THIS draft rather than about the volunteer in general — an unverified
+ * shift outside the period was never a candidate and saying so would be noise.
+ *
+ * @param array $draft From gwc_vt_letter_draft().
+ * @return int Minutes, or 0.
+ */
+function gwc_vt_draft_unverified_minutes( array $draft ): int {
+	$args = gwc_vt_letter_args_for_draft( $draft );
+
+	$args['include_unverified'] = true;
+
+	$letter = gwc_vt_build_letter( (int) ( $draft['volunteer'] ?? 0 ), $args );
+
+	return $letter instanceof GWC_VT_Letter ? (int) $letter->unverified_minutes : 0;
+}
+
+/**
  * Every draft on one volunteer, oldest first.
  *
  * Oldest first because these are a queue: the one somebody has been meaning to

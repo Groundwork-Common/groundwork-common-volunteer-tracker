@@ -469,7 +469,11 @@ function gwc_vt_render_verify_letter_cta(): void {
 		}
 	}
 
-	$letter = gwc_vt_produce_letter_url( $volunteer_id );
+	/* Their own record, where the letters box is. There was a screen for this
+	 * once and this link went to it with the volunteer already chosen; the box
+	 * replaced it, and a link that arrives on the record does the same job
+	 * without a second screen having to be told who we are talking about. */
+	$letter = (string) get_edit_post_link( $volunteer_id, 'url' ) . '#gwc-vt-volunteer-letters';
 	?>
 	<div class="notice notice-success gwcvt-verify__done">
 		<p>
@@ -481,7 +485,7 @@ function gwc_vt_render_verify_letter_cta(): void {
 			);
 			?>
 			<a href="<?php echo esc_url( $letter ); ?>">
-				<?php esc_html_e( 'Produce their letter', 'groundwork-common-volunteer-tracker' ); ?> &rarr;
+				<?php esc_html_e( 'Write them a letter', 'groundwork-common-volunteer-tracker' ); ?> &rarr;
 			</a>
 		</p>
 	</div>

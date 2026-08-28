@@ -174,14 +174,38 @@ echo "\n── Every screen the plugin registers ──────────�
  * disagree with it, which is the same drift this whole script exists to stop. */
 $GLOBALS['gwc_vt_help_screens'] = gwc_vt_help_screens();
 
-/* Including the three that are listed only when their feature is on — the
- * schedule, producing a letter, the letters log — which are switched on above.
- * Asserting the count keeps that honest: a failed switch would otherwise show
- * up as three screens quietly not being checked. */
+/* Including the two that are listed only when their feature is on — the
+ * schedule and the letters log — which are switched on above. Asserting the
+ * count keeps that honest: a failed switch would otherwise show up as screens
+ * quietly not being checked.
+ *
+ * It was three until producing a letter stopped being a screen. That one is not
+ * missing from this list, it no longer exists: letters are written in a box on
+ * the volunteer's own record, and a record is not somewhere this list can send
+ * anybody because it needs a volunteer. Its help tabs moved to that editor and
+ * are checked below, by id, since the list cannot reach them. */
 gwc_vt_help_check(
 	'every screen the plugin can register is being checked',
-	count( $GLOBALS['gwc_vt_help_screens'] ) >= 13,
+	count( $GLOBALS['gwc_vt_help_screens'] ) >= 12,
 	count( $GLOBALS['gwc_vt_help_screens'] ) . ' screen(s)'
+);
+
+/* The volunteer editor is the exception the list cannot carry, and it is where
+ * letters are made — so its tabs are checked directly rather than left to be
+ * the one screen nothing looks at. */
+$GLOBALS['gwc_vt_help_editor'] = gwc_vt_help_tabs_for( GWC_VT_VOLUNTEER_TYPE );
+
+gwc_vt_help_check(
+	'the volunteer editor, where letters are written, has help of its own',
+	array() !== $GLOBALS['gwc_vt_help_editor'],
+	array() === $GLOBALS['gwc_vt_help_editor'] ? 'none' : implode( ', ', array_keys( $GLOBALS['gwc_vt_help_editor'] ) )
+);
+
+gwc_vt_help_check(
+	'and it covers both halves of the flow, writing and issuing',
+	isset( $GLOBALS['gwc_vt_help_editor']['gwc-vt-help-writing'] )
+		&& isset( $GLOBALS['gwc_vt_help_editor']['gwc-vt-help-issuing'] ),
+	implode( ', ', array_keys( $GLOBALS['gwc_vt_help_editor'] ) )
 );
 
 foreach ( $GLOBALS['gwc_vt_help_screens'] as $gwc_vt_help_what => $gwc_vt_help_id ) {

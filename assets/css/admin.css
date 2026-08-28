@@ -2541,8 +2541,37 @@ a.gwcvt-letters-box__discard:focus {
 	font-size: 15px;
 }
 
+/* A dashicon cross in the corner, which is where wp-admin's own modals put
+   theirs and therefore where somebody looks. Sized to a real tap target rather
+   than to the glyph. */
 .gwcvt-sheet__close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	/* flex: 0 0 auto, because the head is a flex row and a long volunteer name
+	   in the heading beside it will otherwise squeeze this to the width of the
+	   glyph — which is what a 36px button rendering 20px wide looks like. */
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
 	margin-left: auto;
+	padding: 0;
+	border: 0;
+	border-radius: 3px;
+	background: none;
+	color: #646970;
+	cursor: pointer;
+}
+
+.gwcvt-sheet__close:hover,
+.gwcvt-sheet__close:focus {
+	background: #f0f0f1;
+	color: #1d2327;
+}
+
+.gwcvt-sheet__close:focus {
+	box-shadow: 0 0 0 2px #2271b1;
+	outline: 2px solid transparent;
 }
 
 /* The letter itself, in an iframe, so gwc_vt_render_letter() stays the only
