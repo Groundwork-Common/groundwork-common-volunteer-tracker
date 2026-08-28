@@ -307,9 +307,12 @@ if ( preg_match_all( '/<a\b[^>]*>\s*([^<]+?)\s*<\/a>/', $GLOBALS['gwc_vt_ld_box'
 	$GLOBALS['gwc_vt_ld_links'] = array_map( 'trim', $gwc_vt_ld_found[1] );
 }
 
+/* Three, not five. Issuing is one act and produces no document: printing,
+ * posting and emailing are things that happen to a letter that already exists,
+ * so they belong on the issued row and cannot be reached from a draft. */
 gwc_vt_ld_check(
-	'a draft row offers exactly Open, Issue it, Email it and Discard',
-	array( 'Open', 'Issue it', 'Email it', 'Discard' ) === $GLOBALS['gwc_vt_ld_links'],
+	'a draft row offers exactly Open, Issue it and Discard',
+	array( 'Open', 'Issue it', 'Discard' ) === $GLOBALS['gwc_vt_ld_links'],
 	implode( ' | ', $GLOBALS['gwc_vt_ld_links'] )
 );
 
@@ -371,27 +374,16 @@ gwc_vt_ld_check(
 		&& false !== strpos( $GLOBALS['gwc_vt_ld_nomail'], 'name="recipient"' )
 );
 
-echo "\n── 8. What the header line says ─────────────────────────────────────\n";
-
+/* The box counted its own rows in a line above them — "1 on this record · 1
+ * draft" over a table with one draft row in it. Every word of that is visible
+ * underneath, and the badge says which kind it is. Deleted rather than reworded:
+ * a header that restates the thing it heads is the same fault as a notice
+ * restating a filter, which this plugin has already removed twice. */
 gwc_vt_ld_check(
-	'nothing on the record says so',
-	false !== stripos( gwc_vt_letters_box_count( 0, 0 ), 'nothing' ),
-	gwc_vt_letters_box_count( 0, 0 )
-);
-
-/* The drafts are named separately because they are the half with something
- * outstanding — "3 on this record" alone does not say one is waiting. */
-gwc_vt_ld_check(
-	'drafts are counted out separately',
-	false !== strpos( gwc_vt_letters_box_count( 1, 2 ), '·' )
-		&& false !== strpos( gwc_vt_letters_box_count( 1, 2 ), '3' ),
-	gwc_vt_letters_box_count( 1, 2 )
-);
-
-gwc_vt_ld_check(
-	'and are not mentioned when there are none',
-	false === strpos( gwc_vt_letters_box_count( 0, 2 ), '·' ),
-	gwc_vt_letters_box_count( 0, 2 )
+	'the box does not count its own rows above them',
+	! function_exists( 'gwc_vt_letters_box_count' )
+		&& false === strpos( $GLOBALS['gwc_vt_ld_box'], 'on this record' ),
+	function_exists( 'gwc_vt_letters_box_count' ) ? 'the function is still there' : 'in the markup'
 );
 
 echo "\n── 9. A reopened letter does not call itself a draft ────────────────\n";
@@ -426,6 +418,154 @@ gwc_vt_ld_check(
 	'a real draft still says it is one',
 	false !== strpos( $GLOBALS['gwc_vt_ld_plain'], 'Draft — not issued' )
 		&& false !== strpos( $GLOBALS['gwc_vt_ld_plain'], 'Print this draft' )
+);
+
+echo "\n── 10. Issuing, then delivering ─────────────────────────────────────\n";
+
+$GLOBALS['gwc_vt_ld_iss'] = gwc_vt_ld_volunteer( 'Zzld Issuedsubject' );
+gwc_vt_ld_entry( $GLOBALS['gwc_vt_ld_iss'], '2026-04-04', 120 );
+gwc_vt_ld_entry( $GLOBALS['gwc_vt_ld_iss'], '2026-04-11', 90 );
+
+$GLOBALS['gwc_vt_ld_built'] = gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_iss'] );
+
+gwc_vt_ld_check(
+	'the builder says which entries it used',
+	2 === count( $GLOBALS['gwc_vt_ld_built']->entry_ids ),
+	implode( ',', $GLOBALS['gwc_vt_ld_built']->entry_ids )
+);
+
+/* Issuing with no medium: the reference is minted and the record written, and
+ * the letter has not gone anywhere. That is a legitimate state now. */
+$GLOBALS['gwc_vt_ld_rec_id'] = gwc_vt_log_letter( $GLOBALS['gwc_vt_ld_built'] );
+$GLOBALS['gwc_vt_ld_rec']    = gwc_vt_letter_record( $GLOBALS['gwc_vt_ld_rec_id'] );
+
+gwc_vt_ld_check(
+	'issuing writes a record with no delivery on it',
+	$GLOBALS['gwc_vt_ld_rec_id'] > 0 && array() === $GLOBALS['gwc_vt_ld_rec']['deliveries']
+);
+
+gwc_vt_ld_check(
+	'and the record remembers which entries the letter listed',
+	$GLOBALS['gwc_vt_ld_built']->entry_ids === $GLOBALS['gwc_vt_ld_rec']['entry_ids'],
+	implode( ',', $GLOBALS['gwc_vt_ld_rec']['entry_ids'] )
+);
+
+/* IDs and nothing else. The log holds no name and outlives the volunteer, so a
+ * stored copy of the shift list would put their service history into the one
+ * record designed to survive their erasure. */
+gwc_vt_ld_check(
+	'and remembers nothing else about them',
+	'' === (string) get_post_meta( $GLOBALS['gwc_vt_ld_rec_id'], '_gwc_vt_letter_rows', true )
+		&& false === strpos( (string) get_post_meta( $GLOBALS['gwc_vt_ld_rec_id'], GWC_VT_LETTER_ENTRY_IDS, true ), 'Sorting' )
+);
+
+gwc_vt_log_delivery( $GLOBALS['gwc_vt_ld_rec_id'], 'print' );
+gwc_vt_log_delivery( $GLOBALS['gwc_vt_ld_rec_id'], 'post', 'Jefferson County Probation' );
+gwc_vt_log_delivery( $GLOBALS['gwc_vt_ld_rec_id'], 'email', 'officer@probation.example', false );
+
+$GLOBALS['gwc_vt_ld_sent'] = gwc_vt_letter_deliveries( $GLOBALS['gwc_vt_ld_rec_id'] );
+
+gwc_vt_ld_check(
+	'three deliveries are recorded, oldest first',
+	3 === count( $GLOBALS['gwc_vt_ld_sent'] )
+		&& 'print' === $GLOBALS['gwc_vt_ld_sent'][0]['medium']
+		&& 'email' === $GLOBALS['gwc_vt_ld_sent'][2]['medium'],
+	count( $GLOBALS['gwc_vt_ld_sent'] ) . ' rows'
+);
+
+/* The fact the log was missing: a printed letter has no destination the plugin
+ * can know, and a posted one does. */
+gwc_vt_ld_check(
+	'a posted letter records who it was posted to',
+	'Jefferson County Probation' === $GLOBALS['gwc_vt_ld_sent'][1]['recipient']
+		&& '' === $GLOBALS['gwc_vt_ld_sent'][0]['recipient']
+);
+
+/* A failed send is recorded as a failed send. A log that only holds successes
+ * cannot tell "we never sent it" from "our mail server was down". */
+gwc_vt_ld_check(
+	'and a send that failed says so',
+	false === $GLOBALS['gwc_vt_ld_sent'][2]['ok']
+		&& false !== stripos( gwc_vt_delivery_words( $GLOBALS['gwc_vt_ld_sent'][2] ), 'failed' ),
+	gwc_vt_delivery_words( $GLOBALS['gwc_vt_ld_sent'][2] )
+);
+
+gwc_vt_ld_check(
+	'each delivery says when and by what means',
+	false !== stripos( gwc_vt_delivery_words( $GLOBALS['gwc_vt_ld_sent'][0] ), 'printed' )
+		&& false !== stripos( gwc_vt_delivery_words( $GLOBALS['gwc_vt_ld_sent'][1] ), 'posted to' ),
+	gwc_vt_delivery_words( $GLOBALS['gwc_vt_ld_sent'][1] )
+);
+
+echo "\n── 11. A delivery reproduces the letter that was issued ─────────────\n";
+
+$GLOBALS['gwc_vt_ld_again'] = gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_rec'] );
+
+gwc_vt_ld_check(
+	'a rebuild is the letter that was issued',
+	$GLOBALS['gwc_vt_ld_again'] instanceof GWC_VT_Letter
+		&& gwc_vt_rebuild_is_faithful( $GLOBALS['gwc_vt_ld_rec'], $GLOBALS['gwc_vt_ld_again'] )
+);
+
+/* The whole reason the entry IDs are stored. A shift verified after the letter
+ * was issued is inside the same period, so a rebuild from the period would put
+ * a bigger number on the page under a reference that digests the smaller one. */
+gwc_vt_ld_entry( $GLOBALS['gwc_vt_ld_iss'], '2026-04-18', 240 );
+
+$GLOBALS['gwc_vt_ld_after'] = gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_rec'] );
+
+gwc_vt_ld_check(
+	'a shift added since is not on it',
+	2 === count( $GLOBALS['gwc_vt_ld_after']->entries )
+		&& gwc_vt_rebuild_is_faithful( $GLOBALS['gwc_vt_ld_rec'], $GLOBALS['gwc_vt_ld_after'] ),
+	count( $GLOBALS['gwc_vt_ld_after']->entries ) . ' rows'
+);
+
+/* And the sabotage: a shift the letter DID list, edited. That letter can no
+ * longer be produced, and the delivery handlers refuse rather than post a
+ * document to a court whose own reference will fail when they ring to check. */
+$GLOBALS['gwc_vt_ld_victim'] = (int) $GLOBALS['gwc_vt_ld_rec']['entry_ids'][0];
+$GLOBALS['gwc_vt_ld_was']    = (int) get_post_meta( $GLOBALS['gwc_vt_ld_victim'], GWC_VT_ENTRY_MINUTES, true );
+
+update_post_meta( $GLOBALS['gwc_vt_ld_victim'], GWC_VT_ENTRY_MINUTES, 999 );
+
+$GLOBALS['gwc_vt_ld_broken'] = gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_rec'] );
+
+gwc_vt_ld_check(
+	'but a shift it listed being changed makes the rebuild unfaithful',
+	! gwc_vt_rebuild_is_faithful( $GLOBALS['gwc_vt_ld_rec'], $GLOBALS['gwc_vt_ld_broken'] )
+);
+
+update_post_meta( $GLOBALS['gwc_vt_ld_victim'], GWC_VT_ENTRY_MINUTES, $GLOBALS['gwc_vt_ld_was'] );
+
+gwc_vt_ld_check(
+	'and putting it back makes it faithful again',
+	gwc_vt_rebuild_is_faithful(
+		$GLOBALS['gwc_vt_ld_rec'],
+		gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_rec'] )
+	)
+);
+
+/* A letter issued before any of this existed has no stored IDs and carried its
+ * medium on the record. Both have to keep reading, because an audit log is not
+ * something you migrate to make old rows look like new ones. */
+$GLOBALS['gwc_vt_ld_old'] = gwc_vt_log_letter( gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_iss'] ), 'email', 'old@example.test' );
+delete_post_meta( $GLOBALS['gwc_vt_ld_old'], GWC_VT_LETTER_ENTRY_IDS );
+delete_post_meta( $GLOBALS['gwc_vt_ld_old'], GWC_VT_LETTER_DELIVERY );
+
+$GLOBALS['gwc_vt_ld_oldrec'] = gwc_vt_letter_record( $GLOBALS['gwc_vt_ld_old'] );
+
+gwc_vt_ld_check(
+	'a letter from before deliveries existed still reports how it went out',
+	1 === count( $GLOBALS['gwc_vt_ld_oldrec']['deliveries'] )
+		&& 'email' === $GLOBALS['gwc_vt_ld_oldrec']['deliveries'][0]['medium']
+		&& 'old@example.test' === $GLOBALS['gwc_vt_ld_oldrec']['deliveries'][0]['recipient'],
+	wp_json_encode( $GLOBALS['gwc_vt_ld_oldrec']['deliveries'] )
+);
+
+gwc_vt_ld_check(
+	'and one with no stored entries still rebuilds, from its period',
+	gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_oldrec'] ) instanceof GWC_VT_Letter
 );
 
 /**

@@ -99,6 +99,17 @@ class GWC_VT_Letter {
 	public int $issued_at = 0;
 
 	/**
+	 * The entry IDs this letter was built from.
+	 *
+	 * Not a constructor argument: it is set by gwc_vt_build_letter() after
+	 * construction, and every letter built by hand — every fixture, every test —
+	 * leaves it empty, which is correct, because those were built from nothing.
+	 *
+	 * @var int[]
+	 */
+	public array $entry_ids = array();
+
+	/**
 	 * Build the letter model.
 	 *
 	 * @param int    $volunteer_id        Volunteer post ID.

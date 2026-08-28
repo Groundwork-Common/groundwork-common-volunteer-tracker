@@ -145,13 +145,23 @@ function gwc_vt_volunteer_letters_notice(): void {
 	 * because a reader who has just pressed a button on this box does not care
 	 * which file answered it. */
 	$said = array(
-		'drafted'     => array( 'success', __( 'Draft started. It is on this record until somebody issues it, and nothing has been sent.', 'groundwork-common-volunteer-tracker' ) ),
-		'discarded'   => array( 'success', __( 'Draft discarded. There was nothing in the issued-letter log to remove.', 'groundwork-common-volunteer-tracker' ) ),
-		'failed'      => array( 'error', __( 'That draft could not be started. Nothing was saved.', 'groundwork-common-volunteer-tracker' ) ),
-		'sent'        => array( 'success', __( 'Letter issued and emailed. It has a reference now, and it is in the issued-letter log.', 'groundwork-common-volunteer-tracker' ) ),
-		'send-failed' => array( 'error', __( 'The letter could not be emailed, so nothing was sent. It is recorded as a failed send, and the draft is still here to try again.', 'groundwork-common-volunteer-tracker' ) ),
-		'no-email'    => array( 'error', __( 'There is no email address on this record, so there was nowhere to send it. Add one above, or use “Issue it” and send it yourself.', 'groundwork-common-volunteer-tracker' ) ),
-		'bad-email'   => array( 'error', __( 'That is not an email address, so nothing was sent. The draft is still here.', 'groundwork-common-volunteer-tracker' ) ),
+		'drafted'         => array( 'success', __( 'Draft started. It is on this record until somebody issues it, and nothing has been sent.', 'groundwork-common-volunteer-tracker' ) ),
+		'discarded'       => array( 'success', __( 'Draft discarded. There was nothing in the issued-letter log to remove.', 'groundwork-common-volunteer-tracker' ) ),
+		'failed'          => array( 'error', __( 'That draft could not be started. Nothing was saved.', 'groundwork-common-volunteer-tracker' ) ),
+		'sent'            => array( 'success', __( 'Letter issued and emailed. It has a reference now, and it is in the issued-letter log.', 'groundwork-common-volunteer-tracker' ) ),
+		'send-failed'     => array( 'error', __( 'The letter could not be emailed, so nothing was sent. The attempt is recorded against it as a failed send, and the letter is still here to try again.', 'groundwork-common-volunteer-tracker' ) ),
+		'no-email'        => array( 'error', __( 'There is no email address on this record, so there was nowhere to send it. Add one above, or use “Issue it” and send it yourself.', 'groundwork-common-volunteer-tracker' ) ),
+		'bad-email'       => array( 'error', __( 'That is not an email address, so nothing was sent.', 'groundwork-common-volunteer-tracker' ) ),
+
+		/* Issuing, and then the three ways a letter leaves. */
+		'issued'          => array( 'success', __( 'Letter issued. It has a reference now and it is in the log — send it whenever you are ready.', 'groundwork-common-volunteer-tracker' ) ),
+		'issue-failed'    => array( 'error', __( 'That letter could not be issued. Nothing was recorded and the draft is still here.', 'groundwork-common-volunteer-tracker' ) ),
+		'delivered-email' => array( 'success', __( 'Emailed, and recorded against the letter.', 'groundwork-common-volunteer-tracker' ) ),
+		'no-addressee'    => array( 'error', __( 'Nothing was recorded, because a posted letter needs somebody to have been posted to.', 'groundwork-common-volunteer-tracker' ) ),
+
+		/* The one refusal that matters. See inc/letter-deliver.php. */
+		'stale'           => array( 'error', __( 'This letter can no longer be produced: one of the shifts it lists has changed since it was issued, so the document would state something its own reference contradicts. Issue a new letter — the old one stays in the log, and stays valid as what you sent that day.', 'groundwork-common-volunteer-tracker' ) ),
+		'gone'            => array( 'error', __( 'There is nothing left to build this letter from. The record it was about has been erased, and the log entry stays as the receipt that it went out.', 'groundwork-common-volunteer-tracker' ) ),
 	);
 
 	if ( ! isset( $said[ $did ] ) ) {
@@ -213,13 +223,6 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 	usort( $drafts, static fn( array $a, array $b ): int => (int) $b['id'] <=> (int) $a['id'] );
 	?>
 	<div class="gwcvt-letters-box" data-gwcvt-letters>
-		<?php if ( $drafts || $issued ) : ?>
-			<?php /* Only when there is something to count. The table's own empty row says the same thing and says what to do about it, and two sentences reporting the same nothing is one of them too many. */ ?>
-			<p class="gwcvt-letters-box__count">
-				<?php echo esc_html( gwc_vt_letters_box_count( count( $drafts ), count( $issued ) ) ); ?>
-			</p>
-		<?php endif; ?>
-
 		<table class="widefat striped">
 			<thead>
 				<tr>
@@ -252,44 +255,6 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 		<?php gwc_vt_render_letter_draft_form( $volunteer_id ); ?>
 	</div>
 	<?php
-}
-
-/**
- * What is on this record, in the header line.
- *
- * The drafts are named separately because they are the half with something
- * outstanding — "3 on this record" alone does not say that one of them is
- * waiting for somebody.
- *
- * @param int $drafts How many drafts.
- * @param int $issued How many have gone out.
- * @return string
- */
-function gwc_vt_letters_box_count( int $drafts, int $issued ): string {
-	$total = $drafts + $issued;
-
-	/* The box does not print this line at all when there is nothing — the empty
-	 * row in the table says it, and better. Kept as a defined answer rather than
-	 * an empty string so a later caller cannot render a blank line by accident. */
-	if ( 0 === $total ) {
-		return __( 'Nothing on this record yet.', 'groundwork-common-volunteer-tracker' );
-	}
-
-	$words = sprintf(
-		/* translators: %s: how many letters, already formatted for the locale. */
-		_n( '%s on this record', '%s on this record', $total, 'groundwork-common-volunteer-tracker' ),
-		number_format_i18n( $total )
-	);
-
-	if ( 0 === $drafts ) {
-		return $words;
-	}
-
-	return $words . ' · ' . sprintf(
-		/* translators: %s: how many drafts, already formatted for the locale. */
-		_n( '%s draft', '%s drafts', $drafts, 'groundwork-common-volunteer-tracker' ),
-		number_format_i18n( $drafts )
-	);
 }
 
 /**
@@ -345,18 +310,13 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 					<?php esc_html_e( 'Open', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
 				<span aria-hidden="true"> | </span>
-				<a href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_print', $volunteer_id, $draft['from'], $draft['to'], (int) $draft['id'] ) ); ?>" data-gwcvt-letter-issue>
+				<?php
+				/* One act, and it produces no document. Printing and emailing
+				 * are things that happen to a letter that already exists —
+				 * see inc/letter-deliver.php. */
+				?>
+				<a href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_issue', $volunteer_id, $draft['from'], $draft['to'], (int) $draft['id'], array( 'back' => 1 ) ) ); ?>" data-gwcvt-letter-issue>
 					<?php esc_html_e( 'Issue it', 'groundwork-common-volunteer-tracker' ); ?>
-				</a>
-				<span aria-hidden="true"> | </span>
-				<a
-					href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_send', $volunteer_id, $draft['from'], $draft['to'], (int) $draft['id'], array( 'back' => 1 ) ) ); ?>"
-					data-gwcvt-letter-mail="draft"
-					data-gwcvt-letter-from="<?php echo esc_attr( (string) $draft['from'] ); ?>"
-					data-gwcvt-letter-to="<?php echo esc_attr( (string) $draft['to'] ); ?>"
-					data-gwcvt-letter-draft="<?php echo esc_attr( (string) $draft['id'] ); ?>"
-				>
-					<?php esc_html_e( 'Email it', 'groundwork-common-volunteer-tracker' ); ?>
 				</a>
 				<span aria-hidden="true"> | </span>
 			<?php endif; ?>
@@ -370,7 +330,7 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 }
 
 /**
- * One letter that has gone out.
+ * One letter that has been issued, and everywhere it has been since.
  *
  * @param array $record From gwc_vt_letters_for_volunteer().
  */
@@ -378,6 +338,8 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 	$volunteer_id = (int) $record['volunteer_id'];
 	$from         = (string) $record['from'];
 	$to           = (string) $record['to'];
+	$reference    = (string) $record['reference'];
+	$deliveries   = (array) ( $record['deliveries'] ?? array() );
 	?>
 	<tr class="gwcvt-letters-box__row gwcvt-letters-box__row--issued">
 		<td><?php echo esc_html( gwc_vt_letter_period_words( $from, $to ) ); ?></td>
@@ -385,14 +347,10 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 			<strong><?php echo esc_html( gwc_vt_format_hours( (int) $record['minutes'] ) ); ?></strong>
 			<div class="description">
 				<?php
-				echo esc_html(
-					'email' === $record['medium']
-						? sprintf(
-							/* translators: %s: an email address. */
-							__( 'Emailed to %s', 'groundwork-common-volunteer-tracker' ),
-							(string) $record['recipient']
-						)
-						: __( 'Printed', 'groundwork-common-volunteer-tracker' )
+				printf(
+					/* translators: %d: number of shifts. */
+					esc_html( _n( '%d shift', '%d shifts', (int) $record['entries'], 'groundwork-common-volunteer-tracker' ) ),
+					(int) $record['entries']
 				);
 				?>
 			</div>
@@ -400,17 +358,35 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 		<td>
 			<span class="gwcvt-badge gwcvt-badge--issued"><?php esc_html_e( 'Issued', 'groundwork-common-volunteer-tracker' ); ?></span>
 			<div class="description"><?php echo esc_html( gwc_vt_local_date( (string) $record['issued_at'] ) ); ?></div>
+
+			<?php
+			/* The audit trail, on the record it is about. A letter with no
+			 * deliveries has been issued and has not gone anywhere — said in
+			 * words, because an empty space under "Issued" reads as a screen
+			 * that did not finish drawing rather than as a fact. */
+			?>
+			<?php if ( $deliveries ) : ?>
+				<ul class="gwcvt-letters-box__sent">
+					<?php foreach ( $deliveries as $delivery ) : ?>
+						<li<?php echo $delivery['ok'] ? '' : ' class="gwcvt-letters-box__sent--failed"'; ?>>
+							<?php echo esc_html( gwc_vt_delivery_words( $delivery ) ); ?>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php else : ?>
+				<div class="description"><?php esc_html_e( 'Not sent yet', 'groundwork-common-volunteer-tracker' ); ?></div>
+			<?php endif; ?>
 		</td>
-		<td><code><?php echo esc_html( (string) $record['reference'] ); ?></code></td>
+		<td><code><?php echo esc_html( $reference ); ?></code></td>
 		<td class="gwcvt-letters-box__actions">
 			<?php
 			/* The reference travels with it, so the band across the top of the
-			 * document can say "this is not the copy they are holding" instead of
-			 * "this is a draft" — which is what it would otherwise say about a
-			 * letter that demonstrably went out. */
+			 * document can say "this is not the copy they are holding" instead
+			 * of "this is a draft" — which is what it would otherwise say about
+			 * a letter that demonstrably went out. */
 			?>
 			<a
-				href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $from, $to, 0, array( 'reference' => (string) $record['reference'] ) ) ); ?>"
+				href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $from, $to, 0, array( 'reference' => $reference ) ) ); ?>"
 				target="_blank"
 				rel="noopener noreferrer"
 				data-gwcvt-letter-open
@@ -419,14 +395,23 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 				<?php esc_html_e( 'Open', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 			<span aria-hidden="true"> | </span>
+			<a href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_print', $reference ) ); ?>" target="_blank" rel="noopener noreferrer" data-gwcvt-letter-deliver>
+				<?php esc_html_e( 'Print', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+			<span aria-hidden="true"> | </span>
 			<a
-				href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_send', $volunteer_id, $from, $to, 0, array( 'back' => 1 ) ) ); ?>"
-				data-gwcvt-letter-mail="issued"
-				data-gwcvt-letter-from="<?php echo esc_attr( $from ); ?>"
-				data-gwcvt-letter-to="<?php echo esc_attr( $to ); ?>"
-				data-gwcvt-letter-draft="0"
+				href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_post', $reference ) ); ?>"
+				data-gwcvt-letter-post="<?php echo esc_attr( $reference ); ?>"
 			>
-				<?php esc_html_e( 'Email it again', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Post', 'groundwork-common-volunteer-tracker' ); ?>
+			</a>
+			<span aria-hidden="true"> | </span>
+			<a
+				href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_email', $reference ) ); ?>"
+				data-gwcvt-letter-mail="issued"
+				data-gwcvt-letter-reference="<?php echo esc_attr( $reference ); ?>"
+			>
+				<?php esc_html_e( 'Email', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 		</td>
 	</tr>
@@ -535,25 +520,66 @@ function gwc_vt_letters_box_footer(): void {
 
 	$on_file = (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_EMAIL, true );
 
-	/* Empty on purpose: every field it submits is up in the box, naming it by
-	 * ID. The email form's three variable fields are filled by the script from
-	 * whichever row was pressed — the nonce is not one of them, because it
-	 * covers the action and the volunteer, and both are fixed on this screen. */
+	/* The adder's form is empty on purpose: every field it submits is up in the
+	 * box, naming it by ID.
+	 *
+	 * The two delivery forms have no action and no nonce of their own. Each
+	 * delivery is nonced against one letter's reference, and a record can hold
+	 * several letters — so the script points the form at the href of whichever
+	 * row was pressed, which is already a complete nonced URL. A POST to a URL
+	 * carrying a query string arrives with both in $_REQUEST, which is what
+	 * check_admin_referer() has always read. Nothing here has to keep a copy of
+	 * a nonce, and nothing can point at the wrong letter. */
 	?>
 	<form id="gwcvt-start-letter" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"></form>
-
-	<form id="gwcvt-email-letter" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-		<input type="hidden" name="action" value="gwc_vt_letter_send" />
-		<input type="hidden" name="volunteer" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
-		<input type="hidden" name="back" value="1" />
-		<input type="hidden" name="from" value="" data-gwcvt-mail-field="from" />
-		<input type="hidden" name="to" value="" data-gwcvt-mail-field="to" />
-		<input type="hidden" name="draft" value="0" data-gwcvt-mail-field="draft" />
-		<?php wp_nonce_field( 'gwc_vt_letter_send_' . $volunteer_id ); ?>
-	</form>
+	<form id="gwcvt-email-letter" method="post" action=""></form>
+	<form id="gwcvt-post-letter" method="post" action="" target="_blank"></form>
 
 	<?php gwc_vt_render_letter_reader(); ?>
 	<?php gwc_vt_render_letter_mailer( $on_file ); ?>
+	<?php gwc_vt_render_letter_poster(); ?>
+	<?php
+}
+
+/**
+ * The panel that asks who a letter is being posted to.
+ *
+ * A postal address is not something this plugin holds or checks, and it does not
+ * try to: what the log needs is the answer to "who did you send it to", and the
+ * person typing it is the person who addressed the envelope. Recorded as what
+ * they said, which is the same standing the typed email address has.
+ *
+ * The form opens the letter in a new tab, because posting one means printing it.
+ */
+function gwc_vt_render_letter_poster(): void {
+	?>
+	<div class="gwcvt-sheet gwcvt-sheet--narrow" data-gwcvt-letter-poster hidden>
+		<div class="gwcvt-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="gwcvt-poster-title">
+			<div class="gwcvt-sheet__head">
+				<h2 id="gwcvt-poster-title"><?php esc_html_e( 'Post this letter', 'groundwork-common-volunteer-tracker' ); ?></h2>
+				<button type="button" class="button-link gwcvt-sheet__close" data-gwcvt-sheet-close>
+					<?php esc_html_e( 'Close', 'groundwork-common-volunteer-tracker' ); ?>
+				</button>
+			</div>
+
+			<div class="gwcvt-sheet__body">
+				<p class="description">
+					<?php esc_html_e( 'The letter opens ready to print. Who it was addressed to is recorded against it, so the log can answer “did you send it to us” rather than only “a letter was printed”.', 'groundwork-common-volunteer-tracker' ); ?>
+				</p>
+
+				<p>
+					<label for="gwcvt-post-addressee"><?php esc_html_e( 'Addressed to', 'groundwork-common-volunteer-tracker' ); ?></label><br />
+					<input type="text" form="gwcvt-post-letter" id="gwcvt-post-addressee" name="addressee" class="regular-text" required
+						placeholder="<?php esc_attr_e( 'e.g. Jefferson County Probation', 'groundwork-common-volunteer-tracker' ); ?>" />
+				</p>
+			</div>
+
+			<div class="gwcvt-sheet__foot">
+				<button type="submit" form="gwcvt-post-letter" class="button button-primary"><?php esc_html_e( 'Record it and print', 'groundwork-common-volunteer-tracker' ); ?></button>
+				<button type="button" class="button" data-gwcvt-sheet-close><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
+			</div>
+		</div>
+	</div>
 	<?php
 }
 
@@ -617,11 +643,8 @@ function gwc_vt_render_letter_mailer( string $on_file ): void {
 			</div>
 
 			<div class="gwcvt-sheet__body">
-				<p class="description" hidden data-gwcvt-mailer-what="draft">
-					<?php esc_html_e( 'This is a draft. Sending it issues it, gives it a reference, and writes the log line.', 'groundwork-common-volunteer-tracker' ); ?>
-				</p>
-				<p class="description" hidden data-gwcvt-mailer-what="issued">
-					<?php esc_html_e( 'This one has already gone out. Sending it again produces a new letter from today’s records, with a new reference — the one they are holding stays valid.', 'groundwork-common-volunteer-tracker' ); ?>
+				<p class="description">
+					<?php esc_html_e( 'The letter is already issued and keeps its reference. Sending it is recorded against it, so the log says where it went and when.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 
 				<fieldset>

@@ -291,6 +291,13 @@ if ( ! function_exists( 'gwc_vt_letter_drafts' ) ) {
 	require GWC_VT_DIR . 'inc/letter-drafts.php';
 }
 
+/* Issuing a letter, and then delivering it — two acts since the audit trail
+ * needed to say where a printed letter went. Requires letter.php for the
+ * rebuild and letter-cpt.php for the log, both of which are already above. */
+if ( ! function_exists( 'gwc_vt_delivery_url' ) ) {
+	require GWC_VT_DIR . 'inc/letter-deliver.php';
+}
+
 /* The letter. letter.php assembles the model and mints the reference,
  * render.php turns one into a document, emails.php sends it. None of them
  * knows about the admin screen that calls them. */

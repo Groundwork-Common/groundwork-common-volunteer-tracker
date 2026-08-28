@@ -19,6 +19,42 @@ const GWC_VT_LETTER_MINUTES    = '_gwc_vt_letter_minutes';
 const GWC_VT_LETTER_ENTRIES    = '_gwc_vt_letter_entries';
 const GWC_VT_LETTER_SENT_OK    = '_gwc_vt_letter_sent_ok';
 
+/* ── Which entries the letter listed, and why that is only IDs ───────────────
+ * Issuing and delivering used to be one act, so the document a court received
+ * was rendered in the same instant its reference was minted and there was
+ * nothing to remember. Now a letter is issued once and printed, posted or
+ * emailed afterwards — which means a delivery next week has to reproduce the
+ * letter that was issued, not whatever the period matches by then. One shift
+ * verified in between and the page would state a different total than the
+ * reference on it digests.
+ *
+ * So the log remembers which entries were on it. IDs and nothing else: no
+ * dates, no hours, no activity, no supervisor. That matters because this log
+ * holds no name and outlives the volunteer on purpose — a stored copy of the
+ * shift list would put the volunteer's service history into the one record
+ * designed to survive their erasure, and the log would then have to die with
+ * them, which is the opposite of what it is for.
+ *
+ * An ID is not a fact about a person. Once the entries are gone the rebuild
+ * finds nothing and says so, which is the correct answer to "show me the letter
+ * you sent about somebody you have since erased".
+ *
+ * Stored as a comma-separated string rather than a serialized array, so it is
+ * legible in the database and immune to the class of bug where a serialized
+ * value comes back as the literal string "Array". */
+const GWC_VT_LETTER_ENTRY_IDS = '_gwc_vt_letter_entry_ids';
+
+/* ── One row per delivery ────────────────────────────────────────────────────
+ * Repeated post meta rather than a fourth post type: deliveries are only ever
+ * read for one letter, never queried across letters, and a post type would buy
+ * ordering and lookup that nothing asks for.
+ *
+ * Each row is an array of when, by, medium, recipient and ok. The letter's own
+ * MEDIUM/RECIPIENT/SENT_OK meta stays where it is and is not written any more —
+ * gwc_vt_letter_deliveries() reads it as a delivery when there are no rows, so
+ * every letter issued before this existed still reports how it went out. */
+const GWC_VT_LETTER_DELIVERY = '_gwc_vt_letter_delivery';
+
 add_action( 'init', 'gwc_vt_register_letter_type' );
 
 /* ── Where the house convention bends, and why ───────────────────────────────
@@ -90,12 +126,16 @@ function gwc_vt_register_letter_type(): void {
  * holding.
  *
  * @param GWC_VT_Letter $letter    The letter.
- * @param string        $medium    'print' or 'email'.
- * @param string        $recipient Address it went to, for email.
+ * @param string        $medium    '' when the letter is only being issued, or
+ *                                 'print'/'post'/'email' when it is being
+ *                                 issued and delivered in one act, which is
+ *                                 what the produce screen still does.
+ * @param string        $recipient Where it went, for a medium that has a
+ *                                 destination.
  * @param bool          $sent_ok   Whether delivery was accepted.
  * @return int The log post ID.
  */
-function gwc_vt_log_letter( GWC_VT_Letter $letter, string $medium, string $recipient = '', bool $sent_ok = true ): int {
+function gwc_vt_log_letter( GWC_VT_Letter $letter, string $medium = '', string $recipient = '', bool $sent_ok = true ): int {
 	$record_id = wp_insert_post(
 		array(
 			'post_type'   => GWC_VT_LETTER_TYPE,
@@ -119,6 +159,14 @@ function gwc_vt_log_letter( GWC_VT_Letter $letter, string $medium, string $recip
 	update_post_meta( $record_id, GWC_VT_LETTER_MINUTES, $letter->verified_minutes );
 	update_post_meta( $record_id, GWC_VT_LETTER_ENTRIES, $letter->entry_count() );
 	update_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, $sent_ok ? 1 : 0 );
+	update_post_meta( $record_id, GWC_VT_LETTER_ENTRY_IDS, implode( ',', array_map( 'intval', $letter->entry_ids ) ) );
+
+	/* A letter issued without going anywhere yet records no delivery. The
+	 * produce screen still issues and delivers in one act and passes a medium,
+	 * which is written as the first delivery so both flows read alike. */
+	if ( '' !== $medium ) {
+		gwc_vt_log_delivery( $record_id, $medium, $recipient, $sent_ok );
+	}
 
 	/**
 	 * Fires after a letter has been issued and logged.
@@ -169,6 +217,111 @@ function gwc_vt_find_letter_record( string $reference ) {
 	return gwc_vt_letter_record( (int) $ids[0] );
 }
 
+/* ── Issuing, and then delivering ────────────────────────────────────────────
+ * These were one act. A letter was produced by printing it or emailing it, and
+ * the log recorded that. It made the invariants easy — the document existed
+ * for exactly as long as the instant its reference was minted — and it made the
+ * audit trail thin: a letter printed and posted to a probation office was
+ * logged as "printed", with nowhere to say where it went.
+ *
+ * So issuing mints the reference and writes the record, and printing, posting
+ * and emailing are things that happen to a letter that already exists. Each one
+ * appends a row. A letter can have none, which means it was issued and has not
+ * gone anywhere yet, and that is a legitimate state rather than a mistake.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Record that an issued letter went somewhere.
+ *
+ * @param int    $record_id Log post ID.
+ * @param string $medium    'print', 'post' or 'email'.
+ * @param string $recipient Where it went: an address for email, an addressee
+ *                          for post, and '' for print, which has no destination
+ *                          the plugin can know about.
+ * @param bool   $ok        Whether it was accepted. Only email can say no.
+ * @return bool
+ */
+function gwc_vt_log_delivery( int $record_id, string $medium, string $recipient = '', bool $ok = true ): bool {
+	if ( GWC_VT_LETTER_TYPE !== get_post_type( $record_id ) ) {
+		return false;
+	}
+
+	$delivery = array(
+		'when'      => current_time( 'mysql', true ),
+		'by'        => (int) get_current_user_id(),
+		'medium'    => $medium,
+		'recipient' => $recipient,
+		'ok'        => $ok ? 1 : 0,
+	);
+
+	$added = (bool) add_post_meta( $record_id, GWC_VT_LETTER_DELIVERY, $delivery );
+
+	/**
+	 * Fires after a letter has gone somewhere.
+	 *
+	 * @param int   $record_id The issued letter.
+	 * @param array $delivery  when, by, medium, recipient, ok.
+	 */
+	do_action( 'gwc_vt_letter_delivered', $record_id, $delivery );
+
+	return $added;
+}
+
+/**
+ * Every delivery of one letter, oldest first.
+ *
+ * ── The letters issued before deliveries existed ─────────────────────────────
+ * Those carry MEDIUM, RECIPIENT and SENT_OK on the record itself, because
+ * issuing was delivering. Reading them as a single delivery is not a migration
+ * — nothing is rewritten — and it means the audit trail reads the same for a
+ * letter sent last year as for one sent this morning. A migration would have
+ * been the wrong instinct anyway: rewriting rows in an append-only log to make
+ * them look like they were written by newer code is exactly what an audit log
+ * must not do.
+ *
+ * @param int $record_id Log post ID.
+ * @return array<int, array>
+ */
+function gwc_vt_letter_deliveries( int $record_id ): array {
+	$rows = (array) get_post_meta( $record_id, GWC_VT_LETTER_DELIVERY, false );
+
+	$deliveries = array();
+
+	foreach ( $rows as $row ) {
+		if ( ! is_array( $row ) || ! isset( $row['medium'] ) ) {
+			continue;
+		}
+
+		$deliveries[] = array(
+			'when'      => (string) ( $row['when'] ?? '' ),
+			'by'        => (int) ( $row['by'] ?? 0 ),
+			'medium'    => (string) $row['medium'],
+			'recipient' => (string) ( $row['recipient'] ?? '' ),
+			'ok'        => ! empty( $row['ok'] ),
+		);
+	}
+
+	if ( $deliveries ) {
+		return $deliveries;
+	}
+
+	$legacy = (string) get_post_meta( $record_id, GWC_VT_LETTER_MEDIUM, true );
+
+	if ( '' === $legacy ) {
+		return array();
+	}
+
+	return array(
+		array(
+			'when'      => (string) get_post_field( 'post_date_gmt', $record_id ),
+			'by'        => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),
+			'medium'    => $legacy,
+			'recipient' => (string) get_post_meta( $record_id, GWC_VT_LETTER_RECIPIENT, true ),
+			'ok'        => (bool) get_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, true ),
+		),
+	);
+}
+
 /**
  * Read one log entry.
  *
@@ -176,9 +329,13 @@ function gwc_vt_find_letter_record( string $reference ) {
  * @return array
  */
 function gwc_vt_letter_record( int $record_id ): array {
+	$ids = (string) get_post_meta( $record_id, GWC_VT_LETTER_ENTRY_IDS, true );
+
 	return array(
 		'id'           => $record_id,
 		'reference'    => (string) get_the_title( $record_id ),
+		'entry_ids'    => '' === $ids ? array() : array_map( 'intval', explode( ',', $ids ) ),
+		'deliveries'   => gwc_vt_letter_deliveries( $record_id ),
 		'volunteer_id' => (int) get_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, true ),
 		'issued_by'    => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),
 		'medium'       => (string) get_post_meta( $record_id, GWC_VT_LETTER_MEDIUM, true ),

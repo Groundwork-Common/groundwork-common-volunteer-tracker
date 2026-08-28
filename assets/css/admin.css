@@ -2400,11 +2400,6 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    answers is "where is this person's letter up to", and splitting it makes the
    reader join the halves themselves. What separates them is the status badge
    and the actions, both of which say the difference in words. */
-.gwcvt-letters-box__count {
-	margin: 0 0 8px;
-	color: #646970;
-}
-
 .gwcvt-letters-box table {
 	margin-bottom: 12px;
 }
@@ -2582,4 +2577,26 @@ a.gwcvt-letters-box__discard:focus {
 	display: inline-flex;
 	flex-wrap: wrap;
 	gap: 8px;
+}
+
+/* The audit trail under a letter's status: where it went, and when. Small and
+   plain — it is a list of facts somebody scans when a court rings up, not
+   something to draw attention to. */
+.gwcvt-letters-box__sent {
+	margin: 4px 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 12px;
+	color: #50575e;
+}
+
+.gwcvt-letters-box__sent li {
+	margin: 0 0 2px;
+}
+
+/* A send that did not go. Red because the difference between "we emailed it"
+   and "we tried to email it" is the whole question somebody is ringing about,
+   and it must not read as one more line in the list. */
+.gwcvt-letters-box__sent--failed {
+	color: #b32d2e;
 }

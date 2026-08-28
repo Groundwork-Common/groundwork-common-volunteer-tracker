@@ -24,7 +24,9 @@
 
 	var reader = document.querySelector( '[data-gwcvt-letter-reader]' );
 	var mailer = document.querySelector( '[data-gwcvt-letter-mailer]' );
+	var poster = document.querySelector( '[data-gwcvt-letter-poster]' );
 	var mailForm = document.getElementById( 'gwcvt-email-letter' );
+	var postForm = document.getElementById( 'gwcvt-post-letter' );
 
 	/**
 	 * Whether the stylesheet that makes a panel a panel actually arrived.
@@ -51,6 +53,10 @@
 
 	if ( ! styled( mailer ) ) {
 		mailer = null;
+	}
+
+	if ( ! styled( poster ) ) {
+		poster = null;
 	}
 
 	/**
@@ -149,6 +155,7 @@
 	function closeSheets() {
 		toggle( reader, false );
 		toggle( mailer, false );
+		toggle( poster, false );
 
 		/* The frame is emptied on the way out rather than left holding a
 		 * letter: this is the most personal document the plugin produces, and
@@ -283,25 +290,12 @@
 
 			event.preventDefault();
 
-			var kind = link.getAttribute( 'data-gwcvt-letter-mail' );
-
-			/* Which letter, copied out of the row into the form that will send
-			 * it. The nonce is not among these: it covers the action and the
-			 * volunteer, and both are fixed on this screen. */
-			[ 'from', 'to', 'draft' ].forEach( function ( name ) {
-				var field = mailForm.querySelector( '[data-gwcvt-mail-field="' + name + '"]' );
-
-				if ( field ) {
-					field.value = link.getAttribute( 'data-gwcvt-letter-' + name ) || '';
-				}
-			} );
-
-			Array.prototype.forEach.call(
-				mailer.querySelectorAll( '[data-gwcvt-mailer-what]' ),
-				function ( line ) {
-					toggle( line, line.getAttribute( 'data-gwcvt-mailer-what' ) === kind );
-				}
-			);
+			/* The row's own href is already a complete nonced URL naming this
+			 * one letter, so the form is pointed at it rather than carrying a
+			 * copy of any of it. A POST to a URL with a query string arrives
+			 * with both in $_REQUEST, which is what check_admin_referer() reads.
+			 * Nothing here can address the wrong letter. */
+			mailForm.setAttribute( 'action', link.getAttribute( 'href' ) );
 
 			/* From a row or from the reader's own footer, which is where a copy
 			 * of this link is. Either way one panel at a time. */
@@ -309,6 +303,26 @@
 
 			syncMailto();
 			openSheet( mailer );
+		} );
+	}
+	/* ── Posting one ─────────────────────────────────────────────────────── */
+
+	if ( poster && postForm ) {
+		document.addEventListener( 'click', function ( event ) {
+			var link = event.target && event.target.closest
+				? event.target.closest( '[data-gwcvt-letter-post]' )
+				: null;
+
+			if ( ! link ) {
+				return;
+			}
+
+			event.preventDefault();
+
+			postForm.setAttribute( 'action', link.getAttribute( 'href' ) );
+
+			toggle( reader, false );
+			openSheet( poster );
 		} );
 	}
 }() );
