@@ -633,7 +633,7 @@ function gwc_vt_add_letters_help( $screen ): void {
 		'gwc-vt-help-log',
 		__( 'What this log is', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'Every letter that has left the building, printed or emailed. A printed letter has left the building just as much as an emailed one, so both are recorded.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Every letter this organization has issued, and everywhere each one has been since. Printing, posting and emailing are all recorded against the letter, so the log answers “did you send it to us” and not only “a letter was produced”.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Rows reading <strong>record removed</strong> are letters produced for somebody whose volunteer record has since been erased or anonymized. They stay, deliberately: the log holds no name and no hours of its own, and it is the receipt of this organization’s own conduct. Losing it when a record goes would be losing it exactly when it starts to matter.', 'groundwork-common-volunteer-tracker' ),
 			__( 'To produce a letter, start from the volunteer’s own record. To check a reference somebody has phoned in, use the panel on the Dashboard.', 'groundwork-common-volunteer-tracker' ),
 		)
@@ -654,7 +654,7 @@ function gwc_vt_add_produce_help( $screen ): void {
 		__( 'Producing a letter', 'groundwork-common-volunteer-tracker' ),
 		array(
 			__( 'Choose a volunteer and, if you need one, a date range. Leaving both dates empty covers everything on record, from their first shift to the day the letter is issued — the letter names both of those dates rather than claiming to cover all of their time.', 'groundwork-common-volunteer-tracker' ),
-			__( 'Printing opens the letter in a new tab; use your browser’s print dialog and choose “Save as PDF” if you need a file. Both printing and emailing are recorded in the log — a printed letter has left the building just as much as an emailed one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Issuing a letter mints its reference and writes it into the log. Nothing has gone anywhere yet: printing, posting and emailing it are separate acts on the volunteer’s record, and each one is recorded against the letter with the date and, where there is one, who it went to.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The letter is built fresh from your records every time it is produced. It is never a stored copy, so it always states what you currently have on file.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The line above Preview says what the letter will state and whether anything of theirs is still waiting to be verified. Unverified hours are never on a letter, so a total that is about to change is worth knowing before you send one.', 'groundwork-common-volunteer-tracker' ),
 		)

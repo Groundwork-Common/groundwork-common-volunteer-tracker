@@ -159,9 +159,15 @@ if ( $gwc_vt_letter instanceof GWC_VT_Letter ) {
 	$gwc_vt_props = array_keys( get_object_vars( $gwc_vt_letter ) );
 	sort( $gwc_vt_props );
 
+	/* entry_ids joined this list when issuing and delivering came apart: the log
+	 * has to remember which entries a letter listed so a delivery next week
+	 * reproduces the letter that was issued. It is IDs and nothing else, which
+	 * is exactly why it does not weaken what this check is for — an ID says
+	 * nothing about a court order, and the property this guard exists to keep
+	 * out would have to be named to be useful. */
 	gwc_vt_check(
 		'the letter model still carries only what it always did',
-		array( 'entries', 'from', 'includes_unverified', 'issued_at', 'reference', 'to', 'unverified_minutes', 'verified_minutes', 'volunteer_id', 'volunteer_name' ) === $gwc_vt_props,
+		array( 'entries', 'entry_ids', 'from', 'includes_unverified', 'issued_at', 'reference', 'to', 'unverified_minutes', 'verified_minutes', 'volunteer_id', 'volunteer_name' ) === $gwc_vt_props,
 		implode( ',', $gwc_vt_props )
 	);
 

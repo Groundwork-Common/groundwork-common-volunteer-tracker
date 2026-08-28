@@ -23,7 +23,9 @@ defined( 'ABSPATH' ) || exit;
  * the bug.
  *
  * @param int   $volunteer_id Volunteer post ID.
- * @param array $args         Optional. 'from' and 'to' as Y-m-d.
+ * @param array $args         Optional. 'from' and 'to' as Y-m-d, and
+ *                            'entry_ids' to build from named entries rather
+ *                            than from everything the period matches.
  * @return GWC_VT_Letter|null Null if there is no such volunteer.
  */
 function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
@@ -38,24 +40,41 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 		? (bool) $args['include_unverified']
 		: (bool) gwc_vt_setting( 'letter_include_unverified' );
 
-	$entry_ids = gwc_vt_entry_ids_for_volunteer(
-		$volunteer_id,
-		array(
-			'from'     => $from,
-			'to'       => $to,
-			/* Published only. A pending entry is one nobody has accepted yet —
-			 * self-logged and untriaged — and putting it on a letter would mean
-			 * the organization reporting a claim it has not looked at. */
-			'statuses' => array( 'publish' ),
-		)
-	);
+	/* Normally the period decides which entries are on the letter. An issued
+	 * letter being rebuilt for a delivery names them instead, so that a print a
+	 * week after issue is the letter that was issued rather than whatever the
+	 * period matches by then. See gwc_vt_rebuild_issued_letter(). */
+	$entry_ids = isset( $args['entry_ids'] )
+		? array_map( 'intval', (array) $args['entry_ids'] )
+		: gwc_vt_entry_ids_for_volunteer(
+			$volunteer_id,
+			array(
+				'from'     => $from,
+				'to'       => $to,
+				/* Published only. A pending entry is one nobody has accepted yet
+				 * — self-logged and untriaged — and putting it on a letter would
+				 * mean the organization reporting a claim it has not looked at. */
+				'statuses' => array( 'publish' ),
+			)
+		);
 
 	$rows       = array();
+	$used       = array();
 	$verified   = 0;
 	$unverified = 0;
 
 	foreach ( $entry_ids as $entry_id ) {
-		$entry_id    = (int) $entry_id;
+		$entry_id = (int) $entry_id;
+
+		/* Only when the caller named them: a period query cannot return an ID
+		 * that is not an entry, but a stored list from a letter issued months
+		 * ago certainly can. Skipping it here is what makes the rebuilt letter
+		 * disagree with its own reference, which is the answer the delivery
+		 * screen needs — see gwc_vt_rebuild_issued_letter(). */
+		if ( isset( $args['entry_ids'] ) && GWC_VT_ENTRY_TYPE !== get_post_type( $entry_id ) ) {
+			continue;
+		}
+
 		$is_verified = gwc_vt_entry_is_verified( $entry_id );
 		$minutes     = (int) get_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, true );
 
@@ -71,6 +90,8 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 				continue;
 			}
 		}
+
+		$used[] = $entry_id;
 
 		$rows[] = new GWC_VT_Letter_Entry(
 			(string) get_post_meta( $entry_id, GWC_VT_ENTRY_DATE, true ),
@@ -97,6 +118,16 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 		time()
 	);
 
+	/* Which entries this was built from, so an issued letter can be rebuilt out
+	 * of exactly the same ones rather than out of whatever the period matches
+	 * later. Set after construction rather than through the constructor: every
+	 * other caller of this class builds one by hand, and a tenth argument they
+	 * do not have would break all of them for a value only the builder knows.
+	 *
+	 * IDs only, and that is the whole point — see the note beside
+	 * GWC_VT_LETTER_ENTRY_IDS in inc/letter-cpt.php. */
+	$letter->entry_ids = array_map( 'intval', $used );
+
 	/**
 	 * The assembled letter, before it is rendered.
 	 *
@@ -104,6 +135,63 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 	 * @param int          $volunteer_id Volunteer post ID.
 	 */
 	return apply_filters( 'gwc_vt_letter_model', $letter, $volunteer_id );
+}
+
+/**
+ * Rebuild the letter an issued record describes.
+ *
+ * ── What this is for, and the one thing it must not do ───────────────────────
+ * Issuing and delivering are two acts now, so printing or emailing a letter
+ * happens after its reference was minted — sometimes days after. The document
+ * that goes out has to be the document that was issued, or the reference on it
+ * digests facts the page does not state.
+ *
+ * So it is rebuilt from the entries the letter named, not from the period. The
+ * period would pick up a shift verified since, and the page would quietly state
+ * a bigger number under a code that says otherwise.
+ *
+ * What it must not do is *assert* that the rebuild is faithful. An entry can be
+ * edited or deleted between issue and delivery, and then the honest answer is
+ * that this is no longer the letter that was issued. That is exactly the
+ * question gwc_vt_verify_reference() already answers, so this returns the
+ * letter and leaves the judgement to the caller, which compares the digests.
+ *
+ * @param array $record From gwc_vt_letter_record().
+ * @return GWC_VT_Letter|null Null when the volunteer is gone.
+ */
+function gwc_vt_rebuild_issued_letter( array $record ) {
+	$volunteer_id = (int) ( $record['volunteer_id'] ?? 0 );
+	$entry_ids    = (array) ( $record['entry_ids'] ?? array() );
+
+	$args = array(
+		'from' => (string) ( $record['from'] ?? '' ),
+		'to'   => (string) ( $record['to'] ?? '' ),
+	);
+
+	/* A letter issued before the log stored entry IDs has none, and there is
+	 * nothing to rebuild from but the period — which is what that letter was
+	 * built from at the time, because issuing and printing were one act. */
+	if ( $entry_ids ) {
+		$args['entry_ids'] = $entry_ids;
+	}
+
+	return gwc_vt_build_letter( $volunteer_id, $args );
+}
+
+/**
+ * Whether a rebuilt letter is still the one that was issued.
+ *
+ * Compared on the digest for the same reason gwc_vt_verify_reference() does:
+ * the code embeds the day it was issued, so a letter from March can never
+ * recompute to a byte-identical code today.
+ *
+ * @param array         $record From gwc_vt_letter_record().
+ * @param GWC_VT_Letter $letter The rebuild.
+ * @return bool
+ */
+function gwc_vt_rebuild_is_faithful( array $record, GWC_VT_Letter $letter ): bool {
+	return gwc_vt_reference_digest( $letter->reference )
+		=== gwc_vt_reference_digest( (string) ( $record['reference'] ?? '' ) );
 }
 
 /* ── The reference code ──────────────────────────────────────────────────────
