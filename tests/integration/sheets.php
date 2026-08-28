@@ -263,6 +263,19 @@ gwc_vt_sh_check(
 	1 === preg_match( '/#poststuff\s+\.gwcvt-panel\s+\.inside\s*>\s*table\s*,\s*\.gwcvt-panel\s+\.inside\s*>\s*table\s*\{[^}]*border-top:\s*0/', $GLOBALS['gwc_vt_sh_css'] )
 );
 
+/* The heading, which core only styles on a post editor. .postbox-header and
+ * .hndle live in wp-admin's edit.css, so a panel on a MENU screen renders its
+ * title as a bare 1.3em <h2> with 16px margins and no padding — a header block
+ * half again too tall with the text floating in it. The Letters screen shipped
+ * looking like that. Asserted here rather than left to the eye, because the
+ * editor supplies these values itself and the fault is invisible on the screen
+ * this file otherwise tests. */
+gwc_vt_sh_check(
+	'the panel heading is styled for a screen that is not a post editor',
+	1 === preg_match( '/\.gwcvt-panel\s+\.postbox-header\s+\.hndle\s*\{[^}]*font-size:\s*14px/', $GLOBALS['gwc_vt_sh_css'] )
+		&& 1 === preg_match( '/\.gwcvt-panel\s+\.postbox-header\s+\.hndle\s*\{[^}]*padding:\s*8px 12px/', $GLOBALS['gwc_vt_sh_css'] )
+);
+
 gwc_vt_sh_check(
 	'and nothing paints over the striping',
 	array() === $GLOBALS['gwc_vt_sh_painted'],
