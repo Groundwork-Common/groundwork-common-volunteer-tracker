@@ -2225,10 +2225,6 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	margin-left: 6px;
 }
 
-.gwcvt-record-credential {
-	margin-top: 12px;
-}
-
 .gwcvt-record-credential label {
 	margin-right: 4px;
 }
@@ -2386,21 +2382,24 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
    answers is "where is this person's letter up to", and splitting it makes the
    reader join the halves themselves. What separates them is the status badge
    and the actions, both of which say the difference in words. */
-.gwcvt-letters-box table {
+.gwcvt-panel .inside > table {
 	margin-bottom: 12px;
 }
 
-.gwcvt-letters-box td {
+.gwcvt-panel .inside > table td {
 	vertical-align: top;
 }
 
-/* Drafts sit a shade back from the letters that have gone out. Faint on
-   purpose: the badge and the actions are what tell somebody which kind of row
-   this is, and a tint that carried the distinction on its own would be a fact
-   stated only in colour. */
-.gwcvt-letters-box__row--draft td {
-	background: #fcfcfc;
-}
+/* No tint on a draft row. There was one, faint, and its own comment already
+   argued itself out of existence: the badge and the actions are what tell
+   somebody which kind of row this is, and a tint carrying that on its own would
+   be a fact stated only in colour.
+
+   It also broke the zebra striping, which is the visible half. `striped`
+   alternates on odd and even rows; a background on every draft row regardless
+   of position overrode some of them and not others, so the alternation stopped
+   halfway down the table and started again below it. Two rows saying the same
+   thing in two ways, and one of them wrong. */
 
 /* In progress, so warm rather than green: the same vocabulary the verification
    badges use, where waiting is amber and done is green. */
@@ -2674,55 +2673,51 @@ body.js .gwcvt-sheet--open {
 	margin: 0;
 }
 
-/* ─── A table that fills its panel ──────────────────────────────────────────
+/* ─── One shape for a panel on a volunteer's record ─────────────────────────
+   Hours, letters and credentials are the same thing three times: a table of
+   what has happened, and a trigger at the foot for making more of it. They had
+   three sets of rules keyed to three ids, and they drifted — one table flush to
+   the panel edge and another inset by twelve, a rule above one trigger and none
+   above another.
+
+   One rule set now, keyed to the class inc/admin-sheet.php puts on all three.
+
    wp-admin pads a meta box's body, which is right for fields and wrong for a
-   table: the table draws its own border and the padding puts a second frame
-   around the first, with a gap of panel showing between them. Core's own
-   full-width tables in panels sit flush, so these do too — the padding is
-   removed from the box and given back to whatever else is in it. */
-#gwc-vt-volunteer-hours .inside,
-#gwc-vt-volunteer-letters .inside {
+   table: the table draws its own border, so the padding puts a second frame
+   around the first with a strip of panel showing between them. The padding
+   comes off the box and is given back with PADDING rather than margin on
+   everything that is not a table — margin would inset the trigger's rule too,
+   which is how the hours panel ended up with a rule that stopped short at both
+   ends. */
+.gwcvt-panel .inside {
 	margin: 0;
 	padding: 0;
 }
 
-#gwc-vt-volunteer-hours .inside > :not(table):not(.gwcvt-letters-box),
-#gwc-vt-volunteer-letters .inside > :not(table):not(.gwcvt-letters-box) {
-	margin: 12px;
-}
-
-#gwc-vt-volunteer-hours .gwcvt-history,
-.gwcvt-letters-box table {
+.gwcvt-panel .inside > table {
 	margin: 0;
 	border-left: 0;
 	border-right: 0;
 }
 
-/* The letters box is a wrapper rather than a bare table, so its own padding
-   has to come back for everything that is not the table. */
-.gwcvt-letters-box > :not(table):not(.gwcvt-letters-box__adder) {
-	margin-left: 12px;
-	margin-right: 12px;
+.gwcvt-panel .inside > :not(table):not(.gwcvt-sheet-trigger) {
+	margin: 0;
+	padding: 12px;
 }
-
-/* The adder carries its own edges: the folded link is ruled off flush with the
-   table, and the panel it opens is inset. */
-.gwcvt-letters-box__adder > .gwcvt-letters-box__panel {
-	margin: 12px;
-}
-
-.gwcvt-letters-box > .notice {
-	margin-top: 12px;
-}
-
 
 /* Every trigger looks the same and sits the same way: under whatever it acts
-   on, ruled off from it, a link rather than a button. Under, because the panel
-   is there to be read and the thing you do afterwards belongs after it; a link,
-   because a button competes with the heading for the first thing the eye lands
-   on, which is the reading. Three panels doing the same kind of thing should not
-   look like three different kinds of thing. */
-.gwcvt-sheet-trigger,
+   on, ruled off from it edge to edge, a link rather than a button. Under,
+   because the panel is there to be read and the thing you do afterwards belongs
+   after it; a link, because a button competes with the heading for the first
+   thing the eye lands on, which is the reading. */
+.gwcvt-sheet-trigger {
+	margin: 0;
+	padding: 10px 12px;
+	border-top: 1px solid #dcdcde;
+}
+
+/* The one that is not a sheet: the no-JavaScript route to the entry editor,
+   which has to sit and look exactly like the trigger it stands in for. */
 .gwcvt-history__add {
 	margin: 0;
 	padding: 10px 12px;

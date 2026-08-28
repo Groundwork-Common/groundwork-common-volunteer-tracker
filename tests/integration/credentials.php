@@ -1150,13 +1150,18 @@ function gwc_vt_cr_panel(): string {
  */
 function gwc_vt_cr_panel_table(): string {
 	$panel = gwc_vt_cr_panel();
-	$open  = strpos( $panel, '<table' );
+
+	/* The BODY, not the whole table. Every check below counts <tr> to mean "how
+	 * many credentials are listed", and the table grew a header row when the
+	 * three panels on a volunteer's record were made to look alike — which is a
+	 * row, and is not a credential. */
+	$open = strpos( $panel, '<tbody' );
 
 	if ( false === $open ) {
 		return '';
 	}
 
-	$close = strpos( $panel, '</table>', $open );
+	$close = strpos( $panel, '</tbody>', $open );
 
 	return false === $close ? '' : substr( $panel, $open, $close - $open );
 }

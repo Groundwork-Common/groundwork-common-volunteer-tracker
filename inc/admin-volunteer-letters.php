@@ -162,17 +162,14 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 	// Newest first in both groups, and the drafts above: those are the ones with something left to do.
 	usort( $issued, static fn( array $a, array $b ): int => strcmp( (string) $b['issued_at'], (string) $a['issued_at'] ) );
 	usort( $drafts, static fn( array $a, array $b ): int => (int) $b['id'] <=> (int) $a['id'] );
+
+	/* Three settings fall back to something reasonable when empty and the letter
+	 * prints perfectly well without any of them — which together means a court
+	 * letter headed with a website's title, giving a webmaster's address as the
+	 * number to ring. Said here because this is where letters are made now; it
+	 * used to be on the screen that made them. */
+	gwc_vt_render_letterhead_warning();
 	?>
-	<div class="gwcvt-letters-box" data-gwcvt-letters>
-		<?php
-		/* Three settings fall back to something reasonable when empty and the
-		 * letter prints perfectly well without any of them — which together
-		 * means a court letter headed with a website's title, giving a
-		 * webmaster's address as the number to ring. Said here because this is
-		 * where letters are made now; it used to be on the screen that made
-		 * them. */
-		gwc_vt_render_letterhead_warning();
-		?>
 
 		<table class="widefat striped">
 			<thead>
@@ -203,8 +200,7 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 			</tbody>
 		</table>
 
-		<?php gwc_vt_sheet_trigger( 'draft-letter', __( 'Draft a verification letter', 'groundwork-common-volunteer-tracker' ) ); ?>
-	</div>
+	<?php gwc_vt_sheet_trigger( 'draft-letter', __( 'Draft a verification letter', 'groundwork-common-volunteer-tracker' ) ); ?>
 	<?php
 }
 

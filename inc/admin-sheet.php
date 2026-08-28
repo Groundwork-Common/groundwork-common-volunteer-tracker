@@ -271,3 +271,52 @@ function gwc_vt_sheet_notice(): void {
 }
 
 add_action( 'admin_notices', 'gwc_vt_sheet_notice' );
+
+/* ── One shape for a panel on this record ────────────────────────────────────
+ * Hours, letters and credentials are the same thing three times: a table of
+ * what has happened, and a trigger at the foot for making more of it. They were
+ * styled three times too, each patched against its own id, and they drifted —
+ * one table flush to the panel edge and another inset by twelve pixels, a rule
+ * above one trigger and none above another.
+ *
+ * So they share a class, and the stylesheet has one rule set instead of three.
+ * A fourth panel joins by being named here, which is one line and is visible in
+ * a diff, rather than by somebody remembering to copy three selectors.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The panels on a volunteer's record that follow the table-and-trigger shape.
+ *
+ * @return string[] Meta box ids.
+ */
+function gwc_vt_record_panels(): array {
+	return array(
+		'gwc-vt-volunteer-hours',
+		'gwc-vt-volunteer-letters',
+		'gwc-vt-volunteer-credentials',
+	);
+}
+
+/**
+ * Give each of them the class the stylesheet keys off.
+ *
+ * WordPress's own postbox_classes_{screen}_{id} hook does this, so the class
+ * lands on the box itself rather than on a wrapper inside it — which matters,
+ * because what has to lose its padding is .inside, and only the box's own
+ * classes can reach it.
+ */
+function gwc_vt_mark_record_panels(): void {
+	foreach ( gwc_vt_record_panels() as $panel ) {
+		add_filter(
+			'postbox_classes_' . GWC_VT_VOLUNTEER_TYPE . '_' . $panel,
+			static function ( $classes ) {
+				$classes   = (array) $classes;
+				$classes[] = 'gwcvt-panel';
+
+				return $classes;
+			}
+		);
+	}
+}
+
+add_action( 'admin_init', 'gwc_vt_mark_record_panels' );
