@@ -160,6 +160,7 @@ function gwc_vt_settings_fields(): array {
 			'type'        => 'text',
 			'label'       => __( 'Subject line', 'groundwork-common-volunteer-tracker' ),
 			'placeholder' => __( 'Your volunteer service verification from {org}', 'groundwork-common-volunteer-tracker' ),
+			'help'        => __( 'Leave empty to use the default subject.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
 		'email_intro'               => array(

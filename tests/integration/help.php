@@ -362,11 +362,20 @@ gwc_vt_help_check(
 	count( $GLOBALS['gwc_vt_help_views'] ) . ' view(s)'
 );
 
-/* The point of the change: no single view is a wall. */
-$GLOBALS['gwc_vt_help_longest'] = max( array_map( 'strlen', $GLOBALS['gwc_vt_help_views'] ) );
+/* The point of the change: no single view is a wall.
+ *
+ * The settings topic is exempt, and is the only one. It ends in a reference —
+ * every setting the plugin has, its label and what it does — which is a list
+ * somebody scans for one line, not a procedure they read to the end. Held to
+ * the same ceiling it would have to be cut into five tabs of nine fields, which
+ * is five places to look for a setting instead of one. */
+$GLOBALS['gwc_vt_help_procedures'] = $GLOBALS['gwc_vt_help_views'];
+unset( $GLOBALS['gwc_vt_help_procedures']['settings'] );
+
+$GLOBALS['gwc_vt_help_longest'] = max( array_map( 'strlen', $GLOBALS['gwc_vt_help_procedures'] ) );
 
 gwc_vt_help_check(
-	'and no one view is longer than the whole guide used to be',
+	'and no how-to view is longer than the whole guide used to be',
 	$GLOBALS['gwc_vt_help_longest'] < 9000,
 	$GLOBALS['gwc_vt_help_longest'] . ' bytes'
 );
@@ -418,7 +427,7 @@ sort( $GLOBALS['gwc_vt_help_ids'] );
 
 gwc_vt_help_check(
 	'the guide covers every part of the plugin it is meant to',
-	array( 'credentials', 'events', 'hours', 'letters', 'public', 'schedule', 'start' ) === $GLOBALS['gwc_vt_help_ids'],
+	array( 'credentials', 'events', 'hours', 'letters', 'public', 'schedule', 'settings', 'start' ) === $GLOBALS['gwc_vt_help_ids'],
 	implode( ', ', $GLOBALS['gwc_vt_help_ids'] )
 );
 
@@ -426,10 +435,67 @@ gwc_vt_help_check( 'every topic has at least one how-to', array() === $GLOBALS['
 gwc_vt_help_check( 'every how-to has three steps or more', array() === $GLOBALS['gwc_vt_help_short'], implode( ', ', $GLOBALS['gwc_vt_help_short'] ) );
 gwc_vt_help_check( 'every how-to reaches the page', array() === $GLOBALS['gwc_vt_help_missing'], implode( ', ', $GLOBALS['gwc_vt_help_missing'] ) );
 
+/* One numbered list per how-to. Counted against the how-to's own wrapper rather
+ * than against <h3>, which the settings reference also uses for its heading and
+ * has no steps under. */
 gwc_vt_help_check(
 	'the steps are numbered lists, not prose',
-	substr_count( $GLOBALS['gwc_vt_help_html'], '<ol>' ) === substr_count( $GLOBALS['gwc_vt_help_html'], '<h3>' ),
-	substr_count( $GLOBALS['gwc_vt_help_html'], '<ol>' ) . ' list(s) for ' . substr_count( $GLOBALS['gwc_vt_help_html'], '<h3>' ) . ' how-to(s)'
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<ol>' ) === substr_count( $GLOBALS['gwc_vt_help_html'], 'class="gwcvt-help__task"' ),
+	substr_count( $GLOBALS['gwc_vt_help_html'], '<ol>' ) . ' list(s) for ' . substr_count( $GLOBALS['gwc_vt_help_html'], 'class="gwcvt-help__task"' ) . ' how-to(s)'
+);
+
+/* ── Every setting is in the guide, because the guide reads the registry ─────
+ * The reference is generated from gwc_vt_settings_fields(), which is also what
+ * draws the settings form. Asserted anyway, from the registry rather than from
+ * a list written here: a filter that added a field, or a renderer that quietly
+ * skipped a type it did not recognise, would leave a setting on the screen and
+ * nowhere in the documentation — which is the state this topic exists to end.
+ * ─────────────────────────────────────────────────────────────────────────── */
+$GLOBALS['gwc_vt_help_ref']     = (string) ( $GLOBALS['gwc_vt_help_views']['settings'] ?? '' );
+$GLOBALS['gwc_vt_help_unnamed'] = array();
+
+foreach ( gwc_vt_settings_fields() as $gwc_vt_help_key => $gwc_vt_help_field ) {
+	$gwc_vt_help_label = (string) ( $gwc_vt_help_field['label'] ?? '' );
+
+	if ( '' === $gwc_vt_help_label ) {
+		continue;
+	}
+
+	if ( false === strpos( $GLOBALS['gwc_vt_help_ref'], esc_html( $gwc_vt_help_label ) ) ) {
+		$GLOBALS['gwc_vt_help_unnamed'][] = (string) $gwc_vt_help_key;
+	}
+}
+
+gwc_vt_help_check(
+	'every setting the plugin has is named in the guide',
+	array() === $GLOBALS['gwc_vt_help_unnamed'],
+	implode( ', ', $GLOBALS['gwc_vt_help_unnamed'] )
+);
+
+/* And what each one is for, not only that it exists. A label with no
+ * explanation beside it is a glossary entry that says the word again. */
+$GLOBALS['gwc_vt_help_unexplained'] = array();
+
+foreach ( gwc_vt_settings_fields() as $gwc_vt_help_key => $gwc_vt_help_field ) {
+	if ( '' === (string) ( $gwc_vt_help_field['help'] ?? '' ) ) {
+		$GLOBALS['gwc_vt_help_unexplained'][] = (string) $gwc_vt_help_key;
+	}
+}
+
+gwc_vt_help_check(
+	'and says what each one does',
+	array() === $GLOBALS['gwc_vt_help_unexplained'],
+	implode( ', ', $GLOBALS['gwc_vt_help_unexplained'] )
+);
+
+/* The two the registry does not hold: a table of roles, and a form of its own.
+ * Both are the ones somebody most needs told about, so both are written by hand
+ * in gwc_vt_help_settings_extras() and both have to be here. */
+gwc_vt_help_check(
+	'including the two tabs that are not built from that registry',
+	false !== strpos( $GLOBALS['gwc_vt_help_ref'], 'Verify hours' )
+		&& false !== strpos( $GLOBALS['gwc_vt_help_ref'], 'Issue letters' )
+		&& false !== strpos( $GLOBALS['gwc_vt_help_ref'], 'On deletion' )
 );
 
 /* Every view carries the whole tab bar, so a reader can reach any topic from
@@ -673,9 +739,30 @@ foreach ( gwc_vt_help_topics() as $gwc_vt_help_topic ) {
 
 /* And it is the two topics that went, not the guide. A filter that dropped
  * everything would satisfy the check above and leave nobody a guide to read. */
+/* ── Documentation does not disappear with the feature ───────────────────────
+ * The Letter tab is not on the settings screen with letters switched off — and
+ * that is exactly the site whose reader wants to know how to switch them back
+ * on. The guide keeps the tab, and keeps the switch that governs it, which is
+ * on Logging and always present.
+ * ─────────────────────────────────────────────────────────────────────────── */
+$_GET['topic'] = 'settings';
+
+ob_start();
+gwc_vt_render_help_page();
+$GLOBALS['gwc_vt_help_off_ref'] = (string) ob_get_clean();
+
+unset( $_GET['topic'] );
+
+gwc_vt_help_check(
+	'the settings reference still documents the Letter tab with letters off',
+	false !== strpos( $GLOBALS['gwc_vt_help_off_ref'], 'Issue verification letters' )
+		&& false !== strpos( $GLOBALS['gwc_vt_help_off_ref'], 'Organization name' ),
+	strlen( $GLOBALS['gwc_vt_help_off_ref'] ) . ' bytes'
+);
+
 gwc_vt_help_check(
 	'and the guide is the rest of itself, without those two topics',
-	array( 'start', 'hours', 'credentials', 'public' ) === $GLOBALS['gwc_vt_help_off_ids'],
+	array( 'start', 'hours', 'credentials', 'public', 'settings' ) === $GLOBALS['gwc_vt_help_off_ids'],
 	implode( ', ', $GLOBALS['gwc_vt_help_off_ids'] )
 );
 
