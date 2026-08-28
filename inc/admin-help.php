@@ -140,7 +140,7 @@ function gwc_vt_add_settings_help( $screen = null ): void {
 			array(
 				__( 'Everything the letter says about your organization comes from this screen: the letterhead, who signs it, and the wording of the opening paragraph.', 'groundwork-common-volunteer-tracker' ),
 				__( 'The wording accepts placeholders — <code>{name}</code>, <code>{hours}</code>, <code>{period}</code>, <code>{org}</code> and others listed above the fields — which are filled in for each volunteer when the letter is produced.', 'groundwork-common-volunteer-tracker' ),
-				__( 'The disclaimer and the note about the reference code cannot be emptied. Saving either one blank restores the built-in wording. They are what tell a reader that <strong>your organization</strong>, not this plugin, is the authoritative record-keeper — and a letter without them has quietly started implying something nobody can stand behind.', 'groundwork-common-volunteer-tracker' ),
+				__( 'The disclaimer and the note about the reference code appear on every letter. Clear either field to go back to the built-in wording. They are what tell a reader that <strong>your organization</strong>, not this plugin, is the authoritative record-keeper — a letter without them has quietly started implying something nobody can stand behind.', 'groundwork-common-volunteer-tracker' ),
 			)
 		);
 	}
