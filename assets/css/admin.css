@@ -2341,6 +2341,15 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	font-size: 13px;
 }
 
+/* ── The notice pointing at the guide ────────────────────────────────────────
+   Core's own notice, with one thing added: the two links sit on their own line
+   under the sentence rather than trailing off the end of it, so "Hide this for
+   good" is a decision somebody makes rather than a word they run into. */
+.gwcvt-welcome__actions {
+	margin: .4em 0 0;
+	color: #646970;
+}
+
 /* ── Every setting, as a reference ───────────────────────────────────────────
    The one topic that is not a procedure: a term and what it means, forty times
    over. Set to the same reading width as the how-tos, with the label carrying

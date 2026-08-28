@@ -1250,7 +1250,7 @@ function gwc_vt_render_uninstall_section(): void {
 							<?php esc_html_e( 'Also remove this plugin\'s settings when it is deleted', 'groundwork-common-volunteer-tracker' ); ?>
 						</label>
 						<p class="description">
-							<?php esc_html_e( 'With this on, deleting the plugin also removes its settings and its retention log. It still deletes no volunteer, shift, signup, hour entry or issued letter.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php esc_html_e( 'With this on, deleting the plugin also removes its settings, its retention log and what each person has dismissed. It still deletes no volunteer, shift, signup, hour entry or issued letter.', 'groundwork-common-volunteer-tracker' ); ?>
 						</p>
 						<p class="description">
 							<?php
