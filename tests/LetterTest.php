@@ -387,6 +387,24 @@ final class LetterTest extends TestCase {
 		$this->assertStringStartsWith( 'FOODBANK2026-42-', gwc_vt_letter_reference( 42, '', '', 390, $this->rows() ) );
 	}
 
+	public function test_the_example_code_is_in_the_shape_this_site_issues(): void {
+		/* The checker shows an example in the box somebody types a code into.
+		 * It is built from the same prefix a real code gets, because an example
+		 * in the wrong shape is read as the shape — and the person retypes a
+		 * code that was already right. */
+		$this->settings( array( 'reference_prefix' => 'fb' ) );
+
+		$this->assertStringStartsWith( 'FB-', gwc_vt_reference_example() );
+		$this->assertStringStartsWith( gwc_vt_reference_prefix(), gwc_vt_letter_reference( 42, '', '', 390, $this->rows() ) );
+	}
+
+	public function test_a_site_with_no_prefix_gets_an_example_without_one(): void {
+		$this->settings( array( 'reference_prefix' => '' ) );
+
+		$this->assertSame( '', gwc_vt_reference_prefix() );
+		$this->assertStringStartsWith( '1042-', gwc_vt_reference_example() );
+	}
+
 	public function test_the_digest_survives_a_different_issue_date(): void {
 		/* The code embeds the day it was issued, so a letter from last March can
 		 * never recompute to a byte-identical code today. Verification compares
