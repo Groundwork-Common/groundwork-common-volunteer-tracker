@@ -2689,18 +2689,27 @@ body.js .gwcvt-sheet--open {
    everything that is not a table — margin would inset the trigger's rule too,
    which is how the hours panel ended up with a rule that stopped short at both
    ends. */
-.gwcvt-panel .inside {
+/* #poststuff is not decoration. WordPress styles .inside from an ID selector —
+   #poststuff .inside — so a class-only rule of ours loses to it however
+   specific it looks, and the 6px top margin it sets survived. That margin is
+   what put a strip of panel background between the header's bottom border and
+   the table's top one: two rules with a gap trapped between them. */
+#poststuff .gwcvt-panel .inside {
 	margin: 0;
 	padding: 0;
 }
 
-.gwcvt-panel .inside > table {
+/* And no top border on the table, because the panel header already drew that
+   line. Left to itself it draws a second one immediately under the first, which
+   is the same fault a pixel apart instead of six. */
+#poststuff .gwcvt-panel .inside > table {
 	margin: 0;
+	border-top: 0;
 	border-left: 0;
 	border-right: 0;
 }
 
-.gwcvt-panel .inside > :not(table):not(.gwcvt-sheet-trigger) {
+#poststuff .gwcvt-panel .inside > :not(table):not(.gwcvt-sheet-trigger) {
 	margin: 0;
 	padding: 12px;
 }

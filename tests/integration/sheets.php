@@ -237,6 +237,26 @@ if ( preg_match_all( '/(\.gwcvt-[^{}]*?(?:__row[a-z-]*|\s+t[dr]))\s*\{([^}]*)\}/
 	}
 }
 
+/* ── Beating WordPress's own selector, and not drawing the line twice ────────
+ * WordPress styles .inside from an ID selector — #poststuff .inside — so a
+ * class-only rule of ours loses to it however specific it looks. The 6px top
+ * margin it sets survived exactly that way, and put a strip of panel background
+ * between the header's bottom border and the table's top one: two rules with
+ * whitespace trapped between them.
+ *
+ * And the table's own top border has to go, because the panel header already
+ * drew that line. Left alone it draws a second one directly under the first,
+ * which is the same fault one pixel apart instead of six. */
+gwc_vt_sh_check(
+	'the panel rules are specific enough to beat WordPress’s own',
+	1 === preg_match( '/#poststuff\s+\.gwcvt-panel\s+\.inside\s*\{[^}]*margin:\s*0/', $GLOBALS['gwc_vt_sh_css'] )
+);
+
+gwc_vt_sh_check(
+	'and the table does not draw the line the panel header already drew',
+	1 === preg_match( '/#poststuff\s+\.gwcvt-panel\s+\.inside\s*>\s*table\s*\{[^}]*border-top:\s*0/', $GLOBALS['gwc_vt_sh_css'] )
+);
+
 gwc_vt_sh_check(
 	'and nothing paints over the striping',
 	array() === $GLOBALS['gwc_vt_sh_painted'],
