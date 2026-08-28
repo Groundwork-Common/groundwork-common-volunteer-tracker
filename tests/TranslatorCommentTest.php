@@ -89,9 +89,17 @@ final class TranslatorCommentTest extends TestCase {
 		 * Written without it this test found four of the five collisions that
 		 * prompted it and silently missed that one, which would have made it a
 		 * weaker check than the tool it exists to replace. It is bounded to a
-		 * single line so it cannot start hunting across a file again. */
+		 * single line so it cannot start hunting across a file again.
+		 *
+		 * The escaper run before that is for `esc_html( _n( ... ) )`, which is how
+		 * a plural is escaped and which this test could not see: the comment is
+		 * followed by `esc_html( `, which is neither an assignment nor the name of
+		 * a gettext function. It missed a real collision on "%d shift" that way,
+		 * found afterwards by reading the generated POT — so the guard was weaker
+		 * than the file it is meant to make unnecessary to read. */
 		$pattern = '/\/\*\s*translators:(?P<comment>(?:(?!\*\/).)*)\*\/\s*'
 			. '(?:[^\n\/]{0,120}?(?:=>|=)\s*)?'
+			. '(?:(?:esc_html|esc_attr|esc_textarea|esc_js|wp_kses_post)\s*\(\s*)?'
 			. '(?P<fn>esc_html__|esc_html_e|esc_attr_e|_n_noop|_x|_n|_e|__)\s*\(\s*'
 			. '(?P<q1>[\'"])(?P<s1>(?:\\\\.|(?!(?P=q1)).)*)(?P=q1)'
 			. '(?:\s*,\s*(?P<q2>[\'"])(?P<s2>(?:\\\\.|(?!(?P=q2)).)*)(?P=q2))?/s';

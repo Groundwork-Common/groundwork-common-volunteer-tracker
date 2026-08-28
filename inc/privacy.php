@@ -268,6 +268,13 @@ function gwc_vt_anonymize_volunteer( int $volunteer_id ): bool {
 	 * post survives anonymization, so nothing else would ever collect them. */
 	gwc_vt_delete_credential_records( $volunteer_id );
 
+	/* And the letters somebody meant to send. A draft is an intention about a
+	 * named person — "we are about to tell a court about this one" — which is
+	 * the same kind of fact as a credential and goes for the same reason. The
+	 * issued-letter log is untouched: that is the organization's own receipt,
+	 * holds no name, and outlives the record on purpose. */
+	gwc_vt_delete_letter_drafts( $volunteer_id );
+
 	/* And the same again on their signups, which carry their own copy of a name
 	 * and an address typed into the public form. The shift and the place on it
 	 * survive — that is the organization's record of what it ran and who staffed
@@ -312,6 +319,7 @@ function gwc_vt_delete_volunteer( int $volunteer_id ): bool {
 	 * leaves the records attached to a volunteer who still exists rather than
 	 * loose in the database with nothing to say whose they were. */
 	gwc_vt_delete_credential_records( $volunteer_id );
+	gwc_vt_delete_letter_drafts( $volunteer_id );
 
 	wp_delete_post( $volunteer_id, true );
 

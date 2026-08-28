@@ -1,0 +1,270 @@
+<?php
+/**
+ * Reading and writing the letters somebody means to send.
+ *
+ * Four functions and no cleverness: make one, list them for a volunteer, read
+ * one, and remove them. The period is sanitized on the way in by the same
+ * function every other date on this plugin goes through, so a draft cannot hold
+ * a date the letter builder would refuse.
+ *
+ * See inc/letter-draft-cpt.php for why a draft holds a period and nothing else.
+ *
+ * @package VolunteerTracker
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Start a letter for somebody, covering a period or all of their time.
+ *
+ * @param int    $volunteer_id Volunteer post ID.
+ * @param string $from         Y-m-d, or '' for their first shift.
+ * @param string $to           Y-m-d, or '' for today.
+ * @return int The draft's ID, or 0.
+ */
+function gwc_vt_add_letter_draft( int $volunteer_id, string $from = '', string $to = '' ): int {
+	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+		return 0;
+	}
+
+	$from = gwc_vt_sanitize_date( $from );
+	$to   = gwc_vt_sanitize_date( $to );
+
+	/* Turned round rather than refused. Two dates the wrong way round is a
+	 * typing order, not a decision, and the alternative is an error message
+	 * about something the screen can see for itself. */
+	if ( '' !== $from && '' !== $to && $from > $to ) {
+		list( $from, $to ) = array( $to, $from );
+	}
+
+	$draft_id = wp_insert_post(
+		array(
+			'post_type'   => GWC_VT_DRAFT_TYPE,
+			'post_status' => 'publish',
+			'post_parent' => $volunteer_id,
+			/* Not shown anywhere: the box renders the period from the meta, so
+			 * that one function decides how a period reads. This is for the
+			 * database and for anybody reading it with a query. */
+			'post_title'  => sprintf(
+				/* translators: 1: a volunteer's name, 2: a period, already worded. */
+				__( 'Letter draft — %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
+				get_the_title( $volunteer_id ),
+				gwc_vt_letter_period_words( $from, $to )
+			),
+		)
+	);
+
+	if ( is_wp_error( $draft_id ) || ! $draft_id ) {
+		return 0;
+	}
+
+	$draft_id = (int) $draft_id;
+
+	update_post_meta( $draft_id, GWC_VT_DRAFT_FROM, $from );
+	update_post_meta( $draft_id, GWC_VT_DRAFT_TO, $to );
+	update_post_meta( $draft_id, GWC_VT_DRAFT_BY, (int) get_current_user_id() );
+
+	/**
+	 * Fires after a letter draft has been started.
+	 *
+	 * @param int $draft_id     The draft.
+	 * @param int $volunteer_id The volunteer it is about.
+	 */
+	do_action( 'gwc_vt_letter_draft_added', $draft_id, $volunteer_id );
+
+	return $draft_id;
+}
+
+/**
+ * One draft, as an array, or an empty array.
+ *
+ * @param int $draft_id Draft post ID.
+ * @return array
+ */
+function gwc_vt_letter_draft( int $draft_id ): array {
+	if ( GWC_VT_DRAFT_TYPE !== get_post_type( $draft_id ) ) {
+		return array();
+	}
+
+	return array(
+		'id'        => $draft_id,
+		'volunteer' => (int) wp_get_post_parent_id( $draft_id ),
+		'from'      => (string) get_post_meta( $draft_id, GWC_VT_DRAFT_FROM, true ),
+		'to'        => (string) get_post_meta( $draft_id, GWC_VT_DRAFT_TO, true ),
+		'by'        => (int) get_post_meta( $draft_id, GWC_VT_DRAFT_BY, true ),
+		'started'   => (string) get_post_time( 'Y-m-d', true, $draft_id ),
+	);
+}
+
+/**
+ * Every draft on one volunteer, oldest first.
+ *
+ * Oldest first because these are a queue: the one somebody has been meaning to
+ * deal with longest is the one that matters, which is the same argument the
+ * applications queue makes about itself.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return array<int, array>
+ */
+function gwc_vt_letter_drafts( int $volunteer_id ): array {
+	if ( $volunteer_id < 1 ) {
+		return array();
+	}
+
+	$ids = get_posts(
+		array(
+			'post_type'      => GWC_VT_DRAFT_TYPE,
+			'post_parent'    => $volunteer_id,
+			'post_status'    => array( 'publish' ),
+			'posts_per_page' => 50,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'orderby'        => 'ID',
+			'order'          => 'ASC',
+		)
+	);
+
+	$drafts = array();
+
+	foreach ( (array) $ids as $id ) {
+		$drafts[] = gwc_vt_letter_draft( (int) $id );
+	}
+
+	return $drafts;
+}
+
+/**
+ * Remove a volunteer's drafts.
+ *
+ * Called when a letter is issued from one, when somebody discards one, and from
+ * both privacy paths — a draft is about a person, so it goes when they do. The
+ * issued-letter log is untouched by all three, deliberately.
+ *
+ * @param int $volunteer_id Volunteer post ID.
+ * @return int How many went.
+ */
+function gwc_vt_delete_letter_drafts( int $volunteer_id ): int {
+	$gone = 0;
+
+	foreach ( gwc_vt_letter_drafts( $volunteer_id ) as $draft ) {
+		if ( wp_delete_post( (int) $draft['id'], true ) ) {
+			++$gone;
+		}
+	}
+
+	return $gone;
+}
+
+/**
+ * Throw one draft away.
+ *
+ * @param int $draft_id Draft post ID.
+ * @return bool
+ */
+function gwc_vt_discard_letter_draft( int $draft_id ): bool {
+	if ( GWC_VT_DRAFT_TYPE !== get_post_type( $draft_id ) ) {
+		return false;
+	}
+
+	return (bool) wp_delete_post( $draft_id, true );
+}
+
+/**
+ * Retire the draft a letter was just issued from.
+ *
+ * Separate from discarding only in what it means: this one is the draft having
+ * done its job, and it is called from the two handlers that write the log. The
+ * guard is why it can be called with 0 — most letters are issued from no draft
+ * at all, and the caller should not have to know that.
+ *
+ * @param int $draft_id Draft post ID, or 0.
+ * @return bool
+ */
+function gwc_vt_finish_letter_draft( int $draft_id ): bool {
+	return $draft_id > 0 && gwc_vt_discard_letter_draft( $draft_id );
+}
+
+/**
+ * Drafts left behind by a volunteer deleted from the post list.
+ *
+ * The same sweep gwc_vt_orphan_credential_record_ids() exists for, and for the
+ * same reason: WordPress does not cascade a delete to children, so the one
+ * route that fires none of this plugin's own hooks — a staff member deleting
+ * the volunteer from the list table — leaves these attached to nothing.
+ *
+ * @param int $limit How many to collect at a time.
+ * @return int[]
+ */
+function gwc_vt_orphan_letter_draft_ids( int $limit = 100 ): array {
+	$ids = get_posts(
+		array(
+			'post_type'      => GWC_VT_DRAFT_TYPE,
+			'post_status'    => array( 'publish' ),
+			'posts_per_page' => $limit,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		)
+	);
+
+	$orphans = array();
+
+	foreach ( (array) $ids as $id ) {
+		$parent = (int) wp_get_post_parent_id( (int) $id );
+
+		if ( $parent < 1 || GWC_VT_VOLUNTEER_TYPE !== get_post_type( $parent ) ) {
+			$orphans[] = (int) $id;
+		}
+	}
+
+	return $orphans;
+}
+
+/**
+ * How a period reads, in one place.
+ *
+ * Every screen that shows a draft, and the draft's own stored title, come
+ * through here — so the unbounded case is worded identically wherever somebody
+ * meets it, and a change to that wording is one edit.
+ *
+ * gwc_vt_display_date() rather than gwc_vt_local_date(): a period is calendar
+ * dates, which were never instants, and putting a plain Y-m-d through the
+ * timezone conversion shifts it across a day boundary on every site west of
+ * UTC. inc/verify.php has the long version beside the two functions.
+ *
+ * @param string $from Y-m-d or ''.
+ * @param string $to   Y-m-d or ''.
+ * @return string
+ */
+function gwc_vt_letter_period_words( string $from, string $to ): string {
+	if ( '' === $from && '' === $to ) {
+		/* Not "their whole time volunteering". A letter with no dates on it
+		 * covers what was recorded between their first shift and the day it goes
+		 * out — which is not all of their time unless they never come back, and
+		 * a draft has not been issued yet so it cannot even name the end. What it
+		 * can say truthfully is where the end will come from. */
+		return __( 'Everything on record, up to the day it is issued', 'groundwork-common-volunteer-tracker' );
+	}
+
+	if ( '' === $to ) {
+		return sprintf(
+			/* translators: %s: a date. */
+			__( 'From %s onwards', 'groundwork-common-volunteer-tracker' ),
+			gwc_vt_display_date( $from )
+		);
+	}
+
+	if ( '' === $from ) {
+		return sprintf(
+			/* translators: %s: a date. */
+			__( 'Everything up to %s', 'groundwork-common-volunteer-tracker' ),
+			gwc_vt_display_date( $to )
+		);
+	}
+
+	return sprintf(
+		/* translators: 1: a date, 2: a later date. */
+		__( '%1$s to %2$s', 'groundwork-common-volunteer-tracker' ),
+		gwc_vt_display_date( $from ),
+		gwc_vt_display_date( $to )
+	);
+}

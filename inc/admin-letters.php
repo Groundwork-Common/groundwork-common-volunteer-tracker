@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'gwc_vt_register_letters_menu', 11 );
-add_action( 'admin_post_gwc_vt_letter_draft', 'gwc_vt_handle_letter_draft' );
+add_action( 'admin_post_gwc_vt_letter_preview', 'gwc_vt_handle_letter_preview' );
 add_action( 'admin_post_gwc_vt_letter_print', 'gwc_vt_handle_letter_print' );
 add_action( 'admin_post_gwc_vt_letter_send', 'gwc_vt_handle_letter_send' );
 
@@ -442,7 +442,7 @@ function gwc_vt_render_produce_letter_screen(): void {
 				</div>
 
 				<p class="description">
-					<?php esc_html_e( 'Leave both dates empty to cover their whole time volunteering.', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php esc_html_e( 'Leave both dates empty for everything on record, up to the day the letter is issued.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 
 				<?php gwc_vt_render_letter_readiness( $volunteer_id, $from, $to ); ?>
@@ -640,7 +640,7 @@ function gwc_vt_render_letter_preview( $letter, int $volunteer_id, string $from,
 			class="button"
 			target="_blank"
 			rel="noopener noreferrer"
-			href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_draft', $volunteer_id, $from, $to ) ); ?>"
+			href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $from, $to ) ); ?>"
 		>
 			<?php esc_html_e( 'Preview the letter', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
@@ -826,19 +826,28 @@ function gwc_vt_render_reissue_banner( array $record ): void {
  * @param int    $volunteer_id Volunteer post ID.
  * @param string $from         Y-m-d or ''.
  * @param string $to           Y-m-d or ''.
+ * @param int    $draft_id     The draft this is being issued from, or 0.
  * @return string
  */
-function gwc_vt_letter_action_url( string $action, int $volunteer_id, string $from, string $to ): string {
+function gwc_vt_letter_action_url( string $action, int $volunteer_id, string $from, string $to, int $draft_id = 0 ): string {
+	$args = array(
+		'action'    => $action,
+		'volunteer' => $volunteer_id,
+		'from'      => $from,
+		'to'        => $to,
+	);
+
+	/* Which draft this is being issued from, when it is being issued from one.
+	 * The handler removes it after logging: the log record holds the volunteer,
+	 * the period, the minutes and the reference, so keeping the draft as well
+	 * would be two rows describing one letter and a screen having to decide
+	 * which of them is true the day they disagree. */
+	if ( $draft_id > 0 ) {
+		$args['draft'] = $draft_id;
+	}
+
 	return wp_nonce_url(
-		add_query_arg(
-			array(
-				'action'    => $action,
-				'volunteer' => $volunteer_id,
-				'from'      => $from,
-				'to'        => $to,
-			),
-			admin_url( 'admin-post.php' )
-		),
+		add_query_arg( $args, admin_url( 'admin-post.php' ) ),
 		$action . '_' . $volunteer_id
 	);
 }
@@ -871,6 +880,10 @@ function gwc_vt_letter_request(): array {
 	$from = isset( $_GET['from'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
 	$to   = isset( $_GET['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
+	/* Covered by the nonce above with everything else in this request: which
+	 * draft, if any, this letter is being issued from. */
+	$draft_id = isset( $_GET['draft'] ) ? absint( wp_unslash( $_GET['draft'] ) ) : 0;
+
 	$letter = gwc_vt_build_letter(
 		$volunteer_id,
 		array(
@@ -892,6 +905,7 @@ function gwc_vt_letter_request(): array {
 		'volunteer_id' => $volunteer_id,
 		'from'         => $from,
 		'to'           => $to,
+		'draft'        => $draft_id,
 	);
 }
 
@@ -995,7 +1009,7 @@ function gwc_vt_render_letterhead_warning(): void {
  * the shift table, the disclaimer, the signature block — before the act of
  * looking becomes an issued letter.
  */
-function gwc_vt_handle_letter_draft(): void {
+function gwc_vt_handle_letter_preview(): void {
 	$request = gwc_vt_letter_request();
 
 	gwc_vt_private_document_headers();
@@ -1012,6 +1026,7 @@ function gwc_vt_handle_letter_print(): void {
 	$letter  = $request['letter'];
 
 	gwc_vt_log_letter( $letter, 'print' );
+	gwc_vt_finish_letter_draft( (int) $request['draft'] );
 
 	/* This is the response in this plugin with the most personal data in it.
 	 * Nothing about it should be cached, stored by an intermediary, or indexed.
@@ -1044,6 +1059,13 @@ function gwc_vt_handle_letter_send(): void {
 	);
 
 	gwc_vt_log_letter( $letter, 'email', $recipient, $sent );
+
+	/* Only when it went. A send that failed leaves the draft where it is, so the
+	 * intention survives the mail server being down — which is the whole reason
+	 * a draft exists rather than a URL somebody has to remember. */
+	if ( $sent ) {
+		gwc_vt_finish_letter_draft( (int) $request['draft'] );
+	}
 
 	gwc_vt_letters_redirect( $sent ? 'sent' : 'send-failed', $request );
 }

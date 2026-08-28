@@ -653,7 +653,7 @@ function gwc_vt_add_produce_help( $screen ): void {
 		'gwc-vt-help-producing',
 		__( 'Producing a letter', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'Choose a volunteer and, if you need one, a date range. Leaving both dates empty covers their whole time volunteering.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Choose a volunteer and, if you need one, a date range. Leaving both dates empty covers everything on record, from their first shift to the day the letter is issued — the letter names both of those dates rather than claiming to cover all of their time.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Printing opens the letter in a new tab; use your browser’s print dialog and choose “Save as PDF” if you need a file. Both printing and emailing are recorded in the log — a printed letter has left the building just as much as an emailed one.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The letter is built fresh from your records every time it is produced. It is never a stored copy, so it always states what you currently have on file.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The line above Preview says what the letter will state and whether anything of theirs is still waiting to be verified. Unverified hours are never on a letter, so a total that is about to change is worth knowing before you send one.', 'groundwork-common-volunteer-tracker' ),

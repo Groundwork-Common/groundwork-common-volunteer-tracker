@@ -279,6 +279,18 @@ if ( ! function_exists( 'gwc_vt_register_letter_type' ) ) {
 	require GWC_VT_DIR . 'inc/letter-cpt.php';
 }
 
+/* The letter somebody means to send, before anybody has sent it. Two files for
+ * the same reason the credential feature has two: the type and its reasoning
+ * are one concern, the reading and writing another. After letter-cpt.php
+ * because a draft is defined against the log — it holds what the log does not,
+ * and goes when the log's own record is written. */
+if ( ! function_exists( 'gwc_vt_register_letter_draft_type' ) ) {
+	require GWC_VT_DIR . 'inc/letter-draft-cpt.php';
+}
+if ( ! function_exists( 'gwc_vt_letter_drafts' ) ) {
+	require GWC_VT_DIR . 'inc/letter-drafts.php';
+}
+
 /* The letter. letter.php assembles the model and mints the reference,
  * render.php turns one into a document, emails.php sends it. None of them
  * knows about the admin screen that calls them. */
@@ -363,6 +375,12 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 
 	// A volunteer's own history: their shifts, and the letters issued for them.
 	require GWC_VT_DIR . 'inc/admin-volunteer.php';
+
+	/* And the letters on that record: the drafts somebody has started, the ones
+	 * that have gone out, and the acts that move a row from the first list to the
+	 * second. Split from admin-volunteer.php because it is a feature rather than a
+	 * panel — two handlers, a notice and a form of its own. */
+	require GWC_VT_DIR . 'inc/admin-volunteer-letters.php';
 
 	// Turning a public submission into a shift on somebody's record.
 	require GWC_VT_DIR . 'inc/admin-triage.php';
