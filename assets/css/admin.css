@@ -930,16 +930,22 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	opacity: 1;
 }
 
-/* ─── The dashboard ─────────────────────────────────────────────────────────
-   Information on the left, action on the right. The fortnight and the year are
-   what is true; the rail beside them is what somebody might do about it. The
-   split is 1.85fr to 1fr because the left column carries a seven-column week
-   strip and the right carries a list of short lines.
+/* ─── Two columns, a heading, a card ────────────────────────────────────────
+   Information on the left, action on the right. On the dashboard the fortnight
+   and the year are what is true and the rail beside them is what somebody might
+   do about it; on the Letters screen it is the log and the reference checker.
+   The split is 1.85fr to 1fr because the left column carries a table and the
+   right carries short lines.
+
+   These four — the split, the section, its heading and the card — were written
+   for the dashboard and named for it, and the Letters screen then wanted the
+   same shape. Renamed rather than copied: a second set of rules drawing the
+   same card is a second set of rules to drift.
 
    No colors of its own — everything below reuses the badge and schedule
-   palette already established above, so the dashboard reads as the same
-   product rather than a visitor. */
-.gwcvt-dash__split {
+   palette already established above, so a screen built from these reads as the
+   same product rather than a visitor. */
+.gwcvt-split {
 	display: grid;
 	grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
 	gap: 24px;
@@ -947,39 +953,38 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 }
 
 /* One column below the width core itself uses to switch wp-admin into its
-   touch layout. The rail goes UNDER the information rather than above it: on a
-   narrow screen the week is still the thing somebody came to read. */
+   touch layout. The rail goes UNDER the main column rather than above it: on a
+   narrow screen the thing somebody came to read is still the thing they came to
+   read. */
 @media ( max-width: 960px ) {
-	.gwcvt-dash__split {
+	.gwcvt-split {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
-.gwcvt-dash__main,
-.gwcvt-dash__rail {
+.gwcvt-split__main,
+.gwcvt-split__rail {
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
 	min-width: 0;
 }
 
-/* The reference checker is a .gwcvt-box, which was written for the Letters
-   screen's wider sidebar. Two things it brings with it do not fit a rail:
+/* Two things a .gwcvt-box brings with it do not fit a rail.
 
    The input carries core's .regular-text, a fixed 25em. In a column narrower
    than that it runs off the right-hand edge of the panel — seen in the browser,
    not guessed. Percentage width instead, with box-sizing so the border stays
    inside the panel.
 
-   And its <h2> is the Letters screen's box heading, 14px and sentence case,
-   beside three section headings that are 11px uppercase. Restyled to match its
-   neighbours rather than restyled at source, because on the Letters screen it
-   is still a box heading among box headings. */
-.gwcvt-dash__rail .gwcvt-box {
+   And its <h2> is a box heading, 14px and sentence case, beside section
+   headings that are 11px uppercase. Restyled here rather than at source, so
+   that a box put in a rail matches its neighbours wherever the rail is. */
+.gwcvt-split__rail .gwcvt-box {
 	padding: 13px 18px;
 }
 
-.gwcvt-dash__rail .gwcvt-box h2 {
+.gwcvt-split__rail .gwcvt-box h2 {
 	margin: 0 0 8px;
 	font-size: 11px;
 	font-weight: 700;
@@ -988,7 +993,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	color: #646970;
 }
 
-.gwcvt-dash__rail .gwcvt-box input[type="text"] {
+.gwcvt-split__rail .gwcvt-box input[type="text"] {
 	width: 100%;
 	max-width: 100%;
 	box-sizing: border-box;
@@ -996,11 +1001,11 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 
 /* Core's inline notices carry a 5px 15px margin meant for the top of a page.
    Inside a panel that is a notice hanging off both edges. */
-.gwcvt-dash__rail .gwcvt-box .notice {
+.gwcvt-split__rail .gwcvt-box .notice {
 	margin: 10px 0 0;
 }
 
-.gwcvt-dash__head {
+.gwcvt-section__head {
 	display: flex;
 	align-items: baseline;
 	justify-content: space-between;
@@ -1008,7 +1013,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	margin-bottom: 8px;
 }
 
-.gwcvt-dash__head h2 {
+.gwcvt-section__head h2 {
 	margin: 0;
 	padding: 0;
 	font-size: 11px;
@@ -1018,12 +1023,12 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	color: #646970;
 }
 
-.gwcvt-dash__aside {
+.gwcvt-section__aside {
 	font-size: 12px;
 	color: #646970;
 }
 
-.gwcvt-dash__panel {
+.gwcvt-card {
 	background: #fff;
 	color: #3c434a;
 	border: 1px solid #c3c4c7;
@@ -2026,12 +2031,25 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	}
 }
 
-/* ─── Letter records, and producing one ─────────────────────────────────────
-   Two screens now rather than one with three jobs on it. The log keeps the menu
-   page; producing a letter starts from the volunteer it is about. */
-.gwcvt-letters__log {
-	max-width: 46em;
-	margin-top: 16px;
+/* ─── Letter records ────────────────────────────────────────────────────────
+   The log keeps the menu page; writing a letter starts from the volunteer it is
+   about. It fills its column — the 46em cap it used to carry was there when it
+   was the only thing on the screen, and beside a rail it left a band of empty
+   page between the two.
+
+   A heading over a flush card, which is what a panel looks like on a menu
+   screen here. It was a .gwcvt-box: a padded card with its heading inside it
+   and a bordered table inside that, so the table drew a second frame twenty
+   pixels in from the first. The same fault the record panels had, fixed the
+   same way — the card is flush and its contents pad themselves. */
+.gwcvt-letters__log .gwcvt-card > table {
+	margin: 0;
+	border: 0;
+}
+
+.gwcvt-letters__log .gwcvt-card > p {
+	margin: 0;
+	padding: 16px 18px;
 }
 
 .gwcvt-letters__crumbs {

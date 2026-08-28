@@ -35,60 +35,39 @@ function gwc_vt_register_letters_menu(): void {
 	 * asked and its answer was the thing that went wrong. */
 }
 
-/* ── The two ways out of a screen you cannot do anything on ──────────────────
- * This page is a log. Everything it lists has already happened, and the two
- * things somebody arrives wanting — produce a letter, check a reference
- * somebody has read down the phone — both live elsewhere. That was said in
- * prose and left as prose, which made the screen a cul-de-sac: it told you
+/* ── The way out of a screen you cannot do anything on ───────────────────────
+ * This page is a log. Everything it lists has already happened, and the thing
+ * somebody arrives wanting — a letter — is made somewhere else. That was said
+ * in prose and left as prose, which made the screen a cul-de-sac: it told you
  * where to go and then made you find it.
  *
- * They are links rather than buttons on purpose. A page-title action here would
- * read as the primary thing to do on a screen whose primary thing is reading,
- * and there is a sharper reason than tidiness for the first one:
- * there is no longer a screen to send anybody to. Letters are made in a box on
- * the volunteer's own record, so the link goes to the volunteer LIST — you pick
- * the person, then the letter, which is the order the whole feature is built
- * around, and was the order even when a screen existed to do it the other way.
+ * There were two links here. The second sent somebody to the dashboard to check
+ * a reference, and the checker is now in this screen's own rail, so it pointed
+ * at another page for a box six inches to the right.
+ *
+ * A link rather than a button, on purpose: a page-title action would read as
+ * the primary thing to do on a screen whose primary thing is reading. And it
+ * goes to the volunteer LIST rather than to a form — you pick the person, then
+ * the letter, which is the order the whole feature is built around.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
  * Where to go from here, since it is not from here.
  *
- * Each is offered only to somebody who can actually open it, the same rule the
+ * Offered only to somebody who can actually open it, the same rule the
  * dashboard's quick actions follow: a link that lands on a permission notice is
  * worse than no link, because it reads as a thing you are supposed to be able
  * to do.
  */
 function gwc_vt_letters_next_steps(): void {
-	$links = array();
-
-	if ( gwc_vt_can_see_records() ) {
-		$links[] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ) ) . '">'
-			. esc_html__( 'Produce one from a volunteer’s record', 'groundwork-common-volunteer-tracker' )
-			. '</a>';
-	}
-
-	/* The reference checker is gated exactly as this screen is, so the only
-	 * question left is whether they can open the dashboard it sits on.
-	 *
-	 * #gwcvt-reference is the checker's own input, which
-	 * gwc_vt_render_reference_checker() already labels by that id — so the link
-	 * lands on the box rather than at the top of the dashboard, and it lands
-	 * there without a second id being invented for the same thing. Two elements
-	 * carrying it would break the <label for> as well as the anchor. */
-	if ( current_user_can( gwc_vt_records_cap() ) ) {
-		$links[] = '<a href="' . esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE . '&page=' . GWC_VT_DASHBOARD_PAGE ) ) . '#gwcvt-reference">'
-			. esc_html__( 'Check a reference somebody has phoned in', 'groundwork-common-volunteer-tracker' )
-			. '</a>';
-	}
-
-	if ( ! $links ) {
+	if ( ! gwc_vt_can_see_records() ) {
 		return;
 	}
 
 	printf(
-		'<p class="description gwcvt-letters__next">%s</p>',
-		wp_kses( implode( ' &middot; ', $links ), array( 'a' => array( 'href' => array() ) ) )
+		'<p class="description gwcvt-letters__next"><a href="%s">%s</a></p>',
+		esc_url( admin_url( 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ) ),
+		esc_html__( 'Draft one from a volunteer’s record', 'groundwork-common-volunteer-tracker' )
 	);
 }
 
@@ -190,8 +169,21 @@ function gwc_vt_render_letters_screen(): void {
 
 		<?php gwc_vt_letters_next_steps(); ?>
 
-		<div class="gwcvt-letters__log">
-			<?php gwc_vt_render_letter_log(); ?>
+		<?php
+		/* The same two columns the dashboard uses, from the same rules — the log
+		 * beside the thing somebody does while reading it. Checking a reference
+		 * is the one job that starts on this screen rather than on a volunteer,
+		 * and it was only on the dashboard, which is not where somebody looking
+		 * at the log is standing. */
+		?>
+		<div class="gwcvt-split">
+			<div class="gwcvt-split__main">
+				<?php gwc_vt_render_letter_log(); ?>
+			</div>
+
+			<div class="gwcvt-split__rail">
+				<?php gwc_vt_render_reference_checker( GWC_VT_LETTERS_PAGE ); ?>
+			</div>
 		</div>
 	</div>
 	<?php
@@ -573,7 +565,7 @@ function gwc_vt_render_reference_checker( string $page = GWC_VT_LETTERS_PAGE ): 
 		<h2><?php esc_html_e( 'Check a reference', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 		<p class="description">
-			<?php esc_html_e( 'Somebody has phoned about a letter. Type the reference code printed on it.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'The code printed on the letter.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
@@ -746,14 +738,20 @@ function gwc_vt_render_reference_comparison( array $result ): void {
 function gwc_vt_render_letter_log(): void {
 	$records = gwc_vt_recent_letters( 15 );
 	?>
-	<div class="gwcvt-box">
-		<h2><?php esc_html_e( 'Recently issued', 'groundwork-common-volunteer-tracker' ); ?></h2>
+	<section class="gwcvt-section gwcvt-letters__log">
+		<div class="gwcvt-section__head">
+			<h2><?php esc_html_e( 'Recently issued', 'groundwork-common-volunteer-tracker' ); ?></h2>
+		</div>
 
+		<div class="gwcvt-card">
 		<?php if ( ! $records ) : ?>
 			<p class="description"><?php esc_html_e( 'No letters have been issued yet.', 'groundwork-common-volunteer-tracker' ); ?></p>
 		<?php else : ?>
-			<?php gwc_vt_render_list_tablenav( count( $records ) ); ?>
-
+			<?php
+			/* No row count above it. The table is fifteen rows at most and every
+			 * one of them is on the screen, so a line saying how many is a line
+			 * the reader checks against something they can already see. */
+			?>
 			<table class="widefat striped gwcvt-log">
 				<thead>
 					<tr>
@@ -817,6 +815,7 @@ function gwc_vt_render_letter_log(): void {
 				</tbody>
 			</table>
 		<?php endif; ?>
-	</div>
+		</div>
+	</section>
 	<?php
 }
