@@ -691,45 +691,20 @@ function gwc_vt_render_volunteer_required_box( $post ): void {
 			<?php esc_html_e( 'For court-ordered or school-required service only. None of it ever reaches a letter.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
-	<?php if ( gwc_vt_has_requirement( $volunteer_id ) ) : ?>
-		<?php $progress = gwc_vt_requirement_progress( $volunteer_id ); ?>
-		<p class="gwcvt-summary gwcvt-progress<?php echo $progress['overdue'] ? ' gwcvt-progress--overdue' : ''; ?>">
-			<strong><?php echo esc_html( gwc_vt_requirement_label( $volunteer_id ) ); ?></strong>
-
-			<?php if ( ! $progress['met'] ) : ?>
-				—
-				<?php
-				printf(
-					/* translators: %s: a number of hours, already formatted. */
-					esc_html__( '%s to go', 'groundwork-common-volunteer-tracker' ),
-					esc_html( gwc_vt_format_hours( $progress['remaining'] ) )
-				);
-				?>
-
-				<?php
-				/* Named separately rather than counted in. Somebody four hours
-				 * short with six unverified is a ten-second problem, and one a
-				 * coordinator can only see if the two numbers stay apart. */
-				if ( $progress['pending'] > 0 ) :
-					?>
-					<span class="gwcvt-badge__detail">
-						<?php
-						printf(
-							/* translators: %s: a number of hours, already formatted. */
-							esc_html__( '%s more is logged but not verified yet, so it does not count toward this.', 'groundwork-common-volunteer-tracker' ),
-							esc_html( gwc_vt_format_hours( $progress['pending'] ) )
-						);
-						?>
-					</span>
-				<?php endif; ?>
-
-				<?php $due = gwc_vt_requirement_deadline_label( $volunteer_id ); ?>
-				<?php if ( '' !== $due ) : ?>
-					<span class="gwcvt-badge__detail"><?php echo esc_html( $due ); ?></span>
-				<?php endif; ?>
-			<?php endif; ?>
-		</p>
-	<?php endif; ?>
+	<?php
+	/* ── No progress line here ───────────────────────────────────────────────
+	 * There was one: "0 of 30 — 30 to go", the unverified hours that do not
+	 * count toward it, and the deadline. Three facts under a panel whose job is
+	 * to record what somebody has to do, on a screen that already carries their
+	 * hours in the panel above.
+	 *
+	 * It is not lost. The volunteer LIST prints the same label in its own
+	 * column, which is where somebody scans across people and where a deadline
+	 * is actually acted on, and the dashboard counts the overdue from the same
+	 * function. This was the third place saying it and the least useful of the
+	 * three: you are looking at one person, and you are here because you are
+	 * typing, not counting. */
+	?>
 	</div>
 	<?php
 }

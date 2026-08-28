@@ -930,20 +930,6 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	opacity: 1;
 }
 
-/* ─── What somebody has to complete ─────────────────────────────────────────
-   Only ever drawn for a volunteer who has a requirement recorded, which is a
-   small minority of them. Overdue is said in words as well as in color — the
-   same rule as the verification badges — because "you are late" is not a thing
-   to communicate with a tint alone. */
-.gwcvt-progress--overdue {
-	border-left: 4px solid #d63638;
-	padding-left: 12px;
-}
-
-.gwcvt-required input {
-	max-width: 8em;
-}
-
 /* ─── The dashboard ─────────────────────────────────────────────────────────
    Information on the left, action on the right. The fortnight and the year are
    what is true; the rail beside them is what somebody might do about it. The
@@ -2456,8 +2442,13 @@ a.gwcvt-letters-box__discard:focus {
 	background: #f6f7f7;
 }
 
+/* Sits where "Log hours" sits on the panel above, and looks the same: a link
+   under the list, ruled off from it. Two panels on one screen doing the same
+   kind of thing should not look like two different kinds of thing. */
 .gwcvt-letters-box__open {
 	margin: 0;
+	padding: 10px 12px;
+	border-top: 1px solid #dcdcde;
 }
 
 /* Two choices stacked rather than side by side: the second grows a pair of date
@@ -2689,9 +2680,15 @@ a.gwcvt-letters-box__discard:focus {
 
 /* The letters box is a wrapper rather than a bare table, so its own padding
    has to come back for everything that is not the table. */
-.gwcvt-letters-box > :not(table) {
+.gwcvt-letters-box > :not(table):not(.gwcvt-letters-box__adder) {
 	margin-left: 12px;
 	margin-right: 12px;
+}
+
+/* The adder carries its own edges: the folded link is ruled off flush with the
+   table, and the panel it opens is inset. */
+.gwcvt-letters-box__adder > .gwcvt-letters-box__panel {
+	margin: 12px;
 }
 
 .gwcvt-letters-box > .notice {
