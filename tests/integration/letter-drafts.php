@@ -272,6 +272,50 @@ gwc_vt_ld_check(
 	gwc_vt_letter_period_words( '', '' )
 );
 
+/* ── And it names dates rather than describing them ──────────────────────────
+ * "Everything on record, up to the day it is issued" is true and says nothing
+ * a reader can check against the letter. The document has always named both
+ * ends; the box now names the ones it knows. */
+gwc_vt_ld_check(
+	'a draft names the date it starts from',
+	false !== strpos( gwc_vt_letter_period_words( '', '', '2026-02-14' ), gwc_vt_display_date( '2026-02-14' ) )
+		&& false !== stripos( gwc_vt_letter_period_words( '', '', '2026-02-14' ), 'issued' ),
+	gwc_vt_letter_period_words( '', '', '2026-02-14' )
+);
+
+/* The end of a draft is the day somebody issues it, and nobody has. Naming
+ * today would be a date that is wrong tomorrow. */
+gwc_vt_ld_check(
+	'and does not invent the date it ends',
+	false === strpos( gwc_vt_letter_period_words( '', '', '2026-02-14' ), gwc_vt_display_date( gmdate( 'Y-m-d' ) ) )
+		|| '2026-02-14' === gmdate( 'Y-m-d' ),
+	gwc_vt_letter_period_words( '', '', '2026-02-14' )
+);
+
+gwc_vt_ld_check(
+	'an issued letter names both ends',
+	gwc_vt_display_date( '2026-02-14' ) . ' to ' . gwc_vt_display_date( '2026-08-28' )
+		=== gwc_vt_letter_period_words( '', '', '2026-02-14', '2026-08-28' ),
+	gwc_vt_letter_period_words( '', '', '2026-02-14', '2026-08-28' )
+);
+
+/* A letter issued before the start date was recorded, on a volunteer whose
+ * entries have since gone. One real date still beats none. */
+gwc_vt_ld_check(
+	'and one with nothing left to name a start with still names its end',
+	false !== strpos( gwc_vt_letter_period_words( '', '', '', '2026-08-28' ), gwc_vt_display_date( '2026-08-28' ) ),
+	gwc_vt_letter_period_words( '', '', '', '2026-08-28' )
+);
+
+/* A period somebody asked for is not overridden by what it turned out to cover:
+ * a letter for March that lists nothing until the 9th still says March. */
+gwc_vt_ld_check(
+	'a period that was asked for wins over the dates it happens to cover',
+	gwc_vt_letter_period_words( '2026-03-01', '2026-03-31' )
+		=== gwc_vt_letter_period_words( '2026-03-01', '2026-03-31', '2026-03-09', '2026-03-30' ),
+	gwc_vt_letter_period_words( '2026-03-01', '2026-03-31', '2026-03-09', '2026-03-30' )
+);
+
 gwc_vt_ld_check(
 	'a bounded one names both dates',
 	false !== strpos( gwc_vt_letter_period_words( '2026-01-01', '2026-03-31' ), gwc_vt_display_date( '2026-01-01' ) )
@@ -443,6 +487,26 @@ gwc_vt_ld_check(
 	'issuing writes a record with no delivery on it',
 	$GLOBALS['gwc_vt_ld_rec_id'] > 0 && array() === $GLOBALS['gwc_vt_ld_rec']['deliveries']
 );
+
+gwc_vt_ld_check(
+	'the record remembers the date the letter starts from',
+	'2026-04-04' === $GLOBALS['gwc_vt_ld_rec']['covers_from'],
+	$GLOBALS['gwc_vt_ld_rec']['covers_from']
+);
+
+/* And a letter issued before that was stored reads it off the entries it
+ * listed, rather than being written back — an append-only log is not somewhere
+ * to quietly fill in fields that were not there at the time. */
+delete_post_meta( $GLOBALS['gwc_vt_ld_rec_id'], GWC_VT_LETTER_COVERS_FROM );
+
+gwc_vt_ld_check(
+	'and works it out when it was issued before that was recorded',
+	'2026-04-04' === gwc_vt_letter_covers_from( $GLOBALS['gwc_vt_ld_rec_id'] )
+		&& '' === (string) get_post_meta( $GLOBALS['gwc_vt_ld_rec_id'], GWC_VT_LETTER_COVERS_FROM, true ),
+	gwc_vt_letter_covers_from( $GLOBALS['gwc_vt_ld_rec_id'] )
+);
+
+update_post_meta( $GLOBALS['gwc_vt_ld_rec_id'], GWC_VT_LETTER_COVERS_FROM, '2026-04-04' );
 
 gwc_vt_ld_check(
 	'and the record remembers which entries the letter listed',
