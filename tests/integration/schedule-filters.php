@@ -727,12 +727,30 @@ gwc_vt_sfl_check(
 	false === strpos( $GLOBALS['gwc_vt_sfl_day'], 'Zzytest produce sorting' )
 );
 
-/* And says so. A screen that has quietly stopped showing everything is how
- * somebody concludes there is nothing there. */
+/* And says so with the control, not with a sentence about the control. The chip
+ * is filled, counts what it left, and clears itself — a notice repeating that
+ * would be a second way back to the same place, and one more thing to read
+ * before the screen begins. */
 gwc_vt_sfl_check(
-	'and says it has been narrowed, with the way back',
-	false !== strpos( $GLOBALS['gwc_vt_sfl_day'], 'only events are listed' )
-		&& false !== strpos( $GLOBALS['gwc_vt_sfl_day'], 'gwcvt-schedule__narrowed' )
+	'and says so with the chip rather than a notice',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_day'], 'gwcvt-chip-filter--on gwcvt-chip-filter--events' )
+		&& false === strpos( $GLOBALS['gwc_vt_sfl_day'], 'gwcvt-schedule__narrowed' )
+);
+
+/* The two narrowings that have no control keep theirs, which is the whole test
+ * for whether a message belongs: slots mode and a shortened window arrive from
+ * a dashboard link and are invisible on the screen they land on. */
+$GLOBALS['gwc_vt_sfl_slots'] = gwc_vt_sfl_screen(
+	array(
+		'gwc_vt_slots'  => '1',
+		'gwc_vt_within' => '7',
+	)
+);
+
+gwc_vt_sfl_check(
+	'a narrowing with no control on the screen still says it is on',
+	false !== strpos( $GLOBALS['gwc_vt_sfl_slots'], 'gwcvt-schedule__narrowed' )
+		&& false !== strpos( $GLOBALS['gwc_vt_sfl_slots'], 'Show the whole schedule' )
 );
 
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T11:53:16+00:00\n"
+"POT-Creation-Date: 2026-08-28T12:06:32+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -2763,10 +2763,6 @@ msgstr ""
 #: inc/admin-shift.php:1264
 #: inc/admin-shift.php:1279
 msgid "You do not have permission to manage the schedule."
-msgstr ""
-
-#: inc/admin-schedule.php:204
-msgid "only events are listed, not the shifts around them"
 msgstr ""
 
 #: inc/admin-schedule.php:208
