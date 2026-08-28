@@ -693,8 +693,8 @@ function gwc_vt_render_letter_mailer( string $on_file ): void {
 					<span class="description"><?php esc_html_e( 'A probation officer, a school.', 'groundwork-common-volunteer-tracker' ); ?></span>
 
 					<span class="gwcvt-letters-box__dates" data-gwcvt-mailer-other>
-						<label class="screen-reader-text" for="gwcvt-mail-address"><?php esc_html_e( 'Email address', 'groundwork-common-volunteer-tracker' ); ?></label>
-						<input type="email" form="gwcvt-email-letter" id="gwcvt-mail-address" name="recipient" class="regular-text" placeholder="name@example.org" />
+						<label for="gwcvt-mail-address"><?php esc_html_e( 'Email address', 'groundwork-common-volunteer-tracker' ); ?></label>
+						<input type="email" form="gwcvt-email-letter" id="gwcvt-mail-address" name="recipient" class="regular-text" />
 					</span>
 				</div>
 			</fieldset>

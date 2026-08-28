@@ -474,7 +474,7 @@ function gwc_vt_render_shift_panel( int $shift_id, string $back = '', string $mo
 				?>
 				<span class="gwcvt-drawer__standing">
 					<a href="<?php echo esc_url( $edit_url . '#gwcvt-roster' ); ?>">
-						<?php esc_html_e( 'Waiting list — promote?', 'groundwork-common-volunteer-tracker' ); ?>
+						<?php esc_html_e( 'Waiting list — promote them', 'groundwork-common-volunteer-tracker' ); ?>
 					</a>
 				</span>
 			</li>
@@ -500,7 +500,7 @@ function gwc_vt_render_shift_panel( int $shift_id, string $back = '', string $mo
 				<?php endif; ?>
 			<?php endif; ?>
 
-			<label class="screen-reader-text" for="gwcvt-drawer-name"><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></label>
+			<label for="gwcvt-drawer-name"><strong><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
 			<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
 				<input
 					type="text"
@@ -614,7 +614,7 @@ function gwc_vt_render_shift_roster( int $shift_id ): void {
 		<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
 		<?php wp_nonce_field( 'gwc_vt_roster_add_' . $shift_id ); ?>
 
-		<label class="screen-reader-text" for="gwcvt-roster-name"><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></label>
+		<label for="gwcvt-roster-name"><strong><?php esc_html_e( 'Volunteer', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
 		<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
 			<input
 				type="text"

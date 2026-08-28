@@ -796,7 +796,13 @@ function gwc_vt_render_volunteer_photo_field( int $volunteer_id ): void {
 	$url = gwc_vt_photo_url( $volunteer_id );
 	?>
 	<div class="gwcvt-field gwcvt-photo">
-		<strong><?php esc_html_e( 'Photo', 'groundwork-common-volunteer-tracker' ); ?></strong>
+		<?php
+		/* The visible text IS the label, rather than a <strong> beside a
+		 * screen-reader-only one saying something else. Two names for one field
+		 * is two names to keep in step, and the one everybody could see was the
+		 * one not attached to the input. */
+		?>
+		<label for="gwcvt-photo"><strong><?php esc_html_e( 'Photo', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
 
 		<?php if ( '' !== $url ) : ?>
 			<p class="gwcvt-photo__current">
@@ -816,9 +822,6 @@ function gwc_vt_render_volunteer_photo_field( int $volunteer_id ): void {
 			</label>
 		<?php endif; ?>
 
-		<label class="screen-reader-text" for="gwcvt-photo">
-			<?php esc_html_e( 'Choose a photo', 'groundwork-common-volunteer-tracker' ); ?>
-		</label>
 		<input type="file" id="gwcvt-photo" name="gwc_vt_photo" accept="image/jpeg,image/png,image/webp" />
 
 		<span class="description">

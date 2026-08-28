@@ -65,6 +65,20 @@ $GLOBALS['gwc_vt_sh_vol'] = (int) wp_insert_post(
 
 $GLOBALS['gwc_vt_sh_made'][] = $GLOBALS['gwc_vt_sh_vol'];
 
+/* One credential to be refused against. It is not a child of the volunteer, so
+ * the clean-up below cannot reach it by parent — it is remembered separately
+ * and deleted by id. */
+$GLOBALS['gwc_vt_sh_cred'] = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_CREDENTIAL_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzsheet Food Handler',
+	)
+);
+
+update_post_meta( $GLOBALS['gwc_vt_sh_cred'], GWC_VT_CREDENTIAL_MONTHS, 0 );
+update_post_meta( $GLOBALS['gwc_vt_sh_cred'], GWC_VT_CREDENTIAL_MODE, 'report' );
+
 echo "\n── 1. The frame is drawn in one place ───────────────────────────────\n";
 
 /* Every sheet on this screen, rendered together the way the footer renders
@@ -317,10 +331,25 @@ $GLOBALS['gwc_vt_sh_said'] = gwc_vt_sheet_messages();
 gwc_vt_sh_check(
 	'every result a handler can redirect with has something to say',
 	array() === array_diff(
-		array( 'hours-logged', 'hours-unreadable', 'hours-failed', 'credential-recorded', 'credential-failed', 'drafted', 'discarded', 'failed', 'issued', 'issue-failed', 'delivered-email', 'send-failed', 'no-email', 'bad-email', 'no-addressee', 'stale', 'gone' ),
+		array( 'hours-logged', 'hours-unreadable', 'hours-failed', 'credential-recorded', 'credential-failed', 'credential-bad-date', 'credential-gone', 'drafted', 'discarded', 'failed', 'issued', 'issue-failed', 'delivered-email', 'send-failed', 'no-email', 'bad-email', 'no-addressee', 'stale', 'gone' ),
 		array_keys( $GLOBALS['gwc_vt_sh_said'] )
 	),
 	implode( ',', array_keys( $GLOBALS['gwc_vt_sh_said'] ) )
+);
+
+/* And a refusal names its cause. gwc_vt_record_credential() says which of its
+ * three rules was broken; the sheet answered every one of them with "could not
+ * be recorded", which names nothing and offers no way out to somebody who has
+ * typed a date wrong. Asserted from the recorder's own error code, so the two
+ * halves of that mapping cannot drift apart silently. */
+$GLOBALS['gwc_vt_sh_refused'] = gwc_vt_record_credential( $GLOBALS['gwc_vt_sh_vol'], $GLOBALS['gwc_vt_sh_cred'], 'not a date' );
+
+gwc_vt_sh_check(
+	'a bad date is refused with a cause the sheet has words for',
+	is_wp_error( $GLOBALS['gwc_vt_sh_refused'] )
+		&& 'gwc_vt_bad_date' === $GLOBALS['gwc_vt_sh_refused']->get_error_code()
+		&& isset( $GLOBALS['gwc_vt_sh_said']['credential-bad-date'] ),
+	is_wp_error( $GLOBALS['gwc_vt_sh_refused'] ) ? (string) $GLOBALS['gwc_vt_sh_refused']->get_error_code() : 'not refused'
 );
 
 /* Translated tables are functions, never consts: a const is evaluated at
@@ -389,6 +418,10 @@ function gwc_vt_sh_cleanup(): void {
 		}
 
 		wp_delete_post( (int) $volunteer_id, true );
+	}
+
+	if ( ! empty( $GLOBALS['gwc_vt_sh_cred'] ) ) {
+		wp_delete_post( (int) $GLOBALS['gwc_vt_sh_cred'], true );
 	}
 }
 

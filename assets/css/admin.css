@@ -2050,6 +2050,13 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	margin-bottom: 0;
 }
 
+/* Label, hint, box — the hint sits between the two, so it is a block rather
+   than the inline span core's .description otherwise is. */
+#gwcvt-reference-hint {
+	display: block;
+	margin: 2px 0 6px;
+}
+
 /* A rail is narrower than core's .regular-text, which is a fixed 25em: left
    alone the input runs off the right-hand edge of the panel. Seen in the
    browser, not guessed — the same fix the dashboard's rail already makes for
