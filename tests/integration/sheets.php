@@ -199,7 +199,7 @@ foreach ( (array) glob( GWC_VT_DIR . 'inc/*.php' ) as $gwc_vt_sh_file ) {
 }
 
 $GLOBALS['gwc_vt_sh_boxes']  = array_values( array_unique( $GLOBALS['gwc_vt_sh_boxes'] ) );
-$GLOBALS['gwc_vt_sh_fields'] = array( 'gwc-vt-volunteer-standing', 'gwc-vt-volunteer-required' );
+$GLOBALS['gwc_vt_sh_fields'] = array( 'gwc-vt-volunteer-standing', 'gwc-vt-volunteer-required', 'gwc-vt-volunteer-retention' );
 
 gwc_vt_sh_check(
 	'and every panel there is one shape or the other, none unaccounted for',

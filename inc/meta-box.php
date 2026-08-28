@@ -71,6 +71,18 @@ function gwc_vt_add_meta_boxes(): void {
 		'normal',
 		'default'
 	);
+
+	/* On the right under Status, which is the column about what this record IS
+	 * rather than what is in it: active or inactive, and kept or not. 'low'
+	 * against Status's 'core' is what puts it underneath. */
+	add_meta_box(
+		'gwc-vt-volunteer-retention',
+		__( 'Retention', 'groundwork-common-volunteer-tracker' ),
+		'gwc_vt_render_volunteer_retention_box',
+		GWC_VT_VOLUNTEER_TYPE,
+		'side',
+		'low'
+	);
 }
 
 /**
@@ -558,41 +570,11 @@ function gwc_vt_render_volunteer_meta_box( $post ): void {
 		<?php gwc_vt_render_volunteer_photo_field( $volunteer_id ); ?>
 
 		<?php
-		/* The retention hold. Courts do sometimes require an organization to
-		 * keep a record longer than its own policy, and a sweep that could not
-		 * be overridden per person would make the retention setting unusable for
-		 * exactly the organizations this plugin is for. It also blocks a privacy
-		 * erasure request, which is why the reason is worth recording — the
-		 * administrator handling that request has to explain the refusal. */
+		/* The retention hold moved to a panel of its own, on the right under
+		 * Status — gwc_vt_render_volunteer_retention_box() below. It is not
+		 * contact information, and it was the one thing in this box that was
+		 * about the record rather than about reaching the person. */
 		?>
-		<div class="gwcvt-field gwcvt-hold">
-			<label>
-				<input type="checkbox" name="gwc_vt_hold" value="1" <?php checked( (bool) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD, true ) ); ?> />
-				<strong><?php esc_html_e( 'Keep this record regardless of the retention policy', 'groundwork-common-volunteer-tracker' ); ?></strong>
-			</label>
-			<?php
-			/* A visible label, not a screen-reader-only one. The placeholder used
-			 * to be the only cue for a sighted user, and a placeholder disappears
-			 * the moment somebody types — leaving a filled-in box with nothing
-			 * saying what it holds, on the field an administrator has to read
-			 * back when refusing an erasure request. */
-			?>
-			<label for="gwcvt-hold-reason">
-				<?php esc_html_e( 'Why it is held', 'groundwork-common-volunteer-tracker' ); ?>
-			</label>
-			<input
-				type="text"
-				id="gwcvt-hold-reason"
-				name="gwc_vt_hold_reason"
-				class="regular-text"
-				maxlength="200"
-				placeholder="<?php esc_attr_e( 'Why — e.g. court order, open case', 'groundwork-common-volunteer-tracker' ); ?>"
-				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD_REASON, true ) ); ?>"
-			/>
-			<span class="description">
-				<?php esc_html_e( 'Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request, so they can explain the refusal.', 'groundwork-common-volunteer-tracker' ); ?>
-			</span>
-		</div>
 
 
 	</div>
@@ -1017,4 +999,65 @@ function gwc_vt_sanitize_date( string $raw ): string {
 	}
 
 	return checkdate( (int) $m[2], (int) $m[3], (int) $m[1] ) ? $raw : '';
+}
+
+/**
+ * Whether this record survives the retention sweep.
+ *
+ * ── Why it is not in Contact details ─────────────────────────────────────────
+ * It was, and it is not contact information: everything else in that box is a
+ * way of reaching somebody, and this is a decision about the record itself. It
+ * also has consequences the other fields do not — it blocks a privacy erasure
+ * request, and the reason typed here is read back to whoever refuses one.
+ *
+ * On the right, under Status, because that is the column about what this record
+ * IS rather than what is in it: active or inactive, and kept or not.
+ *
+ * ── Why an override exists at all ────────────────────────────────────────────
+ * Courts do sometimes require an organization to keep a record longer than its
+ * own policy, and a sweep that could not be overridden per person would make
+ * the retention setting unusable for exactly the organizations this is for.
+ *
+ * @param WP_Post $post The volunteer.
+ */
+function gwc_vt_render_volunteer_retention_box( $post ): void {
+	if ( ! is_a( $post, 'WP_Post' ) || GWC_VT_VOLUNTEER_TYPE !== $post->post_type ) {
+		return;
+	}
+
+	$volunteer_id = (int) $post->ID;
+	?>
+	<div class="gwcvt-fields gwcvt-hold">
+		<p>
+			<label>
+				<input type="checkbox" name="gwc_vt_hold" value="1" <?php checked( (bool) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD, true ) ); ?> />
+				<strong><?php esc_html_e( 'Keep regardless of the retention policy', 'groundwork-common-volunteer-tracker' ); ?></strong>
+			</label>
+		</p>
+
+		<p>
+			<?php
+			/* A visible label, not a screen-reader-only one. The placeholder used
+			 * to be the only cue for a sighted user, and a placeholder disappears
+			 * the moment somebody types — leaving a filled-in box with nothing
+			 * saying what it holds, on the field an administrator has to read
+			 * back when refusing an erasure request. */
+			?>
+			<label for="gwcvt-hold-reason"><?php esc_html_e( 'Why it is held', 'groundwork-common-volunteer-tracker' ); ?></label><br />
+			<input
+				type="text"
+				id="gwcvt-hold-reason"
+				name="gwc_vt_hold_reason"
+				class="widefat"
+				maxlength="200"
+				placeholder="<?php esc_attr_e( 'e.g. court order, open case', 'groundwork-common-volunteer-tracker' ); ?>"
+				value="<?php echo esc_attr( (string) get_post_meta( $volunteer_id, GWC_VT_VOLUNTEER_HOLD_REASON, true ) ); ?>"
+			/>
+		</p>
+
+		<p class="description">
+			<?php esc_html_e( 'Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+	</div>
+	<?php
 }
