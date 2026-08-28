@@ -332,6 +332,67 @@ foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {
 
 gwc_vt_return_options();
 
+
+echo "\n── The retention panel appears where there is something to hold ─────\n";
+
+/* ── Why it is conditional ───────────────────────────────────────────────────
+ * The panel exempts a record from the retention sweep. On a site that purges
+ * nothing — which is every site until somebody sets a period, since
+ * retention_months defaults to 0 — it is a panel about a rule the organization
+ * does not have, on every volunteer.
+ *
+ * The exception is the one that matters: a record that is ALREADY held. Turning
+ * the policy off afterwards would otherwise leave a flag set with nothing on
+ * the screen to show it or clear it, which is the silent state this plugin has
+ * a rule against. */
+$GLOBALS['gwc_vt_pr_panel_vol'] = (int) wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzpanel Retention',
+	)
+);
+
+$GLOBALS['gwc_vt_pr_panel_was'] = (array) get_option( GWC_VT_SETTINGS_OPTION, array() );
+
+/**
+ * Set the retention period and ask whether the panel applies.
+ *
+ * @param int $months Months, or 0 for "purge nothing".
+ * @param int $who    Volunteer post ID.
+ * @return bool
+ */
+function gwc_vt_pr_panel_at( int $months, int $who ): bool {
+	$settings                     = (array) get_option( GWC_VT_SETTINGS_OPTION, array() );
+	$settings['retention_months'] = $months;
+
+	update_option( GWC_VT_SETTINGS_OPTION, $settings );
+	gwc_vt_settings_cache( null, true );
+
+	return gwc_vt_retention_panel_applies( $who );
+}
+
+gwc_vt_check(
+	'with a policy, every record carries it',
+	true === gwc_vt_pr_panel_at( 24, $GLOBALS['gwc_vt_pr_panel_vol'] )
+);
+
+gwc_vt_check(
+	'with none, no record carries it',
+	false === gwc_vt_pr_panel_at( 0, $GLOBALS['gwc_vt_pr_panel_vol'] )
+);
+
+update_post_meta( $GLOBALS['gwc_vt_pr_panel_vol'], GWC_VT_VOLUNTEER_HOLD, 1 );
+
+gwc_vt_check(
+	'but a record already held keeps it, so the flag can be seen and cleared',
+	true === gwc_vt_pr_panel_at( 0, $GLOBALS['gwc_vt_pr_panel_vol'] )
+);
+
+update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_pr_panel_was'] );
+gwc_vt_settings_cache( null, true );
+wp_delete_post( $GLOBALS['gwc_vt_pr_panel_vol'], true );
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? "ALL PASS\n" : $GLOBALS['gwc_vt_failures'] . " CHECK(S) FAILED\n" );
 
 if ( $GLOBALS['gwc_vt_failures'] > 0 ) {

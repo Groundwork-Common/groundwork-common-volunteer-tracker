@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'add_meta_boxes', 'gwc_vt_add_meta_boxes' );
+add_action( 'add_meta_boxes', 'gwc_vt_add_meta_boxes', 10, 2 );
 add_action( 'save_post_' . GWC_VT_ENTRY_TYPE, 'gwc_vt_save_entry', 10, 2 );
 add_action( 'save_post_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_save_volunteer', 10, 2 );
 add_action( 'admin_notices', 'gwc_vt_entry_saved_notice' );
@@ -40,8 +40,12 @@ add_action( 'post_edit_form_tag', 'gwc_vt_volunteer_form_enctype' );
  * The entry's title field is kept off the screen by the post type declaring no
  * 'title' support, not from here — see the note in inc/cpt.php for why
  * remove_meta_box( 'titlediv', … ) does not do it.
+ *
+ * @param string       $post_type The post type being edited.
+ * @param WP_Post|null $post      The post, which the retention panel needs in
+ *                               order to ask whether this one is held.
  */
-function gwc_vt_add_meta_boxes(): void {
+function gwc_vt_add_meta_boxes( $post_type = '', $post = null ): void {
 	add_meta_box(
 		'gwc-vt-entry',
 		__( 'Shift', 'groundwork-common-volunteer-tracker' ),
@@ -74,15 +78,43 @@ function gwc_vt_add_meta_boxes(): void {
 
 	/* On the right under Status, which is the column about what this record IS
 	 * rather than what is in it: active or inactive, and kept or not. 'low'
-	 * against Status's 'core' is what puts it underneath. */
-	add_meta_box(
-		'gwc-vt-volunteer-retention',
-		__( 'Retention', 'groundwork-common-volunteer-tracker' ),
-		'gwc_vt_render_volunteer_retention_box',
-		GWC_VT_VOLUNTEER_TYPE,
-		'side',
-		'low'
-	);
+	 * against Status's 'core' is what puts it underneath.
+	 *
+	 * Only where there is a policy to be held against. This panel exempts a
+	 * record from the retention sweep, and on a site that purges nothing — which
+	 * is every site until somebody sets a period, because retention_months
+	 * defaults to 0 — it is a panel about a rule the organization does not have,
+	 * on every volunteer.
+	 *
+	 * Except on a record that already carries a hold. Somebody who turned the
+	 * policy off after holding a person would otherwise have a flag set on that
+	 * record with nothing on the screen to show it or clear it, which is the
+	 * silent-state failure this plugin has a rule about. The panel says so when
+	 * it draws in that state. */
+	if ( gwc_vt_retention_panel_applies( $post instanceof WP_Post ? (int) $post->ID : 0 ) ) {
+		add_meta_box(
+			'gwc-vt-volunteer-retention',
+			__( 'Retention', 'groundwork-common-volunteer-tracker' ),
+			'gwc_vt_render_volunteer_retention_box',
+			GWC_VT_VOLUNTEER_TYPE,
+			'side',
+			'low'
+		);
+	}
+}
+
+/**
+ * Whether a volunteer's record should carry the retention panel.
+ *
+ * @param int $volunteer_id Volunteer post ID, or 0 on a record with no id yet.
+ * @return bool
+ */
+function gwc_vt_retention_panel_applies( int $volunteer_id ): bool {
+	if ( (int) gwc_vt_setting( 'retention_months' ) > 0 ) {
+		return true;
+	}
+
+	return $volunteer_id > 0 && gwc_vt_retention_held( $volunteer_id );
 }
 
 /**
@@ -1058,6 +1090,18 @@ function gwc_vt_render_volunteer_retention_box( $post ): void {
 		<p class="description">
 			<?php esc_html_e( 'Also blocks an erasure request from WordPress’s privacy tools. The reason is shown to whoever handles that request.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
+
+		<?php
+		/* The panel is only here at all because this record is held — the
+		 * organization purges nothing, so there is no sweep for the hold to
+		 * exempt it from. Said out loud, because a checkbox doing nothing is
+		 * worse than no checkbox. */
+		?>
+		<?php if ( (int) gwc_vt_setting( 'retention_months' ) < 1 ) : ?>
+			<p class="description">
+				<?php esc_html_e( 'Nothing is being purged at the moment, so this changes nothing until a retention period is set.', 'groundwork-common-volunteer-tracker' ); ?>
+			</p>
+		<?php endif; ?>
 	</div>
 	<?php
 }
