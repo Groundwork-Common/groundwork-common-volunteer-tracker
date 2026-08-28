@@ -516,11 +516,22 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 	?>
 	<div class="gwcvt-letters-box__adder">
 		<?php /* Hidden until the script unhides it — see the note above the box. */ ?>
+		<?php
+		/* A link, the same as "Log hours" on the panel above. This box is a list
+		 * of what has happened to somebody's letters; drafting another is what
+		 * you do after reading it, not the first thing on the screen. A primary
+		 * button here was a slab of blue at the foot of every volunteer's
+		 * record, competing with the panel heading on a screen where most of
+		 * the reading is elsewhere.
+		 *
+		 * Still a <button>: it opens a panel on this page rather than going
+		 * anywhere, and something that navigates nowhere is not a link however
+		 * it is painted. .button-link is wp-admin's own way of saying that. */
+		?>
 		<p class="gwcvt-letters-box__open" data-gwcvt-letters-open hidden>
-			<button type="button" class="button button-primary" data-gwcvt-letters-add>
+			<button type="button" class="button-link" data-gwcvt-letters-add>
 				<?php esc_html_e( 'Draft a verification letter', 'groundwork-common-volunteer-tracker' ); ?>
 			</button>
-			<span class="description"><?php esc_html_e( 'Nothing is sent until you issue it.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</p>
 
 		<div class="gwcvt-letters-box__panel" data-gwcvt-letters-panel>

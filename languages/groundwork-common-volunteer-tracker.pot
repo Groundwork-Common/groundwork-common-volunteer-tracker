@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T18:10:16+00:00\n"
+"POT-Creation-Date: 2026-08-28T18:17:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -1223,13 +1223,13 @@ msgstr ""
 #: inc/admin-event.php:589
 #: inc/admin-repeat.php:285
 #: inc/admin-shift.php:167
-#: inc/admin-volunteer-letters.php:548
+#: inc/admin-volunteer-letters.php:559
 msgid "From"
 msgstr ""
 
 #: inc/admin-event.php:507
 #: inc/admin-event.php:593
-#: inc/admin-volunteer-letters.php:550
+#: inc/admin-volunteer-letters.php:561
 msgid "To"
 msgstr ""
 
@@ -1429,7 +1429,7 @@ msgid "Report a problem"
 msgstr ""
 
 #: inc/admin-help.php:139
-#: inc/admin-volunteer-letters.php:723
+#: inc/admin-volunteer-letters.php:734
 msgid "The letter"
 msgstr ""
 
@@ -3220,7 +3220,7 @@ msgid "Volunteer Tracker Settings"
 msgstr ""
 
 #: inc/admin-screen.php:490
-#: inc/admin-volunteer-letters.php:709
+#: inc/admin-volunteer-letters.php:720
 msgid "Letter"
 msgstr ""
 
@@ -4076,9 +4076,9 @@ msgid "Save this shift"
 msgstr ""
 
 #: inc/admin-shift.php:416
-#: inc/admin-volunteer-letters.php:667
-#: inc/admin-volunteer-letters.php:719
-#: inc/admin-volunteer-letters.php:775
+#: inc/admin-volunteer-letters.php:678
+#: inc/admin-volunteer-letters.php:730
+#: inc/admin-volunteer-letters.php:786
 msgid "Close"
 msgstr ""
 
@@ -4749,118 +4749,114 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:521
+#: inc/admin-volunteer-letters.php:533
 msgid "Draft a verification letter"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:523
-msgid "Nothing is sent until you issue it."
-msgstr ""
-
-#: inc/admin-volunteer-letters.php:532
+#: inc/admin-volunteer-letters.php:543
 msgid "What the letter covers"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:537
+#: inc/admin-volunteer-letters.php:548
 msgid "Everything on record"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:539
+#: inc/admin-volunteer-letters.php:550
 msgid "Their first shift to today."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:545
+#: inc/admin-volunteer-letters.php:556
 msgid "A period"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:566
-#: inc/admin-volunteer-letters.php:677
+#: inc/admin-volunteer-letters.php:577
+#: inc/admin-volunteer-letters.php:688
 msgid "Addressed to"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:569
+#: inc/admin-volunteer-letters.php:580
 msgid "Officer J. Smith, Richmond County Probation"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:570
+#: inc/admin-volunteer-letters.php:581
 msgid "Only if it is going to somebody other than the volunteer."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:575
+#: inc/admin-volunteer-letters.php:586
 msgid "About"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:578
+#: inc/admin-volunteer-letters.php:589
 msgid "e.g. case 2026-CR-1234"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:579
+#: inc/admin-volunteer-letters.php:590
 msgid "Printed as a “Re:” line."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:584
+#: inc/admin-volunteer-letters.php:595
 msgid "Save the draft"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:585
-#: inc/admin-volunteer-letters.php:685
-#: inc/admin-volunteer-letters.php:814
+#: inc/admin-volunteer-letters.php:596
+#: inc/admin-volunteer-letters.php:696
+#: inc/admin-volunteer-letters.php:825
 msgid "Cancel"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:586
+#: inc/admin-volunteer-letters.php:597
 msgid "Figures are fixed when you save it."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:657
+#: inc/admin-volunteer-letters.php:668
 msgid "Post this letter"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:673
+#: inc/admin-volunteer-letters.php:684
 msgid "The letter opens ready to print, and who it went to is recorded."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:679
+#: inc/admin-volunteer-letters.php:690
 msgid "e.g. Jefferson County Probation"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:684
+#: inc/admin-volunteer-letters.php:695
 msgid "Record it and print"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:741
+#: inc/admin-volunteer-letters.php:752
 msgid "Reading a draft records nothing."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:765
+#: inc/admin-volunteer-letters.php:776
 msgid "Email this letter"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:781
+#: inc/admin-volunteer-letters.php:792
 msgid "Recorded against the letter, which keeps its reference."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:785
+#: inc/admin-volunteer-letters.php:796
 msgid "Where to send it"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:793
+#: inc/admin-volunteer-letters.php:804
 msgid "The address on this record."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:800
+#: inc/admin-volunteer-letters.php:811
 msgid "Another address"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:802
+#: inc/admin-volunteer-letters.php:813
 msgid "A probation officer, a school."
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:805
+#: inc/admin-volunteer-letters.php:816
 msgid "Email address"
 msgstr ""
 
-#: inc/admin-volunteer-letters.php:813
+#: inc/admin-volunteer-letters.php:824
 msgid "Send it"
 msgstr ""
 
@@ -6457,46 +6453,34 @@ msgstr ""
 msgid "For court-ordered or school-required service only. None of it ever reaches a letter."
 msgstr ""
 
-#. translators: %s: a number of hours, already formatted.
-#: inc/meta-box.php:704
-#, php-format
-msgid "%s to go"
-msgstr ""
-
-#. translators: %s: a number of hours, already formatted.
-#: inc/meta-box.php:719
-#, php-format
-msgid "%s more is logged but not verified yet, so it does not count toward this."
-msgstr ""
-
-#: inc/meta-box.php:781
+#: inc/meta-box.php:756
 msgid "Photo saved."
 msgstr ""
 
-#: inc/meta-box.php:782
+#: inc/meta-box.php:757
 msgid "Photo removed."
 msgstr ""
 
-#: inc/meta-box.php:810
+#: inc/meta-box.php:785
 msgid "Photo"
 msgstr ""
 
-#: inc/meta-box.php:826
+#: inc/meta-box.php:801
 msgid "Remove this photo when I save"
 msgstr ""
 
-#: inc/meta-box.php:831
+#: inc/meta-box.php:806
 #: inc/registration-form.php:169
 msgid "Choose a photo"
 msgstr ""
 
 #. translators: %s: a file size, such as "8 MB".
-#: inc/meta-box.php:839
+#: inc/meta-box.php:814
 #, php-format
 msgid "For telling two records apart at the desk. JPEG, PNG or WebP, up to %s."
 msgstr ""
 
-#: inc/meta-box.php:846
+#: inc/meta-box.php:821
 msgid "It is kept out of the Media Library, is never given a public address, and is never printed on a letter. Only somebody who can open this record can see it. Location data the camera recorded is discarded."
 msgstr ""
 
