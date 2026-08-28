@@ -285,6 +285,14 @@ function gwc_vt_render_produce_letter_screen(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$to = isset( $_GET['to'] ) ? gwc_vt_sanitize_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
 
+	/* What was typed into the picker, and whether this screen is answering the
+	 * form at all. The text field posts even when it is empty, so its presence
+	 * is what tells "asked for a preview" apart from "just arrived". */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$typed = isset( $_GET['volunteer_name'] ) ? sanitize_text_field( wp_unslash( $_GET['volunteer_name'] ) ) : '';
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$asked = isset( $_GET['volunteer_name'] );
+
 	/* An issued letter somebody has come back to look at. Read before the build
 	 * so its volunteer and period win over an empty query string — the link
 	 * carries all three, but a hand-edited URL that kept the reference and lost
@@ -368,11 +376,38 @@ function gwc_vt_render_produce_letter_screen(): void {
 							aria-autocomplete="list"
 							aria-controls="gwcvt-letter-volunteer-results"
 							placeholder="<?php esc_attr_e( 'Start typing a name…', 'groundwork-common-volunteer-tracker' ); ?>"
-							value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : '' ); ?>"
+							name="volunteer_name"
+							value="<?php echo esc_attr( $volunteer_id > 0 ? get_the_title( $volunteer_id ) : $typed ); ?>"
 						/>
 						<input type="hidden" name="volunteer" id="gwcvt-letter-volunteer-id" value="<?php echo esc_attr( (string) $volunteer_id ); ?>" />
 						<ul id="gwcvt-letter-volunteer-results" class="gwcvt-picker__results" role="listbox" hidden></ul>
 					</div>
+
+					<?php
+					/* Pressing the button with nothing chosen used to reload this
+					 * screen unchanged: no preview, no message, and the name
+					 * cleared out of the box — which is indistinguishable from a
+					 * button that does nothing, and is what somebody reported.
+					 *
+					 * Typing is deliberately not choosing. admin-picker.js clears
+					 * the ID on every keystroke, because a corrected name with the
+					 * old ID still attached would produce a letter about the wrong
+					 * person under the right name. So the screen has to say what
+					 * it is waiting for. */
+					if ( $asked && $volunteer_id < 1 ) :
+						?>
+						<div class="notice notice-warning inline">
+							<p>
+								<?php if ( '' !== $typed ) : ?>
+									<?php esc_html_e( 'Nobody is chosen yet. Select the name from the list under the box — a letter is about one volunteer’s record, and typing a name does not say which record.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php else : ?>
+									<?php esc_html_e( 'Choose a volunteer first: start typing a name and select it from the list.', 'groundwork-common-volunteer-tracker' ); ?>
+								<?php endif; ?>
+							</p>
+						</div>
+						<?php
+					endif;
+					?>
 				</div>
 
 				<div class="gwcvt-field-row">
