@@ -2336,7 +2336,7 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 }
 
 .gwcvt-standing__action {
-	margin: 0 0 .8em 24px;
+	margin: .8em 0 0;
 }
 
 .gwcvt-standing__facts {
@@ -2346,20 +2346,28 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	color: #50575e;
 }
 
+/* Label then value, both to the left, the way wp-admin's own sidebar panels
+   read. They used to be pushed apart with space-between and the value
+   right-aligned, which is fine for a column of numbers and wrong for the one
+   row that is a sentence: "since June 20, 2026 — 2 months" wrapped, and the
+   remainder sat alone against the right edge with nothing above it.
+
+   min-width rather than a fixed column, so the values line up where the labels
+   allow it and a long label pushes its own value along instead of wrapping. */
 .gwcvt-standing__facts div {
 	display: flex;
-	justify-content: space-between;
-	gap: 1em;
-	margin: 0 0 .3em;
+	gap: .6em;
+	margin: 0 0 .35em;
 }
 
 .gwcvt-standing__facts dt {
 	flex: 0 0 auto;
+	min-width: 9em;
+	color: #646970;
 }
 
 .gwcvt-standing__facts dd {
 	margin: 0;
-	text-align: right;
 	color: #1d2327;
 }
 
@@ -2740,4 +2748,18 @@ body.js .gwcvt-sheet--open {
 	flex: 1 1 auto;
 	padding: 0;
 	overflow: hidden;
+}
+
+/* ─── The Save panel's empty strip ──────────────────────────────────────────
+   Core's submit box always renders #minor-publishing, which holds the status,
+   visibility and schedule controls. A volunteer supports 'title' and nothing
+   else — see the supports array in inc/volunteer-cpt.php — so all three of its
+   children come out empty, leaving a six-pixel band between two borders with
+   nothing in it.
+
+   Hidden rather than emptied: it is core's markup, and the day this post type
+   supports something that belongs in there, deleting the rule is the whole
+   change. Scoped to this screen so no other post type is touched. */
+body.post-type-gwc_vt_volunteer #submitdiv #minor-publishing {
+	display: none;
 }
