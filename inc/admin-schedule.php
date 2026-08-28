@@ -426,7 +426,18 @@ function gwc_vt_render_schedule_list( string $missing = '' ): void {
 		<?php gwc_vt_render_schedule_narrowing( $slots, $within, $when, $base, $only ); ?>
 
 		<?php gwc_vt_render_schedule_nav( $base, $when, 'list', $only ); ?>
-		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when, 'list', count( $rows ), $events ); ?>
+		<?php
+		/* Where this list starts, for the calendar link. Only while narrowed:
+		 * an unnarrowed "Coming up" starts today, and today's month is where
+		 * somebody pressing Month means. On the past half the rows are newest
+		 * first, so the first one is still the one they are looking at. */
+		$opens_on = '';
+
+		if ( 'events' === $only && $rows ) {
+			$opens_on = substr( (string) ( $rows[0]['date'] ?? '' ), 0, 7 );
+		}
+		?>
+		<?php gwc_vt_render_schedule_filters( $base, $counts, $state, $term, $when, 'list', count( $rows ), $events, $opens_on ); ?>
 
 		<?php if ( '' !== $day ) : ?>
 			<p class="gwcvt-schedule__day">
@@ -660,11 +671,27 @@ function gwc_vt_render_schedule_month(): void {
 				<span class="screen-reader-text"><?php esc_html_e( 'The month after', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</a>
 
-			<?php if ( gwc_vt_schedule_month() !== gmdate( 'Y-m', (int) strtotime( $today . ' 00:00:00 UTC' ) ) ) : ?>
+			<?php
+			/* Named, not "this month". The link sits beside the name of the
+			 * month being looked at, so "this" had two candidates and the wrong
+			 * one was the nearer: somebody reading December's calendar took
+			 * "Back to this month" to mean December. */
+			$now = gmdate( 'Y-m', (int) strtotime( $today . ' 00:00:00 UTC' ) );
+
+			if ( gwc_vt_schedule_month() !== $now ) :
+				?>
 				<a class="gwcvt-month__today" href="<?php echo esc_url( $carrier ); ?>">
-					<?php esc_html_e( 'Back to this month', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php
+					printf(
+						/* translators: %s: a month and year, such as "August 2026". */
+						esc_html__( 'Back to %s', 'groundwork-common-volunteer-tracker' ),
+						esc_html( (string) wp_date( 'F Y', (int) strtotime( $today . ' 00:00:00 UTC' ), new DateTimeZone( 'UTC' ) ) )
+					);
+					?>
 				</a>
-			<?php endif; ?>
+				<?php
+			endif;
+			?>
 		</div>
 
 		<div class="gwcvt-month">
@@ -1991,8 +2018,10 @@ function gwc_vt_render_schedule_status_links( string $base, string $current ): v
  *                     for those events as a calendar, and used to get a calendar
  *                     of everything — the control that changes the drawing
  *                     silently changed the subject.
+ * @param string $month The month the calendar should open on, `Y-m`, or '' for
+ *                      whichever one today is in.
  */
-function gwc_vt_render_schedule_view_tabs( string $base, string $view, string $only = '' ): void {
+function gwc_vt_render_schedule_view_tabs( string $base, string $view, string $only = '', string $month = '' ): void {
 	$options = array(
 		'list'  => __( 'List', 'groundwork-common-volunteer-tracker' ),
 		'month' => __( 'Month', 'groundwork-common-volunteer-tracker' ),
@@ -2028,6 +2057,15 @@ function gwc_vt_render_schedule_view_tabs( string $base, string $view, string $o
 	if ( 'events' === $only ) {
 		$links['list']  = add_query_arg( 'gwc_vt_only', 'events', $links['list'] );
 		$links['month'] = add_query_arg( 'gwc_vt_only', 'events', $links['month'] );
+	}
+
+	/* Open the calendar where the list somebody is reading actually starts. A
+	 * narrowed list is usually months from today — four events in a year, the
+	 * nearest in December — and a Month that opens on this month answers with an
+	 * empty grid and no clue that the thing they were looking at is two screens
+	 * to the right. */
+	if ( '' !== $month ) {
+		$links['month'] = add_query_arg( 'gwc_vt_month', $month, $links['month'] );
 	}
 	?>
 	<span class="gwcvt-segmented gwcvt-schedule__views">
@@ -2149,8 +2187,9 @@ function gwc_vt_render_schedule_chips( array $counts, string $state, string $ter
  * @param string             $view   'list', 'month' or 'events'.
  * @param int                $count  How many rows are on the screen.
  * @param int                $events How many of them are events.
+ * @param string             $month  The month the calendar should open on, or ''.
  */
-function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when, string $view = 'list', int $count = 0, int $events = 0 ): void {
+function gwc_vt_render_schedule_filters( string $base, array $counts, string $state, string $term, string $when, string $view = 'list', int $count = 0, int $events = 0, string $month = '' ): void {
 	/* Every link keeps the half of the query it is not about: switching a chip
 	 * must not silently drop a search, and neither may throw you back to the
 	 * upcoming view from the past one. */
@@ -2219,8 +2258,8 @@ function gwc_vt_render_schedule_filters( string $base, array $counts, string $st
 		static function () use ( $counts, $state, $term, $carrier, $events ) {
 			gwc_vt_render_schedule_chips( $counts, $state, $term, $carrier, $events );
 		},
-		static function () use ( $base, $view, $only ) {
-			gwc_vt_render_schedule_view_tabs( $base, $view, $only );
+		static function () use ( $base, $view, $only, $month ) {
+			gwc_vt_render_schedule_view_tabs( $base, $view, $only, $month );
 		}
 	);
 }

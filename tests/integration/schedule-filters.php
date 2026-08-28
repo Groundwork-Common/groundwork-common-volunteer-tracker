@@ -649,6 +649,70 @@ foreach ( array( 'gwcvt-chip-filter', 'gwcvt-month__step' ) as $gwc_vt_sfl_kind 
 	);
 }
 
+/* ── Month, from a narrowed list, opens where that list starts ───────────────
+ * Four events in a year and the nearest in December: a Month link that opens on
+ * today's month answers with an empty grid, and nothing on it says the thing
+ * they were reading is two screens to the right.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_sfl_far'] = wp_insert_post(
+	array(
+		'post_type'   => GWC_VT_EVENT_TYPE,
+		'post_status' => 'publish',
+		'post_title'  => 'Zzytest winter appeal',
+	)
+);
+
+$GLOBALS['gwc_vt_sfl_made'][] = (int) $GLOBALS['gwc_vt_sfl_far'];
+
+$GLOBALS['gwc_vt_sfl_far_day'] = gmdate( 'Y-m-d', time() + ( 100 * DAY_IN_SECONDS ) );
+
+$GLOBALS['gwc_vt_sfl_far_slot'] = gwc_vt_sfl_shift(
+	$GLOBALS['gwc_vt_sfl_far_day'],
+	'Zzytest hamper packing',
+	'Zzytest north hall',
+	array(
+		GWC_VT_SHIFT_MIN => 4,
+		GWC_VT_SHIFT_MAX => 8,
+	)
+);
+
+wp_update_post(
+	array(
+		'ID'          => $GLOBALS['gwc_vt_sfl_far_slot'],
+		'post_parent' => (int) $GLOBALS['gwc_vt_sfl_far'],
+	)
+);
+
+gwc_vt_event_refresh_dates( (int) $GLOBALS['gwc_vt_sfl_far'] );
+
+/* Narrowed to events and searched down to the far one, so the first row IS the
+ * one whose month the link should open on. */
+$GLOBALS['gwc_vt_sfl_far_screen'] = gwc_vt_sfl_screen(
+	array(
+		'gwc_vt_only' => 'events',
+		's'           => 'winter appeal',
+	)
+);
+
+$GLOBALS['gwc_vt_sfl_far_month'] = substr( $GLOBALS['gwc_vt_sfl_far_day'], 0, 7 );
+
+gwc_vt_sfl_check(
+	'Month opens on the month the narrowed list starts in',
+	false !== strpos(
+		$GLOBALS['gwc_vt_sfl_far_screen'],
+		'gwc_vt_month=' . $GLOBALS['gwc_vt_sfl_far_month']
+	),
+	$GLOBALS['gwc_vt_sfl_far_month']
+);
+
+/* And an unnarrowed list does not carry one: "Coming up" starts today, which is
+ * the month somebody pressing Month means. */
+gwc_vt_sfl_check(
+	'and an unnarrowed list leaves the calendar on today',
+	false === strpos( gwc_vt_sfl_screen( array() ), 'gwc_vt_month=' )
+);
+
 /* A day clicked out of that calendar lands on the flat list, which reads the
  * same narrowing rather than answering with the shifts. */
 $GLOBALS['gwc_vt_sfl_day'] = gwc_vt_sfl_screen(

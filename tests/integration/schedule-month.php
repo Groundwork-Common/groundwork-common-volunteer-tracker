@@ -323,6 +323,52 @@ gwc_vt_sm_check(
 	in_array( $gwc_vt_sm_leading, $gwc_vt_sm_found, true )
 );
 
+/* ── The way back names the month it goes back to ────────────────────────────
+ * It said "Back to this month", sitting a few pixels from the name of the month
+ * being looked at — two candidates for "this", and the wrong one nearer. On
+ * December's calendar it read as a link back to December.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$gwc_vt_sm_admins = get_users( array( 'role' => 'administrator', 'number' => 1 ) );
+wp_set_current_user( $gwc_vt_sm_admins ? (int) $gwc_vt_sm_admins[0]->ID : 1 );
+
+$_GET['view']         = 'month';
+$_GET['gwc_vt_month'] = $GLOBALS['gwc_vt_sm_month'];
+
+ob_start();
+gwc_vt_render_schedule_screen();
+$GLOBALS['gwc_vt_sm_html'] = (string) ob_get_clean();
+
+unset( $_GET['view'], $_GET['gwc_vt_month'] );
+
+$GLOBALS['gwc_vt_sm_now'] = (string) wp_date(
+	'F Y',
+	(int) strtotime( gwc_vt_today() . ' 00:00:00 UTC' ),
+	new DateTimeZone( 'UTC' )
+);
+
+gwc_vt_sm_check(
+	'the way back names the month, rather than saying "this"',
+	false !== strpos( $GLOBALS['gwc_vt_sm_html'], 'Back to ' . $GLOBALS['gwc_vt_sm_now'] )
+		&& false === strpos( $GLOBALS['gwc_vt_sm_html'], 'Back to this month' ),
+	$GLOBALS['gwc_vt_sm_now']
+);
+
+/* And it is not offered at all on the month somebody is already in, where it
+ * would be a link to the page it is on. */
+$_GET['view'] = 'month';
+
+ob_start();
+gwc_vt_render_schedule_screen();
+$GLOBALS['gwc_vt_sm_today_html'] = (string) ob_get_clean();
+
+unset( $_GET['view'] );
+
+gwc_vt_sm_check(
+	'and is not offered on the month it would return to',
+	false === strpos( $GLOBALS['gwc_vt_sm_today_html'], 'gwcvt-month__today' )
+);
+
 echo "\n", ( 0 === $GLOBALS['gwc_vt_failures'] ? 'ALL PASS' : $GLOBALS['gwc_vt_failures'] . ' FAILED' ), "\n";
 
 /* Exit non-zero so a failure fails the job. Printing the count and returning 0
