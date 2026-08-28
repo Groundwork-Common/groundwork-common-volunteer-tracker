@@ -900,6 +900,134 @@ gwc_vt_ld_check(
 	gwc_vt_verify_reference( $GLOBALS['gwc_vt_ld_frozen']['reference'] )['status']
 );
 
+
+echo "\n── 16. A letter can be addressed to whoever asked for it ────────────\n";
+
+/* ── Why this exists ─────────────────────────────────────────────────────────
+ * Most letters are handed to the volunteer and need none of this. Where a court
+ * or a school asked to be sent one directly, an officer's name and a case
+ * number are how the paperwork gets filed at the other end — and a document
+ * that goes from the organization to the requester, never through the hands of
+ * the person it is about, is the strongest control in ordinary use.
+ *
+ * ── And why a case number is allowed on a letter when ordered hours are not ──
+ * The rule those would break is about ASSERTIONS. How many hours a court
+ * ordered, who ordered them and by when are facts about the court's own
+ * document, and an organization repeating them back is certifying somebody
+ * else's paperwork. "Re: 2026-CR-1234" asserts nothing about the person; it
+ * says which correspondence this is. Removing it would not change what the
+ * letter CLAIMS, only make the envelope harder to file. */
+$GLOBALS['gwc_vt_ld_addr'] = gwc_vt_ld_volunteer( 'Zzld Addressed' );
+gwc_vt_ld_entry( $GLOBALS['gwc_vt_ld_addr'], '2026-06-02', 150 );
+
+$GLOBALS['gwc_vt_ld_plainD'] = gwc_vt_letter_draft( gwc_vt_add_letter_draft( $GLOBALS['gwc_vt_ld_addr'] ) );
+
+/* Absent unless asked for. A "To:" block over a blank line is worse than none. */
+$GLOBALS['gwc_vt_ld_plainpage'] = gwc_vt_render_letter(
+	gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_addr'], gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ld_plainD'] ) ),
+	'draft'
+);
+
+gwc_vt_ld_check(
+	'a letter with nobody to address prints no address block at all',
+	false === strpos( $GLOBALS['gwc_vt_ld_plainpage'], 'gwcvt-addressed' )
+		&& false === strpos( $GLOBALS['gwc_vt_ld_plainpage'], 'Re:' )
+);
+
+$GLOBALS['gwc_vt_ld_toD'] = gwc_vt_letter_draft(
+	gwc_vt_add_letter_draft(
+		$GLOBALS['gwc_vt_ld_addr'],
+		'',
+		'',
+		"Officer J. Smith\nRichmond County Probation",
+		'case 2026-CR-1234'
+	)
+);
+
+/* A browser posts a textarea with CRLF and sanitize_textarea_field() leaves it
+ * that way. Folding on "\n" alone then left the \r behind, and the screen
+ * printed a line break followed by a comma. Normalized on the way in, so the
+ * database holds one form. */
+$GLOBALS['gwc_vt_ld_crlf'] = gwc_vt_letter_draft(
+	gwc_vt_add_letter_draft( $GLOBALS['gwc_vt_ld_addr'], '', '', "Officer J. Smith\r\nRichmond County Probation", '' )
+);
+
+gwc_vt_ld_check(
+	'an address is stored with one kind of line ending',
+	false === strpos( $GLOBALS['gwc_vt_ld_crlf']['addressee'], "\r" ),
+	wp_json_encode( $GLOBALS['gwc_vt_ld_crlf']['addressee'] )
+);
+
+gwc_vt_ld_check(
+	'and folds onto one line without leaving a stray break behind',
+	'Officer J. Smith, Richmond County Probation' === gwc_vt_one_line( $GLOBALS['gwc_vt_ld_crlf']['addressee'] )
+		&& 'Officer J. Smith, Richmond County Probation' === gwc_vt_one_line( "Officer J. Smith\r\nRichmond County Probation" ),
+	wp_json_encode( gwc_vt_one_line( $GLOBALS['gwc_vt_ld_crlf']['addressee'] ) )
+);
+
+gwc_vt_ld_check(
+	'a draft remembers who it is for and what it concerns',
+	"Officer J. Smith\nRichmond County Probation" === $GLOBALS['gwc_vt_ld_toD']['addressee']
+		&& 'case 2026-CR-1234' === $GLOBALS['gwc_vt_ld_toD']['matter'],
+	$GLOBALS['gwc_vt_ld_toD']['matter']
+);
+
+$GLOBALS['gwc_vt_ld_toL'] = gwc_vt_build_letter(
+	$GLOBALS['gwc_vt_ld_addr'],
+	gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ld_toD'] )
+);
+$GLOBALS['gwc_vt_ld_topage'] = gwc_vt_render_letter( $GLOBALS['gwc_vt_ld_toL'], 'draft' );
+
+gwc_vt_ld_check(
+	'and the letter prints both, the second as a Re: line',
+	false !== strpos( $GLOBALS['gwc_vt_ld_topage'], 'Officer J. Smith' )
+		&& false !== strpos( $GLOBALS['gwc_vt_ld_topage'], 'Richmond County Probation' )
+		&& false !== strpos( $GLOBALS['gwc_vt_ld_topage'], 'Re: case 2026-CR-1234' )
+);
+
+/* Outside the digest, deliberately. A letter sent to two officers about one
+ * matter states the same service and is the same document; making the addressee
+ * part of the code would produce two codes for one set of facts, and the code
+ * is a statement about the facts. */
+gwc_vt_ld_check(
+	'addressing does not change the reference',
+	gwc_vt_reference_digest( $GLOBALS['gwc_vt_ld_toL']->reference )
+		=== gwc_vt_reference_digest(
+			gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_addr'], gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ld_plainD'] ) )->reference
+		),
+	gwc_vt_reference_digest( $GLOBALS['gwc_vt_ld_toL']->reference )
+);
+
+/* It survives issuing, so reopening or re-delivering reproduces the document
+ * that went out rather than an unaddressed version of it. */
+$GLOBALS['gwc_vt_ld_torec'] = gwc_vt_letter_record( gwc_vt_log_letter( $GLOBALS['gwc_vt_ld_toL'] ) );
+
+gwc_vt_ld_check(
+	'the log keeps it, and a rebuild prints it again',
+	'case 2026-CR-1234' === $GLOBALS['gwc_vt_ld_torec']['matter']
+		&& false !== strpos(
+			gwc_vt_render_letter( gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_torec'] ), 'print' ),
+			'Re: case 2026-CR-1234'
+		)
+);
+
+/* The rule this sits next to, checked rather than assumed: putting a case
+ * number on a letter must not have opened a route for what a court REQUIRED to
+ * reach one. tests/integration/required.php owns the full sweep; this is the
+ * narrow version aimed at the field just added. */
+update_post_meta( $GLOBALS['gwc_vt_ld_addr'], GWC_VT_VOLUNTEER_REQUIRED, 40 * 60 );
+
+gwc_vt_ld_check(
+	'and none of it lets a required-hours figure onto the letter',
+	false === stripos(
+		gwc_vt_render_letter(
+			gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_addr'], gwc_vt_letter_args_for_draft( $GLOBALS['gwc_vt_ld_toD'] ) ),
+			'draft'
+		),
+		'requir'
+	)
+);
+
 /**
  * Take everything this script made back out.
  */

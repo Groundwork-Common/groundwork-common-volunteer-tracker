@@ -99,6 +99,31 @@ class GWC_VT_Letter {
 	public int $issued_at = 0;
 
 	/**
+	 * Who the letter is addressed to, and what matter it concerns.
+	 *
+	 * Both optional and both blank by default. Addressing, not assertion: they
+	 * say which correspondence this is, and nothing about the person or about
+	 * what anybody required of them. That distinction is why a case number is
+	 * allowed here while "40 hours ordered" is not — see the note beside them in
+	 * inc/letter-draft-cpt.php.
+	 *
+	 * Deliberately outside the reference digest. A letter sent to two officers
+	 * about one matter states the same service and is the same document; making
+	 * the addressee part of the code would produce two codes for one set of
+	 * facts, and the code is a statement about the facts.
+	 *
+	 * @var string
+	 */
+	public string $addressee = '';
+
+	/**
+	 * The matter it concerns — a case number, usually.
+	 *
+	 * @var string
+	 */
+	public string $matter = '';
+
+	/**
 	 * The moment the attestations on this letter were counted as of.
 	 *
 	 * A GMT datetime, or '' for a letter built from the record as it stands. Set

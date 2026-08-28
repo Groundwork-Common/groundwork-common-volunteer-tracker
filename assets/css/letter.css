@@ -304,3 +304,20 @@ body.gwcvt-letter-page {
 	width: auto;
 	margin: 0 0 8px;
 }
+
+/* ─── Who the letter is for ─────────────────────────────────────────────────
+   Where a business letter puts it: under the date, above the heading. Absent
+   entirely on a letter handed to the volunteer, which is most of them. */
+.gwcvt-addressed {
+	margin: 0 0 1.5em;
+}
+
+.gwcvt-addressed__to {
+	margin: 0;
+	white-space: pre-line;
+}
+
+.gwcvt-addressed__matter {
+	margin: .5em 0 0;
+	font-weight: 700;
+}

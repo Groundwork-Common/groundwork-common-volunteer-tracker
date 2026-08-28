@@ -19,10 +19,12 @@ defined( 'ABSPATH' ) || exit;
  *
  * @param int    $volunteer_id Volunteer post ID.
  * @param string $from         Y-m-d, or '' for their first shift.
- * @param string $to           Y-m-d, or '' for today.
+ * @param string $to           Y-m-d, or '' for the day the draft is made.
+ * @param string $addressee    Optional. Who the letter is for.
+ * @param string $matter       Optional. What it concerns, usually a case number.
  * @return int The draft's ID, or 0.
  */
-function gwc_vt_add_letter_draft( int $volunteer_id, string $from = '', string $to = '' ): int {
+function gwc_vt_add_letter_draft( int $volunteer_id, string $from = '', string $to = '', string $addressee = '', string $matter = '' ): int {
 	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 		return 0;
 	}
@@ -79,6 +81,8 @@ function gwc_vt_add_letter_draft( int $volunteer_id, string $from = '', string $
 	update_post_meta( $draft_id, GWC_VT_DRAFT_FROM, $from );
 	update_post_meta( $draft_id, GWC_VT_DRAFT_TO, $to );
 	update_post_meta( $draft_id, GWC_VT_DRAFT_BY, (int) get_current_user_id() );
+	update_post_meta( $draft_id, GWC_VT_DRAFT_ADDRESSEE, gwc_vt_normalize_lines( $addressee ) );
+	update_post_meta( $draft_id, GWC_VT_DRAFT_MATTER, $matter );
 
 	/**
 	 * Fires after a letter draft has been started.
@@ -114,7 +118,39 @@ function gwc_vt_letter_draft( int $draft_id ): array {
 		 * this fact, and a second copy of it is a second thing that can be
 		 * wrong. See the note on 'verified_as_of' in gwc_vt_build_letter(). */
 		'as_of'     => (string) get_post_field( 'post_date_gmt', $draft_id ),
+		'addressee' => (string) get_post_meta( $draft_id, GWC_VT_DRAFT_ADDRESSEE, true ),
+		'matter'    => (string) get_post_meta( $draft_id, GWC_VT_DRAFT_MATTER, true ),
 	);
+}
+
+/**
+ * One line ending, and one way to fold an address onto one line.
+ *
+ * A browser posts a textarea with CRLF and sanitize_textarea_field() leaves it
+ * that way, so the stored value carries a \r that nothing downstream expects.
+ * Folding on "\n" alone then left the \r behind, and the screen printed a line
+ * break followed by a comma.
+ *
+ * Normalized on the way in so the database holds one form, and folded through
+ * one function so the row, the data attribute and anything later agree.
+ *
+ * @param string $text Any multi-line text.
+ * @return string
+ */
+function gwc_vt_normalize_lines( string $text ): string {
+	return (string) str_replace( array( "\r\n", "\r" ), "\n", $text );
+}
+
+/**
+ * An address on one line, for a screen that has room for one.
+ *
+ * @param string $text A possibly multi-line address.
+ * @return string
+ */
+function gwc_vt_one_line( string $text ): string {
+	$parts = array_filter( array_map( 'trim', explode( "\n", gwc_vt_normalize_lines( $text ) ) ), 'strlen' );
+
+	return implode( ', ', $parts );
 }
 
 /**
@@ -132,6 +168,8 @@ function gwc_vt_letter_args_for_draft( array $draft ): array {
 		'from'           => (string) ( $draft['from'] ?? '' ),
 		'to'             => (string) ( $draft['to'] ?? '' ),
 		'verified_as_of' => (string) ( $draft['as_of'] ?? '' ),
+		'addressee'      => (string) ( $draft['addressee'] ?? '' ),
+		'matter'         => (string) ( $draft['matter'] ?? '' ),
 	);
 }
 

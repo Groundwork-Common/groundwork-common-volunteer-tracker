@@ -321,6 +321,16 @@
 
 			postForm.setAttribute( 'action', link.getAttribute( 'href' ) );
 
+			/* Prefilled from whoever the letter is addressed to, when it is
+			 * addressed to anybody. Offered, not imposed — a letter addressed
+			 * to a court can still be posted to somebody else, and the field
+			 * stays editable. */
+			var to = poster.querySelector( '#gwcvt-post-addressee' );
+
+			if ( to ) {
+				to.value = link.getAttribute( 'data-gwcvt-letter-addressee' ) || '';
+			}
+
 			toggle( reader, false );
 			openSheet( poster );
 		} );

@@ -304,6 +304,39 @@ function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium, bool $reprod
 
 		<p class="gwcvt-date"><?php echo esc_html( wp_date( (string) get_option( 'date_format' ), $letter->issued_at ) ); ?></p>
 
+		<?php
+		/* ── Addressed, when somebody said who to ────────────────────────────
+		 * Both optional, both absent unless filled in, because most letters are
+		 * handed to the volunteer and a "To:" block over a blank line is worse
+		 * than no block. Where a court asked for it directly, this is what
+		 * makes the document route: an officer and a case number is how the
+		 * paperwork is filed at the other end.
+		 *
+		 * A case number is addressing and not a claim — it says which
+		 * correspondence this is, where "40 hours were ordered" would be this
+		 * organization repeating a court's own document back to it. That
+		 * distinction is the whole of why one is allowed here and the other
+		 * never reaches the letter at all. */
+		?>
+		<?php if ( '' !== $letter->addressee || '' !== $letter->matter ) : ?>
+			<div class="gwcvt-addressed">
+				<?php if ( '' !== $letter->addressee ) : ?>
+					<p class="gwcvt-addressed__to"><?php echo nl2br( esc_html( $letter->addressee ) ); ?></p>
+				<?php endif; ?>
+				<?php if ( '' !== $letter->matter ) : ?>
+					<p class="gwcvt-addressed__matter">
+						<?php
+						printf(
+							/* translators: %s: what the letter concerns, usually a case number. */
+							esc_html__( 'Re: %s', 'groundwork-common-volunteer-tracker' ),
+							esc_html( $letter->matter )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
+
 		<h1 class="gwcvt-heading"><?php echo esc_html( $strings['heading'] ); ?></h1>
 
 		<p class="gwcvt-intro"><?php echo wp_kses( gwc_vt_letter_intro( $tokens ), gwc_vt_letter_allowed_html() ); ?></p>

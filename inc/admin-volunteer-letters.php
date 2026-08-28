@@ -93,7 +93,11 @@ function gwc_vt_handle_add_letter_draft(): void {
 	$draft_id = gwc_vt_add_letter_draft(
 		$volunteer_id,
 		$ranged ? sanitize_text_field( (string) ( $posted['from'] ?? '' ) ) : '',
-		$ranged ? sanitize_text_field( (string) ( $posted['to'] ?? '' ) ) : ''
+		$ranged ? sanitize_text_field( (string) ( $posted['to'] ?? '' ) ) : '',
+		/* sanitize_textarea_field, because an addressee is several lines and
+		 * sanitize_text_field would fold them into one. */
+		trim( sanitize_textarea_field( (string) ( $posted['addressee'] ?? '' ) ) ),
+		trim( sanitize_text_field( (string) ( $posted['matter'] ?? '' ) ) )
 	);
 
 	gwc_vt_letters_box_redirect( $volunteer_id, $draft_id > 0 ? 'drafted' : 'failed' );
@@ -278,7 +282,20 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 	$covers_from = $letter instanceof GWC_VT_Letter ? gwc_vt_letter_earliest_date( $letter ) : '';
 	?>
 	<tr class="gwcvt-letters-box__row gwcvt-letters-box__row--draft">
-		<td><?php echo esc_html( gwc_vt_letter_period_words( $draft['from'], $draft['to'], $covers_from ) ); ?></td>
+		<td>
+			<?php echo esc_html( gwc_vt_letter_period_words( $draft['from'], $draft['to'], $covers_from ) ); ?>
+			<?php if ( '' !== (string) $draft['addressee'] ) : ?>
+				<div class="description">
+					<?php
+					printf(
+						/* translators: %s: who the letter is addressed to. */
+						esc_html__( 'For %s', 'groundwork-common-volunteer-tracker' ),
+						esc_html( gwc_vt_one_line( (string) $draft['addressee'] ) )
+					);
+					?>
+				</div>
+			<?php endif; ?>
+		</td>
 		<td>
 			<?php if ( $empty ) : ?>
 				<span class="description"><?php esc_html_e( 'Nothing verified in that period yet', 'groundwork-common-volunteer-tracker' ); ?></span>
@@ -303,7 +320,7 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 				<div class="description"><?php esc_html_e( 'Verify some hours, and this can be issued.', 'groundwork-common-volunteer-tracker' ); ?></div>
 			<?php else : ?>
 				<a
-					href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $draft['from'], $draft['to'] ) ); ?>"
+					href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $draft['from'], $draft['to'], (int) $draft['id'] ) ); ?>"
 					target="_blank"
 					rel="noopener noreferrer"
 					data-gwcvt-letter-open
@@ -410,6 +427,8 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 			<a
 				href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_post', $record_id ) ); ?>"
 				data-gwcvt-letter-post="<?php echo esc_attr( (string) $record_id ); ?>"
+				<?php /* Whoever the letter is addressed to is who it is being posted to, nearly always. Offered rather than assumed: the field is still editable. */ ?>
+				data-gwcvt-letter-addressee="<?php echo esc_attr( gwc_vt_one_line( (string) ( $record['addressee'] ?? '' ) ) ); ?>"
 			>
 				<?php esc_html_e( 'Post', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
@@ -489,6 +508,33 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 					</span>
 				</div>
 			</fieldset>
+
+			<?php
+			/* Both optional and both blank by default: most letters are handed
+			 * to the volunteer and need neither. They exist for the court or
+			 * school that asked to be sent one directly, where an officer's
+			 * name and a case number are how the paperwork gets filed at the
+			 * other end. */
+			?>
+			<div class="gwcvt-letters-box__addressing">
+				<p>
+					<label for="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>">
+						<?php esc_html_e( 'Addressed to', 'groundwork-common-volunteer-tracker' ); ?>
+					</label><br />
+					<textarea form="gwcvt-start-letter" id="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="addressee" rows="3" class="large-text"
+						placeholder="<?php esc_attr_e( 'Officer J. Smith, Richmond County Probation', 'groundwork-common-volunteer-tracker' ); ?>"></textarea>
+					<span class="description"><?php esc_html_e( 'Optional. Leave empty for a letter you are handing to the volunteer.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				</p>
+
+				<p>
+					<label for="gwcvt-draft-matter-<?php echo esc_attr( (string) $volunteer_id ); ?>">
+						<?php esc_html_e( 'About', 'groundwork-common-volunteer-tracker' ); ?>
+					</label><br />
+					<input type="text" form="gwcvt-start-letter" id="gwcvt-draft-matter-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="matter" class="regular-text"
+						placeholder="<?php esc_attr_e( 'e.g. case 2026-CR-1234', 'groundwork-common-volunteer-tracker' ); ?>" />
+					<span class="description"><?php esc_html_e( 'Optional. Printed as a “Re:” line so the letter can be filed. Nothing a court required of them ever appears on a letter.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				</p>
+			</div>
 
 			<p class="gwcvt-letters-box__foot">
 				<button type="submit" form="gwcvt-start-letter" class="button button-primary"><?php esc_html_e( 'Save the draft', 'groundwork-common-volunteer-tracker' ); ?></button>

@@ -153,6 +153,8 @@ function gwc_vt_build_letter( int $volunteer_id, array $args = array() ) {
 	 * GWC_VT_LETTER_ENTRY_IDS in inc/letter-cpt.php. */
 	$letter->entry_ids      = array_map( 'intval', $used );
 	$letter->verified_as_of = $as_of;
+	$letter->addressee      = (string) ( $args['addressee'] ?? '' );
+	$letter->matter         = (string) ( $args['matter'] ?? '' );
 
 	/**
 	 * The assembled letter, before it is rendered.
@@ -216,6 +218,8 @@ function gwc_vt_rebuild_issued_letter( array $record ) {
 		'from'           => (string) ( $record['from'] ?? '' ),
 		'to'             => (string) ( $record['to'] ?? '' ),
 		'verified_as_of' => (string) ( $record['as_of'] ?? '' ),
+		'addressee'      => (string) ( $record['addressee'] ?? '' ),
+		'matter'         => (string) ( $record['matter'] ?? '' ),
 	);
 
 	/* A letter issued before the log stored entry IDs has none, and there is

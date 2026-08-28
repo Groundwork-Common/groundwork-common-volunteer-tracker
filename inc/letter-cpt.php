@@ -89,6 +89,19 @@ const GWC_VT_LETTER_COVERS_FROM = '_gwc_vt_letter_covers_from';
  * draft, in which case the checker behaves exactly as it always did. */
 const GWC_VT_LETTER_AS_OF = '_gwc_vt_letter_as_of';
 
+/* Who the letter was addressed to and what it concerned, so that reopening or
+ * re-delivering one reproduces the document that went out rather than an
+ * unaddressed version of it. Addressing, never assertion — see the long note
+ * beside GWC_VT_DRAFT_ADDRESSEE.
+ *
+ * This is the one thing on this record that can name somebody other than the
+ * volunteer: a probation officer, a school. The log holds no volunteer name on
+ * purpose, and that reasoning does not extend here — an officer's name is the
+ * organization's own record of where it sent a document, which is exactly the
+ * fact an audit trail exists to keep. */
+const GWC_VT_LETTER_ADDRESSEE = '_gwc_vt_letter_addressee';
+const GWC_VT_LETTER_MATTER    = '_gwc_vt_letter_matter';
+
 add_action( 'init', 'gwc_vt_register_letter_type' );
 
 /* ── Where the house convention bends, and why ───────────────────────────────
@@ -196,6 +209,8 @@ function gwc_vt_log_letter( GWC_VT_Letter $letter, string $medium = '', string $
 	update_post_meta( $record_id, GWC_VT_LETTER_ENTRY_IDS, implode( ',', array_map( 'intval', $letter->entry_ids ) ) );
 	update_post_meta( $record_id, GWC_VT_LETTER_COVERS_FROM, gwc_vt_letter_earliest_date( $letter ) );
 	update_post_meta( $record_id, GWC_VT_LETTER_AS_OF, $letter->verified_as_of );
+	update_post_meta( $record_id, GWC_VT_LETTER_ADDRESSEE, $letter->addressee );
+	update_post_meta( $record_id, GWC_VT_LETTER_MATTER, $letter->matter );
 
 	/* A letter issued without going anywhere yet records no delivery. The
 	 * produce screen still issues and delivers in one act and passes a medium,
@@ -416,6 +431,8 @@ function gwc_vt_letter_record( int $record_id ): array {
 		'entry_ids'     => '' === $ids ? array() : array_map( 'intval', explode( ',', $ids ) ),
 		'covers_from'   => gwc_vt_letter_covers_from( $record_id ),
 		'as_of'         => (string) get_post_meta( $record_id, GWC_VT_LETTER_AS_OF, true ),
+		'addressee'     => (string) get_post_meta( $record_id, GWC_VT_LETTER_ADDRESSEE, true ),
+		'matter'        => (string) get_post_meta( $record_id, GWC_VT_LETTER_MATTER, true ),
 		'deliveries'    => gwc_vt_letter_deliveries( $record_id ),
 		'volunteer_id'  => (int) get_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, true ),
 		'issued_by'     => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),

@@ -2600,3 +2600,19 @@ a.gwcvt-letters-box__discard:focus {
 .gwcvt-letters-box__sent--failed {
 	color: #b32d2e;
 }
+
+/* The optional addressing on the draft form. Below the period because that is
+   the order the questions are asked in — what it covers, then who it is for. */
+.gwcvt-letters-box__addressing {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #dcdcde;
+}
+
+.gwcvt-letters-box__addressing p {
+	margin: 0 0 10px;
+}
+
+.gwcvt-letters-box__addressing label {
+	font-weight: 600;
+}
