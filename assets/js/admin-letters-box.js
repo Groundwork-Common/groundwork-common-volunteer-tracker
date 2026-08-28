@@ -245,7 +245,6 @@
 			}
 
 			toggle( reader.querySelector( '[data-gwcvt-reader-note-draft]' ), draft );
-			toggle( reader.querySelector( '[data-gwcvt-reader-note-issued]' ), ! draft );
 
 			if ( frame ) {
 				frame.setAttribute( 'src', link.getAttribute( 'href' ) );
