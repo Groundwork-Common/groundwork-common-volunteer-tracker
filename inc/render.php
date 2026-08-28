@@ -34,12 +34,35 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Render a letter.
  *
+ * ── The third medium, and why it is not a fourth document ───────────────────
+ * 'draft' is 'print' with two differences, and it exists because the screen
+ * that says "Preview the letter" was showing four figures in a table: verified
+ * hours, shifts, the period and the reference. Useful, and not a preview — the
+ * letterhead, the shift table, the wording and the disclaimer could not be read
+ * by anybody before the letter had been issued, because opening one to print
+ * IS issuing it.
+ *
+ * So a draft is the same document, rendered by the same function, from the same
+ * letter object. Two things are taken off it:
+ *
+ *   The reference. It is the digest a court checks by telephone, and the log is
+ *   what it is checked against. A draft is in no log, so a reference on it would
+ *   be a code that fails the only test it exists for. The space says so instead.
+ *
+ *   The claim to be issued. A band across the top says this is a draft and that
+ *   nothing has gone out — visible on paper as well as on screen, because the
+ *   one thing a draft must not become is a letter somebody printed and handed
+ *   over while the organization's own log knows nothing about it.
+ *
  * @param GWC_VT_Letter $letter The letter.
- * @param string        $medium 'print' or 'email'.
+ * @param string        $medium 'print', 'email' or 'draft'.
  * @return string A complete HTML document.
  */
 function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' ): string {
 	$body = gwc_vt_letter_body( $letter, $medium );
+
+	/* Everything a draft does, the print document does — it is the same paper. */
+	$on_paper = 'print' === $medium || 'draft' === $medium;
 
 	if ( 'email' === $medium ) {
 		$body = gwc_vt_inline_letter_styles( $body );
@@ -53,17 +76,33 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' )
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="noindex, nofollow" />
-	<title><?php echo esc_html( gwc_vt_letter_title( $letter ) ); ?></title>
-	<?php if ( 'print' === $medium ) : ?>
+	<title><?php echo esc_html( gwc_vt_letter_title( $letter, $medium ) ); ?></title>
+	<?php if ( $on_paper ) : ?>
 		<?php gwc_vt_print_document_styles(); ?>
 	<?php endif; ?>
 </head>
 <body class="gwcvt-letter-page">
-	<?php if ( 'print' === $medium ) : ?>
+	<?php if ( 'draft' === $medium ) : ?>
+		<?php
+		/* NOT hidden under @media print, unlike the toolbar below it. A draft
+		 * that loses its banner on paper is an issued letter that nothing
+		 * recorded. */
+		?>
+		<div class="gwcvt-letter-draft" role="note">
+			<strong><?php esc_html_e( 'Draft — not issued', 'groundwork-common-volunteer-tracker' ); ?></strong>
+			<span><?php esc_html_e( 'Nobody has been sent this and nothing has been recorded. Go back and use “Open the letter to print” or “Email it” to issue it, which is what gives it its reference.', 'groundwork-common-volunteer-tracker' ); ?></span>
+		</div>
+	<?php endif; ?>
+
+	<?php if ( $on_paper ) : ?>
 		<?php /* Hidden by the stylesheet under @media print, so it never appears on paper. */ ?>
 		<div class="gwcvt-letter-toolbar">
 			<button type="button" class="gwcvt-print-button" onclick="window.print()">
-				<?php esc_html_e( 'Print this letter', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php
+				echo 'draft' === $medium
+					? esc_html__( 'Print this draft', 'groundwork-common-volunteer-tracker' )
+					: esc_html__( 'Print this letter', 'groundwork-common-volunteer-tracker' );
+				?>
 			</button>
 			<span class="gwcvt-letter-toolbar__hint">
 				<?php esc_html_e( 'Choose “Save as PDF” in the print dialog to email it yourself.', 'groundwork-common-volunteer-tracker' ); ?>
@@ -157,7 +196,7 @@ function gwc_vt_letter_strings( GWC_VT_Letter $letter ): array {
  */
 function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium ): string {
 	$org       = gwc_vt_org_name();
-	$tokens    = gwc_vt_letter_tokens( $letter );
+	$tokens    = gwc_vt_letter_tokens( $letter, $medium );
 	$itemize   = (bool) gwc_vt_setting( 'letter_itemize' );
 	$signatory = trim( (string) gwc_vt_setting( 'signatory_name' ) );
 	$title     = trim( (string) gwc_vt_setting( 'signatory_title' ) );
@@ -292,8 +331,18 @@ function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium ): string {
 
 		<footer class="gwcvt-disclaimer">
 			<p><?php echo wp_kses( gwc_vt_replace_tokens( gwc_vt_disclaimer(), $tokens ), gwc_vt_letter_allowed_html() ); ?></p>
-			<p class="gwcvt-reference-note"><?php echo wp_kses( gwc_vt_replace_tokens( gwc_vt_reference_note(), $tokens ), gwc_vt_letter_allowed_html() ); ?></p>
-			<p class="gwcvt-reference"><?php echo esc_html( $letter->reference ); ?></p>
+			<?php if ( 'draft' === $medium ) : ?>
+				<?php
+				/* No reference on a draft. It is the digest somebody checks by
+				 * telephone against the issued-letter log, and a draft is in no
+				 * log — a code that fails the only test it exists for is worse
+				 * than no code. */
+				?>
+				<p class="gwcvt-reference-note"><?php esc_html_e( 'A reference is given when the letter is issued. This draft has none, so there is nothing to check by telephone.', 'groundwork-common-volunteer-tracker' ); ?></p>
+			<?php else : ?>
+				<p class="gwcvt-reference-note"><?php echo wp_kses( gwc_vt_replace_tokens( gwc_vt_reference_note(), $tokens ), gwc_vt_letter_allowed_html() ); ?></p>
+				<p class="gwcvt-reference"><?php echo esc_html( $letter->reference ); ?></p>
+			<?php endif; ?>
 		</footer>
 	</div>
 	<?php
@@ -320,9 +369,21 @@ function gwc_vt_letter_allowed_html(): array {
  * The values a letter's configurable text can refer to.
  *
  * @param GWC_VT_Letter $letter The letter.
+ * @param string        $medium 'print', 'email' or 'draft' — a draft has no
+ *                              reference, so {reference} says so instead.
  * @return array<string, string>
  */
-function gwc_vt_letter_tokens( GWC_VT_Letter $letter ): array {
+function gwc_vt_letter_tokens( GWC_VT_Letter $letter, string $medium = 'print' ): array {
+	/* A draft has no reference, and {reference} is a token an administrator can
+	 * put in the intro, the disclaimer or the reference note — so taking the
+	 * printed reference off the footer is not enough on its own. Every route the
+	 * code can reach the page by goes through this array, which is why the
+	 * substitution happens here rather than in three places that would have to
+	 * agree. */
+	$reference = 'draft' === $medium
+		? __( 'none — this is a draft', 'groundwork-common-volunteer-tracker' )
+		: $letter->reference;
+
 	return array(
 		'{org}'       => gwc_vt_org_name(),
 		'{name}'      => $letter->volunteer_name,
@@ -330,7 +391,7 @@ function gwc_vt_letter_tokens( GWC_VT_Letter $letter ): array {
 		'{shifts}'    => (string) number_format_i18n( $letter->verified_count() ),
 		'{period}'    => gwc_vt_letter_period( $letter ),
 		'{contact}'   => gwc_vt_org_contact(),
-		'{reference}' => $letter->reference,
+		'{reference}' => $reference,
 		'{timestamp}' => (string) wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), $letter->issued_at ),
 		'{timezone}'  => gwc_vt_timezone_label( $letter->issued_at ),
 	);
@@ -402,9 +463,19 @@ function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
  * The document's title, which is also the suggested filename when printing.
  *
  * @param GWC_VT_Letter $letter The letter.
+ * @param string        $medium 'print', 'email' or 'draft'.
  * @return string
  */
-function gwc_vt_letter_title( GWC_VT_Letter $letter ): string {
+function gwc_vt_letter_title( GWC_VT_Letter $letter, string $medium = 'print' ): string {
+	if ( 'draft' === $medium ) {
+		return sprintf(
+			/* translators: 1: a volunteer's name, 2: the organization's name. */
+			__( 'Draft — volunteer service verification — %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
+			$letter->volunteer_name,
+			gwc_vt_org_name()
+		);
+	}
+
 	return sprintf(
 		/* translators: 1: a volunteer's name, 2: the organization's name. */
 		__( 'Volunteer service verification — %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),

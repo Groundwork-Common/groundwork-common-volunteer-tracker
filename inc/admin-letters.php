@@ -8,6 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'gwc_vt_register_letters_menu', 11 );
+add_action( 'admin_post_gwc_vt_letter_draft', 'gwc_vt_handle_letter_draft' );
 add_action( 'admin_post_gwc_vt_letter_print', 'gwc_vt_handle_letter_print' );
 add_action( 'admin_post_gwc_vt_letter_send', 'gwc_vt_handle_letter_send' );
 
@@ -446,7 +447,29 @@ function gwc_vt_render_produce_letter_screen(): void {
 
 				<?php gwc_vt_render_letter_readiness( $volunteer_id, $from, $to ); ?>
 
-				<p><button type="submit" class="button"><?php esc_html_e( 'Preview the letter', 'groundwork-common-volunteer-tracker' ); ?></button></p>
+				<?php
+				/* This button never previewed anything. It reloads the screen
+				 * with a table of four figures — verified hours, shifts, the
+				 * period, the reference — which is a useful check and is not a
+				 * letter. Worse, the usual way in is "Produce a letter for this
+				 * volunteer" from the volunteer's own record, which arrives with
+				 * those figures already on screen: pressing a button labelled
+				 * Preview then re-ran the same query and repainted an identical
+				 * page. It looked broken because it was doing nothing.
+				 *
+				 * It says what it does now. Previewing the letter is its own
+				 * button, beside the two that issue one, and it opens the
+				 * document. */
+				?>
+				<p>
+					<button type="submit" class="button">
+						<?php
+						echo $letter instanceof GWC_VT_Letter
+							? esc_html__( 'Update the figures', 'groundwork-common-volunteer-tracker' )
+							: esc_html__( 'Work out the figures', 'groundwork-common-volunteer-tracker' );
+						?>
+					</button>
+				</p>
 			</form>
 
 			<?php gwc_vt_render_letter_preview( $letter, $volunteer_id, $from, $to ); ?>
@@ -567,6 +590,9 @@ function gwc_vt_render_letter_preview( $letter, int $volunteer_id, string $from,
 	<hr />
 	<h2 class="title"><?php echo esc_html( $letter->volunteer_name ); ?></h2>
 
+	<?php /* Named, because a four-row table under somebody's name was being read as the letter. */ ?>
+	<p class="description"><?php esc_html_e( 'What the letter will state:', 'groundwork-common-volunteer-tracker' ); ?></p>
+
 	<?php if ( $letter->is_empty() ) : ?>
 		<div class="notice notice-warning inline">
 			<p><?php esc_html_e( 'There are no published hour entries for this volunteer in that period, so there is nothing to verify. A letter stating zero hours is not something to send.', 'groundwork-common-volunteer-tracker' ); ?></p>
@@ -604,10 +630,23 @@ function gwc_vt_render_letter_preview( $letter, int $volunteer_id, string $from,
 	<?php gwc_vt_render_letterhead_warning(); ?>
 
 	<p class="gwcvt-letter-actions">
+		<?php
+		/* Reading it comes before issuing it, so it is offered first — and as
+		 * the secondary button, because the two beside it are the ones that put
+		 * a letter into the world. A new tab: this screen is where somebody
+		 * comes back to, with the dates they typed still in it. */
+		?>
+		<a
+			class="button"
+			target="_blank"
+			rel="noopener noreferrer"
+			href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_draft', $volunteer_id, $from, $to ) ); ?>"
+		>
+			<?php esc_html_e( 'Preview the letter', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+
 		<a
 			class="button button-primary"
-			target="_blank"
-			rel="noopener"
 			href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_print', $volunteer_id, $from, $to ) ); ?>"
 		>
 			<?php esc_html_e( 'Open the letter to print', 'groundwork-common-volunteer-tracker' ); ?>
@@ -940,6 +979,30 @@ function gwc_vt_render_letterhead_warning(): void {
  * our handler runs; the handler then checks the capability and a per-volunteer
  * nonce.
  * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Render the letter as a draft, and record nothing.
+ *
+ * The whole of the difference from printing is the line that is not here:
+ * gwc_vt_log_letter(). Everything else — the capability, the per-volunteer
+ * nonce, the private-document headers, the rebuild from entries rather than
+ * from the rollup — is identical, because this is the same letter and the same
+ * reasons apply to showing it.
+ *
+ * Not logging is the point and is also the risk, and the document says so about
+ * itself: a band across the top that survives printing, and no reference. What
+ * this buys is that somebody can read what a court will read — the letterhead,
+ * the shift table, the disclaimer, the signature block — before the act of
+ * looking becomes an issued letter.
+ */
+function gwc_vt_handle_letter_draft(): void {
+	$request = gwc_vt_letter_request();
+
+	gwc_vt_private_document_headers();
+
+	echo gwc_vt_render_letter( $request['letter'], 'draft' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
+	exit;
+}
 
 /**
  * Render a letter for printing.
