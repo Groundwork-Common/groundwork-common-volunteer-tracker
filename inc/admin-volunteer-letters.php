@@ -666,7 +666,7 @@ function gwc_vt_render_letter_reader(): void {
 				<span data-gwcvt-reader-actions></span>
 				<span class="description" data-gwcvt-reader-note></span>
 				<span class="description gwcvt-sheet__note--draft" hidden data-gwcvt-reader-note-draft><?php esc_html_e( 'Reading a draft records nothing.', 'groundwork-common-volunteer-tracker' ); ?></span>
-				<span class="description gwcvt-sheet__note--issued" hidden data-gwcvt-reader-note-issued><?php esc_html_e( 'Every send is logged, and issues a new letter with its own reference.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<span class="description gwcvt-sheet__note--issued" hidden data-gwcvt-reader-note-issued><?php esc_html_e( 'Sending or printing this is recorded against it. The letter keeps the reference it was issued with.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</div>
 		</div>
 	</div>
