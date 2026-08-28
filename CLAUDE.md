@@ -45,7 +45,12 @@ tool this file used to describe, and the later half is easy to miss when scannin
 `inc/`:
 
 - **Hours and the letter** — `cpt.php`, `entries.php`, `verify.php`, `letter.php`,
-  `render.php`, `letter-cpt.php`. The original product.
+  `render.php`, `letter-cpt.php`. The original product. A letter is now started
+  on the volunteer rather than on a screen of its own: `letter-draft-cpt.php` and
+  `letter-drafts.php` hold the intention — the period, and deliberately nothing
+  else — and `admin-volunteer-letters.php` is the box that shows drafts and
+  issued letters as one list. A draft dies with the volunteer; the issued-letter
+  log outlives them.
 - **The schedule** — `shift-cpt.php`, `shifts.php`, `recurrence.php`,
   `signup-cpt.php`, `signups.php`, plus the public `signup-form.php` /
   `signup-handler.php`, `ics.php`, and two cron passes in `schedule-cron.php`

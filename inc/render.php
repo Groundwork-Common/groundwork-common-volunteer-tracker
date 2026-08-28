@@ -90,7 +90,7 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print' )
 		?>
 		<div class="gwcvt-letter-draft" role="note">
 			<strong><?php esc_html_e( 'Draft — not issued', 'groundwork-common-volunteer-tracker' ); ?></strong>
-			<span><?php esc_html_e( 'Nobody has been sent this and nothing has been recorded. Go back and use “Open the letter to print” or “Email it” to issue it, which is what gives it its reference.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span><?php esc_html_e( 'Nobody has been sent this and nothing has been recorded. Go back and use “Issue and print” or “Issue and email” on the volunteer’s record — issuing is what gives a letter its reference.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</div>
 	<?php endif; ?>
 
@@ -439,7 +439,7 @@ function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
 
 	if ( '' !== $letter->from && '' !== $letter->to ) {
 		return sprintf(
-			/* translators: 1: a date, 2: a date. */
+			/* translators: 1: a date, 2: a later date. */
 			__( '%1$s to %2$s', 'groundwork-common-volunteer-tracker' ),
 			$from,
 			$to
@@ -456,7 +456,49 @@ function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
 		return sprintf( __( 'up to %s', 'groundwork-common-volunteer-tracker' ), $to );
 	}
 
-	return __( 'their entire time volunteering with us', 'groundwork-common-volunteer-tracker' );
+	/* ── The unbounded case, which used to overclaim ─────────────────────────
+	 * It said "their entire time volunteering with us", and that is not what the
+	 * letter covers. It covers what this organization had recorded between their
+	 * first shift and the day the letter was produced — which is the same thing
+	 * only if they never volunteer again and nothing is verified late. On a
+	 * document somebody hands to a court, "entire" is a claim about the future
+	 * and about other organizations, and this plugin makes neither.
+	 *
+	 * So it names the two ends it actually has. The start is the earliest shift
+	 * on the letter and the end is the day it was issued, both of which are on
+	 * the page anyway — the first in the itemised table, the second in the
+	 * timestamp — so the sentence agrees with the rest of the document instead of
+	 * summarising it more grandly.
+	 *
+	 * The reference is unaffected: gwc_vt_letter_reference() digests the raw
+	 * from and to, which stay empty, so every letter already issued still checks
+	 * out against its own code. */
+	$earliest = '';
+
+	foreach ( $letter->entries as $entry ) {
+		if ( '' === $earliest || $entry->date < $earliest ) {
+			$earliest = $entry->date;
+		}
+	}
+
+	$issued = gwc_vt_display_date( (string) wp_date( 'Y-m-d', $letter->issued_at ) );
+
+	if ( '' === $earliest ) {
+		/* No entries at all, which is a letter this plugin refuses to issue —
+		 * but a preview of one can reach here. */
+		return sprintf(
+			/* translators: %s: a date. */
+			__( 'their service on record up to %s', 'groundwork-common-volunteer-tracker' ),
+			$issued
+		);
+	}
+
+	return sprintf(
+		/* translators: 1: the date of their first shift, 2: the date of the letter. */
+		__( '%1$s to %2$s, the date of this letter', 'groundwork-common-volunteer-tracker' ),
+		gwc_vt_display_date( $earliest ),
+		$issued
+	);
 }
 
 /**

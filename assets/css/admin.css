@@ -2393,3 +2393,75 @@ a.gwcvt-badge--waiting.gwcvt-badge--action:focus {
 	text-transform: uppercase;
 	letter-spacing: .3px;
 }
+
+/* ─── Letters on a volunteer's record ───────────────────────────────────────
+   One table holding two kinds of row: what somebody means to send, and what
+   has gone out. They are deliberately not two tables — the question the box
+   answers is "where is this person's letter up to", and splitting it makes the
+   reader join the halves themselves. What separates them is the status badge
+   and the actions, both of which say the difference in words. */
+.gwcvt-letters-box {
+	margin-bottom: 12px;
+}
+
+.gwcvt-letters-box td {
+	vertical-align: top;
+}
+
+/* Drafts sit a shade back from the letters that have gone out. Faint on
+   purpose: the badge and the actions are what tell somebody which kind of row
+   this is, and a tint that carried the distinction on its own would be a fact
+   stated only in colour. */
+.gwcvt-letters-box__row--draft td {
+	background: #fcfcfc;
+}
+
+/* In progress, so warm rather than green: the same vocabulary the verification
+   badges use, where waiting is amber and done is green. */
+.gwcvt-badge--draft {
+	background: #fcf9e8;
+	color: #614200;
+	box-shadow: inset 0 0 0 1px #dba617;
+}
+
+.gwcvt-badge--issued {
+	background: #edfaef;
+	color: #00450c;
+	box-shadow: inset 0 0 0 1px #68de7c;
+}
+
+.gwcvt-letters-box__actions {
+	white-space: nowrap;
+}
+
+/* Destructive, and inside a row of ordinary links, so it is the one thing in
+   the group that is red — the same treatment core gives "Delete Permanently"
+   in a row of row actions, and a nonced link for the same reason. */
+.gwcvt-letters-box__discard {
+	color: #b32d2e;
+}
+
+.gwcvt-letters-box__discard:hover,
+.gwcvt-letters-box__discard:focus {
+	color: #8a2424;
+}
+
+/* The starting form. Two choices stacked rather than side by side: the second
+   one grows a pair of date fields when it is picked, and a two-column layout
+   would move the first choice every time somebody chose the second. */
+.gwcvt-letters-box__choice {
+	margin-bottom: 8px;
+}
+
+.gwcvt-letters-box__choice .description {
+	display: block;
+	margin-left: 24px;
+}
+
+.gwcvt-letters-box__dates {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 4px 0 0 24px;
+}

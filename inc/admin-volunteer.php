@@ -221,13 +221,15 @@ function gwc_vt_volunteer_sortable_columns( $columns ): array {
  * scanning the issued-letter log — two screens and a mental join, performed
  * while somebody is on the phone.
  *
- * Both panels are read-only. A shift is edited on the shift, and an issued
- * letter is not editable at all; making either editable from here would mean a
- * second write path into records whose correctness is the product.
+ * The hours panel is read-only: a shift is edited on the shift, and a second
+ * write path into the numbers a letter is built from is exactly what this
+ * plugin spends its time avoiding. The letters panel writes, but only ever the
+ * intention — a draft is started and discarded there, and an issued letter is
+ * still not editable by anybody. See inc/admin-volunteer-letters.php.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Register both history panels.
+ * Register both panels.
  */
 function gwc_vt_add_volunteer_history_boxes(): void {
 	add_meta_box(
@@ -352,107 +354,9 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 	<?php
 }
 
-/**
- * Every letter issued about this volunteer.
- *
- * @param WP_Post $post The volunteer.
- */
-function gwc_vt_render_volunteer_letters_box( $post ): void {
-	$volunteer_id = (int) $post->ID;
-
-	if ( 'auto-draft' === get_post_status( $volunteer_id ) ) {
-		return;
-	}
-
-	$records = gwc_vt_letters_for_volunteer( $volunteer_id );
-
-	if ( ! $records ) {
-		printf(
-			'<p class="description">%s</p>',
-			esc_html__( 'No verification letter has been issued for this volunteer.', 'groundwork-common-volunteer-tracker' )
-		);
-
-		/* And then the button, rather than returning here. This branch is the
-		 * volunteer nobody has written a letter for yet, which is precisely the
-		 * one somebody opening this panel is most likely to want to write one
-		 * for. An early return would have hidden it from them. */
-		gwc_vt_produce_letter_button( $volunteer_id );
-
-		return;
-	}
-
-	// Newest first.
-	usort( $records, static fn( array $a, array $b ): int => strcmp( $b['issued_at'], $a['issued_at'] ) );
-	?>
-	<table class="widefat striped gwcvt-history">
-		<thead>
-			<tr>
-				<th scope="col"><?php esc_html_e( 'Issued', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'Reference', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'Hours stated', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<th scope="col"><?php esc_html_e( 'How', 'groundwork-common-volunteer-tracker' ); ?></th>
-				<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'groundwork-common-volunteer-tracker' ); ?></span></th>
-			</tr>
-		</thead>
-		<tbody>
-			<?php foreach ( $records as $record ) : ?>
-				<tr>
-					<td><?php echo esc_html( $record['issued_at'] ); ?></td>
-					<td><code><?php echo esc_html( $record['reference'] ); ?></code></td>
-					<td><?php echo esc_html( gwc_vt_format_hours( $record['minutes'] ) ); ?></td>
-					<td>
-						<?php
-						if ( 'email' === $record['medium'] ) {
-							echo esc_html(
-								$record['sent_ok']
-									/* translators: %s: an email address. */
-									? sprintf( __( 'Emailed to %s', 'groundwork-common-volunteer-tracker' ), $record['recipient'] )
-									: __( 'Email failed', 'groundwork-common-volunteer-tracker' )
-							);
-						} else {
-							esc_html_e( 'Printed', 'groundwork-common-volunteer-tracker' );
-						}
-						?>
-					</td>
-					<td class="gwcvt-history__action">
-						<?php
-						/* Straight to the checker with the reference already in
-						 * the box. The common reason for looking at this table is
-						 * that somebody has phoned about one of these.
-						 *
-						 * The checker is a panel on the dashboard now, not a box
-						 * on the Letters screen — so this points there. It is a
-						 * GET form either way, which is what lets a link fill it
-						 * in. */
-						?>
-						<a href="<?php echo esc_url( gwc_vt_dashboard_reference_url( $record['reference'] ) ); ?>">
-							<?php esc_html_e( 'Check it', 'groundwork-common-volunteer-tracker' ); ?>
-						</a>
-						<?php
-						/* And the other question this table gets asked: "can you
-						 * send that again". Separate from Check it because they
-						 * are different jobs — checking answers somebody else's
-						 * question about a letter they hold, looking at it again
-						 * is this organization deciding whether to send another
-						 * one. Both land somewhere that says whether the records
-						 * still agree with what went out. */
-						?>
-						<span aria-hidden="true"> | </span>
-						<a href="<?php echo esc_url( gwc_vt_letter_review_url( $record ) ); ?>">
-							<?php esc_html_e( 'View or send again', 'groundwork-common-volunteer-tracker' ); ?>
-						</a>
-					</td>
-				</tr>
-			<?php endforeach; ?>
-		</tbody>
-	</table>
-
-	<p class="description">
-		<?php esc_html_e( 'What each letter stated when it went out. Checking one compares it against the records as they stand now.', 'groundwork-common-volunteer-tracker' ); ?>
-	</p>
-	<?php
-	gwc_vt_produce_letter_button( $volunteer_id );
-}
+/* The letters box moved to inc/admin-volunteer-letters.php, where it grew the
+ * other half of the flow: the drafts somebody has started but not sent. It is
+ * still registered above, beside the hours panel. */
 
 /**
  * The way to write one, under the list of the ones already written.

@@ -193,9 +193,30 @@ final class LetterTest extends TestCase {
 		$this->assertSame( '2026-03-01 to 2026-03-31', gwc_vt_letter_period( $this->letter() ) );
 		$this->assertSame( 'from 2026-03-01 onwards', gwc_vt_letter_period( $this->letter( array( 'to' => '' ) ) ) );
 		$this->assertSame( 'up to 2026-03-31', gwc_vt_letter_period( $this->letter( array( 'from' => '' ) ) ) );
+		/* Not "their entire time volunteering with us", which is what this said
+		 * and is not what a letter with no dates on it covers. It runs from the
+		 * first thing on record to the day it goes out — so it names both, and
+		 * says where the second one came from. Somebody who volunteers again next
+		 * week is not contradicted by a letter that never claimed to cover it. */
 		$this->assertSame(
-			'their entire time volunteering with us',
+			'2026-03-02 to 2027-01-15, the date of this letter',
 			gwc_vt_letter_period( $this->letter( array( 'from' => '', 'to' => '' ) ) )
+		);
+
+		/* And with nothing on record there is no first date to name, so it says
+		 * only the half it can stand behind. */
+		$this->assertSame(
+			'their service on record up to 2027-01-15',
+			gwc_vt_letter_period(
+				$this->letter(
+					array(
+						'from'             => '',
+						'to'               => '',
+						'entries'          => array(),
+						'verified_minutes' => 0,
+					)
+				)
+			)
 		);
 	}
 

@@ -537,7 +537,7 @@ gwc_vt_check(
 /* And the screen offers it beside the two that do issue. */
 gwc_vt_check(
 	'the screen offers a preview, a print and a send',
-	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwc_vt_letter_draft' )
+	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwc_vt_letter_preview' )
 		&& false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwc_vt_letter_print' )
 );
 
