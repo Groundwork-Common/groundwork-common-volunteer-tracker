@@ -152,10 +152,10 @@ function gwc_vt_help_topics(): array {
 			'intro' => __( 'A letter reports what your organization recorded. You write it on the volunteer’s own record: start a draft, issue it when you are happy with it, then send it. It carries a reference code so anybody who receives it can phone you and check it.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
-					'title' => __( 'Start a letter', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Draft a letter', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Find <strong>Verification letters</strong> and select <strong>Start a letter</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find <strong>Verification letters</strong> and select <strong>Draft a verification letter</strong>.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Choose <strong>Everything on record</strong>, or <strong>A period</strong> if a court or a school asked about particular months.', 'groundwork-common-volunteer-tracker' ),
 						__( 'If it is going to somebody other than the volunteer, fill in who it is addressed to and what it is about.', 'groundwork-common-volunteer-tracker' ),
 						__( 'Select <strong>Save the draft</strong>.', 'groundwork-common-volunteer-tracker' ),

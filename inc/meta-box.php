@@ -688,7 +688,7 @@ function gwc_vt_render_volunteer_required_box( $post ): void {
 		</p>
 
 		<p class="description">
-			<?php esc_html_e( 'Leave this empty for everybody who is not working off court-ordered or school-required service. None of it ever reaches a letter — what somebody was ordered to do is a fact about their court’s document, not about anything you observed. The date is optional and shows as a countdown here and on the volunteer list.', 'groundwork-common-volunteer-tracker' ); ?>
+			<?php esc_html_e( 'For court-ordered or school-required service only. None of it ever reaches a letter.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 
 	<?php if ( gwc_vt_has_requirement( $volunteer_id ) ) : ?>
