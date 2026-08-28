@@ -104,7 +104,7 @@ function gwc_vt_settings_fields(): array {
 			'rows'        => 4,
 			'label'       => __( 'Opening paragraph', 'groundwork-common-volunteer-tracker' ),
 			'placeholder' => gwc_vt_letter_intro( array() ),
-			'help'        => __( 'Leave empty to use the wording shown. Plain text only — bold and italic survive, other markup does not.', 'groundwork-common-volunteer-tracker' ),
+			'help'        => __( 'Leave empty to use the default wording. Plain text only — bold and italic survive, other markup does not.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
 		'letter_disclaimer'         => array(
@@ -114,7 +114,7 @@ function gwc_vt_settings_fields(): array {
 			'rows'        => 5,
 			'label'       => __( 'Disclaimer', 'groundwork-common-volunteer-tracker' ),
 			'placeholder' => gwc_vt_default_disclaimer(),
-			'help'        => __( 'Yours to change, and it cannot be emptied: saving it blank restores the default.', 'groundwork-common-volunteer-tracker' ),
+			'help'        => __( 'Yours to change. Clear the field to go back to the default wording — every letter carries a disclaimer.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
 		'letter_reference_note'     => array(
@@ -124,7 +124,7 @@ function gwc_vt_settings_fields(): array {
 			'rows'        => 3,
 			'label'       => __( 'What the reference code proves', 'groundwork-common-volunteer-tracker' ),
 			'placeholder' => gwc_vt_default_reference_note(),
-			'help'        => __( 'Also cannot be emptied. Without it, a reader assumes a code means some outside body issued the document.', 'groundwork-common-volunteer-tracker' ),
+			'help'        => __( 'Clear the field to go back to the default wording. Without this note, a reader assumes a code means some outside body issued the document.', 'groundwork-common-volunteer-tracker' ),
 			'tokens'      => true,
 		),
 
