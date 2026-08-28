@@ -147,14 +147,14 @@ function gwc_vt_render_dashboard(): void {
 		<h1 class="wp-heading-inline"><?php esc_html_e( 'Groundwork Common Volunteer Tracker', 'groundwork-common-volunteer-tracker' ); ?></h1>
 		<hr class="wp-header-end" />
 
-		<div class="gwcvt-dash__split">
+		<div class="gwcvt-split">
 
-			<div class="gwcvt-dash__main">
+			<div class="gwcvt-split__main">
 				<?php gwc_vt_render_dashboard_upcoming(); ?>
 				<?php gwc_vt_render_dashboard_year(); ?>
 			</div>
 
-			<div class="gwcvt-dash__rail">
+			<div class="gwcvt-split__rail">
 				<?php gwc_vt_render_dashboard_actions(); ?>
 				<?php gwc_vt_render_dashboard_worklist( $items ); ?>
 				<?php gwc_vt_render_dashboard_reference(); ?>
@@ -208,7 +208,7 @@ function gwc_vt_render_dashboard_reference(): void {
 	}
 
 	?>
-	<section class="gwcvt-dash__section">
+	<section class="gwcvt-section">
 		<?php gwc_vt_render_reference_checker( GWC_VT_DASHBOARD_PAGE ); ?>
 	</section>
 	<?php
@@ -236,12 +236,12 @@ function gwc_vt_render_dashboard_worklist( array $items ): void {
 	 * all still on the row.
 	 * ─────────────────────────────────────────────────────────────────────── */
 	?>
-	<section class="gwcvt-dash__section">
-		<div class="gwcvt-dash__head">
+	<section class="gwcvt-section">
+		<div class="gwcvt-section__head">
 			<h2><?php esc_html_e( 'Needs you', 'groundwork-common-volunteer-tracker' ); ?></h2>
 		</div>
 
-		<div class="gwcvt-dash__panel gwcvt-docket">
+		<div class="gwcvt-card gwcvt-docket">
 			<?php if ( ! $items && ! gwc_vt_has_any_records() ) : ?>
 				<?php
 				/* Nothing waiting because nothing has started. Telling this person
@@ -405,14 +405,14 @@ function gwc_vt_render_dashboard_upcoming(): void {
 	$titles = gwc_vt_fortnight_titles();
 	$view   = gwc_vt_dashboard_view();
 	?>
-	<section class="gwcvt-dash__section">
-		<div class="gwcvt-dash__head">
+	<section class="gwcvt-section">
+		<div class="gwcvt-section__head">
 			<h2><?php esc_html_e( 'Coming up', 'groundwork-common-volunteer-tracker' ); ?></h2>
 			<?php gwc_vt_render_dashboard_view_toggle( $view ); ?>
 		</div>
 
 		<?php if ( 'list' === $view ) : ?>
-			<div class="gwcvt-dash__panel">
+			<div class="gwcvt-card">
 				<?php foreach ( array_filter( $weeks ) as $when => $ids ) : ?>
 					<?php /* array_filter drops an empty half rather than heading it and leaving it blank: a heading over nothing reads as a fault in the screen. */ ?>
 					<h3 class="gwcvt-shiftweek"><?php echo esc_html( $titles[ $when ] ); ?></h3>
@@ -503,7 +503,7 @@ function gwc_vt_render_dashboard_week_strip( array $shifts, string $today ): voi
 	$weeks  = gwc_vt_fortnight_grid( $today, (int) get_option( 'start_of_week' ) );
 	$titles = gwc_vt_fortnight_titles();
 	?>
-	<div class="gwcvt-dash__panel gwcvt-strip">
+	<div class="gwcvt-card gwcvt-strip">
 		<?php foreach ( $weeks as $week ) : ?>
 			<h3 class="gwcvt-shiftweek"><?php echo esc_html( (string) ( $titles[ $week['title_key'] ] ?? '' ) ); ?></h3>
 
@@ -657,11 +657,11 @@ function gwc_vt_render_dashboard_year(): void {
 	$totals = gwc_vt_org_totals( $from, $to );
 	?>
 	<section>
-		<div class="gwcvt-dash__head">
+		<div class="gwcvt-section__head">
 			<h2><?php esc_html_e( 'This year', 'groundwork-common-volunteer-tracker' ); ?></h2>
 		</div>
 
-		<div class="gwcvt-dash__panel gwcvt-year">
+		<div class="gwcvt-card gwcvt-year">
 			<p class="gwcvt-year__figure">
 				<?php echo esc_html( gwc_vt_format_hours( (int) $totals['verified'] ) ); ?>
 				<span class="gwcvt-year__unit"><?php esc_html_e( 'verified hours', 'groundwork-common-volunteer-tracker' ); ?></span>
@@ -763,12 +763,12 @@ function gwc_vt_render_dashboard_actions(): void {
 		return;
 	}
 	?>
-	<section class="gwcvt-dash__section">
-		<div class="gwcvt-dash__head">
+	<section class="gwcvt-section">
+		<div class="gwcvt-section__head">
 			<h2><?php esc_html_e( 'Quick actions', 'groundwork-common-volunteer-tracker' ); ?></h2>
 		</div>
 
-		<nav class="gwcvt-dash__panel gwcvt-actions" aria-label="<?php esc_attr_e( 'Quick actions', 'groundwork-common-volunteer-tracker' ); ?>">
+		<nav class="gwcvt-card gwcvt-actions" aria-label="<?php esc_attr_e( 'Quick actions', 'groundwork-common-volunteer-tracker' ); ?>">
 			<ul class="gwcvt-actions__list">
 				<?php foreach ( $actions as $action ) : ?>
 					<li><a href="<?php echo esc_url( (string) $action['url'] ); ?>"><?php echo esc_html( (string) $action['label'] ); ?></a></li>

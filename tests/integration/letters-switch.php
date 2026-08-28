@@ -502,20 +502,20 @@ gwc_vt_ls_check(
 	false === strpos( $gwc_vt_ls_records, 'gwcvt-letter-volunteer' )
 );
 
-/* The checker's own input, which is what renders only where the form does.
- * Not the string "gwcvt-reference" any more — that is now also the anchor the
- * link below points AT, so the old marker would be satisfied by the link and
- * report a form that is not there. */
+/* The checker's own input, which is what renders only where the form does. It
+ * is in this screen's rail now: whoever is reading the log is the person a
+ * caller reaches, and sending them to the dashboard for a box that fits beside
+ * the log was a page load to answer a ten-second question. */
 gwc_vt_ls_check(
-	'nor the reference checker, which moved to the dashboard',
-	false === strpos( $gwc_vt_ls_records, 'name="reference"' )
+	'but the reference checker is on it',
+	false !== strpos( $gwc_vt_ls_records, 'name="reference"' )
 );
 
 /* ── And it is not a cul-de-sac ──────────────────────────────────────────────
- * Everything on this screen has already happened, so both things somebody
- * arrives wanting are elsewhere. Saying so in prose was not enough; these are
- * the links that say it. Asserted by destination rather than by wording, so a
- * copy edit does not fail the build and a broken link does.
+ * Everything on this screen has already happened, so the thing somebody arrives
+ * wanting is elsewhere. Saying so in prose was not enough; this is the link
+ * that says it. Asserted by destination rather than by wording, so a copy edit
+ * does not fail the build and a broken link does.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 gwc_vt_ls_check(
@@ -523,9 +523,11 @@ gwc_vt_ls_check(
 	false !== strpos( $gwc_vt_ls_records, 'post_type=' . GWC_VT_VOLUNTEER_TYPE )
 );
 
+/* And no longer a link to the dashboard's copy of the checker, which is what
+ * the second link here used to be: another page for a box six inches away. */
 gwc_vt_ls_check(
-	'and a way to check a reference, landing on the checker itself',
-	false !== strpos( $gwc_vt_ls_records, 'page=' . GWC_VT_DASHBOARD_PAGE . '#gwcvt-reference' )
+	'and does not send anybody to the dashboard to check one',
+	false === strpos( $gwc_vt_ls_records, 'page=' . GWC_VT_DASHBOARD_PAGE . '#gwcvt-reference' )
 );
 
 ob_start();
