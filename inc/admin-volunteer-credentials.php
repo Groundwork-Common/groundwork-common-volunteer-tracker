@@ -27,7 +27,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 add_action( 'add_meta_boxes', 'gwc_vt_add_volunteer_credentials_box' );
-add_action( 'save_post_' . GWC_VT_VOLUNTEER_TYPE, 'gwc_vt_save_volunteer_credential', 10, 2 );
 add_action( 'admin_post_gwc_vt_remove_credential_record', 'gwc_vt_handle_remove_credential_record' );
 add_action( 'admin_notices', 'gwc_vt_credential_record_notice' );
 
@@ -113,8 +112,6 @@ function gwc_vt_render_volunteer_credentials_box( $post ): void {
 		return;
 	}
 
-	wp_nonce_field( 'gwc_vt_save_volunteer_credential', 'gwc_vt_credential_nonce' );
-
 	/* ── What this person holds, not what the organization asks for ───────────
 	 * The table listed every credential defined anywhere and said "not recorded"
 	 * against most of them, so a volunteer who holds one of six read as five
@@ -150,7 +147,16 @@ function gwc_vt_render_volunteer_credentials_box( $post ): void {
 		);
 	}
 
-	gwc_vt_render_record_credential_field( $volunteer_id, $live );
+	if ( gwc_vt_can_record_credentials() ) {
+		gwc_vt_sheet_trigger( 'record-credential', __( 'Record a credential', 'groundwork-common-volunteer-tracker' ) );
+	} else {
+		printf(
+			'<p class="description">%s</p>',
+			esc_html__( 'Recording that somebody holds a credential needs permission to verify hours, which your account does not have.', 'groundwork-common-volunteer-tracker' )
+		);
+	}
+
+	unset( $live );
 }
 
 /**
@@ -285,99 +291,6 @@ function gwc_vt_standing_badge( string $standing ): string {
 		esc_attr( $badges[ $standing ][0] ),
 		esc_html( $badges[ $standing ][1] )
 	);
-}
-
-/**
- * The fields that record one.
- *
- * @param int   $volunteer_id Volunteer post ID.
- * @param int[] $live         Credentials currently in use.
- */
-function gwc_vt_render_record_credential_field( int $volunteer_id, array $live ): void {
-	if ( ! gwc_vt_can_record_credentials() ) {
-		printf(
-			'<p class="description">%s</p>',
-			esc_html__( 'Recording that somebody holds a credential needs permission to verify hours, which your account does not have.', 'groundwork-common-volunteer-tracker' )
-		);
-		return;
-	}
-
-	/* A div, never a p — the same reason the volunteer picker's wrapper is one.
-	 * A list inside a paragraph closes the paragraph and everything open in it,
-	 * silently and with valid-looking markup. */
-	?>
-	<div class="gwcvt-field gwcvt-record-credential">
-		<label for="gwcvt-record-credential"><strong><?php esc_html_e( 'Record one', 'groundwork-common-volunteer-tracker' ); ?></strong></label>
-		<select id="gwcvt-record-credential" name="gwc_vt_record_credential">
-			<option value="0"><?php esc_html_e( '— nothing to record —', 'groundwork-common-volunteer-tracker' ); ?></option>
-			<?php foreach ( $live as $credential_id ) : ?>
-				<?php $credential = gwc_vt_credential( (int) $credential_id ); ?>
-				<?php if ( $credential ) : ?>
-					<option value="<?php echo esc_attr( (string) $credential['id'] ); ?>"><?php echo esc_html( $credential['name'] ); ?></option>
-				<?php endif; ?>
-			<?php endforeach; ?>
-		</select>
-
-		<label for="gwcvt-record-date"><?php esc_html_e( 'Granted on', 'groundwork-common-volunteer-tracker' ); ?></label>
-		<input type="date" id="gwcvt-record-date" name="gwc_vt_record_date" value="<?php echo esc_attr( gwc_vt_today() ); ?>" max="<?php echo esc_attr( gwc_vt_today() ); ?>" />
-
-		<p class="description">
-			<?php esc_html_e( 'The day they actually did it, not the day you are typing. Anything that expires counts from that date, so a class taken in March and entered in June expires in March.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
-	</div>
-	<?php
-
-	/* Nothing is written here — the volunteer's own Update button saves it. Said
-	 * out loud because the box looks like a form and is not one. */
-	printf(
-		'<p class="description">%s</p>',
-		esc_html__( 'Saved when you press Update.', 'groundwork-common-volunteer-tracker' )
-	);
-
-	unset( $volunteer_id );
-}
-
-/**
- * Record whatever the box asked for, on the volunteer's own save.
- *
- * @param int     $post_id The volunteer.
- * @param WP_Post $post    The volunteer.
- */
-function gwc_vt_save_volunteer_credential( $post_id, $post ): void {
-	$post_id = (int) $post_id;
-
-	if ( ! gwc_vt_should_save( $post_id, 'gwc_vt_credential_nonce', 'gwc_vt_save_volunteer_credential' ) ) {
-		return;
-	}
-
-	if ( ! gwc_vt_can_record_credentials() ) {
-		return;
-	}
-
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- gwc_vt_should_save() verified gwc_vt_credential_nonce immediately above.
-	$credential_id = isset( $_POST['gwc_vt_record_credential'] ) ? absint( wp_unslash( $_POST['gwc_vt_record_credential'] ) ) : 0;
-
-	if ( $credential_id < 1 ) {
-		return;
-	}
-
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above; gwc_vt_usable_date() is the validator.
-	$granted = isset( $_POST['gwc_vt_record_date'] ) ? sanitize_text_field( wp_unslash( $_POST['gwc_vt_record_date'] ) ) : '';
-
-	$result = gwc_vt_record_credential( $post_id, $credential_id, $granted );
-
-	/* A refusal has to be said out loud. The rest of the record saved, so the
-	 * screen otherwise reports success for a credential that was not recorded —
-	 * which is the silent correction this plugin has a rule about. It cannot be
-	 * shown from here, because the save redirects; it goes in a transient the
-	 * notice on the next page load reads. */
-	set_transient(
-		'gwc_vt_credential_said_' . get_current_user_id(),
-		is_wp_error( $result ) ? $result->get_error_message() : 'recorded',
-		60
-	);
-
-	unset( $post );
 }
 
 /**

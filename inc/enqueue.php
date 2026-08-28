@@ -205,16 +205,33 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 	 * already rendered, and it only shows and hides it. */
 	if ( in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true )
 		&& $screen
-		&& GWC_VT_VOLUNTEER_TYPE === (string) ( $screen->post_type ?? '' )
-		&& gwc_vt_letters_enabled()
-		&& current_user_can( gwc_vt_cap( 'issue' ) ) ) {
+		&& GWC_VT_VOLUNTEER_TYPE === (string) ( $screen->post_type ?? '' ) ) {
+
+		/* Opening and closing a sheet, which every secondary action on this
+		 * screen now uses. No wp_set_script_translations() call and none
+		 * needed: it has no strings, because every word it shows is markup PHP
+		 * already rendered and it only shows and hides it. */
 		wp_enqueue_script(
-			'gwc-vt-admin-letters-box',
-			GWC_VT_URL . 'assets/js/admin-letters-box.js',
+			'gwc-vt-admin-sheet',
+			GWC_VT_URL . 'assets/js/admin-sheet.js',
 			array(),
-			gwc_vt_asset_version( 'assets/js/admin-letters-box.js' ),
+			gwc_vt_asset_version( 'assets/js/admin-sheet.js' ),
 			true
 		);
+
+		/* And the parts of the letters box that are about letters rather than
+		 * about sheets: pointing the reader's frame somewhere, and filling in
+		 * which letter a delivery is for. Depends on the above in the ordering
+		 * sense — it calls window.gwcVtSheet. */
+		if ( gwc_vt_letters_enabled() && current_user_can( gwc_vt_cap( 'issue' ) ) ) {
+			wp_enqueue_script(
+				'gwc-vt-admin-letters-box',
+				GWC_VT_URL . 'assets/js/admin-letters-box.js',
+				array( 'gwc-vt-admin-sheet' ),
+				gwc_vt_asset_version( 'assets/js/admin-letters-box.js' ),
+				true
+			);
+		}
 	}
 
 	/* The picker appears wherever somebody has to name a volunteer: the entry

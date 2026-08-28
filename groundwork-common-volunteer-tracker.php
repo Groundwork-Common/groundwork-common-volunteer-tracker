@@ -383,6 +383,12 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 	// A volunteer's own history: their shifts, and the letters issued for them.
 	require GWC_VT_DIR . 'inc/admin-volunteer.php';
 
+	/* One way to open a secondary action on a volunteer's record. Required before
+	 * the panels that use it, because they call gwc_vt_render_sheet() as they
+	 * draw. */
+	require GWC_VT_DIR . 'inc/admin-sheet.php';
+	require GWC_VT_DIR . 'inc/admin-volunteer-sheets.php';
+
 	/* And the letters on that record: the drafts somebody has started, the ones
 	 * that have gone out, and the acts that move a row from the first list to the
 	 * second. Split from admin-volunteer.php because it is a feature rather than a

@@ -434,3 +434,71 @@ function gwc_vt_invalidate_from_entry( $post_id ): void {
 
 	gwc_vt_mark_totals_dirty( (int) get_post_meta( $post_id, GWC_VT_ENTRY_VOLUNTEER, true ) );
 }
+
+/**
+ * Record one shift somebody worked.
+ *
+ * ── Why this is a function and not four lines in a handler ───────────────────
+ * The quick-add screen has written entries this way since it was built, inline
+ * in its own handler, and every later way of logging one copied the shape. That
+ * was fine while there was one caller. It stopped being fine the moment a
+ * second wanted the same six meta rows, the retitle, the rollup refresh and the
+ * hook — because a caller that forgets the rollup refresh produces a volunteer
+ * whose totals are quietly wrong, and nothing says so.
+ *
+ * Everything an entry needs to be complete happens here, once.
+ *
+ * ── What it does not do ──────────────────────────────────────────────────────
+ * It does not verify. An entry arrives unverified however it was created, and
+ * staff attesting to it is a separate act by a separate person — that
+ * separation is most of what makes a letter mean anything.
+ *
+ * @param int    $volunteer_id Volunteer post ID.
+ * @param string $date         Y-m-d.
+ * @param int    $minutes      Duration, already parsed.
+ * @param string $activity     What they did.
+ * @param string $supervisor   Who oversaw it.
+ * @param string $source       'staff' or another recorded origin.
+ * @return int The entry's ID, or 0.
+ */
+function gwc_vt_log_one_entry( int $volunteer_id, string $date, int $minutes, string $activity = '', string $supervisor = '', string $source = 'staff' ): int {
+	if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) || $minutes < 1 ) {
+		return 0;
+	}
+
+	$date = gwc_vt_sanitize_date( $date );
+
+	if ( '' === $date ) {
+		return 0;
+	}
+
+	$entry_id = wp_insert_post(
+		array(
+			'post_type'   => GWC_VT_ENTRY_TYPE,
+			'post_status' => 'publish',
+			'post_title'  => 'tmp',
+		)
+	);
+
+	if ( is_wp_error( $entry_id ) || ! $entry_id ) {
+		return 0;
+	}
+
+	$entry_id = (int) $entry_id;
+
+	update_post_meta( $entry_id, GWC_VT_ENTRY_VOLUNTEER, (string) $volunteer_id );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_DATE, $date );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_MINUTES, $minutes );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_ACTIVITY, $activity );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_SUPERVISOR, $supervisor );
+	update_post_meta( $entry_id, GWC_VT_ENTRY_SOURCE, $source );
+
+	gwc_vt_retitle_entry( $entry_id );
+	gwc_vt_refresh_totals( $volunteer_id );
+	gwc_vt_forget_unverified_count();
+
+	/** This filter is documented in inc/meta-box.php */
+	do_action( 'gwc_vt_entry_saved', $entry_id );
+
+	return $entry_id;
+}

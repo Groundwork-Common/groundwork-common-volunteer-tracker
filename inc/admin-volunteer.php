@@ -367,7 +367,15 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 	 * screen and this plugin should not squat on a parameter name that generic
 	 * on somebody else's page. */
 	?>
-	<p class="gwcvt-history__add">
+	<?php
+	/* Two ways in, and only one of them shows at a time. The sheet is the one
+	 * somebody gets: it commits here, without leaving the record. The link is
+	 * what is rendered when the script has not run, and it goes to the entry
+	 * editor with this volunteer already filled in — a longer road to the same
+	 * place, which is the point of writing it this way round. */
+	gwc_vt_sheet_trigger( 'log-hours', __( 'Log hours', 'groundwork-common-volunteer-tracker' ), 'gwcvt-history__add' );
+	?>
+	<p class="gwcvt-history__add" data-gwcvt-sheet-inline>
 		<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE . '&gwc_vt_for=' . $volunteer_id ) ); ?>">
 			<?php esc_html_e( 'Log hours', 'groundwork-common-volunteer-tracker' ); ?>
 		</a>
