@@ -25,3 +25,12 @@ phpunit-*.phar
 node_modules/
 vendor/
 .DS_Store
+
+# What a Playwright run leaves behind: the signed-in session and the fixture map
+# global setup writes, the traces and screenshots kept from failures, and the
+# HTML report. All of it is rebuilt by the next run, and the fixture map in
+# particular is a file full of post IDs that mean nothing on anybody else's
+# database.
+tests/e2e/.state/
+tests/e2e/.artifacts/
+tests/e2e/.report/

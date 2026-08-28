@@ -30,6 +30,16 @@ phpcs.xml.dist
 .phpcs.cache
 vendor
 
+# The browser suite. Same arrangement as the linter above and for the same
+# reason: Playwright is development tooling, installs no runtime dependency,
+# and the plugin loads nothing from node_modules. The specs themselves live in
+# tests/, which is already excluded — these three are the files that sit at the
+# repository root, and `wp dist-archive` reads the working directory rather than
+# git, so an installed node_modules would otherwise add a few hundred megabytes
+# of browser harness to the zip.
+package.json
+package-lock.json
+playwright.config.js
 node_modules
 README.md
 .DS_Store

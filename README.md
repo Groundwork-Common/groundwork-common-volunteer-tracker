@@ -342,6 +342,47 @@ Then the integration scripts, each of which creates and removes its own fixtures
 bin/wpenv run cli -- wp eval-file wp-content/plugins/groundwork-common-volunteer-tracker/tests/integration/letter.php
 ```
 
+### And the browser suite
+
+```bash
+npm install && npx playwright install chromium   # once
+npm run test:e2e
+```
+
+There are three questions, not two. "Is the logic right" is the unit suite,
+against a stubbed WordPress. "Does it actually run" is `tests/integration/`,
+against a real database and a real `WP_REST_Server`. Neither has a browser, so
+neither can see the third: **does a person get through it.**
+
+That question is not decoration here. A sheet whose fields stopped naming the
+form they belong to posts an empty form and says nothing about it. A block whose
+hand-written `edit.asset.php` drifts from its `edit.js` throws in the editor on a
+site whose script loading order differs from the one it was written on, while the
+front of the site goes on working. A destructive control guarded by
+`onclick="return confirm(...)"` cannot be pressed by anything without a browser at
+all. And the public forms' whole defence is that their outcomes are
+indistinguishable *as rendered* — which is a claim about a page, not about a
+message table.
+
+`tests/e2e/` drives every one of the plugin's 45 `admin_post_` handlers, its ten
+admin screens, its five blocks, its five shortcodes, its three REST routes, the
+calendar file, the photograph endpoint and all four public surfaces, in Chromium,
+against the wp-env site. `tests/e2e/README.md` is the account of how it is
+arranged and what it has already been caught by; two things belong here:
+
+- **`tests/e2e/specs/coverage.spec.js` reads the plugin's own source** and fails
+  when a handler, screen, shortcode, block, route or post type is named by no
+  spec. That is the same device the integration job uses when it globs
+  `tests/integration/` rather than listing it, and for the same reason: a
+  hand-kept list of what to cover stops being complete the first time somebody
+  adds something and does not think of it.
+- **npm is now in this repository, on the same terms Composer is.** It installs
+  no runtime dependency, the plugin loads nothing from it, and `package.json`,
+  `package-lock.json`, `playwright.config.js` and `node_modules` are all in
+  `.distignore` beside `composer.json` and `vendor/`. Hard rule 8 in `CLAUDE.md`
+  states the terms; what is still forbidden is anything that would make a build
+  step necessary **to produce the zip**.
+
 ### Why that is `bin/wpenv` and not `npx @wordpress/env`
 
 Everything after the wrapper is passed through untouched, so the two are
@@ -445,6 +486,7 @@ before pushing; the table is what a hosted run would cover.
 | `js` | Does the event grid still renumber a cloned row? The one hand-written script with logic worth checking. |
 | `unit` | Is the logic right? PHPUnit 11 on 8.2, 8.3, 8.4. |
 | `integration` | Does it actually run? Every script in `tests/integration/` under wp-env, on **7.4 and 8.3** — the two ends where the interesting failures are. The workflow globs the directory, so a new script is picked up without being listed anywhere, including here. A script passes only if it **both** exits zero **and** prints `ALL PASS`; see below. |
+| `browser` | Does a person get through it? `tests/e2e/` in Chromium against a wp-env site — the sheets, the blocks, the nonced links, the public forms. Heavier than the rest, since it boots a site and downloads a browser; nothing here runs automatically anyway, so that cost is paid only when somebody asks. Traces from a failure are kept as an artifact. |
 | `version` | Do the header, the constant, `Stable tag` and the changelog still agree? |
 
 **An integration script must exit non-zero when it fails, and the job checks

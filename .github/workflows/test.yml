@@ -238,6 +238,75 @@ jobs:
         if: always()
         run: npx --yes @wordpress/env stop --config=.wp-env.ci.json || true
 
+  # The third question, after "is the logic right" and "does it actually run":
+  # does a person get through it. Chromium against the wp-env site, driving the
+  # real screens.
+  #
+  # It is here rather than only on somebody's laptop for the same reason every
+  # other check is: a check that exists in one place is a check that stops being
+  # run. It is heavier than the rest — a browser download and a booted site — and
+  # nothing in this file runs automatically anyway, so the cost is paid only when
+  # somebody asks for it.
+  browser:
+    name: Does a person get through it?
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+
+      # A current host's PHP. The 7.4 floor is a question about the source, and
+      # `lint` and `integration` already ask it; this job is about the screens.
+      - name: Write a wp-env config
+        run: |
+          cat > .wp-env.ci.json <<'JSON'
+          {
+            "core": null,
+            "phpVersion": "8.3",
+            "plugins": [ "." ],
+            "testsEnvironment": false,
+            "config": {
+              "WP_DEBUG": true,
+              "WP_DEBUG_DISPLAY": true,
+              "SCRIPT_DEBUG": true
+            }
+          }
+          JSON
+
+      - name: Start WordPress
+        run: npx --yes @wordpress/env start --config=.wp-env.ci.json
+
+      - name: Install the harness
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # wp-env's default port, which is what the config above leaves it at.
+      # bin/wpenv pins a different one for local work; the suite is pointed at
+      # whichever it is told about rather than guessing.
+      - name: Run the browser suite
+        env:
+          GWC_VT_E2E_URL: http://localhost:8888
+        run: npm run test:e2e
+
+      - name: Keep the traces from anything that failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright
+          path: |
+            tests/e2e/.report
+            tests/e2e/.artifacts
+          retention-days: 7
+
+      - name: Stop WordPress
+        if: always()
+        run: npx --yes @wordpress/env stop --config=.wp-env.ci.json || true
+
   version:
     name: Version numbers agree
     runs-on: ubuntu-latest

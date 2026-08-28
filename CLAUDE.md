@@ -120,6 +120,39 @@ php phpunit-11.phar --filter VersionTest
 `failOnPhpunitDeprecation`.
 
 ```bash
+npm install && npx playwright install chromium   # once
+bin/wpenv start
+npm run test:e2e                                 # the browser suite
+npm run test:e2e -- blocks --headed              # one file, watchable
+```
+
+**The browser suite is the third question**, after "is the logic right" and
+"does it actually run": *does a person get through it*. It drives real screens
+in Chromium against the wp-env site, and it is the only thing here that can see
+a sheet that does not open, a block that throws in the editor, a nonced link
+that carries the wrong id, or a public form whose two outcomes stopped looking
+identical. `tests/e2e/README.md` is the long version; four things are worth
+knowing before you touch it:
+
+- **It reseeds, and it purges.** Each spec file starts by rebuilding
+  `tests/seed.php` — and, unlike the seed, by deleting **every** record of this
+  plugin's post types first, marked or not. Unmarked leftovers from an old
+  integration run are in the verify queue and push the seeded rows onto page two
+  of a list table, which is a failure that reads exactly like a bug.
+- **Tests inside one file share a site.** The reset is per file, not per test.
+  Two tests that want the same volunteer in different states use different
+  volunteers; the seed has six, in six states, for that.
+- **Nothing is asserted through the back door that could be driven through a
+  screen.** `tests/e2e/support/api.php` is arrange-and-inspect only. An
+  operation that verified an entry by writing its meta would let a spec pass
+  while `gwc_vt_handle_verify_entry()` was broken.
+- **`tests/e2e/specs/coverage.spec.js` reads the plugin's own source** — every
+  `admin_post_` action, every screen slug, every shortcode, block, REST route
+  and post type — and fails when one of them is named by no spec. Adding a
+  handler without a browser test is a red run, which is the same trick the
+  integration job plays by globbing `tests/integration/` rather than listing it.
+
+```bash
 bin/wpenv start
 for f in tests/integration/*.php; do
   bin/wpenv run cli -- wp eval-file \
@@ -442,14 +475,24 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
    `test_the_upgrade_notice_has_an_entry_for_this_version()` has always asserted:
    following the rule exactly as written failed the build.
 8. **Nothing may stand between the source and the shipped plugin.** No build
-   step, no npm, no transpiler, no autoloader: every file that runs on a user's
-   site is a file in this repository, byte for byte. That is what makes
+   step, no transpiler, no autoloader: every file that runs on a user's site is
+   a file in this repository, byte for byte. That is what makes
    `blocks/*/edit.js` hand-written ES5 and `edit.asset.php` hand-written to
-   match. This rule used to read "do not add Composer" and was narrowed when the
-   coding standard was wired into CI — Composer is permitted **for development
-   tooling only**, installs no runtime dependency, and every file it touches is
-   in `.distignore`. If a change would make Composer, npm or a build step
-   necessary to produce the zip, it is out of scope for this plugin.
+   match.
+
+   This rule has been narrowed twice, both times for a development tool and both
+   times on the same terms. It first read "do not add Composer", and Composer
+   arrived with the coding standard. It then read "no npm", and npm arrived with
+   the browser suite — `package.json`, `playwright.config.js` and `node_modules`,
+   all three named in `.distignore` beside `composer.json` and `vendor`.
+
+   The terms are what matter, and they are not negotiable: a development
+   dependency installs **no runtime dependency**, the plugin loads **nothing**
+   from it, and **every file it touches is excluded from the zip**. What is
+   still forbidden is the thing the rule was always about — if a change would
+   make Composer, npm or a build step necessary **to produce the zip**, or put a
+   file on a user's site that is not in this repository byte for byte, it is out
+   of scope for this plugin.
 9. **Every new block editor script needs `wp_set_script_translations()`.**
    Registration is in `inc/block.php`; a handle missing from that loop has its
    strings extracted into the POT and rendered in English forever.
