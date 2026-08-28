@@ -517,6 +517,45 @@ switch ( $gwc_vt_e2e_op ) {
 		gwc_vt_e2e_reply( gwc_vt_e2e_fixtures() );
 		break;
 
+	/* Empty the site without reseeding it — the state a plugin is installed
+	 * into, which is what the welcome notice exists for and the only state it
+	 * appears in. */
+	case 'purge':
+		gwc_vt_e2e_reply( gwc_vt_e2e_purge() );
+		break;
+
+	/* One user's meta: read it, set it, or clear it.
+	 *
+	 * Three explicit modes rather than two inferred ones. The first version
+	 * wrote when a value was given and DELETED otherwise, which made every read
+	 * a destructive one — so the welcome spec asked what the handler had just
+	 * written, erased it in the asking, and reported that the handler wrote
+	 * nothing.
+	 *
+	 * Arrange and inspect either way: the thing under test is the handler that
+	 * writes it. */
+	case 'user.meta':
+		$gwc_vt_e2e_who = get_user_by( 'login', (string) ( $gwc_vt_e2e_args['login'] ?? '' ) );
+
+		if ( ! $gwc_vt_e2e_who ) {
+			gwc_vt_e2e_reply( array( 'error' => 'no such user' ) );
+			break;
+		}
+
+		if ( array_key_exists( 'value', $gwc_vt_e2e_args ) ) {
+			update_user_meta( $gwc_vt_e2e_who->ID, (string) $gwc_vt_e2e_args['key'], $gwc_vt_e2e_args['value'] );
+		} elseif ( ! empty( $gwc_vt_e2e_args['clear'] ) ) {
+			delete_user_meta( $gwc_vt_e2e_who->ID, (string) $gwc_vt_e2e_args['key'] );
+		}
+
+		gwc_vt_e2e_reply(
+			array(
+				'id'    => (int) $gwc_vt_e2e_who->ID,
+				'value' => get_user_meta( $gwc_vt_e2e_who->ID, (string) $gwc_vt_e2e_args['key'], true ),
+			)
+		);
+		break;
+
 	case 'mail.install':
 		gwc_vt_e2e_reply( gwc_vt_e2e_install_mail_trap() );
 		break;
