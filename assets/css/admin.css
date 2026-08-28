@@ -2500,8 +2500,28 @@ a.gwcvt-letters-box__discard:focus {
 	background: rgba(0, 0, 0, .55);
 }
 
-.gwcvt-sheet[hidden] {
+/* ── Closed unless opened, and hidden by the stylesheet ──────────────────────
+   body.js is WordPress's own: it ships every admin page with class="no-js" and
+   swaps it for "js" from a snippet in the head, before anything below the fold
+   has painted.
+
+   So with scripting on, every sheet is hidden before it can flash; with
+   scripting off none of these rules apply and each sheet is simply a block at
+   the foot of the record — a heading, its fields, its buttons — and everything
+   works. That is what lets each sheet be the ONLY copy of its form: rendering
+   an inline fallback as well would duplicate every id inside it, and duplicate
+   ids show up as a label that focuses the wrong field.
+
+   Specificity, since it is the whole mechanism: `body.js .gwcvt-sheet` is
+   (0,2,1) against `.gwcvt-sheet`'s (0,1,0), so the display:flex above loses to
+   this whatever order they appear in. The open rule matches both and comes
+   later, so it wins over the closed one. */
+body.js .gwcvt-sheet {
 	display: none;
+}
+
+body.js .gwcvt-sheet--open {
+	display: flex;
 }
 
 .gwcvt-sheet__panel {

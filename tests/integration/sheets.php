@@ -109,6 +109,32 @@ gwc_vt_sh_check(
 	! preg_match( '/data-gwcvt-sheet="[a-z-]+"[^>]*\shidden/', $GLOBALS['gwc_vt_sh_all'] )
 );
 
+/* ── The other half of that, which shipped broken ────────────────────────────
+ * Not rendering `hidden` only works because the STYLESHEET hides them under
+ * body.js. Those two rules were written and then lost — an assertion later in
+ * the same edit aborted before the file was saved — so every sheet rendered
+ * with `display: flex` and six of them stacked over the record the moment it
+ * opened. Nothing caught it, because the check that existed opened a sheet and
+ * measured it, which is the one state where flex is correct.
+ *
+ * So the rule is asserted where it lives. Reading the stylesheet is crude, and
+ * it is the only thing here that can fail in the direction that matters: PHP
+ * renders these visible on purpose, and CSS is the whole of what closes them. */
+$GLOBALS['gwc_vt_sh_css'] = (string) file_get_contents( GWC_VT_DIR . 'assets/css/admin.css' );
+
+gwc_vt_sh_check(
+	'and the stylesheet is what closes them, under body.js',
+	1 === preg_match( '/body\.js\s+\.gwcvt-sheet\s*\{[^}]*display:\s*none/', $GLOBALS['gwc_vt_sh_css'] )
+		&& 1 === preg_match( '/body\.js\s+\.gwcvt-sheet--open\s*\{[^}]*display:\s*flex/', $GLOBALS['gwc_vt_sh_css'] )
+);
+
+/* And in that order, because both selectors match an open sheet and the later
+ * one wins. Reversed, a sheet could never be opened at all. */
+gwc_vt_sh_check(
+	'with the open rule after the closed one, or nothing could ever open',
+	strpos( $GLOBALS['gwc_vt_sh_css'], 'body.js .gwcvt-sheet--open' ) > strpos( $GLOBALS['gwc_vt_sh_css'], 'body.js .gwcvt-sheet {' )
+);
+
 /* The one that bites hardest. A field that does not name its form is submitted
  * with the volunteer instead, silently, because the parser has already put it
  * there. */
