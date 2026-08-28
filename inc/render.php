@@ -69,7 +69,7 @@ defined( 'ABSPATH' ) || exit;
  * @return string A complete HTML document.
  */
 function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print', array $issued = array() ): string {
-	$body = gwc_vt_letter_body( $letter, $medium );
+	$body = gwc_vt_letter_body( $letter, $medium, ! empty( $issued['faithful'] ) );
 
 	/* Everything a draft does, the print document does — it is the same paper. */
 	$on_paper = 'print' === $medium || 'draft' === $medium;
@@ -77,6 +77,19 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print', 
 	if ( 'email' === $medium ) {
 		$body = gwc_vt_inline_letter_styles( $body );
 	}
+
+	/* The letter reopened from its own log record, rebuilt faithfully — not a
+	 * draft and not a rendering that has drifted, but the document itself. It
+	 * carries no band, because there is nothing to warn about. */
+	$reproduced = ! empty( $issued['faithful'] );
+
+	/* And no print button, either. Putting an issued letter on paper is a
+	 * delivery and has to be recorded, which is what the Print action on the
+	 * record does; a button here would put the same page through the printer
+	 * with nothing in the log to say it went anywhere. A browser can of course
+	 * print any page it is shown — what this avoids is OFFERING the unlogged
+	 * route beside the logged one. */
+	$show_toolbar = $on_paper && ! $issued;
 
 	ob_start();
 	?>
@@ -92,7 +105,7 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print', 
 	<?php endif; ?>
 </head>
 <body class="gwcvt-letter-page">
-	<?php if ( 'draft' === $medium ) : ?>
+	<?php if ( 'draft' === $medium && ! $reproduced ) : ?>
 		<?php
 		/* NOT hidden under @media print, unlike the toolbar below it. A draft
 		 * that loses its banner on paper is an issued letter that nothing
@@ -117,7 +130,7 @@ function gwc_vt_render_letter( GWC_VT_Letter $letter, string $medium = 'print', 
 		</div>
 	<?php endif; ?>
 
-	<?php if ( $on_paper ) : ?>
+	<?php if ( $show_toolbar ) : ?>
 		<?php /* Hidden by the stylesheet under @media print, so it never appears on paper. */ ?>
 		<div class="gwcvt-letter-toolbar">
 			<button type="button" class="gwcvt-print-button" onclick="window.print()">
@@ -222,11 +235,14 @@ function gwc_vt_letter_strings( GWC_VT_Letter $letter ): array {
  *
  * @param GWC_VT_Letter $letter The letter.
  * @param string        $medium 'print' or 'email'.
+ * @param bool          $reproduced Whether this is an issued letter reopened
+ *                                  and rebuilt exactly — which keeps its own
+ *                                  reference rather than printing "none".
  * @return string
  */
-function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium ): string {
+function gwc_vt_letter_body( GWC_VT_Letter $letter, string $medium, bool $reproduced = false ): string {
 	$org       = gwc_vt_org_name();
-	$tokens    = gwc_vt_letter_tokens( $letter, $medium );
+	$tokens    = gwc_vt_letter_tokens( $letter, $medium, $reproduced );
 	$itemize   = (bool) gwc_vt_setting( 'letter_itemize' );
 	$signatory = trim( (string) gwc_vt_setting( 'signatory_name' ) );
 	$title     = trim( (string) gwc_vt_setting( 'signatory_title' ) );
@@ -401,16 +417,25 @@ function gwc_vt_letter_allowed_html(): array {
  * @param GWC_VT_Letter $letter The letter.
  * @param string        $medium 'print', 'email' or 'draft' — a draft has no
  *                              reference, so {reference} says so instead.
+ * @param bool          $reproduced Whether this is an issued letter reopened
+ *                                  and rebuilt exactly — which keeps its own
+ *                                  reference rather than printing "none".
  * @return array<string, string>
  */
-function gwc_vt_letter_tokens( GWC_VT_Letter $letter, string $medium = 'print' ): array {
+function gwc_vt_letter_tokens( GWC_VT_Letter $letter, string $medium = 'print', bool $reproduced = false ): array {
 	/* A draft has no reference, and {reference} is a token an administrator can
 	 * put in the intro, the disclaimer or the reference note — so taking the
 	 * printed reference off the footer is not enough on its own. Every route the
 	 * code can reach the page by goes through this array, which is why the
 	 * substitution happens here rather than in three places that would have to
 	 * agree. */
-	$reference = 'draft' === $medium
+	/* A reopened letter that rebuilt faithfully has its real reference back on
+	 * it — gwc_vt_stamp_issued_letter() put it there — and printing "none" over
+	 * the code a court is holding would be the one substitution that matters
+	 * getting it exactly backwards. It is told apart from a draft by having one
+	 * at all: gwc_vt_build_letter() always mints a reference, but a draft's is
+	 * never written to the log and never printed. */
+	$reference = 'draft' === $medium && ! $reproduced
 		? __( 'none — this copy has not been issued', 'groundwork-common-volunteer-tracker' )
 		: $letter->reference;
 
@@ -535,6 +560,18 @@ function gwc_vt_letter_period( GWC_VT_Letter $letter ): string {
  * @return string
  */
 function gwc_vt_letter_title( GWC_VT_Letter $letter, string $medium = 'print', array $issued = array() ): string {
+	if ( isset( $issued['reference'] ) && ! empty( $issued['faithful'] ) ) {
+		/* Reopened and rebuilt exactly. It is the letter, so it is named the
+		 * way the letter is named — and the print dialog suggests the same
+		 * filename it suggested the day it went out. */
+		return sprintf(
+			/* translators: 1: a volunteer's name, 2: the organization's name. */
+			__( 'Volunteer service verification — %1$s — %2$s', 'groundwork-common-volunteer-tracker' ),
+			$letter->volunteer_name,
+			gwc_vt_org_name()
+		);
+	}
+
 	if ( isset( $issued['reference'] ) ) {
 		return sprintf(
 			/* translators: 1: a volunteer's name, 2: the organization's name. */

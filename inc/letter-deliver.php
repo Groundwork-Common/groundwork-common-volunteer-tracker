@@ -71,6 +71,19 @@ function gwc_vt_handle_letter_issue(): void {
 /**
  * The shared front half of the three delivery handlers.
  *
+ * ── Addressed by record ID, and not by reference ─────────────────────────────
+ * A reference is a digest over what the letter states, so two letters issued on
+ * the same day, for the same volunteer, over the same shifts have the SAME
+ * code. That is correct — they are the same document, and a court ringing up
+ * about either gets the same answer — but it makes the reference a poor way to
+ * say *which row of the log* a delivery belongs to. Looking one up by reference
+ * returns whichever row the query happened to order first, and the delivery
+ * would be recorded against a letter nobody touched.
+ *
+ * The document would still be right, which is what makes this the kind of bug
+ * that survives: everything a human looks at is correct and the audit trail
+ * quietly points at the wrong row. So deliveries name the record.
+ *
  * @param string $action The admin_post action, which is also the nonce action.
  * @return array{record:array, letter:GWC_VT_Letter, request:array}
  */
@@ -86,19 +99,19 @@ function gwc_vt_delivery_request( string $action ): array {
 	gwc_vt_require_cap( 'issue' );
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- named in the nonce action checked immediately below.
-	$reference = isset( $_REQUEST['reference'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['reference'] ) ) : '';
+	$record_id = isset( $_REQUEST['record'] ) ? absint( wp_unslash( $_REQUEST['record'] ) ) : 0;
 
-	check_admin_referer( $action . '_' . $reference );
+	check_admin_referer( $action . '_' . $record_id );
 
-	$record = gwc_vt_find_letter_record( $reference );
-
-	if ( ! is_array( $record ) ) {
+	if ( GWC_VT_LETTER_TYPE !== get_post_type( $record_id ) ) {
 		wp_die(
-			esc_html__( 'No letter was issued with that reference.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'That letter is not in the log.', 'groundwork-common-volunteer-tracker' ),
 			esc_html__( 'Not found', 'groundwork-common-volunteer-tracker' ),
 			array( 'response' => 404 )
 		);
 	}
+
+	$record = gwc_vt_letter_record( $record_id );
 
 	$letter = gwc_vt_rebuild_issued_letter( $record );
 
@@ -121,11 +134,10 @@ function gwc_vt_delivery_request( string $action ): array {
 		gwc_vt_letters_redirect( 'stale', $request );
 	}
 
-	/* The code it was issued under, not the one the rebuild just minted. They
-	 * digest the same facts — that is what being faithful means — but the code
-	 * also carries the day it was issued, and the document a court is holding
-	 * says that day. */
-	$letter->reference = (string) $record['reference'];
+	/* The code and the date it was issued under, not the ones the rebuild just
+	 * minted. Only now, and never before the check above — see the note on
+	 * gwc_vt_stamp_issued_letter(). */
+	gwc_vt_stamp_issued_letter( $record, $letter );
 
 	return array(
 		'record'  => $record,
@@ -227,23 +239,24 @@ function gwc_vt_handle_deliver_email(): void {
 /**
  * A nonced URL for delivering an issued letter.
  *
- * The nonce action carries the reference, so one minted for a delivery of one
- * letter cannot be replayed against another.
+ * The nonce action carries the record ID, so one minted for a delivery of one
+ * letter cannot be replayed against another — and the ID rather than the
+ * reference, for the reason set out on gwc_vt_delivery_request().
  *
  * @param string $action    admin_post action.
- * @param string $reference The letter's reference code.
+ * @param int    $record_id The log record's post ID.
  * @return string
  */
-function gwc_vt_delivery_url( string $action, string $reference ): string {
+function gwc_vt_delivery_url( string $action, int $record_id ): string {
 	return wp_nonce_url(
 		add_query_arg(
 			array(
-				'action'    => $action,
-				'reference' => $reference,
+				'action' => $action,
+				'record' => $record_id,
 			),
 			admin_url( 'admin-post.php' )
 		),
-		$action . '_' . $reference
+		$action . '_' . $record_id
 	);
 }
 

@@ -632,6 +632,132 @@ gwc_vt_ld_check(
 	gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_oldrec'] ) instanceof GWC_VT_Letter
 );
 
+echo "\n── 12. A delivery is dated when the letter was issued ───────────────\n";
+
+/* The bug this section exists for: gwc_vt_build_letter() stamps issued_at with
+ * now, because it has no idea it is reproducing something rather than producing
+ * it. A letter printed a week after issue was therefore dated the day it was
+ * printed, and stated a period ending that day, while the log and the box said
+ * otherwise. The reference digest does not cover the date, so nothing caught
+ * it — the delivery was "faithful" and wrongly dated at the same time. */
+wp_update_post(
+	array(
+		'ID'            => $GLOBALS['gwc_vt_ld_rec_id'],
+		'post_date'     => '2026-04-20 09:00:00',
+		'post_date_gmt' => '2026-04-20 09:00:00',
+	)
+);
+
+$GLOBALS['gwc_vt_ld_dated'] = gwc_vt_letter_record( $GLOBALS['gwc_vt_ld_rec_id'] );
+$GLOBALS['gwc_vt_ld_reb']   = gwc_vt_rebuild_issued_letter( $GLOBALS['gwc_vt_ld_dated'] );
+
+gwc_vt_ld_check(
+	'a fresh rebuild is dated now, which is why it has to be stamped',
+	gmdate( 'Y-m-d', $GLOBALS['gwc_vt_ld_reb']->issued_at ) !== '2026-04-20',
+	gmdate( 'Y-m-d', $GLOBALS['gwc_vt_ld_reb']->issued_at )
+);
+
+/* Checked BEFORE stamping, and the order is the whole point — see the note on
+ * gwc_vt_stamp_issued_letter(). Stamping first would compare the record against
+ * itself and answer "faithful" for every letter however far the records had
+ * moved, which is the verifier-that-always-says-yes this plugin warns about,
+ * and worse here because this one gates whether a document may be sent. */
+gwc_vt_ld_check(
+	'and is checked before it is stamped',
+	gwc_vt_rebuild_is_faithful( $GLOBALS['gwc_vt_ld_dated'], $GLOBALS['gwc_vt_ld_reb'] )
+);
+
+gwc_vt_stamp_issued_letter( $GLOBALS['gwc_vt_ld_dated'], $GLOBALS['gwc_vt_ld_reb'] );
+
+gwc_vt_ld_check(
+	'stamping puts the log’s own date back on it',
+	'2026-04-20' === gmdate( 'Y-m-d', $GLOBALS['gwc_vt_ld_reb']->issued_at ),
+	gmdate( 'Y-m-d', $GLOBALS['gwc_vt_ld_reb']->issued_at )
+);
+
+gwc_vt_ld_check(
+	'and the log’s own reference',
+	$GLOBALS['gwc_vt_ld_dated']['reference'] === $GLOBALS['gwc_vt_ld_reb']->reference,
+	$GLOBALS['gwc_vt_ld_reb']->reference
+);
+
+/* The document says it too, in both the places it prints a date. */
+$GLOBALS['gwc_vt_ld_page'] = gwc_vt_render_letter(
+	$GLOBALS['gwc_vt_ld_reb'],
+	'draft',
+	array_merge( $GLOBALS['gwc_vt_ld_dated'], array( 'faithful' => true ) )
+);
+
+/* Counted rather than merely present: the date is printed in the letterhead,
+ * in the period sentence and in the timestamp, and the bug put today's date in
+ * every one of them. Asserting the day it was rendered appears nowhere is the
+ * half that would have failed before. */
+/* The period sentence, checked on its own rather than by searching the page:
+ * "today" appears legitimately in the attestation beside every shift verified
+ * today, so a whole-document search for it proves nothing. The period is where
+ * the bug showed, and where it must not. */
+gwc_vt_ld_check(
+	'and the period sentence names the issue date, not the day it was rendered',
+	false !== strpos( gwc_vt_letter_period( $GLOBALS['gwc_vt_ld_reb'] ), gwc_vt_display_date( '2026-04-20' ) )
+		&& false === strpos( gwc_vt_letter_period( $GLOBALS['gwc_vt_ld_reb'] ), gwc_vt_display_date( gmdate( 'Y-m-d' ) ) ),
+	gwc_vt_letter_period( $GLOBALS['gwc_vt_ld_reb'] )
+);
+
+/* And the document itself, which prints it in the letterhead as well. */
+gwc_vt_ld_check(
+	'and so does the document, more than once',
+	substr_count( $GLOBALS['gwc_vt_ld_page'], gwc_vt_display_date( '2026-04-20' ) ) >= 2,
+	substr_count( $GLOBALS['gwc_vt_ld_page'], gwc_vt_display_date( '2026-04-20' ) ) . ' mentions of the issue date'
+);
+
+/* Reopened and reproduced exactly, so it is the letter: its real reference, no
+ * band, and no print button — putting an issued letter on paper is a delivery
+ * and has to be recorded, so the unlogged route is not offered beside the
+ * logged one. */
+gwc_vt_ld_check(
+	'a faithful reproduction carries its reference and no draft band',
+	false !== strpos( $GLOBALS['gwc_vt_ld_page'], $GLOBALS['gwc_vt_ld_dated']['reference'] )
+		&& false === strpos( $GLOBALS['gwc_vt_ld_page'], 'Draft — not issued' )
+		&& false === strpos( $GLOBALS['gwc_vt_ld_page'], 'has not been issued' )
+);
+
+gwc_vt_ld_check(
+	'and offers no print button of its own',
+	false === strpos( $GLOBALS['gwc_vt_ld_page'], 'gwcvt-print-button' )
+);
+
+echo "\n── 13. A delivery names the record, not the reference ───────────────\n";
+
+/* A reference is a digest over what the letter states, so two letters issued on
+ * the same day for the same volunteer over the same shifts have the SAME code.
+ * That is correct, and it makes the reference useless for saying which row of
+ * the log a delivery belongs to — the lookup returns whichever the query orders
+ * first, and the delivery lands on a letter nobody touched. The document would
+ * still be right, which is exactly what would have kept this hidden. */
+$GLOBALS['gwc_vt_ld_twin'] = gwc_vt_log_letter( gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_iss'] ) );
+$GLOBALS['gwc_vt_ld_twin2'] = gwc_vt_log_letter( gwc_vt_build_letter( $GLOBALS['gwc_vt_ld_iss'] ) );
+
+gwc_vt_ld_check(
+	'two letters issued over the same shifts share a reference',
+	get_the_title( $GLOBALS['gwc_vt_ld_twin'] ) === get_the_title( $GLOBALS['gwc_vt_ld_twin2'] )
+		&& $GLOBALS['gwc_vt_ld_twin'] !== $GLOBALS['gwc_vt_ld_twin2'],
+	get_the_title( $GLOBALS['gwc_vt_ld_twin'] )
+);
+
+gwc_vt_ld_check(
+	'so a delivery URL names the record it belongs to',
+	false !== strpos( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_print', $GLOBALS['gwc_vt_ld_twin2'] ), 'record=' . $GLOBALS['gwc_vt_ld_twin2'] )
+		&& false === strpos( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_print', $GLOBALS['gwc_vt_ld_twin2'] ), 'reference=' )
+);
+
+gwc_vt_log_delivery( $GLOBALS['gwc_vt_ld_twin2'], 'print' );
+
+gwc_vt_ld_check(
+	'and lands on that one and not its twin',
+	1 === count( gwc_vt_letter_deliveries( $GLOBALS['gwc_vt_ld_twin2'] ) )
+		&& array() === gwc_vt_letter_deliveries( $GLOBALS['gwc_vt_ld_twin'] )
+);
+
 /**
  * Take everything this script made back out.
  */

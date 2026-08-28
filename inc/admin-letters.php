@@ -1046,18 +1046,48 @@ function gwc_vt_render_letterhead_warning(): void {
 function gwc_vt_handle_letter_preview(): void {
 	$request = gwc_vt_letter_request();
 
-	/* Opening a letter that already went out. Covered by the same nonce as the
-	 * rest of the request; it changes nothing but the band across the top, which
-	 * has to say "this is not the copy they hold" rather than "this is a draft".
-	 * A reference naming nothing falls through to the draft band, which is the
-	 * safe direction: it claims less, not more. */
+	$letter = $request['letter'];
+
+	/* ── Opening a letter that already went out ──────────────────────────────
+	 * Covered by the same nonce as the rest of the request. It is rebuilt from
+	 * the entries the letter listed, exactly as a delivery is, so that reading
+	 * one and printing one show the same document — they used to differ, which
+	 * is an unhelpful surprise on the two actions that sit next to each other.
+	 *
+	 * Only when that rebuild no longer matches does this fall back to today's
+	 * records and band the page. A reference naming nothing falls through to
+	 * the draft band, which is the safe direction: it claims less, not more. */
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- gwc_vt_letter_request() checked the nonce over this whole request.
-	$reference = isset( $_REQUEST['reference'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['reference'] ) ) : '';
-	$issued    = '' !== $reference ? gwc_vt_find_letter_record( $reference ) : array();
+	$record_id = isset( $_REQUEST['record'] ) ? absint( wp_unslash( $_REQUEST['record'] ) ) : 0;
+
+	/* The record, not the reference: two letters issued the same day over the
+	 * same shifts share a code, so a reference cannot say which row of the log
+	 * is being opened. See gwc_vt_delivery_request(). */
+	$issued = GWC_VT_LETTER_TYPE === get_post_type( $record_id )
+		? gwc_vt_letter_record( $record_id )
+		: array();
+
+	if ( $issued ) {
+		$rebuild = gwc_vt_rebuild_issued_letter( $issued );
+
+		$issued['faithful'] = $rebuild instanceof GWC_VT_Letter
+			&& gwc_vt_rebuild_is_faithful( $issued, $rebuild );
+
+		if ( $issued['faithful'] ) {
+			/* It IS the letter — reference, date and all — so it is rendered as
+			 * the document it is, and there is nothing for a band to warn
+			 * about. Only the stamp puts the log's own identity back on; see
+			 * the note on gwc_vt_stamp_issued_letter() for why that happens
+			 * after the check and never before it. */
+			gwc_vt_stamp_issued_letter( $issued, $rebuild );
+
+			$letter = $rebuild;
+		}
+	}
 
 	gwc_vt_private_document_headers();
 
-	echo gwc_vt_render_letter( $request['letter'], 'draft', is_array( $issued ) ? $issued : array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
+	echo gwc_vt_render_letter( $letter, 'draft', $issued ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a complete document, escaped as it was assembled in inc/render.php.
 	exit;
 }
 

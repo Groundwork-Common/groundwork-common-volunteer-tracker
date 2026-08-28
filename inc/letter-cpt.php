@@ -394,21 +394,28 @@ function gwc_vt_letter_record( int $record_id ): array {
 	$ids = (string) get_post_meta( $record_id, GWC_VT_LETTER_ENTRY_IDS, true );
 
 	return array(
-		'id'           => $record_id,
-		'reference'    => (string) get_the_title( $record_id ),
-		'entry_ids'    => '' === $ids ? array() : array_map( 'intval', explode( ',', $ids ) ),
-		'covers_from'  => gwc_vt_letter_covers_from( $record_id ),
-		'deliveries'   => gwc_vt_letter_deliveries( $record_id ),
-		'volunteer_id' => (int) get_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, true ),
-		'issued_by'    => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),
-		'medium'       => (string) get_post_meta( $record_id, GWC_VT_LETTER_MEDIUM, true ),
-		'recipient'    => (string) get_post_meta( $record_id, GWC_VT_LETTER_RECIPIENT, true ),
-		'from'         => (string) get_post_meta( $record_id, GWC_VT_LETTER_RANGE_FROM, true ),
-		'to'           => (string) get_post_meta( $record_id, GWC_VT_LETTER_RANGE_TO, true ),
-		'minutes'      => (int) get_post_meta( $record_id, GWC_VT_LETTER_MINUTES, true ),
-		'entries'      => (int) get_post_meta( $record_id, GWC_VT_LETTER_ENTRIES, true ),
-		'sent_ok'      => (bool) get_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, true ),
-		'issued_at'    => (string) get_post_field( 'post_date', $record_id ),
+		'id'            => $record_id,
+		'reference'     => (string) get_the_title( $record_id ),
+		'entry_ids'     => '' === $ids ? array() : array_map( 'intval', explode( ',', $ids ) ),
+		'covers_from'   => gwc_vt_letter_covers_from( $record_id ),
+		'deliveries'    => gwc_vt_letter_deliveries( $record_id ),
+		'volunteer_id'  => (int) get_post_meta( $record_id, GWC_VT_LETTER_VOLUNTEER, true ),
+		'issued_by'     => (int) get_post_meta( $record_id, GWC_VT_LETTER_BY, true ),
+		'medium'        => (string) get_post_meta( $record_id, GWC_VT_LETTER_MEDIUM, true ),
+		'recipient'     => (string) get_post_meta( $record_id, GWC_VT_LETTER_RECIPIENT, true ),
+		'from'          => (string) get_post_meta( $record_id, GWC_VT_LETTER_RANGE_FROM, true ),
+		'to'            => (string) get_post_meta( $record_id, GWC_VT_LETTER_RANGE_TO, true ),
+		'minutes'       => (int) get_post_meta( $record_id, GWC_VT_LETTER_MINUTES, true ),
+		'entries'       => (int) get_post_meta( $record_id, GWC_VT_LETTER_ENTRIES, true ),
+		'sent_ok'       => (bool) get_post_meta( $record_id, GWC_VT_LETTER_SENT_OK, true ),
+		'issued_at'     => (string) get_post_field( 'post_date', $record_id ),
+		/* The same instant in UTC. issued_at is site-local, so putting it
+		 * through strtotime() — which runs in UTC, because WordPress sets PHP's
+		 * timezone there — moves it by the site's offset and can land the
+		 * rebuilt letter on the wrong calendar day. Anything needing a timestamp
+		 * takes this one; anything needing the calendar date takes the first ten
+		 * characters of the other, which never needed converting. */
+		'issued_at_gmt' => (string) get_post_field( 'post_date_gmt', $record_id ),
 	);
 }
 

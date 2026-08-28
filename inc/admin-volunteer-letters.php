@@ -344,12 +344,13 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 	$from         = (string) $record['from'];
 	$to           = (string) $record['to'];
 	$reference    = (string) $record['reference'];
+	$record_id    = (int) $record['id'];
 	$deliveries   = (array) ( $record['deliveries'] ?? array() );
 
 	/* Both ends, from the record rather than from a rebuild: the start was
 	 * stored at issue and the end is the day it was issued. The same two dates
 	 * the document itself prints. */
-	$issued_on = (string) wp_date( 'Y-m-d', (int) strtotime( (string) $record['issued_at'] ) );
+	$issued_on = substr( (string) $record['issued_at'], 0, 10 );
 	?>
 	<tr class="gwcvt-letters-box__row gwcvt-letters-box__row--issued">
 		<td><?php echo esc_html( gwc_vt_letter_period_words( $from, $to, (string) ( $record['covers_from'] ?? '' ), $issued_on ) ); ?></td>
@@ -396,7 +397,7 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 			 * a letter that demonstrably went out. */
 			?>
 			<a
-				href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $from, $to, 0, array( 'reference' => $reference ) ) ); ?>"
+				href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $from, $to, 0, array( 'record' => $record_id ) ) ); ?>"
 				target="_blank"
 				rel="noopener noreferrer"
 				data-gwcvt-letter-open
@@ -405,21 +406,21 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
 				<?php esc_html_e( 'Open', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 			<span aria-hidden="true"> | </span>
-			<a href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_print', $reference ) ); ?>" target="_blank" rel="noopener noreferrer" data-gwcvt-letter-deliver>
+			<a href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_print', $record_id ) ); ?>" target="_blank" rel="noopener noreferrer" data-gwcvt-letter-deliver>
 				<?php esc_html_e( 'Print', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 			<span aria-hidden="true"> | </span>
 			<a
-				href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_post', $reference ) ); ?>"
-				data-gwcvt-letter-post="<?php echo esc_attr( $reference ); ?>"
+				href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_post', $record_id ) ); ?>"
+				data-gwcvt-letter-post="<?php echo esc_attr( (string) $record_id ); ?>"
 			>
 				<?php esc_html_e( 'Post', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
 			<span aria-hidden="true"> | </span>
 			<a
-				href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_email', $reference ) ); ?>"
+				href="<?php echo esc_url( gwc_vt_delivery_url( 'gwc_vt_letter_deliver_email', $record_id ) ); ?>"
 				data-gwcvt-letter-mail="issued"
-				data-gwcvt-letter-reference="<?php echo esc_attr( $reference ); ?>"
+				data-gwcvt-letter-record="<?php echo esc_attr( (string) $record_id ); ?>"
 			>
 				<?php esc_html_e( 'Email', 'groundwork-common-volunteer-tracker' ); ?>
 			</a>
