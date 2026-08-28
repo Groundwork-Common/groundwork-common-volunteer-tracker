@@ -310,24 +310,6 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 	usort( $rows, static fn( array $a, array $b ): int => strcmp( $b['date'], $a['date'] ) );
 
 	?>
-	<?php
-	/* ── The way from a person to their hours ────────────────────────────────
-	 * This panel listed what somebody had done and offered no way to record
-	 * anything more, so the route from "I am looking at Dana" to "Dana worked
-	 * on Tuesday" was: leave, find Hours, start a blank entry, and search for
-	 * Dana again. The one thing this screen knows is exactly the thing that
-	 * form would ask for.
-	 *
-	 * gwc_vt_for rather than volunteer, because the entry editor is a core
-	 * screen and the plugin should not be squatting on a parameter name that
-	 * generic on it. */
-	?>
-	<p class="gwcvt-history__add">
-		<a class="button" href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE . '&gwc_vt_for=' . $volunteer_id ) ); ?>">
-			<?php esc_html_e( 'Log hours for them', 'groundwork-common-volunteer-tracker' ); ?>
-		</a>
-	</p>
-
 	<table class="widefat striped gwcvt-history">
 		<thead>
 			<tr>
@@ -369,6 +351,27 @@ function gwc_vt_render_volunteer_hours_box( $post ): void {
 		</tbody>
 	</table>
 
+	<?php
+	/* ── The way from a person to their hours ────────────────────────────────
+	 * The panel listed what somebody had done and offered no way to record
+	 * anything more, so the route from "I am looking at Dana" to "Dana worked on
+	 * Tuesday" was: leave, find Hours, start a blank entry, and search for Dana
+	 * again. The one thing this screen knows is what that form asks for first.
+	 *
+	 * Under the list rather than over it, and a link rather than a button: the
+	 * panel is here to be read, and the thing you do afterwards belongs after
+	 * it. A button would compete with the heading for the first thing the eye
+	 * lands on, which the reading is.
+	 *
+	 * gwc_vt_for rather than volunteer, because the entry editor is a core
+	 * screen and this plugin should not squat on a parameter name that generic
+	 * on somebody else's page. */
+	?>
+	<p class="gwcvt-history__add">
+		<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE . '&gwc_vt_for=' . $volunteer_id ) ); ?>">
+			<?php esc_html_e( 'Log hours', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
+	</p>
 	<?php
 }
 

@@ -2698,8 +2698,13 @@ a.gwcvt-letters-box__discard:focus {
 	margin-top: 12px;
 }
 
-/* The way from a person to their hours. Above the table rather than below it,
-   because it is what somebody came here to do, not a footnote to the list. */
+
+/* Under the list, not over it: the panel is here to be read, and the thing you
+   do afterwards belongs after it. A link rather than a button for the same
+   reason — a button competes with the heading for the first thing the eye
+   lands on, which is the reading. */
 .gwcvt-history__add {
-	margin: 12px;
+	margin: 0;
+	padding: 10px 12px;
+	border-top: 1px solid #dcdcde;
 }

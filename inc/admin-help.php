@@ -656,7 +656,7 @@ function gwc_vt_add_volunteer_letters_help( $screen ): void {
 		'gwc-vt-help-writing',
 		__( 'Writing a letter', 'groundwork-common-volunteer-tracker' ),
 		array(
-			__( 'Every letter for this person lives in <strong>Verification letters</strong> below: the ones you have started, and the ones that have gone out. Select <strong>Start a letter</strong> to begin one.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Every letter for this person lives in <strong>Verification letters</strong> below: the ones you have started, and the ones that have gone out. Select <strong>Draft a verification letter</strong> to begin one.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Choose <strong>Everything on record</strong>, or <strong>A period</strong> when a court or a school asked about particular months. Leaving it on everything covers their first shift to the day you started the draft, and the letter names both of those dates rather than claiming to cover all of their time.', 'groundwork-common-volunteer-tracker' ),
 			__( 'A draft is fixed at the moment you make it. It states what you had verified that day, so what you read on the draft is what the letter will say — and a shift verified afterwards will not join it. If hours are still waiting to be verified, the row says so; verify them and start another draft.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Select <strong>Open</strong> to read the letter a draft would produce. Reading one records nothing and sends nothing.', 'groundwork-common-volunteer-tracker' ),

@@ -188,7 +188,7 @@ function gwc_vt_volunteer_letters_notice(): void {
  * All three are built so the screen works with the script absent, and the
  * script takes things AWAY rather than adding them:
  *
- *   The adder renders open, and "Start a letter" renders hidden. The script
+ *   The adder renders open, and its button renders hidden. The script
  *   unhides the button and folds the panel. A reader without it gets the form.
  *
  *   "Open" is a plain link to the letter. The script intercepts it and shows the
@@ -214,7 +214,7 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 	if ( 'auto-draft' === get_post_status( $volunteer_id ) ) {
 		printf(
 			'<p class="description">%s</p>',
-			esc_html__( 'Save this volunteer, then start a letter for them.', 'groundwork-common-volunteer-tracker' )
+			esc_html__( 'Save this volunteer first.', 'groundwork-common-volunteer-tracker' )
 		);
 		return;
 	}
@@ -251,7 +251,7 @@ function gwc_vt_render_volunteer_letters_box( $post ): void {
 				<?php if ( ! $drafts && ! $issued ) : ?>
 					<tr>
 						<td colspan="5" class="description">
-							<?php esc_html_e( 'No letters yet. Start one when a court or a school asks for proof of somebody’s service.', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php esc_html_e( 'No letters yet.', 'groundwork-common-volunteer-tracker' ); ?>
 						</td>
 					</tr>
 				<?php endif; ?>
@@ -344,7 +344,7 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 					<?php
 					printf(
 						/* translators: %s: a duration, e.g. "3". */
-						esc_html__( '%s of their time is not verified, and this draft will not pick it up. Verify it and start another.', 'groundwork-common-volunteer-tracker' ),
+						esc_html__( '%s not verified — this draft will not include it.', 'groundwork-common-volunteer-tracker' ),
 						esc_html( gwc_vt_format_hours( $waiting ) )
 					);
 					?>
@@ -355,7 +355,7 @@ function gwc_vt_render_letter_draft_row( array $draft ): void {
 		<td class="gwcvt-letters-box__actions">
 			<?php if ( $empty ) : ?>
 				<?php /* No issue action at all, and a line saying what would bring one back — an empty actions cell reads as a row somebody has broken. */ ?>
-				<div class="description"><?php esc_html_e( 'Verify some hours, and this can be issued.', 'groundwork-common-volunteer-tracker' ); ?></div>
+				<div class="description"><?php esc_html_e( 'Verify some hours first.', 'groundwork-common-volunteer-tracker' ); ?></div>
 			<?php else : ?>
 				<a
 					href="<?php echo esc_url( gwc_vt_letter_action_url( 'gwc_vt_letter_preview', $volunteer_id, $draft['from'], $draft['to'], (int) $draft['id'] ) ); ?>"
@@ -490,7 +490,7 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
  * "Start", not "Add". You are not adding a letter to a collection — nothing has
  * been written yet, and the thing that appears is a draft you will come back to
  * and issue later. Every other word in this feature already said so: the notice
- * says "Draft started", the guide's task is "Start a letter", the handler is
+ * says "Draft started", the guide's task is drafting one, the handler is
  * gwc_vt_handle_add_letter_draft() but the form it posts is #gwcvt-start-letter.
  * The button was the only place still saying add.
  *
@@ -498,7 +498,7 @@ function gwc_vt_render_letter_issued_row( array $record ): void {
  * A meta box is rendered inside wp-admin's own <form id="post">, and a form
  * inside a form is not something HTML has. The parser does not complain; it
  * drops the inner tags and leaves the fields behind, still on the page, now
- * belonging to the post form. So "Start a letter" looked right, rendered right,
+ * belonging to the post form. So the button looked right, rendered right,
  * and saved the volunteer.
  *
  * The fix is the HTML5 `form` attribute: the fields live here, the form element
@@ -518,9 +518,9 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 		<?php /* Hidden until the script unhides it — see the note above the box. */ ?>
 		<p class="gwcvt-letters-box__open" data-gwcvt-letters-open hidden>
 			<button type="button" class="button button-primary" data-gwcvt-letters-add>
-				<?php esc_html_e( 'Start a letter', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'Draft a verification letter', 'groundwork-common-volunteer-tracker' ); ?>
 			</button>
-			<span class="description"><?php esc_html_e( 'Saved as a draft. Nothing is sent and nothing is logged until you issue it.', 'groundwork-common-volunteer-tracker' ); ?></span>
+			<span class="description"><?php esc_html_e( 'Nothing is sent until you issue it.', 'groundwork-common-volunteer-tracker' ); ?></span>
 		</p>
 
 		<div class="gwcvt-letters-box__panel" data-gwcvt-letters-panel>
@@ -536,7 +536,7 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 						<input type="radio" form="gwcvt-start-letter" name="gwc_vt_period" value="all" checked data-gwcvt-letters-period="all" />
 						<?php esc_html_e( 'Everything on record', 'groundwork-common-volunteer-tracker' ); ?>
 					</label>
-					<span class="description"><?php esc_html_e( 'From their first shift to the day it is issued. The letter names both dates.', 'groundwork-common-volunteer-tracker' ); ?></span>
+					<span class="description"><?php esc_html_e( 'Their first shift to today.', 'groundwork-common-volunteer-tracker' ); ?></span>
 				</div>
 
 				<div class="gwcvt-letters-box__choice">
@@ -544,9 +544,7 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 						<input type="radio" form="gwcvt-start-letter" name="gwc_vt_period" value="range" data-gwcvt-letters-period="range" />
 						<?php esc_html_e( 'A period', 'groundwork-common-volunteer-tracker' ); ?>
 					</label>
-					<span class="description"><?php esc_html_e( 'For a court or a school that asked about particular months.', 'groundwork-common-volunteer-tracker' ); ?></span>
-
-					<span class="gwcvt-letters-box__dates" data-gwcvt-letters-dates>
+						<span class="gwcvt-letters-box__dates" data-gwcvt-letters-dates>
 						<label for="gwcvt-draft-from-<?php echo esc_attr( (string) $volunteer_id ); ?>"><?php esc_html_e( 'From', 'groundwork-common-volunteer-tracker' ); ?></label>
 						<input type="date" form="gwcvt-start-letter" id="gwcvt-draft-from-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="from" />
 						<label for="gwcvt-draft-to-<?php echo esc_attr( (string) $volunteer_id ); ?>"><?php esc_html_e( 'To', 'groundwork-common-volunteer-tracker' ); ?></label>
@@ -569,7 +567,7 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 					</label><br />
 					<textarea form="gwcvt-start-letter" id="gwcvt-draft-addressee-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="addressee" rows="3" class="large-text"
 						placeholder="<?php esc_attr_e( 'Officer J. Smith, Richmond County Probation', 'groundwork-common-volunteer-tracker' ); ?>"></textarea>
-					<span class="description"><?php esc_html_e( 'Optional. Leave empty for a letter you are handing to the volunteer.', 'groundwork-common-volunteer-tracker' ); ?></span>
+					<span class="description"><?php esc_html_e( 'Only if it is going to somebody other than the volunteer.', 'groundwork-common-volunteer-tracker' ); ?></span>
 				</p>
 
 				<p>
@@ -578,14 +576,14 @@ function gwc_vt_render_letter_draft_form( int $volunteer_id ): void {
 					</label><br />
 					<input type="text" form="gwcvt-start-letter" id="gwcvt-draft-matter-<?php echo esc_attr( (string) $volunteer_id ); ?>" name="matter" class="regular-text"
 						placeholder="<?php esc_attr_e( 'e.g. case 2026-CR-1234', 'groundwork-common-volunteer-tracker' ); ?>" />
-					<span class="description"><?php esc_html_e( 'Optional. Printed as a “Re:” line so the letter can be filed. Nothing a court required of them ever appears on a letter.', 'groundwork-common-volunteer-tracker' ); ?></span>
+					<span class="description"><?php esc_html_e( 'Printed as a “Re:” line.', 'groundwork-common-volunteer-tracker' ); ?></span>
 				</p>
 			</div>
 
 			<p class="gwcvt-letters-box__foot">
 				<button type="submit" form="gwcvt-start-letter" class="button button-primary"><?php esc_html_e( 'Save the draft', 'groundwork-common-volunteer-tracker' ); ?></button>
 				<button type="button" class="button" data-gwcvt-letters-cancel hidden><?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?></button>
-				<span class="description"><?php esc_html_e( 'The figures are worked out when you open it, and again when you issue it.', 'groundwork-common-volunteer-tracker' ); ?></span>
+				<span class="description"><?php esc_html_e( 'Figures are fixed when you save it.', 'groundwork-common-volunteer-tracker' ); ?></span>
 			</p>
 		</div>
 	</div>
@@ -672,7 +670,7 @@ function gwc_vt_render_letter_poster(): void {
 
 			<div class="gwcvt-sheet__body">
 				<p class="description">
-					<?php esc_html_e( 'The letter opens ready to print. Who it was addressed to is recorded against it, so the log can answer “did you send it to us” rather than only “a letter was printed”.', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php esc_html_e( 'The letter opens ready to print, and who it went to is recorded.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 
 				<p>
@@ -780,7 +778,7 @@ function gwc_vt_render_letter_mailer( string $on_file ): void {
 
 			<div class="gwcvt-sheet__body">
 				<p class="description">
-					<?php esc_html_e( 'The letter is already issued and keeps its reference. Sending it is recorded against it, so the log says where it went and when.', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php esc_html_e( 'Recorded against the letter, which keeps its reference.', 'groundwork-common-volunteer-tracker' ); ?>
 				</p>
 
 				<fieldset>
@@ -801,7 +799,7 @@ function gwc_vt_render_letter_mailer( string $on_file ): void {
 							<input type="radio" form="gwcvt-email-letter" name="gwc_vt_mailto" value="other" <?php checked( ! $has_address ); ?> data-gwcvt-mailto="other" />
 							<?php esc_html_e( 'Another address', 'groundwork-common-volunteer-tracker' ); ?>
 						</label>
-						<span class="description"><?php esc_html_e( 'A probation officer or a school who asked to receive it directly.', 'groundwork-common-volunteer-tracker' ); ?></span>
+						<span class="description"><?php esc_html_e( 'A probation officer, a school.', 'groundwork-common-volunteer-tracker' ); ?></span>
 
 						<span class="gwcvt-letters-box__dates" data-gwcvt-mailer-other>
 							<label class="screen-reader-text" for="gwcvt-mail-address"><?php esc_html_e( 'Email address', 'groundwork-common-volunteer-tracker' ); ?></label>
