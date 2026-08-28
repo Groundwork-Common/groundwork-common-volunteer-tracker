@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-28T12:20:25+00:00\n"
+"POT-Creation-Date: 2026-08-28T13:07:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -53,8 +53,8 @@ msgstr ""
 #: inc/admin-credentials.php:922
 #: inc/admin-dashboard.php:119
 #: inc/admin-help-page.php:160
-#: inc/admin-letters.php:241
-#: inc/admin-letters.php:276
+#: inc/admin-letters.php:242
+#: inc/admin-letters.php:277
 #: inc/admin-quick-add.php:177
 #: inc/admin-quick-add.php:670
 #: inc/admin-schedule.php:68
@@ -524,7 +524,7 @@ msgstr ""
 
 #: inc/admin-dashboard.php:118
 #: inc/admin-help-page.php:159
-#: inc/admin-letters.php:240
+#: inc/admin-letters.php:241
 #: inc/admin-verify.php:336
 msgid "You do not have permission to see this."
 msgstr ""
@@ -641,7 +641,7 @@ msgid "Volunteers with hours"
 msgstr ""
 
 #: inc/admin-dashboard.php:673
-#: inc/render.php:128
+#: inc/render.php:167
 msgid "Shifts recorded"
 msgstr ""
 
@@ -802,20 +802,20 @@ msgid "Put somebody on"
 msgstr ""
 
 #: inc/admin-event-roster.php:124
-#: inc/admin-letters.php:366
-#: inc/admin-letters.php:1235
+#: inc/admin-letters.php:367
+#: inc/admin-letters.php:1317
 #: inc/admin-quick-add.php:256
 #: inc/admin-quick-add.php:482
 #: inc/admin-shift.php:503
 #: inc/admin-shift.php:617
 #: inc/cpt.php:253
 #: inc/meta-box.php:131
-#: inc/render.php:129
+#: inc/render.php:168
 msgid "Volunteer"
 msgstr ""
 
 #: inc/admin-event-roster.php:133
-#: inc/admin-letters.php:368
+#: inc/admin-letters.php:369
 #: inc/admin-quick-add.php:308
 #: inc/admin-quick-add.php:603
 #: inc/admin-shift.php:504
@@ -825,7 +825,7 @@ msgid "No volunteer of that name"
 msgstr ""
 
 #: inc/admin-event-roster.php:143
-#: inc/admin-letters.php:378
+#: inc/admin-letters.php:379
 #: inc/admin-quick-add.php:318
 #: inc/admin-quick-add.php:614
 #: inc/admin-shift.php:513
@@ -967,7 +967,7 @@ msgid "That event no longer exists."
 msgstr ""
 
 #: inc/admin-event-roster.php:767
-#: inc/admin-letters.php:827
+#: inc/admin-letters.php:885
 #: inc/admin-shift.php:1149
 #: inc/admin-triage.php:291
 #: inc/admin-verify.php:671
@@ -1026,7 +1026,7 @@ msgid "Shown above the times on the event's page."
 msgstr ""
 
 #: inc/admin-event.php:133
-#: inc/admin-letters.php:1237
+#: inc/admin-letters.php:1319
 #: inc/admin-schedule.php:460
 #: inc/admin-settings.php:1316
 #: inc/schedule-emails.php:478
@@ -1217,13 +1217,13 @@ msgstr ""
 #: inc/admin-volunteer.php:314
 #: inc/cpt.php:254
 #: inc/privacy.php:766
-#: inc/render.php:133
+#: inc/render.php:172
 msgid "Date"
 msgstr ""
 
 #: inc/admin-event.php:506
 #: inc/admin-event.php:589
-#: inc/admin-letters.php:415
+#: inc/admin-letters.php:435
 #: inc/admin-repeat.php:285
 #: inc/admin-shift.php:167
 msgid "From"
@@ -1231,7 +1231,7 @@ msgstr ""
 
 #: inc/admin-event.php:507
 #: inc/admin-event.php:593
-#: inc/admin-letters.php:419
+#: inc/admin-letters.php:439
 msgid "To"
 msgstr ""
 
@@ -1366,7 +1366,7 @@ msgstr ""
 #: inc/cpt.php:134
 #: inc/cpt.php:255
 #: inc/privacy.php:770
-#: inc/render.php:134
+#: inc/render.php:173
 msgid "Hours"
 msgstr ""
 
@@ -1381,7 +1381,7 @@ msgid "Verifying hours"
 msgstr ""
 
 #: inc/admin-help-page.php:82
-#: inc/admin-letters.php:348
+#: inc/admin-letters.php:349
 #: inc/volunteer-cpt.php:153
 msgid "Volunteers"
 msgstr ""
@@ -1411,7 +1411,7 @@ msgid "Producing a letter"
 msgstr ""
 
 #: inc/admin-help-page.php:108
-#: inc/admin-letters.php:131
+#: inc/admin-letters.php:132
 #: inc/admin-volunteer.php:252
 msgid "Verification letters"
 msgstr ""
@@ -1478,7 +1478,7 @@ msgstr ""
 #: inc/admin-help.php:163
 #: inc/admin-screen.php:502
 #: inc/admin-volunteer-status.php:218
-#: inc/render.php:132
+#: inc/render.php:171
 msgid "Shifts"
 msgstr ""
 
@@ -2005,59 +2005,63 @@ msgstr ""
 msgid "Somebody who signed up through your site and has not been matched to a volunteer record yet is shown with a suggestion. Choosing who they are logs their hours and matches their signup at the same time."
 msgstr ""
 
-#: inc/admin-letters.php:77
+#: inc/admin-letters.php:78
 msgid "Produce one from a volunteer’s record"
 msgstr ""
 
-#: inc/admin-letters.php:91
+#: inc/admin-letters.php:92
 msgid "Check a reference somebody has phoned in"
 msgstr ""
 
-#: inc/admin-letters.php:140
+#: inc/admin-letters.php:141
 msgid "Produce a letter"
-msgstr ""
-
-#: inc/admin-letters.php:232
-#: inc/admin-letters.php:267
-#: inc/admin-letters.php:803
-msgid "This organization does not issue verification letters."
 msgstr ""
 
 #: inc/admin-letters.php:233
 #: inc/admin-letters.php:268
-#: inc/admin-letters.php:804
+#: inc/admin-letters.php:861
+msgid "This organization does not issue verification letters."
+msgstr ""
+
+#: inc/admin-letters.php:234
+#: inc/admin-letters.php:269
+#: inc/admin-letters.php:862
 msgid "Not available"
 msgstr ""
 
-#: inc/admin-letters.php:275
+#: inc/admin-letters.php:276
 msgid "You do not have permission to produce letters."
 msgstr ""
 
-#: inc/admin-letters.php:402
+#: inc/admin-letters.php:422
 msgid "Nobody is chosen yet. Select the name from the list under the box — a letter is about one volunteer’s record, and typing a name does not say which record."
 msgstr ""
 
-#: inc/admin-letters.php:404
+#: inc/admin-letters.php:424
 msgid "Choose a volunteer first: start typing a name and select it from the list."
 msgstr ""
 
-#: inc/admin-letters.php:425
+#: inc/admin-letters.php:445
 msgid "Leave both dates empty to cover their whole time volunteering."
 msgstr ""
 
-#: inc/admin-letters.php:430
-msgid "Preview the letter"
+#: inc/admin-letters.php:468
+msgid "Update the figures"
+msgstr ""
+
+#: inc/admin-letters.php:469
+msgid "Work out the figures"
 msgstr ""
 
 #. translators: 1: a duration, e.g. "12.5". 2: how many shifts.
-#: inc/admin-letters.php:498
+#: inc/admin-letters.php:540
 #, php-format
 msgid "The letter will state %1$s of verified time across %2$s."
 msgstr ""
 
 #. translators: %d: number of shifts.
-#: inc/admin-letters.php:503
-#: inc/admin-letters.php:1096
+#: inc/admin-letters.php:545
+#: inc/admin-letters.php:1178
 #, php-format
 msgid "%d shift"
 msgid_plural "%d shifts"
@@ -2065,244 +2069,252 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: a duration, e.g. "3".
-#: inc/admin-letters.php:516
+#: inc/admin-letters.php:558
 #, php-format
 msgid "A further %s of their recorded time is not verified yet, and is not in that total. Verifying it would change what the letter says."
 msgstr ""
 
-#: inc/admin-letters.php:520
+#: inc/admin-letters.php:562
 msgid "Nothing of theirs is waiting to be verified, so nothing is about to change that total."
 msgstr ""
 
-#: inc/admin-letters.php:540
+#: inc/admin-letters.php:582
 #: inc/admin-triage.php:450
 #: inc/credentials.php:288
 msgid "That volunteer no longer exists."
 msgstr ""
 
-#: inc/admin-letters.php:553
+#: inc/admin-letters.php:594
+msgid "What the letter will state:"
+msgstr ""
+
+#: inc/admin-letters.php:598
 msgid "There are no published hour entries for this volunteer in that period, so there is nothing to verify. A letter stating zero hours is not something to send."
 msgstr ""
 
-#: inc/admin-letters.php:561
+#: inc/admin-letters.php:606
 #: inc/admin-volunteer-status.php:206
 #: inc/privacy.php:674
-#: inc/render.php:131
+#: inc/render.php:170
 #: inc/volunteer-cpt.php:195
 msgid "Verified hours"
 msgstr ""
 
-#: inc/admin-letters.php:565
+#: inc/admin-letters.php:610
 msgid "Verified shifts"
 msgstr ""
 
-#: inc/admin-letters.php:569
+#: inc/admin-letters.php:614
 msgid "Period"
 msgstr ""
 
-#: inc/admin-letters.php:573
-#: inc/admin-letters.php:1234
+#: inc/admin-letters.php:618
+#: inc/admin-letters.php:1316
 #: inc/admin-volunteer.php:391
 #: inc/privacy.php:798
 msgid "Reference"
 msgstr ""
 
-#: inc/admin-letters.php:581
+#: inc/admin-letters.php:626
 msgid "None of these hours has been verified yet. Verify them before issuing a letter — otherwise it reports zero verified hours."
 msgstr ""
 
-#: inc/admin-letters.php:594
+#: inc/admin-letters.php:645
+msgid "Preview the letter"
+msgstr ""
+
+#: inc/admin-letters.php:652
 msgid "Open the letter to print"
 msgstr ""
 
 #. translators: %s: an email address.
-#: inc/admin-letters.php:601
+#: inc/admin-letters.php:659
 #, php-format
 msgid "Email this letter to %s?"
 msgstr ""
 
 #. translators: %s: an email address.
-#: inc/admin-letters.php:606
+#: inc/admin-letters.php:664
 #, php-format
 msgid "Email it to %s"
 msgstr ""
 
 #. translators: %s: a link to the volunteer's record.
-#: inc/admin-letters.php:616
+#: inc/admin-letters.php:674
 #, php-format
 msgid "No email address on file, so it cannot be emailed. %s"
 msgstr ""
 
-#: inc/admin-letters.php:618
+#: inc/admin-letters.php:676
 msgid "Add one to their record"
 msgstr ""
 
-#: inc/admin-letters.php:627
+#: inc/admin-letters.php:685
 msgid "Both actions are recorded in the log, including printing — a printed letter has left the building just as much as an emailed one."
 msgstr ""
 
 #. translators: 1: a date, 2: a reference code.
-#: inc/admin-letters.php:720
+#: inc/admin-letters.php:778
 #, php-format
 msgid "Issued %1$s, reference %2$s."
 msgstr ""
 
-#: inc/admin-letters.php:729
+#: inc/admin-letters.php:787
 msgid "Nothing on this volunteer’s record has changed since. Printing or emailing it again produces the same letter, with the same reference."
 msgstr ""
 
-#: inc/admin-letters.php:739
+#: inc/admin-letters.php:797
 msgid "This volunteer’s record has since been removed or anonymized, so there is nothing left to build a letter from. The log entry above is what remains, and it is enough to confirm that a letter was issued and what it stated."
 msgstr ""
 
-#: inc/admin-letters.php:748
+#: inc/admin-letters.php:806
 msgid "This is not a copy of that letter — no copy is kept. It is the letter your records would produce today, and they have changed since."
 msgstr ""
 
 #. translators: %s: the reference code of the letter that was issued.
-#: inc/admin-letters.php:753
+#: inc/admin-letters.php:811
 #, php-format
 msgid "If you print or send this, it goes out as a new letter with a new reference. %s stays the reference on the copy the volunteer already has, and will still check out as what you issued that day."
 msgstr ""
 
-#: inc/admin-letters.php:826
+#: inc/admin-letters.php:884
 msgid "That volunteer does not exist."
 msgstr ""
 
 #. translators: %s: the site's title.
-#: inc/admin-letters.php:866
+#: inc/admin-letters.php:924
 #, php-format
 msgid "The letter will be headed “%s”, which is this website's title rather than an organization name anybody chose."
 msgstr ""
 
 #. translators: %s: an email address.
-#: inc/admin-letters.php:874
+#: inc/admin-letters.php:932
 #, php-format
 msgid "Questions about it will be directed to %s, this site's administrator address. That is the contact somebody uses to check a reference code, so it should be one that is answered."
 msgstr ""
 
-#: inc/admin-letters.php:880
+#: inc/admin-letters.php:938
 msgid "Nobody is named under the signature line, so it prints the word “Signature”. That is deliberate — it looks unfinished because it is — but it will look that way to whoever receives it."
 msgstr ""
 
-#: inc/admin-letters.php:897
+#: inc/admin-letters.php:955
 msgid "This letter has not been given your letterhead yet."
 msgstr ""
 
-#: inc/admin-letters.php:905
+#: inc/admin-letters.php:963
 msgid "Set it up on the Letter tab"
 msgstr ""
 
-#: inc/admin-letters.php:1002
+#: inc/admin-letters.php:1084
 msgid "The letter was emailed and recorded in the log."
 msgstr ""
 
-#: inc/admin-letters.php:1003
+#: inc/admin-letters.php:1085
 msgid "WordPress could not send the email. The attempt is recorded in the log. Check the site’s mail configuration, or print the letter instead."
 msgstr ""
 
-#: inc/admin-letters.php:1004
+#: inc/admin-letters.php:1086
 msgid "That volunteer has no email address on file."
 msgstr ""
 
-#: inc/admin-letters.php:1047
+#: inc/admin-letters.php:1129
 msgid "Check a reference"
 msgstr ""
 
-#: inc/admin-letters.php:1050
+#: inc/admin-letters.php:1132
 msgid "Somebody has phoned about a letter. Type the reference code printed on it."
 msgstr ""
 
-#: inc/admin-letters.php:1058
+#: inc/admin-letters.php:1140
 msgid "Reference code"
 msgstr ""
 
-#: inc/admin-letters.php:1061
+#: inc/admin-letters.php:1143
 #: inc/admin-volunteer.php:429
 msgid "Check it"
 msgstr ""
 
-#: inc/admin-letters.php:1075
+#: inc/admin-letters.php:1157
 msgid "No letter with that reference has been issued from this site."
 msgstr ""
 
-#: inc/admin-letters.php:1082
+#: inc/admin-letters.php:1164
 msgid "a volunteer whose record has since been removed"
 msgstr ""
 
-#: inc/admin-letters.php:1087
+#: inc/admin-letters.php:1169
 msgid "This letter matches our current records."
 msgstr ""
 
 #. translators: 1: a volunteer's name, 2: a duration, 3: a number of shifts, 4: a date.
-#: inc/admin-letters.php:1091
+#: inc/admin-letters.php:1173
 #, php-format
 msgid "%1$s — %2$s verified across %3$s. Issued %4$s."
 msgstr ""
 
-#: inc/admin-letters.php:1106
+#: inc/admin-letters.php:1188
 msgid "This letter was issued from this site, but our records have changed since."
 msgstr ""
 
 #. translators: 1: a volunteer's name, 2: a duration, 3: a date.
-#: inc/admin-letters.php:1110
+#: inc/admin-letters.php:1192
 #, php-format
 msgid "The letter said: %1$s, %2$s verified. Issued %3$s."
 msgstr ""
 
-#: inc/admin-letters.php:1146
+#: inc/admin-letters.php:1228
 msgid "That volunteer’s record no longer exists, so there is nothing left to compare against."
 msgstr ""
 
-#: inc/admin-letters.php:1152
+#: inc/admin-letters.php:1234
 msgid "The total is unchanged, so the difference is in the detail — a date, an activity, a supervisor, or hours moved between shifts. Compare the letter below against the copy you were sent to see which."
 msgstr ""
 
 #. translators: %s: a duration.
-#: inc/admin-letters.php:1157
+#: inc/admin-letters.php:1239
 #, php-format
 msgid "The records now say: %s verified. This is ordinary — hours get corrected and shifts get verified after a letter goes out. Compare the letter below against the copy you were sent."
 msgstr ""
 
-#: inc/admin-letters.php:1198
+#: inc/admin-letters.php:1280
 msgid "Show the letter as our records stand now — compare it against the copy you were sent"
 msgstr ""
 
-#: inc/admin-letters.php:1199
+#: inc/admin-letters.php:1281
 msgid "Show the full letter"
 msgstr ""
 
-#: inc/admin-letters.php:1211
+#: inc/admin-letters.php:1293
 msgid "This is generated from the records as they stand right now. It is not a stored copy of what was sent — this plugin does not keep one."
 msgstr ""
 
-#: inc/admin-letters.php:1224
+#: inc/admin-letters.php:1306
 msgid "Recently issued"
 msgstr ""
 
-#: inc/admin-letters.php:1227
+#: inc/admin-letters.php:1309
 msgid "No letters have been issued yet."
 msgstr ""
 
-#: inc/admin-letters.php:1236
+#: inc/admin-letters.php:1318
 #: inc/admin-volunteer.php:393
 msgid "How"
 msgstr ""
 
-#: inc/admin-letters.php:1259
+#: inc/admin-letters.php:1341
 msgid "record removed"
 msgstr ""
 
-#: inc/admin-letters.php:1267
+#: inc/admin-letters.php:1349
 msgid "Emailed"
 msgstr ""
 
-#: inc/admin-letters.php:1268
+#: inc/admin-letters.php:1350
 #: inc/admin-volunteer.php:410
 msgid "Email failed"
 msgstr ""
 
-#: inc/admin-letters.php:1271
+#: inc/admin-letters.php:1353
 #: inc/admin-volunteer.php:413
 msgid "Printed"
 msgstr ""
@@ -2414,7 +2426,7 @@ msgstr ""
 #: inc/admin-shift.php:195
 #: inc/meta-box.php:245
 #: inc/privacy.php:778
-#: inc/render.php:136
+#: inc/render.php:175
 msgid "Supervised by"
 msgstr ""
 
@@ -3818,7 +3830,7 @@ msgid "Letterhead"
 msgstr ""
 
 #: inc/admin-settings.php:445
-#: inc/render.php:139
+#: inc/render.php:178
 msgid "Signature"
 msgstr ""
 
@@ -4559,7 +4571,7 @@ msgstr ""
 
 #: inc/admin-verify.php:1241
 #: inc/privacy.php:782
-#: inc/render.php:137
+#: inc/render.php:176
 msgid "Verification"
 msgstr ""
 
@@ -4831,7 +4843,7 @@ msgstr ""
 #: inc/admin-volunteer.php:316
 #: inc/cpt.php:256
 #: inc/privacy.php:774
-#: inc/render.php:135
+#: inc/render.php:174
 msgid "Activity"
 msgstr ""
 
@@ -6663,60 +6675,86 @@ msgstr ""
 msgid "This form had been open too long to submit safely. Your answers are below — please send them again."
 msgstr ""
 
-#: inc/render.php:66
+#: inc/render.php:92
+msgid "Draft — not issued"
+msgstr ""
+
+#: inc/render.php:93
+msgid "Nobody has been sent this and nothing has been recorded. Go back and use “Open the letter to print” or “Email it” to issue it, which is what gives it its reference."
+msgstr ""
+
+#: inc/render.php:103
+msgid "Print this draft"
+msgstr ""
+
+#: inc/render.php:104
 msgid "Print this letter"
 msgstr ""
 
-#: inc/render.php:69
+#: inc/render.php:108
 msgid "Choose “Save as PDF” in the print dialog to email it yourself."
 msgstr ""
 
-#: inc/render.php:127
+#: inc/render.php:166
 msgid "Volunteer Service Verification"
 msgstr ""
 
-#: inc/render.php:130
+#: inc/render.php:169
 msgid "Period covered"
 msgstr ""
 
-#: inc/render.php:138
+#: inc/render.php:177
 msgid "Not verified — not included in the total above"
 msgstr ""
 
 #. translators: %s: a duration, e.g. "1.5".
-#: inc/render.php:264
+#: inc/render.php:303
 #, php-format
 msgid "This letter also lists %s of recorded but unverified time. No member of staff has attested to those shifts, and they are excluded from the verified total above."
 msgstr ""
 
-#: inc/render.php:360
+#: inc/render.php:341
+msgid "A reference is given when the letter is issued. This draft has none, so there is nothing to check by telephone."
+msgstr ""
+
+#: inc/render.php:384
+msgid "none — this is a draft"
+msgstr ""
+
+#: inc/render.php:421
 msgid "This letter confirms that {name} performed {hours} hours of verified volunteer service with {org} during {period}. The shifts below are recorded in our volunteer hour log, and each was attested to by a member of our staff."
 msgstr ""
 
 #. translators: 1: a date, 2: a date.
-#: inc/render.php:382
+#: inc/render.php:443
 #, php-format
 msgid "%1$s to %2$s"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/render.php:390
+#: inc/render.php:451
 #, php-format
 msgid "from %s onwards"
 msgstr ""
 
 #. translators: %s: a date.
-#: inc/render.php:395
+#: inc/render.php:456
 #, php-format
 msgid "up to %s"
 msgstr ""
 
-#: inc/render.php:398
+#: inc/render.php:459
 msgid "their entire time volunteering with us"
 msgstr ""
 
 #. translators: 1: a volunteer's name, 2: the organization's name.
-#: inc/render.php:410
+#: inc/render.php:473
+#, php-format
+msgid "Draft — volunteer service verification — %1$s — %2$s"
+msgstr ""
+
+#. translators: 1: a volunteer's name, 2: the organization's name.
+#: inc/render.php:481
 #, php-format
 msgid "Volunteer service verification — %1$s — %2$s"
 msgstr ""

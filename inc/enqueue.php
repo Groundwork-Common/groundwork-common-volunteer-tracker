@@ -198,6 +198,29 @@ function gwc_vt_enqueue_admin_assets( $hook_suffix ): void {
 		true
 	);
 
+	/* ── Taking the reader to the answer they asked for ──────────────────────
+	 * "Preview the letter" reloads this screen with the preview UNDER the form,
+	 * and on a laptop the form, the readiness note and the button fill the
+	 * viewport — so pressing it looks like a repaint and nothing else, which is
+	 * how it was reported.
+	 *
+	 * Enhancement, not carriage: the preview is rendered by PHP and is on the
+	 * page either way. This only moves the viewport to it, and only when there
+	 * is one, so a reader with JavaScript off scrolls instead. It follows the
+	 * reader's own reduced-motion setting rather than always animating.
+	 * ─────────────────────────────────────────────────────────────────────── */
+	if ( $on_produce ) {
+		wp_add_inline_script(
+			'gwc-vt-admin-picker',
+			'( function () {' .
+				'var preview = document.querySelector( ".gwcvt-preview, .gwcvt-letters-main .notice-warning" );' .
+				'if ( ! preview || ! window.location.search.match( /[?&]volunteer=\\d/ ) ) { return; }' .
+				'var still = window.matchMedia && window.matchMedia( "(prefers-reduced-motion: reduce)" ).matches;' .
+				'preview.scrollIntoView( { block: "start", behavior: still ? "auto" : "smooth" } );' .
+			'}() );'
+		);
+	}
+
 	if ( $on_quick_add ) {
 		wp_enqueue_script(
 			'gwc-vt-quick-add',

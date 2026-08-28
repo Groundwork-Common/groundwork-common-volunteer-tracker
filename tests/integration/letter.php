@@ -456,6 +456,119 @@ $GLOBALS['gwc_vt_chosen'] = gwc_vt_letter_screen(
 	)
 );
 
+/* ── The preview is the letter, and it is not an issue ───────────────────────
+ * What the screen called a preview was four figures in a table. The document —
+ * the letterhead, the shift table, the wording, the disclaimer, the signature
+ * line — could not be read by anybody until the letter had been issued, because
+ * opening one to print IS issuing it: gwc_vt_handle_letter_print() logs before
+ * it renders.
+ *
+ * So there is a draft medium. The whole of its difference from printing is the
+ * line that is not in the handler, and these checks are about that line.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+$GLOBALS['gwc_vt_draft'] = gwc_vt_render_letter(
+	gwc_vt_build_letter( (int) $GLOBALS['gwc_vt_shown'] ),
+	'draft'
+);
+
+gwc_vt_check(
+	'a draft is the whole document, not a summary of it',
+	false !== strpos( $GLOBALS['gwc_vt_draft'], 'gwcvt-disclaimer' )
+		&& false !== strpos( $GLOBALS['gwc_vt_draft'], 'gwcvt-signature' )
+);
+
+gwc_vt_check(
+	'and says it is a draft, in words that survive printing',
+	false !== strpos( $GLOBALS['gwc_vt_draft'], 'gwcvt-letter-draft' )
+		&& false !== strpos( $GLOBALS['gwc_vt_draft'], 'Draft' )
+);
+
+/* The reference is the digest somebody checks by telephone against the log, and
+ * a draft is in no log. Not on the footer, and not through the {reference}
+ * token an administrator can put in the intro or the disclaimer either. */
+$GLOBALS['gwc_vt_draft_letter'] = gwc_vt_build_letter( (int) $GLOBALS['gwc_vt_shown'] );
+
+gwc_vt_check(
+	'and carries no reference anywhere on it',
+	false === strpos( $GLOBALS['gwc_vt_draft'], $GLOBALS['gwc_vt_draft_letter']->reference ),
+	$GLOBALS['gwc_vt_draft_letter']->reference
+);
+
+gwc_vt_check(
+	'while the issued letter still carries one',
+	false !== strpos(
+		gwc_vt_render_letter( $GLOBALS['gwc_vt_draft_letter'], 'print' ),
+		$GLOBALS['gwc_vt_draft_letter']->reference
+	)
+);
+
+/* The one that matters: looking is not issuing. */
+$GLOBALS['gwc_vt_logged_before'] = count(
+	get_posts(
+		array(
+			'post_type'      => GWC_VT_LETTER_TYPE,
+			'post_status'    => array_values( get_post_stati() ),
+			'numberposts'    => -1,
+			'fields'         => 'ids',
+		)
+	)
+);
+
+gwc_vt_render_letter( $GLOBALS['gwc_vt_draft_letter'], 'draft' );
+
+$GLOBALS['gwc_vt_logged_after'] = count(
+	get_posts(
+		array(
+			'post_type'      => GWC_VT_LETTER_TYPE,
+			'post_status'    => array_values( get_post_stati() ),
+			'numberposts'    => -1,
+			'fields'         => 'ids',
+		)
+	)
+);
+
+gwc_vt_check(
+	'rendering a draft writes nothing to the issued-letter log',
+	$GLOBALS['gwc_vt_logged_before'] === $GLOBALS['gwc_vt_logged_after'],
+	$GLOBALS['gwc_vt_logged_before'] . ' → ' . $GLOBALS['gwc_vt_logged_after']
+);
+
+/* And the screen offers it beside the two that do issue. */
+gwc_vt_check(
+	'the screen offers a preview, a print and a send',
+	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwc_vt_letter_draft' )
+		&& false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwc_vt_letter_print' )
+);
+
+gwc_vt_check(
+	'and calls the figures what they are',
+	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'What the letter will state' )
+);
+
+/* The button says what pressing it would do. Arriving from a volunteer's record
+ * lands here with the preview already drawn, and a button still labelled
+ * "Preview the letter" then repaints an identical screen — which is what "it
+ * does nothing" looked like the second time it was reported. */
+gwc_vt_check(
+	'with a letter on the screen the button offers to redo the figures',
+	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'Update the figures' )
+);
+
+gwc_vt_check(
+	'and with nobody chosen it offers to work them out',
+	false !== strpos( $GLOBALS['gwc_vt_fresh'], 'Work out the figures' )
+		&& false === strpos( $GLOBALS['gwc_vt_fresh'], 'Update the figures' )
+);
+
+/* And "Preview the letter" is on the screen only where there is a letter to
+ * preview — beside the actions, not on the form's own button. */
+gwc_vt_check(
+	'previewing is offered with the letter, not instead of the figures',
+	false === strpos( $GLOBALS['gwc_vt_fresh'], 'Preview the letter' )
+		&& false !== strpos( $GLOBALS['gwc_vt_chosen'], 'Preview the letter' )
+);
+
 gwc_vt_check(
 	'choosing somebody previews their letter',
 	false !== strpos( $GLOBALS['gwc_vt_chosen'], 'gwcvt-preview' )
