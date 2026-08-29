@@ -1149,14 +1149,7 @@ function gwc_vt_event_redirect( int $event_id, string $result, array $extra = ar
 		$args['gwc_vt_only'] = 'events';
 	}
 
-	/* Dropped by hand rather than with array_filter( …, 'strlen' ): the counts
-	 * are integers, and passing one to strlen() is deprecated in PHP 8.1 — which
-	 * this plugin's own suite would fail on, since it fails on deprecations. */
-	foreach ( $args as $key => $value ) {
-		if ( '' === $value || 0 === $value ) {
-			unset( $args[ $key ] );
-		}
-	}
+	$args = gwc_vt_redirect_args( $args );
 
 	wp_safe_redirect( gwc_vt_schedule_url( $args ) );
 	exit;

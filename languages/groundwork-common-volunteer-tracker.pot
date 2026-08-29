@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-29T01:21:21+00:00\n"
+"POT-Creation-Date: 2026-08-29T01:57:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -421,7 +421,7 @@ msgstr ""
 #: inc/admin-dashboard-widget.php:116
 #: inc/admin-dashboard.php:104
 #: inc/admin-help.php:91
-#: inc/admin-screen.php:529
+#: inc/admin-screen.php:564
 msgid "Volunteer Tracker"
 msgstr ""
 
@@ -907,7 +907,7 @@ msgid "Log the hours"
 msgstr ""
 
 #: inc/admin-event-roster.php:422
-#: inc/admin-event-roster.php:846
+#: inc/admin-event-roster.php:850
 #: inc/admin-event.php:119
 #: inc/admin-shift.php:575
 #: inc/admin-shift.php:1212
@@ -916,7 +916,7 @@ msgid "Name"
 msgstr ""
 
 #: inc/admin-event-roster.php:423
-#: inc/admin-event-roster.php:847
+#: inc/admin-event-roster.php:851
 #: inc/admin-shift.php:576
 #: inc/admin-shift.php:1213
 msgid "Contact"
@@ -962,12 +962,12 @@ msgstr ""
 msgid "Give them a place"
 msgstr ""
 
-#: inc/admin-event-roster.php:766
+#: inc/admin-event-roster.php:770
 #: inc/admin-schedule.php:2640
 msgid "That event no longer exists."
 msgstr ""
 
-#: inc/admin-event-roster.php:767
+#: inc/admin-event-roster.php:771
 #: inc/admin-letters.php:357
 #: inc/admin-shift.php:1149
 #: inc/admin-triage.php:291
@@ -977,33 +977,33 @@ msgid "Not found"
 msgstr ""
 
 #. translators: %s: a staff member's name.
-#: inc/admin-event-roster.php:817
+#: inc/admin-event-roster.php:821
 #: inc/admin-shift.php:1200
 #: inc/admin-verify.php:557
 #, php-format
 msgid "Supervised by %s"
 msgstr ""
 
-#: inc/admin-event-roster.php:848
+#: inc/admin-event-roster.php:852
 #: inc/admin-shift.php:1214
 msgid "In"
 msgstr ""
 
-#: inc/admin-event-roster.php:849
+#: inc/admin-event-roster.php:853
 #: inc/admin-shift.php:1215
 msgid "Out"
 msgstr ""
 
-#: inc/admin-event-roster.php:850
+#: inc/admin-event-roster.php:854
 #: inc/admin-shift.php:1216
 msgid "Initials"
 msgstr ""
 
-#: inc/admin-event-roster.php:868
+#: inc/admin-event-roster.php:872
 msgid "(waiting list)"
 msgstr ""
 
-#: inc/admin-event-roster.php:889
+#: inc/admin-event-roster.php:893
 #: inc/admin-shift.php:1240
 msgid "Hours from this sheet still need typing up and verifying before they can appear on a letter."
 msgstr ""
@@ -1031,7 +1031,7 @@ msgstr ""
 #: inc/admin-letters.php:821
 #: inc/admin-schedule.php:460
 #: inc/admin-settings.php:1317
-#: inc/schedule-emails.php:478
+#: inc/schedule-emails.php:493
 msgid "When"
 msgstr ""
 
@@ -1047,7 +1047,7 @@ msgstr ""
 #: inc/admin-event.php:147
 #: inc/admin-schedule.php:462
 #: inc/admin-shift.php:147
-#: inc/schedule-emails.php:479
+#: inc/schedule-emails.php:494
 msgid "Where"
 msgstr ""
 
@@ -1069,7 +1069,7 @@ msgid "Everybody has to hold"
 msgstr ""
 
 #: inc/admin-event.php:186
-#: inc/admin-shift.php:1426
+#: inc/admin-shift.php:1415
 msgid "stops signup"
 msgstr ""
 
@@ -1400,7 +1400,7 @@ msgstr ""
 
 #: inc/admin-help-page.php:87
 #: inc/admin-help.php:93
-#: inc/admin-screen.php:451
+#: inc/admin-screen.php:486
 #: inc/help-content.php:418
 msgid "Settings"
 msgstr ""
@@ -1440,7 +1440,7 @@ msgid "How-to guide"
 msgstr ""
 
 #: inc/admin-help.php:94
-#: inc/admin-screen.php:1137
+#: inc/admin-screen.php:1172
 msgid "Report a problem"
 msgstr ""
 
@@ -1484,7 +1484,7 @@ msgid "The public form is switched off until you switch it on and choose a page 
 msgstr ""
 
 #: inc/admin-help.php:163
-#: inc/admin-screen.php:494
+#: inc/admin-screen.php:529
 #: inc/admin-volunteer-status.php:211
 #: inc/render.php:237
 msgid "Shifts"
@@ -2720,7 +2720,7 @@ msgstr ""
 
 #: inc/admin-schedule.php:461
 #: inc/admin-settings.php:1318
-#: inc/schedule-emails.php:477
+#: inc/schedule-emails.php:492
 msgid "What"
 msgstr ""
 
@@ -3231,98 +3231,98 @@ msgstr ""
 msgid "Recorded with your name and shown on the roster — “certificate seen, being entered Monday”."
 msgstr ""
 
-#: inc/admin-screen.php:450
+#: inc/admin-screen.php:485
 msgid "Volunteer Tracker Settings"
 msgstr ""
 
-#: inc/admin-screen.php:490
+#: inc/admin-screen.php:525
 #: inc/admin-volunteer-letters.php:629
 #: inc/help-content.php:524
 msgid "Letter"
 msgstr ""
 
-#: inc/admin-screen.php:493
+#: inc/admin-screen.php:528
 msgid "Logging"
 msgstr ""
 
-#: inc/admin-screen.php:495
+#: inc/admin-screen.php:530
 msgid "Privacy"
 msgstr ""
 
-#: inc/admin-screen.php:534
+#: inc/admin-screen.php:569
 msgid "Settings sections"
 msgstr ""
 
 #. translators: %s: the name of a settings tab.
-#: inc/admin-screen.php:568
+#: inc/admin-screen.php:603
 #, php-format
 msgid "The %s settings are not built yet. Hours logging works without them."
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:643
+#: inc/admin-screen.php:678
 #, php-format
 msgid "Built by %s — technology leadership and support for nonprofits."
 msgstr ""
 
-#: inc/admin-screen.php:647
-#: inc/admin-screen.php:1053
-#: inc/admin-screen.php:1083
-#: inc/admin-screen.php:1097
+#: inc/admin-screen.php:682
+#: inc/admin-screen.php:1088
+#: inc/admin-screen.php:1118
+#: inc/admin-screen.php:1132
 msgid "Groundwork Common"
 msgstr ""
 
 #. translators: %s: this plugin's version number.
-#: inc/admin-screen.php:687
+#: inc/admin-screen.php:722
 #, php-format
 msgid "Volunteer Tracker %s"
 msgstr ""
 
 #. translators: %s: the version of WordPress this site runs.
-#: inc/admin-screen.php:698
+#: inc/admin-screen.php:733
 #, php-format
 msgid "WordPress %s"
 msgstr ""
 
-#: inc/admin-screen.php:759
+#: inc/admin-screen.php:794
 msgid "Search"
 msgstr ""
 
 #. translators: %s: how many rows are on the screen, already formatted.
-#: inc/admin-screen.php:818
+#: inc/admin-screen.php:853
 #, php-format
 msgid "%s item"
 msgid_plural "%s items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin-screen.php:1055
+#: inc/admin-screen.php:1090
 msgid "Show"
 msgstr ""
 
-#: inc/admin-screen.php:1063
+#: inc/admin-screen.php:1098
 msgid "Hide for 30 days"
 msgstr ""
 
 #. translators: %s: Groundwork Common, linked to the company site.
-#: inc/admin-screen.php:1102
+#: inc/admin-screen.php:1137
 #, php-format
 msgid "%s provides technology leadership and support for nonprofits — fractional, by the project, or alongside an in-house team. We release tools like this one because good technology work should leave an organization more capable, not more dependent on whoever built it."
 msgstr ""
 
-#: inc/admin-screen.php:1110
+#: inc/admin-screen.php:1145
 msgid "If you find this plugin useful, the most valuable thing you can do for us is mention us to a nonprofit who might benefit from our services. Referrals are how our business continues to grow its impact and reach."
 msgstr ""
 
-#: inc/admin-screen.php:1116
+#: inc/admin-screen.php:1151
 msgid "Learn about Groundwork Common"
 msgstr ""
 
-#: inc/admin-screen.php:1125
+#: inc/admin-screen.php:1160
 msgid "You can also support our WordPress plugins directly. While we offer the plugin free to you, it costs us to maintain it — the security updates, the compatibility testing against each new WordPress release, the bug nobody but you has hit. We can’t do it without your support, and we appreciate whatever support you can give."
 msgstr ""
 
-#: inc/admin-screen.php:1130
+#: inc/admin-screen.php:1165
 msgid "Support our work"
 msgstr ""
 
@@ -4263,32 +4263,32 @@ msgstr ""
 msgid "Offered only while nobody is signed up. A shift people committed to is canceled, not erased."
 msgstr ""
 
-#: inc/admin-shift.php:1402
+#: inc/admin-shift.php:1391
 msgid "They have to hold"
 msgstr ""
 
-#: inc/admin-shift.php:1429
+#: inc/admin-shift.php:1418
 msgid "— asked for by the whole event"
 msgstr ""
 
-#: inc/admin-shift.php:1436
+#: inc/admin-shift.php:1425
 msgid "A missing credential is flagged on the roster; only the ones marked “stops signup” turn anybody away."
 msgstr ""
 
 #. translators: 1: a staff member's name. 2: the reason they gave.
-#: inc/admin-shift.php:1504
+#: inc/admin-shift.php:1493
 #, php-format
 msgid "Added by %1$s over a credential: %2$s"
 msgstr ""
 
 #. translators: %s: the reason given.
-#: inc/admin-shift.php:1510
+#: inc/admin-shift.php:1499
 #, php-format
 msgid "Added over a credential: %s"
 msgstr ""
 
 #. translators: %s: a list of credential names, already joined with commas.
-#: inc/admin-shift.php:1531
+#: inc/admin-shift.php:1520
 #, php-format
 msgid "No %s on file"
 msgid_plural "Not on file: %s"
@@ -4296,13 +4296,13 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: a list of credential names, already joined with commas.
-#: inc/admin-shift.php:1585
+#: inc/admin-shift.php:1574
 #, php-format
 msgid "This shift asks for: %s"
 msgstr ""
 
 #. translators: %s: how many people, already formatted.
-#: inc/admin-shift.php:1602
+#: inc/admin-shift.php:1591
 #, php-format
 msgid "%s person here has not been matched to a volunteer record, so nothing can be checked for them."
 msgid_plural "%s people here have not been matched to volunteer records, so nothing can be checked for them."
@@ -4962,7 +4962,7 @@ msgstr ""
 
 #: inc/admin-volunteer-status.php:200
 #: inc/events.php:120
-#: inc/events.php:489
+#: inc/events.php:485
 #: inc/ics.php:166
 msgid "Volunteering"
 msgstr ""
@@ -5473,16 +5473,16 @@ msgid "Places available"
 msgstr ""
 
 #. translators: 1: how many places are taken, 2: how many places there are.
-#: inc/events.php:249
-#: inc/shifts.php:1386
+#: inc/events.php:245
+#: inc/shifts.php:1413
 #, php-format
 msgctxt "places taken of places available"
 msgid "%1$d of %2$d"
 msgstr ""
 
 #. translators: %d: how many people have signed up.
-#: inc/events.php:257
-#: inc/shifts.php:1394
+#: inc/events.php:253
+#: inc/shifts.php:1421
 #, php-format
 msgid "%d signed up"
 msgid_plural "%d signed up"
@@ -5490,18 +5490,18 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: a role, 2: a time range.
-#: inc/events.php:498
+#: inc/events.php:494
 #, php-format
 msgctxt "a slot, named in a clash warning"
 msgid "%1$s %2$s"
 msgstr ""
 
-#: inc/events.php:605
+#: inc/events.php:601
 msgid "Event"
 msgstr ""
 
 #. translators: %d: how many of an event's times are short of people.
-#: inc/events.php:618
+#: inc/events.php:614
 #, php-format
 msgid "%d short"
 msgid_plural "%d short"
@@ -5509,8 +5509,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: 1: how many were made together. 2: the last date in the run.
-#: inc/events.php:723
-#: inc/shifts.php:1292
+#: inc/events.php:719
+#: inc/shifts.php:1319
 #, php-format
 msgid "One of %1$d made together, through %2$s"
 msgstr ""
@@ -7030,13 +7030,13 @@ msgid "Please give your name and an email address we can reply to."
 msgstr ""
 
 #: inc/registration.php:355
-#: inc/self-log.php:303
-#: inc/signup-handler.php:757
+#: inc/self-log.php:378
+#: inc/signup-handler.php:729
 msgid "That code was not recognized. Check the code you were given and try again."
 msgstr ""
 
 #: inc/registration.php:356
-#: inc/self-log.php:304
+#: inc/self-log.php:379
 msgid "This form had been open too long to submit safely. Your answers are below — please send them again."
 msgstr ""
 
@@ -7249,163 +7249,161 @@ msgid "You are getting this because the daily summary is switched on under Volun
 msgstr ""
 
 #. translators: 1: the organization's name, 2: a date.
-#: inc/schedule-emails.php:156
+#: inc/schedule-emails.php:191
 #, php-format
 msgid "%1$s: you are on the waiting list for %2$s"
 msgstr ""
 
 #. translators: 1: the organization's name, 2: the date of a shift.
-#: inc/schedule-emails.php:162
+#: inc/schedule-emails.php:197
 #, php-format
 msgctxt "email subject line; the second placeholder is a date"
 msgid "%1$s: you are signed up for %2$s"
 msgstr ""
 
 #. translators: %s: the organization's name.
-#: inc/schedule-emails.php:191
+#: inc/schedule-emails.php:226
 #, php-format
 msgid "Thank you for offering to help %s. That shift is full at the moment, so you are on the waiting list — we will be in touch if a place comes free."
 msgstr ""
 
 #. translators: %s: the organization's name.
-#: inc/schedule-emails.php:196
+#: inc/schedule-emails.php:231
 #, php-format
 msgid "Thank you for signing up to volunteer with %s. Here are the details."
 msgstr ""
 
-#: inc/schedule-emails.php:223
-#: inc/schedule-emails.php:302
+#: inc/schedule-emails.php:258
+#: inc/schedule-emails.php:325
 msgid "Add it to your calendar, or cancel"
 msgstr ""
 
-#: inc/schedule-emails.php:228
+#: inc/schedule-emails.php:263
 msgid "If you cannot make it, please use that link to let us know — it helps more than you would think."
 msgstr ""
 
-#. translators: 1: the organization's name, 2: its contact details.
-#: inc/schedule-emails.php:240
-#, php-format
-msgid "Sent by %1$s (%2$s). Signing up records your name and email address so we know who is coming; it does not create an account."
+#: inc/schedule-emails.php:271
+msgid "Signing up records your name and email address so we know who is coming; it does not create an account."
 msgstr ""
 
 #. translators: 1: a date, 2: the organization's name.
-#: inc/schedule-emails.php:277
+#: inc/schedule-emails.php:300
 #, php-format
 msgid "A reminder that you are down to volunteer on %1$s with %2$s."
 msgstr ""
 
-#: inc/schedule-emails.php:307
+#: inc/schedule-emails.php:330
 msgid "If you cannot make it, please use that link to let us know — there is still time for us to ask somebody else."
 msgstr ""
 
 #. translators: 1: the organization's name, 2: the date of a shift.
-#: inc/schedule-emails.php:317
+#: inc/schedule-emails.php:340
 #, php-format
 msgctxt "email subject line; the second placeholder is a date"
 msgid "%1$s: a reminder about %2$s"
 msgstr ""
 
 #. translators: 1: a date, 2: the organization's name.
-#: inc/schedule-emails.php:353
+#: inc/schedule-emails.php:372
 #, php-format
 msgid "The shift on %1$s with %2$s has been canceled. Please do not come."
 msgstr ""
 
-#: inc/schedule-emails.php:369
+#: inc/schedule-emails.php:388
 msgid "We are sorry for the short notice, and we hope to see you another time. There is nothing you need to do."
 msgstr ""
 
 #. translators: 1: the organization's name, 2: a date.
-#: inc/schedule-emails.php:378
+#: inc/schedule-emails.php:397
 #, php-format
 msgid "%1$s: the shift on %2$s is canceled"
 msgstr ""
 
 #. translators: %s: the organization's name.
-#: inc/schedule-emails.php:417
+#: inc/schedule-emails.php:432
 #, php-format
 msgid "A shift you signed up for with %s has changed. Here are the new details."
 msgstr ""
 
 #. translators: %s: the shift's previous date, time and place.
-#: inc/schedule-emails.php:433
+#: inc/schedule-emails.php:448
 #, php-format
 msgid "It was previously: %s"
 msgstr ""
 
-#: inc/schedule-emails.php:446
+#: inc/schedule-emails.php:461
 msgid "Update your calendar, or cancel if this no longer suits"
 msgstr ""
 
 #. translators: 1: the organization's name, 2: a date.
-#: inc/schedule-emails.php:456
+#: inc/schedule-emails.php:471
 #, php-format
 msgid "%1$s: the shift on %2$s has changed"
 msgstr ""
 
-#: inc/schedule-emails.php:485
+#: inc/schedule-emails.php:500
 msgid "Ask for"
 msgstr ""
 
 #. translators: 1: the organization's name, 2: its contact details.
-#: inc/schedule-emails.php:516
+#: inc/schedule-emails.php:543
 #, php-format
 msgid "Sent by %1$s (%2$s)."
 msgstr ""
 
 #. translators: 1: the event's name, 2: a date, 3: the organization's name.
-#: inc/schedule-emails.php:681
+#: inc/schedule-emails.php:712
 #, php-format
 msgid "Thank you for signing up for %1$s on %2$s with %3$s. Here is what you put your name down for."
 msgstr ""
 
-#: inc/schedule-emails.php:700
+#: inc/schedule-emails.php:731
 msgid "Each one has its own link. Canceling one takes you off that one only and leaves the rest as they are."
 msgstr ""
 
 #. translators: %s: a staff member's name.
-#: inc/schedule-emails.php:711
+#: inc/schedule-emails.php:742
 #, php-format
 msgid "%s will be looking after the day."
 msgstr ""
 
 #. translators: 1: the organization's name, 2: the name of an event.
-#: inc/schedule-emails.php:724
+#: inc/schedule-emails.php:755
 #, php-format
 msgctxt "email subject line; the second placeholder is an event name"
 msgid "%1$s: you are signed up for %2$s"
 msgstr ""
 
-#: inc/schedule-emails.php:767
+#: inc/schedule-emails.php:798
 msgid "This one is full, so you are on the waiting list for it. We will be in touch if a place comes free."
 msgstr ""
 
-#: inc/schedule-emails.php:783
+#: inc/schedule-emails.php:814
 msgid "Add this one to your calendar, or cancel it"
 msgstr ""
 
 #. translators: 1: the organization's name, 2: a date, 3: the event's name.
-#: inc/schedule-emails.php:824
+#: inc/schedule-emails.php:855
 #, php-format
 msgid "A reminder that you are down to volunteer with %1$s on %2$s — %3$s. Here is your day."
 msgstr ""
 
-#: inc/schedule-emails.php:843
+#: inc/schedule-emails.php:874
 msgid "If you cannot make one of them, please use its own link to let us know — it takes you off that one only, and there is still time for us to ask somebody else."
 msgstr ""
 
 #. translators: 1: the organization's name, 2: the name of an event.
-#: inc/schedule-emails.php:852
+#: inc/schedule-emails.php:883
 #, php-format
 msgctxt "email subject line; the second placeholder is an event name"
 msgid "%1$s: a reminder about %2$s"
 msgstr ""
 
-#: inc/self-log.php:301
+#: inc/self-log.php:376
 msgid "Thank you — your hours have been sent to staff and will appear on your record once somebody has checked them."
 msgstr ""
 
-#: inc/self-log.php:302
+#: inc/self-log.php:377
 msgid "Please give your name, the date, and how long you worked."
 msgstr ""
 
@@ -7480,7 +7478,7 @@ msgid "full"
 msgstr ""
 
 #. translators: 1: a start time, 2: an end time.
-#: inc/shifts.php:1367
+#: inc/shifts.php:1394
 #, php-format
 msgid "%1$s–%2$s"
 msgstr ""
@@ -7581,7 +7579,7 @@ msgid "If that address is on one of our volunteer records, a sign-in link is on 
 msgstr ""
 
 #: inc/signin.php:646
-#: inc/signup-handler.php:818
+#: inc/signup-handler.php:790
 msgid "That does not look like an email address. Check it and try again."
 msgstr ""
 
@@ -7704,65 +7702,65 @@ msgstr ""
 msgid "See the other times"
 msgstr ""
 
-#: inc/signup-handler.php:754
+#: inc/signup-handler.php:726
 msgid "Thank you — you are signed up. We have sent the details to your email address, along with a link you can use if you need to cancel."
 msgstr ""
 
-#: inc/signup-handler.php:755
+#: inc/signup-handler.php:727
 msgid "Please choose a shift and give your name and email address."
 msgstr ""
 
-#: inc/signup-handler.php:756
+#: inc/signup-handler.php:728
 msgid "That shift is no longer taking signups. The list below is up to date — please pick another."
 msgstr ""
 
-#: inc/signup-handler.php:758
+#: inc/signup-handler.php:730
 msgid "This page had been open too long to submit safely. Please try again."
 msgstr ""
 
-#: inc/signup-handler.php:759
+#: inc/signup-handler.php:731
 msgid "You have been taken off that shift. Thank you for letting us know."
 msgstr ""
 
-#: inc/signup-handler.php:760
+#: inc/signup-handler.php:732
 msgid "That link is no longer valid. It may have already been used, or the shift may have changed. Please get in touch if you need to cancel."
 msgstr ""
 
-#: inc/signup-handler.php:767
+#: inc/signup-handler.php:739
 msgid "That is more times than we can take in one go. Please pick a few, send them, and come back for the rest."
 msgstr ""
 
-#: inc/signup-handler.php:768
+#: inc/signup-handler.php:740
 msgid "Two of the times you picked overlap. Change one, or select the checkbox below to say you meant both."
 msgstr ""
 
-#: inc/signup-handler.php:775
+#: inc/signup-handler.php:747
 msgid "This shift is only open to volunteers who have signed in, because of what it asks people to hold. Sign in with your email address and then come back."
 msgstr ""
 
 #. translators: %s: a list of things they need, already joined with commas.
-#: inc/signup-handler.php:787
+#: inc/signup-handler.php:759
 #, php-format
 msgid "This shift needs %s, and we have no current record of yours. Please get in touch — if you have it already, we may just not have it on file yet."
 msgstr ""
 
-#: inc/signup-handler.php:790
+#: inc/signup-handler.php:762
 msgid "This shift asks for something we have no current record of for you. Please get in touch."
 msgstr ""
 
-#: inc/signup-handler.php:815
+#: inc/signup-handler.php:787
 msgid "Please choose a shift."
 msgstr ""
 
-#: inc/signup-handler.php:816
+#: inc/signup-handler.php:788
 msgid "Please give your name."
 msgstr ""
 
-#: inc/signup-handler.php:817
+#: inc/signup-handler.php:789
 msgid "Please give your email address."
 msgstr ""
 
-#: inc/signup-handler.php:819
+#: inc/signup-handler.php:791
 msgid "That code was not recognized. Check the code you were given."
 msgstr ""
 

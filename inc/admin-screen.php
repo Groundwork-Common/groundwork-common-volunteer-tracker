@@ -255,6 +255,41 @@ function gwc_vt_menu_order(): array {
  * ─────────────────────────────────────────────────────────────────────────── */
 
 /**
+ * Drop the arguments a redirect has nothing to say with.
+ *
+ * ── Why by hand, and why a zero counts as nothing ────────────────────────────
+ * By hand rather than with array_filter( …, 'strlen' ): the counts are integers,
+ * and passing one to strlen() is deprecated in PHP 8.1 — which this plugin's own
+ * suite would fail on, since it fails on deprecations.
+ *
+ * A zero goes with the empty string, and that is what makes it safe for a caller
+ * to hand one over rather than guard it. Every notice that reads one of these
+ * counts defaults to 0 when the argument is absent, so "not there" and "0" are
+ * the same answer downstream.
+ *
+ * ── Why it is a function ─────────────────────────────────────────────────────
+ * The same four lines were written out four times: twice inside
+ * gwc_vt_shift_redirect(), once in gwc_vt_event_redirect(), and not at all in
+ * gwc_vt_event_roster_redirect(), which stripped nothing. Two of them carried
+ * the same copied comment explaining the strlen() decision, and the predicate
+ * had since changed in one of them — the shift redirect kept zeroes and had each
+ * of its callers guard with a ternary instead, which is one rule kept in three
+ * places (#64).
+ *
+ * @param array $args Query arguments.
+ * @return array The ones worth putting in a URL.
+ */
+function gwc_vt_redirect_args( array $args ): array {
+	foreach ( $args as $key => $value ) {
+		if ( '' === $value || 0 === $value ) {
+			unset( $args[ $key ] );
+		}
+	}
+
+	return $args;
+}
+
+/**
  * The submenu slugs that are verbs rather than places.
  *
  * @return string[]

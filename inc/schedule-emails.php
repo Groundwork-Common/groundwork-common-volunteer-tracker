@@ -267,16 +267,8 @@ function gwc_vt_signup_confirmation_body( int $signup_id, int $shift_id, bool $w
 	/* Said once, in the first message they get, rather than on every one. What
 	 * signing up does with their details is worth stating plainly; repeating it
 	 * on every reminder is how a footer stops being read. */
-	$lines[] = sprintf(
-		'<p><small>%s</small></p>',
-		esc_html(
-			sprintf(
-				/* translators: 1: the organization's name, 2: its contact details. */
-				__( 'Sent by %1$s (%2$s). Signing up records your name and email address so we know who is coming; it does not create an account.', 'groundwork-common-volunteer-tracker' ),
-				gwc_vt_org_name(),
-				gwc_vt_org_contact()
-			)
-		)
+	$lines[] = gwc_vt_email_footer(
+		__( 'Signing up records your name and email address so we know who is coming; it does not create an account.', 'groundwork-common-volunteer-tracker' )
 	);
 
 	return implode( "\n", $lines );
@@ -528,20 +520,36 @@ function gwc_vt_shift_details_table( int $shift_id ): string {
 /**
  * The line at the bottom of every message to a volunteer.
  *
+ * ── Why it takes an extra sentence rather than being copied ──────────────────
+ * The confirmation had its own, because it says one thing more than the others:
+ * what signing up does with somebody's details. That sentence is deliberate and
+ * belongs only there — repeating it on every reminder is how a footer stops
+ * being read.
+ *
+ * What was not deliberate was the clause in front of it. "Sent by %1$s (%2$s)"
+ * was written out a second time, inside a longer msgid, so changing how the
+ * organization's contact renders moved five messages and left one behind (#64).
+ *
+ * Splitting the msgid is the point rather than a side effect: the shared clause
+ * is now one string for a translator instead of two, and the sentence that is
+ * particular to one message is a string of its own.
+ *
+ * @param string $extra Optional. A sentence for this message only.
  * @return string
  */
-function gwc_vt_email_footer(): string {
-	return sprintf(
-		'<p><small>%s</small></p>',
-		esc_html(
-			sprintf(
-				/* translators: 1: the organization's name, 2: its contact details. */
-				__( 'Sent by %1$s (%2$s).', 'groundwork-common-volunteer-tracker' ),
-				gwc_vt_org_name(),
-				gwc_vt_org_contact()
-			)
-		)
+function gwc_vt_email_footer( string $extra = '' ): string {
+	$line = sprintf(
+		/* translators: 1: the organization's name, 2: its contact details. */
+		__( 'Sent by %1$s (%2$s).', 'groundwork-common-volunteer-tracker' ),
+		gwc_vt_org_name(),
+		gwc_vt_org_contact()
 	);
+
+	if ( '' !== trim( $extra ) ) {
+		$line .= ' ' . $extra;
+	}
+
+	return sprintf( '<p><small>%s</small></p>', esc_html( $line ) );
 }
 
 /**

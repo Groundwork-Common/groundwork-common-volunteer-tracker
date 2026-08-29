@@ -714,15 +714,19 @@ function gwc_vt_event_roster_redirect( int $event_id, string $result, array $ext
 		exit;
 	}
 
+	/* The same strip the other two redirects use. This one had none, so a count
+	 * of zero reached the URL here and nowhere else. */
 	wp_safe_redirect(
 		gwc_vt_schedule_url(
-			array_merge(
-				array(
-					'gwc_vt_event'        => $event_id,
-					'view'                => 'roster',
-					'gwc_vt_event_result' => $result,
-				),
-				$extra
+			gwc_vt_redirect_args(
+				array_merge(
+					array(
+						'gwc_vt_event'        => $event_id,
+						'view'                => 'roster',
+						'gwc_vt_event_result' => $result,
+					),
+					$extra
+				)
 			)
 		)
 	);
