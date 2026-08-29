@@ -93,28 +93,21 @@ test.describe( 'capabilities', () => {
 		}
 	} );
 
-	/* ── This test currently FAILS, and the failure is the point ──────────────
-	 * Tracked as issue #213. It is not flaky and it is not mis-written: a
-	 * contributor — the lowest role that has edit_posts at all — can open both
-	 * of this plugin's list tables and read every volunteer's name, their
-	 * verified hours, and the court-ordered hours column.
+	/* ── The disclosure this file was written and then fixed for ──────────────
+	 * A contributor — the lowest role that has edit_posts at all — could open
+	 * both of this plugin's list tables and read every volunteer's name, their
+	 * verified hours and their court-ordered total. Issue #213.
 	 *
-	 * The reason is an assumption in the design notes that is no longer true of
-	 * WordPress: "the list tables are safe on their own, because WordPress
-	 * filters them by author for anybody without edit_others_posts". Current
-	 * core does not. It restricts what a contributor may EDIT; it does not
-	 * restrict what edit.php LISTS. The same site shows a contributor the
-	 * administrator's "Hello world!" in the ordinary Posts list, which is the
-	 * quickest way to see that this is core's behaviour rather than anything
-	 * this plugin does.
+	 * The cause was a belief, stated in four places in writing: that WordPress
+	 * adds an author restriction to a list table for anybody without
+	 * edit_others_posts. It does not. wp_edit_posts_query() sets $perm only
+	 * when a post_status is in the query string, and 'readable' would not
+	 * restrict a published post anyway.
 	 *
-	 * The plugin's own custom screens are gated correctly — every one of them
-	 * asks gwc_vt_can_see_records() — so the leak is exactly at the two places
-	 * nobody gated, because nobody thought they needed gating.
-	 *
-	 * Left failing rather than skipped, marked test.fail(), or softened into an
-	 * assertion that passes. A green suite over a real disclosure is the thing
-	 * this repository's notes call verification that proves nothing.
+	 * Both post types now override edit_posts and create_posts with
+	 * gwc_vt_records_cap(), so the screen is closed rather than emptied — see
+	 * gwc_vt_records_post_type_caps(). This test held the shape of the answer
+	 * while it was still red.
 	 * ───────────────────────────────────────────────────────────────────────── */
 	test( 'a contributor cannot read the list tables either', async ( {
 		browser,
@@ -137,17 +130,50 @@ test.describe( 'capabilities', () => {
 			for ( const type of [ 'gwc_vt_volunteer', 'gwc_vt_entry' ] ) {
 				await page.goto( `/wp-admin/edit.php?post_type=${ type }` );
 
-				const rows = await page
-					.locator( '#the-list' )
-					.innerText()
-					.catch( () => '' );
+				/* The whole body, not #the-list: the screen is refused outright
+				 * now, so there is no list to read. Asking for one waits for an
+				 * element that will never arrive, which is a test timeout
+				 * wearing the costume of a failed assertion. */
+				const shown = await page.locator( 'body' ).innerText();
+
+				expect( shown, `${ type } was not refused` ).toContain(
+					'higher level of permission'
+				);
 
 				for ( const name of Object.keys( fixtures.volunteers ) ) {
 					expect(
-						rows,
+						shown,
 						`${ type } listed ${ name } to a contributor`
 					).not.toContain( name );
 				}
+			}
+
+			/* And the menu offers nothing that would refuse them.
+			 *
+			 * The guide survives, and should: it is registered on 'read'
+			 * deliberately, and tests/integration/help.php asserts every role
+			 * can read it. WordPress promotes it to a parent entry of its own
+			 * when the rest of the menu goes, so what a contributor now sees
+			 * under Volunteer Tracker is the guide and nothing else — which is
+			 * a coherent thing to be shown, rather than six screens that all
+			 * say no. */
+			await page.goto( '/wp-admin/index.php' );
+
+			const menu = page.locator( '#adminmenu' );
+
+			await expect( menu ).toContainText( 'Help' );
+
+			for ( const word of [
+				'Volunteers',
+				'Hours',
+				'Schedule',
+				'Verification letters',
+				'Credentials',
+			] ) {
+				await expect(
+					menu,
+					`the menu still offers ${ word }`
+				).not.toContainText( word );
 			}
 		} finally {
 			await close();

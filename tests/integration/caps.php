@@ -116,10 +116,17 @@ echo "\n── Who may see records about other people ────────�
  * read a stranger's name, email, phone, photograph and the court that ordered
  * their service off the offers queue.
  *
- * The list TABLES were never affected: WordPress adds an author restriction for
- * anybody without edit_others_posts, so a contributor opening Volunteers has
- * always seen zero rows. It was the custom screens — which query for
- * themselves and so bypass that — and the REST routes behind them.
+ * The list TABLES were believed to be unaffected, on the grounds that WordPress
+ * adds an author restriction for anybody without edit_others_posts. It does
+ * not — wp_edit_posts_query() sets $perm only when a post_status is in the
+ * query string, and 'readable' does not restrict a published post anyway — so
+ * a contributor read the whole volunteer list and the whole hours list off two
+ * screens nobody had gated. Issue #213, found by the browser suite.
+ *
+ * Both types now override edit_posts and create_posts through
+ * gwc_vt_records_post_type_caps(), and the loop below asserts that per role
+ * rather than leaving it to a browser: this is the assertion whose absence let
+ * a paragraph of prose stand in for a check for months.
  *
  * Asserted per role rather than per capability, because the claim worth keeping
  * true is about people: a contributor and an author cannot see any of this, an
@@ -171,6 +178,25 @@ foreach ( array( 'contributor' => false, 'author' => false, 'editor' => true, 'a
 		$gwc_vt_caps_the . ' ' . $gwc_vt_caps_word . ' see records',
 		gwc_vt_can_see_records() === $gwc_vt_caps_may
 	);
+
+	/* The two screens with a list table, asked the way wp-admin asks: can this
+	 * person edit_posts for the type. Both, and both halves of the answer —
+	 * an editor has to keep working, or the fix for #213 is an outage. */
+	foreach ( array( GWC_VT_ENTRY_TYPE, GWC_VT_VOLUNTEER_TYPE ) as $gwc_vt_caps_type ) {
+		$gwc_vt_caps_object = get_post_type_object( $gwc_vt_caps_type );
+
+		gwc_vt_check(
+			$gwc_vt_caps_the . ' ' . $gwc_vt_caps_word . ' open the ' . $gwc_vt_caps_type . ' list',
+			$gwc_vt_caps_object instanceof WP_Post_Type
+				&& current_user_can( $gwc_vt_caps_object->cap->edit_posts ) === $gwc_vt_caps_may
+		);
+
+		gwc_vt_check(
+			$gwc_vt_caps_the . ' ' . $gwc_vt_caps_word . ' add a ' . $gwc_vt_caps_type,
+			$gwc_vt_caps_object instanceof WP_Post_Type
+				&& current_user_can( $gwc_vt_caps_object->cap->create_posts ) === $gwc_vt_caps_may
+		);
+	}
 
 	gwc_vt_check(
 		$gwc_vt_caps_the . ' ' . $gwc_vt_caps_word . ' open the shift panel',

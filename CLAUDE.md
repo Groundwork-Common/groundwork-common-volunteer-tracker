@@ -378,10 +378,21 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   uses an INNER JOIN, so an entry missing that key vanishes silently. The
   EXISTS-or-NOT-EXISTS pair keeps those rows, sorted last.
 - **`edit_posts` is contributor-level, and is not the gate for seeing records.**
-  The list tables are safe on their own — WordPress filters them by author for
-  anybody without `edit_others_posts` — but every custom screen queries for
-  itself and bypasses that. Use `gwc_vt_can_see_records()` / `gwc_vt_records_cap()`
-  for anything that shows or acts on somebody else's record.
+  Use `gwc_vt_can_see_records()` / `gwc_vt_records_cap()` for anything that shows
+  or acts on somebody else's record — every custom screen queries for itself, so
+  each has to ask.
+- **WordPress does not filter a list table by author, and this file said it did.**
+  For months, in four places, the claim was that core adds an author restriction
+  for anybody without `edit_others_posts`, so the two `show_ui` types needed
+  nothing from us. It does not: `wp_edit_posts_query()` sets `$perm = 'readable'`
+  only when a `post_status` is in the query string, and `readable` does not
+  restrict a published post anyway. A contributor read six volunteers' names,
+  hours and court-ordered totals off one screen and twenty entries off the other,
+  while every custom screen correctly refused them (#213). Both types now
+  override `edit_posts` and `create_posts` through
+  `gwc_vt_records_post_type_caps()`. **A belief about what a framework does for
+  you is worth a five-line test more than a paragraph of prose** — this one had
+  the paragraph, in four files, and was wrong in all of them.
 - **Capabilities use `isset()`, not truthiness.** `isset()` is true for "an
   administrator decided no" and false for "this role never heard of it". Getting
   it wrong means staff silently cannot verify hours after a migration, with
