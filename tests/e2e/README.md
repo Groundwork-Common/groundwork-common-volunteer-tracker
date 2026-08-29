@@ -138,15 +138,16 @@ the one it loaded, and every spec file's reset asks again — the fingerprint
 rides along in the seed's reply, so it costs nothing. A mismatch stops the run
 with one sentence instead of nineteen mystery failures.
 
-To take it back:
+`bin/wpenv` now takes it back on its own. Before every invocation it asks
+`docker inspect` what the running container is actually mounted on, prints it as
+`wpenv:   mounted`, and stops and starts the stack when that is not this
+worktree (#214, #217). So the failures below should not recur — but the
+fingerprint checks stay, because they are the ones that would catch a way of
+losing the mount that nobody has thought of yet.
 
-```bash
-bin/wpenv stop && bin/wpenv start
-```
-
-`start` on its own is not always enough. wp-env reuses the cached compose file
-under `~/.wp-env/`, which already names the sibling's path, and returns "Done"
-in three seconds having changed nothing.
+Doing it by hand is `bin/wpenv stop && bin/wpenv start`. Plain `start` is not
+enough: wp-env reuses the cached compose file under `~/.wp-env/`, which already
+names the sibling's path, and returns "Done" having changed nothing.
 
 To stop sharing altogether, give this worktree its own instance — four more
 containers and a database, and nobody can take it:
