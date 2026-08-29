@@ -40,18 +40,20 @@ const GWC_VT_CAP_ISSUE  = 'gwc_vt_issue_letters';
  * has, for a reason worth writing down.
  *
  * The comment above says the post types use capability_type 'post' so that "a
- * site's existing editorial roles already mean something sensible". For the
- * list tables that is exactly true: WordPress adds an author restriction for
- * anybody without edit_others_posts, so a contributor opening Volunteers sees
- * zero rows without this plugin doing anything.
+ * site's existing editorial roles already mean something sensible", and below
+ * the plural that is exactly true — edit_post, delete_post and the ownership
+ * rules map as they do for a post.
  *
- * It stops being true the moment a screen queries for itself. Every custom
- * screen here does — the schedule drawer, the offers queue, the verify queue,
+ * It has never been true of who reaches a SCREEN. Every custom screen here
+ * queries for itself — the schedule drawer, the offers queue, the verify queue,
  * the REST routes behind them — and each was gated on edit_posts, which a
  * CONTRIBUTOR has. So a role WordPress designed for "may draft a post, may not
  * see anybody else's" could read volunteer names off a roster, and read a
  * stranger's name, email, phone, photograph and the court that ordered their
  * service off the offers queue.
+ *
+ * And it was not true of the two LIST TABLES either, which this plugin believed
+ * in writing in four places for months. See gwc_vt_records_post_type_caps().
  *
  * edit_others_posts is the line WordPress already draws for "may see other
  * people's records", and it is held by editor and administrator — which is
@@ -107,6 +109,56 @@ function gwc_vt_can_see_records( int $user_id = 0 ): bool {
 	return $user_id > 0
 		? user_can( $user_id, gwc_vt_records_cap() )
 		: current_user_can( gwc_vt_records_cap() );
+}
+
+/**
+ * The capability overrides that put a list table behind the same gate.
+ *
+ * ── What WordPress does not do ───────────────────────────────────────────────
+ * This plugin said, in inc/access.php, in CLAUDE.md, in README.md and in
+ * tests/integration/caps.php, that WordPress adds an author restriction to a
+ * list table for anybody without edit_others_posts — so that a contributor
+ * opening Volunteers saw zero rows and the two screens with a list table needed
+ * nothing from us.
+ *
+ * It does not. wp_edit_posts_query() narrows by permission in exactly one
+ * place: it sets $perm = 'readable', and only when a post_status is present in
+ * the query string. The default view passes none, so there is no restriction at
+ * all — and 'readable' would not restrict a published post even if there were.
+ * The same site shows a contributor the administrator's own posts in the
+ * ordinary Posts list, which is the quickest way to see that this is core's
+ * behaviour rather than anything here.
+ *
+ * What that cost: a contributor could read six volunteers' names, their verified
+ * hours and their court-ordered totals off one screen, and twenty hour entries —
+ * names, dates, activities, attestations — off the other, while every custom
+ * screen in the plugin correctly refused them. Issue #213.
+ *
+ * ── Why an override and not a pre_get_posts ──────────────────────────────────
+ * Because hiding the rows is not the same as closing the screen, and this is a
+ * screen that should be closed. A query filter would leave the views strip
+ * counting what it will not show — "All (6)" over an empty table — and would be
+ * a second mechanism beside gwc_vt_records_cap(), which is the one thing this
+ * file exists to prevent.
+ *
+ * ── Why create_posts is here too ─────────────────────────────────────────────
+ * get_post_type_capabilities() derives create_posts from the DEFAULT plural
+ * rather than from an override, so setting edit_posts alone leaves post-new.php
+ * open. Both, or neither.
+ *
+ * Read at registration, which is `init` — so a site using the gwc_vt_records_cap
+ * filter has to add it before then, rather than on admin_menu as the screens
+ * would allow.
+ *
+ * @return array<string, string> register_post_type() capability overrides.
+ */
+function gwc_vt_records_post_type_caps(): array {
+	$capability = gwc_vt_records_cap();
+
+	return array(
+		'edit_posts'   => $capability,
+		'create_posts' => $capability,
+	);
 }
 
 /* The roles that get both capabilities when the plugin cannot ask. Editor is

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-29T00:38:25+00:00\n"
+"POT-Creation-Date: 2026-08-29T01:21:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: groundwork-common-volunteer-tracker\n"
@@ -40,14 +40,14 @@ msgstr ""
 msgid "https://www.groundworkcommon.com/"
 msgstr ""
 
-#: inc/access.php:341
+#: inc/access.php:393
 #: inc/admin-applications.php:435
 #: inc/admin-volunteer-sheets.php:35
 #: inc/admin-volunteer-status.php:374
 msgid "You do not have permission to do that."
 msgstr ""
 
-#: inc/access.php:342
+#: inc/access.php:394
 #: inc/admin-applications.php:137
 #: inc/admin-applications.php:436
 #: inc/admin-credentials.php:171
@@ -635,7 +635,7 @@ msgid "verified hours"
 msgstr ""
 
 #: inc/admin-dashboard.php:671
-#: inc/volunteer-cpt.php:196
+#: inc/volunteer-cpt.php:202
 msgid "Awaiting verification"
 msgstr ""
 
@@ -810,7 +810,7 @@ msgstr ""
 #: inc/admin-quick-add.php:482
 #: inc/admin-shift.php:503
 #: inc/admin-shift.php:617
-#: inc/cpt.php:253
+#: inc/cpt.php:259
 #: inc/meta-box.php:193
 #: inc/render.php:234
 msgid "Volunteer"
@@ -1056,7 +1056,7 @@ msgid "A role can override this."
 msgstr ""
 
 #: inc/admin-event.php:161
-#: inc/cpt.php:257
+#: inc/cpt.php:263
 msgid "Supervisor"
 msgstr ""
 
@@ -1218,7 +1218,7 @@ msgstr ""
 #: inc/admin-shift.php:159
 #: inc/admin-volunteer-sheets.php:153
 #: inc/admin-volunteer.php:316
-#: inc/cpt.php:254
+#: inc/cpt.php:260
 #: inc/privacy.php:774
 #: inc/render.php:238
 msgid "Date"
@@ -1369,7 +1369,7 @@ msgstr ""
 #: inc/admin-volunteer-status.php:232
 #: inc/admin-volunteer.php:317
 #: inc/cpt.php:134
-#: inc/cpt.php:255
+#: inc/cpt.php:261
 #: inc/privacy.php:778
 #: inc/render.php:239
 msgid "Hours"
@@ -3909,11 +3909,11 @@ msgid "Who can do what"
 msgstr ""
 
 #: inc/admin-settings.php:1082
-msgid "Anybody who can edit posts can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization's name on a letter to a court."
+msgid "Anybody who can edit other people's posts can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization's name on a letter to a court."
 msgstr ""
 
 #: inc/admin-settings.php:1086
-msgid "A role with neither still sees the hours list and can type up a shift — it simply has no Verify button and no Letters screen."
+msgid "A role with neither still sees the hours list and can type up a shift — it simply has no Verify button and no Letters screen. A role that cannot edit other people's posts sees none of it at all."
 msgstr ""
 
 #: inc/admin-settings.php:1097
@@ -4921,7 +4921,7 @@ msgstr ""
 
 #: inc/admin-volunteer-sheets.php:166
 #: inc/admin-volunteer.php:318
-#: inc/cpt.php:256
+#: inc/cpt.php:262
 #: inc/privacy.php:782
 #: inc/render.php:240
 msgid "Activity"
@@ -5178,37 +5178,37 @@ msgid "No entries in the trash."
 msgstr ""
 
 #. translators: %s: the name somebody typed into the public form.
-#: inc/cpt.php:216
+#: inc/cpt.php:222
 #: inc/signup-cpt.php:188
 #, php-format
 msgid "%s (unmatched)"
 msgstr ""
 
-#: inc/cpt.php:217
+#: inc/cpt.php:223
 msgid "Unassigned"
 msgstr ""
 
 #. translators: 1: volunteer name, 2: date, 3: duration.
-#: inc/cpt.php:222
+#: inc/cpt.php:228
 #, php-format
 msgid "%1$s — %2$s — %3$s"
 msgstr ""
 
-#: inc/cpt.php:224
+#: inc/cpt.php:230
 msgid "no date"
 msgstr ""
 
 #. translators: %s: the name somebody typed into the public form.
-#: inc/cpt.php:307
+#: inc/cpt.php:313
 #, php-format
 msgid "%s — not yet matched"
 msgstr ""
 
-#: inc/cpt.php:308
+#: inc/cpt.php:314
 msgid "Not assigned"
 msgstr ""
 
-#: inc/cpt.php:378
+#: inc/cpt.php:384
 #: inc/privacy.php:666
 msgid "Volunteer record"
 msgstr ""
@@ -6667,7 +6667,7 @@ msgstr ""
 
 #: inc/privacy.php:682
 #: inc/render.php:236
-#: inc/volunteer-cpt.php:195
+#: inc/volunteer-cpt.php:201
 msgid "Verified hours"
 msgstr ""
 
@@ -7847,11 +7847,11 @@ msgstr ""
 msgid "No volunteers in the trash."
 msgstr ""
 
-#: inc/volunteer-cpt.php:197
+#: inc/volunteer-cpt.php:203
 msgid "Required"
 msgstr ""
 
-#: inc/volunteer-cpt.php:198
+#: inc/volunteer-cpt.php:204
 msgid "Last shift"
 msgstr ""
 

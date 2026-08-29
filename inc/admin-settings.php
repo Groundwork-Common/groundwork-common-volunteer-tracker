@@ -1079,11 +1079,11 @@ function gwc_vt_render_permissions_tab(): void {
 	<h2><?php esc_html_e( 'Who can do what', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'Anybody who can edit posts can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization\'s name on a letter to a court.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'Anybody who can edit other people\'s posts can log hours and see volunteer records. These two are held separately because they are bigger decisions: attesting that hours were worked, and putting your organization\'s name on a letter to a court.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'A role with neither still sees the hours list and can type up a shift — it simply has no Verify button and no Letters screen.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'A role with neither still sees the hours list and can type up a shift — it simply has no Verify button and no Letters screen. A role that cannot edit other people\'s posts sees none of it at all.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">

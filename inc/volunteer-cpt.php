@@ -168,6 +168,12 @@ function gwc_vt_register_volunteer_type(): void {
 		'supports'            => array( 'title' ),
 		'capability_type'     => 'post',
 		'map_meta_cap'        => true,
+
+		/* The gate on the list table, which capability_type cannot supply on its
+		 * own — see gwc_vt_records_post_type_caps() in inc/access.php for what
+		 * WordPress does and does not do here, and issue #213 for what that
+		 * cost. */
+		'capabilities'        => gwc_vt_records_post_type_caps(),
 		'delete_with_user'    => false,
 	);
 
