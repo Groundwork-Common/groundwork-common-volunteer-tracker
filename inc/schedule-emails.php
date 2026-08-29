@@ -130,23 +130,58 @@ function gwc_vt_send_queued_confirmations(): void {
 }
 
 /**
+ * The address to write to and the shift it is about, or nothing.
+ *
+ * ── Why the two answers come back together ───────────────────────────────────
+ * Every message about one signup needs both, and every one of the four opened
+ * with the same eleven lines to get them: resolve the address, refuse anything
+ * is_email() will not take, read post_parent, refuse a parent that is not a
+ * shift. Byte for byte the same in all four (#64).
+ *
+ * Nothing had drifted. What the duplication cost was the next change: a fifth
+ * message would have been written by copying a fourth, and a rule added to one
+ * — a suppression list, an unsubscribed flag — would have left three messages
+ * still going out with nothing to say so.
+ *
+ * Null rather than an empty array, so a caller cannot get half an answer by
+ * destructuring one. The two refusals stay silent and separate on purpose: a
+ * signup with no usable address and a signup whose parent is not a shift are
+ * both "there is nobody to write to about anything", and neither is worth an
+ * error on a cron pass.
+ *
+ * @param int $signup_id Signup post ID.
+ * @return array{0: string, 1: int}|null The address and the shift, or null.
+ */
+function gwc_vt_signup_mail_target( int $signup_id ): ?array {
+	$email = gwc_vt_signup_email( $signup_id );
+
+	if ( '' === $email || ! is_email( $email ) ) {
+		return null;
+	}
+
+	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
+
+	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
+		return null;
+	}
+
+	return array( $email, $shift_id );
+}
+
+/**
  * Tell somebody they are signed up, where to go, and how to get out of it.
  *
  * @param int $signup_id Signup post ID.
  * @return bool
  */
 function gwc_vt_send_signup_confirmation( int $signup_id ): bool {
-	$email = gwc_vt_signup_email( $signup_id );
+	$to = gwc_vt_signup_mail_target( $signup_id );
 
-	if ( '' === $email || ! is_email( $email ) ) {
+	if ( null === $to ) {
 		return false;
 	}
 
-	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
-
-	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
-		return false;
-	}
+	list( $email, $shift_id ) = $to;
 
 	$waiting = GWC_VT_SIGNUP_WAITLIST === get_post_status( $signup_id );
 
@@ -256,17 +291,13 @@ function gwc_vt_signup_confirmation_body( int $signup_id, int $shift_id, bool $w
  * @return bool
  */
 function gwc_vt_send_shift_reminder( int $signup_id ): bool {
-	$email = gwc_vt_signup_email( $signup_id );
+	$to = gwc_vt_signup_mail_target( $signup_id );
 
-	if ( '' === $email || ! is_email( $email ) ) {
+	if ( null === $to ) {
 		return false;
 	}
 
-	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
-
-	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
-		return false;
-	}
+	list( $email, $shift_id ) = $to;
 
 	$lines = array(
 		sprintf(
@@ -332,17 +363,13 @@ function gwc_vt_send_shift_reminder( int $signup_id ): bool {
  * @return bool
  */
 function gwc_vt_send_shift_cancelled_notice( int $signup_id, string $reason = '' ): bool {
-	$email = gwc_vt_signup_email( $signup_id );
+	$to = gwc_vt_signup_mail_target( $signup_id );
 
-	if ( '' === $email || ! is_email( $email ) ) {
+	if ( null === $to ) {
 		return false;
 	}
 
-	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
-
-	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
-		return false;
-	}
+	list( $email, $shift_id ) = $to;
 
 	$lines = array(
 		sprintf(
@@ -396,17 +423,13 @@ function gwc_vt_send_shift_cancelled_notice( int $signup_id, string $reason = ''
  * @return bool
  */
 function gwc_vt_send_shift_changed_notice( int $signup_id, array $was = array() ): bool {
-	$email = gwc_vt_signup_email( $signup_id );
+	$to = gwc_vt_signup_mail_target( $signup_id );
 
-	if ( '' === $email || ! is_email( $email ) ) {
+	if ( null === $to ) {
 		return false;
 	}
 
-	$shift_id = (int) get_post_field( 'post_parent', $signup_id );
-
-	if ( GWC_VT_SHIFT_TYPE !== get_post_type( $shift_id ) ) {
-		return false;
-	}
+	list( $email, $shift_id ) = $to;
 
 	$lines = array(
 		sprintf(

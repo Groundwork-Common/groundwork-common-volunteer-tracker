@@ -202,10 +202,11 @@ function gwc_vt_event_short_slot_ids( int $event_id ): array {
 /**
  * Times on this event that have happened and whose hours are not logged.
  *
- * The same three conditions gwc_vt_unreconciled_shift_ids() uses, asked of one
- * event's slots — deliberately the same, because that function is what counts
- * for the dashboard and the nag, and a badge here that disagreed with the number
- * being nagged about would be worse than no badge.
+ * The predicate the dashboard and the nag count with —
+ * gwc_vt_shift_is_unlogged() — asked of one event's slots. The same one rather
+ * than a matching one: a badge here that disagreed with the number being nagged
+ * about would be worse than no badge, and a docblock saying two copies must
+ * agree is not a thing that makes them.
  *
  * It exists because an event slot IS an ordinary shift and was being counted in
  * that nag, while the only screens offering a way to log a shift's hours listed
@@ -218,12 +219,7 @@ function gwc_vt_event_unlogged_slot_ids( int $event_id ): array {
 	$due = array();
 
 	foreach ( gwc_vt_event_slot_ids( $event_id ) as $shift_id ) {
-		if ( gwc_vt_shift_is_reconciled( $shift_id ) || ! gwc_vt_shift_has_ended( $shift_id ) ) {
-			continue;
-		}
-
-		// A time nobody came to is not a chore somebody forgot. Same rule, same reason.
-		if ( 0 === gwc_vt_shift_filled( $shift_id ) ) {
+		if ( ! gwc_vt_shift_is_unlogged( (int) $shift_id ) ) {
 			continue;
 		}
 

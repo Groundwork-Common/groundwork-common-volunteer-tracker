@@ -768,6 +768,40 @@ const GWC_VT_UNRECONCILED_DAYS = 180;
 const GWC_VT_UNDERSTAFFED_DAYS = 7;
 
 /**
+ * Has this shift happened, with people on it, and nobody typed the hours up?
+ *
+ * ── Why this is a function and not three conditions ──────────────────────────
+ * It was three conditions, written out twice: once in
+ * gwc_vt_unreconciled_shift_ids() below, which is what the dashboard counts and
+ * what the nag is about, and once in gwc_vt_event_unlogged_slot_ids(), which is
+ * what the badge on an event says. The docblock on the second told you they had
+ * to agree, and then nothing made them.
+ *
+ * That is the trap CLAUDE.md records as "a count and the screen it links to
+ * must come from one function", in its third place. The two it was written for
+ * both said a number and then showed something else; this pair had not drifted
+ * yet, which is the only reason it is a tidy-up rather than a bug (#64).
+ *
+ * The three, and each is a different kind of no:
+ *
+ *   already reconciled   somebody has typed the hours up. Done.
+ *   has not ended        it cannot be late; it has not happened.
+ *   nobody on it         a time nobody came to is not a chore somebody forgot,
+ *                        it is a Saturday that did not happen. Still
+ *                        reconcilable by hand from the schedule.
+ *
+ * @param int $shift_id Shift post ID.
+ * @return bool
+ */
+function gwc_vt_shift_is_unlogged( int $shift_id ): bool {
+	if ( gwc_vt_shift_is_reconciled( $shift_id ) || ! gwc_vt_shift_has_ended( $shift_id ) ) {
+		return false;
+	}
+
+	return 0 !== gwc_vt_shift_filled( $shift_id );
+}
+
+/**
  * Shifts that have finished and whose hours have never been logged.
  *
  * The query the reconciliation nag is built on. An unreconciled shift is not an
@@ -800,14 +834,7 @@ function gwc_vt_unreconciled_shift_ids( int $limit = 50 ): array {
 			break;
 		}
 
-		if ( gwc_vt_shift_is_reconciled( $shift_id ) || ! gwc_vt_shift_has_ended( $shift_id ) ) {
-			continue;
-		}
-
-		/* A shift nobody signed up for and nobody walked into is not a chore
-		 * somebody forgot; it is a Saturday that did not happen. Left out of the
-		 * nag, and still reconcilable by hand from the schedule. */
-		if ( 0 === gwc_vt_shift_filled( $shift_id ) ) {
+		if ( ! gwc_vt_shift_is_unlogged( $shift_id ) ) {
 			continue;
 		}
 
