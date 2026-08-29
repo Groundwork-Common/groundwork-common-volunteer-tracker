@@ -158,6 +158,21 @@ WP_ENV_HOME="$HOME/.wp-env-$(basename "$PWD")" npx @wordpress/env start
 
 Then point the suite at whatever port that prints, with `GWC_VT_E2E_URL`.
 
+## When a run fails, copy the artifacts before doing anything else
+
+```bash
+cp -R tests/e2e/.artifacts /tmp/gwcvt-failed-$(date +%s)
+```
+
+Playwright empties `outputDir` at the START of every run, so the trace and the
+page snapshot from a failure are destroyed by the next run — including the
+"let me just re-run it to see" that is the first thing anybody does. That has
+cost two diagnoses here: both times a single test failed once, and both times
+the evidence was gone before it was read.
+
+A failure that does not reproduce is worth more attention than one that does,
+not less. It is also the only kind whose evidence you get exactly one chance at.
+
 ## Traps already paid for
 
 - **Row actions are parked at `left: -9999em`, not hidden.** The link is in the

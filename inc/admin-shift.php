@@ -889,7 +889,7 @@ function gwc_vt_handle_save_shift(): void {
 			}
 		}
 
-		gwc_vt_shift_redirect( $shift_id, 'saved', $told > 0 ? array( 'gwc_vt_told' => $told ) : array() );
+		gwc_vt_shift_redirect( $shift_id, 'saved', array( 'gwc_vt_told' => $told ) );
 	}
 
 	$pattern = sanitize_key( (string) ( $posted['gwc_vt_repeat'] ?? 'once' ) );
@@ -994,7 +994,7 @@ function gwc_vt_handle_cancel_shift(): void {
 	 * re-mailed the whole roster and overwrote the reason. */
 	$told = gwc_vt_call_off_slot( $shift_id, $reason, ! empty( $_POST['gwc_vt_notify'] ) );
 
-	gwc_vt_shift_redirect( $shift_id, 'cancelled', $told > 0 ? array( 'gwc_vt_told' => $told ) : array() );
+	gwc_vt_shift_redirect( $shift_id, 'cancelled', array( 'gwc_vt_told' => $told ) );
 }
 
 /**
@@ -1324,11 +1324,7 @@ function gwc_vt_shift_redirect( int $shift_id, string $result, array $extra = ar
 			$args['gwc_vt_open'] = $shift_id;
 		}
 
-		foreach ( $args as $key => $value ) {
-			if ( '' === $value ) {
-				unset( $args[ $key ] );
-			}
-		}
+		$args = gwc_vt_redirect_args( $args );
 
 		wp_safe_redirect( gwc_vt_schedule_url( $args ) );
 		exit;
@@ -1338,14 +1334,7 @@ function gwc_vt_shift_redirect( int $shift_id, string $result, array $extra = ar
 		$args['shift'] = $shift_id;
 	}
 
-	/* Dropped by hand rather than with array_filter( …, 'strlen' ): the count is
-	 * an integer, and passing one to strlen() is deprecated in PHP 8.1 — which
-	 * this plugin's own test suite would fail on, since it fails on deprecations. */
-	foreach ( $args as $key => $value ) {
-		if ( '' === $value ) {
-			unset( $args[ $key ] );
-		}
-	}
+	$args = gwc_vt_redirect_args( $args );
 
 	wp_safe_redirect( gwc_vt_schedule_url( $args ) );
 	exit;
