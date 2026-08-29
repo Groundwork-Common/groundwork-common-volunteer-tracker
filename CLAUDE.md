@@ -260,7 +260,21 @@ orphaned by worktrees that no longer existed.
 
 `bin/wpenv` runs wp-env from the **main checkout** — one fixed path, so one
 fixed instance per plugin — and mounts the worktree you are standing in at the
-real slug. It writes the mount and the pinned ports into `.wp-env.override.json`
+real slug.
+
+**It also checks that the running containers agree, and remounts them when they
+do not.** A bind mount is fixed when a container is CREATED, so rewriting the
+override changes nothing about a stack that is already up — and `wp-env start`
+on an already-up stack does not re-read the mapping either. Whichever worktree
+started the environment therefore owned it until somebody stopped it, while the
+wrapper printed the path of the worktree you were standing in. Full integration
+runs were reported green against a sibling's branch, and a browser suite lost an
+afternoon to one assertion failing on somebody else's markup (#214, #217). The
+wrapper now asks `docker inspect` for the real mount before every invocation —
+tens of milliseconds, against seconds for a `run cli` — prints it as
+`wpenv:   mounted`, and stops and starts on a mismatch rather than warning. A
+warning is read past on the twentieth invocation of a suite, which is exactly
+when it matters. It writes the mount and the pinned ports into `.wp-env.override.json`
 there, and into `.wp-env.php74.override.json` for `--floor`, because wp-env
 derives an override's name from the `--config` it was given. Both are gitignored
 and both are named in `.distignore`.

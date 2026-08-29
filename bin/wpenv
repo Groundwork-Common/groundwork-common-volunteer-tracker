@@ -230,7 +230,82 @@ if [ -n "$STRAYS" ]; then
 	echo "$STRAYS" | sed 's/^/wpenv:   /' >&2
 fi
 
+# ── Say what is ACTUALLY mounted, and fix it when it is not this ─────────────
+# The line above is a statement about the file this script just wrote. It is not
+# a statement about the containers that are going to answer the command, and for
+# months it was read as one.
+#
+# A bind mount is fixed when a container is CREATED. Rewriting the override
+# changes nothing about a stack that is already up, and `wp-env start` on an
+# already-up stack does not re-read the mapping either — it reports Done in
+# thirteen seconds having changed nothing. So whichever worktree started the
+# environment owns it until somebody stops it, and every `run cli` from anywhere
+# else executes that worktree's code while this script cheerfully prints the
+# path of the worktree you are standing in.
+#
+# The symptom is the worst kind there is: a green suite. Full integration runs
+# have been reported as passing against a sibling's branch, and a browser suite
+# lost an afternoon to one assertion that failed on somebody else's markup.
+# Issues #214 and #217, filed from both sides of it on the same day.
+#
+# So: ask Docker what the mount is, and recreate on a mismatch rather than warn
+# about it. A warning is read past on the twentieth invocation of a suite, which
+# is exactly when this matters. Docker is asked rather than WP-CLI because
+# `docker inspect` is tens of milliseconds and `run cli` is seconds — this runs
+# before every single invocation, including the forty-five in an integration
+# sweep.
+#
+# Nothing is said when the stack is down. That is the ordinary case, and `start`
+# will mount it correctly.
+#
+MOUNT_POINT="/var/www/html/wp-content/plugins/$SLUG"
+
+# wp-env names its Compose project after the config file's path — the naming is
+# set out at the top of this file. The floor carries the config's basename, so
+# the two instances for this plugin are told apart by that rather than by a
+# guess at the hash.
+if [ "$FLOOR" -eq 1 ]; then
+	PROJECT_RE="^wp-env-$SLUG-php74-[0-9a-f]+$"
+else
+	PROJECT_RE="^wp-env-$SLUG-[0-9a-f]+$"
+fi
+
+RUNNING_CLI="$( docker ps --format '{{.Label "com.docker.compose.project"}} {{.Names}}' 2>/dev/null \
+	| awk -v re="$PROJECT_RE" '$1 ~ re && $2 ~ /-cli-1$/ { print $2; exit }' || true )"
+
+MOUNTED=""
+if [ -n "$RUNNING_CLI" ]; then
+	MOUNTED="$( docker inspect "$RUNNING_CLI" \
+		--format "{{range .Mounts}}{{if eq .Destination \"$MOUNT_POINT\"}}{{.Source}}{{end}}{{end}}" 2>/dev/null || true )"
+fi
+
+# `stop` and `destroy` are the two commands whose whole job is to take the stack
+# down. Remounting first would be a stop-start-stop.
+REMOUNT=1
+case "${1:-}" in
+	stop|destroy|clean) REMOUNT=0 ;;
+esac
+
 cd "$MAIN"
+
+if [ "$REMOUNT" -eq 1 ] && [ -n "$MOUNTED" ] && [ "$MOUNTED" != "$HERE" ]; then
+	echo "wpenv:   mounted  $MOUNTED" >&2
+	echo "wpenv: the running containers are serving another worktree." >&2
+	echo "wpenv: stopping and starting so they serve this one." >&2
+
+	npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" stop >/dev/null 2>&1 || true
+
+	# `start` is the command that recreates. If that is what was asked for, the
+	# dispatch below is it; anything else needs the stack back up first.
+	if [ "${1:-}" != "start" ]; then
+		npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" start >/dev/null 2>&1 || true
+	fi
+elif [ -n "$MOUNTED" ]; then
+	# Confirmed rather than asserted. Two lines that say the same path are worth
+	# more than one that says it twice as confidently.
+	echo "wpenv:   mounted  $MOUNTED"
+fi
+
 # --config is a global yargs option, so it goes before the subcommand: after
 # it, a `run cli -- wp ...` invocation would hand it to wp rather than wp-env.
 npx @wordpress/env "${CONFIG_ARG[@]+"${CONFIG_ARG[@]}"}" "$@"
