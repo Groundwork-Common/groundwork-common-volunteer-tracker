@@ -53,9 +53,10 @@ require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 $GLOBALS['gwc_vt_menu_before']       = $GLOBALS['submenu'] ?? null;
 $GLOBALS['gwc_vt_menu_title_before'] = $GLOBALS['title'] ?? null;
+$GLOBALS['gwc_vt_menu_settings']     = get_option( GWC_VT_SETTINGS_OPTION, array() );
 
 /**
- * Put the menu globals back exactly as they were found.
+ * Put the menu globals and the settings back exactly as they were found.
  */
 function gwc_vt_menu_restore(): void {
 	if ( null === ( $GLOBALS['gwc_vt_menu_before'] ?? null ) ) {
@@ -69,6 +70,98 @@ function gwc_vt_menu_restore(): void {
 	} else {
 		$GLOBALS['title'] = $GLOBALS['gwc_vt_menu_title_before'];
 	}
+
+	update_option( GWC_VT_SETTINGS_OPTION, $GLOBALS['gwc_vt_menu_settings'] );
+	gwc_vt_settings_cache( null, true );
+}
+
+/**
+ * Put the site in a named state and rebuild the menu core would build.
+ *
+ * ── Why this file now asks the question twice ────────────────────────────────
+ * It used to assert against whatever the site happened to have switched on, and
+ * on a bare install it failed: scheduling is off until an organization turns it
+ * on, so gwc_vt_register_schedule_menu() returns early and the Schedule row the
+ * band map names is not there. Red for a reason that is not a bug — and a suite
+ * with a permanent red in it is one people learn to read past, which is the same
+ * failure as the seven scripts that printed FAIL and exited zero.
+ *
+ * The state a site starts in is worth a check of its own, so both are checked.
+ *
+ * @param array $settings Settings to overlay on the site's own.
+ * @return array{slugs: string[], labels: string[], ruled: string[]}
+ */
+function gwc_vt_menu_build( array $settings ): array {
+	update_option( GWC_VT_SETTINGS_OPTION, array_merge( $GLOBALS['gwc_vt_menu_settings'], $settings ) );
+	gwc_vt_settings_cache( null, true );
+
+	$GLOBALS['submenu'] = array();
+
+	/* The three WordPress adds itself for the two post types, before any
+	 * admin_menu callback runs. Spelled out rather than loading
+	 * wp-admin/menu.php, which wants a screen, $parent_file, $self and a dozen
+	 * other request globals that do not exist under WP-CLI. */
+	$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
+		array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+		array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
+		array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
+	);
+
+	/* Then this plugin's own, through the real add_submenu_page(). */
+	do_action( 'admin_menu', '' );
+
+	$rows = (array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() );
+
+	$ruled = array();
+
+	foreach ( $rows as $row ) {
+		if ( false !== strpos( (string) ( $row[4] ?? '' ), 'gwc-vt-rule' ) ) {
+			$ruled[] = (string) ( $row[2] ?? '' );
+		}
+	}
+
+	return array(
+		'slugs'  => array_map(
+			static function ( array $item ): string {
+				return (string) ( $item[2] ?? '' );
+			},
+			$rows
+		),
+		'labels' => array_map(
+			static function ( array $item ): string {
+				return (string) ( $item[0] ?? '' );
+			},
+			$rows
+		),
+		'ruled'  => $ruled,
+	);
+}
+
+/**
+ * The rule the arrangement asks for, given what is actually on the menu.
+ *
+ * Every band after the first that has any rows opens with one. Computed rather
+ * than written out, because which bands have rows is the thing that changes
+ * between a bare install and a running organization — and asserting a fixed
+ * list is what made this script fail on a site nobody had set up yet.
+ *
+ * @param string[] $slugs The menu's slugs, in order.
+ * @return string[] The slugs that should carry a rule.
+ */
+function gwc_vt_menu_expected_rules( array $slugs ): array {
+	$expected = array();
+
+	foreach ( gwc_vt_menu_bands() as $band ) {
+		$present = array_values( array_intersect( $slugs, $band ) );
+
+		if ( $present ) {
+			$expected[] = $present[0];
+		}
+	}
+
+	/* The first band opens the menu, and the row that opens a menu carries no
+	 * rule above it. */
+	return array_slice( $expected, 1 );
 }
 
 register_shutdown_function( 'gwc_vt_menu_restore' );
@@ -90,116 +183,133 @@ if ( ! $gwc_vt_admins ) {
 
 wp_set_current_user( (int) $gwc_vt_admins[0] );
 
-/* ── Build the menu the way an admin request does ────────────────────────── */
-
-$GLOBALS['submenu'] = array();
-
-/* The three WordPress adds itself for the two post types, before any admin_menu
- * callback runs. Spelled out rather than loading wp-admin/menu.php, which wants
- * a screen, $parent_file, $self and a dozen other request globals that do not
- * exist under WP-CLI. */
-$GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] = array(
-	array( 'Hours', 'edit_posts', 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-	array( 'Log hours', 'edit_posts', 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE ),
-	array( 'Volunteers', 'edit_posts', 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE ),
-);
-
-/* Then this plugin's own, through the real add_submenu_page(). */
-do_action( 'admin_menu', '' );
-
-$gwc_vt_slugs = array_map(
-	static function ( array $item ): string {
-		return (string) ( $item[2] ?? '' );
-	},
-	(array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() )
-);
-
-$gwc_vt_labels = array_map(
-	static function ( array $item ): string {
-		return (string) ( $item[0] ?? '' );
-	},
-	(array) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ?? array() )
-);
-
-/* ── The menu lists places ───────────────────────────────────────────────── */
-
-gwc_vt_menu_check(
-	'Log a day is off the menu',
-	! in_array( GWC_VT_QUICK_ADD_PAGE, $gwc_vt_slugs, true ),
-	implode( ' · ', $gwc_vt_labels )
-);
-
-gwc_vt_menu_check(
-	'the post type’s own add-new entry is off the menu',
-	! in_array( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
-);
-
-gwc_vt_menu_check(
-	'Hours is still on it',
-	in_array( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
-);
-
-/* Settings opens the setting-up band rather than ending the menu — the owner's
- * own arrangement, Settings then Credentials then Help. */
-gwc_vt_menu_check(
-	'the menu ends with the setting-up band, in that order',
-	array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_HELP_PAGE ) === array_slice( $gwc_vt_slugs, -3 ),
-	implode( ' · ', array_slice( $gwc_vt_slugs, -3 ) )
-);
-
-gwc_vt_menu_check(
-	'the menu is a list, not a sparse array',
-	array_keys( (array) $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ) === range( 0, count( $gwc_vt_slugs ) - 1 )
-);
-
-/* ── The bands, drawn against the menu core actually builds ──────────────────
- * tests/MenuTest.php asserts this against a fixture. What it cannot assert is
- * that the rows core adds itself — Hours and Volunteers, from the two post
- * types, before any admin_menu callback runs — carry the slugs the bands name
- * them by. Get one of those wrong and the band map is describing a menu nobody
- * has, silently, because a slug that matches nothing simply takes no rule.
+/* ── Twice: as a new install has it, and with everything switched on ─────────
+ * Everything below holds in both states. What differs is which bands have rows
+ * in them, which is why the rule is computed from the menu rather than written
+ * out — see gwc_vt_menu_expected_rules().
  * ─────────────────────────────────────────────────────────────────────────── */
 
-$gwc_vt_ruled = array();
+$GLOBALS['gwc_vt_menu_states'] = array(
+	/* A site nobody has set up yet. Scheduling and letters are both off until an
+	 * organization says otherwise, which is the state the rest of this suite is
+	 * careful to test and the one this script used to fail on. */
+	'as a new install has it' => array(
+		'shifts_enabled'  => false,
+		'signup_enabled'  => false,
+		'letters_enabled' => false,
+	),
 
-foreach ( (array) $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] as $gwc_vt_row ) {
-	if ( false !== strpos( (string) ( $gwc_vt_row[4] ?? '' ), 'gwc-vt-rule' ) ) {
-		$gwc_vt_ruled[] = (string) ( $gwc_vt_row[2] ?? '' );
-	}
+	/* And a running organization, where the whole band map has something to
+	 * describe. */
+	'with everything on'      => array(
+		'shifts_enabled'  => true,
+		'letters_enabled' => true,
+	),
+);
+
+foreach ( $GLOBALS['gwc_vt_menu_states'] as $gwc_vt_state => $gwc_vt_state_settings ) {
+	$gwc_vt_menu    = gwc_vt_menu_build( $gwc_vt_state_settings );
+	$gwc_vt_slugs   = $gwc_vt_menu['slugs'];
+	$gwc_vt_labels  = $gwc_vt_menu['labels'];
+	$gwc_vt_ruled   = $gwc_vt_menu['ruled'];
+	$gwc_vt_in      = ', ' . $gwc_vt_state;
+
+	/* ── The menu lists places ───────────────────────────────────────────── */
+
+	gwc_vt_menu_check(
+		'Log a day is off the menu' . $gwc_vt_in,
+		! in_array( GWC_VT_QUICK_ADD_PAGE, $gwc_vt_slugs, true ),
+		implode( ' · ', $gwc_vt_labels )
+	);
+
+	gwc_vt_menu_check(
+		'the post type’s own add-new entry is off the menu' . $gwc_vt_in,
+		! in_array( 'post-new.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
+	);
+
+	gwc_vt_menu_check(
+		'Hours is still on it' . $gwc_vt_in,
+		in_array( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
+	);
+
+	/* Settings opens the setting-up band rather than ending the menu — the
+	 * owner's own arrangement, Settings then Credentials then Help. */
+	gwc_vt_menu_check(
+		'the menu ends with the setting-up band, in that order' . $gwc_vt_in,
+		array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_HELP_PAGE ) === array_slice( $gwc_vt_slugs, -3 ),
+		implode( ' · ', array_slice( $gwc_vt_slugs, -3 ) )
+	);
+
+	gwc_vt_menu_check(
+		'the menu is a list, not a sparse array' . $gwc_vt_in,
+		array_keys( (array) $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ] ) === range( 0, count( $gwc_vt_slugs ) - 1 )
+	);
+
+	/* ── The bands, drawn against the menu core actually builds ──────────────
+	 * tests/MenuTest.php asserts this against a fixture. What it cannot assert
+	 * is that the rows core adds itself — Hours and Volunteers, from the two
+	 * post types, before any admin_menu callback runs — carry the slugs the
+	 * bands name them by. Get one of those wrong and the band map is describing
+	 * a menu nobody has, silently, because a slug that matches nothing simply
+	 * takes no rule.
+	 * ─────────────────────────────────────────────────────────────────────── */
+
+	gwc_vt_menu_check(
+		'a rule opens each band that has rows' . $gwc_vt_in,
+		gwc_vt_menu_expected_rules( $gwc_vt_slugs ) === $gwc_vt_ruled,
+		implode( ' · ', $gwc_vt_ruled )
+	);
+
+	gwc_vt_menu_check(
+		'the row that opens the menu carries none' . $gwc_vt_in,
+		'' === (string) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ][0][4] ?? '' ),
+		(string) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ][0][2] ?? '' )
+	);
+
+	/* Credentials is named in the order rather than left in the "anything we
+	 * have not heard of" remainder, which is where it sat for two releases. It
+	 * is in the setting-up band now rather than beside the volunteers —
+	 * asserted by position, because it was always present and the question is
+	 * only where. */
+	gwc_vt_menu_check(
+		'Credentials sits in the setting-up band, below the record' . $gwc_vt_in,
+		array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) > array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
+			&& array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) > array_search( GWC_VT_SETTINGS_PAGE, $gwc_vt_slugs, true ),
+		implode( ' · ', $gwc_vt_slugs )
+	);
 }
 
-gwc_vt_menu_check(
-	'a rule opens each band after the first',
-	array( GWC_VT_SCHEDULE_PAGE, 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, GWC_VT_SETTINGS_PAGE ) === $gwc_vt_ruled,
-	implode( ' · ', $gwc_vt_ruled )
-);
+/* ── And the arrangement itself, which only a set-up site can show ───────────
+ * "Every band finds a row" is the check that the grouping is not describing
+ * screens nobody has. It is a question about the band MAP, so it is asked in
+ * the state where every band is supposed to have something — asking it of a
+ * bare install is asking whether an organization has switched scheduling on,
+ * which is not this script's business.
+ *
+ * The three rules are written out here rather than computed, because in this
+ * state the arrangement is a decision somebody made and is worth pinning
+ * literally. gwc_vt_menu_expected_rules() above keeps it honest in both states;
+ * this keeps it honest about which three.
+ * ─────────────────────────────────────────────────────────────────────────── */
 
-gwc_vt_menu_check(
-	'the row that opens the menu carries none',
-	'' === (string) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ][0][4] ?? '' ),
-	(string) ( $GLOBALS['submenu'][ GWC_VT_MENU_SLUG ][0][2] ?? '' )
-);
+$gwc_vt_full = gwc_vt_menu_build( $GLOBALS['gwc_vt_menu_states']['with everything on'] );
 
-/* Credentials is named in the order rather than left in the "anything we have
- * not heard of" remainder, which is where it sat for two releases. It is in the
- * setting-up band now rather than beside the volunteers — asserted by position,
- * because it was always present and the question is only where. */
-gwc_vt_menu_check(
-	'Credentials sits in the setting-up band, below the record',
-	array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) > array_search( 'edit.php?post_type=' . GWC_VT_ENTRY_TYPE, $gwc_vt_slugs, true )
-		&& array_search( GWC_VT_CREDENTIALS_PAGE, $gwc_vt_slugs, true ) > array_search( GWC_VT_SETTINGS_PAGE, $gwc_vt_slugs, true ),
-	implode( ' · ', $gwc_vt_slugs )
-);
-
-/* Every band has to find something, or the grouping is describing screens that
- * are not on this menu. */
 foreach ( gwc_vt_menu_bands() as $gwc_vt_band => $gwc_vt_band_slugs ) {
 	gwc_vt_menu_check(
-		'the ' . $gwc_vt_band . ' band matches rows that exist',
-		array() !== array_intersect( $gwc_vt_band_slugs, $gwc_vt_slugs ),
+		'the ' . $gwc_vt_band . ' band matches rows that exist, with everything on',
+		array() !== array_intersect( $gwc_vt_band_slugs, $gwc_vt_full['slugs'] ),
 		implode( ' · ', $gwc_vt_band_slugs )
 	);
 }
+
+gwc_vt_menu_check(
+	'the rules fall between plan, record and setting-up, with everything on',
+	array( GWC_VT_SCHEDULE_PAGE, 'edit.php?post_type=' . GWC_VT_VOLUNTEER_TYPE, GWC_VT_SETTINGS_PAGE ) === $gwc_vt_full['ruled'],
+	implode( ' · ', $gwc_vt_full['ruled'] )
+);
+
+$gwc_vt_slugs  = $gwc_vt_full['slugs'];
+$gwc_vt_labels = $gwc_vt_full['labels'];
 
 /* ── The stylesheet the rule needs ───────────────────────────────────────────
  * The class is inert without it, and it is printed inline on admin_head rather
