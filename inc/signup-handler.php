@@ -150,23 +150,10 @@ function gwc_vt_handle_public_signup(): void {
 
 	$posted = wp_unslash( $_POST );
 
-	/* The honeypot. A visible text input in an off-screen wrapper — not
-	 * type="hidden" and not an inline display:none, both of which the scripts
-	 * worth stopping already know to skip. */
-	if ( '' !== trim( (string) ( $posted['gwc_vt_website'] ?? '' ) ) ) {
-		gwc_vt_signup_result( 'accepted', $started );
-		return;
-	}
+	$refusal = gwc_vt_form_guard( $posted );
 
-	$age = gwc_vt_form_age( (string) ( $posted['gwc_vt_t'] ?? '' ) );
-
-	if ( null === $age || $age > GWC_VT_FORM_MAX_AGE ) {
-		gwc_vt_signup_result( 'expired', $started );
-		return;
-	}
-
-	if ( $age < GWC_VT_FORM_MIN_AGE ) {
-		gwc_vt_signup_result( 'accepted', $started );
+	if ( null !== $refusal ) {
+		gwc_vt_signup_result( $refusal, $started );
 		return;
 	}
 
@@ -177,9 +164,9 @@ function gwc_vt_handle_public_signup(): void {
 	$name     = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_name'] ?? '' ) ), 0, 100 );
 	$email    = sanitize_email( (string) ( $posted['gwc_vt_email'] ?? '' ) );
 
-	$code = (string) gwc_vt_setting( 'signup_code' );
-
-	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
+	/* Checked here rather than up with the other guards, because the name and
+	 * the address have deliberately been read first — see above. */
+	if ( ! gwc_vt_form_code_ok( $posted, 'signup_code' ) ) {
 		/* A distinct message, because this one is not a security boundary — it is
 		 * a word somebody was given, and a person who mistypes it needs telling.
 		 *
@@ -438,28 +425,18 @@ function gwc_vt_handle_public_event_signup(): void {
 		}
 	}
 
-	/* The honeypot. Everything above this line is derived from the request;
-	 * everything below it can depend on the database. */
-	if ( '' !== trim( (string) ( $posted['gwc_vt_website'] ?? '' ) ) ) {
-		gwc_vt_signup_result( 'accepted', $started );
+	/* The shared guards, and they run HERE rather than at the top. Everything
+	 * above this line is derived from the request; everything below it can
+	 * depend on the database. That ordering is this form's own and is the
+	 * reason gwc_vt_form_guard() is a call rather than a prelude. */
+	$refusal = gwc_vt_form_guard( $posted );
+
+	if ( null !== $refusal ) {
+		gwc_vt_signup_result( $refusal, $started );
 		return;
 	}
 
-	$age = gwc_vt_form_age( (string) ( $posted['gwc_vt_t'] ?? '' ) );
-
-	if ( null === $age || $age > GWC_VT_FORM_MAX_AGE ) {
-		gwc_vt_signup_result( 'expired', $started );
-		return;
-	}
-
-	if ( $age < GWC_VT_FORM_MIN_AGE ) {
-		gwc_vt_signup_result( 'accepted', $started );
-		return;
-	}
-
-	$code = (string) gwc_vt_setting( 'signup_code' );
-
-	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
+	if ( ! gwc_vt_form_code_ok( $posted, 'signup_code' ) ) {
 		gwc_vt_signup_result( 'bad-code', $started );
 		return;
 	}
@@ -710,12 +687,7 @@ function gwc_vt_public_shift_ids(): array {
  *                        'accepted' — see the note below the assignment.
  */
 function gwc_vt_signup_result( string $result, float $started, array $retry = array() ): void {
-	$elapsed = microtime( true ) - $started;
-	$floor   = 0.25;
-
-	if ( $elapsed < $floor ) {
-		usleep( (int) ( ( $floor - $elapsed ) * 1000000 ) );
-	}
+	gwc_vt_form_settle( $started );
 
 	$GLOBALS['gwc_vt_signup_result'] = $result;
 

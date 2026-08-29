@@ -118,6 +118,107 @@ function gwc_vt_is_self_log_page(): bool {
 }
 
 /**
+ * The guards every public form runs, in the order all three run them.
+ *
+ * ── Why this is one function and was three copies ────────────────────────────
+ * The honeypot, the stamp that is too old and the stamp that came back too fast
+ * were written out in inc/self-log.php and twice in inc/signup-handler.php.
+ * Nothing had drifted (#64). What the duplication cost was the next guard: a
+ * fifth defence added to one form would have left two accepting what it
+ * refused, with nothing anywhere that would notice.
+ *
+ * ── What it deliberately does NOT cover ──────────────────────────────────────
+ * The shared code, which is checked separately by gwc_vt_form_code_ok(). Two of
+ * the three forms check it exactly here; the shift signup reads the name and
+ * address FIRST, on purpose, so that a mistyped code can hand the rest back —
+ * retyping a name because a word from a card was wrong is the same insult as
+ * retyping it because an address was.
+ *
+ * The orderings AROUND these three also differ on purpose and are left alone.
+ * The event form runs its clash check before the honeypot, because everything
+ * above that line is derived from the request and everything below it can
+ * depend on the database.
+ *
+ * ── The answers, and why two of them are the same word ───────────────────────
+ * 'accepted' for the honeypot and for a submission that arrived faster than a
+ * person can type is hard rule 3: accepted, honeypotted and rate-limited must
+ * be indistinguishable, or the form becomes an oracle for "is this named person
+ * working off a court order". The caller passes the key to its own result
+ * function, so each form keeps its own wording and its own retry behaviour.
+ *
+ * @param array $posted The unslashed request.
+ * @return string|null A result key to answer with, or null to go on.
+ */
+function gwc_vt_form_guard( array $posted ): ?string {
+	/* The honeypot. A visible text input in an off-screen wrapper — not
+	 * type="hidden" and not an inline display:none, both of which the scripts
+	 * worth stopping already know to skip. A real person never sees it. */
+	if ( '' !== trim( (string) ( $posted['gwc_vt_website'] ?? '' ) ) ) {
+		return 'accepted';
+	}
+
+	$age = gwc_vt_form_age( (string) ( $posted['gwc_vt_t'] ?? '' ) );
+
+	if ( null === $age || $age > GWC_VT_FORM_MAX_AGE ) {
+		/* Stale, or the stamp was forged. Re-rendered rather than discarded, so
+		 * somebody who left the tab open over lunch gets their values back
+		 * instead of losing the form. */
+		return 'expired';
+	}
+
+	if ( $age < GWC_VT_FORM_MIN_AGE ) {
+		return 'accepted';
+	}
+
+	return null;
+}
+
+/**
+ * Does the shared code match, if this form asks for one at all?
+ *
+ * Separate from gwc_vt_form_guard() because the three forms check it at three
+ * different points, and because it is not the same kind of thing: a shared code
+ * is a note handed out at the front desk, not a security boundary. That is why
+ * a wrong one gets a message of its own — somebody who mistypes it needs to be
+ * told so, and telling them discloses nothing about anybody.
+ *
+ * @param array  $posted  The unslashed request.
+ * @param string $setting Which setting holds the code.
+ * @return bool
+ */
+function gwc_vt_form_code_ok( array $posted, string $setting ): bool {
+	$code = (string) gwc_vt_setting( $setting );
+
+	if ( '' === $code ) {
+		return true;
+	}
+
+	return hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) );
+}
+
+/**
+ * Hold the response open to a floor, so its timing says nothing.
+ *
+ * The three outcomes hard rule 3 makes indistinguishable do different amounts
+ * of work: a real submission writes a post, a honeypot hit returns at once. A
+ * response that came back in four milliseconds after one and ninety after the
+ * other is the same oracle, told in a different channel.
+ *
+ * Was written out twice, identically, with only the $GLOBALS key it set
+ * differing (#64).
+ *
+ * @param float $started microtime( true ) when the handler began.
+ */
+function gwc_vt_form_settle( float $started ): void {
+	$floor   = 0.25;
+	$elapsed = microtime( true ) - $started;
+
+	if ( $elapsed < $floor ) {
+		usleep( (int) ( ( $floor - $elapsed ) * 1000000 ) );
+	}
+}
+
+/**
  * Read, check and record one submission.
  */
 function gwc_vt_handle_self_log(): void {
@@ -132,35 +233,14 @@ function gwc_vt_handle_self_log(): void {
 
 	$posted = wp_unslash( $_POST );
 
-	/* The honeypot. A visible text input in an off-screen wrapper — not
-	 * type="hidden" and not an inline display:none, both of which the scripts
-	 * worth stopping already know to skip. A real person never sees it. */
-	if ( '' !== trim( (string) ( $posted['gwc_vt_website'] ?? '' ) ) ) {
-		gwc_vt_self_log_result( 'accepted', $started );
+	$refusal = gwc_vt_form_guard( $posted );
+
+	if ( null !== $refusal ) {
+		gwc_vt_self_log_result( $refusal, $started );
 		return;
 	}
 
-	$age = gwc_vt_form_age( (string) ( $posted['gwc_vt_t'] ?? '' ) );
-
-	if ( null === $age || $age > GWC_VT_FORM_MAX_AGE ) {
-		/* Stale, or the stamp was forged. Re-rendered rather than discarded, so
-		 * somebody who left the tab open over lunch gets their values back
-		 * instead of losing the form. */
-		gwc_vt_self_log_result( 'expired', $started );
-		return;
-	}
-
-	if ( $age < GWC_VT_FORM_MIN_AGE ) {
-		gwc_vt_self_log_result( 'accepted', $started );
-		return;
-	}
-
-	$code = (string) gwc_vt_setting( 'self_log_code' );
-
-	if ( '' !== $code && ! hash_equals( $code, trim( (string) ( $posted['gwc_vt_code'] ?? '' ) ) ) ) {
-		/* Wrong shared code. A distinct message, because this one is not a
-		 * security boundary — it is a note handed out at the front desk, and
-		 * somebody who mistypes it needs to be told so. */
+	if ( ! gwc_vt_form_code_ok( $posted, 'self_log_code' ) ) {
 		gwc_vt_self_log_result( 'bad-code', $started );
 		return;
 	}
@@ -275,12 +355,7 @@ function gwc_vt_insert_self_logged_entry( string $name, string $email, string $d
  * @param float  $started microtime when the handler began.
  */
 function gwc_vt_self_log_result( string $result, float $started ): void {
-	$elapsed = microtime( true ) - $started;
-	$floor   = 0.25;
-
-	if ( $elapsed < $floor ) {
-		usleep( (int) ( ( $floor - $elapsed ) * 1000000 ) );
-	}
+	gwc_vt_form_settle( $started );
 
 	$GLOBALS['gwc_vt_self_log_result'] = $result;
 }
