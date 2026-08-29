@@ -762,7 +762,7 @@ gwc_vt_help_check(
 
 gwc_vt_help_check(
 	'and the guide is the rest of itself, without those two topics',
-	array( 'start', 'hours', 'credentials', 'public', 'settings' ) === $GLOBALS['gwc_vt_help_off_ids'],
+	array( 'start', 'public', 'credentials', 'hours', 'settings' ) === $GLOBALS['gwc_vt_help_off_ids'],
 	implode( ', ', $GLOBALS['gwc_vt_help_off_ids'] )
 );
 

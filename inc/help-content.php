@@ -40,6 +40,25 @@ defined( 'ABSPATH' ) || exit;
  * A function rather than a const: a const is evaluated at include time, which
  * freezes every string in English for the request.
  *
+ * ── The order the tabs are in ───────────────────────────────────────────────
+ * A volunteer's path through the organization, which is also the order a
+ * coordinator meets these screens: set the plugin up, take the people who
+ * arrive, record what they must hold, plan when they work, run the events they
+ * work at, write down the hours, produce the letter the hours were for. The
+ * settings reference is last because it is looked things up in, not read.
+ *
+ * It used to run start, hours, letters, schedule, events, credentials, public —
+ * which is the order the features were built in, not the order anybody works
+ * in. It put how somebody arrives seventh of eight, and put credentials, which
+ * decide who may be given a shift, after the topic about giving out shifts.
+ *
+ * Two constraints on any further shuffle: `start` stays first, because
+ * gwc_vt_current_help_topic() falls back to the first topic and
+ * gwc_vt_help_topic_for_screen() returns '' meaning "the guide's front, which
+ * is the setting-up one"; and `hours` stays next to `letters`, because the
+ * letter is built out of the hours and reading one after the other is the
+ * point of the pair.
+ *
  * @return array<int, array{id:string, title:string, intro:string, tasks:array}>
  */
 function gwc_vt_help_topics(): array {
@@ -86,100 +105,98 @@ function gwc_vt_help_topics(): array {
 		),
 
 		array(
-			'id'    => 'hours',
-			'title' => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
-			'intro' => __( 'Hours reach a letter only after somebody on your staff says the work happened. That is two steps, and they are deliberately separate.', 'groundwork-common-volunteer-tracker' ),
+			'id'    => 'public',
+			'title' => __( 'Taking signups and applications from your site', 'groundwork-common-volunteer-tracker' ),
+			'intro' => __( 'Three public forms, each switched off until you switch it on. None of them creates a volunteer record on its own.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
-					'title' => __( 'Add New Volunteer', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Let people sign up for shifts', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add New Volunteer</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Enter their name, and their email address if you have one.', 'groundwork-common-volunteer-tracker' ),
-						__( 'If a court or school required a number of hours, enter how many, by when, and who required them.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Publish</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Create or choose the page you want the list to appear on.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Add the <strong>Volunteer Shifts</strong> block to it, and publish the page.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong> and select the <strong>Shifts</strong> tab.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Turn on signups, and choose the page you added the block to.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save Changes</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'A volunteer is not a WordPress user. No account is created, no password is set, and they never log in.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'Visitors see what each shift is and how many places are left. They never see who is coming.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Log one shift', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Answer somebody who applied to volunteer', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Log one shift</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Start typing the volunteer’s name and select them from the list.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Enter the date, how long they worked, and what they did.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Publish</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>, then <strong>Applied</strong> above the list.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Read what they sent.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add as a volunteer</strong> to make a record from it, or <strong>Discard</strong> to take it off the list.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'Enter the duration however you say it: 3.5, 3:30, 3h 30m, or 210m all work. The figure stored is rounded to the increment you chose in Settings — always to the nearest, never up — and the screen tells you when it has rounded.', 'groundwork-common-volunteer-tracker' ),
-				),
-				array(
-					'title' => __( 'Log a whole day from a sign-in sheet', 'groundwork-common-volunteer-tracker' ),
-					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Log a day</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Enter the date, the times, and what the work was. These are used for every row.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Add a row for each person on the sheet.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Log these hours</strong>.', 'groundwork-common-volunteer-tracker' ),
-					),
-				),
-				array(
-					'title' => __( 'Verify hours', 'groundwork-common-volunteer-tracker' ),
-					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Waiting to verify</strong>, above the list.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Read the shifts waiting, which are grouped by the person they are about.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Verify</strong> beside each one you can confirm happened.', 'groundwork-common-volunteer-tracker' ),
-					),
-					'note'  => __( 'Your name and the date are recorded, and both appear on any letter that includes those hours. Only verified hours reach a letter.', 'groundwork-common-volunteer-tracker' ),
-				),
-				array(
-					'title' => __( 'Match hours somebody sent in themselves', 'groundwork-common-volunteer-tracker' ),
-					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>, then <strong>Waiting to verify</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Match them now</strong> in the notice at the top.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Open the entry and select <strong>Attach to</strong> the right person.', 'groundwork-common-volunteer-tracker' ),
-						__( 'If they are not on file yet, select <strong>Create a volunteer from this</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Verify the hours as usual.', 'groundwork-common-volunteer-tracker' ),
-					),
-					'note'  => __( 'Anything sent through the public form arrives attached to nobody. What somebody typed is a claim until a person says whose it is.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'Nothing is sent to them when an application arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
 		),
 
 		array(
-			'id'    => 'letters',
-			'title' => __( 'Writing a letter', 'groundwork-common-volunteer-tracker' ),
-			'intro' => __( 'A letter reports what your organization recorded. You write it on the volunteer’s own record: start a draft, issue it when you are happy with it, then send it. It carries a reference code so anybody who receives it can phone you and check it.', 'groundwork-common-volunteer-tracker' ),
+			'id'    => 'credentials',
+			'title' => __( 'Tracking credentials', 'groundwork-common-volunteer-tracker' ),
+			'intro' => __( 'A credential is something a volunteer has to hold — a training course, a signed waiver, a background check. It is not the same as hours a court required, which live on the volunteer’s own record.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
-					'title' => __( 'Draft a letter', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Define a credential', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add New Credential</strong>, beside the heading.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter what it is called, as you would say it out loud.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter how many months it lasts, or 0 if it never expires.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Choose what happens when somebody has not got it: report it, or stop them signing up.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add it</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Reporting is the safer choice and what most organizations want. Stopping a signup is for the things nobody may work without.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Change a credential you already defined', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Hover the one you want and select <strong>Edit</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Change the name, the renewal interval, what happens when somebody has not got it, or the note.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save this credential</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Renaming is safe — every record points at the credential itself. Changing the interval is not the same kind of change: expiry is worked out from it every time it is asked for, so a shorter interval can make somebody lapsed the moment you save. The form says how many people hold it before you change that field.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Mark somebody inactive who has stopped volunteering', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Hover the row for the person who has stopped.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Make inactive</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Record that somebody holds one', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Find <strong>Verification letters</strong> and select <strong>Draft a verification letter</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Choose <strong>Everything on record</strong>, or <strong>A period</strong> if a court or a school asked about particular months.', 'groundwork-common-volunteer-tracker' ),
-						__( 'If it is going to somebody other than the volunteer, fill in who it is addressed to and what it is about.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Save the draft</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Choose the credential from the list.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter the date they actually did it, which may not be today.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Update</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'A draft is fixed at the moment you make it. It states what you had verified that day, and shifts verified afterwards will not join it — so if hours are still waiting, verify them first and start the draft after. Nothing is sent and nothing is logged until you issue it.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'Anything that expires counts from the date you enter, so a class taken in March and recorded in June expires in March.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Issue it and send it', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Ask for a credential on a shift', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Select <strong>Open</strong> on the draft to read the letter it would produce. Reading one records nothing.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Issue it</strong>. The letter gets its reference code and goes into your log. It has not been sent to anybody yet.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Then select <strong>Print</strong>, <strong>Post</strong> or <strong>Email</strong> on the issued row.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Open the shift from the schedule.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find <strong>They have to hold</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select each credential this shift needs.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save this shift</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'Each of the three is recorded against the letter with the date, and Post and Email also record who it went to — so the log answers “did you send it to us”, not only “a letter was produced”. Email offers the address on the record or one you type. To save a PDF, choose Print and then your browser’s Save as PDF; the plugin does not bundle a PDF library.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'For an event, set it on the event instead and every role on the day asks for it, in addition to anything a role asks for itself.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Check a reference code somebody phoned about', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'See who holds a credential', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Dashboard</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Find the <strong>Check a reference</strong> panel.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Enter the code the caller reads to you.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Check it</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find the credential in the list.', 'groundwork-common-volunteer-tracker' ),
+						__( 'In <strong>Who holds it</strong>, select the number of people who hold it, or the number whose has lapsed.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'You are told whether the code matches a letter you issued and whether it still says what your records say. A shift verified since the letter went out does not disturb the answer — the letter is checked against what you had attested to on the day it was fixed. You are not told anything the caller is not already holding.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'The volunteer list opens, showing only those people. You can also filter that list yourself with the two dropdowns above it.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
 		),
@@ -298,98 +315,100 @@ function gwc_vt_help_topics(): array {
 		),
 
 		array(
-			'id'    => 'credentials',
-			'title' => __( 'Tracking credentials', 'groundwork-common-volunteer-tracker' ),
-			'intro' => __( 'A credential is something a volunteer has to hold — a training course, a signed waiver, a background check. It is not the same as hours a court required, which live on the volunteer’s own record.', 'groundwork-common-volunteer-tracker' ),
+			'id'    => 'hours',
+			'title' => __( 'Recording hours', 'groundwork-common-volunteer-tracker' ),
+			'intro' => __( 'Hours reach a letter only after somebody on your staff says the work happened. That is two steps, and they are deliberately separate.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
-					'title' => __( 'Define a credential', 'groundwork-common-volunteer-tracker' ),
-					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add New Credential</strong>, beside the heading.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Enter what it is called, as you would say it out loud.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Enter how many months it lasts, or 0 if it never expires.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Choose what happens when somebody has not got it: report it, or stop them signing up.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add it</strong>.', 'groundwork-common-volunteer-tracker' ),
-					),
-					'note'  => __( 'Reporting is the safer choice and what most organizations want. Stopping a signup is for the things nobody may work without.', 'groundwork-common-volunteer-tracker' ),
-				),
-				array(
-					'title' => __( 'Change a credential you already defined', 'groundwork-common-volunteer-tracker' ),
-					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Hover the one you want and select <strong>Edit</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Change the name, the renewal interval, what happens when somebody has not got it, or the note.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Save this credential</strong>.', 'groundwork-common-volunteer-tracker' ),
-					),
-					'note'  => __( 'Renaming is safe — every record points at the credential itself. Changing the interval is not the same kind of change: expiry is worked out from it every time it is asked for, so a shorter interval can make somebody lapsed the moment you save. The form says how many people hold it before you change that field.', 'groundwork-common-volunteer-tracker' ),
-				),
-				array(
-					'title' => __( 'Mark somebody inactive who has stopped volunteering', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Add New Volunteer', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
 						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Hover the row for the person who has stopped.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Make inactive</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add New Volunteer</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter their name, and their email address if you have one.', 'groundwork-common-volunteer-tracker' ),
+						__( 'If a court or school required a number of hours, enter how many, by when, and who required them.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Publish</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'It keeps everything: their hours, their name, and their name on any letter already issued. It stops them being offered when you are staffing a shift, and takes them off the overdue list. Select <strong>Inactive</strong> above the list to see them, and <strong>Make active</strong> on the row to undo it. This is not anonymizing and not deleting — those are on the volunteer’s own record and answer a privacy question instead.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'A volunteer is not a WordPress user. No account is created, no password is set, and they never log in.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Record that somebody holds one', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Log one shift', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Find <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Choose the credential from the list.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Enter the date they actually did it, which may not be today.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Update</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Log one shift</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Start typing the volunteer’s name and select them from the list.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter the date, how long they worked, and what they did.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Publish</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'Anything that expires counts from the date you enter, so a class taken in March and recorded in June expires in March.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'Enter the duration however you say it: 3.5, 3:30, 3h 30m, or 210m all work. The figure stored is rounded to the increment you chose in Settings — always to the nearest, never up — and the screen tells you when it has rounded.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Ask for a credential on a shift', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Log a whole day from a sign-in sheet', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Open the shift from the schedule.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Find <strong>They have to hold</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select each credential this shift needs.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Save this shift</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Log a day</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter the date, the times, and what the work was. These are used for every row.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Add a row for each person on the sheet.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Log these hours</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'For an event, set it on the event instead and every role on the day asks for it, in addition to anything a role asks for itself.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'See who holds a credential', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Verify hours', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Credentials</strong>.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Find the credential in the list.', 'groundwork-common-volunteer-tracker' ),
-						__( 'In <strong>Who holds it</strong>, select the number of people who hold it, or the number whose has lapsed.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Waiting to verify</strong>, above the list.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Read the shifts waiting, which are grouped by the person they are about.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Verify</strong> beside each one you can confirm happened.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'The volunteer list opens, showing only those people. You can also filter that list yourself with the two dropdowns above it.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'Your name and the date are recorded, and both appear on any letter that includes those hours. Only verified hours reach a letter.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Match hours somebody sent in themselves', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Hours</strong>, then <strong>Waiting to verify</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Match them now</strong> in the notice at the top.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Open the entry and select <strong>Attach to</strong> the right person.', 'groundwork-common-volunteer-tracker' ),
+						__( 'If they are not on file yet, select <strong>Create a volunteer from this</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Verify the hours as usual.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Anything sent through the public form arrives attached to nobody. What somebody typed is a claim until a person says whose it is.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
 		),
 
 		array(
-			'id'    => 'public',
-			'title' => __( 'Taking signups and applications from your site', 'groundwork-common-volunteer-tracker' ),
-			'intro' => __( 'Three public forms, each switched off until you switch it on. None of them creates a volunteer record on its own.', 'groundwork-common-volunteer-tracker' ),
+			'id'    => 'letters',
+			'title' => __( 'Writing a letter', 'groundwork-common-volunteer-tracker' ),
+			'intro' => __( 'A letter reports what your organization recorded. You write it on the volunteer’s own record: start a draft, issue it when you are happy with it, then send it. It carries a reference code so anybody who receives it can phone you and check it.', 'groundwork-common-volunteer-tracker' ),
 			'tasks' => array(
 				array(
-					'title' => __( 'Let people sign up for shifts', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Draft a letter', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Create or choose the page you want the list to appear on.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Add the <strong>Volunteer Shifts</strong> block to it, and publish the page.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Settings</strong> and select the <strong>Shifts</strong> tab.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Turn on signups, and choose the page you added the block to.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Save Changes</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find <strong>Verification letters</strong> and select <strong>Draft a verification letter</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Choose <strong>Everything on record</strong>, or <strong>A period</strong> if a court or a school asked about particular months.', 'groundwork-common-volunteer-tracker' ),
+						__( 'If it is going to somebody other than the volunteer, fill in who it is addressed to and what it is about.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Save the draft</strong>.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'Visitors see what each shift is and how many places are left. They never see who is coming.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'A draft is fixed at the moment you make it. It states what you had verified that day, and shifts verified afterwards will not join it — so if hours are still waiting, verify them first and start the draft after. Nothing is sent and nothing is logged until you issue it.', 'groundwork-common-volunteer-tracker' ),
 				),
 				array(
-					'title' => __( 'Answer somebody who applied to volunteer', 'groundwork-common-volunteer-tracker' ),
+					'title' => __( 'Issue it and send it', 'groundwork-common-volunteer-tracker' ),
 					'steps' => array(
-						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong>, then <strong>Applied</strong> above the list.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Read what they sent.', 'groundwork-common-volunteer-tracker' ),
-						__( 'Select <strong>Add as a volunteer</strong> to make a record from it, or <strong>Discard</strong> to take it off the list.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Open</strong> on the draft to read the letter it would produce. Reading one records nothing.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Issue it</strong>. The letter gets its reference code and goes into your log. It has not been sent to anybody yet.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Then select <strong>Print</strong>, <strong>Post</strong> or <strong>Email</strong> on the issued row.', 'groundwork-common-volunteer-tracker' ),
 					),
-					'note'  => __( 'Nothing is sent to them when an application arrives or while it waits. The count beside the menu item, and the line on your dashboard, are how you find out one is here.', 'groundwork-common-volunteer-tracker' ),
+					'note'  => __( 'Each of the three is recorded against the letter with the date, and Post and Email also record who it went to — so the log answers “did you send it to us”, not only “a letter was produced”. Email offers the address on the record or one you type. To save a PDF, choose Print and then your browser’s Save as PDF; the plugin does not bundle a PDF library.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Check a reference code somebody phoned about', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Dashboard</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find the <strong>Check a reference</strong> panel.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Enter the code the caller reads to you.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Check it</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'You are told whether the code matches a letter you issued and whether it still says what your records say. A shift verified since the letter went out does not disturb the answer — the letter is checked against what you had attested to on the day it was fixed. You are not told anything the caller is not already holding.', 'groundwork-common-volunteer-tracker' ),
 				),
 			),
 		),
