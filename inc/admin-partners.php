@@ -43,12 +43,12 @@ add_action( GWC_VT_PARTNER_TAXONOMY . '_edit_form_fields', 'gwc_vt_partner_edit_
 add_action( 'created_' . GWC_VT_PARTNER_TAXONOMY, 'gwc_vt_save_partner_fields' );
 add_action( 'edited_' . GWC_VT_PARTNER_TAXONOMY, 'gwc_vt_save_partner_fields' );
 
-/* And the filter on the volunteer list, the same shape as the credential one. */
+/* And the filter, on both lists a partner can be attached to. */
 add_action( 'restrict_manage_posts', 'gwc_vt_partner_filter_dropdown', 12 );
 add_action( 'pre_get_posts', 'gwc_vt_apply_partner_filter' );
 
-/** Which partner the volunteer list is filtered to. */
-const GWC_VT_PARTNER_FILTER = 'gwc_vt_partner_is';
+/* The total, above the hours list, whenever that filter is on. */
+add_action( 'admin_notices', 'gwc_vt_partner_hours_summary' );
 
 /**
  * Register the screen.
@@ -212,6 +212,7 @@ function gwc_vt_render_partners_list(): void {
 							<td class="manage-column check-column"></td>
 							<th scope="col"><?php esc_html_e( 'Partner', 'groundwork-common-volunteer-tracker' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Volunteers', 'groundwork-common-volunteer-tracker' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Hours verified', 'groundwork-common-volunteer-tracker' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'Contact', 'groundwork-common-volunteer-tracker' ); ?></th>
 							<th scope="col"><?php esc_html_e( 'CRM ID', 'groundwork-common-volunteer-tracker' ); ?></th>
 						</tr>
@@ -259,7 +260,7 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 			<label class="screen-reader-text" for="gwcvt-partner-<?php echo esc_attr( (string) $partner->term_id ); ?>">
 				<?php
 				printf(
-					/* translators: %s: an partner's name. */
+					/* translators: %s: a partner's name. */
 					esc_html__( 'Select %s', 'groundwork-common-volunteer-tracker' ),
 					esc_html( $partner->name )
 				);
@@ -298,6 +299,40 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 			<?php endif; ?>
 		</td>
 		<td>
+			<?php
+			/* ── The number this whole feature exists to produce ──────────────
+			 * Counted from ENTRIES, never from the people in the column beside
+			 * it. Somebody who came once with Acme and twice on their own is one
+			 * volunteer and three entries, and only one of those two numbers is
+			 * an answer to "what did Acme contribute".
+			 *
+			 * The link opens the hours list narrowed by the same function this
+			 * total was built from, so pressing the number shows the records it
+			 * came from. */
+			$hours     = gwc_vt_partner_hours( (int) $partner->term_id );
+			$hours_url = gwc_vt_partner_hours_url( (int) $partner->term_id );
+			?>
+			<?php if ( $hours->entries > 0 && '' !== $hours_url ) : ?>
+				<a href="<?php echo esc_url( $hours_url ); ?>">
+					<?php echo esc_html( gwc_vt_format_hours( $hours->verified_minutes ) ); ?>
+				</a>
+			<?php else : ?>
+				<?php echo esc_html( gwc_vt_format_hours( $hours->verified_minutes ) ); ?>
+			<?php endif; ?>
+
+			<?php if ( $hours->pending_minutes > 0 ) : ?>
+				<div class="row-actions">
+					<?php
+					printf(
+						/* translators: %s: a duration, already formatted. */
+						esc_html__( '%s awaiting verification', 'groundwork-common-volunteer-tracker' ),
+						esc_html( gwc_vt_format_hours( $hours->pending_minutes ) )
+					);
+					?>
+				</div>
+			<?php endif; ?>
+		</td>
+		<td>
 			<?php echo esc_html( $fields[ GWC_VT_PARTNER_CONTACT_NAME ] ); ?>
 			<?php if ( '' !== $fields[ GWC_VT_PARTNER_CONTACT_EMAIL ] ) : ?>
 				<div class="row-actions"><?php echo esc_html( $fields[ GWC_VT_PARTNER_CONTACT_EMAIL ] ); ?></div>
@@ -314,7 +349,7 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 function gwc_vt_render_partner_add_form(): void {
 	?>
 	<div class="gwcvt-partners__add">
-		<h2><?php esc_html_e( 'Add an partner', 'groundwork-common-volunteer-tracker' ); ?></h2>
+		<h2><?php esc_html_e( 'Add a partner', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="gwc_vt_add_partner" />
@@ -514,7 +549,7 @@ function gwc_vt_partner_notice(): void {
 
 	$messages = array(
 		'added'      => __( 'Partner added.', 'groundwork-common-volunteer-tracker' ),
-		'exists'     => __( 'There is already an partner with that name.', 'groundwork-common-volunteer-tracker' ),
+		'exists'     => __( 'There is already a partner with that name.', 'groundwork-common-volunteer-tracker' ),
 		'empty'      => __( 'Give the partner a name.', 'groundwork-common-volunteer-tracker' ),
 		'not-enough' => __( 'Choose at least two partners to fold together.', 'groundwork-common-volunteer-tracker' ),
 		'gone'       => __( 'That partner no longer exists. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
@@ -573,7 +608,7 @@ function gwc_vt_partner_redirect( string $result, int $count = 0 ): void {
 /* ── The two handlers ────────────────────────────────────────────────────── */
 
 /**
- * Add an partner.
+ * Add a partner.
  */
 function gwc_vt_handle_add_partner(): void {
 	check_admin_referer( 'gwc_vt_add_partner' );
@@ -594,7 +629,7 @@ function gwc_vt_handle_add_partner(): void {
 
 	/* term_exists is the ordinary answer to typing a name that is already
 	 * there, and it is worth saying so rather than reporting a failure: the
-	 * operator wanted an partner by that name and there is one. */
+	 * operator wanted a partner by that name and there is one. */
 	if ( is_wp_error( $made ) ) {
 		gwc_vt_partner_redirect( 'term_exists' === $made->get_error_code() ? 'exists' : 'empty' );
 	}
@@ -737,7 +772,19 @@ function gwc_vt_save_partner_fields( $term_id ): void {
 function gwc_vt_partner_filter_dropdown(): void {
 	$screen = get_current_screen();
 
-	if ( ! $screen instanceof WP_Screen || 'edit-' . GWC_VT_VOLUNTEER_TYPE !== $screen->id ) {
+	/* Both lists a partner can be attached to, read from the taxonomy rather
+	 * than named — a third object type gets its filter for free, the same way
+	 * the merge does. */
+	$here = $screen instanceof WP_Screen ? (string) $screen->id : '';
+	$mine = false;
+
+	foreach ( gwc_vt_partner_object_types() as $type ) {
+		if ( 'edit-' . $type === $here ) {
+			$mine = true;
+		}
+	}
+
+	if ( ! $mine ) {
 		return;
 	}
 
@@ -765,6 +812,124 @@ function gwc_vt_partner_filter_dropdown(): void {
 }
 
 /**
+ * What the rows on screen add up to.
+ *
+ * ── Computed from the query that drew the list, not from the term ────────────
+ * The obvious version asks gwc_vt_partner_hours() for the partner's totals and
+ * prints them above the table. That number is right about the partner and wrong
+ * about the screen the moment anything else is filtering — a verification state,
+ * a search, a date — and it would sit directly above a list that disagreed with
+ * it.
+ *
+ * This plugin has been caught by that twice: the dashboard counting overdue
+ * volunteers and linking to an unfiltered list, and the unlogged-hours nag
+ * counting slots a view then excluded. So this re-runs the MAIN QUERY with its
+ * paging removed and totals what comes back. It says what is on the screen,
+ * whatever else the coordinator has narrowed it by.
+ *
+ * The arithmetic is still gwc_vt_total_from_ids(), so "verified" means here
+ * what it means on the letter.
+ */
+function gwc_vt_partner_hours_summary(): void {
+	$screen = get_current_screen();
+
+	if ( ! $screen instanceof WP_Screen || 'edit-' . GWC_VT_ENTRY_TYPE !== $screen->id ) {
+		return;
+	}
+
+	if ( ! gwc_vt_can_see_records() ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only, and core does not nonce these.
+	$term_id = isset( $_GET[ GWC_VT_PARTNER_FILTER ] ) ? absint( wp_unslash( $_GET[ GWC_VT_PARTNER_FILTER ] ) ) : 0;
+
+	$partner = $term_id > 0 ? gwc_vt_partner( $term_id ) : null;
+
+	if ( ! $partner ) {
+		return;
+	}
+
+	$main = $GLOBALS['wp_query'] ?? null;
+
+	if ( ! $main instanceof WP_Query ) {
+		return;
+	}
+
+	/* The same vars, unpaged. 'fields' and 'posts_per_page' are the only things
+	 * that change — narrow it any further and this stops describing the list. */
+	$vars = $main->query_vars;
+
+	unset( $vars['paged'], $vars['offset'] );
+
+	/* nopaging as well as posts_per_page, and it is not belt and braces.
+	 * WP_Query only drops the LIMIT when nopaging is true; the hours list's own
+	 * vars carry nopaging => false, so posts_per_page => -1 on its own produced
+	 * `LIMIT 0, -1` — which is not valid SQL and returns nothing. The list
+	 * showed two rows and the line above it said nought. */
+	$vars['nopaging']       = true;
+	$vars['posts_per_page'] = -1;
+	$vars['fields']         = 'ids';
+	$vars['no_found_rows']  = true;
+
+	/* ── WP_Query, and deliberately not get_posts() ──────────────────────────
+	 * get_posts() is not a thin wrapper. Among other defaults it does
+	 *
+	 *     if ( empty( $r['post_status'] ) ) { $r['post_status'] = 'publish'; }
+	 *
+	 * and the hours list arrives here with post_status set to the empty string,
+	 * which WP_Query reads as "every status this user may see". So the same
+	 * vars through get_posts() silently dropped every pending entry: the list
+	 * showed two rows and the line above it said nought, which is precisely the
+	 * disagreement this function exists to prevent.
+	 *
+	 * pre_get_posts still fires for this query. Everything this plugin hangs
+	 * there checks is_main_query() first, so nothing is applied twice — and the
+	 * vars already carry the filters in any case. */
+	$counter = new WP_Query();
+
+	$totals = gwc_vt_total_from_ids( array_map( 'intval', (array) $counter->query( $vars ) ) );
+	?>
+	<div class="notice notice-info gwcvt-partners__summary">
+		<p>
+			<strong><?php echo esc_html( $partner->name ); ?></strong>
+			<?php
+			printf(
+				/* translators: 1: a duration, already formatted; 2: how many hour entries. */
+				esc_html( _n( '— %1$s verified across %2$s entry shown.', '— %1$s verified across %2$s entries shown.', (int) $totals->entries, 'groundwork-common-volunteer-tracker' ) ),
+				esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ),
+				esc_html( number_format_i18n( (int) $totals->entries ) )
+			);
+			?>
+
+			<?php if ( $totals->pending_minutes > 0 ) : ?>
+				<?php
+				printf(
+					/* translators: %s: a duration, already formatted. */
+					esc_html__( 'A further %s is recorded and waiting for a staff member to check it.', 'groundwork-common-volunteer-tracker' ),
+					esc_html( gwc_vt_format_hours( $totals->pending_minutes ) )
+				);
+				?>
+			<?php endif; ?>
+		</p>
+
+		<?php if ( '' !== $totals->first && '' !== $totals->last ) : ?>
+			<p class="description">
+				<?php
+				printf(
+					/* translators: 1: the earliest date shown; 2: the latest. */
+					esc_html__( 'Earliest %1$s, latest %2$s.', 'groundwork-common-volunteer-tracker' ),
+					esc_html( gwc_vt_shift_date_label_from( $totals->first ) ),
+					esc_html( gwc_vt_shift_date_label_from( $totals->last ) )
+				);
+				?>
+			</p>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
+/**
  * Apply it.
  *
  * @param WP_Query $query The query.
@@ -774,7 +939,7 @@ function gwc_vt_apply_partner_filter( $query ): void {
 		return;
 	}
 
-	if ( GWC_VT_VOLUNTEER_TYPE !== $query->get( 'post_type' ) ) {
+	if ( ! in_array( (string) $query->get( 'post_type' ), gwc_vt_partner_object_types(), true ) ) {
 		return;
 	}
 

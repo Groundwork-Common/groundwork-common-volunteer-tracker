@@ -827,6 +827,15 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 						'name'  => __( 'Verification', 'groundwork-common-volunteer-tracker' ),
 						'value' => gwc_vt_attestation_line( $entry_id ),
 					),
+					array(
+						/* Who they came with that day. A fact about this
+						 * person's own Saturday, so it belongs in what they are
+						 * shown — and it is on the entry rather than on them,
+						 * which is why a day they came alone says nothing here
+						 * even when they are affiliated with somebody. */
+						'name'  => __( 'Came with', 'groundwork-common-volunteer-tracker' ),
+						'value' => gwc_vt_entry_partner_names( $entry_id ),
+					),
 				),
 			);
 		}

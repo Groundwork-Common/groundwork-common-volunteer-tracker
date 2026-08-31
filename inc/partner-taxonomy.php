@@ -8,7 +8,7 @@
  * people who arrived under it.
  *
  * ── A term, not a string, and not a post type ────────────────────────────────
- * An partner's name here is an AGGREGATION KEY, not a label. The question
+ * A partner's name here is an AGGREGATION KEY, not a label. The question
  * the feature exists to answer is "how many hours did Acme contribute", and
  * free text answers it wrongly and silently: "Acme Corp" and "ACME Corp." split
  * the total in two, forever, and nothing on any screen says so.
@@ -18,7 +18,7 @@
  * allowed. Right for a word nobody sums; wrong for a key.
  *
  * It is not a post type either, and the line is worth stating because it moved
- * once already. #211 drew it at "a second fact about an partner" and that
+ * once already. #211 drew it at "a second fact about a partner" and that
  * rule fires on a contact name, which is not the distinction that matters. What
  * makes credentials a post type is that they carry BEHAVIOUR — a renewal
  * interval, a mode that blocks a signup — and CHILD RECORDS, one per grant. An
@@ -111,6 +111,24 @@ const GWC_VT_PARTNER_CONTACT_EMAIL = 'gwc_vt_partner_contact_email';
 
 /** Their telephone number. */
 const GWC_VT_PARTNER_CONTACT_PHONE = 'gwc_vt_partner_contact_phone';
+
+/**
+ * Which partner a list is filtered to.
+ *
+ * ── Why this and not the taxonomy's own query var ────────────────────────────
+ * A URL of the form ?gwc_vt_partner=<slug> does nothing. WP_Query::parse_tax_query()
+ * only reads a taxonomy's query var when the taxonomy HAS one — `if ( $t->query_var
+ * && ... )` — and this one is registered query_var => false, deliberately: a
+ * public query var on a non-public taxonomy is a way to ask the front end about
+ * records that are not the front end's business.
+ *
+ * The first version of gwc_vt_partner_volunteers_url() built exactly that URL.
+ * It returned every volunteer on the site, under a count that said three. That
+ * is the "a count and the screen it links to" trap for the third time in this
+ * feature, so both URL helpers now build the filter the dropdown posts and the
+ * one that gwc_vt_apply_partner_filter() actually reads.
+ */
+const GWC_VT_PARTNER_FILTER = 'gwc_vt_partner_is';
 
 /** Longest any of the free-text fields may be. */
 const GWC_VT_PARTNER_FIELD_MAX = 200;
@@ -271,7 +289,7 @@ function gwc_vt_register_partner_taxonomy(): void {
  * tag-style metabox would have, and the whole feature exists to prevent exactly
  * that.
  *
- * This is core's markup with that block left off. Adding an partner is a
+ * This is core's markup with that block left off. Adding a partner is a
  * deliberate act on the Partners screen, where the duplicate finder can
  * see it happen.
  *
@@ -291,7 +309,7 @@ function gwc_vt_partner_meta_box( $post ): void {
 			 * a form with every checkbox cleared posts NOTHING for this field,
 			 * which save_post reads as "no opinion" and leaves the old terms in
 			 * place. 0 is not a real term, so it says "an empty set, on
-			 * purpose" and taking somebody off an partner works. */
+			 * purpose" and taking somebody off a partner works. */
 			?>
 			<input type="hidden" name="<?php echo esc_attr( $name ); ?>[]" value="0" />
 
@@ -329,24 +347,42 @@ function gwc_vt_partner_meta_box( $post ): void {
 /**
  * What the taxonomy is attached to.
  *
- * The volunteer today. #211 adds GWC_VT_ENTRY_TYPE, which is one entry in this
- * array and nothing else — and every consumer that matters reads this function
- * rather than naming a type, so the merge screen and the privacy exporter pick
- * the second one up without being edited.
+ * ── Two types, two questions, and neither answers the other's ────────────────
+ * THE VOLUNTEER answers "who is affiliated with Acme" — a standing fact about a
+ * person, which is why anonymizing takes it away with their name.
  *
- * That is not a convenience. A merge written against volunteers alone would
- * leave every entry relationship pointing at a term that no longer exists, and
- * nothing on any screen would say so.
+ * THE ENTRY answers "how many hours did Acme contribute" — a fact about a
+ * Saturday, which is why anonymizing leaves it alone. It identifies nobody once
+ * the name above it is gone, and it is the organization's own record of a day's
+ * work.
+ *
+ * The rule that keeps them apart is load-bearing, and it is stated once, here:
+ *
+ *   HOURS BY PARTNER ARE COUNTED FROM ENTRIES, NEVER FROM VOLUNTEERS.
+ *
+ * Somebody who came once with Acme and twice on their own has one term on their
+ * record and three entries. A total built from the person attributes all three
+ * to Acme, and nothing on any screen would say so. gwc_vt_partner_hours() is the
+ * only function that answers the question, and it reads entries.
+ *
+ * Everything that operates across the taxonomy reads this function rather than
+ * naming a type — the merge, the counts, the purge — so a third type would be
+ * one line here. That is not a convenience: a merge written against volunteers
+ * alone would leave every entry relationship pointing at a deleted term,
+ * silently, and tests/integration/partners.php §5 exists for exactly that.
  *
  * @return string[]
  */
 function gwc_vt_partner_object_types(): array {
 	/**
-	 * The post types an partner can be attached to.
+	 * The post types a partner can be attached to.
 	 *
 	 * @param string[] $types Post type slugs.
 	 */
-	return (array) apply_filters( 'gwc_vt_partner_object_types', array( GWC_VT_VOLUNTEER_TYPE ) );
+	return (array) apply_filters(
+		'gwc_vt_partner_object_types',
+		array( GWC_VT_VOLUNTEER_TYPE, GWC_VT_ENTRY_TYPE )
+	);
 }
 
 /**
@@ -404,7 +440,7 @@ function gwc_vt_register_partner_meta(): void {
 }
 
 /**
- * May this user write an partner's details?
+ * May this user write a partner's details?
  *
  * @return bool
  */

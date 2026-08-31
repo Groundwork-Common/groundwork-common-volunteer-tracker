@@ -245,6 +245,12 @@ function gwc_vt_render_blank_day_screen(): void {
 							<p class="description"><?php esc_html_e( 'Prefilled with your name. Change it if it was somebody else.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><label for="gwcvt-qa-partner"><?php esc_html_e( 'Came with', 'groundwork-common-volunteer-tracker' ); ?></label></th>
+						<td>
+							<?php gwc_vt_render_quick_add_partner_field(); ?>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 
@@ -470,6 +476,12 @@ function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): voi
 							<p class="description"><?php esc_html_e( 'From the shift.', 'groundwork-common-volunteer-tracker' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><label for="gwcvt-qa-partner"><?php esc_html_e( 'Came with', 'groundwork-common-volunteer-tracker' ); ?></label></th>
+						<td>
+							<?php gwc_vt_render_quick_add_partner_field(); ?>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 
@@ -661,6 +673,55 @@ function gwc_vt_render_roster_log_row( int $index, int $signup_id, int $shift_id
 }
 
 /**
+ * Who the day's volunteers came with.
+ *
+ * ── One partner for the whole day, not one per row ───────────────────────────
+ * This is the shape the work actually has. A company sends twenty people for a
+ * morning and a coordinator types up one sign-in sheet; asking twenty times is
+ * the surest way to have it answered nought times, and an unattributed entry is
+ * the failure the taxonomy exists to prevent.
+ *
+ * Somebody on the sheet who did NOT come with them is the rarer case, and it is
+ * corrected on that one entry afterwards — a fix to one record rather than a tax
+ * on every sheet.
+ *
+ * A select and not a text field, for the same reason the metabox is a checkbox
+ * list: typing a partner's name is how the same company comes to exist twice.
+ * Drawn only once there is something to choose.
+ */
+function gwc_vt_render_quick_add_partner_field(): void {
+	$partners = function_exists( 'gwc_vt_partner_terms' ) ? gwc_vt_partner_terms() : array();
+
+	if ( ! $partners ) {
+		?>
+		<p class="description">
+			<?php
+			printf(
+				/* translators: %s: a link to the Partners screen. */
+				esc_html__( 'No partners yet. %s if a company, school or group sends people.', 'groundwork-common-volunteer-tracker' ),
+				'<a href="' . esc_url( gwc_vt_partners_url() ) . '">' . esc_html__( 'Add one', 'groundwork-common-volunteer-tracker' ) . '</a>'
+			);
+			?>
+		</p>
+		<?php
+		return;
+	}
+	?>
+	<select id="gwcvt-qa-partner" name="gwc_vt_partner">
+		<option value="0"><?php esc_html_e( '— nobody in particular —', 'groundwork-common-volunteer-tracker' ); ?></option>
+		<?php foreach ( $partners as $partner ) : ?>
+			<option value="<?php echo esc_attr( (string) $partner->term_id ); ?>">
+				<?php echo esc_html( $partner->name ); ?>
+			</option>
+		<?php endforeach; ?>
+	</select>
+	<p class="description">
+		<?php esc_html_e( 'Applied to every row you log below. Leave it as it is for people who came on their own.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+	<?php
+}
+
+/**
  * Create one entry per filled row.
  */
 function gwc_vt_handle_quick_add(): void {
@@ -698,6 +759,15 @@ function gwc_vt_handle_quick_add(): void {
 
 	$activity   = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_activity'] ?? '' ) ), 0, 200 );
 	$supervisor = mb_substr( sanitize_text_field( (string) ( $posted['gwc_vt_supervisor'] ?? '' ) ), 0, 100 );
+
+	/* Checked against the taxonomy rather than trusted, so a hand-edited post
+	 * naming a category or a tag attaches nothing instead of attaching whatever
+	 * that term happens to be. */
+	$partner_id = absint( $posted['gwc_vt_partner'] ?? 0 );
+
+	if ( $partner_id > 0 && ! gwc_vt_partner( $partner_id ) ) {
+		$partner_id = 0;
+	}
 
 	$volunteers = array_map( 'absint', (array) ( $posted['gwc_vt_volunteer'] ?? array() ) );
 	$hours      = array_map( 'strval', (array) ( $posted['gwc_vt_hours'] ?? array() ) );
@@ -785,6 +855,12 @@ function gwc_vt_handle_quick_add(): void {
 
 		if ( $shift_id > 0 ) {
 			update_post_meta( $entry_id, GWC_VT_ENTRY_SHIFT, $shift_id );
+		}
+
+		/* A term, not meta — this is the aggregation key the Partners screen
+		 * sums, and gwc_vt_partner_hours() reads it off the entry. */
+		if ( $partner_id > 0 ) {
+			wp_set_object_terms( $entry_id, array( $partner_id ), GWC_VT_PARTNER_TAXONOMY );
 		}
 
 		if ( $signup_id > 0 ) {

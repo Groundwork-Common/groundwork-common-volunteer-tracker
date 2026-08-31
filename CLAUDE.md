@@ -86,10 +86,20 @@ tool this file used to describe, and the later half is easy to miss when scannin
   **never** on `gwc_vt_settle_signups()` or `gwc_vt_handle_signup_promote()`,
   which act on somebody already accepted and would fail silently on cron.
 - **Partners** — `partner-taxonomy.php` (the `gwc_vt_partner` taxonomy, its four
-  term-meta fields and the metabox), `partners.php` (the queries, the merge and
-  the near-duplicate finder) and `admin-partners.php` (the screen, the fields on
-  core's term editor, the volunteer-list filter). A partner is who somebody came
-  **with**; see the Vocabulary note on why it is never called an organization.
+  term-meta fields and the metabox), `partners.php` (the queries, the merge, the
+  near-duplicate finder and `gwc_vt_partner_hours()`) and `admin-partners.php`
+  (the screen, the fields on core's term editor, the two list filters and the
+  total above the hours list). A partner is who somebody came **with**; see the
+  Vocabulary note on why it is never called an organization.
+  **Two object types answering two questions.** The VOLUNTEER answers "who is
+  affiliated with Acme" and is stripped when somebody is anonymized. The ENTRY
+  answers "how many hours did Acme contribute" and survives, because it is a
+  fact about a Saturday rather than a property of a person. **Hours by partner
+  are counted from entries, never from volunteers** — somebody who came once
+  with Acme and twice alone is one volunteer and three entries, and only one of
+  those is an answer. `gwc_vt_partner_hours()` is the only function that answers
+  it, and it hands the arithmetic to `gwc_vt_total_from_ids()` so "verified"
+  means here what it means on the letter.
   **WordPress does not merge terms** — there is none in `edit-tags.php`, none in
   the terms list table and none in the API, and renaming a near-duplicate onto
   the real one fails with `duplicate_term_slug`. That is why there is a screen
@@ -497,6 +507,15 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   `show_in_admin_all_list => true` deliberately. A count written with `'any'`
   reports fewer people than the screen it opens. Derive the statuses from
   `show_in_admin_all_list`, which is the same question the link is asking.
+- **`get_posts()` rewrites an empty `post_status` to `publish`, and `WP_Query`
+  does not.** Re-running a list screen's own `query_vars` to total what it shows
+  therefore drops every pending row — the hours list showed two entries and the
+  line above it said nought. `get_posts()` is not a thin wrapper; use
+  `new WP_Query()` when the point is to reproduce a query somebody else built.
+- **`posts_per_page => -1` does not remove the LIMIT on its own.** WP_Query drops
+  it only when `nopaging` is true, and a main query's vars carry
+  `nopaging => false` — so re-running them with `-1` builds `LIMIT 0, -1`, which
+  is not valid SQL and quietly returns nothing. Set both.
 - **Trapping mail belongs on `pre_wp_mail`, never `phpmailer_init`.** The latter
   is the usual place to redirect mail and it cannot stop a send — only change
   where it goes. If PHPMailer then throws, because the host has no MTA or rejects
