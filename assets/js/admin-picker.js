@@ -68,6 +68,29 @@
 			close();
 		}
 
+		/* ── Naming somebody who is not on file ──────────────────────────────
+		 * Opt-in, on an attribute. One script draws every picker in this plugin
+		 * — the entry editor, both roster boxes, Log a day — and only the one
+		 * that is about work already done should be able to bring a person into
+		 * existence. The others must not quietly start creating people.
+		 *
+		 * Nothing is written here. This fills the row and nothing else, so a
+		 * name typed and then thought better of leaves no record behind; the
+		 * volunteer is created by the handler when the sheet is saved. */
+		var canCreate = root.hasAttribute( 'data-gwcvt-can-create' );
+
+		/* No second field to carry the name: on a picker that can create, the
+		 * visible box is itself named and posts what is in it. Choosing this
+		 * option therefore only has to make sure no volunteer ID goes with it —
+		 * the handler reads an ID where there is one and the typed name where
+		 * there is not. */
+		function chooseNew( name ) {
+			hidden.value = '0';
+			search.value = name;
+			remember();
+			close();
+		}
+
 		function highlight( next ) {
 			var options = list.querySelectorAll( 'li' );
 			if ( ! options.length ) {
@@ -83,15 +106,58 @@
 			}
 		}
 
+		/* The last option, when the typed name matches nothing this site knows.
+		 * Built with createElement and textContent like everything else here —
+		 * the value being rendered is a name somebody typed, and a name is
+		 * exactly the kind of value nobody thinks of as markup until somebody
+		 * types a tag into it. */
+		function appendCreate( name ) {
+			if ( ! canCreate || ! name ) {
+				return;
+			}
+
+			var option = document.createElement( 'li' );
+			option.setAttribute( 'role', 'option' );
+			option.setAttribute( 'aria-selected', 'false' );
+			option.className = 'gwcvt-picker__create';
+			option.tabIndex = -1;
+
+			var template = root.getAttribute( 'data-gwcvt-create' ) || 'Add %s as a new volunteer';
+
+			option.textContent = template.replace( '%s', '“' + name + '”' );
+
+			option.addEventListener( 'mousedown', function ( event ) {
+				event.preventDefault();
+				chooseNew( name );
+			} );
+
+			option.addEventListener( 'mouseenter', function () {
+				highlight( items.length );
+			} );
+
+			list.appendChild( option );
+
+			/* Reachable by keyboard as well as by pointer. items carries a
+			 * sentinel so ArrowDown and Enter walk onto it like any other row —
+			 * without this the option is mouse-only, which on a screen somebody
+			 * is typing eleven names into is no option at all. */
+			items.push( { create: name } );
+		}
+
 		function render( results ) {
 			list.textContent = '';
-			items = results;
+			items = results.slice();
+
+			var term = search.value.trim();
 
 			if ( ! results.length ) {
 				var empty = document.createElement( 'li' );
 				empty.className = 'gwcvt-picker__empty';
 				empty.textContent = root.getAttribute( 'data-gwcvt-empty' ) || 'No matches';
 				list.appendChild( empty );
+
+				appendCreate( term );
+
 				list.hidden = false;
 				search.setAttribute( 'aria-expanded', 'true' );
 				return;
@@ -116,6 +182,10 @@
 
 				list.appendChild( option );
 			} );
+
+			/* Offered under the matches as well as instead of them: "Dana" may
+			 * find Dana Achebe and still not be the Dana standing at the desk. */
+			appendCreate( term );
 
 			list.hidden = false;
 			search.setAttribute( 'aria-expanded', 'true' );
@@ -174,7 +244,12 @@
 				highlight( active - 1 );
 			} else if ( 'Enter' === event.key && active > -1 && items[ active ] ) {
 				event.preventDefault();
-				choose( items[ active ] );
+
+				if ( items[ active ].create ) {
+					chooseNew( items[ active ].create );
+				} else {
+					choose( items[ active ] );
+				}
 			} else if ( 'Escape' === event.key ) {
 				close();
 			}

@@ -311,10 +311,48 @@ function gwc_vt_render_quick_add_row( int $index, bool $walk_in = false ): void 
 				);
 				?>
 			</label>
-			<div class="gwcvt-picker" data-gwcvt-picker data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>">
+			<?php
+			/* ── This picker may bring somebody into existence, and says so ───
+			 * data-gwcvt-can-create is opt-in per picker: one script draws every
+			 * picker in this plugin, and only the one that is about work already
+			 * done should be able to create a person. The entry editor and the
+			 * two roster boxes deliberately do not carry it. */
+			?>
+			<div
+				class="gwcvt-picker"
+				data-gwcvt-picker
+				data-gwcvt-can-create
+				data-gwcvt-empty="<?php esc_attr_e( 'No volunteer of that name', 'groundwork-common-volunteer-tracker' ); ?>"
+				data-gwcvt-create="
+				<?php
+				/* translators: %s: the name somebody typed, in quotation marks. */
+				echo esc_attr__( 'Add %s as a new volunteer', 'groundwork-common-volunteer-tracker' );
+				/* Substituted by assets/js/admin-picker.js with the name in the
+				 * box, not by PHP — there is nothing to put in it here. */
+				?>
+				"
+			>
+				<?php
+				/* ── The text field is named, and that is the no-JS path ──────
+				 * Every other picker in the plugin leaves its box unnamed on
+				 * purpose: a named text field is one a browser remembers and
+				 * re-fills, and on the entry editor that would put somebody's
+				 * name on a screen that produces letters about people.
+				 *
+				 * Here it has to post. Without JavaScript this row used to send
+				 * volunteer 0 and log nothing at all, silently — so the no-JS
+				 * path GAINS the feature rather than losing it: type a name,
+				 * save, and the handler makes the person.
+				 *
+				 * Keyed by row index, never positional. Only some rows carry a
+				 * name, and a positional array closes its gaps up — which would
+				 * attribute one person's name to another person's row. The same
+				 * reasoning the attendance checkboxes carry. */
+				?>
 				<input
 					type="text"
 					id="gwcvt-qa-name-<?php echo esc_attr( (string) $index ); ?>"
+					name="gwc_vt_new_name[<?php echo esc_attr( (string) $index ); ?>]"
 					class="regular-text"
 					autocomplete="off"
 					role="combobox"
@@ -770,6 +808,123 @@ function gwc_vt_render_quick_add_partner_field(): void {
 }
 
 /**
+ * The volunteer a typed name means, if it means one that already exists.
+ *
+ * ── Duplicate people are the failure this whole feature exists to avoid ──────
+ * Somebody who comes with a company in March and back on their own in June has
+ * to find their March hours, their waiver and their letter on ONE record. A
+ * screen that made a second Dana Reyes every time a coordinator typed the name
+ * would quietly split people in half, and the halves are only ever noticed when
+ * a letter comes out short.
+ *
+ * So an exact match to one existing volunteer uses that record. An exact match
+ * to TWO refuses the row and says so, because which of them is a question for
+ * the coordinator and not for a heuristic — and guessing here writes hours onto
+ * a real person who did not work them.
+ *
+ * Exact, not fuzzy: matching loosely would fold two people with similar names
+ * into one, which is the same failure pointing the other way and worse, because
+ * nothing on any screen would show it.
+ *
+ * @param string $name As typed.
+ * @return array{result:string, volunteer_id:int} result is 'found', 'create' or
+ *                                                'ambiguous'.
+ */
+function gwc_vt_volunteer_for_typed_name( string $name ): array {
+	$name = trim( $name );
+
+	if ( '' === $name ) {
+		return array(
+			'result'       => 'ambiguous',
+			'volunteer_id' => 0,
+		);
+	}
+
+	/* Every status, inactive included. Somebody who stopped coming and has come
+	 * back is the same person, and making a second record for them is exactly
+	 * the split this function exists to prevent — they would keep their old
+	 * hours and start a new pile beside them. */
+	$found = get_posts(
+		array(
+			'post_type'              => GWC_VT_VOLUNTEER_TYPE,
+			'post_status'            => array_values( get_post_stati() ),
+			'posts_per_page'         => 3,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'title'                  => $name,
+		)
+	);
+
+	$found = array_map( 'intval', (array) $found );
+
+	if ( count( $found ) > 1 ) {
+		return array(
+			'result'       => 'ambiguous',
+			'volunteer_id' => 0,
+		);
+	}
+
+	if ( 1 === count( $found ) ) {
+		return array(
+			'result'       => 'found',
+			'volunteer_id' => (int) reset( $found ),
+		);
+	}
+
+	return array(
+		'result'       => 'create',
+		'volunteer_id' => 0,
+	);
+}
+
+/**
+ * Bring a volunteer into existence from a name on a sign-in sheet.
+ *
+ * Name only, published, and no email — the same shape Add New Volunteer
+ * produces with the title filled in. An address typed on a clipboard by
+ * somebody else is not one to send a court letter to, and it can be added on
+ * the record when there is one to trust.
+ *
+ * @param string $name As typed.
+ * @return int Volunteer post ID, or 0.
+ */
+function gwc_vt_create_volunteer_named( string $name ): int {
+	$name = trim( $name );
+
+	if ( '' === $name ) {
+		return 0;
+	}
+
+	$id = wp_insert_post(
+		array(
+			'post_type'   => GWC_VT_VOLUNTEER_TYPE,
+			'post_status' => 'publish',
+			'post_title'  => $name,
+		)
+	);
+
+	if ( is_wp_error( $id ) ) {
+		return 0;
+	}
+
+	/**
+	 * Fires when a volunteer is created from a row on Log a day.
+	 *
+	 * Separate from any other creation route so a site can tell a record made
+	 * from a sign-in sheet — name only, nothing else known — from one somebody
+	 * filled in deliberately.
+	 *
+	 * @param int    $volunteer_id The new volunteer.
+	 * @param string $name         The name as it was typed.
+	 */
+	do_action( 'gwc_vt_volunteer_created_from_sheet', (int) $id, $name );
+
+	return (int) $id;
+}
+
+/**
  * Create one entry per filled row.
  */
 function gwc_vt_handle_quick_add(): void {
@@ -820,6 +975,11 @@ function gwc_vt_handle_quick_add(): void {
 	$volunteers = array_map( 'absint', (array) ( $posted['gwc_vt_volunteer'] ?? array() ) );
 	$hours      = array_map( 'strval', (array) ( $posted['gwc_vt_hours'] ?? array() ) );
 
+	/* Keyed by row index, like the two below and for the same reason: only some
+	 * rows carry a typed name, and a positional array closes its gaps up —
+	 * which attributes one person's name to another person's row. */
+	$names = (array) ( $posted['gwc_vt_new_name'] ?? array() );
+
 	/* ── Why these two are keyed and the two above are not ───────────────────
 	 * gwc_vt_volunteer[] and gwc_vt_hours[] are positional, and every row renders
 	 * both, so their indexes line up with the rows on screen.
@@ -839,12 +999,18 @@ function gwc_vt_handle_quick_add(): void {
 
 	$made     = 0;
 	$skipped  = 0;
+	$created  = 0;
 	$no_shows = 0;
 	$logged   = array();
 
 	foreach ( $volunteers as $index => $volunteer_id ) {
 		$typed     = trim( (string) ( $hours[ $index ] ?? '' ) );
 		$signup_id = (int) ( $signups[ $index ] ?? 0 );
+
+		/* The name in the box, which is what a row carries when nobody was
+		 * picked from the list — either because the person is not on file, or
+		 * because there is no JavaScript and there was no list. */
+		$typed_name = mb_substr( trim( sanitize_text_field( (string) ( $names[ $index ] ?? '' ) ) ), 0, 200 );
 
 		/* Somebody who signed up and did not turn up. Counted so the coordinator
 		 * is told, and recorded as nothing at all — no entry, and no stored flag
@@ -856,18 +1022,40 @@ function gwc_vt_handle_quick_add(): void {
 		}
 
 		// An untouched row. Not an error — the form ships more rows than most days need.
-		if ( $volunteer_id < 1 && '' === $typed ) {
+		if ( $volunteer_id < 1 && '' === $typed_name && '' === $typed ) {
 			continue;
+		}
+
+		/* ── A row can name somebody who is not on file ───────────────────────
+		 * Resolved here but not written yet: gwc_vt_volunteer_for_typed_name()
+		 * either finds the one existing record, refuses because there are two
+		 * of them, or reports that it would create one. The creating happens
+		 * below, once the row is known to be complete — a name typed into a row
+		 * that is then abandoned must leave no record behind. */
+		$make = '';
+
+		if ( $volunteer_id < 1 && '' !== $typed_name ) {
+			$found = gwc_vt_volunteer_for_typed_name( $typed_name );
+
+			if ( 'ambiguous' === $found['result'] ) {
+				/* Two people called Dana Reyes is a question for the
+				 * coordinator, not for a heuristic. */
+				++$skipped;
+				continue;
+			}
+
+			$volunteer_id = (int) $found['volunteer_id'];
+			$make         = 'create' === $found['result'] ? $typed_name : '';
 		}
 
 		/* Half a row IS an error, and a silent skip would mean somebody's hours
 		 * quietly not recorded. Counted and reported. */
-		if ( $volunteer_id < 1 || '' === $typed ) {
+		if ( ( $volunteer_id < 1 && '' === $make ) || '' === $typed ) {
 			++$skipped;
 			continue;
 		}
 
-		if ( GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
+		if ( '' === $make && GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 			++$skipped;
 			continue;
 		}
@@ -877,6 +1065,18 @@ function gwc_vt_handle_quick_add(): void {
 		if ( null === $minutes || $minutes < 1 ) {
 			++$skipped;
 			continue;
+		}
+
+		// Only now, with the row complete and its hours readable.
+		if ( '' !== $make ) {
+			$volunteer_id = gwc_vt_create_volunteer_named( $make );
+
+			if ( $volunteer_id < 1 ) {
+				++$skipped;
+				continue;
+			}
+
+			++$created;
 		}
 
 		$entry_id = wp_insert_post(
@@ -955,7 +1155,8 @@ function gwc_vt_handle_quick_add(): void {
 		$skipped,
 		$made > 0 ? 'logged' : 'nothing',
 		$shift_id,
-		$no_shows
+		$no_shows,
+		$created
 	);
 }
 
@@ -967,14 +1168,16 @@ function gwc_vt_handle_quick_add(): void {
  * @param string $result   What to say.
  * @param int    $shift_id The shift this was logged against, if any.
  * @param int    $no_shows How many people signed up and did not turn up.
+ * @param int    $created  How many volunteer records were made from typed names.
  */
-function gwc_vt_quick_add_redirect( int $made, int $skipped, string $result, int $shift_id = 0, int $no_shows = 0 ): void {
+function gwc_vt_quick_add_redirect( int $made, int $skipped, string $result, int $shift_id = 0, int $no_shows = 0, int $created = 0 ): void {
 	$args = array(
 		'page'           => GWC_VT_QUICK_ADD_PAGE,
 		'post_type'      => GWC_VT_ENTRY_TYPE,
 		'gwc_vt_qa'      => $result,
 		'gwc_vt_made'    => $made,
 		'gwc_vt_skipped' => $skipped,
+		'gwc_vt_created' => $created,
 	);
 
 	if ( $shift_id > 0 ) {
@@ -1026,6 +1229,9 @@ function gwc_vt_quick_add_notice(): void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
 	$no_shows = isset( $_GET['gwc_vt_no_shows'] ) ? absint( wp_unslash( $_GET['gwc_vt_no_shows'] ) ) : 0;
 
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$created = isset( $_GET['gwc_vt_created'] ) ? absint( wp_unslash( $_GET['gwc_vt_created'] ) ) : 0;
+
 	if ( 'bad-date' === $result ) {
 		printf(
 			'<div class="notice notice-error"><p>%s</p></div>',
@@ -1072,6 +1278,23 @@ function gwc_vt_quick_add_notice(): void {
 		$made
 	);
 
+	if ( $created > 0 ) {
+		/* Said out loud, because creating a person is not the same size of act
+		 * as logging their hours — a coordinator should leave this screen
+		 * knowing the site has three records on it that did not exist a minute
+		 * ago, and where to go and correct a spelling. */
+		$message .= ' ' . sprintf(
+			/* translators: %d: how many volunteer records were created. */
+			_n(
+				'%d volunteer record was created from the names you typed.',
+				'%d volunteer records were created from the names you typed.',
+				$created,
+				'groundwork-common-volunteer-tracker'
+			),
+			$created
+		);
+	}
+
 	if ( $no_shows > 0 ) {
 		$message .= ' ' . sprintf(
 			/* translators: %d: how many people did not turn up. */
@@ -1089,8 +1312,8 @@ function gwc_vt_quick_add_notice(): void {
 		$message .= ' ' . sprintf(
 			/* translators: %d: number of rows. */
 			_n(
-				'%d row was skipped — it needed both a volunteer and a readable number of hours.',
-				'%d rows were skipped — each needed both a volunteer and a readable number of hours.',
+				'%d row was skipped — it needed a name and a readable number of hours, and a name that matches two volunteers is one you have to choose between yourself.',
+				'%d rows were skipped — each needed a name and a readable number of hours, and a name that matches two volunteers is one you have to choose between yourself.',
 				$skipped,
 				'groundwork-common-volunteer-tracker'
 			),
