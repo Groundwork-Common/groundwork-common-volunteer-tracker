@@ -233,11 +233,12 @@ foreach ( $GLOBALS['gwc_vt_menu_states'] as $gwc_vt_state => $gwc_vt_state_setti
 	);
 
 	/* Settings opens the setting-up band rather than ending the menu — the
-	 * owner's own arrangement, Settings then Credentials then Help. */
+	 * owner's own arrangement: Settings, then the two things an organization
+	 * defines once, then Help. */
 	gwc_vt_menu_check(
 		'the menu ends with the setting-up band, in that order' . $gwc_vt_in,
-		array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_HELP_PAGE ) === array_slice( $gwc_vt_slugs, -3 ),
-		implode( ' · ', array_slice( $gwc_vt_slugs, -3 ) )
+		array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_PARTNERS_PAGE, GWC_VT_HELP_PAGE ) === array_slice( $gwc_vt_slugs, -4 ),
+		implode( ' · ', array_slice( $gwc_vt_slugs, -4 ) )
 	);
 
 	gwc_vt_menu_check(

@@ -167,6 +167,34 @@ foreach ( $gwc_vt_private_types as $gwc_vt_type ) {
 	);
 }
 
+/* And the taxonomies, which are a second way to publish the same records and
+ * are not covered by the loop above. A taxonomy registered show_in_rest => true
+ * puts the list of organizations a site works with at /wp/v2/, and its term meta
+ * puts a named contact's telephone number beside it.
+ *
+ * Read from the plugin rather than listed, so a second taxonomy is covered the
+ * day somebody registers one. tests/integration/partners.php asserts the same thing
+ * about gwc_vt_org in more detail; this is the sweep that would notice a NEW
+ * one, which that file by definition cannot. */
+foreach ( get_taxonomies( array(), 'objects' ) as $gwc_vt_taxonomy ) {
+	if ( 0 !== strpos( (string) $gwc_vt_taxonomy->name, 'gwc_vt_' ) ) {
+		continue;
+	}
+
+	gwc_vt_check(
+		$gwc_vt_taxonomy->name . ' declares show_in_rest false',
+		false === $gwc_vt_taxonomy->show_in_rest
+	);
+
+	$gwc_vt_tax_probe = rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/' . $gwc_vt_taxonomy->name ) );
+
+	gwc_vt_check(
+		$gwc_vt_taxonomy->name . ' has no route under /wp/v2/',
+		404 === $gwc_vt_tax_probe->get_status(),
+		'status ' . $gwc_vt_tax_probe->get_status()
+	);
+}
+
 /* ── The one route that does exist ───────────────────────────────────────── */
 
 $gwc_vt_routes = rest_get_server()->get_routes();

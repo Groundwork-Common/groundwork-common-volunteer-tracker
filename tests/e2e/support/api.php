@@ -332,6 +332,32 @@ function gwc_vt_e2e_purge(): array {
 		}
 	}
 
+	/* And every organization.
+	 *
+	 * Terms are not posts, so the loop above cannot reach them — and unlike a
+	 * leftover post, a leftover term is not merely noise. The Organizations
+	 * screen leads with proposed duplicates, and a previous run's "Zzytest
+	 * Acme Corp" would sit at the top of it proposing a merge no spec asked
+	 * for. Same reasoning as the status list above: the purge has to know about
+	 * everything the plugin stores, not everything that happens to be a post.
+	 *
+	 * Read from the taxonomy rather than named, so this covers hour entries the
+	 * day #211 registers them. */
+	foreach ( array( GWC_VT_PARTNER_TAXONOMY ) as $taxonomy ) {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+				'fields'     => 'ids',
+			)
+		);
+
+		foreach ( ( is_wp_error( $terms ) ? array() : (array) $terms ) as $term_id ) {
+			wp_delete_term( (int) $term_id, $taxonomy );
+			++$removed;
+		}
+	}
+
 	/* And the pages the seed puts its blocks on.
 	 *
 	 * Not for tidiness: a page whose slug the seed wants is a page the seed
@@ -601,6 +627,86 @@ switch ( $gwc_vt_e2e_op ) {
 				),
 			)
 		);
+		break;
+
+	/* Every term in a taxonomy, with its meta and its parent.
+	 *
+	 * Inspect only, like everything else here. A merge is driven through the
+	 * screen — asserting it by writing term relationships would let a spec pass
+	 * while gwc_vt_merge_partners() was broken, which is the whole rule this file
+	 * is written under. */
+	case 'terms':
+		$gwc_vt_e2e_tax   = (string) ( $gwc_vt_e2e_args['taxonomy'] ?? '' );
+		$gwc_vt_e2e_found = get_terms(
+			array(
+				'taxonomy'   => $gwc_vt_e2e_tax,
+				'hide_empty' => false,
+			)
+		);
+
+		gwc_vt_e2e_reply(
+			array_map(
+				static function ( $gwc_vt_e2e_term ) {
+					return array(
+						'id'     => (int) $gwc_vt_e2e_term->term_id,
+						'name'   => (string) $gwc_vt_e2e_term->name,
+						'parent' => (int) $gwc_vt_e2e_term->parent,
+						'meta'   => array_map(
+							static function ( $gwc_vt_e2e_v ) {
+								return is_array( $gwc_vt_e2e_v ) && 1 === count( $gwc_vt_e2e_v ) ? $gwc_vt_e2e_v[0] : $gwc_vt_e2e_v;
+							},
+							(array) get_term_meta( (int) $gwc_vt_e2e_term->term_id )
+						),
+					);
+				},
+				is_wp_error( $gwc_vt_e2e_found ) ? array() : (array) $gwc_vt_e2e_found
+			)
+		);
+		break;
+
+	/* What one post holds in one taxonomy, by name. */
+	case 'object.terms':
+		$gwc_vt_e2e_held = wp_get_object_terms(
+			(int) ( $gwc_vt_e2e_args['id'] ?? 0 ),
+			(string) ( $gwc_vt_e2e_args['taxonomy'] ?? '' ),
+			array( 'fields' => 'names' )
+		);
+
+		gwc_vt_e2e_reply( is_wp_error( $gwc_vt_e2e_held ) ? array() : array_values( (array) $gwc_vt_e2e_held ) );
+		break;
+
+	/* An organization to arrange a test around. Creating one is driven through
+	 * the screen in the spec that covers gwc_vt_add_partner; this exists for the
+	 * specs that need one to already be there. */
+	case 'term.ensure':
+		$gwc_vt_e2e_made = wp_insert_term(
+			(string) ( $gwc_vt_e2e_args['name'] ?? '' ),
+			(string) ( $gwc_vt_e2e_args['taxonomy'] ?? '' ),
+			array( 'parent' => (int) ( $gwc_vt_e2e_args['parent'] ?? 0 ) )
+		);
+
+		if ( is_wp_error( $gwc_vt_e2e_made ) ) {
+			$gwc_vt_e2e_was = term_exists(
+				(string) ( $gwc_vt_e2e_args['name'] ?? '' ),
+				(string) ( $gwc_vt_e2e_args['taxonomy'] ?? '' )
+			);
+
+			gwc_vt_e2e_reply( array( 'id' => (int) ( $gwc_vt_e2e_was['term_id'] ?? 0 ) ) );
+			break;
+		}
+
+		gwc_vt_e2e_reply( array( 'id' => (int) $gwc_vt_e2e_made['term_id'] ) );
+		break;
+
+	/* Attach a post to terms, to arrange a merge worth watching. */
+	case 'object.terms.set':
+		wp_set_object_terms(
+			(int) ( $gwc_vt_e2e_args['id'] ?? 0 ),
+			array_map( 'intval', (array) ( $gwc_vt_e2e_args['terms'] ?? array() ) ),
+			(string) ( $gwc_vt_e2e_args['taxonomy'] ?? '' )
+		);
+
+		gwc_vt_e2e_reply( array( 'ok' => true ) );
 		break;
 
 	/* Every post of a type, with the meta the caller names. */

@@ -127,6 +127,30 @@
 		</properties>
 	</rule>
 
+	<!--
+		The plugin's own sanitizers, declared so the security sniff knows they
+		are sanitizers.
+
+		Without this, every call that cleans input through one of them is
+		reported as a non-sanitized input variable — and the only ways out are a
+		phpcs:ignore on a security line, which this codebase has learned not to
+		leave lying around, or calling sanitize_text_field() a second time at the
+		call site purely to satisfy the sniff, which puts the rule about what is
+		allowed in two places.
+
+		gwc_vt_sanitize_partner_text() and gwc_vt_sanitize_partner_email() are the two
+		registered term-meta callbacks in inc/org-taxonomy.php. Both end in a
+		core sanitizer and neither can return markup.
+	-->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput">
+		<properties>
+			<property name="customSanitizingFunctions" type="array">
+				<element value="gwc_vt_sanitize_partner_text"/>
+				<element value="gwc_vt_sanitize_partner_email"/>
+			</property>
+		</properties>
+	</rule>
+
 	<rule ref="WordPress.WP.I18n">
 		<properties>
 			<property name="text_domain" type="array">

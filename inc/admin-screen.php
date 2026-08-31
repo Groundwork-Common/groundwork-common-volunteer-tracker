@@ -33,6 +33,7 @@ const GWC_VT_REPEAT_PAGE    = 'gwc-vt-repeat';
  * were written in. */
 const GWC_VT_APPLICATIONS_PAGE = 'gwc-vt-applications';
 const GWC_VT_CREDENTIALS_PAGE  = 'gwc-vt-credentials';
+const GWC_VT_PARTNERS_PAGE     = 'gwc-vt-partners';
 const GWC_VT_HELP_PAGE         = 'gwc-vt-help';
 
 add_filter( 'admin_footer_text', 'gwc_vt_admin_footer_text' );
@@ -164,6 +165,14 @@ function gwc_vt_menu_bands(): array {
 		'setup'  => array(
 			GWC_VT_SETTINGS_PAGE,
 			GWC_VT_CREDENTIALS_PAGE,
+
+			/* Organizations, beside credentials and for the same reason. Naming
+			 * the companies and schools a site works with is a decision made
+			 * once and revisited when one of them changes its name; who came
+			 * with whom is asked from the volunteer list, which is where
+			 * somebody stands when they ask it. */
+			GWC_VT_PARTNERS_PAGE,
+
 			GWC_VT_HELP_PAGE,
 		),
 	);

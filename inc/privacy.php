@@ -583,6 +583,43 @@ function gwc_vt_volunteers_by_email( string $email ): array {
 }
 
 /**
+ * Every partner naming one address as its contact.
+ *
+ * The lookup the export needs and the eraser deliberately does not — see both
+ * for the asymmetry.
+ *
+ * @param string $email The address being asked about.
+ * @return WP_Term[]
+ */
+function gwc_vt_partners_by_contact_email( string $email ): array {
+	$email = sanitize_email( trim( $email ) );
+
+	if ( '' === $email || ! is_email( $email ) ) {
+		return array();
+	}
+
+	$found = array();
+
+	/* Walked rather than queried by meta. get_terms() takes a meta_query, but
+	 * the number of organizations a site has is the number of companies it works
+	 * with — tens, not thousands — and this runs once per export request. A
+	 * meta_query here would be a join to save a loop nobody can measure.
+	 *
+	 * Compared case-insensitively, because an address is not case sensitive in
+	 * the half that matters and somebody requesting an export will type it
+	 * however their mail client shows it. */
+	foreach ( gwc_vt_partner_terms() as $term ) {
+		$held = (string) get_term_meta( (int) $term->term_id, GWC_VT_PARTNER_CONTACT_EMAIL, true );
+
+		if ( '' !== $held && 0 === strcasecmp( $held, $email ) ) {
+			$found[] = $term;
+		}
+	}
+
+	return $found;
+}
+
+/**
  * Applications made by this address.
  *
  * The sibling of gwc_vt_signups_by_claim_email(), and needed for the same
@@ -940,6 +977,49 @@ function gwc_vt_export_personal_data( $email, $page = 1 ) {
 		}
 	}
 
+	/* ── The one person here who is not a volunteer ──────────────────────────
+	 * A partner's contact. They did not sign up for anything, they are
+	 * probably not on any shift, and they are in this database because a member
+	 * of staff typed them in — which is exactly the population these tools exist
+	 * for. Every other branch above resolves the address through
+	 * gwc_vt_volunteers_by_email() or gwc_vt_applications_by_email(), and an
+	 * partner's contact matches neither, so without this they are the one
+	 * category of personal data an export request silently omits.
+	 *
+	 * Exported, and deliberately NOT erased — see gwc_vt_erase_personal_data(),
+	 * where the reasoning for the asymmetry lives. */
+	foreach ( gwc_vt_partners_by_contact_email( (string) $email ) as $org ) {
+		$fields = gwc_vt_partner_field_values( (int) $org->term_id );
+
+		$items[] = array(
+			'group_id'    => 'gwc_vt_partner_contact',
+			'group_label' => __( 'Partners you are the contact for', 'groundwork-common-volunteer-tracker' ),
+			'item_id'     => 'gwcvt-org-' . (int) $org->term_id,
+			'data'        => array(
+				array(
+					'name'  => __( 'Organization', 'groundwork-common-volunteer-tracker' ),
+					'value' => (string) $org->name,
+				),
+				array(
+					'name'  => __( 'Your name, as we hold it', 'groundwork-common-volunteer-tracker' ),
+					'value' => $fields[ GWC_VT_PARTNER_CONTACT_NAME ],
+				),
+				array(
+					'name'  => __( 'Email', 'groundwork-common-volunteer-tracker' ),
+					'value' => $fields[ GWC_VT_PARTNER_CONTACT_EMAIL ],
+				),
+				array(
+					'name'  => __( 'Phone', 'groundwork-common-volunteer-tracker' ),
+					'value' => $fields[ GWC_VT_PARTNER_CONTACT_PHONE ],
+				),
+				array(
+					'name'  => __( 'Why we hold this', 'groundwork-common-volunteer-tracker' ),
+					'value' => __( 'You are recorded as the person to contact at this partner about its volunteers. It is not a volunteer record and says nothing about you having volunteered.', 'groundwork-common-volunteer-tracker' ),
+				),
+			),
+		);
+	}
+
 	$most_entries = 0;
 
 	foreach ( $volunteers as $volunteer_id ) {
@@ -1030,6 +1110,30 @@ function gwc_vt_erase_personal_data( $email, $page = 1 ) {
 	$removed  = false;
 	$retained = false;
 	$messages = array();
+
+	/* ── A partner's contact is reported, never emptied ────────────────
+	 * The export carries them; this deliberately does not erase them, and the
+	 * asymmetry is a decision rather than an omission.
+	 *
+	 * Erasing on an email match would blank a field on a SHARED record. The
+	 * partner is not that person — it is a company this site works with,
+	 * and one of its employees leaving should not quietly empty the contact
+	 * details everybody else relies on. The right answer to "the contact has
+	 * gone" is almost always "put the new one in", which no eraser can do.
+	 *
+	 * So it is surfaced to the administrator handling the request, with the
+	 * organization named, and they do it. That is the same principle as the
+	 * retention-hold messages below: the point of this function is as much to
+	 * tell a person what happened as to delete anything. */
+	foreach ( gwc_vt_partners_by_contact_email( (string) $email ) as $org ) {
+		$retained = true;
+
+		$messages[] = sprintf(
+			/* translators: %s: an organization's name. */
+			__( 'This address is recorded as the contact for %s, which is a partner rather than a volunteer. It was not erased, because clearing it would remove a shared record everybody uses. Edit that partner under Volunteer Tracker → Partners to replace or remove the contact.', 'groundwork-common-volunteer-tracker' ),
+			(string) $org->name
+		);
+	}
 
 	$volunteers = gwc_vt_volunteers_by_email( (string) $email );
 

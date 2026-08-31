@@ -82,6 +82,7 @@ function gwc_vt_help_screens(): array {
 		__( 'Volunteers', 'groundwork-common-volunteer-tracker' )           => 'edit-' . GWC_VT_VOLUNTEER_TYPE,
 		__( 'One volunteer’s record', 'groundwork-common-volunteer-tracker' ) => GWC_VT_VOLUNTEER_TYPE,
 		__( 'Credentials', 'groundwork-common-volunteer-tracker' )          => $page . GWC_VT_CREDENTIALS_PAGE,
+		__( 'Organizations', 'groundwork-common-volunteer-tracker' )        => $page . GWC_VT_PARTNERS_PAGE,
 		__( 'Applications', 'groundwork-common-volunteer-tracker' )         => $page . GWC_VT_APPLICATIONS_PAGE,
 		__( 'Changing a whole repeat', 'groundwork-common-volunteer-tracker' ) => $page . GWC_VT_REPEAT_PAGE,
 		__( 'Settings', 'groundwork-common-volunteer-tracker' )             => $page . GWC_VT_SETTINGS_PAGE,
@@ -302,6 +303,7 @@ function gwc_vt_current_help_topic(): string {
 function gwc_vt_help_topic_for_screen( string $screen_id ): string {
 	$map = array(
 		GWC_VT_CREDENTIALS_PAGE  => 'credentials',
+		GWC_VT_PARTNERS_PAGE     => 'partners',
 		GWC_VT_APPLICATIONS_PAGE => 'public',
 		GWC_VT_SCHEDULE_PAGE     => 'schedule',
 		GWC_VT_REPEAT_PAGE       => 'schedule',

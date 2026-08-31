@@ -85,6 +85,18 @@ tool this file used to describe, and the later half is easy to miss when scannin
   `gwc_vt_add_signup()`**, which the reconciler and every fixture also call, and
   **never** on `gwc_vt_settle_signups()` or `gwc_vt_handle_signup_promote()`,
   which act on somebody already accepted and would fail silently on cron.
+- **Partners** — `partner-taxonomy.php` (the `gwc_vt_partner` taxonomy, its four
+  term-meta fields and the metabox), `partners.php` (the queries, the merge and
+  the near-duplicate finder) and `admin-partners.php` (the screen, the fields on
+  core's term editor, the volunteer-list filter). A partner is who somebody came
+  **with**; see the Vocabulary note on why it is never called an organization.
+  **WordPress does not merge terms** — there is none in `edit-tags.php`, none in
+  the terms list table and none in the API, and renaming a near-duplicate onto
+  the real one fails with `duplicate_term_slug`. That is why there is a screen
+  at all. The taxonomy is `hierarchical` for the **checkbox metabox**, not for
+  hierarchy: flat gives the free-text tag input that lets somebody type the
+  second "ACME Corp." into existence. Core's own metabox hands that text field
+  back anyway for anyone with `edit_terms`, which is why `meta_box_cb` is ours.
 - **Sheets** — `admin-sheet.php` is the one way a secondary action opens on a
   volunteer's record: the frame, the trigger, the redirect and the one table of
   messages. `admin-volunteer-sheets.php` carries logging hours and recording a
@@ -470,6 +482,21 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   because the instance name is derived from the config file's path. If you need
   a real WordPress test database here one day, that is the moment to add the
   file — not before.
+- **A taxonomy's default capabilities sit below this plugin's gate.**
+  `register_taxonomy()` defaults `assign_terms` to **`edit_posts`** —
+  contributor-level, `wp-includes/class-wp-taxonomy.php:434` — and the other
+  three to `manage_categories`, which Editor holds. Every record screen here is
+  behind `gwc_vt_records_cap()`. Registered without an explicit `capabilities`
+  array, a taxonomy therefore arrives behind a *weaker* gate than the records it
+  describes — and `gwc_vt_partner` carries a named contact's telephone number.
+  That is #213's shape exactly. Override all four.
+- **`post_status => 'any'` is not "any", and a count that uses it disagrees with
+  the list it links to.** `'any'` means every status whose `exclude_from_search`
+  is false, so it drops `gwc_vt_vol_inactive` — while the volunteer list's All
+  view *shows* inactive people, because that status sets
+  `show_in_admin_all_list => true` deliberately. A count written with `'any'`
+  reports fewer people than the screen it opens. Derive the statuses from
+  `show_in_admin_all_list`, which is the same question the link is asking.
 - **Trapping mail belongs on `pre_wp_mail`, never `phpmailer_init`.** The latter
   is the usual place to redirect mail and it cannot stop a send — only change
   where it goes. If PHPMailer then throws, because the host has no MTA or rejects
@@ -547,7 +574,19 @@ stored · **retire** stop asking for a credential without destroying the records
 of who held it — **of a credential only; a person goes inactive** ·
 **inactive** a volunteer who has stopped coming: hours, name and issued letters
 all stay, they are not offered when staffing a shift, and it is neither
-anonymize nor delete
+anonymize nor delete ·
+**organization** *the host nonprofit* — the one running the site, whose
+letterhead is on the letter and about which this file says "a record of what the
+organization observed". It owns `gwc_vt_org_name()`, `gwc_vt_org_contact()`,
+`gwc_vt_org_totals()`, the `org_name` setting, the `gwcvt-org-*` letterhead
+classes and `{org}` in the wording · **partner** *an organization a volunteer
+came WITH* — a company, a school, a court's service partner. A `gwc_vt_partner`
+term, multi-valued, on the volunteer and (with #211) on the entry.
+**Never call a partner an "organization"**, in code or on a screen: that word is
+taken, the way "requirement" is taken by court-ordered hours. This one was
+briefly `gwc_vt_org`, which put a partner's contact telephone number a
+substring away from the nonprofit's own — see the note at the top of
+`inc/partner-taxonomy.php`
 
 ## Where work is tracked
 

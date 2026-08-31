@@ -160,6 +160,22 @@ if ( ! function_exists( 'gwc_vt_entry_ids_for_volunteer' ) ) {
 	require GWC_VT_DIR . 'inc/entries.php';
 }
 
+/* Organizations: who somebody came with. After volunteer-cpt.php, whose type
+ * the taxonomy is registered against — gwc_vt_partner_object_types() names the
+ * constant, so above it that constant does not exist yet. Before privacy.php,
+ * which fires the gwc_vt_purged hook the taxonomy listens on to take a person's
+ * organizations off with their name.
+ *
+ * Loaded with the types rather than with the admin, and for the same reason
+ * credentials are: the retention sweep runs on cron, where no admin file is
+ * loaded, and the purge has to reach this. */
+if ( ! function_exists( 'gwc_vt_register_partner_taxonomy' ) ) {
+	require GWC_VT_DIR . 'inc/partner-taxonomy.php';
+}
+if ( ! function_exists( 'gwc_vt_merge_partners' ) ) {
+	require GWC_VT_DIR . 'inc/partners.php';
+}
+
 /* What a mandated volunteer still has to complete. After entries.php, because
  * progress is measured against the cached rollup that file maintains. */
 if ( ! function_exists( 'gwc_vt_requirement_progress' ) ) {
@@ -406,6 +422,10 @@ if ( ! function_exists( 'gwc_vt_colophon_snoozed' ) ) {
 
 	// Recording that a named volunteer holds one.
 	require GWC_VT_DIR . 'inc/admin-volunteer-credentials.php';
+
+	/* Naming the organizations volunteers come with, and folding the
+	 * duplicates. Beside the credential screens it is modelled on. */
+	require GWC_VT_DIR . 'inc/admin-partners.php';
 
 	// Retiring somebody who has stopped, which is neither anonymizing nor deleting.
 	require GWC_VT_DIR . 'inc/admin-volunteer-status.php';
