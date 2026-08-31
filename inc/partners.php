@@ -54,7 +54,7 @@ defined( 'ABSPATH' ) || exit;
  * Every partner, alphabetically.
  *
  * @param array $args Passed through to get_terms(); 'hide_empty' defaults off,
- *                    because an partner defined this morning has nobody on
+ *                    because a partner defined this morning has nobody on
  *                    it yet and must still be pickable.
  * @return WP_Term[]
  */
@@ -107,7 +107,7 @@ function gwc_vt_partner_field_values( int $term_id ): array {
 }
 
 /**
- * Write an partner's details.
+ * Write a partner's details.
  *
  * The one function that writes this meta, so sanitizing happens once and the
  * merge screen and the term editor cannot drift apart on what is allowed. The
@@ -245,6 +245,124 @@ function gwc_vt_partner_counts( int $term_id ): array {
 	return $counts;
 }
 
+/* ── What a partner actually contributed ─────────────────────────────────────
+ * The question the whole feature exists to answer, and the one place it is
+ * answered. Everything about the shape of this is a rule written down
+ * elsewhere in the plugin, gathered here because this is where they all land at
+ * once.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The statuses an hours total counts.
+ *
+ * The same two gwc_vt_org_totals() uses for the organization's own figure in
+ * inc/dashboard.php — the number that goes into a Form 990 or a grant report.
+ * A partner's contribution and the organization's own total are the same kind
+ * of claim about the same records, and two different status sets would mean the
+ * parts did not add up to the whole.
+ *
+ * @return string[]
+ */
+function gwc_vt_partner_hours_statuses(): array {
+	return array( 'publish', 'pending' );
+}
+
+/**
+ * The entries attributed to one partner.
+ *
+ * @param int   $term_id Term ID.
+ * @param array $args    from, to (Y-m-d). Either may be empty for open-ended.
+ * @return int[] Entry post IDs.
+ */
+function gwc_vt_partner_entry_ids( int $term_id, array $args = array() ): array {
+	if ( ! gwc_vt_partner( $term_id ) ) {
+		return array();
+	}
+
+	$from = (string) ( $args['from'] ?? '' );
+	$to   = (string) ( $args['to'] ?? '' );
+
+	$query = array(
+		'post_type'              => GWC_VT_ENTRY_TYPE,
+		'post_status'            => gwc_vt_partner_hours_statuses(),
+		'update_post_term_cache' => false,
+		'tax_query'              => gwc_vt_partner_query( $term_id ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- one term on one type; there is no other way to ask it.
+	);
+
+	if ( '' !== $from || '' !== $to ) {
+		$range = array(
+			'key'     => GWC_VT_ENTRY_DATE,
+			'type'    => 'CHAR',
+			'compare' => 'BETWEEN',
+			'value'   => array( '' !== $from ? $from : '0000-00-00', '' !== $to ? $to : '9999-12-31' ),
+		);
+
+		$query['meta_query'] = array( $range ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- one indexed range on the entry's own date, which is the only date anybody means.
+	}
+
+	$found = array();
+
+	/* Walked in batches rather than fetched at once, and ordered by ID inside
+	 * gwc_vt_walk_matching_ids() for the reason its own comment gives: offset
+	 * paging is only correct over a total order, and post_date is not one. */
+	gwc_vt_walk_matching_ids(
+		$query,
+		static function ( int $entry_id ) use ( &$found ): void {
+			$found[] = $entry_id;
+		}
+	);
+
+	return $found;
+}
+
+/**
+ * What one partner contributed.
+ *
+ * ── The arithmetic is not this function's ────────────────────────────────────
+ * It collects IDs and hands them to gwc_vt_total_from_ids(), which is what the
+ * letter and every per-volunteer rollup use. That is deliberate and it is the
+ * rule inc/entries.php states about itself: one definition of what "verified"
+ * means, so a condition added to gwc_vt_entry_is_verified() reaches the letter,
+ * the rollup, the dashboard and this together.
+ *
+ * A partner's hours were very nearly summed here with a fresh loop and a fresh
+ * idea of the word. gwc_vt_org_totals() has the scar — it was the only reader
+ * deciding for itself, and it says so in its own comment.
+ *
+ * ── Read from entries, never from volunteers ─────────────────────────────────
+ * See gwc_vt_partner_object_types(). Somebody who came once with Acme and twice
+ * alone has one term on their record and three entries; counting people would
+ * attribute all three.
+ *
+ * Not cached. gwc_vt_org_totals() caches for an hour because it is drawn on the
+ * dashboard on every load and answers a question about the whole year. This is
+ * asked when somebody has gone looking for one partner, often just after
+ * verifying something — which is the moment a stale figure is worst.
+ *
+ * @param int   $term_id Term ID.
+ * @param array $args    from, to (Y-m-d).
+ * @return GWC_VT_Totals
+ */
+function gwc_vt_partner_hours( int $term_id, array $args = array() ): GWC_VT_Totals {
+	$ids = gwc_vt_partner_entry_ids( $term_id, $args );
+
+	/* gwc_vt_total_from_ids() reads two meta keys per entry and its docblock
+	 * says "meta already primed" — without this, a partner with four hundred
+	 * entries is eight hundred queries.
+	 *
+	 * gwc_vt_walk_matching_ids() does prime each batch as it goes, so this is
+	 * usually a no-op; update_meta_cache() only queries the IDs it has not
+	 * already got. It is here anyway because depending on another function's
+	 * internal caching is the kind of thing that is true until somebody
+	 * reasonably changes it, and the failure would be silent and slow rather
+	 * than wrong. */
+	if ( $ids ) {
+		update_postmeta_cache( $ids );
+	}
+
+	return gwc_vt_total_from_ids( $ids );
+}
+
 /**
  * A URL for the volunteer list, filtered to one partner.
  *
@@ -263,11 +381,55 @@ function gwc_vt_partner_volunteers_url( int $term_id ): string {
 
 	return add_query_arg(
 		array(
-			'post_type'             => GWC_VT_VOLUNTEER_TYPE,
-			GWC_VT_PARTNER_TAXONOMY => $term->slug,
+			'post_type'           => GWC_VT_VOLUNTEER_TYPE,
+			GWC_VT_PARTNER_FILTER => $term_id,
 		),
 		admin_url( 'edit.php' )
 	);
+}
+
+/**
+ * A URL for the hours list, filtered to one partner.
+ *
+ * The other half of the rule gwc_vt_partner_volunteers_url() keeps: the number
+ * on the Partners screen and the screen it opens are built from one function,
+ * so they cannot come to disagree.
+ *
+ * @param int $term_id Term ID.
+ * @return string
+ */
+function gwc_vt_partner_hours_url( int $term_id ): string {
+	if ( ! gwc_vt_partner( $term_id ) ) {
+		return '';
+	}
+
+	return add_query_arg(
+		array(
+			'post_type'           => GWC_VT_ENTRY_TYPE,
+			GWC_VT_PARTNER_FILTER => $term_id,
+		),
+		admin_url( 'edit.php' )
+	);
+}
+
+/**
+ * The partners on one entry, as a sentence.
+ *
+ * Empty for a day somebody came on their own, which is most days — and that
+ * emptiness is the point: an entry says who was there that Saturday, not who
+ * the person is affiliated with in general.
+ *
+ * @param int $entry_id Entry post ID.
+ * @return string
+ */
+function gwc_vt_entry_partner_names( int $entry_id ): string {
+	$names = wp_get_object_terms( $entry_id, GWC_VT_PARTNER_TAXONOMY, array( 'fields' => 'names' ) );
+
+	if ( is_wp_error( $names ) || ! $names ) {
+		return '';
+	}
+
+	return implode( ', ', array_map( 'strval', (array) $names ) );
 }
 
 /* ── Finding the duplicates before somebody sums them ────────────────────── */

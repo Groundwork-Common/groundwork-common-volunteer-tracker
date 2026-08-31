@@ -61,7 +61,7 @@ function gwc_vt_o_check( string $label, bool $ok, string $got = '' ): void {
 }
 
 /**
- * An partner, remembered for the clean-up.
+ * A partner, remembered for the clean-up.
  *
  * @param string $name   What it is called.
  * @param int    $parent Parent term, or 0.
@@ -168,7 +168,7 @@ echo "\n── 2. The capabilities core would have got wrong ──────�
 /* register_taxonomy() defaults assign_terms to edit_posts — contributor-level,
  * wp-includes/class-wp-taxonomy.php:434 — and the other three to
  * manage_categories, which Editor holds. Every record screen in this plugin is
- * behind gwc_vt_records_cap(). Left at the defaults, an partner's contact
+ * behind gwc_vt_records_cap(). Left at the defaults, a partner's contact
  * name and telephone number sit behind a weaker gate than a volunteer's name,
  * which is #213 happening again. */
 foreach ( array( 'manage_terms', 'edit_terms', 'delete_terms', 'assign_terms' ) as $gwc_vt_o_cap ) {
@@ -370,11 +370,17 @@ gwc_vt_o_check(
 
 echo "\n── 5. And it covers every object type, not just volunteers ──────\n";
 
-/* THE CHECK THIS FILE EXISTS FOR. #211 registers hour entries as a second
- * object type, and a merge written against volunteers alone would silently
- * orphan every entry relationship. Registered here for real rather than
- * asserted about, so the check fails against that implementation today. */
-register_taxonomy_for_object_type( GWC_VT_PARTNER_TAXONOMY, GWC_VT_ENTRY_TYPE );
+/* THE CHECK THIS FILE EXISTS FOR. Hour entries are the second object type, and
+ * a merge written against volunteers alone would silently orphan every entry
+ * relationship. This was registering the type by hand when the taxonomy was
+ * volunteers-only; it now asserts the real registration instead, which is the
+ * stronger version — the by-hand form would go on passing if somebody removed
+ * entries from gwc_vt_partner_object_types(). */
+gwc_vt_o_check(
+	'hour entries really are an object type of the taxonomy',
+	in_array( GWC_VT_ENTRY_TYPE, gwc_vt_partner_object_types(), true )
+		&& is_object_in_taxonomy( GWC_VT_ENTRY_TYPE, GWC_VT_PARTNER_TAXONOMY )
+);
 
 $gwc_vt_o_second = gwc_vt_o_org( 'Zzytest Acme Corporation' );
 
@@ -391,7 +397,7 @@ $GLOBALS['gwc_vt_partner_posts'][] = $gwc_vt_o_entry;
 wp_set_object_terms( $gwc_vt_o_entry, array( $gwc_vt_o_second ), GWC_VT_PARTNER_TAXONOMY );
 
 gwc_vt_o_check(
-	'an entry can carry an partner once the type is registered',
+	'an entry can carry a partner once the type is registered',
 	array( $gwc_vt_o_second ) === gwc_vt_o_held( $gwc_vt_o_entry )
 );
 
@@ -403,7 +409,6 @@ gwc_vt_o_check(
 	implode( ',', gwc_vt_o_held( $gwc_vt_o_entry ) )
 );
 
-unregister_taxonomy_for_object_type( GWC_VT_PARTNER_TAXONOMY, GWC_VT_ENTRY_TYPE );
 
 echo "\n── 6. Children are moved deliberately, not by wp_delete_term ────\n";
 
@@ -488,7 +493,7 @@ gwc_vt_o_check(
 );
 
 gwc_vt_o_check(
-	'an ampersand and the word do not split an partner in two',
+	'an ampersand and the word do not split a partner in two',
 	gwc_vt_partner_normalize( 'Bread & Roses' ) === gwc_vt_partner_normalize( 'Bread and Roses' )
 );
 
@@ -613,7 +618,7 @@ $gwc_vt_o_export = gwc_vt_export_personal_data( 'zzytest-dana@example.org', 1 );
 $gwc_vt_o_groups = wp_list_pluck( (array) $gwc_vt_o_export['data'], 'group_id' );
 
 gwc_vt_o_check(
-	'an partner contact appears in an export request',
+	'a partner contact appears in an export request',
 	in_array( 'gwc_vt_partner_contact', (array) $gwc_vt_o_groups, true ),
 	implode( ',', (array) $gwc_vt_o_groups )
 );
@@ -635,7 +640,7 @@ gwc_vt_o_check(
 $gwc_vt_o_erase = gwc_vt_erase_personal_data( 'zzytest-dana@example.org', 1 );
 
 gwc_vt_o_check(
-	'an erasure request does not clear an partner contact',
+	'an erasure request does not clear a partner contact',
 	'zzytest-dana@example.org' === (string) get_term_meta( $gwc_vt_o_acme, GWC_VT_PARTNER_CONTACT_EMAIL, true ),
 	(string) get_term_meta( $gwc_vt_o_acme, GWC_VT_PARTNER_CONTACT_EMAIL, true )
 );
@@ -663,6 +668,181 @@ gwc_vt_o_check(
 	'a merge with nothing to fold in is refused',
 	is_wp_error( gwc_vt_merge_partners( $gwc_vt_o_acme, array() ) )
 );
+
+echo "\n── 13. What a partner contributed, counted from entries ────────\n";
+
+/* ── The number the whole feature exists to produce ──────────────────────────
+ * And the reason it must not be counted from people: this volunteer came ONCE
+ * with the partner and TWICE on their own. One term on their record, three
+ * entries, and only one of the two possible totals is an answer to "what did
+ * they contribute".
+ * ─────────────────────────────────────────────────────────────────────────── */
+$gwc_vt_o_hours_partner = gwc_vt_o_org( 'Zzytest Delacroix Freight' );
+$gwc_vt_o_worker        = gwc_vt_o_volunteer( 'Zzytest Org Nadia Ferreira' );
+
+/* Affiliated with them, which is the volunteer half and must not feed the sum. */
+wp_set_object_terms( $gwc_vt_o_worker, array( $gwc_vt_o_hours_partner ), GWC_VT_PARTNER_TAXONOMY );
+
+/**
+ * One entry, remembered for the clean-up.
+ *
+ * @param int    $volunteer_id Whose it is.
+ * @param string $date         Y-m-d.
+ * @param int    $minutes      How long.
+ * @param bool   $verified     Whether staff have attested to it.
+ * @param int    $partner_id   Who they came with, or 0.
+ * @return int
+ */
+function gwc_vt_o_entry( int $volunteer_id, string $date, int $minutes, bool $verified, int $partner_id = 0 ): int {
+	$id = (int) wp_insert_post(
+		array(
+			'post_type'   => GWC_VT_ENTRY_TYPE,
+			'post_title'  => 'Zzytest partner hours',
+			'post_status' => 'publish',
+		)
+	);
+
+	$GLOBALS['gwc_vt_partner_posts'][] = $id;
+
+	update_post_meta( $id, GWC_VT_ENTRY_VOLUNTEER, (string) $volunteer_id );
+	update_post_meta( $id, GWC_VT_ENTRY_DATE, $date );
+	update_post_meta( $id, GWC_VT_ENTRY_MINUTES, $minutes );
+
+	/* Verified means one thing and gwc_vt_entry_is_verified() is where it is
+	 * decided: a non-empty _gwc_vt_verified_at. Written the way the real
+	 * attestation writes it, so this fixture cannot drift from the definition
+	 * the letter uses. */
+	if ( $verified ) {
+		update_post_meta( $id, GWC_VT_ENTRY_VERIFIED_AT, gmdate( 'Y-m-d H:i:s' ) );
+		update_post_meta( $id, GWC_VT_ENTRY_VERIFIED_BY, '1' );
+	}
+
+	if ( $partner_id > 0 ) {
+		wp_set_object_terms( $id, array( $partner_id ), GWC_VT_PARTNER_TAXONOMY );
+	}
+
+	return $id;
+}
+
+$gwc_vt_o_with    = gwc_vt_o_entry( $gwc_vt_o_worker, '2026-03-02', 120, true, $gwc_vt_o_hours_partner );
+$gwc_vt_o_alone_a = gwc_vt_o_entry( $gwc_vt_o_worker, '2026-06-02', 180, true );
+$gwc_vt_o_alone_b = gwc_vt_o_entry( $gwc_vt_o_worker, '2026-07-02', 60, false );
+
+$gwc_vt_o_contributed = gwc_vt_partner_hours( $gwc_vt_o_hours_partner );
+
+gwc_vt_o_check(
+	'only the day they came with the partner counts, not their other two',
+	120 === (int) $gwc_vt_o_contributed->verified_minutes,
+	(string) $gwc_vt_o_contributed->verified_minutes
+);
+
+gwc_vt_o_check(
+	'and it counts one entry, not the volunteer\'s three',
+	1 === (int) $gwc_vt_o_contributed->entries,
+	(string) $gwc_vt_o_contributed->entries
+);
+
+/* Pending is reported beside verified rather than folded in — the same shape
+ * every other total in this plugin has, because the two answer different
+ * questions and only one of them is what an organization stands behind. */
+$gwc_vt_o_pending_entry = gwc_vt_o_entry( $gwc_vt_o_worker, '2026-03-03', 45, false, $gwc_vt_o_hours_partner );
+$gwc_vt_o_contributed   = gwc_vt_partner_hours( $gwc_vt_o_hours_partner );
+
+gwc_vt_o_check(
+	'unverified hours are reported beside the total, never inside it',
+	120 === (int) $gwc_vt_o_contributed->verified_minutes
+		&& 45 === (int) $gwc_vt_o_contributed->pending_minutes,
+	$gwc_vt_o_contributed->verified_minutes . ' verified / ' . $gwc_vt_o_contributed->pending_minutes . ' pending'
+);
+
+/* A date range, for "what did they give us this year". */
+$gwc_vt_o_q1 = gwc_vt_partner_hours( $gwc_vt_o_hours_partner, array( 'from' => '2026-01-01', 'to' => '2026-03-02' ) );
+
+gwc_vt_o_check(
+	'a date range narrows it to the entry\'s own date',
+	120 === (int) $gwc_vt_o_q1->verified_minutes && 1 === (int) $gwc_vt_o_q1->entries,
+	$gwc_vt_o_q1->verified_minutes . ' / ' . $gwc_vt_o_q1->entries . ' entries'
+);
+
+$gwc_vt_o_none = gwc_vt_partner_hours( $gwc_vt_o_hours_partner, array( 'from' => '2020-01-01', 'to' => '2020-12-31' ) );
+
+gwc_vt_o_check(
+	'and a range with nothing in it is zero rather than everything',
+	0 === (int) $gwc_vt_o_none->verified_minutes && 0 === (int) $gwc_vt_o_none->entries
+);
+
+/* The count and the screen it links to, again — this time the hours list. */
+$gwc_vt_o_listed_entries = get_posts(
+	array(
+		'post_type'      => GWC_VT_ENTRY_TYPE,
+		'post_status'    => gwc_vt_partner_hours_statuses(),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'tax_query'      => gwc_vt_partner_query( $gwc_vt_o_hours_partner ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- the assertion is about this exact query.
+	)
+);
+
+gwc_vt_o_check(
+	'the hours list shows exactly the entries the total counted',
+	count( (array) $gwc_vt_o_listed_entries ) === (int) $gwc_vt_o_contributed->entries,
+	'counted ' . $gwc_vt_o_contributed->entries . ', listed ' . count( (array) $gwc_vt_o_listed_entries )
+);
+
+echo "\n── 14. Anonymizing: the person loses it, the Saturday keeps it ──\n";
+
+/* ── The asymmetry, and why it is not an inconsistency ───────────────────────
+ * A term on a PERSON is a property of them, and anonymizing removes those.
+ * A term on an ENTRY is a fact about a day's work — the organization's own
+ * record of what happened — and it identifies nobody once the name above it is
+ * gone. #211 argues both, and this is where the pair is held in place: assert
+ * only one and the other is free to change without anything noticing.
+ * ─────────────────────────────────────────────────────────────────────────── */
+gwc_vt_anonymize_volunteer( $gwc_vt_o_worker );
+
+gwc_vt_o_check(
+	'the anonymized volunteer holds no partner',
+	array() === gwc_vt_o_held( $gwc_vt_o_worker ),
+	implode( ',', gwc_vt_o_held( $gwc_vt_o_worker ) )
+);
+
+gwc_vt_o_check(
+	'but the entry still says who was there that day',
+	array( $gwc_vt_o_hours_partner ) === gwc_vt_o_held( $gwc_vt_o_with ),
+	implode( ',', gwc_vt_o_held( $gwc_vt_o_with ) )
+);
+
+/* Which means the partner's contribution survives the purge, which is the whole
+ * reason the hours do: a grant report covering last year must not change because
+ * somebody exercised a privacy right this year. */
+$gwc_vt_o_after = gwc_vt_partner_hours( $gwc_vt_o_hours_partner );
+
+gwc_vt_o_check(
+	'so what the partner contributed is unchanged by the anonymization',
+	120 === (int) $gwc_vt_o_after->verified_minutes,
+	(string) $gwc_vt_o_after->verified_minutes
+);
+
+echo "\n── 15. The links a number opens really do filter ────────────────\n";
+
+/* gwc_vt_partner_volunteers_url() built ?gwc_vt_partner=<slug> at first, which
+ * does nothing at all: WP_Query::parse_tax_query() reads a taxonomy's query var
+ * only when the taxonomy HAS one, and this one is query_var => false on purpose.
+ * The count said three and the link opened every volunteer on the site. */
+foreach (
+	array(
+		'volunteers' => gwc_vt_partner_volunteers_url( $gwc_vt_o_hours_partner ),
+		'hours'      => gwc_vt_partner_hours_url( $gwc_vt_o_hours_partner ),
+	) as $gwc_vt_o_what => $gwc_vt_o_link
+) {
+	$gwc_vt_o_query = array();
+	parse_str( (string) wp_parse_url( $gwc_vt_o_link, PHP_URL_QUERY ), $gwc_vt_o_query );
+
+	gwc_vt_o_check(
+		'the ' . $gwc_vt_o_what . ' link carries the filter the screen actually reads',
+		(int) ( $gwc_vt_o_query[ GWC_VT_PARTNER_FILTER ] ?? 0 ) === $gwc_vt_o_hours_partner,
+		$gwc_vt_o_link
+	);
+}
 
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
