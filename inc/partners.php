@@ -74,6 +74,62 @@ function gwc_vt_partner_terms( array $args = array() ): array {
 	return is_wp_error( $terms ) ? array() : (array) $terms;
 }
 
+/** How many partners a page of the list holds. */
+const GWC_VT_PARTNERS_PER_PAGE = 20;
+
+/**
+ * One page of partners, and how many there are in total.
+ *
+ * ── Why the search is core's and not this file's own ─────────────────────────
+ * The list used to be filtered in PHP against gwc_vt_partner_normalize(), the
+ * same shape the duplicate finder compares — so "acme corp" found "ACME Corp.".
+ * That is a nice property and it cannot be paged: normalizing happens after the
+ * rows are already in memory, which is the thing paging exists to avoid.
+ *
+ * get_terms()'s own `search` is a LIKE over the name and the slug, and MySQL's
+ * default collation is case-insensitive, so "acme corp" still finds "ACME Corp."
+ * and "Acme Corporation". What it no longer finds is a match that differs by
+ * punctuation alone — "acmecorp" for "Acme Corp." — and the duplicate finder,
+ * which still normalizes, is the thing that catches those and offers them.
+ *
+ * @param array $args page (1-based), per_page, search.
+ * @return array{terms: WP_Term[], total: int}
+ */
+function gwc_vt_partner_page( array $args = array() ): array {
+	$per_page = max( 1, (int) ( $args['per_page'] ?? GWC_VT_PARTNERS_PER_PAGE ) );
+	$page     = max( 1, (int) ( $args['page'] ?? 1 ) );
+	$search   = trim( (string) ( $args['search'] ?? '' ) );
+
+	$query = array(
+		'taxonomy'   => GWC_VT_PARTNER_TAXONOMY,
+		'hide_empty' => false,
+		'orderby'    => 'name',
+		'order'      => 'ASC',
+	);
+
+	if ( '' !== $search ) {
+		$query['search'] = $search;
+	}
+
+	$total = wp_count_terms( array_merge( $query, array( 'fields' => 'count' ) ) );
+	$total = is_wp_error( $total ) ? 0 : (int) $total;
+
+	$terms = get_terms(
+		array_merge(
+			$query,
+			array(
+				'number' => $per_page,
+				'offset' => ( $page - 1 ) * $per_page,
+			)
+		)
+	);
+
+	return array(
+		'terms' => is_wp_error( $terms ) ? array() : (array) $terms,
+		'total' => $total,
+	);
+}
+
 /**
  * One partner, or null.
  *
@@ -215,13 +271,19 @@ function gwc_vt_partner_count_statuses(): array {
  *
  * So every screen in this plugin reads this instead, and says which is which.
  *
- * @param int $term_id Term ID.
+ * @param int      $term_id Term ID.
+ * @param string[] $types   Optional. Only these object types; all of them by default.
  * @return array<string, int> Post type => how many.
  */
-function gwc_vt_partner_counts( int $term_id ): array {
+function gwc_vt_partner_counts( int $term_id, array $types = array() ): array {
 	$counts = array();
 
-	foreach ( gwc_vt_partner_object_types() as $type ) {
+	/* Callers that show one number ask for one. The list draws a row per partner
+	 * and prints only the volunteer count, so asking for every registered type
+	 * there was a query per row for a figure nothing rendered. */
+	$wanted = $types ? array_intersect( gwc_vt_partner_object_types(), $types ) : gwc_vt_partner_object_types();
+
+	foreach ( $wanted as $type ) {
 		/* posts_per_page => 1 and found_posts, rather than fetching every ID and
 		 * counting them in PHP. This runs once per row on a screen that lists
 		 * every partner a site has, and the difference is a SQL COUNT against

@@ -690,9 +690,7 @@ function gwc_vt_render_roster_log_row( int $index, int $signup_id, int $shift_id
  * Drawn only once there is something to choose.
  */
 function gwc_vt_render_quick_add_partner_field(): void {
-	$partners = function_exists( 'gwc_vt_partner_terms' ) ? gwc_vt_partner_terms() : array();
-
-	if ( ! $partners ) {
+	if ( ! function_exists( 'gwc_vt_partner_dropdown' ) || ! gwc_vt_partner_terms( array( 'number' => 1 ) ) ) {
 		?>
 		<p class="description">
 			<?php
@@ -706,15 +704,16 @@ function gwc_vt_render_quick_add_partner_field(): void {
 		<?php
 		return;
 	}
+
+	gwc_vt_partner_dropdown(
+		array(
+			'name'             => 'gwc_vt_partner',
+			'id'               => 'gwcvt-qa-partner',
+			'selected'         => 0,
+			'show_option_none' => __( '— none —', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
 	?>
-	<select id="gwcvt-qa-partner" name="gwc_vt_partner">
-		<option value="0"><?php esc_html_e( '— none —', 'groundwork-common-volunteer-tracker' ); ?></option>
-		<?php foreach ( $partners as $partner ) : ?>
-			<option value="<?php echo esc_attr( (string) $partner->term_id ); ?>">
-				<?php echo esc_html( $partner->name ); ?>
-			</option>
-		<?php endforeach; ?>
-	</select>
 	<p class="description">
 		<?php esc_html_e( 'Applied to every row below.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>

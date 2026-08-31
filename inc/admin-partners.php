@@ -104,9 +104,28 @@ function gwc_vt_restore_partners_title(): void {
  * @return string
  */
 function gwc_vt_partners_url( array $args = array() ): string {
+	/* ── edit.php with the post type, not admin.php ──────────────────────────
+	 * This screen is a submenu of edit.php?post_type=gwc_vt_entry, and that is
+	 * the URL gwc_vt_credentials_url() builds for the sibling screen next door.
+	 *
+	 * admin.php?page=<slug> mostly works — wp-admin/admin.php has a back-compat
+	 * path that finds a submenu by its own slug — and "mostly" is the problem.
+	 * It resolves through $admin_page_hooks and $_parent_pages, and where it
+	 * misses, the answer is the bare string "Cannot load gwc-vt-partners." with
+	 * no clue what it wanted. The pagination links were the first thing to hit
+	 * it, in a fresh browser session and not in one that had already been to the
+	 * real URL, which is as good a description of a trap as any.
+	 *
+	 * The canonical URL is not ambiguous and costs one more query argument. */
 	return add_query_arg(
-		array_merge( array( 'page' => GWC_VT_PARTNERS_PAGE ), $args ),
-		admin_url( 'admin.php' )
+		array_merge(
+			array(
+				'post_type' => GWC_VT_ENTRY_TYPE,
+				'page'      => GWC_VT_PARTNERS_PAGE,
+			),
+			$args
+		),
+		admin_url( 'edit.php' )
 	);
 }
 
@@ -171,42 +190,6 @@ function gwc_vt_render_partners_screen(): void {
 }
 
 /**
- * How many rows the list is showing, after any search.
- *
- * @param string $term What was searched for, or ''.
- * @return WP_Term[]
- */
-function gwc_vt_partners_matching( string $term ): array {
-	$partners = gwc_vt_partner_terms();
-
-	if ( '' === $term ) {
-		return $partners;
-	}
-
-	$needle = gwc_vt_partner_normalize( $term );
-	$found  = array();
-
-	foreach ( $partners as $partner ) {
-		/* Matched on the same normalized shape the duplicate finder compares,
-		 * so searching "acme corp" finds "ACME Corp." — a search that cannot
-		 * find the thing somebody is looking at is worse than no search. The
-		 * CRM ID and the contact are searched as typed. */
-		$haystack = gwc_vt_partner_normalize( (string) $partner->name );
-		$fields   = gwc_vt_partner_field_values( (int) $partner->term_id );
-
-		if (
-			( '' !== $needle && false !== strpos( $haystack, $needle ) )
-			|| false !== stripos( $fields[ GWC_VT_PARTNER_CRM_ID ], $term )
-			|| false !== stripos( $fields[ GWC_VT_PARTNER_CONTACT_NAME ], $term )
-		) {
-			$found[] = $partner;
-		}
-	}
-
-	return $found;
-}
-
-/**
  * What was searched for.
  *
  * @return string
@@ -235,8 +218,18 @@ function gwc_vt_partners_search(): string {
  * to look for it.
  */
 function gwc_vt_render_partners_list(): void {
-	$term       = gwc_vt_partners_search();
-	$showing    = gwc_vt_partners_matching( $term );
+	$term = gwc_vt_partners_search();
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- list navigation; read-only, and core does not nonce paging.
+	$page = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
+
+	$found      = gwc_vt_partner_page(
+		array(
+			'page'   => $page,
+			'search' => $term,
+		)
+	);
+	$showing    = $found['terms'];
 	$duplicates = gwc_vt_partner_duplicate_clusters();
 	?>
 	<div class="wrap gwcvt-wrap">
@@ -283,7 +276,7 @@ function gwc_vt_render_partners_list(): void {
 					'page'      => GWC_VT_PARTNERS_PAGE,
 				),
 				'label'       => __( 'Find a partner', 'groundwork-common-volunteer-tracker' ),
-				'placeholder' => __( 'Find a partner — name, CRM ID or contact', 'groundwork-common-volunteer-tracker' ),
+				'placeholder' => __( 'Find a partner', 'groundwork-common-volunteer-tracker' ),
 				'button'      => __( 'Find', 'groundwork-common-volunteer-tracker' ),
 			)
 		);
@@ -297,7 +290,16 @@ function gwc_vt_render_partners_list(): void {
 			/* Folding two together is a bulk action, so it is where wp-admin
 			 * keeps bulk actions: the left of the row above the table, beside
 			 * the count. It was a button under the table, which is nowhere. */
-			gwc_vt_render_list_tablenav( count( $showing ), 'gwc_vt_render_partner_bulk_actions' );
+			gwc_vt_render_list_tablenav(
+				(int) $found['total'],
+				'gwc_vt_render_partner_bulk_actions',
+				null,
+				array(
+					'per_page' => GWC_VT_PARTNERS_PER_PAGE,
+					'current'  => $page,
+					'base'     => gwc_vt_partners_url( '' !== $term ? array( 's' => $term ) : array() ),
+				)
+			);
 			?>
 
 			<table class="wp-list-table widefat fixed striped table-view-list gwcvt-partners">
@@ -378,7 +380,7 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 	/* Not $partner->count. That column is one number across every object type in
 	 * the taxonomy — volunteers PLUS entries added together, which is not a
 	 * quantity of anything. See gwc_vt_partner_counts(). */
-	$counts     = gwc_vt_partner_counts( (int) $partner->term_id );
+	$counts     = gwc_vt_partner_counts( (int) $partner->term_id, array( GWC_VT_VOLUNTEER_TYPE ) );
 	$volunteers = (int) ( $counts[ GWC_VT_VOLUNTEER_TYPE ] ?? 0 );
 	$hours      = gwc_vt_partner_hours( (int) $partner->term_id );
 	$edit       = gwc_vt_partners_url( array( 'partner' => (int) $partner->term_id ) );
@@ -1044,53 +1046,6 @@ function gwc_vt_save_partner_fields( $term_id ): void {
 /* ── The filter on the volunteer list ────────────────────────────────────── */
 
 /**
- * The dropdown, above the volunteer list.
- *
- * Only once anything is defined — a control offering to filter by a thing the
- * site does not have can only ever return nothing.
- */
-function gwc_vt_partner_filter_dropdown(): void {
-	$screen = get_current_screen();
-
-	/* Both lists a partner can be attached to, read from the taxonomy rather
-	 * than named — a third object type gets its filter for free, the same way
-	 * the merge does. */
-	$here = $screen instanceof WP_Screen ? (string) $screen->id : '';
-	$mine = false;
-
-	foreach ( gwc_vt_partner_object_types() as $type ) {
-		if ( 'edit-' . $type === $here ) {
-			$mine = true;
-		}
-	}
-
-	if ( ! $mine ) {
-		return;
-	}
-
-	$partners = gwc_vt_partner_terms();
-
-	if ( ! $partners ) {
-		return;
-	}
-
-	$current = gwc_vt_partner_filtered_term();
-	?>
-	<label class="screen-reader-text" for="<?php echo esc_attr( GWC_VT_PARTNER_FILTER ); ?>">
-		<?php esc_html_e( 'Filter by partner', 'groundwork-common-volunteer-tracker' ); ?>
-	</label>
-	<select name="<?php echo esc_attr( GWC_VT_PARTNER_FILTER ); ?>" id="<?php echo esc_attr( GWC_VT_PARTNER_FILTER ); ?>">
-		<option value="0"><?php esc_html_e( 'Any partner', 'groundwork-common-volunteer-tracker' ); ?></option>
-		<?php foreach ( $partners as $partner ) : ?>
-			<option value="<?php echo esc_attr( (string) $partner->term_id ); ?>" <?php selected( $current, (int) $partner->term_id ); ?>>
-				<?php echo esc_html( $partner->name ); ?>
-			</option>
-		<?php endforeach; ?>
-	</select>
-	<?php
-}
-
-/**
  * Which partner a list is filtered to, however the URL said so.
  *
  * ── Two URLs reach the same list, and only one of them was recognised ────────
@@ -1227,6 +1182,83 @@ function gwc_vt_partner_hours_summary(): void {
 		</p>
 	</div>
 	<?php
+}
+
+/**
+ * The dropdown, above the volunteer list.
+ *
+ * Only once anything is defined — a control offering to filter by a thing the
+ * site does not have can only ever return nothing.
+ */
+function gwc_vt_partner_filter_dropdown(): void {
+	$screen = get_current_screen();
+
+	/* Both lists a partner can be attached to, read from the taxonomy rather
+	 * than named — a third object type gets its filter for free, the same way
+	 * the merge does. */
+	$here = $screen instanceof WP_Screen ? (string) $screen->id : '';
+	$mine = false;
+
+	foreach ( gwc_vt_partner_object_types() as $type ) {
+		if ( 'edit-' . $type === $here ) {
+			$mine = true;
+		}
+	}
+
+	if ( ! $mine ) {
+		return;
+	}
+	?>
+	<label class="screen-reader-text" for="<?php echo esc_attr( GWC_VT_PARTNER_FILTER ); ?>">
+		<?php esc_html_e( 'Filter by partner', 'groundwork-common-volunteer-tracker' ); ?>
+	</label>
+	<?php
+	gwc_vt_partner_dropdown(
+		array(
+			'name'            => GWC_VT_PARTNER_FILTER,
+			'id'              => GWC_VT_PARTNER_FILTER,
+			'selected'        => gwc_vt_partner_filtered_term(),
+			'show_option_all' => __( 'Any partner', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+}
+
+/**
+ * A partner chooser, in core's own control.
+ *
+ * ── Core's, rather than a hand-rolled <select> or a combobox ─────────────────
+ * wp_dropdown_categories() is what wp-admin puts on its own post list for a
+ * hierarchical taxonomy, and it does two things the hand-written selects here
+ * did not: it indents a chapter under the national body it is part of, so the
+ * tree this taxonomy is hierarchical FOR is visible in the control; and it
+ * draws nothing at all when there is nothing to choose.
+ *
+ * #235 proposed replacing these with the REST-backed combobox the volunteer
+ * field uses. On doing the work that is the wrong trade: the combobox needs
+ * JavaScript to function at all, and a chooser that cannot be used without it
+ * is worse at every size than a long select. Core ships a plain select for
+ * categories on every WordPress site, including ones with hundreds. The
+ * combobox stays worth having as an enhancement over this — over, not instead
+ * of — and that is noted on the issue rather than done here.
+ *
+ * @param array $args Passed through; name, id, selected and one of
+ *                    show_option_all / show_option_none.
+ */
+function gwc_vt_partner_dropdown( array $args ): void {
+	wp_dropdown_categories(
+		array_merge(
+			array(
+				'taxonomy'          => GWC_VT_PARTNER_TAXONOMY,
+				'hierarchical'      => true,
+				'hide_empty'        => false,
+				'hide_if_empty'     => true,
+				'value_field'       => 'term_id',
+				'orderby'           => 'name',
+				'option_none_value' => 0,
+			),
+			$args
+		)
+	);
 }
 
 /**
