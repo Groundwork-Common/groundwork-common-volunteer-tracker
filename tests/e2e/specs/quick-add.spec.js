@@ -190,4 +190,125 @@ test.describe( 'logging a day', () => {
 			/date/i
 		);
 	} );
+
+	test( 'a row creates the volunteer it names', async ( { page, admin, api } ) => {
+		await admin.visit( 'gwc-vt-log-a-day' );
+
+		await page.fill( '#gwcvt-qa-date', '2026-08-15' );
+		await page.fill( '#gwcvt-qa-activity', 'Saturday sorting' );
+
+		/* ── The offer only appears where the screen may create people ────────
+		 * data-gwcvt-can-create is opt-in per picker: one script draws every
+		 * picker in the plugin, and the entry editor and the two roster boxes
+		 * must not quietly start bringing people into existence. */
+		await page.fill( '#gwcvt-qa-name-0', 'Sorrel Ashgrove' );
+
+		const create = page.locator( '#gwcvt-qa-results-0 .gwcvt-picker__create' );
+
+		await expect( create ).toBeVisible();
+		await expect( create ).toContainText( 'Sorrel Ashgrove' );
+
+		await create.click();
+
+		/* Choosing it fills the row and writes nothing — a name typed and then
+		 * thought better of must leave no record behind. */
+		expect(
+			api( 'posts', { type: 'gwc_vt_volunteer' } ).some(
+				( one ) => one.title === 'Sorrel Ashgrove'
+			)
+		).toBe( false );
+
+		await page.fill( '#gwcvt-qa-hours-0', '3' );
+
+		await admin
+			.formFor( 'gwc_vt_quick_add' )
+			.first()
+			.getByRole( 'button', { name: /Log/ } )
+			.first()
+			.click();
+
+		await page.waitForURL( /gwc_vt_qa=/ );
+
+		expect( page.url() ).toContain( 'gwc_vt_created=1' );
+		expect( await admin.notices() ).toContain( 'volunteer record was created' );
+
+		const made = api( 'posts', { type: 'gwc_vt_volunteer' } ).find(
+			( one ) => one.title === 'Sorrel Ashgrove'
+		);
+
+		expect( made ).toBeTruthy();
+
+		/* And the hours are on them, unverified like every other entry. */
+		const entry = api( 'posts', {
+			type: 'gwc_vt_entry',
+			meta: { volunteer: '_gwc_vt_volunteer', minutes: '_gwc_vt_minutes' },
+		} ).find( ( one ) => Number( one.volunteer ) === made.id );
+
+		expect( entry ).toBeTruthy();
+		expect( Number( entry.minutes ) ).toBe( 180 );
+	} );
+
+	test( 'the offer to create is not on the pickers that must not', async ( {
+		page,
+		admin,
+		api,
+	} ) => {
+		const entry = api( 'posts', { type: 'gwc_vt_entry' } )[ 0 ];
+
+		await admin.edit( entry.id );
+
+		/* The hour entry's own picker. Somebody correcting whose shift this was
+		 * should not be able to invent a person while doing it. */
+		const picker = page.locator( '[data-gwcvt-picker]' ).first();
+
+		await expect( picker ).toBeVisible();
+		expect( await picker.getAttribute( 'data-gwcvt-can-create' ) ).toBeNull();
+	} );
+
+	test( 'a row still logs nothing with no JavaScript, but keeps the name', async ( {
+		browser,
+		baseURL,
+		api,
+	} ) => {
+		/* ── The no-JS path GAINS this rather than losing it ──────────────────
+		 * Without JavaScript there is no picker and no list, so this row used to
+		 * post volunteer 0 and log nothing at all, silently. The name field is
+		 * named now, so it posts, and the handler makes the person.
+		 */
+		const context = await browser.newContext( { baseURL, javaScriptEnabled: false } );
+		const page = await context.newPage();
+
+		try {
+			await page.goto( '/wp-login.php' );
+			await page.fill( '#user_login', 'admin' );
+			await page.fill( '#user_pass', 'password' );
+			await page.click( '#wp-submit' );
+
+			await page.goto(
+				'/wp-admin/edit.php?post_type=gwc_vt_entry&page=gwc-vt-log-a-day'
+			);
+
+			await page.fill( '#gwcvt-qa-date', '2026-08-16' );
+			await page.fill( '#gwcvt-qa-name-0', 'Wrenna Fieldhouse' );
+			await page.fill( '#gwcvt-qa-hours-0', '2' );
+
+			await page
+				.locator( 'form.gwcvt-quick-add input[type="submit"], form.gwcvt-quick-add button[type="submit"]' )
+				.first()
+				.click();
+
+			await page.waitForURL( /gwc_vt_qa=/ );
+
+			expect( page.url() ).toContain( 'gwc_vt_created=1' );
+		} finally {
+			await context.close();
+		}
+
+		expect(
+			api( 'posts', { type: 'gwc_vt_volunteer' } ).some(
+				( one ) => one.title === 'Wrenna Fieldhouse'
+			)
+		).toBe( true );
+	} );
+
 } );
