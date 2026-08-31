@@ -844,6 +844,87 @@ foreach (
 	);
 }
 
+echo "\n── 16. The list is bounded, whatever the site holds ────────────\n";
+
+/* ── Why this is asserted and not left to judgement ──────────────────────────
+ * The screen draws a row per partner and each row costs a count and a walk over
+ * that partner's entries, so an unbounded list is work proportional to the whole
+ * site on a screen somebody opens to look something up. Measured on this
+ * database: a page of twenty is 62 queries whatever the site holds, where the
+ * unpaged shape was 120 at forty-five partners and climbing.
+ *
+ * The bound is what is asserted, rather than the query count — a figure that
+ * would fail for a hundred honest reasons and teach nobody anything.
+ * ─────────────────────────────────────────────────────────────────────────── */
+for ( $gwc_vt_o_n = 1; $gwc_vt_o_n <= 25; $gwc_vt_o_n++ ) {
+	gwc_vt_o_org( sprintf( 'Zzytest Paged Partner %02d', $gwc_vt_o_n ) );
+}
+
+$gwc_vt_o_first = gwc_vt_partner_page( array( 'page' => 1, 'per_page' => 10 ) );
+
+gwc_vt_o_check(
+	'a page holds no more than it was asked for',
+	10 === count( $gwc_vt_o_first['terms'] ),
+	(string) count( $gwc_vt_o_first['terms'] )
+);
+
+gwc_vt_o_check(
+	'and the total counts everything, not the page',
+	$gwc_vt_o_first['total'] >= 25,
+	(string) $gwc_vt_o_first['total']
+);
+
+/* Offset paging is only correct over a total order, and get_terms() is ordered
+ * by name here. Two pages that overlap would show a partner twice and skip
+ * another, which is the failure gwc_vt_walk_matching_ids() carries its own note
+ * about. */
+$gwc_vt_o_second = gwc_vt_partner_page( array( 'page' => 2, 'per_page' => 10 ) );
+
+$gwc_vt_o_ids_a = array_map( 'intval', wp_list_pluck( $gwc_vt_o_first['terms'], 'term_id' ) );
+$gwc_vt_o_ids_b = array_map( 'intval', wp_list_pluck( $gwc_vt_o_second['terms'], 'term_id' ) );
+
+gwc_vt_o_check(
+	'two pages do not overlap',
+	array() === array_intersect( $gwc_vt_o_ids_a, $gwc_vt_o_ids_b ),
+	implode( ',', array_intersect( $gwc_vt_o_ids_a, $gwc_vt_o_ids_b ) )
+);
+
+/* A page past the end is empty rather than the last page again — somebody
+ * following a stale link should see nothing, not the wrong thing. */
+$gwc_vt_o_past = gwc_vt_partner_page( array( 'page' => 9999, 'per_page' => 10 ) );
+
+gwc_vt_o_check( 'a page past the end is empty', array() === $gwc_vt_o_past['terms'] );
+
+/* The search narrows the TOTAL as well as the page, or the pagination links
+ * offer pages that are not there. */
+$gwc_vt_o_hunted = gwc_vt_partner_page( array( 'search' => 'Zzytest Paged Partner 1', 'per_page' => 100 ) );
+
+gwc_vt_o_check(
+	'a search narrows the total, not only the page',
+	10 === (int) $gwc_vt_o_hunted['total'] && 10 === count( $gwc_vt_o_hunted['terms'] ),
+	$gwc_vt_o_hunted['total'] . ' total / ' . count( $gwc_vt_o_hunted['terms'] ) . ' shown'
+);
+
+/* Case and trailing punctuation still find it, which is most of what the
+ * hand-rolled normalizing search was for before paging made it impossible. */
+$gwc_vt_o_shouty = gwc_vt_partner_page( array( 'search' => 'zzytest paged partner 01' ) );
+
+gwc_vt_o_check(
+	'and the search does not care about case',
+	1 === (int) $gwc_vt_o_shouty['total'],
+	(string) $gwc_vt_o_shouty['total']
+);
+
+/* And a row asks for the one figure it prints. Asking for every registered
+ * object type was a query per row for a number nothing rendered. */
+$gwc_vt_o_one = gwc_vt_partner_counts( $gwc_vt_o_hours_partner, array( GWC_VT_VOLUNTEER_TYPE ) );
+
+gwc_vt_o_check(
+	'a count can be asked for one object type',
+	array_keys( $gwc_vt_o_one ) === array( GWC_VT_VOLUNTEER_TYPE ),
+	implode( ',', array_keys( $gwc_vt_o_one ) )
+);
+
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
 foreach ( $GLOBALS['gwc_vt_partner_posts'] as $gwc_vt_o_id ) {

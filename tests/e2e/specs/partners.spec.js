@@ -138,6 +138,77 @@ test.describe( 'partners', () => {
 		await expect( rows.first() ).toContainText( 'Beaulieu Corp.' );
 	} );
 
+	test( 'a long list pages, and the search pages with it', async ( {
+		page,
+		admin,
+		api,
+	} ) => {
+		/* Twenty-five, because the page holds twenty. Arranged rather than
+		 * driven: this is about what the screen does with a list, not about
+		 * adding partners, which the test above covers. */
+		for ( let n = 1; n <= 25; n++ ) {
+			api( 'term.ensure', {
+				taxonomy: TAX,
+				name: `Scale Partner ${ String( n ).padStart( 2, '0' ) }`,
+			} );
+		}
+
+		await admin.visit( SCREEN );
+
+		const rows = page.locator( '#the-list tr:not(.no-items)' );
+
+		await expect( rows ).toHaveCount( 20 );
+
+		/* The count is of the whole list, not of the page — that is the number
+		 * somebody is asking for once a list is long enough to page. */
+		await expect( page.locator( '.displaying-num' ) ).toContainText( /2[5-9]|3[0-9] items/ );
+		await expect( page.locator( '.tablenav-pages' ) ).not.toHaveClass( /one-page/ );
+
+		await page.locator( '.pagination-links a' ).last().click();
+		await page.waitForURL( /paged=/ );
+
+		/* A second page with something on it, and nothing from the first. */
+		const second = await rows.count();
+
+		expect( second ).toBeGreaterThan( 0 );
+		expect( second ).toBeLessThanOrEqual( 20 );
+
+		await expect(
+			page.getByRole( 'link', { name: 'Scale Partner 01' } )
+		).toHaveCount( 0 );
+
+		/* And a search keeps its paging: the base the links are built from has
+		 * to carry the search, or page two silently drops it and shows
+		 * everything. */
+		await admin.visit( SCREEN, { s: 'Scale Partner 1' } );
+
+		await expect( rows ).toHaveCount( 10 );
+		await expect( page.locator( '.displaying-num' ) ).toContainText( '10 items' );
+
+		/* ── The duplicate finder is not paged, and must not be ──────────────
+		 * It reads every term, because two spellings of the same partner are
+		 * exactly as likely to be twenty rows apart as adjacent — and a finder
+		 * that only compared what was on screen would miss the ones that
+		 * matter most. Its link carries the ids, so the pair it offers is
+		 * reachable without either being on the current page. */
+		api( 'term.ensure', { taxonomy: TAX, name: 'Aardvark Haulage' } );
+		api( 'term.ensure', { taxonomy: TAX, name: 'Aardvark Haulage Ltd' } );
+
+		await admin.visit( SCREEN );
+
+		const offered = page.locator( '.gwcvt-partners__duplicates' );
+
+		await expect( offered ).toContainText( 'Aardvark Haulage' );
+
+		/* Both are on page one here by name order, so prove it the other way:
+		 * the link is by id, not by what is drawn. */
+		/* add_query_arg() writes an array as merge[0]=…&merge[1]=…, which PHP
+		 * parses back into the same array the checkbox form's merge[] posts. */
+		await expect(
+			offered.getByRole( 'link', { name: /Look at these/i } ).first()
+		).toHaveAttribute( 'href', /merge(%5B|\[)\d/ );
+	} );
+
 	test( 'the same name twice is refused, and says so', async ( {
 		page,
 		admin,
@@ -281,7 +352,16 @@ test.describe( 'partners', () => {
 			terms: [ fold.id ],
 		} );
 
-		await admin.visit( SCREEN );
+		/* ── Searched first, because the list pages ──────────────────────────
+		 * Two partners to fold together are not necessarily on the same page of
+		 * a long list, and the checkboxes only reach what is drawn. Narrowing to
+		 * them is the flow, and it is why the search had to keep working
+		 * alongside paging rather than being dropped when paging arrived.
+		 *
+		 * The other way in does not care about pages at all: the duplicate
+		 * finder reads every term and its link carries the ids, which is
+		 * asserted below. */
+		await admin.visit( SCREEN, { s: 'Vanterpool Mills' } );
 
 		/* Offered as a duplicate before anybody goes looking, which is the half
 		 * of this feature that prevents the problem rather than repairing it. */

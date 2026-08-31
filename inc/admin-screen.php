@@ -837,11 +837,23 @@ function gwc_vt_render_list_search( array $args ): void {
  * the Media library's own list-or-grid control — the same question, and the same
  * answer about where a reader looks for it.
  *
- * @param int      $count    How many rows are being shown.
+ * ── Paging, for the screens that have grown into needing it ─────────────────
+ * `$paging` is empty on four of the five callers and the box keeps the
+ * `one-page` class, which is what stops it drawing arrows it has nothing to
+ * point at. Given a total, a page size and a current page it draws core's own
+ * links instead, and the count becomes "N items" over the whole set rather than
+ * over the page — which is the number somebody is actually asking for when a
+ * list is long enough to page.
+ *
+ * @param int      $count    How many rows the query matched in total.
  * @param callable $filters  Optional. Prints the screen's own filter controls.
  * @param callable $switcher Optional. Prints a view switcher, right-hand side.
+ * @param array    $paging   Optional. per_page, current and base (a URL).
  */
-function gwc_vt_render_list_tablenav( int $count, $filters = null, $switcher = null ): void {
+function gwc_vt_render_list_tablenav( int $count, $filters = null, $switcher = null, array $paging = array() ): void {
+	$per_page = (int) ( $paging['per_page'] ?? 0 );
+	$pages    = $per_page > 0 ? (int) ceil( $count / $per_page ) : 1;
+	$current  = max( 1, (int) ( $paging['current'] ?? 1 ) );
 	?>
 	<div class="tablenav top">
 		<?php if ( is_callable( $filters ) ) : ?>
@@ -854,16 +866,34 @@ function gwc_vt_render_list_tablenav( int $count, $filters = null, $switcher = n
 			<?php call_user_func( $switcher ); ?>
 		<?php endif; ?>
 
-		<div class="tablenav-pages one-page">
+		<div class="tablenav-pages<?php echo $pages > 1 ? '' : ' one-page'; ?>">
 			<span class="displaying-num">
 				<?php
 				printf(
-					/* translators: %s: how many rows are on the screen, already formatted. */
+					/* translators: %s: how many rows the list holds, already formatted. */
 					esc_html( _n( '%s item', '%s items', $count, 'groundwork-common-volunteer-tracker' ) ),
 					esc_html( number_format_i18n( $count ) )
 				);
 				?>
 			</span>
+
+			<?php if ( $pages > 1 ) : ?>
+				<span class="pagination-links">
+					<?php
+					echo paginate_links( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core builds and escapes these links.
+						array(
+							'base'      => (string) ( $paging['base'] ?? '' ) . '%_%',
+							'format'    => '&paged=%#%',
+							'total'     => $pages,
+							'current'   => $current,
+							'prev_text' => '&lsaquo;',
+							'next_text' => '&rsaquo;',
+							'type'      => 'plain',
+						)
+					);
+					?>
+				</span>
+			<?php endif; ?>
 		</div>
 
 		<br class="clear" />
