@@ -34,7 +34,7 @@
 defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_menu', 'gwc_vt_register_partners_screen', 14 );
-add_action( 'admin_post_gwc_vt_add_partner', 'gwc_vt_handle_add_partner' );
+add_action( 'admin_post_gwc_vt_save_partner', 'gwc_vt_handle_save_partner' );
 add_action( 'admin_post_gwc_vt_merge_partners', 'gwc_vt_handle_merge_partners' );
 
 /* The four fields, on core's own add and edit forms. */
@@ -110,27 +110,6 @@ function gwc_vt_partners_url( array $args = array() ): string {
 	);
 }
 
-/**
- * Where core edits one partner.
- *
- * Built here rather than typed at three call sites, because the taxonomy is
- * show_in_menu => false and the URL therefore needs the post type spelled out
- * or core cannot work out which menu to highlight.
- *
- * @param int $term_id Term ID.
- * @return string
- */
-function gwc_vt_partner_edit_url( int $term_id ): string {
-	return add_query_arg(
-		array(
-			'taxonomy'  => GWC_VT_PARTNER_TAXONOMY,
-			'post_type' => GWC_VT_VOLUNTEER_TYPE,
-			'tag_ID'    => $term_id,
-		),
-		admin_url( 'term.php' )
-	);
-}
-
 /* ── The screen ──────────────────────────────────────────────────────────── */
 
 /**
@@ -138,15 +117,53 @@ function gwc_vt_partner_edit_url( int $term_id ): string {
  */
 function gwc_vt_render_partners_screen(): void {
 	if ( ! gwc_vt_can_see_records() ) {
-		wp_die( esc_html__( 'You do not have permission to see this.', 'groundwork-common-volunteer-tracker' ) );
+		wp_die(
+			esc_html__( 'You do not have permission to see partners.', 'groundwork-common-volunteer-tracker' ),
+			esc_html__( 'Permission denied', 'groundwork-common-volunteer-tracker' ),
+			array( 'response' => 403 )
+		);
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only; chooses which view to draw, and the merge itself is nonced on POST.
+	/* Folding two together is the one view that takes several rows, so it is
+	 * asked for as several and checked first. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation between this screen's views; every form it draws carries its own nonce.
 	$merging = isset( $_GET['merge'] ) ? array_map( 'absint', (array) wp_unslash( $_GET['merge'] ) ) : array();
 	$merging = array_values( array_filter( $merging ) );
 
-	if ( $merging ) {
+	/* From the duplicate list's link, which names the pair and nothing else, or
+	 * from the bulk action above the table. Anything else that happens to carry
+	 * merge[] — a half-used bulk row where nobody picked an action — falls
+	 * through to the list rather than opening a confirmation nobody asked for. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$bulk = isset( $_GET['gwc_vt_bulk'] ) ? sanitize_key( wp_unslash( $_GET['gwc_vt_bulk'] ) ) : '';
+
+	if ( $merging && ( '' === $bulk || 'merge' === $bulk ) ) {
 		gwc_vt_render_partner_merge_form( $merging );
+		return;
+	}
+
+	/* 'new', or the id of the one being edited. sanitize_key() keeps digits, so
+	 * one value carries both and absint() tells them apart — the same shape the
+	 * Credentials screen uses, because these are the same screen wearing two
+	 * different nouns. */
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+	$asked = isset( $_GET['partner'] ) ? sanitize_key( wp_unslash( $_GET['partner'] ) ) : '';
+
+	if ( 'new' === $asked ) {
+		gwc_vt_render_partner_form( 0 );
+		return;
+	}
+
+	$editing = absint( $asked );
+
+	if ( $editing > 0 ) {
+		/* A stale bookmark lands on the list saying so, rather than on a form
+		 * that would write to nothing. */
+		if ( ! gwc_vt_partner( $editing ) ) {
+			gwc_vt_partner_redirect( 'gone' );
+		}
+
+		gwc_vt_render_partner_form( $editing );
 		return;
 	}
 
@@ -154,43 +171,99 @@ function gwc_vt_render_partners_screen(): void {
 }
 
 /**
- * Every partner, what carries it, and what to do about the duplicates.
+ * How many rows the list is showing, after any search.
+ *
+ * @param string $term What was searched for, or ''.
+ * @return WP_Term[]
+ */
+function gwc_vt_partners_matching( string $term ): array {
+	$partners = gwc_vt_partner_terms();
+
+	if ( '' === $term ) {
+		return $partners;
+	}
+
+	$needle = gwc_vt_partner_normalize( $term );
+	$found  = array();
+
+	foreach ( $partners as $partner ) {
+		/* Matched on the same normalized shape the duplicate finder compares,
+		 * so searching "acme corp" finds "ACME Corp." — a search that cannot
+		 * find the thing somebody is looking at is worse than no search. The
+		 * CRM ID and the contact are searched as typed. */
+		$haystack = gwc_vt_partner_normalize( (string) $partner->name );
+		$fields   = gwc_vt_partner_field_values( (int) $partner->term_id );
+
+		if (
+			( '' !== $needle && false !== strpos( $haystack, $needle ) )
+			|| false !== stripos( $fields[ GWC_VT_PARTNER_CRM_ID ], $term )
+			|| false !== stripos( $fields[ GWC_VT_PARTNER_CONTACT_NAME ], $term )
+		) {
+			$found[] = $partner;
+		}
+	}
+
+	return $found;
+}
+
+/**
+ * What was searched for.
+ *
+ * @return string
+ */
+function gwc_vt_partners_search(): string {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list search; read-only, and core does not nonce these.
+	return isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+}
+
+/**
+ * Every partner, and what to do about the duplicates.
+ *
+ * ── Core's shape, because this plugin agreed on one ──────────────────────────
+ * Heading, an Add New button beside it where wp-admin puts one on every list it
+ * ships, the search box in core's slot, the row of controls above the table with
+ * the count on the right, `wp-list-table` markup, the name as the link, and the
+ * second way in on hover. `gwc_vt_render_list_search()` and
+ * `gwc_vt_render_list_tablenav()` in inc/admin-screen.php are that agreement —
+ * five screens once had five arrangements, and the note above those functions
+ * records why they stopped.
+ *
+ * The first version of this screen had the add form under the table. That is
+ * the arrangement admin-credentials.php was deliberately moved AWAY from: it
+ * leaves the bottom half of a screen as a form nobody asked for yet, and puts
+ * the add affordance in the one place a WordPress administrator has never had
+ * to look for it.
  */
 function gwc_vt_render_partners_list(): void {
-	$partners   = gwc_vt_partner_terms();
+	$term       = gwc_vt_partners_search();
+	$showing    = gwc_vt_partners_matching( $term );
 	$duplicates = gwc_vt_partner_duplicate_clusters();
 	?>
-	<div class="wrap gwcvt-partners">
+	<div class="wrap gwcvt-wrap">
 		<h1 class="wp-heading-inline"><?php echo esc_html( gwc_vt_partners_title() ); ?></h1>
+		<a class="page-title-action" href="<?php echo esc_url( gwc_vt_partners_url( array( 'partner' => 'new' ) ) ); ?>">
+			<?php esc_html_e( 'Add New Partner', 'groundwork-common-volunteer-tracker' ); ?>
+		</a>
 		<hr class="wp-header-end" />
 
 		<?php gwc_vt_partner_notice(); ?>
 
-		<p class="gwcvt-partners__intro">
-			<?php esc_html_e( 'The companies, schools and groups your volunteers come with. Naming one here is what lets you count its hours as one number instead of several.', 'groundwork-common-volunteer-tracker' ); ?>
-		</p>
-
 		<?php if ( $duplicates ) : ?>
 			<div class="notice notice-warning gwcvt-partners__duplicates">
-				<h2><?php esc_html_e( 'These look like the same partner', 'groundwork-common-volunteer-tracker' ); ?></h2>
-
-				<p>
-					<?php esc_html_e( 'Their names match once punctuation, capitals and words like “Inc” are set aside. Nothing has been changed — look at each one and decide.', 'groundwork-common-volunteer-tracker' ); ?>
-				</p>
-
+				<p><strong><?php esc_html_e( 'These look like the same partner', 'groundwork-common-volunteer-tracker' ); ?></strong></p>
 				<ul>
 					<?php foreach ( $duplicates as $cluster ) : ?>
 						<?php
 						$ids   = array();
 						$names = array();
 
-						foreach ( $cluster as $term ) {
-							$ids[]   = (int) $term->term_id;
-							$names[] = (string) $term->name;
+						foreach ( $cluster as $one ) {
+							$ids[]   = (int) $one->term_id;
+							$names[] = (string) $one->name;
 						}
 						?>
 						<li>
-							<strong><?php echo esc_html( implode( ' · ', $names ) ); ?></strong>
+							<?php echo esc_html( implode( ' · ', $names ) ); ?>
 							<a href="<?php echo esc_url( gwc_vt_partners_url( array( 'merge' => $ids ) ) ); ?>">
 								<?php esc_html_e( 'Look at these', 'groundwork-common-volunteer-tracker' ); ?>
 							</a>
@@ -200,48 +273,102 @@ function gwc_vt_render_partners_list(): void {
 			</div>
 		<?php endif; ?>
 
-		<?php if ( ! $partners ) : ?>
-			<p><?php esc_html_e( 'No partners yet. Add the first one below.', 'groundwork-common-volunteer-tracker' ); ?></p>
-		<?php else : ?>
-			<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
-				<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_PARTNERS_PAGE ); ?>" />
+		<?php
+		gwc_vt_render_list_search(
+			array(
+				'id'          => 'gwcvt-partner-search',
+				'value'       => $term,
+				'keep'        => array(
+					'post_type' => GWC_VT_ENTRY_TYPE,
+					'page'      => GWC_VT_PARTNERS_PAGE,
+				),
+				'label'       => __( 'Find a partner', 'groundwork-common-volunteer-tracker' ),
+				'placeholder' => __( 'Find a partner — name, CRM ID or contact', 'groundwork-common-volunteer-tracker' ),
+				'button'      => __( 'Find', 'groundwork-common-volunteer-tracker' ),
+			)
+		);
+		?>
 
-				<table class="wp-list-table widefat fixed striped gwcvt-partners__table">
-					<thead>
-						<tr>
-							<td class="manage-column check-column"></td>
-							<th scope="col"><?php esc_html_e( 'Partner', 'groundwork-common-volunteer-tracker' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'Volunteers', 'groundwork-common-volunteer-tracker' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'Hours verified', 'groundwork-common-volunteer-tracker' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'Contact', 'groundwork-common-volunteer-tracker' ); ?></th>
-							<th scope="col"><?php esc_html_e( 'CRM ID', 'groundwork-common-volunteer-tracker' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $partners as $partner ) : ?>
+		<form method="get" action="<?php echo esc_url( admin_url( 'edit.php' ) ); ?>">
+			<input type="hidden" name="post_type" value="<?php echo esc_attr( GWC_VT_ENTRY_TYPE ); ?>" />
+			<input type="hidden" name="page" value="<?php echo esc_attr( GWC_VT_PARTNERS_PAGE ); ?>" />
+
+			<?php
+			/* Folding two together is a bulk action, so it is where wp-admin
+			 * keeps bulk actions: the left of the row above the table, beside
+			 * the count. It was a button under the table, which is nowhere. */
+			gwc_vt_render_list_tablenav( count( $showing ), 'gwc_vt_render_partner_bulk_actions' );
+			?>
+
+			<table class="wp-list-table widefat fixed striped table-view-list gwcvt-partners">
+				<thead>
+					<?php gwc_vt_render_partner_headings(); ?>
+				</thead>
+				<tbody id="the-list">
+					<?php if ( $showing ) : ?>
+						<?php foreach ( $showing as $partner ) : ?>
 							<?php gwc_vt_render_partner_row( $partner ); ?>
 						<?php endforeach; ?>
-					</tbody>
-				</table>
-
-				<p class="gwcvt-partners__actions">
-					<button type="submit" class="button">
-						<?php esc_html_e( 'Fold the selected ones together', 'groundwork-common-volunteer-tracker' ); ?>
-					</button>
-					<span class="description">
-						<?php esc_html_e( 'You choose which one survives on the next screen. Nothing changes until then.', 'groundwork-common-volunteer-tracker' ); ?>
-					</span>
-				</p>
-			</form>
-		<?php endif; ?>
-
-		<?php gwc_vt_render_partner_add_form(); ?>
+					<?php else : ?>
+						<tr class="no-items">
+							<td class="colspanchange" colspan="6">
+								<?php
+								echo '' !== $term
+									? esc_html__( 'No partner of that name.', 'groundwork-common-volunteer-tracker' )
+									: esc_html__( 'No partners yet.', 'groundwork-common-volunteer-tracker' );
+								?>
+							</td>
+						</tr>
+					<?php endif; ?>
+				</tbody>
+				<tfoot>
+					<?php gwc_vt_render_partner_headings(); ?>
+				</tfoot>
+			</table>
+		</form>
 	</div>
 	<?php
 }
 
 /**
- * One row.
+ * The bulk action, in the slot core keeps for one.
+ */
+function gwc_vt_render_partner_bulk_actions(): void {
+	?>
+	<label class="screen-reader-text" for="gwcvt-partner-bulk">
+		<?php esc_html_e( 'Action for the selected partners', 'groundwork-common-volunteer-tracker' ); ?>
+	</label>
+	<select name="gwc_vt_bulk" id="gwcvt-partner-bulk">
+		<option value=""><?php esc_html_e( 'Bulk actions', 'groundwork-common-volunteer-tracker' ); ?></option>
+		<option value="merge"><?php esc_html_e( 'Fold together', 'groundwork-common-volunteer-tracker' ); ?></option>
+	</select>
+	<?php submit_button( __( 'Apply', 'groundwork-common-volunteer-tracker' ), 'action', '', false ); ?>
+	<?php
+}
+
+/**
+ * The column headings, printed above the table and below it.
+ */
+function gwc_vt_render_partner_headings(): void {
+	?>
+	<tr>
+		<td class="manage-column column-cb check-column">
+			<label class="screen-reader-text" for="gwcvt-partner-all">
+				<?php esc_html_e( 'Select all partners', 'groundwork-common-volunteer-tracker' ); ?>
+			</label>
+			<input id="gwcvt-partner-all" type="checkbox" />
+		</td>
+		<th scope="col" class="manage-column column-primary"><?php esc_html_e( 'Partner', 'groundwork-common-volunteer-tracker' ); ?></th>
+		<th scope="col" class="manage-column"><?php esc_html_e( 'Volunteers', 'groundwork-common-volunteer-tracker' ); ?></th>
+		<th scope="col" class="manage-column"><?php esc_html_e( 'Verified hours', 'groundwork-common-volunteer-tracker' ); ?></th>
+		<th scope="col" class="manage-column"><?php esc_html_e( 'Contact', 'groundwork-common-volunteer-tracker' ); ?></th>
+		<th scope="col" class="manage-column"><?php esc_html_e( 'CRM ID', 'groundwork-common-volunteer-tracker' ); ?></th>
+	</tr>
+	<?php
+}
+
+/**
+ * One row, in core's shape.
  *
  * @param WP_Term $partner The partner.
  */
@@ -249,11 +376,12 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 	$fields = gwc_vt_partner_field_values( (int) $partner->term_id );
 
 	/* Not $partner->count. That column is one number across every object type in
-	 * the taxonomy, so the moment #211 registers entries it becomes volunteers
-	 * plus entries added together — see gwc_vt_partner_counts(). */
+	 * the taxonomy — volunteers PLUS entries added together, which is not a
+	 * quantity of anything. See gwc_vt_partner_counts(). */
 	$counts     = gwc_vt_partner_counts( (int) $partner->term_id );
 	$volunteers = (int) ( $counts[ GWC_VT_VOLUNTEER_TYPE ] ?? 0 );
-	$url        = gwc_vt_partner_volunteers_url( (int) $partner->term_id );
+	$hours      = gwc_vt_partner_hours( (int) $partner->term_id );
+	$edit       = gwc_vt_partners_url( array( 'partner' => (int) $partner->term_id ) );
 	?>
 	<tr>
 		<th scope="row" class="check-column">
@@ -273,13 +401,18 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 				value="<?php echo esc_attr( (string) $partner->term_id ); ?>"
 			/>
 		</th>
-		<td>
-			<strong><a href="<?php echo esc_url( gwc_vt_partner_edit_url( (int) $partner->term_id ) ); ?>"><?php echo esc_html( $partner->name ); ?></a></strong>
+
+		<td class="column-primary has-row-actions">
+			<?php
+			/* The name is the link, because in every list table in wp-admin the
+			 * title is what you press to open the thing. */
+			?>
+			<strong><a href="<?php echo esc_url( $edit ); ?>"><?php echo esc_html( $partner->name ); ?></a></strong>
 
 			<?php if ( (int) $partner->parent > 0 ) : ?>
 				<?php $parent = gwc_vt_partner( (int) $partner->parent ); ?>
 				<?php if ( $parent ) : ?>
-					<div class="row-actions">
+					<div class="gwcvt-partners__sub">
 						<?php
 						printf(
 							/* translators: %s: the name of a parent partner. */
@@ -290,38 +423,42 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 					</div>
 				<?php endif; ?>
 			<?php endif; ?>
+
+			<div class="row-actions">
+				<span class="edit">
+					<a href="<?php echo esc_url( $edit ); ?>"><?php esc_html_e( 'Edit', 'groundwork-common-volunteer-tracker' ); ?></a>
+				</span>
+			</div>
+
+			<button type="button" class="toggle-row">
+				<span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'groundwork-common-volunteer-tracker' ); ?></span>
+			</button>
 		</td>
-		<td>
+
+		<td data-colname="<?php esc_attr_e( 'Volunteers', 'groundwork-common-volunteer-tracker' ); ?>">
+			<?php $url = gwc_vt_partner_volunteers_url( (int) $partner->term_id ); ?>
 			<?php if ( $volunteers > 0 && '' !== $url ) : ?>
 				<a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( number_format_i18n( $volunteers ) ); ?></a>
 			<?php else : ?>
 				<?php echo esc_html( number_format_i18n( $volunteers ) ); ?>
 			<?php endif; ?>
 		</td>
-		<td>
+
+		<td data-colname="<?php esc_attr_e( 'Verified hours', 'groundwork-common-volunteer-tracker' ); ?>">
 			<?php
-			/* ── The number this whole feature exists to produce ──────────────
-			 * Counted from ENTRIES, never from the people in the column beside
-			 * it. Somebody who came once with Acme and twice on their own is one
-			 * volunteer and three entries, and only one of those two numbers is
-			 * an answer to "what did Acme contribute".
-			 *
-			 * The link opens the hours list narrowed by the same function this
-			 * total was built from, so pressing the number shows the records it
-			 * came from. */
-			$hours     = gwc_vt_partner_hours( (int) $partner->term_id );
+			/* Counted from ENTRIES, never from the people in the column beside
+			 * it, and the link opens the hours list narrowed by the same
+			 * function this total was built from. */
 			$hours_url = gwc_vt_partner_hours_url( (int) $partner->term_id );
 			?>
 			<?php if ( $hours->entries > 0 && '' !== $hours_url ) : ?>
-				<a href="<?php echo esc_url( $hours_url ); ?>">
-					<?php echo esc_html( gwc_vt_format_hours( $hours->verified_minutes ) ); ?>
-				</a>
+				<a href="<?php echo esc_url( $hours_url ); ?>"><?php echo esc_html( gwc_vt_format_hours( $hours->verified_minutes ) ); ?></a>
 			<?php else : ?>
 				<?php echo esc_html( gwc_vt_format_hours( $hours->verified_minutes ) ); ?>
 			<?php endif; ?>
 
 			<?php if ( $hours->pending_minutes > 0 ) : ?>
-				<div class="row-actions">
+				<div class="gwcvt-partners__sub">
 					<?php
 					printf(
 						/* translators: %s: a duration, already formatted. */
@@ -332,42 +469,131 @@ function gwc_vt_render_partner_row( WP_Term $partner ): void {
 				</div>
 			<?php endif; ?>
 		</td>
-		<td>
+
+		<td data-colname="<?php esc_attr_e( 'Contact', 'groundwork-common-volunteer-tracker' ); ?>">
 			<?php echo esc_html( $fields[ GWC_VT_PARTNER_CONTACT_NAME ] ); ?>
 			<?php if ( '' !== $fields[ GWC_VT_PARTNER_CONTACT_EMAIL ] ) : ?>
-				<div class="row-actions"><?php echo esc_html( $fields[ GWC_VT_PARTNER_CONTACT_EMAIL ] ); ?></div>
+				<div class="gwcvt-partners__sub"><?php echo esc_html( $fields[ GWC_VT_PARTNER_CONTACT_EMAIL ] ); ?></div>
 			<?php endif; ?>
 		</td>
-		<td><?php echo esc_html( $fields[ GWC_VT_PARTNER_CRM_ID ] ); ?></td>
+
+		<td data-colname="<?php esc_attr_e( 'CRM ID', 'groundwork-common-volunteer-tracker' ); ?>">
+			<?php echo esc_html( $fields[ GWC_VT_PARTNER_CRM_ID ] ); ?>
+		</td>
 	</tr>
 	<?php
 }
 
 /**
- * Adding one.
+ * Adding one, or changing one, on a view of its own.
+ *
+ * ── One form, both jobs ──────────────────────────────────────────────────────
+ * The same shape gwc_vt_render_credential_form() has, and for the same reason:
+ * the questions are identical, and a second form is a second place for them to
+ * drift.
+ *
+ * It replaces a link out to core's term editor. That link worked, and it took
+ * somebody off this plugin's screens into a taxonomy page with a Description
+ * field this feature does not use and a Count column that adds volunteers to
+ * hour entries. Owning the form is what the rest of the plugin does.
+ *
+ * @param int $partner_id Term ID, or 0 to add.
  */
-function gwc_vt_render_partner_add_form(): void {
+function gwc_vt_render_partner_form( int $partner_id ): void {
+	$partner = $partner_id > 0 ? gwc_vt_partner( $partner_id ) : null;
+	$fields  = $partner ? gwc_vt_partner_field_values( $partner_id ) : array();
+	$others  = array();
+
+	foreach ( gwc_vt_partner_terms() as $one ) {
+		/* A partner cannot be its own parent, and cannot be parented under one
+		 * of its own children — offering either is offering a cycle. */
+		if ( $partner && ( (int) $one->term_id === $partner_id || term_is_ancestor_of( $partner_id, (int) $one->term_id, GWC_VT_PARTNER_TAXONOMY ) ) ) {
+			continue;
+		}
+
+		$others[] = $one;
+	}
 	?>
-	<div class="gwcvt-partners__add">
-		<h2><?php esc_html_e( 'Add a partner', 'groundwork-common-volunteer-tracker' ); ?></h2>
+	<div class="wrap gwcvt-wrap">
+		<h1 class="wp-heading-inline">
+			<?php
+			echo $partner
+				? esc_html__( 'Edit a partner', 'groundwork-common-volunteer-tracker' )
+				: esc_html__( 'Add New Partner', 'groundwork-common-volunteer-tracker' );
+			?>
+		</h1>
+		<hr class="wp-header-end" />
+
+		<?php gwc_vt_partner_notice(); ?>
 
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="gwc_vt_add_partner" />
-			<?php wp_nonce_field( 'gwc_vt_add_partner' ); ?>
+			<input type="hidden" name="action" value="gwc_vt_save_partner" />
+			<input type="hidden" name="gwc_vt_partner_id" value="<?php echo esc_attr( (string) $partner_id ); ?>" />
+			<?php wp_nonce_field( 'gwc_vt_save_partner' ); ?>
 
-			<p>
-				<label for="gwcvt-partner-name"><?php esc_html_e( 'What it is called', 'groundwork-common-volunteer-tracker' ); ?></label><br />
-				<input type="text" id="gwcvt-partner-name" name="gwc_vt_partner_name" class="regular-text" required maxlength="<?php echo esc_attr( (string) GWC_VT_PARTNER_FIELD_MAX ); ?>" />
-			</p>
+			<table class="form-table" role="presentation">
+				<tbody>
+					<tr>
+						<th scope="row"><label for="gwcvt-partner-name"><?php esc_html_e( 'Name', 'groundwork-common-volunteer-tracker' ); ?></label></th>
+						<td>
+							<input
+								type="text"
+								id="gwcvt-partner-name"
+								name="gwc_vt_partner_name"
+								class="regular-text"
+								required
+								maxlength="<?php echo esc_attr( (string) GWC_VT_PARTNER_FIELD_MAX ); ?>"
+								value="<?php echo esc_attr( $partner ? (string) $partner->name : '' ); ?>"
+							/>
+						</td>
+					</tr>
 
-			<p class="description">
-				<?php esc_html_e( 'Write it as you would say it. You can add the CRM ID and a contact after it exists, and you can rename it later without moving any records.', 'groundwork-common-volunteer-tracker' ); ?>
-			</p>
+					<?php if ( $others ) : ?>
+						<tr>
+							<th scope="row"><label for="gwcvt-partner-parent"><?php esc_html_e( 'Part of', 'groundwork-common-volunteer-tracker' ); ?></label></th>
+							<td>
+								<select id="gwcvt-partner-parent" name="gwc_vt_partner_parent">
+									<option value="0"><?php esc_html_e( '— none —', 'groundwork-common-volunteer-tracker' ); ?></option>
+									<?php foreach ( $others as $one ) : ?>
+										<option value="<?php echo esc_attr( (string) $one->term_id ); ?>" <?php selected( $partner ? (int) $partner->parent : 0, (int) $one->term_id ); ?>>
+											<?php echo esc_html( $one->name ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description"><?php esc_html_e( 'For a local chapter of a national body.', 'groundwork-common-volunteer-tracker' ); ?></p>
+							</td>
+						</tr>
+					<?php endif; ?>
+
+					<?php foreach ( gwc_vt_partner_fields() as $key => $field ) : ?>
+						<tr>
+							<th scope="row"><label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field['label'] ); ?></label></th>
+							<td>
+								<input
+									type="<?php echo esc_attr( $field['type'] ); ?>"
+									id="<?php echo esc_attr( $key ); ?>"
+									name="<?php echo esc_attr( $key ); ?>"
+									class="regular-text"
+									maxlength="<?php echo esc_attr( (string) GWC_VT_PARTNER_FIELD_MAX ); ?>"
+									value="<?php echo esc_attr( (string) ( $fields[ $key ] ?? '' ) ); ?>"
+								/>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
 
 			<p>
 				<button type="submit" class="button button-primary">
-					<?php esc_html_e( 'Add it', 'groundwork-common-volunteer-tracker' ); ?>
+					<?php
+					echo $partner
+						? esc_html__( 'Save this partner', 'groundwork-common-volunteer-tracker' )
+						: esc_html__( 'Add it', 'groundwork-common-volunteer-tracker' );
+					?>
 				</button>
+				<a class="button" href="<?php echo esc_url( gwc_vt_partners_url() ); ?>">
+					<?php esc_html_e( 'Cancel', 'groundwork-common-volunteer-tracker' ); ?>
+				</a>
 			</p>
 		</form>
 	</div>
@@ -405,7 +631,7 @@ function gwc_vt_render_partner_merge_form( array $term_ids ): void {
 		<div class="notice notice-warning inline">
 			<p>
 				<strong><?php esc_html_e( 'This cannot be undone.', 'groundwork-common-volunteer-tracker' ); ?></strong>
-				<?php esc_html_e( 'The partners you do not keep are deleted, and everything that pointed at them points at the one you keep instead. No volunteer and no hour entry is deleted.', 'groundwork-common-volunteer-tracker' ); ?>
+				<?php esc_html_e( 'No volunteer or hour entry is deleted.', 'groundwork-common-volunteer-tracker' ); ?>
 			</p>
 		</div>
 
@@ -417,7 +643,13 @@ function gwc_vt_render_partner_merge_form( array $term_ids ): void {
 				<input type="hidden" name="partners[]" value="<?php echo esc_attr( (string) $partner->term_id ); ?>" />
 			<?php endforeach; ?>
 
-			<h2><?php esc_html_e( 'Which one do you want to keep?', 'groundwork-common-volunteer-tracker' ); ?></h2>
+			<?php
+			/* Nothing preselected here either, and for the stronger version of
+			 * the reason given below about the conflicting details: this is the
+			 * consequential choice on an irreversible screen, and a default
+			 * would let somebody press the button without having made it. */
+			?>
+			<h2><?php esc_html_e( 'Which one to keep', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 			<table class="widefat striped gwcvt-partners__table">
 				<thead>
@@ -428,7 +660,7 @@ function gwc_vt_render_partner_merge_form( array $term_ids ): void {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $partners as $index => $partner ) : ?>
+					<?php foreach ( $partners as $partner ) : ?>
 						<?php $counts = gwc_vt_partner_counts( (int) $partner->term_id ); ?>
 						<tr>
 							<td>
@@ -437,7 +669,6 @@ function gwc_vt_render_partner_merge_form( array $term_ids ): void {
 									id="gwcvt-survivor-<?php echo esc_attr( (string) $partner->term_id ); ?>"
 									name="survivor"
 									value="<?php echo esc_attr( (string) $partner->term_id ); ?>"
-									<?php checked( 0, $index ); ?>
 									required
 								/>
 							</td>
@@ -471,10 +702,6 @@ function gwc_vt_render_partner_merge_form( array $term_ids ): void {
 
 			<?php if ( $conflicts ) : ?>
 				<h2><?php esc_html_e( 'These details disagree', 'groundwork-common-volunteer-tracker' ); ?></h2>
-
-				<p>
-					<?php esc_html_e( 'Choose what the one you keep should end up with. If two partners have different CRM IDs, it is worth checking you have picked the right pair before going on.', 'groundwork-common-volunteer-tracker' ); ?>
-				</p>
 
 				<?php
 				/* ── Nothing is preselected, and that is the point ────────────
@@ -549,10 +776,11 @@ function gwc_vt_partner_notice(): void {
 
 	$messages = array(
 		'added'      => __( 'Partner added.', 'groundwork-common-volunteer-tracker' ),
+		'saved'      => __( 'Saved.', 'groundwork-common-volunteer-tracker' ),
 		'exists'     => __( 'There is already a partner with that name.', 'groundwork-common-volunteer-tracker' ),
 		'empty'      => __( 'Give the partner a name.', 'groundwork-common-volunteer-tracker' ),
 		'not-enough' => __( 'Choose at least two partners to fold together.', 'groundwork-common-volunteer-tracker' ),
-		'gone'       => __( 'That partner no longer exists. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'gone'       => __( 'That partner no longer exists.', 'groundwork-common-volunteer-tracker' ),
 	);
 
 	if ( 'merged' === $result ) {
@@ -561,12 +789,7 @@ function gwc_vt_partner_notice(): void {
 			esc_html(
 				sprintf(
 					/* translators: %d: how many partners were folded in. */
-					_n(
-						'Folded in %d partner. Everything that pointed at it now points at the one you kept.',
-						'Folded in %d partners. Everything that pointed at them now points at the one you kept.',
-						$count,
-						'groundwork-common-volunteer-tracker'
-					),
+					_n( 'Folded in %d partner.', 'Folded in %d partners.', $count, 'groundwork-common-volunteer-tracker' ),
 					$count
 				)
 			)
@@ -581,7 +804,7 @@ function gwc_vt_partner_notice(): void {
 
 	printf(
 		'<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
-		'added' === $result ? 'success' : 'error',
+		in_array( $result, array( 'added', 'saved' ), true ) ? 'success' : 'error',
 		esc_html( $messages[ $result ] )
 	);
 }
@@ -608,14 +831,19 @@ function gwc_vt_partner_redirect( string $result, int $count = 0 ): void {
 /* ── The two handlers ────────────────────────────────────────────────────── */
 
 /**
- * Add a partner.
+ * Add a partner, or save the one being edited.
+ *
+ * One handler for both, because they are one form. A missing or unknown id is
+ * an add; a real one is a save.
  */
-function gwc_vt_handle_add_partner(): void {
-	check_admin_referer( 'gwc_vt_add_partner' );
+function gwc_vt_handle_save_partner(): void {
+	check_admin_referer( 'gwc_vt_save_partner' );
 
 	if ( ! gwc_vt_can_see_records() ) {
 		wp_die( esc_html__( 'You do not have permission to do that.', 'groundwork-common-volunteer-tracker' ) );
 	}
+
+	$partner_id = isset( $_POST['gwc_vt_partner_id'] ) ? absint( wp_unslash( $_POST['gwc_vt_partner_id'] ) ) : 0;
 
 	$name = isset( $_POST['gwc_vt_partner_name'] )
 		? gwc_vt_sanitize_partner_text( wp_unslash( $_POST['gwc_vt_partner_name'] ) )
@@ -625,7 +853,35 @@ function gwc_vt_handle_add_partner(): void {
 		gwc_vt_partner_redirect( 'empty' );
 	}
 
-	$made = wp_insert_term( $name, GWC_VT_PARTNER_TAXONOMY );
+	$parent = isset( $_POST['gwc_vt_partner_parent'] ) ? absint( wp_unslash( $_POST['gwc_vt_partner_parent'] ) ) : 0;
+
+	/* Checked rather than trusted: a posted parent that is not a partner, or is
+	 * this partner, or is below it, would each build something the tree cannot
+	 * hold. */
+	if ( $parent > 0 && ( ! gwc_vt_partner( $parent ) || $parent === $partner_id || ( $partner_id > 0 && term_is_ancestor_of( $partner_id, $parent, GWC_VT_PARTNER_TAXONOMY ) ) ) ) {
+		$parent = 0;
+	}
+
+	if ( $partner_id > 0 && gwc_vt_partner( $partner_id ) ) {
+		$done = wp_update_term(
+			$partner_id,
+			GWC_VT_PARTNER_TAXONOMY,
+			array(
+				'name'   => $name,
+				'parent' => $parent,
+			)
+		);
+
+		if ( is_wp_error( $done ) ) {
+			gwc_vt_partner_redirect( 'exists' );
+		}
+
+		gwc_vt_save_partner_fields_from_post( $partner_id );
+
+		gwc_vt_partner_redirect( 'saved' );
+	}
+
+	$made = wp_insert_term( $name, GWC_VT_PARTNER_TAXONOMY, array( 'parent' => $parent ) );
 
 	/* term_exists is the ordinary answer to typing a name that is already
 	 * there, and it is worth saying so rather than reporting a failure: the
@@ -634,7 +890,31 @@ function gwc_vt_handle_add_partner(): void {
 		gwc_vt_partner_redirect( 'term_exists' === $made->get_error_code() ? 'exists' : 'empty' );
 	}
 
+	gwc_vt_save_partner_fields_from_post( (int) $made['term_id'] );
+
 	gwc_vt_partner_redirect( 'added' );
+}
+
+/**
+ * The four details, off a posted form.
+ *
+ * @param int $partner_id Term ID.
+ */
+function gwc_vt_save_partner_fields_from_post( int $partner_id ): void {
+	$values = array();
+
+	foreach ( array_keys( gwc_vt_partner_fields() ) as $key ) {
+		if ( ! isset( $_POST[ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the caller checked the form's nonce.
+			continue;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce as above; sanitized by gwc_vt_set_partner_fields() through each field's own callback.
+		$values[ $key ] = (string) wp_unslash( $_POST[ $key ] );
+	}
+
+	if ( $values ) {
+		gwc_vt_set_partner_fields( $partner_id, $values );
+	}
 }
 
 /**
@@ -794,8 +1074,7 @@ function gwc_vt_partner_filter_dropdown(): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only, and core does not nonce these.
-	$current = isset( $_GET[ GWC_VT_PARTNER_FILTER ] ) ? absint( wp_unslash( $_GET[ GWC_VT_PARTNER_FILTER ] ) ) : 0;
+	$current = gwc_vt_partner_filtered_term();
 	?>
 	<label class="screen-reader-text" for="<?php echo esc_attr( GWC_VT_PARTNER_FILTER ); ?>">
 		<?php esc_html_e( 'Filter by partner', 'groundwork-common-volunteer-tracker' ); ?>
@@ -809,6 +1088,43 @@ function gwc_vt_partner_filter_dropdown(): void {
 		<?php endforeach; ?>
 	</select>
 	<?php
+}
+
+/**
+ * Which partner a list is filtered to, however the URL said so.
+ *
+ * ── Two URLs reach the same list, and only one of them was recognised ────────
+ * This plugin's own `gwc_vt_partner_is=<id>`, which the dropdown posts and both
+ * URL helpers build — and core's `taxonomy=gwc_vt_partner&term=<slug>`, which is
+ * what the Partners column on the hours list links to and which WP_Query honours
+ * regardless of the taxonomy having no query var of its own.
+ *
+ * Reading only the first meant the total above the list appeared when somebody
+ * used the dropdown and vanished when they pressed the partner's name in the
+ * row — the same list, filtered the same way, described in one case and not the
+ * other. One resolver, so the dropdown, the filter and the total all answer from
+ * the same question.
+ *
+ * @return int Term ID, or 0.
+ */
+function gwc_vt_partner_filtered_term(): int {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only, and core does not nonce these.
+	$term_id = isset( $_GET[ GWC_VT_PARTNER_FILTER ] ) ? absint( wp_unslash( $_GET[ GWC_VT_PARTNER_FILTER ] ) ) : 0;
+
+	if ( $term_id < 1 ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+		$taxonomy = isset( $_GET['taxonomy'] ) ? sanitize_key( wp_unslash( $_GET['taxonomy'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- as above.
+		$slug = isset( $_GET['term'] ) ? sanitize_title( wp_unslash( $_GET['term'] ) ) : '';
+
+		if ( GWC_VT_PARTNER_TAXONOMY === $taxonomy && '' !== $slug ) {
+			$term = get_term_by( 'slug', $slug, GWC_VT_PARTNER_TAXONOMY );
+
+			$term_id = $term instanceof WP_Term ? (int) $term->term_id : 0;
+		}
+	}
+
+	return gwc_vt_partner( $term_id ) ? $term_id : 0;
 }
 
 /**
@@ -841,10 +1157,7 @@ function gwc_vt_partner_hours_summary(): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only, and core does not nonce these.
-	$term_id = isset( $_GET[ GWC_VT_PARTNER_FILTER ] ) ? absint( wp_unslash( $_GET[ GWC_VT_PARTNER_FILTER ] ) ) : 0;
-
-	$partner = $term_id > 0 ? gwc_vt_partner( $term_id ) : null;
+	$partner = gwc_vt_partner( gwc_vt_partner_filtered_term() );
 
 	if ( ! $partner ) {
 		return;
@@ -896,7 +1209,7 @@ function gwc_vt_partner_hours_summary(): void {
 			<?php
 			printf(
 				/* translators: 1: a duration, already formatted; 2: how many hour entries. */
-				esc_html( _n( '— %1$s verified across %2$s entry shown.', '— %1$s verified across %2$s entries shown.', (int) $totals->entries, 'groundwork-common-volunteer-tracker' ) ),
+				esc_html( _n( '%1$s verified across %2$s entry shown.', '%1$s verified across %2$s entries shown.', (int) $totals->entries, 'groundwork-common-volunteer-tracker' ) ),
 				esc_html( gwc_vt_format_hours( $totals->verified_minutes ) ),
 				esc_html( number_format_i18n( (int) $totals->entries ) )
 			);
@@ -906,25 +1219,12 @@ function gwc_vt_partner_hours_summary(): void {
 				<?php
 				printf(
 					/* translators: %s: a duration, already formatted. */
-					esc_html__( 'A further %s is recorded and waiting for a staff member to check it.', 'groundwork-common-volunteer-tracker' ),
+					esc_html__( '%s awaiting verification.', 'groundwork-common-volunteer-tracker' ),
 					esc_html( gwc_vt_format_hours( $totals->pending_minutes ) )
 				);
 				?>
 			<?php endif; ?>
 		</p>
-
-		<?php if ( '' !== $totals->first && '' !== $totals->last ) : ?>
-			<p class="description">
-				<?php
-				printf(
-					/* translators: 1: the earliest date shown; 2: the latest. */
-					esc_html__( 'Earliest %1$s, latest %2$s.', 'groundwork-common-volunteer-tracker' ),
-					esc_html( gwc_vt_shift_date_label_from( $totals->first ) ),
-					esc_html( gwc_vt_shift_date_label_from( $totals->last ) )
-				);
-				?>
-			</p>
-		<?php endif; ?>
 	</div>
 	<?php
 }
@@ -943,10 +1243,9 @@ function gwc_vt_apply_partner_filter( $query ): void {
 		return;
 	}
 
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a list-table filter; read-only, and core does not nonce these.
-	$term_id = isset( $_GET[ GWC_VT_PARTNER_FILTER ] ) ? absint( wp_unslash( $_GET[ GWC_VT_PARTNER_FILTER ] ) ) : 0;
+	$term_id = gwc_vt_partner_filtered_term();
 
-	if ( $term_id < 1 || ! gwc_vt_partner( $term_id ) ) {
+	if ( $term_id < 1 ) {
 		return;
 	}
 

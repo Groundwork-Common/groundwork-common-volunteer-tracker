@@ -698,7 +698,7 @@ function gwc_vt_render_quick_add_partner_field(): void {
 			<?php
 			printf(
 				/* translators: %s: a link to the Partners screen. */
-				esc_html__( 'No partners yet. %s if a company, school or group sends people.', 'groundwork-common-volunteer-tracker' ),
+				esc_html__( 'No partners yet. %s', 'groundwork-common-volunteer-tracker' ),
 				'<a href="' . esc_url( gwc_vt_partners_url() ) . '">' . esc_html__( 'Add one', 'groundwork-common-volunteer-tracker' ) . '</a>'
 			);
 			?>
@@ -708,7 +708,7 @@ function gwc_vt_render_quick_add_partner_field(): void {
 	}
 	?>
 	<select id="gwcvt-qa-partner" name="gwc_vt_partner">
-		<option value="0"><?php esc_html_e( '— nobody in particular —', 'groundwork-common-volunteer-tracker' ); ?></option>
+		<option value="0"><?php esc_html_e( '— none —', 'groundwork-common-volunteer-tracker' ); ?></option>
 		<?php foreach ( $partners as $partner ) : ?>
 			<option value="<?php echo esc_attr( (string) $partner->term_id ); ?>">
 				<?php echo esc_html( $partner->name ); ?>
@@ -716,7 +716,7 @@ function gwc_vt_render_quick_add_partner_field(): void {
 		<?php endforeach; ?>
 	</select>
 	<p class="description">
-		<?php esc_html_e( 'Applied to every row you log below. Leave it as it is for people who came on their own.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'Applied to every row below.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 	<?php
 }

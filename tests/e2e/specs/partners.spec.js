@@ -1,7 +1,7 @@
 /**
  * Partners: naming them, recording who came with them, and merging.
  *
- * Covers gwc_vt_add_partner and gwc_vt_merge_partners.
+ * Covers gwc_vt_save_partner and gwc_vt_merge_partners.
  *
  * ── Why the merge needs a browser and not only a database ────────────────────
  * tests/integration/partners.php already proves gwc_vt_merge_partners() moves what it
@@ -49,39 +49,40 @@ async function pick( page, row, name ) {
 	await results.first().click();
 }
 
-/**
- * Core's own editor for one partner.
- *
- * The taxonomy is show_in_menu => false, so the URL needs the post type spelled
- * out or wp-admin cannot work out which menu to highlight and renders the
- * screen without one.
- *
- * @param {number} id The term ID.
- * @return {string} A path, relative to baseURL.
- */
-function termUrl( id ) {
-	return `/wp-admin/term.php?taxonomy=${ TAX }&post_type=gwc_vt_volunteer&tag_ID=${ id }`;
-}
-
 test.describe( 'partners', () => {
-	test( 'one can be added, and appears in the list', async ( {
+	test( 'one is added from its own view, not a form under the table', async ( {
 		page,
 		admin,
 		api,
 	} ) => {
 		await admin.visit( SCREEN );
 
-		const form = admin.formFor( 'gwc_vt_add_partner' ).first();
+		/* ── The affordance where wp-admin keeps it ──────────────────────────
+		 * This screen had the add form under the table, which is the
+		 * arrangement admin-credentials.php was deliberately moved away from:
+		 * the bottom half of the screen is a form nobody asked for yet, and the
+		 * add affordance is in the one place a WordPress administrator has
+		 * never had to look. */
+		await expect(
+			page.locator( '.wrap > .page-title-action' )
+		).toHaveText( /Add New Partner/i );
+
+		expect( await page.locator( '#gwcvt-partner-name' ).count() ).toBe( 0 );
+
+		await page.getByRole( 'link', { name: /Add New Partner/i } ).click();
+
+		const form = admin.formFor( 'gwc_vt_save_partner' ).first();
 
 		await expect( form ).toBeVisible();
 
 		await page.fill( '#gwcvt-partner-name', 'Cranebrook Mutual' );
+		await page.fill( '#gwc_vt_partner_crm_id', 'CB-1' );
 		await form.locator( 'button[type="submit"]' ).first().click();
 
 		await page.waitForURL( /gwc_vt_partner_result=added/ );
 
 		await expect(
-			page.getByRole( 'link', { name: 'Cranebrook Mutual' } )
+			page.getByRole( 'link', { name: 'Cranebrook Mutual' } ).first()
 		).toBeVisible();
 
 		const made = api( 'terms', { taxonomy: TAX } ).find(
@@ -89,6 +90,52 @@ test.describe( 'partners', () => {
 		);
 
 		expect( made ).toBeTruthy();
+		expect( made.meta.gwc_vt_partner_crm_id ).toBe( 'CB-1' );
+	} );
+
+	test( 'the list has the shape every other list on this plugin has', async ( {
+		page,
+		admin,
+		api,
+	} ) => {
+		api( 'term.ensure', { taxonomy: TAX, name: 'Adeyemi Logistics' } );
+
+		await admin.visit( SCREEN );
+
+		/* Core's markup, core's slots — the agreement gwc_vt_render_list_search()
+		 * and gwc_vt_render_list_tablenav() exist to keep. Five screens once had
+		 * five arrangements. */
+		await expect( page.locator( 'table.wp-list-table tbody#the-list' ) ).toBeVisible();
+		await expect( page.locator( '.tablenav.top .displaying-num' ) ).toContainText( /item/ );
+		await expect( page.locator( '#gwcvt-partner-search' ) ).toBeVisible();
+		await expect( page.locator( '.tablenav.top #gwcvt-partner-bulk' ) ).toBeVisible();
+
+		/* The name opens it, and Edit is the second way in — not the only one. */
+		const row = page
+			.locator( '#the-list tr' )
+			.filter( { hasText: 'Adeyemi Logistics' } );
+
+		await expect( row.locator( '.row-actions .edit a' ) ).toHaveCount( 1 );
+		await row.getByRole( 'link', { name: 'Adeyemi Logistics' } ).click();
+
+		await expect( admin.formFor( 'gwc_vt_save_partner' ).first() ).toBeVisible();
+		await expect( page.locator( '#gwcvt-partner-name' ) ).toHaveValue( 'Adeyemi Logistics' );
+	} );
+
+	test( 'the search finds one however it was punctuated', async ( {
+		page,
+		admin,
+		api,
+	} ) => {
+		api( 'term.ensure', { taxonomy: TAX, name: 'Beaulieu Corp.' } );
+		api( 'term.ensure', { taxonomy: TAX, name: 'Ramanathan Trust' } );
+
+		await admin.visit( SCREEN, { s: 'beaulieu corp' } );
+
+		const rows = page.locator( '#the-list tr:not(.no-items)' );
+
+		await expect( rows ).toHaveCount( 1 );
+		await expect( rows.first() ).toContainText( 'Beaulieu Corp.' );
 	} );
 
 	test( 'the same name twice is refused, and says so', async ( {
@@ -96,28 +143,19 @@ test.describe( 'partners', () => {
 		admin,
 		api,
 	} ) => {
-		await admin.visit( SCREEN );
+		for ( let attempt = 0; attempt < 2; attempt++ ) {
+			await admin.visit( SCREEN, { partner: 'new' } );
+			await page.fill( '#gwcvt-partner-name', 'Halbrook Trust' );
+			await admin
+				.formFor( 'gwc_vt_save_partner' )
+				.first()
+				.locator( 'button[type="submit"]' )
+				.first()
+				.click();
+			await page.waitForURL( /gwc_vt_partner_result=/ );
+		}
 
-		await page.fill( '#gwcvt-partner-name', 'Halbrook Trust' );
-		await admin
-			.formFor( 'gwc_vt_add_partner' )
-			.first()
-			.locator( 'button[type="submit"]' )
-			.first()
-			.click();
-
-		await page.waitForURL( /gwc_vt_partner_result=added/ );
-
-		await page.fill( '#gwcvt-partner-name', 'Halbrook Trust' );
-		await admin
-			.formFor( 'gwc_vt_add_partner' )
-			.first()
-			.locator( 'button[type="submit"]' )
-			.first()
-			.click();
-
-		await page.waitForURL( /gwc_vt_partner_result=exists/ );
-
+		expect( page.url() ).toContain( 'gwc_vt_partner_result=exists' );
 		expect( await admin.notices() ).toContain( 'already a partner' );
 
 		/* And it really did not make a second one — the notice being right is
@@ -129,45 +167,41 @@ test.describe( 'partners', () => {
 		expect( named.length ).toBe( 1 );
 	} );
 
-	test( 'the contact details save on the term editor and come back', async ( {
+	test( 'the contact details save and come back', async ( {
 		page,
 		admin,
 		api,
 	} ) => {
-		const org = api( 'term.ensure', {
-			taxonomy: TAX,
-			name: 'Pelham Foods',
-		} );
+		const partner = api( 'term.ensure', { taxonomy: TAX, name: 'Pelham Foods' } );
 
-		await page.goto( termUrl( org.id ) );
+		await admin.visit( SCREEN, { partner: partner.id } );
 
 		await page.fill( '#gwc_vt_partner_crm_id', 'SF-4417' );
 		await page.fill( '#gwc_vt_partner_contact_name', 'Rosalind Achebe' );
 		await page.fill( '#gwc_vt_partner_contact_email', 'rosalind@example.org' );
 		await page.fill( '#gwc_vt_partner_contact_phone', '555-0164' );
 
-		await page
-			.getByRole( 'button', { name: 'Update', exact: true } )
+		await admin
+			.formFor( 'gwc_vt_save_partner' )
+			.first()
+			.locator( 'button[type="submit"]' )
+			.first()
 			.click();
 
-		await page.waitForLoadState( 'networkidle' );
+		await page.waitForURL( /gwc_vt_partner_result=saved/ );
 
 		const saved = api( 'terms', { taxonomy: TAX } ).find(
-			( one ) => one.id === org.id
+			( one ) => one.id === partner.id
 		);
 
 		expect( saved.meta.gwc_vt_partner_crm_id ).toBe( 'SF-4417' );
 		expect( saved.meta.gwc_vt_partner_contact_name ).toBe( 'Rosalind Achebe' );
-		expect( saved.meta.gwc_vt_partner_contact_email ).toBe(
-			'rosalind@example.org'
-		);
+		expect( saved.meta.gwc_vt_partner_contact_email ).toBe( 'rosalind@example.org' );
 
-		/* And the screen shows them back, because a field that saves and does
-		 * not redisplay reads as one that did not save. */
-		await admin.visit( SCREEN );
-
+		/* And the list shows them back, because a field that saves and does not
+		 * redisplay reads as one that did not save. */
 		await expect(
-			page.locator( '.gwcvt-partners__table' ).getByText( 'SF-4417' )
+			page.locator( '#the-list' ).getByText( 'SF-4417' )
 		).toBeVisible();
 	} );
 
@@ -258,14 +292,21 @@ test.describe( 'partners', () => {
 		await page.check( `#gwcvt-partner-${ keep.id }` );
 		await page.check( `#gwcvt-partner-${ fold.id }` );
 
-		await page
-			.getByRole( 'button', { name: /Fold the selected ones together/i } )
-			.click();
+		/* A bulk action in the slot core keeps for one, rather than a button
+		 * under the table. */
+		await page.selectOption( '#gwcvt-partner-bulk', 'merge' );
+		await page.locator( '.tablenav.top input[type="submit"]' ).first().click();
 
-		/* A confirmation step, because the merge cannot be undone. */
+		/* A confirmation step, because the merge cannot be undone — and nothing
+		 * on it is preselected, so the button cannot be pressed without the
+		 * choice having been made. */
 		await expect(
 			page.getByText( 'This cannot be undone' )
 		).toBeVisible();
+
+		expect(
+			await page.locator( 'input[name="survivor"]:checked' ).count()
+		).toBe( 0 );
 
 		/* ── And no PHP complaint anywhere on it ─────────────────────────────
 		 * WP_DEBUG and WP_DEBUG_DISPLAY are both on here, so a notice prints
@@ -316,18 +357,21 @@ test.describe( 'partners', () => {
 		const a = api( 'term.ensure', { taxonomy: TAX, name: 'Okonkwo Freight' } );
 		const b = api( 'term.ensure', { taxonomy: TAX, name: 'Okonkwo Freight Ltd' } );
 
-		/* Set through the real term editor, so this test does not depend on a
-		 * back door for the arrangement it is about to assert on. */
+		/* Set through the real form, so this test does not depend on a back door
+		 * for the arrangement it is about to assert on. */
 		for ( const [ term, crm ] of [
 			[ a, 'CRM-AAA' ],
 			[ b, 'CRM-BBB' ],
 		] ) {
-			await page.goto( termUrl( term.id ) );
+			await admin.visit( SCREEN, { partner: term.id } );
 			await page.fill( '#gwc_vt_partner_crm_id', crm );
-			await page
-				.getByRole( 'button', { name: 'Update', exact: true } )
+			await admin
+				.formFor( 'gwc_vt_save_partner' )
+				.first()
+				.locator( 'button[type="submit"]' )
+				.first()
 				.click();
-			await page.waitForLoadState( 'networkidle' );
+			await page.waitForURL( /gwc_vt_partner_result=saved/ );
 		}
 
 		/* Built by hand rather than through admin.visit(), which runs its
@@ -437,7 +481,7 @@ test.describe( 'partners', () => {
 		await admin.visit( SCREEN );
 
 		const row = page
-			.locator( '.gwcvt-partners__table tbody tr' )
+			.locator( '#the-list tr' )
 			.filter( { hasText: 'Okonkwo Bakeries' } );
 
 		await expect( row ).toContainText( '5' );
@@ -477,6 +521,27 @@ test.describe( 'partners', () => {
 		await expect( rows ).toHaveCount( 2 );
 		await expect( summary ).toContainText( 'Ferreira Haulage' );
 		await expect( summary ).toContainText( '2 entries shown' );
+
+		/* ── Core's own link reaches the same list, and must be described ────
+		 * The Partners column on this screen is core's, and it links to
+		 * ?taxonomy=gwc_vt_partner&term=<slug> — which WP_Query honours even
+		 * though the taxonomy has no query var. Reading only this plugin's
+		 * filter meant the total appeared when somebody used the dropdown and
+		 * vanished when they pressed the partner's name in a row: the same list,
+		 * filtered the same way, described in one case and not the other. */
+		await page.goto(
+			`/wp-admin/edit.php?post_type=gwc_vt_entry` +
+				`&taxonomy=gwc_vt_partner&term=ferreira-haulage`
+		);
+
+		await expect( rows ).toHaveCount( 2 );
+		await expect( summary ).toContainText( '2 entries shown' );
+
+		/* And the dropdown says what the list is filtered by, whichever URL
+		 * form got there. */
+		await expect(
+			page.locator( '#gwc_vt_partner_is' )
+		).toHaveValue( String( partner.id ) );
 
 		/* ── And it moves when the list does ─────────────────────────────────
 		 * The number is computed from the main query rather than from the term,
@@ -525,7 +590,7 @@ test.describe( 'partners', () => {
 		await admin.visit( SCREEN );
 
 		const row = page
-			.locator( '.gwcvt-partners__table tbody tr' )
+			.locator( '#the-list tr' )
 			.filter( { hasText: 'Nakamura Provisions' } );
 
 		await expect( row ).toHaveCount( 1 );
