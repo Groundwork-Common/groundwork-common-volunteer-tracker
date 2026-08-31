@@ -1,7 +1,8 @@
 /**
  * A shift: writing one, staffing it, calling it off, and erasing it.
  *
- * Covers gwc_vt_save_shift, gwc_vt_roster_add, gwc_vt_roster_remove,
+ * Covers gwc_vt_save_shift, gwc_vt_roster_add, gwc_vt_group_seats,
+ * gwc_vt_roster_remove,
  * gwc_vt_roster_print, gwc_vt_cancel_shift and gwc_vt_delete_shift.
  *
  * ── The distinction the screen has to keep ───────────────────────────────────
@@ -339,4 +340,87 @@ test.describe( 'a shift', () => {
 			page.locator( 'a[href*="action=gwc_vt_delete_shift"]' )
 		).toHaveCount( 0 );
 	} );
+
+	test( 'a group holds places before any of the names exist', async ( {
+		page,
+		admin,
+		api,
+	} ) => {
+		const shift = api( 'posts', { type: 'gwc_vt_shift' } )[ 0 ];
+
+		expect( shift ).toBeTruthy();
+
+		await page.goto( admin.screenUrl( 'gwc-vt-schedule', { shift: shift.id } ) );
+
+		/* ── No volunteer record, and that is the whole point ────────────────
+		 * "Acme Corp is bringing twelve on Saturday" is knowable three weeks
+		 * before any of the twelve names are. The form above this one needs a
+		 * volunteer to add anybody; this one deliberately needs none. */
+		await page.fill( '#gwcvt-group-name', 'Beaulieu Freight' );
+		await page.fill( '#gwcvt-group-seats', '12' );
+		await page.fill( '#gwcvt-group-email', 'rota@beaulieu.example' );
+
+		await page
+			.locator( 'form.gwcvt-group-hold-add input[type="submit"], form.gwcvt-group-hold-add button[type="submit"]' )
+			.first()
+			.click();
+
+		await page.waitForURL( /gwc_vt_shift_result=held/ );
+
+		/* One line on the roster, not twelve blanks — the blanks belong on the
+		 * printed sheet, where somebody writes names on them. */
+		const row = page
+			.locator( '.gwcvt-roster tbody tr' )
+			.filter( { hasText: 'Beaulieu Freight' } );
+
+		await expect( row ).toHaveCount( 1 );
+		await expect( row ).toContainText( '12 seats' );
+
+		/* And the places are really held: the shift is twelve fuller. */
+		const held = api( 'posts', { type: 'gwc_vt_signup' } ).find(
+			( one ) => one.title && one.title.includes( 'Beaulieu Freight' )
+		);
+
+		expect( held ).toBeTruthy();
+	} );
+
+	test( 'a hold is resized in place, not taken off and made again', async ( {
+		page,
+		admin,
+		api,
+	} ) => {
+		const shift = api( 'posts', { type: 'gwc_vt_shift' } )[ 1 ];
+
+		expect( shift ).toBeTruthy();
+
+		await page.goto( admin.screenUrl( 'gwc-vt-schedule', { shift: shift.id } ) );
+
+		await page.fill( '#gwcvt-group-name', 'Okonkwo Scouts' );
+		await page.fill( '#gwcvt-group-seats', '8' );
+		await page
+			.locator( 'form.gwcvt-group-hold-add input[type="submit"], form.gwcvt-group-hold-add button[type="submit"]' )
+			.first()
+			.click();
+
+		await page.waitForURL( /gwc_vt_shift_result=held/ );
+
+		const row = page
+			.locator( '.gwcvt-roster tbody tr' )
+			.filter( { hasText: 'Okonkwo Scouts' } );
+
+		await expect( row ).toContainText( '8 seats' );
+
+		/* Changed where it is, through gwc_vt_group_seats — deleting and
+		 * re-making would move the booking's date, retire the cancellation link
+		 * already in the contact's inbox, and re-owe a reminder that has gone. */
+		await row.locator( 'input[name="gwc_vt_seats"]' ).fill( '5' );
+		await row.locator( 'input[type="submit"]' ).first().click();
+
+		await page.waitForURL( /gwc_vt_shift_result=seats-changed/ );
+
+		await expect(
+			page.locator( '.gwcvt-roster tbody tr' ).filter( { hasText: 'Okonkwo Scouts' } )
+		).toContainText( '5 seats' );
+	} );
+
 } );

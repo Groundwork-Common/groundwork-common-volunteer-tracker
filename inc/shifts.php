@@ -426,7 +426,21 @@ function gwc_vt_shift_signup_ids( int $shift_id, array $statuses = array( 'publi
  * @return int
  */
 function gwc_vt_shift_filled( int $shift_id ): int {
-	return count( gwc_vt_shift_signup_ids( $shift_id ) );
+	$filled = 0;
+
+	/* Seats, not rows. One booking can hold twelve places — "Acme Corp is
+	 * bringing twelve on Saturday" — and every count downstream of this reads
+	 * through here: spots left, the full and short badges, the public list, the
+	 * waiting list, an event's fill summary and the dashboard.
+	 *
+	 * gwc_vt_signup_seats() floors at one and treats an absent key as one, so on
+	 * a site that has never made a hold this is the old count exactly, row for
+	 * row, with nothing migrated. */
+	foreach ( gwc_vt_shift_signup_ids( $shift_id ) as $signup_id ) {
+		$filled += gwc_vt_signup_seats( (int) $signup_id );
+	}
+
+	return $filled;
 }
 
 /**
@@ -798,7 +812,23 @@ function gwc_vt_shift_is_unlogged( int $shift_id ): bool {
 		return false;
 	}
 
-	return 0 !== gwc_vt_shift_filled( $shift_id );
+	/* ── Nameable places, not filled ones ────────────────────────────────────
+	 * This asked gwc_vt_shift_filled(), which now sums seats — so a Saturday
+	 * booked entirely by a group's twelve-seat hold would nag to have its hours
+	 * typed up forever, because a hold has no names and no names means no
+	 * hours to type. A permanent item on a worklist is worse than no worklist:
+	 * it is the one everybody learns to read past.
+	 *
+	 * So the question is whether anybody NAMEABLE was on it. A hold that turns
+	 * into twelve real people becomes twelve entries through Log a day, and
+	 * those are what the nag is about. */
+	foreach ( gwc_vt_shift_signup_ids( $shift_id ) as $signup_id ) {
+		if ( ! gwc_vt_signup_is_group_hold( (int) $signup_id ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**

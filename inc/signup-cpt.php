@@ -71,6 +71,23 @@ const GWC_VT_SIGNUP_REVISION = '_gwc_vt_signup_revision';
  * run sends late rather than never or twice. */
 const GWC_VT_SIGNUP_REMINDED = '_gwc_vt_signup_reminded_at';
 
+/* How many places this signup takes. Absent means one.
+ *
+ * ── Seats, not rows ──────────────────────────────────────────────────────────
+ * "Acme Corp is bringing twelve on Saturday" is one booking, twelve places and
+ * no names — because the names do not exist yet, and three of the twelve will
+ * not come. Before this the only ways to say it were to over-book the shift or
+ * to invent twelve volunteer records for people who might never arrive, and
+ * those records then live in the volunteer list, the retention sweep and the
+ * overdue counts forever.
+ *
+ * Absent means one, which is what makes this need no migration: every signup
+ * ever made is a one-seat signup and reads as one without being touched.
+ * gwc_vt_signup_seats() is the only thing that reads the key, and it floors at
+ * one — a hold of nought places is not a thing anybody means, and a stored 0
+ * would silently free the seats while leaving the booking on the roster. */
+const GWC_VT_SIGNUP_SEATS = '_gwc_vt_signup_seats';
+
 /* The hour entry reconciliation produced, if any. Its absence on a reconciled
  * shift is how a no-show is derived — there is no stored no-show flag, because a
  * record of who does not turn up is a behavior file on people working off court
@@ -161,6 +178,30 @@ function gwc_vt_register_signup_type(): void {
 }
 
 /**
+ * How many places one signup takes.
+ *
+ * @param int $signup_id Signup post ID.
+ * @return int One or more.
+ */
+function gwc_vt_signup_seats( int $signup_id ): int {
+	return max( 1, (int) get_post_meta( $signup_id, GWC_VT_SIGNUP_SEATS, true ) );
+}
+
+/**
+ * Is this a group's hold rather than one person's place?
+ *
+ * Seats, and not "has no volunteer": an unmatched signup from the public form
+ * also has no volunteer, and it is one person who typed their own name. The
+ * difference that matters everywhere downstream is how many places it takes.
+ *
+ * @param int $signup_id Signup post ID.
+ * @return bool
+ */
+function gwc_vt_signup_is_group_hold( int $signup_id ): bool {
+	return gwc_vt_signup_seats( $signup_id ) > 1;
+}
+
+/**
  * Who a signup is for, as a string to show a coordinator.
  *
  * An attached signup reads its name from the volunteer record, so correcting a
@@ -177,10 +218,27 @@ function gwc_vt_signup_name( int $signup_id ): string {
 		return (string) get_the_title( $volunteer_id );
 	}
 
+	/* A partner's name where the hold names one, so renaming the partner renames
+	 * every booking it holds — which is the property the taxonomy exists for and
+	 * a copied string would not have. */
+	$partner = gwc_vt_signup_partner_name( $signup_id );
+
+	if ( '' !== $partner ) {
+		return $partner;
+	}
+
 	$claimed = trim( (string) get_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_NAME, true ) );
 
 	if ( '' === $claimed ) {
 		return __( 'Someone', 'groundwork-common-volunteer-tracker' );
+	}
+
+	/* "(unmatched)" means "somebody typed this name and nobody has said who they
+	 * are". A hold is not that: it has no volunteer because there is nobody yet,
+	 * on purpose, and calling it unmatched would send a coordinator looking for
+	 * a person to attach who does not exist. */
+	if ( gwc_vt_signup_is_group_hold( $signup_id ) ) {
+		return $claimed;
 	}
 
 	return sprintf(

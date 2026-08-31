@@ -291,18 +291,35 @@ function gwc_vt_send_shift_reminder( int $signup_id ): bool {
 
 	list( $email, $shift_id ) = $to;
 
+	/* ── One message for a hold, and it says how many ────────────────────────
+	 * A group's booking is one signup row, so this already sends once rather
+	 * than twelve times — the thing that needed saying is what it is about.
+	 * "You are down to volunteer" is wrong for somebody who is sending twelve
+	 * people and may not be coming themselves. */
+	$seats = gwc_vt_signup_seats( $signup_id );
+
+	$opening = gwc_vt_signup_is_group_hold( $signup_id )
+		? sprintf(
+			/* translators: 1: how many places, 2: a date, 3: the organization's name. */
+			_n(
+				'A reminder that you are holding %1$s place on %2$s with %3$s.',
+				'A reminder that you are holding %1$s places on %2$s with %3$s.',
+				$seats,
+				'groundwork-common-volunteer-tracker'
+			),
+			number_format_i18n( $seats ),
+			gwc_vt_shift_date_label( $shift_id ),
+			gwc_vt_org_name()
+		)
+		: sprintf(
+			/* translators: 1: a date, 2: the organization's name. */
+			__( 'A reminder that you are down to volunteer on %1$s with %2$s.', 'groundwork-common-volunteer-tracker' ),
+			gwc_vt_shift_date_label( $shift_id ),
+			gwc_vt_org_name()
+		);
+
 	$lines = array(
-		sprintf(
-			'<p>%s</p>',
-			esc_html(
-				sprintf(
-					/* translators: 1: a date, 2: the organization's name. */
-					__( 'A reminder that you are down to volunteer on %1$s with %2$s.', 'groundwork-common-volunteer-tracker' ),
-					gwc_vt_shift_date_label( $shift_id ),
-					gwc_vt_org_name()
-				)
-			)
-		),
+		sprintf( '<p>%s</p>', esc_html( $opening ) ),
 		gwc_vt_shift_details_table( $shift_id ),
 	);
 

@@ -361,6 +361,11 @@ function gwc_vt_partner_meta_box( $post ): void {
  * the name above it is gone, and it is the organization's own record of a day's
  * work.
  *
+ * THE SIGNUP answers "who has booked Saturday" — a group's hold, made before
+ * any of the twelve names exist. It is a term rather than the name copied into
+ * the booking so that renaming a partner renames every hold it has, and so a
+ * merge carries them; a copied string would have neither property.
+ *
  * The rule that keeps them apart is load-bearing, and it is stated once, here:
  *
  *   HOURS BY PARTNER ARE COUNTED FROM ENTRIES, NEVER FROM VOLUNTEERS.
@@ -386,8 +391,27 @@ function gwc_vt_partner_object_types(): array {
 	 */
 	return (array) apply_filters(
 		'gwc_vt_partner_object_types',
-		array( GWC_VT_VOLUNTEER_TYPE, GWC_VT_ENTRY_TYPE )
+		array( GWC_VT_VOLUNTEER_TYPE, GWC_VT_ENTRY_TYPE, GWC_VT_SIGNUP_TYPE )
 	);
+}
+
+/**
+ * The partner one signup is held for, by name.
+ *
+ * Empty for an ordinary signup, and for a hold made for a group the site has no
+ * partner record for — a scout troop that comes once does not need one.
+ *
+ * @param int $signup_id Signup post ID.
+ * @return string
+ */
+function gwc_vt_signup_partner_name( int $signup_id ): string {
+	$names = wp_get_object_terms( $signup_id, GWC_VT_PARTNER_TAXONOMY, array( 'fields' => 'names' ) );
+
+	if ( is_wp_error( $names ) || ! $names ) {
+		return '';
+	}
+
+	return (string) reset( $names );
 }
 
 /**
