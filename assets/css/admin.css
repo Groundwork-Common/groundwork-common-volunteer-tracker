@@ -2927,6 +2927,15 @@ body.post-type-gwc_vt_volunteer #submitdiv #minor-publishing {
 	margin: 0 0 .35em;
 }
 
+/* The second line in a cell — a contact's address, a parent, the hours still
+   waiting. This was .row-actions, which wp-admin parks off-screen and brings
+   back on :hover: right for Edit and Delete, and a way to hide a fact from
+   anybody who never thinks to hover. */
+.gwcvt-partners__sub {
+	font-size: .9em;
+	color: #50575e;
+}
+
 .gwcvt-partners__table {
 	margin-top: 1em;
 }

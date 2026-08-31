@@ -1238,16 +1238,13 @@ function gwc_vt_render_partner_contact_note(): void {
 	<h2><?php esc_html_e( 'Partner contacts', 'groundwork-common-volunteer-tracker' ); ?></h2>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'A partner can hold a contact’s name, email address and telephone number. That is one living person’s data, and it is not a volunteer record — they may never have volunteered here at all. Only people who can already see volunteer records can see it.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'A partner can hold a contact’s name, email address and telephone number. That is one living person’s data, and they may never have volunteered here.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
 	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'An export request under Tools → Export Personal Data includes it when the address matches. An erasure request does not clear it: the partner is shared, and one employee leaving should not empty the contact details everybody uses. The request tells whoever handles it which partner to edit instead.', 'groundwork-common-volunteer-tracker' ); ?>
+		<?php esc_html_e( 'An export request includes it. An erasure request does not clear it, because the record is shared — the request names the partner to edit instead. The retention sweep never touches partners.', 'groundwork-common-volunteer-tracker' ); ?>
 	</p>
 
-	<p class="description" style="max-width:44em">
-		<?php esc_html_e( 'The retention sweep never touches partners. It works from a volunteer’s last activity, and a partner has none. Anonymizing a volunteer does take their partners off their record, along with their name — their hours stay.', 'groundwork-common-volunteer-tracker' ); ?>
-	</p>
 	<?php
 }
 

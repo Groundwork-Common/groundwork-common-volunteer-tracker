@@ -154,13 +154,18 @@ function gwc_vt_partner_fields(): array {
 			/* Deliberately opaque. It may point at CiviCRM, at Salesforce, at a
 			 * spreadsheet, or at nothing. This plugin never reads it, never
 			 * validates its shape and takes no runtime dependency on any CRM —
-			 * hard rule 8, and the reason #211 asked for the field at all. */
-			'help'  => __( 'Whatever this partner is called in the system you actually keep. Stored and shown back to you; nothing here reads it.', 'groundwork-common-volunteer-tracker' ),
+			 * hard rule 8, and the reason #211 asked for the field at all.
+			 *
+			 * No help text under it, and none under the contact either: the
+			 * labels are the explanation, and what the fields are for belongs in
+			 * the Help tab where somebody goes once rather than under a field
+			 * every coordinator reads past forever. */
+			'help'  => '',
 		),
 		GWC_VT_PARTNER_CONTACT_NAME  => array(
 			'label' => __( 'Contact', 'groundwork-common-volunteer-tracker' ),
 			'type'  => 'text',
-			'help'  => __( 'Who to ask for. This is a person’s name, and it is covered by your privacy policy the same as a volunteer’s.', 'groundwork-common-volunteer-tracker' ),
+			'help'  => '',
 		),
 		GWC_VT_PARTNER_CONTACT_EMAIL => array(
 			'label' => __( 'Contact email', 'groundwork-common-volunteer-tracker' ),
