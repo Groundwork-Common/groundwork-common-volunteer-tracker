@@ -38,7 +38,7 @@ const PHP_COMPLAINTS =
 const SCREENS = screenSlugs();
 
 test.describe( 'the admin screens', () => {
-	test( 'the source still has ten of them', () => {
+	test( 'the source still has eleven of them', () => {
 		/* Not a tautology: this is the guard on the regex in source.js. If the
 		 * constants move or are renamed, screenSlugs() quietly returns fewer,
 		 * every loop below runs over a shorter list, and the run goes green
@@ -51,6 +51,7 @@ test.describe( 'the admin screens', () => {
 			'gwc-vt-help',
 			'gwc-vt-letters',
 			'gwc-vt-log-a-day',
+			'gwc-vt-partners',
 			'gwc-vt-repeat',
 			'gwc-vt-schedule',
 			'gwc-vt-settings',

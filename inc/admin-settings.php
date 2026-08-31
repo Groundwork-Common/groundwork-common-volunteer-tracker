@@ -12,6 +12,7 @@ add_action( 'gwc_vt_render_tab_logging', 'gwc_vt_render_settings_tab' );
 add_action( 'gwc_vt_render_tab_shifts', 'gwc_vt_render_settings_tab' );
 add_action( 'gwc_vt_render_tab_privacy', 'gwc_vt_render_settings_tab' );
 add_action( 'gwc_vt_render_tab_privacy', 'gwc_vt_render_retention_log', 20 );
+add_action( 'gwc_vt_render_tab_privacy', 'gwc_vt_render_partner_contact_note', 25 );
 add_action( 'gwc_vt_render_tab_privacy', 'gwc_vt_render_uninstall_section', 30 );
 add_action( 'admin_post_gwc_vt_save_uninstall', 'gwc_vt_handle_save_uninstall' );
 
@@ -1218,6 +1219,36 @@ function gwc_vt_handle_save_permissions(): void {
  */
 function gwc_vt_destructive_uninstall_armed(): bool {
 	return (bool) get_option( 'gwc_vt_allow_destructive_uninstall', false );
+}
+
+/**
+ * What is held about a partner's contact, and what happens to it.
+ *
+ * On the screen rather than only in a help tab, and only when there is
+ * something to describe. A policy nobody can find is one people are surprised
+ * by — the rule this tab already follows for uninstall and for anonymizing, and
+ * this is the first personal data in the plugin that does not belong to a
+ * volunteer.
+ */
+function gwc_vt_render_partner_contact_note(): void {
+	if ( ! function_exists( 'gwc_vt_partner_terms' ) || ! gwc_vt_partner_terms() ) {
+		return;
+	}
+	?>
+	<h2><?php esc_html_e( 'Partner contacts', 'groundwork-common-volunteer-tracker' ); ?></h2>
+
+	<p class="description" style="max-width:44em">
+		<?php esc_html_e( 'A partner can hold a contact’s name, email address and telephone number. That is one living person’s data, and it is not a volunteer record — they may never have volunteered here at all. Only people who can already see volunteer records can see it.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+
+	<p class="description" style="max-width:44em">
+		<?php esc_html_e( 'An export request under Tools → Export Personal Data includes it when the address matches. An erasure request does not clear it: the partner is shared, and one employee leaving should not empty the contact details everybody uses. The request tells whoever handles it which partner to edit instead.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+
+	<p class="description" style="max-width:44em">
+		<?php esc_html_e( 'The retention sweep never touches partners. It works from a volunteer’s last activity, and a partner has none. Anonymizing a volunteer does take their partners off their record, along with their name — their hours stay.', 'groundwork-common-volunteer-tracker' ); ?>
+	</p>
+	<?php
 }
 
 /**

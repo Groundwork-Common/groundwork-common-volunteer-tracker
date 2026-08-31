@@ -2904,3 +2904,60 @@ body.js .gwcvt-sheet--open {
 body.post-type-gwc_vt_volunteer #submitdiv #minor-publishing {
 	display: none;
 }
+
+/* ─── Partner organizations ─────────────────────────────────────────────────────────
+   The list, the duplicate proposals and the merge form. Almost nothing: the
+   table is core's own wp-list-table and the notice is core's notice, so what is
+   left is spacing and the one fieldset that is not a shape core ships. */
+.gwcvt-partners__intro {
+	max-width: 44em;
+}
+
+.gwcvt-partners__duplicates h2 {
+	margin: .5em 0 .25em;
+	font-size: 1em;
+}
+
+.gwcvt-partners__duplicates ul {
+	margin: 0 0 1em 1.5em;
+	list-style: disc;
+}
+
+.gwcvt-partners__duplicates li {
+	margin: 0 0 .35em;
+}
+
+.gwcvt-partners__table {
+	margin-top: 1em;
+}
+
+.gwcvt-partners__actions {
+	margin: 1em 0 2em;
+}
+
+.gwcvt-partners__actions .description {
+	margin-left: .5em;
+}
+
+/* A rule and a heading, so several of these read as several questions rather
+   than one long column of radios. */
+.gwcvt-partners__conflict {
+	margin: 0 0 1.5em;
+	padding: 0 0 0 1em;
+	border-left: 4px solid #c3c4c7;
+}
+
+.gwcvt-partners__conflict legend {
+	padding: 0;
+}
+
+.gwcvt-partners__conflict p {
+	margin: .35em 0;
+}
+
+.gwcvt-partners__add {
+	margin-top: 2em;
+	padding-top: 1em;
+	border-top: 1px solid #dcdcde;
+	max-width: 44em;
+}

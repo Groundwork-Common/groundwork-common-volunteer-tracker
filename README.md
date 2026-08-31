@@ -260,6 +260,9 @@ Every hook in the plugin is in this table. If you add one, add its row.
 | `gwc_vt_hour_increment` | filter | The increment every logged duration is rounded to, in minutes. |
 | `gwc_vt_post_type_args` | filter | `register_post_type()` arguments for hour entries. |
 | `gwc_vt_volunteer_post_type_args` | filter | `register_post_type()` arguments for volunteers. |
+| `gwc_vt_partner_taxonomy_args` | filter | `register_taxonomy()` arguments for partner organizations. |
+| `gwc_vt_partner_object_types` | filter | The post types a partner can be attached to. |
+| `gwc_vt_partners_merged` | action | After partners are folded together; the losing terms are already deleted, so their names are passed. |
 | `gwc_vt_admin_tabs` | filter | The settings screen's tabs, keyed by slug. |
 | `gwc_vt_menu_bands` | filter | The bands the Volunteer Tracker submenu is grouped into, keyed by band. Moves rows and the rules between them together. |
 | `gwc_vt_menu_order` | filter | The order of the Volunteer Tracker submenu, by slug. Moves rows without moving the rules; `gwc_vt_menu_bands` is usually what you want. |

@@ -91,7 +91,7 @@ test.describe( 'coverage', () => {
 	test( 'every admin screen is opened by a spec', () => {
 		const slugs = screenSlugs().map( ( screen ) => screen.slug );
 
-		expect( slugs.length ).toBe( 10 );
+		expect( slugs.length ).toBe( 11 );
 
 		const missing = slugs.filter( ( slug ) => ! SPECS.includes( slug ) );
 

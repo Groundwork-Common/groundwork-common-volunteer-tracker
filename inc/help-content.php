@@ -202,6 +202,63 @@ function gwc_vt_help_topics(): array {
 		),
 
 		array(
+			'id'    => 'partners',
+			'title' => __( 'Partners volunteers come with', 'groundwork-common-volunteer-tracker' ),
+			'intro' => __( 'A company sending a team for a day, a school sending a class, a court’s community-service partner. Naming them here is what lets you count one partner’s contribution as one number.', 'groundwork-common-volunteer-tracker' ),
+			'tasks' => array(
+				array(
+					'title' => __( 'Add an organization', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Partners</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Under <strong>Add an organization</strong>, enter what it is called.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Add it</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Write it as you would say it out loud. You can rename it later without moving any records, and you can add a CRM ID and a contact once it exists.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Record a CRM ID and who to ring', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Partners</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select the organization’s name.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Fill in the CRM ID, the contact’s name, their email address and their telephone number — any of them, or none.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Update</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'Nothing here reads the CRM ID. It is stored so you can find the same partner in whatever system you actually keep. The contact is a real person’s details, and your privacy policy covers them.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Say who somebody came with', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Volunteers</strong> and open the person’s record.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find <strong>Partners</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select each one they came with.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Update</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'It is a list of things that already exist, and that is deliberate — typing a name here is how the same company ends up in your records twice. Add a new one on the Organizations screen first.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'Fold two partners into one', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Partners</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select the checkbox beside each one that is really the same organization.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Fold the selected ones together</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Choose which name to keep, and answer anything the two disagree about.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select <strong>Fold them together</strong>.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'This cannot be undone. The ones you do not keep are deleted and everything that pointed at them points at the one you kept; no volunteer and no hour entry is deleted. Anything that looks like a duplicate is offered at the top of the screen.', 'groundwork-common-volunteer-tracker' ),
+				),
+				array(
+					'title' => __( 'See who came with a partner', 'groundwork-common-volunteer-tracker' ),
+					'steps' => array(
+						__( 'Go to <strong>Volunteer Tracker</strong> &rsaquo; <strong>Partners</strong>.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Find the organization in the list.', 'groundwork-common-volunteer-tracker' ),
+						__( 'Select the number in the <strong>Volunteers</strong> column.', 'groundwork-common-volunteer-tracker' ),
+					),
+					'note'  => __( 'The volunteer list opens showing only those people. You can also filter that list yourself with the dropdown above it. This counts people, not hours — an organization’s hours are a different question and are not answered here.', 'groundwork-common-volunteer-tracker' ),
+				),
+			),
+		),
+
+		array(
 			'id'    => 'schedule',
 			'title' => __( 'Planning shifts', 'groundwork-common-volunteer-tracker' ),
 			'intro' => __( 'A scheduled shift is a plan. Nobody accrues hours by signing up — turning a finished shift into hours is something a person does afterwards.', 'groundwork-common-volunteer-tracker' ),

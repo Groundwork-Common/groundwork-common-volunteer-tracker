@@ -327,9 +327,19 @@ final class MenuTest extends TestCase {
 		$bands = gwc_vt_menu_bands();
 
 		$this->assertSame(
-			array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_HELP_PAGE ),
+			array( GWC_VT_SETTINGS_PAGE, GWC_VT_CREDENTIALS_PAGE, GWC_VT_PARTNERS_PAGE, GWC_VT_HELP_PAGE ),
 			$bands['setup'],
 			'the band the owner asked for, in the order they asked for it'
+		);
+
+		/* Help stays last of the four. The band is Settings, then the two things
+		 * an organization defines once — what volunteers must hold and who they
+		 * come with — and then the guide, which is where somebody goes when one
+		 * of the three did not explain itself. */
+		$this->assertSame(
+			GWC_VT_HELP_PAGE,
+			end( $bands['setup'] ),
+			'the guide closes the band'
 		);
 
 		$this->assertContains( GWC_VT_SETTINGS_PAGE, gwc_vt_menu_order() );

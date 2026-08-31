@@ -178,6 +178,7 @@ function gwc_vt_add_settings_help( $screen = null ): void {
 			__( 'Anonymizing is usually the right action rather than deleting. Your grant reporting and your Form 990 need the hours; they do not need the name, and the hours identify nobody once it is gone.', 'groundwork-common-volunteer-tracker' ),
 			__( 'A volunteer’s record can be held back from the sweep individually, with a reason — for when a court requires you to keep something longer than your own policy. A hold also blocks an erasure request from WordPress’s privacy tools, and the reason you record is shown to whoever handles it.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Requests under Tools → Export Personal Data and Erase Personal Data include volunteer records, shifts, issued letters, and any shifts somebody signed up for — including a signup from a person who never became a volunteer, which nothing else in the plugin would find. They work whether or not you have set a retention period.', 'groundwork-common-volunteer-tracker' ),
+			__( 'A partner’s contact is the one thing an export includes and an erasure does not. It is a shared record rather than that person’s own, so one employee leaving must not empty the details everybody uses — the request names the partner for you to edit instead.', 'groundwork-common-volunteer-tracker' ),
 			__( 'Deleting the plugin removes none of it. Every volunteer, shift, signup, hour entry and issued letter stays exactly where it is, and so do the two permissions this plugin adds to your roles. Deactivating does the same. That means deleting the plugin is not a way to remove somebody\'s data — use the retention policy or the Erase Personal Data tool first.', 'groundwork-common-volunteer-tracker' ),
 			__( 'The one thing you can ask it to clean up on deletion is its own configuration, with the checkbox under <strong>Removing this plugin</strong>. Even armed, it deletes no records of any kind.', 'groundwork-common-volunteer-tracker' ),
 		)
@@ -260,6 +261,11 @@ function gwc_vt_add_screen_help( $screen ): void {
 		return;
 	}
 
+	if ( false !== strpos( (string) $screen->id, GWC_VT_PARTNERS_PAGE ) ) {
+		gwc_vt_add_partners_help( $screen );
+		return;
+	}
+
 	if ( false !== strpos( (string) $screen->id, GWC_VT_APPLICATIONS_PAGE ) ) {
 		gwc_vt_add_offers_help( $screen );
 		return;
@@ -282,6 +288,49 @@ function gwc_vt_add_screen_help( $screen ): void {
 	if ( GWC_VT_VOLUNTEER_TYPE === $screen->id ) {
 		gwc_vt_add_volunteer_record_help( $screen );
 	}
+}
+
+/**
+ * Naming the partner organizations volunteers come with.
+ *
+ * @param WP_Screen $screen The screen.
+ */
+function gwc_vt_add_partners_help( $screen ): void {
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-partners-what',
+		__( 'What this is for', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'The companies, schools, churches and court partners your volunteers arrive with. Somebody can be attached to more than one, and being attached to none is the ordinary case.', 'groundwork-common-volunteer-tracker' ),
+			__( 'The reason these are a list rather than something you type on each person is that the name has to be <strong>one</strong> name. “Acme Corp” and “ACME Corp.” typed on different records are two different partners as far as any total is concerned, and nothing on any screen would tell you.', 'groundwork-common-volunteer-tracker' ),
+			__( 'That is also why you cannot create one from a volunteer’s record. You pick from this list there; you add to it here.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-partners-merge',
+		__( 'Folding two into one', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'When the same partner has ended up in the list twice, select both and fold them together. You choose which name survives; everything that pointed at the other one points at it instead, and no volunteer and no hour entry is deleted.', 'groundwork-common-volunteer-tracker' ),
+			__( 'It cannot be undone, so the screen shows you what will move first. Where two of them disagree about a CRM ID or a contact, you are asked which to keep rather than one being picked for you — two different CRM IDs usually means the wrong pair has been selected.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Anything that looks like a duplicate is offered at the top of the screen. It compares names with capitals, punctuation and words like “Inc” set aside. It never merges anything on its own, and it will not spot two partners that are genuinely spelled differently.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Renaming is not merging and is always safe: rename one here and the word changes everywhere at once, with no record moving.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_tab(
+		$screen,
+		'gwc-vt-partners-privacy',
+		__( 'The contact is a person', 'groundwork-common-volunteer-tracker' ),
+		array(
+			__( 'The contact name, email address and telephone number on a partner are one living person’s details, and your privacy policy covers them the same as a volunteer’s. Only people who can already see volunteer records can see them.', 'groundwork-common-volunteer-tracker' ),
+			__( 'They appear in an export request under Tools &rsaquo; Export Personal Data if that address matches. An erasure request does not empty them, because the partner is not that person — replacing a contact who has left is something you do here.', 'groundwork-common-volunteer-tracker' ),
+			__( 'Anonymizing a volunteer takes their partners off their record along with their name. Their hours stay, and so does everything the partner itself holds.', 'groundwork-common-volunteer-tracker' ),
+		)
+	);
+
+	gwc_vt_add_help_sidebar( $screen );
 }
 
 /**

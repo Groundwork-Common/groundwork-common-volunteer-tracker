@@ -427,7 +427,7 @@ sort( $GLOBALS['gwc_vt_help_ids'] );
 
 gwc_vt_help_check(
 	'the guide covers every part of the plugin it is meant to',
-	array( 'credentials', 'events', 'hours', 'letters', 'public', 'schedule', 'settings', 'start' ) === $GLOBALS['gwc_vt_help_ids'],
+	array( 'credentials', 'events', 'hours', 'letters', 'partners', 'public', 'schedule', 'settings', 'start' ) === $GLOBALS['gwc_vt_help_ids'],
 	implode( ', ', $GLOBALS['gwc_vt_help_ids'] )
 );
 
@@ -762,7 +762,7 @@ gwc_vt_help_check(
 
 gwc_vt_help_check(
 	'and the guide is the rest of itself, without those two topics',
-	array( 'start', 'public', 'credentials', 'hours', 'settings' ) === $GLOBALS['gwc_vt_help_off_ids'],
+	array( 'start', 'public', 'credentials', 'partners', 'hours', 'settings' ) === $GLOBALS['gwc_vt_help_off_ids'],
 	implode( ', ', $GLOBALS['gwc_vt_help_off_ids'] )
 );
 
