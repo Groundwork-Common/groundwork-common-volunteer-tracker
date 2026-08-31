@@ -500,6 +500,21 @@ function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): voi
 					$index = 0;
 
 					foreach ( $roster as $signup_id ) {
+						/* ── A hold is places, not a person ──────────────────
+						 * It has no volunteer and no name to suggest one from,
+						 * so the roster row would render a picker over a person
+						 * who does not exist. It renders as its own heading and
+						 * then blank rows — one per place held — which is the
+						 * same shape the printed sheet takes and the same shape
+						 * a coordinator is holding in their hand.
+						 *
+						 * Filling them in from the sheet is #209; today they are
+						 * ordinary walk-in rows, which already work. */
+						if ( gwc_vt_signup_is_group_hold( (int) $signup_id ) ) {
+							$index = gwc_vt_render_group_hold_log_rows( $index, (int) $signup_id );
+							continue;
+						}
+
 						gwc_vt_render_roster_log_row( $index, $signup_id, $shift_id, '' !== $logged_at );
 						++$index;
 					}
@@ -523,6 +538,40 @@ function gwc_vt_render_shift_log_form( int $shift_id, int $back_event = 0 ): voi
 			<?php submit_button( __( 'Log these hours', 'groundwork-common-volunteer-tracker' ) ); ?>
 		</form>
 	<?php
+}
+
+/**
+ * A group's hold on the log-a-shift screen: a heading and its blank rows.
+ *
+ * @param int $index     The row index to carry on from.
+ * @param int $signup_id The hold.
+ * @return int The next free row index.
+ */
+function gwc_vt_render_group_hold_log_rows( int $index, int $signup_id ): int {
+	$seats = gwc_vt_signup_seats( $signup_id );
+	?>
+	<tr class="gwcvt-quick-add__group">
+		<td class="gwcvt-quick-add__came" aria-hidden="true"></td>
+		<td colspan="2">
+			<strong><?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?></strong>
+			<span class="description">
+				<?php
+				printf(
+					/* translators: %d: how many places a group has held. */
+					esc_html( _n( '%d place held — write the names in below', '%d places held — write the names in below', $seats, 'groundwork-common-volunteer-tracker' ) ),
+					(int) $seats
+				);
+				?>
+			</span>
+		</td>
+	</tr>
+	<?php
+	for ( $seat = 0; $seat < $seats; $seat++ ) {
+		gwc_vt_render_quick_add_row( $index, true );
+		++$index;
+	}
+
+	return $index;
 }
 
 /**

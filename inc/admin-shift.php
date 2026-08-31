@@ -11,6 +11,7 @@ add_action( 'admin_post_gwc_vt_save_shift', 'gwc_vt_handle_save_shift' );
 add_action( 'admin_post_gwc_vt_cancel_shift', 'gwc_vt_handle_cancel_shift' );
 add_action( 'admin_post_gwc_vt_delete_shift', 'gwc_vt_handle_delete_shift' );
 add_action( 'admin_post_gwc_vt_roster_add', 'gwc_vt_handle_roster_add' );
+add_action( 'admin_post_gwc_vt_group_seats', 'gwc_vt_handle_group_seats' );
 add_action( 'admin_post_gwc_vt_roster_remove', 'gwc_vt_handle_roster_remove' );
 add_action( 'admin_post_gwc_vt_roster_print', 'gwc_vt_handle_roster_print' );
 
@@ -637,6 +638,106 @@ function gwc_vt_render_shift_roster( int $shift_id ): void {
 			<?php esc_html_e( 'Somebody not on file yet needs a volunteer record first.', 'groundwork-common-volunteer-tracker' ); ?>
 		</p>
 	</form>
+
+	<?php gwc_vt_render_group_hold_form( $shift_id ); ?>
+	<?php
+}
+
+/**
+ * Holding places for a group whose names do not exist yet.
+ *
+ * ── Why this is not the form above with a number on it ───────────────────────
+ * The form above puts one named person on a shift and needs a volunteer record
+ * to do it. This one deliberately needs none: the whole point is that "Acme
+ * Corp is bringing twelve on Saturday" is knowable three weeks before any of
+ * the twelve names are, and inventing twelve records for people who might not
+ * come is the workaround this replaces.
+ *
+ * The partner is a term, so renaming or merging one carries every hold it has.
+ * A group the site has no partner record for — a scout troop that comes once —
+ * types its name instead, and that is not a second-class case.
+ *
+ * @param int $shift_id Shift post ID.
+ */
+function gwc_vt_render_group_hold_form( int $shift_id ): void {
+	?>
+	<h3><?php esc_html_e( 'Hold places for a group', 'groundwork-common-volunteer-tracker' ); ?></h3>
+
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-group-hold-add">
+		<input type="hidden" name="action" value="gwc_vt_roster_add" />
+		<input type="hidden" name="gwc_vt_shift" value="<?php echo esc_attr( (string) $shift_id ); ?>" />
+		<input type="hidden" name="gwc_vt_group_hold" value="1" />
+		<?php wp_nonce_field( 'gwc_vt_roster_add_' . $shift_id ); ?>
+
+		<p>
+			<label for="gwcvt-group-partner"><strong><?php esc_html_e( 'Which group', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
+			<?php if ( function_exists( 'gwc_vt_partner_dropdown' ) && gwc_vt_partner_terms( array( 'number' => 1 ) ) ) : ?>
+				<?php
+				gwc_vt_partner_dropdown(
+					array(
+						'name'             => 'gwc_vt_partner',
+						'id'               => 'gwcvt-group-partner',
+						'selected'         => 0,
+						'show_option_none' => __( '— not on file —', 'groundwork-common-volunteer-tracker' ),
+					)
+				);
+				?>
+			<?php endif; ?>
+			<input
+				type="text"
+				id="gwcvt-group-name"
+				name="gwc_vt_group_name"
+				class="regular-text"
+				maxlength="100"
+				placeholder="<?php esc_attr_e( 'Or type a name', 'groundwork-common-volunteer-tracker' ); ?>"
+			/>
+		</p>
+
+		<p>
+			<label for="gwcvt-group-seats"><strong><?php esc_html_e( 'How many places', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
+			<input type="number" id="gwcvt-group-seats" name="gwc_vt_seats" class="small-text" min="1" value="1" required />
+		</p>
+
+		<p>
+			<label for="gwcvt-group-email"><strong><?php esc_html_e( 'Who to write to', 'groundwork-common-volunteer-tracker' ); ?></strong></label><br />
+			<input type="email" id="gwcvt-group-email" name="gwc_vt_group_email" class="regular-text" maxlength="200" />
+		</p>
+
+		<?php submit_button( __( 'Hold them', 'groundwork-common-volunteer-tracker' ), 'secondary', 'submit', false ); ?>
+
+		<p class="description">
+			<?php esc_html_e( 'One reminder goes to that address, not one per place.', 'groundwork-common-volunteer-tracker' ); ?>
+		</p>
+	</form>
+	<?php
+}
+
+/**
+ * What a hold cannot be checked for, said where somebody will read it.
+ *
+ * A credential check takes a volunteer ID, and a hold has none — there is
+ * nobody yet to hold anything. Refusing the hold would make the feature useless
+ * exactly where waivers matter most, so the hold is allowed and the roster says
+ * so instead. The check still happens per person, when the names
+ * exist and a credential is recorded against them.
+ *
+ * @param int $shift_id Shift post ID.
+ * @param int $seats    How many places the hold takes.
+ */
+function gwc_vt_render_group_hold_flag( int $shift_id, int $seats ): void {
+	if ( ! function_exists( 'gwc_vt_shift_needs_signin' ) || ! gwc_vt_shift_needs_signin( $shift_id ) ) {
+		return;
+	}
+	?>
+	<span class="gwcvt-roster__flag gwcvt-roster__flag--group">
+		<?php
+		printf(
+			/* translators: %d: how many places a group has held. */
+			esc_html( _n( '%d unnamed: check at the door', '%d unnamed: check at the door', $seats, 'groundwork-common-volunteer-tracker' ) ),
+			(int) $seats
+		);
+		?>
+	</span>
 	<?php
 }
 
@@ -668,6 +769,27 @@ function gwc_vt_render_roster_row( int $signup_id, string $standing, bool $remov
 			<?php else : ?>
 				<?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?>
 			<?php endif; ?>
+
+			<?php if ( gwc_vt_signup_is_group_hold( $signup_id ) ) : ?>
+				<?php
+				/* One line for the whole hold, not twelve blanks. The blanks are
+				 * what the PRINTED roster wants, on a clipboard at the door;
+				 * on screen they would be twelve rows saying nothing. */
+				$seats = gwc_vt_signup_seats( $signup_id );
+				?>
+				<span class="gwcvt-roster__seats">
+					<?php
+					printf(
+						/* translators: %d: how many places a group has held. */
+						esc_html( _n( '%d seat', '%d seats', $seats, 'groundwork-common-volunteer-tracker' ) ),
+						(int) $seats
+					);
+					?>
+				</span>
+
+				<?php gwc_vt_render_group_hold_flag( (int) wp_get_post_parent_id( $signup_id ), $seats ); ?>
+			<?php endif; ?>
+
 			<?php gwc_vt_render_roster_credential_flag( $signup_id, (int) wp_get_post_parent_id( $signup_id ) ); ?>
 		</td>
 		<td>
@@ -680,6 +802,35 @@ function gwc_vt_render_roster_row( int $signup_id, string $standing, bool $remov
 		<td><?php echo esc_html( '' !== $signed_up ? $signed_up : '—' ); ?></td>
 		<td><?php echo esc_html( $standing ); ?></td>
 		<td class="gwcvt-roster__actions">
+			<?php if ( $removable && gwc_vt_signup_is_group_hold( $signup_id ) ) : ?>
+				<?php
+				/* Changed in place rather than by taking the hold off and making
+				 * it again — see gwc_vt_set_signup_seats() for the three things
+				 * re-making would destroy. */
+				?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="gwcvt-roster__seats-form">
+					<input type="hidden" name="action" value="gwc_vt_group_seats" />
+					<input type="hidden" name="gwc_vt_signup" value="<?php echo esc_attr( (string) $signup_id ); ?>" />
+					<?php wp_nonce_field( 'gwc_vt_group_seats_' . $signup_id ); ?>
+
+					<label class="screen-reader-text" for="gwcvt-seats-<?php echo esc_attr( (string) $signup_id ); ?>">
+						<?php
+						/* translators: %s: a group's name. */
+						printf( esc_html__( 'How many places %s is holding', 'groundwork-common-volunteer-tracker' ), esc_html( gwc_vt_signup_name( $signup_id ) ) );
+						?>
+					</label>
+					<input
+						type="number"
+						id="gwcvt-seats-<?php echo esc_attr( (string) $signup_id ); ?>"
+						name="gwc_vt_seats"
+						class="small-text"
+						min="1"
+						value="<?php echo esc_attr( (string) gwc_vt_signup_seats( $signup_id ) ); ?>"
+					/>
+					<?php submit_button( __( 'Change', 'groundwork-common-volunteer-tracker' ), 'small', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
+
 			<?php if ( $removable ) : ?>
 				<a
 					class="gwcvt-roster__remove"
@@ -1040,6 +1191,14 @@ function gwc_vt_handle_roster_add(): void {
 
 	check_admin_referer( 'gwc_vt_roster_add_' . $shift_id );
 
+	/* ── A hold takes the same route in, and stops before the credential check
+	 * There is nobody yet to check, which is the whole point of a hold: see
+	 * gwc_vt_render_group_hold_flag() for why it is flagged on the roster
+	 * rather than refused here. */
+	if ( ! empty( $_POST['gwc_vt_group_hold'] ) ) {
+		gwc_vt_handle_group_hold_add( $shift_id );
+	}
+
 	$volunteer_id = absint( wp_unslash( $_POST['gwc_vt_volunteer'] ?? 0 ) );
 
 	if ( $volunteer_id < 1 ) {
@@ -1092,6 +1251,102 @@ function gwc_vt_handle_roster_add(): void {
 	}
 
 	gwc_vt_shift_redirect( $shift_id, 'rostered' );
+}
+
+/**
+ * Hold places for a group, from the shift screen.
+ *
+ * Reached from gwc_vt_handle_roster_add(), which has already checked the
+ * capability and the nonce — one form action for one screen's two ways of
+ * putting somebody on a shift, rather than a second nonce to keep in step.
+ *
+ * @param int $shift_id Shift post ID.
+ */
+function gwc_vt_handle_group_hold_add( int $shift_id ): void {
+	$seats = absint( wp_unslash( $_POST['gwc_vt_seats'] ?? 0 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the caller checked the nonce.
+
+	if ( $seats < 1 ) {
+		gwc_vt_shift_redirect( $shift_id, 'no-seats' );
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
+	$partner_id = absint( wp_unslash( $_POST['gwc_vt_partner'] ?? 0 ) );
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
+	$name = mb_substr( trim( sanitize_text_field( (string) wp_unslash( $_POST['gwc_vt_group_name'] ?? '' ) ) ), 0, 100 );
+
+	/* A partner or a typed name; a hold with neither is a row on the roster
+	 * that cannot say whose it is. The partner wins where both are given —
+	 * gwc_vt_signup_name() reads the term first, so the typed one would never
+	 * be seen and storing it would be storing a lie. */
+	if ( $partner_id > 0 && function_exists( 'gwc_vt_partner' ) && gwc_vt_partner( $partner_id ) ) {
+		$name = '';
+	} else {
+		$partner_id = 0;
+
+		if ( '' === $name ) {
+			gwc_vt_shift_redirect( $shift_id, 'no-group' );
+		}
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- as above.
+	$email = sanitize_email( (string) wp_unslash( $_POST['gwc_vt_group_email'] ?? '' ) );
+
+	$signup_id = gwc_vt_add_signup(
+		$shift_id,
+		array(
+			/* A claim name even when a partner is named, because
+			 * gwc_vt_add_signup() refuses a signup with neither a volunteer nor
+			 * a name — and the partner's name is not its to read. */
+			'claim_name'  => '' !== $name ? $name : gwc_vt_partner_name_for_group_hold( $partner_id ),
+			'claim_email' => $email,
+			'seats'       => $seats,
+			'partner'     => $partner_id,
+			'source'      => 'staff',
+		)
+	);
+
+	if ( $signup_id < 1 ) {
+		gwc_vt_shift_redirect( $shift_id, 'not-rostered' );
+	}
+
+	gwc_vt_shift_redirect( $shift_id, 'held' );
+}
+
+/**
+ * A partner's name, for the claim field on a hold that names one.
+ *
+ * The claim is a fallback for display and a required field on the way in; the
+ * term is what gwc_vt_signup_name() actually reads, so a rename still carries.
+ *
+ * @param int $partner_id Term ID.
+ * @return string
+ */
+function gwc_vt_partner_name_for_group_hold( int $partner_id ): string {
+	$partner = function_exists( 'gwc_vt_partner' ) ? gwc_vt_partner( $partner_id ) : null;
+
+	return $partner ? (string) $partner->name : __( 'A group', 'groundwork-common-volunteer-tracker' );
+}
+
+/**
+ * Change how many places a hold takes.
+ */
+function gwc_vt_handle_group_seats(): void {
+	gwc_vt_require_shift_cap();
+
+	$signup_id = isset( $_POST['gwc_vt_signup'] ) ? absint( wp_unslash( $_POST['gwc_vt_signup'] ) ) : 0;
+
+	check_admin_referer( 'gwc_vt_group_seats_' . $signup_id );
+
+	$shift_id = (int) wp_get_post_parent_id( $signup_id );
+
+	$seats = absint( wp_unslash( $_POST['gwc_vt_seats'] ?? 0 ) );
+
+	if ( $seats < 1 || ! gwc_vt_set_signup_seats( $signup_id, $seats ) ) {
+		gwc_vt_shift_redirect( $shift_id, 'no-seats' );
+	}
+
+	gwc_vt_shift_redirect( $shift_id, 'seats-changed' );
 }
 
 /**
@@ -1218,13 +1473,45 @@ function gwc_vt_render_roster_document( int $shift_id ): void {
 		</thead>
 		<tbody>
 			<?php foreach ( $roster as $signup_id ) : ?>
-				<tr>
-					<td><?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?></td>
-					<td><?php echo esc_html( gwc_vt_signup_email( $signup_id ) ); ?></td>
-					<td></td>
-					<td></td>
-					<td></td>
-				</tr>
+				<?php if ( gwc_vt_signup_is_group_hold( $signup_id ) ) : ?>
+					<?php
+					/* ── A hold prints as a heading and then blanks ───────────
+					 * On screen a hold is one line, because twelve empty rows
+					 * say nothing. On a clipboard at the door it is the
+					 * opposite: the group's name once, and then twelve ruled
+					 * lines for the twelve people who are about to write their
+					 * names on them. That is what the sheet is FOR, and it is
+					 * the difference between the two renderings. */
+					$seats = gwc_vt_signup_seats( $signup_id );
+					?>
+					<tr>
+						<td colspan="5">
+							<strong><?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?></strong>
+							—
+							<?php
+							printf(
+								/* translators: %d: how many places a group has held. */
+								esc_html( _n( '%d place', '%d places', $seats, 'groundwork-common-volunteer-tracker' ) ),
+								(int) $seats
+							);
+							?>
+							<?php if ( gwc_vt_shift_needs_signin( $shift_id ) ) : ?>
+								· <?php esc_html_e( 'check what they hold at the door', 'groundwork-common-volunteer-tracker' ); ?>
+							<?php endif; ?>
+						</td>
+					</tr>
+					<?php for ( $seat = 0; $seat < $seats; $seat++ ) : ?>
+						<tr><td></td><td></td><td></td><td></td><td></td></tr>
+					<?php endfor; ?>
+				<?php else : ?>
+					<tr>
+						<td><?php echo esc_html( gwc_vt_signup_name( $signup_id ) ); ?></td>
+						<td><?php echo esc_html( gwc_vt_signup_email( $signup_id ) ); ?></td>
+						<td></td>
+						<td></td>
+						<td></td>
+					</tr>
+				<?php endif; ?>
 			<?php endforeach; ?>
 
 			<?php

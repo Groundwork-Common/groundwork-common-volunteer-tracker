@@ -275,6 +275,274 @@ gwc_vt_check(
 	(string) $gwc_vt_totals->total_minutes()
 );
 
+echo "\n── Holding seats for a group ────────────────────────────────────\n";
+
+/* ── The thing #210 exists for ───────────────────────────────────────────────
+ * "Acme Corp is bringing twelve on Saturday": one booking, twelve places, no
+ * names. Everything below turns on gwc_vt_shift_filled() summing seats rather
+ * than counting rows, because every count on every screen reads through it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+$gwc_vt_hold_shift = gwc_vt_make_shift( '2030-09-14', 20, 0 );
+
+$gwc_vt_group_hold = gwc_vt_track(
+	gwc_vt_add_signup(
+		$gwc_vt_hold_shift,
+		array(
+			'claim_name'  => 'Acme Corp',
+			'claim_email' => 'rota@acme.example',
+			'seats'       => 12,
+		)
+	)
+);
+
+gwc_vt_check( 'a hold is created without a volunteer', $gwc_vt_group_hold > 0, (string) $gwc_vt_group_hold );
+
+gwc_vt_check(
+	'twelve seats fill twelve places, not one',
+	12 === gwc_vt_shift_filled( $gwc_vt_hold_shift ),
+	(string) gwc_vt_shift_filled( $gwc_vt_hold_shift )
+);
+
+gwc_vt_check(
+	'and spots-left agrees with it',
+	8 === gwc_vt_shift_spots_left( $gwc_vt_hold_shift ),
+	(string) gwc_vt_shift_spots_left( $gwc_vt_hold_shift )
+);
+
+gwc_vt_check( 'it reads as a hold', gwc_vt_signup_is_group_hold( $gwc_vt_group_hold ) );
+
+/* Not "(unmatched)". A hold has no volunteer on purpose, and calling it
+ * unmatched sends a coordinator looking for a person who does not exist. */
+gwc_vt_check(
+	'and is named plainly rather than reported as unmatched',
+	'Acme Corp' === gwc_vt_signup_name( $gwc_vt_group_hold ),
+	gwc_vt_signup_name( $gwc_vt_group_hold )
+);
+
+/* ── The seat sum must not move anything on a site with no holds ───────────── */
+$gwc_vt_plain_shift = gwc_vt_make_shift( '2030-09-15', 3, 0 );
+$gwc_vt_plain       = gwc_vt_track(
+	gwc_vt_add_signup( $gwc_vt_plain_shift, array( 'claim_name' => 'Solo Person' ) )
+);
+
+gwc_vt_check(
+	'an ordinary signup still fills exactly one place',
+	1 === gwc_vt_shift_filled( $gwc_vt_plain_shift ),
+	(string) gwc_vt_shift_filled( $gwc_vt_plain_shift )
+);
+
+gwc_vt_check(
+	'and stores no seats row at all, so nothing needed migrating',
+	'' === (string) get_post_meta( $gwc_vt_plain, GWC_VT_SIGNUP_SEATS, true )
+);
+
+echo "\n── The queue stops rather than stepping over a hold ─────────────\n";
+
+/* Three places, then a twelve-seat hold at the front of the queue and a
+ * one-seat signup behind it. Promoting the hold over-books by nine; skipping it
+ * gives a group that has waited a fortnight its place to a walk-in. So the
+ * queue stops, and a person decides. */
+$gwc_vt_queue_shift = gwc_vt_make_shift( '2030-09-16', 4, 0 );
+
+gwc_vt_track( gwc_vt_add_signup( $gwc_vt_queue_shift, array( 'claim_name' => 'First In' ) ) );
+
+$gwc_vt_big_hold = gwc_vt_track(
+	gwc_vt_add_signup( $gwc_vt_queue_shift, array( 'claim_name' => 'Big Group', 'seats' => 12 ) )
+);
+
+$gwc_vt_behind = gwc_vt_track(
+	gwc_vt_add_signup( $gwc_vt_queue_shift, array( 'claim_name' => 'Behind Them' ) )
+);
+
+gwc_vt_check(
+	'a hold that does not fit is waitlisted rather than over-booking the shift',
+	GWC_VT_SIGNUP_WAITLIST === get_post_status( $gwc_vt_big_hold ),
+	(string) get_post_status( $gwc_vt_big_hold )
+);
+
+gwc_vt_check(
+	'and the one-seat signup behind it does not leapfrog it',
+	GWC_VT_SIGNUP_WAITLIST === get_post_status( $gwc_vt_behind ),
+	(string) get_post_status( $gwc_vt_behind )
+);
+
+gwc_vt_check(
+	'so the shift stays as full as it honestly is',
+	1 === gwc_vt_shift_filled( $gwc_vt_queue_shift ),
+	(string) gwc_vt_shift_filled( $gwc_vt_queue_shift )
+);
+
+echo "\n── Reducing a hold, without re-making it ────────────────────────\n";
+
+/* Backdated deliberately. Comparing the value before and after would pass a
+ * delete-and-re-make that happened inside the same second, and
+ * current_time( 'mysql' ) has one-second resolution — which is the trap
+ * GWC_VT_SIGNUP_REVISION exists because of, recorded in inc/signup-cpt.php. A
+ * fixed old timestamp cannot be arrived at by accident. */
+$gwc_vt_was_created = '2029-01-02 03:04:05';
+
+update_post_meta( $gwc_vt_group_hold, GWC_VT_SIGNUP_CREATED, $gwc_vt_was_created );
+
+$gwc_vt_was_revision = (int) get_post_meta( $gwc_vt_group_hold, GWC_VT_SIGNUP_REVISION, true );
+
+update_post_meta( $gwc_vt_group_hold, GWC_VT_SIGNUP_REMINDED, current_time( 'mysql', true ) );
+
+gwc_vt_check( 'twelve becomes nine', gwc_vt_set_signup_seats( $gwc_vt_group_hold, 9 ) );
+
+gwc_vt_check(
+	'the places come back',
+	11 === gwc_vt_shift_spots_left( $gwc_vt_hold_shift ),
+	(string) gwc_vt_shift_spots_left( $gwc_vt_hold_shift )
+);
+
+/* The three things deleting and re-making would have destroyed. */
+gwc_vt_check(
+	'the booking still says when it was made',
+	$gwc_vt_was_created === (string) get_post_meta( $gwc_vt_group_hold, GWC_VT_SIGNUP_CREATED, true )
+);
+
+gwc_vt_check(
+	'the cancellation link already in their inbox still works',
+	$gwc_vt_was_revision === (int) get_post_meta( $gwc_vt_group_hold, GWC_VT_SIGNUP_REVISION, true )
+);
+
+gwc_vt_check(
+	'and a reminder that has gone is not owed again',
+	'' !== (string) get_post_meta( $gwc_vt_group_hold, GWC_VT_SIGNUP_REMINDED, true )
+);
+
+/* Reducing frees places, so the queue behind should move at once. */
+$gwc_vt_freed = gwc_vt_make_shift( '2030-09-17', 12, 0 );
+$gwc_vt_squat = gwc_vt_track( gwc_vt_add_signup( $gwc_vt_freed, array( 'claim_name' => 'Squatter', 'seats' => 12 ) ) );
+$gwc_vt_next  = gwc_vt_track( gwc_vt_add_signup( $gwc_vt_freed, array( 'claim_name' => 'Next Up' ) ) );
+
+gwc_vt_check(
+	'somebody behind a full hold waits',
+	GWC_VT_SIGNUP_WAITLIST === get_post_status( $gwc_vt_next )
+);
+
+gwc_vt_set_signup_seats( $gwc_vt_squat, 5 );
+
+gwc_vt_check(
+	'and is promoted the moment the hold shrinks',
+	'publish' === get_post_status( $gwc_vt_next ),
+	(string) get_post_status( $gwc_vt_next )
+);
+
+/* A hold cannot be reduced to nothing. Nought places is not a thing anybody
+ * means, and it would free the seats while leaving the booking on the roster. */
+gwc_vt_set_signup_seats( $gwc_vt_squat, 0 );
+
+gwc_vt_check(
+	'a hold cannot be shrunk to nought places',
+	1 === gwc_vt_signup_seats( $gwc_vt_squat ),
+	(string) gwc_vt_signup_seats( $gwc_vt_squat )
+);
+
+echo "\n── A hold names a partner, and the name is not copied ───────────\n";
+
+$gwc_vt_partner_term = wp_insert_term( 'Zzytest Hold Partner', GWC_VT_PARTNER_TAXONOMY );
+$gwc_vt_partner_id   = is_wp_error( $gwc_vt_partner_term ) ? 0 : (int) $gwc_vt_partner_term['term_id'];
+
+$gwc_vt_named_shift = gwc_vt_make_shift( '2030-09-18', 20, 0 );
+$gwc_vt_named       = gwc_vt_track(
+	gwc_vt_add_signup(
+		$gwc_vt_named_shift,
+		array( 'claim_name' => 'ignored', 'seats' => 6, 'partner' => $gwc_vt_partner_id )
+	)
+);
+
+gwc_vt_check(
+	'the hold is shown under the partner it names',
+	'Zzytest Hold Partner' === gwc_vt_signup_name( $gwc_vt_named ),
+	gwc_vt_signup_name( $gwc_vt_named )
+);
+
+/* The property a copied string would not have. */
+wp_update_term( $gwc_vt_partner_id, GWC_VT_PARTNER_TAXONOMY, array( 'name' => 'Zzytest Renamed Partner' ) );
+clean_term_cache( array( $gwc_vt_partner_id ), GWC_VT_PARTNER_TAXONOMY );
+
+gwc_vt_check(
+	'and renaming the partner renames the booking',
+	'Zzytest Renamed Partner' === gwc_vt_signup_name( $gwc_vt_named ),
+	gwc_vt_signup_name( $gwc_vt_named )
+);
+
+wp_delete_term( $gwc_vt_partner_id, GWC_VT_PARTNER_TAXONOMY );
+
+echo "\n── A hold produces no hours, and nags for none ─────────────────\n";
+
+/* A shift booked entirely by a group's hold has no names on it, so there are no
+ * hours to type up — and a worklist line that can never be cleared is the one
+ * everybody learns to read past. */
+$gwc_vt_past = gwc_vt_make_shift( '2020-05-05', 20, 0 );
+
+gwc_vt_track( gwc_vt_add_signup( $gwc_vt_past, array( 'claim_name' => 'Held Only', 'seats' => 12 ) ) );
+
+gwc_vt_check(
+	'a shift held only by a group does not nag to have its hours logged',
+	! gwc_vt_shift_is_unlogged( $gwc_vt_past ),
+	gwc_vt_shift_is_unlogged( $gwc_vt_past ) ? 'nagging' : 'quiet'
+);
+
+/* One named person on the same shift and it nags again, because now there is
+ * somebody whose hours could be written up. */
+gwc_vt_track( gwc_vt_add_signup( $gwc_vt_past, array( 'claim_name' => 'A Real Person' ) ) );
+
+gwc_vt_check(
+	'and nags again as soon as somebody nameable is on it',
+	gwc_vt_shift_is_unlogged( $gwc_vt_past )
+);
+
+echo "\n── The public list says places, never who ──────────────────────\n";
+
+/* Hard rule territory: a place count says nothing about anybody, and an
+ * employer's name is somebody else's business. The public renderer is asked for
+ * its actual output rather than reasoned about. */
+$gwc_vt_public_shift = gwc_vt_make_shift( gmdate( 'Y-m-d', time() + DAY_IN_SECONDS ), 20, 0 );
+
+update_post_meta( $gwc_vt_public_shift, GWC_VT_SHIFT_ACTIVITY, 'Zzytest public activity' );
+
+gwc_vt_track(
+	gwc_vt_add_signup(
+		$gwc_vt_public_shift,
+		array( 'claim_name' => 'Zzytest Secret Employer', 'claim_email' => 'x@example.org', 'seats' => 12 )
+	)
+);
+
+$GLOBALS['gwc_vt_was_open'] = get_option( GWC_VT_SETTINGS_OPTION, array() );
+
+update_option(
+	GWC_VT_SETTINGS_OPTION,
+	array_merge(
+		(array) $GLOBALS['gwc_vt_was_open'],
+		array( 'shifts_enabled' => 1, 'signup_enabled' => 1, 'schedule_page' => 1 )
+	)
+);
+gwc_vt_settings_cache( null, true );
+
+$gwc_vt_public_html = gwc_vt_render_shift_list();
+
+gwc_vt_check(
+	'the public list draws something',
+	'' !== $gwc_vt_public_html,
+	(string) strlen( $gwc_vt_public_html ) . ' bytes'
+);
+
+gwc_vt_check(
+	'and never names the group holding the places',
+	false === strpos( $gwc_vt_public_html, 'Zzytest Secret Employer' )
+);
+
+gwc_vt_check(
+	'while the places it holds are subtracted from what is offered',
+	8 === gwc_vt_shift_spots_left( $gwc_vt_public_shift ),
+	(string) gwc_vt_shift_spots_left( $gwc_vt_public_shift )
+);
+
+update_option( GWC_VT_SETTINGS_OPTION, (array) $GLOBALS['gwc_vt_was_open'] );
+gwc_vt_settings_cache( null, true );
+
 /* ── Clean up ────────────────────────────────────────────────────────────── */
 
 foreach ( $GLOBALS['gwc_vt_made'] as $gwc_vt_id ) {

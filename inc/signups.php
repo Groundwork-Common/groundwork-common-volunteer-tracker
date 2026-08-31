@@ -34,6 +34,8 @@ function gwc_vt_add_signup( int $shift_id, array $args = array() ): int {
 	$name         = mb_substr( sanitize_text_field( (string) ( $args['claim_name'] ?? '' ) ), 0, 100 );
 	$email        = sanitize_email( (string) ( $args['claim_email'] ?? '' ) );
 	$source       = 'self' === ( $args['source'] ?? '' ) ? 'self' : 'staff';
+	$seats        = max( 1, (int) ( $args['seats'] ?? 1 ) );
+	$partner_id   = (int) ( $args['partner'] ?? 0 );
 
 	if ( $volunteer_id > 0 && GWC_VT_VOLUNTEER_TYPE !== get_post_type( $volunteer_id ) ) {
 		return 0;
@@ -100,6 +102,21 @@ function gwc_vt_add_signup( int $shift_id, array $args = array() ): int {
 
 	if ( '' !== $email && is_email( $email ) ) {
 		update_post_meta( $signup_id, GWC_VT_SIGNUP_CLAIM_EMAIL, $email );
+	}
+
+	/* Written only when it is more than one, so an ordinary signup carries no
+	 * seats row at all and reads as one through gwc_vt_signup_seats(). That is
+	 * what makes this need no migration, and it keeps a million one-seat rows
+	 * out of the meta table. */
+	if ( $seats > 1 ) {
+		update_post_meta( $signup_id, GWC_VT_SIGNUP_SEATS, $seats );
+	}
+
+	/* A term, not the name copied in, so renaming or merging the partner
+	 * carries every hold it has. Checked against the taxonomy rather than
+	 * trusted: a posted id that is not a partner attaches nothing. */
+	if ( $partner_id > 0 && function_exists( 'gwc_vt_partner' ) && gwc_vt_partner( $partner_id ) ) {
+		wp_set_object_terms( $signup_id, array( $partner_id ), GWC_VT_PARTNER_TAXONOMY );
 	}
 
 	gwc_vt_settle_signups( $shift_id );
@@ -193,7 +210,23 @@ function gwc_vt_settle_signups( int $shift_id ): void {
 	$waiting = gwc_vt_shift_signup_ids( $shift_id, array( GWC_VT_SIGNUP_WAITLIST ) );
 
 	foreach ( $waiting as $signup_id ) {
-		if ( $max > 0 && $filled >= $max ) {
+		$seats = gwc_vt_signup_seats( (int) $signup_id );
+
+		/* ── Stop, rather than stepping over a hold that does not fit ─────────
+		 * Three places come free and the front of the queue is a twelve-seat
+		 * hold. Promoting it would over-book the shift by nine; skipping it
+		 * would give a group that has waited a fortnight's place to a walk-in
+		 * who joined the queue this morning.
+		 *
+		 * So the queue stops. It is strictly ordered, which is what a queue is,
+		 * and the shift stays three short until either the group reduces its
+		 * hold or a coordinator promotes somebody by hand — both of which are
+		 * decisions a person should be making rather than a cron pass.
+		 *
+		 * `break`, not `continue`: a `continue` here is the leapfrog, and it is
+		 * the version somebody will reach for as a small fix when a shift sits
+		 * three short. tests/integration/signups.php asserts the queue stops. */
+		if ( $max > 0 && $filled + $seats > $max ) {
 			break;
 		}
 
@@ -204,7 +237,7 @@ function gwc_vt_settle_signups( int $shift_id ): void {
 			)
 		);
 
-		++$filled;
+		$filled += $seats;
 	}
 
 	if ( $locked ) {
@@ -257,6 +290,51 @@ function gwc_vt_release_signup_lock( int $shift_id ): void {
 }
 
 /* ── Coming off a shift ──────────────────────────────────────────────────── */
+
+/**
+ * Change how many places a hold takes, without re-making it.
+ *
+ * ── Why not delete and add again ─────────────────────────────────────────────
+ * Twelve becomes nine on Friday afternoon, which is the ordinary thing to
+ * happen to a group booking. Deleting the hold and making a new one would move
+ * GWC_VT_SIGNUP_CREATED — so the roster would say the group booked on Friday
+ * rather than three weeks ago — bump the revision, which retires the
+ * cancellation link already in the contact's inbox, and clear
+ * GWC_VT_SIGNUP_REMINDED, so a reminder that had already gone would go again.
+ *
+ * None of those is what "we are bringing nine now" means.
+ *
+ * @param int $signup_id Signup post ID.
+ * @param int $seats     One or more.
+ * @return bool Whether anything was changed.
+ */
+function gwc_vt_set_signup_seats( int $signup_id, int $seats ): bool {
+	if ( GWC_VT_SIGNUP_TYPE !== get_post_type( $signup_id ) ) {
+		return false;
+	}
+
+	$seats = max( 1, $seats );
+
+	if ( $seats > 1 ) {
+		update_post_meta( $signup_id, GWC_VT_SIGNUP_SEATS, $seats );
+	} else {
+		delete_post_meta( $signup_id, GWC_VT_SIGNUP_SEATS );
+	}
+
+	gwc_vt_retitle_signup( $signup_id );
+
+	/* Reducing a hold frees places, and the queue behind it should move into
+	 * them at once rather than at the next time anything else happens to the
+	 * shift. Settling is idempotent, so calling it after an increase is a
+	 * no-op rather than a special case worth branching on. */
+	$shift_id = (int) wp_get_post_parent_id( $signup_id );
+
+	if ( $shift_id > 0 ) {
+		gwc_vt_settle_signups( $shift_id );
+	}
+
+	return true;
+}
 
 /**
  * Take somebody off a shift.

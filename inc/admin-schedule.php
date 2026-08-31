@@ -1061,6 +1061,8 @@ function gwc_vt_schedule_notice(): void {
 		'not-found'      => __( 'That shift no longer exists.', 'groundwork-common-volunteer-tracker' ),
 		'has-roster'     => __( 'People have signed up, so this can be called off but not deleted.', 'groundwork-common-volunteer-tracker' ),
 		'no-volunteer'   => __( 'Choose somebody to add. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'no-seats'       => __( 'Say how many places to hold. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
+		'no-group'       => __( 'Choose a partner or type the group’s name. Nothing was changed.', 'groundwork-common-volunteer-tracker' ),
 
 		/* Said out loud rather than swallowed. This handler used to discard
 		 * gwc_vt_add_signup()'s return value and report success whatever it
@@ -1089,6 +1091,8 @@ function gwc_vt_schedule_notice(): void {
 		'cancelled'         => __( 'Shift canceled. It stays on the schedule so everybody can see it was called off.', 'groundwork-common-volunteer-tracker' ),
 		'deleted'           => __( 'Shift deleted.', 'groundwork-common-volunteer-tracker' ),
 		'rostered'          => __( 'Added to the shift.', 'groundwork-common-volunteer-tracker' ),
+		'held'              => __( 'Places held. One reminder goes to the address you gave.', 'groundwork-common-volunteer-tracker' ),
+		'seats-changed'     => __( 'Places changed. Anybody waiting has been moved up.', 'groundwork-common-volunteer-tracker' ),
 		'removed'           => __( 'Taken off the shift.', 'groundwork-common-volunteer-tracker' ),
 		'promoted'          => __( 'They have a place now.', 'groundwork-common-volunteer-tracker' ),
 
@@ -2645,7 +2649,7 @@ function gwc_vt_event_notice(): void {
 		return;
 	}
 
-	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'unknown-role', 'failed', 'no-volunteer', 'wrong-slot', 'not-rostered' );
+	$errors = array( 'no-title', 'no-role', 'bad-time', 'has-roster', 'bad-date', 'unknown', 'unknown-role', 'failed', 'no-volunteer', 'no-seats', 'no-group', 'wrong-slot', 'not-rostered' );
 	$detail = array();
 
 	if ( $made > 0 ) {

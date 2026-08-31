@@ -516,6 +516,12 @@ Copy it up and run it by absolute path: `wp eval-file ~/beta-seeds/gwcvt-seed.ph
   it only when `nopaging` is true, and a main query's vars carry
   `nopaging => false` — so re-running them with `-1` builds `LIMIT 0, -1`, which
   is not valid SQL and quietly returns nothing. Set both.
+- **A count that gates a worklist must count what can be acted on.**
+  `gwc_vt_shift_is_unlogged()` asked `gwc_vt_shift_filled()`, which now sums
+  seats — so a Saturday booked entirely by a group's twelve-seat hold nagged to
+  have its hours typed up forever, because a hold has no names and no names
+  means no hours. A worklist line that can never be cleared is the one everybody
+  learns to read past, which costs the other lines too.
 - **Trapping mail belongs on `pre_wp_mail`, never `phpmailer_init`.** The latter
   is the usual place to redirect mail and it cannot stop a send — only change
   where it goes. If PHPMailer then throws, because the host has no MTA or rejects
@@ -584,7 +590,14 @@ log** the record that a letter went out; survives purges, holds no name ·
 **reference code** a salted digest over every printed field, checkable by phone ·
 **rollup** cached totals · **self-log** the optional anonymous front-end form ·
 **triage** attaching a self-logged entry to a volunteer · **hold** a per-volunteer
-block on the retention sweep · **anonymize vs delete** — anonymizing keeps the
+block on the retention sweep — and **never** the other kind, see **group hold** ·
+**group hold** a signup that takes several seats for a group whose names do not
+exist yet: `GWC_VT_SIGNUP_SEATS`, one row, one reminder, one cancellation link.
+Every identifier says `group_hold` or `group_seats`, because bare `gwc_vt_hold_*`
+is taken by the retention hold (`_gwc_vt_hold_reason`) and that is the
+organization/partner mistake again ·
+**seats** how many places one signup takes; absent means one, which is why
+nothing needed migrating · **anonymize vs delete** — anonymizing keeps the
 hours · **increment** rounding granularity, nearest and never up ·
 **credential** a thing a volunteer must *hold* — a class, a waiver, a check;
 never a "requirement", which is court-ordered hours · **record** one grant of one
